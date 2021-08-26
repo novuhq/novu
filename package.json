@@ -1,11 +1,11 @@
 {
-  "name": "communicat",
+  "name": "@notifire/core",
   "version": "1.0.0",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "repository": "https://github.com/scopsy/communicat",
+  "repository": "https://github.com/notifire/core",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -41,12 +41,11 @@
   "engines": {
     "node": ">=10"
   },
-  "dependencies": {
-    "@bitauth/libauth": "^1.17.1"
-  },
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "@sendgrid/mail": "^7.4.6",
+    "@types/node": "^16.7.2",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
     "@typescript-eslint/parser": "^4.0.1",
     "ava": "^3.12.1",

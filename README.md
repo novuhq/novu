@@ -1,3 +1,3 @@
-# communicat
+# Notifire
 
 Notification Management Framework
