@@ -1,3 +1,5 @@
+import EventEmitter from 'events';
+
 import { EmailHandler } from './handler/email.handler';
 import { SmsHandler } from './handler/sms.handler';
 import { INotifireConfig } from './notifire.interface';
@@ -10,11 +12,12 @@ import {
 } from './template/template.interface';
 import { TemplateStore } from './template/template.store';
 
-export class Notifire {
+export class Notifire extends EventEmitter {
   private templateStore: TemplateStore;
   private providerStore: ProviderStore;
 
   constructor(private config?: INotifireConfig) {
+    super();
     this.templateStore = this.config?.templateStore || new TemplateStore();
     this.providerStore = this.config?.providerStore || new ProviderStore();
   }
@@ -48,6 +51,13 @@ export class Notifire {
         );
       }
 
+      this.emit('pre:send', {
+        id: template.id,
+        channel: message.channel,
+        message,
+        trigger: data,
+      });
+
       if (provider.channelType === ChannelTypeEnum.EMAIL) {
         const emailHandler = new EmailHandler(message, provider);
         await emailHandler.send(data);
@@ -55,6 +65,13 @@ export class Notifire {
         const smsHandler = new SmsHandler(message, provider);
         await smsHandler.send(data);
       }
+
+      this.emit('post:send', {
+        id: template.id,
+        channel: message.channel,
+        message,
+        trigger: data,
+      });
     }
   }
 }
