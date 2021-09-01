@@ -4,7 +4,7 @@
   </a>
 </p>
 
-<h1 align="center">Notifire</h1>
+<h1 align="center">Notification management library</h1>
 
 <div align="center">
 
