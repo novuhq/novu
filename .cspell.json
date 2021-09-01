@@ -21,7 +21,8 @@
     "sandboxed",
     "transpiled",
     "typedoc",
-    "untracked"
+    "untracked",
+    "notifire"
   ],
   "flagWords": [],
   "ignorePaths": [
