@@ -5,15 +5,19 @@ import { IEmailProvider, ISmsProvider } from './provider.interface';
 export class ProviderStore {
   private providers: Array<ISmsProvider | IEmailProvider> = [];
 
-  addProvider(provider: IEmailProvider | ISmsProvider) {
+  async addProvider(provider: IEmailProvider | ISmsProvider) {
     this.providers.push(provider);
   }
 
-  getProviderById(providerId: string) {
+  async getProviderById(providerId: string) {
     return this.providers.find((provider) => provider.id === providerId);
   }
 
-  getProviderByChannel(channel: ChannelTypeEnum) {
+  async getProviderByChannel(channel: ChannelTypeEnum) {
     return this.providers.find((provider) => provider.channelType === channel);
+  }
+
+  async getProviders() {
+    return this.providers;
   }
 }

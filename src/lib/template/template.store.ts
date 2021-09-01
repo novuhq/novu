@@ -10,4 +10,8 @@ export class TemplateStore {
   async getTemplateById(templateId: string) {
     return this.templates.find((template) => template.id === templateId);
   }
+
+  async getTemplates() {
+    return this.templates;
+  }
 }
