@@ -55,7 +55,7 @@ export class Notifire extends EventEmitter {
         id: template.id,
         channel: message.channel,
         message,
-        trigger: data,
+        triggerPayload: data,
       });
 
       if (provider.channelType === ChannelTypeEnum.EMAIL) {
@@ -70,7 +70,7 @@ export class Notifire extends EventEmitter {
         id: template.id,
         channel: message.channel,
         message,
-        trigger: data,
+        triggerPayload: data,
       });
     }
   }
