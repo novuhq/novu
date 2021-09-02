@@ -22,7 +22,8 @@
     "transpiled",
     "typedoc",
     "untracked",
-    "notifire"
+    "notifire",
+    "sendgrid"
   ],
   "flagWords": [],
   "ignorePaths": [
