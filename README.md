@@ -12,6 +12,9 @@ The ultimate library for managing transactional notifications for node
 
 </div>
 
+## ⭐️ Why
+Building a transactional notification system is hard, at first it seems like just sending an email but in reality it's just the beggining. In today's world users expect multi channel communication experience over email, sms, push, direct and more... An ever growing list of providers are poping up each day, and notifications are spread around the code. Notifire's goal is to simplify transactional notifications and provide developers the tools to create meaningful communication between the system and it's users.
+
 ## ✨ Features
 
 - 🌈 Single API for all messaging providers
