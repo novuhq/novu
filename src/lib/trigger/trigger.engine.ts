@@ -1,3 +1,5 @@
+import _get from 'lodash.get';
+
 import { getHandlebarsVariables } from '../content/content.engine';
 import { EmailHandler } from '../handler/email.handler';
 import { SmsHandler } from '../handler/sms.handler';
@@ -9,7 +11,6 @@ import {
   ITriggerPayload,
 } from '../template/template.interface';
 import { TemplateStore } from '../template/template.store';
-import _get from 'lodash.get';
 
 export class TriggerEngine {
   constructor(

@@ -1,10 +1,11 @@
+import merge from 'lodash.merge';
+
 import { INotifireConfig } from './notifire.interface';
 import { IEmailProvider, ISmsProvider } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
 import { TemplateStore } from './template/template.store';
 import { TriggerEngine } from './trigger/trigger.engine';
-import merge from 'lodash.merge';
 
 export class Notifire {
   private readonly templateStore: TemplateStore;
