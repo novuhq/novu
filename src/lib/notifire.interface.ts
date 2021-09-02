@@ -7,6 +7,7 @@ export interface INotifireConfig {
       from?: { name: string; email: string };
     };
   };
+  variableProtection?: boolean;
   templateStore?: TemplateStore;
   providerStore?: ProviderStore;
 }

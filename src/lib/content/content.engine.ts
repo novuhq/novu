@@ -16,13 +16,12 @@ export function compileTemplate(
       | number;
   }
 ) {
-  // const variables = getHandlebarsVariables(content);
   const template = Handlebars.compile(content);
 
   return template(data);
 }
 
-/*function getHandlebarsVariables(input: string): string[] {
+export function getHandlebarsVariables(input: string): string[] {
   const ast: hbs.AST.Program = Handlebars.parseWithoutProcessing(input);
 
   return ast.body
@@ -36,4 +35,4 @@ export function compileTemplate(
 
       return paramsExpressionList[0]?.original || pathExpression.original;
     });
-}*/
+}
