@@ -1,5 +1,5 @@
 {
-  "name": "@notifire/lib",
+  "name": "@notifire/core",
   "version": "0.0.2",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",

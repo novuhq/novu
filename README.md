@@ -22,17 +22,17 @@ The ultimate library for managing transactional notifications for node
 ## 📦 Install
 
 ```bash
-npm install @notifire/lib
+npm install @notifire/core
 ```
 
 ```bash
-yarn add @notifire/lib
+yarn add @notifire/core
 ```
 
 ## 🔨 Usage
 
 ```ts
-import { Notifire, ChannelTypeEnum } from '@notifire/lib';
+import { Notifire, ChannelTypeEnum } from '@notifire/core';
 import { SendgridProvider } from '@notifire/sendgrid-provider';
 
 const notifire = new Notifire();
@@ -75,7 +75,7 @@ await notifire.trigger('<REPLACE_WITH_EVENT_NAME>', {
 
 ### TypeScript
 
-`@notifire/lib` is written in TypeScript with complete definitions.
+`@notifire/core` is written in TypeScript with complete definitions.
 
 ## 🔗 Links
 - [Home page](https://notifire.co/)
