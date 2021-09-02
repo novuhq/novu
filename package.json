@@ -41,6 +41,10 @@
   "engines": {
     "node": ">=10"
   },
+  "dependencies": {
+    "lodash.get": "^4.4.2",
+    "lodash.merge": "^4.6.2"
+  },
   "devDependencies": {
     "ts-jest": "^27.0.5",
     "@types/jest": "^27.0.1",

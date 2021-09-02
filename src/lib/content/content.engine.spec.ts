@@ -1,4 +1,4 @@
-import { compileTemplate } from './content.engine';
+import { compileTemplate, getHandlebarsVariables } from './content.engine';
 
 test('should parse basic variables correctly', () => {
   const html = compileTemplate(
@@ -46,4 +46,22 @@ test('should parse if statements', () => {
     }
   );
   expect(htmlWithoutContent).not.toContain('second item');
+});
+
+test('should extract template variables', () => {
+  const variables = getHandlebarsVariables(`
+    {{firstName}}
+    <div> {{#if name}} {{/if}} {{cats}} </div>
+
+    {{user.name}}
+
+    {{#each items}}
+      {{cellular}}
+    {{/each}}
+  `);
+
+  expect(variables.length).toEqual(3);
+  expect(variables).toContain('firstName');
+  expect(variables).toContain('user.name');
+  expect(variables).toContain('cats');
 });

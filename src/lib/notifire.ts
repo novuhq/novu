@@ -1,3 +1,4 @@
+import merge from 'lodash.merge';
 import EventEmitter from 'events';
 
 import { INotifireConfig } from './notifire.interface';
@@ -13,6 +14,12 @@ export class Notifire extends EventEmitter {
 
   constructor(private config?: INotifireConfig) {
     super();
+
+    const defaultConfig: Partial<INotifireConfig> = {
+      variableProtection: true,
+    };
+    this.config = merge(defaultConfig, config);
+
     this.templateStore = this.config?.templateStore || new TemplateStore();
     this.providerStore = this.config?.providerStore || new ProviderStore();
   }
@@ -35,6 +42,7 @@ export class Notifire extends EventEmitter {
     const triggerEngine = new TriggerEngine(
       this.templateStore,
       this.providerStore,
+      this.config,
       this
     );
 
