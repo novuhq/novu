@@ -4,12 +4,10 @@
   </a>
 </p>
 
-<h1 align="center">Notification management library</h1>
+<h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
-
-The ultimate library for managing transactional notifications for node
-
+The ultimate library for managing multi-channel transactional notifications with a single API. 
 </div>
 
 ## ⭐️ Why
@@ -17,10 +15,13 @@ Building a transactional notification system is hard, at first it seems like jus
 
 ## ✨ Features
 
-- 🌈 Single API for all messaging providers
-- 🌈 Easily manage notification and channels 
+- 🌈 Single API for all messaging providers (Email, SMS, Push, Direct)
+- 💅 Easily manage notification over multiple channels
+- 🚀 Equiped with a templating engine for advanced layouts and designs 
+- 🛡 Built-in protection for missing variables
 - 📦 Easy to setup and integrate
 - 🛡 Written in TypeScript with predictable static types.
+- 👨‍💻 Community driven
 
 ## 📦 Install
 
@@ -76,9 +77,18 @@ await notifire.trigger('<REPLACE_WITH_EVENT_NAME>', {
 });
 ```
 
-### TypeScript
+## Providers
+Notifire provides a single API to manage more than 20+ providers across multiple channels with a single to use interface.
 
-`@notifire/core` is written in TypeScript with complete definitions.
+#### 💌 Email
+- [x] [Sendgrid](https://github.com/notifirehq/sendgrid)
+- [ ] SES
+- [ ] Mailgun
+- [ ] SMTP
+
+#### 📞 SMS
+- [ ] Twillio
+- [ ] Plivo
 
 ## 🔗 Links
 - [Home page](https://notifire.co/)
