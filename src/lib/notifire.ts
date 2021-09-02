@@ -1,3 +1,5 @@
+import EventEmitter from 'events';
+
 import { INotifireConfig } from './notifire.interface';
 import { IEmailProvider, ISmsProvider } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
@@ -5,11 +7,12 @@ import { ITemplate, ITriggerPayload } from './template/template.interface';
 import { TemplateStore } from './template/template.store';
 import { TriggerEngine } from './trigger/trigger.engine';
 
-export class Notifire {
+export class Notifire extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
 
   constructor(private config?: INotifireConfig) {
+    super();
     this.templateStore = this.config?.templateStore || new TemplateStore();
     this.providerStore = this.config?.providerStore || new ProviderStore();
   }
@@ -31,7 +34,8 @@ export class Notifire {
   async trigger(eventId: string, data: ITriggerPayload) {
     const triggerEngine = new TriggerEngine(
       this.templateStore,
-      this.providerStore
+      this.providerStore,
+      this
     );
 
     return await triggerEngine.trigger(eventId, data);
