@@ -22,7 +22,10 @@ export class TriggerEngine {
       );
     }
 
-    for (const message of template.messages) {
+    const activeMessages: IMessage[] =
+      await this.templateStore.getActiveMessages(template, data);
+
+    for (const message of activeMessages) {
       await this.processTemplateMessage(message, data);
     }
   }

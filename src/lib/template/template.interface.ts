@@ -8,6 +8,7 @@ export interface IMessage {
   subject?: string;
   channel: ChannelTypeEnum;
   template: string;
+  active?: boolean | ((payload: ITriggerPayload) => Promise<boolean> | boolean);
 }
 
 export enum ChannelTypeEnum {
