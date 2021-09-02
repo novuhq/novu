@@ -44,10 +44,16 @@ test('emailHandler should be called correctly', async () => {
 test('variable protection should throw if missing variable provided', async () => {
   const templateStore = new TemplateStore();
   const providerStore = new ProviderStore();
+  const ee = new EventEmitter();
 
-  const triggerEngine = new TriggerEngine(templateStore, providerStore, {
-    variableProtection: true,
-  });
+  const triggerEngine = new TriggerEngine(
+    templateStore,
+    providerStore,
+    {
+      variableProtection: true,
+    },
+    ee
+  );
 
   await providerStore.addProvider({
     channelType: ChannelTypeEnum.EMAIL,

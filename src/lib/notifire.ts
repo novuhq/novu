@@ -42,7 +42,6 @@ export class Notifire extends EventEmitter {
     const triggerEngine = new TriggerEngine(
       this.templateStore,
       this.providerStore,
-      this.providerStore,
       this.config,
       this
     );
