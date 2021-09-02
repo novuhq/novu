@@ -8,6 +8,7 @@
   "repository": "https://github.com/notifirehq/lib",
   "license": "MIT",
   "keywords": [],
+  "private": false,
   "scripts": {
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
