@@ -1,4 +1,5 @@
 import merge from 'lodash.merge';
+import EventEmitter from 'events';
 
 import { INotifireConfig } from './notifire.interface';
 import { IEmailProvider, ISmsProvider } from './provider/provider.interface';
@@ -7,11 +8,13 @@ import { ITemplate, ITriggerPayload } from './template/template.interface';
 import { TemplateStore } from './template/template.store';
 import { TriggerEngine } from './trigger/trigger.engine';
 
-export class Notifire {
+export class Notifire extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
 
   constructor(private config?: INotifireConfig) {
+    super();
+
     const defaultConfig: Partial<INotifireConfig> = {
       variableProtection: true,
     };
@@ -39,7 +42,9 @@ export class Notifire {
     const triggerEngine = new TriggerEngine(
       this.templateStore,
       this.providerStore,
-      this.config
+      this.providerStore,
+      this.config,
+      this
     );
 
     return await triggerEngine.trigger(eventId, data);
