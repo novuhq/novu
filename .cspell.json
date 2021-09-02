@@ -23,7 +23,8 @@
     "typedoc",
     "untracked",
     "notifire",
-    "sendgrid"
+    "sendgrid",
+    "deduplicated"
   ],
   "flagWords": [],
   "ignorePaths": [
