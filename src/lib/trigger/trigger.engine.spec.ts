@@ -1,3 +1,4 @@
+import EventEmitter from 'events';
 import { EmailHandler } from '../handler/email.handler';
 import { ProviderStore } from '../provider/provider.store';
 import { ChannelTypeEnum } from '../template/template.interface';
@@ -7,6 +8,7 @@ import { TriggerEngine } from './trigger.engine';
 test('emailHandler should be called correctly', async () => {
   const templateStore = new TemplateStore();
   const providerStore = new ProviderStore();
+  const ee = new EventEmitter();
 
   await providerStore.addProvider({
     channelType: ChannelTypeEnum.EMAIL,
@@ -25,7 +27,7 @@ test('emailHandler should be called correctly', async () => {
     ],
   });
 
-  const triggerEngine = new TriggerEngine(templateStore, providerStore);
+  const triggerEngine = new TriggerEngine(templateStore, providerStore, ee);
 
   const emailSpy = jest.spyOn(EmailHandler.prototype, 'send');
   await triggerEngine.trigger('test-notification', {
