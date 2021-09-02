@@ -33,12 +33,12 @@ yarn add @notifire/core
 
 ```ts
 import { Notifire, ChannelTypeEnum } from '@notifire/core';
-import { SendgridProvider } from '@notifire/sendgrid-provider';
+import { SendgridEmailProvider } from '@notifire/sendgrid-provider';
 
 const notifire = new Notifire();
 
 await notifire.registerProvider(
-  new SendgridProvider({
+  new SendgridEmailProvider({
     apiKey: process.env.SENDGRID_API_KEY
   })
 );
