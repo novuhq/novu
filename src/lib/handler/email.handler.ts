@@ -3,7 +3,8 @@ import { IEmailProvider } from '../provider/provider.interface';
 import { IMessage, ITriggerPayload } from '../template/template.interface';
 
 export class EmailHandler {
-  constructor(private message: IMessage, private provider: IEmailProvider) {}
+  constructor(private message: IMessage, private provider: IEmailProvider) {
+  }
 
   async send(data: ITriggerPayload) {
     const html = compileTemplate(this.message.template, data);
