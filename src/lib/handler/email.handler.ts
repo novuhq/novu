@@ -9,6 +9,10 @@ export class EmailHandler {
     const html = compileTemplate(this.message.template, data);
     const subject = compileTemplate(this.message.subject || '', data);
 
-    await this.provider.sendMessage(data.$email, subject, html, data);
+    await this.provider.sendMessage({
+      to: data.$email,
+      subject,
+      html
+    });
   }
 }
