@@ -27,6 +27,9 @@ test('send sms should call the provider method correctly', async () => {
   });
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith('+1333322214', `Name: test name`);
+  expect(spy).toHaveBeenCalledWith({
+    'content': 'Name: test name',
+    'to': '+1333322214'
+  });
   spy.mockRestore();
 });
