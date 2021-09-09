@@ -29,7 +29,9 @@
     "Twillio",
     "Mailgun",
     "Plivo",
-    "deduplicated"
+    "deduplicated",
+    "Twilio",
+    "Pushwoosh"
   ],
   "flagWords": [],
   "ignorePaths": [
