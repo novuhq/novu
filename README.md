@@ -78,16 +78,20 @@ await notifire.trigger('<REPLACE_WITH_EVENT_NAME>', {
 ```
 
 ## Providers
-Notifire provides a single API to manage more than 20+ providers across multiple channels with a single to use interface.
+Notifire provides a single API to manage providers across multiple channels with a single to use interface.
 
 #### 💌 Email
 - [x] [Sendgrid](https://github.com/notifirehq/sendgrid)
+- [x] [Mailgun](https://github.com/notifirehq/mailgun)
 - [ ] SES
-- [ ] Mailgun
 - [ ] SMTP
 
 #### 📞 SMS
-- [ ] Twillio
+- [x] [Twilio](https://github.com/notifirehq/twilio)
+- [ ] Plivo
+
+#### 📱 Push
+- [x] [Twilio](https://github.com/notifirehq/twilio)
 - [ ] Plivo
 
 ## 🔗 Links
