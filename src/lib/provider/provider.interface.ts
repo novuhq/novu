@@ -12,6 +12,12 @@ export interface IEmailOptions {
   from?: string;
 }
 
+export interface ISmsOptions {
+  to: string;
+  content: string;
+  from?: string;
+}
+
 export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
@@ -19,7 +25,7 @@ export interface IEmailProvider extends IProvider {
 }
 
 export interface ISmsProvider extends IProvider {
-  sendMessage(to: string, content: string): Promise<any>;
+  sendMessage(options: ISmsOptions): Promise<any>;
 
   channelType: ChannelTypeEnum.SMS;
 }
