@@ -27,10 +27,11 @@ test('send should call the provider method correctly', async () => {
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith(
-    'test@email.com',
-    'test',
-    `<div><h1>Test Header</div> Name: test name</div>`,
-    { $email: 'test@email.com', $user_id: '1234', firstName: 'test name' }
+    {
+      'html': '<div><h1>Test Header</div> Name: test name</div>',
+      'subject': 'test',
+      'to': 'test@email.com'
+    }
   );
   spy.mockRestore();
 });
