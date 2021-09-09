@@ -91,8 +91,7 @@ Notifire provides a single API to manage providers across multiple channels with
 - [ ] Plivo
 
 #### 📱 Push
-- [x] [Twilio](https://github.com/notifirehq/twilio)
-- [ ] Plivo
+- [ ] Pushwoosh
 
 ## 🔗 Links
 - [Home page](https://notifire.co/)
