@@ -45,7 +45,7 @@ yarn add @notifire/core
 
 ```ts
 import { Notifire, ChannelTypeEnum } from '@notifire/core';
-import { SendgridEmailProvider } from '@notifire/sendgrid-provider';
+import { SendgridEmailProvider } from '@notifire/sendgrid';
 
 const notifire = new Notifire();
 
