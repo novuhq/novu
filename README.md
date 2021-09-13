@@ -11,13 +11,18 @@
 The ultimate library for managing multi-channel transactional notifications with a single API. 
 </div>
 
-<br/>
-<div align="center">
-  <a href="https://docs.notifire.co/" style="text-decoration: underline;">Documentation</a> 
-  &nbsp; |  &nbsp;	
-  <a href="https://blog.notifire.co/" style="text-decoration: underline;">Blog</a>
-</div>
-
+  <p align="center">
+    <br />
+    <a href="https://docs.notifire.co"><strong>Explore the docs »</strong></a>
+    <br />
+  <br/>
+    <a href="https://github.com/notifirehq/notifire/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/notifirehq/notifire/discussions">Request Feature</a>
+    ·
+    <a href="https://blog.notifire.co/">Read our blog</a>
+  </p>
+  
 ## ⭐️ Why
 Building a transactional notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, direct and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Notifire's goal is to simplify transactional notifications and provide developers the tools to create meaningful communication between the system and it's users.
 
