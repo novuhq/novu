@@ -4,10 +4,18 @@
   </a>
 </p>
 
+
 <h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
 The ultimate library for managing multi-channel transactional notifications with a single API. 
+</div>
+
+<br/>
+<div align="center">
+  <a href="https://docs.notifire.co/" style="text-decoration: underline;">Documentation</a> 
+  &nbsp; |  &nbsp;	
+  <a href="https://blog.notifire.co/" style="text-decoration: underline;">Blog</a>
 </div>
 
 ## ⭐️ Why
