@@ -1,5 +1,6 @@
 import { ProviderStore } from './provider/provider.store';
 import { TemplateStore } from './template/template.store';
+import { ThemeStore } from './theme/theme.store';
 
 export interface INotifireConfig {
   channels?: {
@@ -10,4 +11,5 @@ export interface INotifireConfig {
   variableProtection?: boolean;
   templateStore?: TemplateStore;
   providerStore?: ProviderStore;
+  themeStore?: ThemeStore;
 }

@@ -3,11 +3,13 @@ import { EmailHandler } from '../handler/email.handler';
 import { ProviderStore } from '../provider/provider.store';
 import { ChannelTypeEnum } from '../template/template.interface';
 import { TemplateStore } from '../template/template.store';
+import { ThemeStore } from '../theme/theme.store';
 import { TriggerEngine } from './trigger.engine';
 
 test('emailHandler should be called correctly', async () => {
   const templateStore = new TemplateStore();
   const providerStore = new ProviderStore();
+  const themeStore = new ThemeStore();
   const ee = new EventEmitter();
 
   await providerStore.addProvider({
@@ -27,7 +29,13 @@ test('emailHandler should be called correctly', async () => {
     ],
   });
 
-  const triggerEngine = new TriggerEngine(templateStore, providerStore, {}, ee);
+  const triggerEngine = new TriggerEngine(
+    templateStore,
+    providerStore,
+    themeStore,
+    {},
+    ee
+  );
 
   const emailSpy = jest.spyOn(EmailHandler.prototype, 'send');
   await triggerEngine.trigger('test-notification', {
@@ -44,11 +52,13 @@ test('emailHandler should be called correctly', async () => {
 test('variable protection should throw if missing variable provided', async () => {
   const templateStore = new TemplateStore();
   const providerStore = new ProviderStore();
+  const themeStore = new ThemeStore();
   const ee = new EventEmitter();
 
   const triggerEngine = new TriggerEngine(
     templateStore,
     providerStore,
+    themeStore,
     {
       variableProtection: true,
     },

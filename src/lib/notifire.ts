@@ -7,10 +7,13 @@ import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
 import { TemplateStore } from './template/template.store';
 import { TriggerEngine } from './trigger/trigger.engine';
+import { ThemeStore } from './theme/theme.store';
+import { ITheme } from './theme/theme.interface';
 
 export class Notifire extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
+  private readonly themeStore: ThemeStore;
 
   constructor(private config?: INotifireConfig) {
     super();
@@ -20,8 +23,17 @@ export class Notifire extends EventEmitter {
     };
     this.config = merge(defaultConfig, config);
 
+    this.themeStore = this.config?.themeStore || new ThemeStore();
     this.templateStore = this.config?.templateStore || new TemplateStore();
     this.providerStore = this.config?.providerStore || new ProviderStore();
+  }
+
+  async registerTheme(theme: ITheme) {
+    return await this.themeStore.addTheme(theme);
+  }
+
+  async setDefaultTheme(themeId: string) {
+    await this.themeStore.setDefaultTheme(themeId);
   }
 
   async registerTemplate(template: ITemplate) {
@@ -42,6 +54,7 @@ export class Notifire extends EventEmitter {
     const triggerEngine = new TriggerEngine(
       this.templateStore,
       this.providerStore,
+      this.themeStore,
       this.config,
       this
     );

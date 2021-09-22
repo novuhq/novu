@@ -1,6 +1,8 @@
 export interface ITemplate {
   id: string;
 
+  themeId?: string;
+
   messages: IMessage[];
 }
 
@@ -20,5 +22,6 @@ export interface ITriggerPayload {
   $email?: string;
   $phone?: string;
   $user_id: string;
+  $theme_id?: string;
   [key: string]: string | boolean | number;
 }
