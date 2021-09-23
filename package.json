@@ -2,7 +2,8 @@
   "name": "notifirehq",
   "private": true,
   "scripts": {
-    "bootstrap": "lerna bootstrap"
+    "bootstrap": "lerna bootstrap",
+    "test": "lerna run test"
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",

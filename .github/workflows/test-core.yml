@@ -13,4 +13,7 @@ jobs:
           node-version: "14"
       - run: rm -rf build
       - run: yarn install
-      - run: yarn test
+      - run: yarn bootstrap
+      - name: Test
+        working-directory: "packages/core"
+        run: yarn test
