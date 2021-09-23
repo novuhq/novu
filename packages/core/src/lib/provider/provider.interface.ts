@@ -21,10 +21,12 @@ export interface ISmsOptions {
 export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendMessage(options: IEmailOptions): Promise<any>;
 }
 
 export interface ISmsProvider extends IProvider {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendMessage(options: ISmsOptions): Promise<any>;
 
   channelType: ChannelTypeEnum.SMS;
