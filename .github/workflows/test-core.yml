@@ -2,7 +2,7 @@ name: Test @notifire/core
 on:
   push:
     paths:
-      - "packages/core"
+      - "packages/core/**"
 jobs:
   test:
     runs-on: ubuntu-latest
