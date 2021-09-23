@@ -56,7 +56,8 @@ const notifire = new Notifire();
 
 await notifire.registerProvider(
   new SendgridEmailProvider({
-    apiKey: process.env.SENDGRID_API_KEY
+    apiKey: process.env.SENDGRID_API_KEY,
+    from: 'sender@mail.com'
   })
 );
 
