@@ -3,7 +3,9 @@ sidebar_position: 4
 ---
 
 # How to Create Provider?
-All of our providers need to implement one or more of our provider interfaces, based on provider feature, from Email and SMS, 
+All of our providers need to implement one or more of our provider interfaces, based on provider feature, from Email, and SMS through Direct, In-app, and push.
+
+For a provider template you can use our [GitHub Template][github-template].
 
 ## Email Provider
 
@@ -72,3 +74,5 @@ export class TwilioSmsProvider implements ISmsProvider {
   }
 }
 ```
+
+[github-template]: https://github.com/notifirehq/provider-template
