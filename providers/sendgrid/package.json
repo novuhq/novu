@@ -43,7 +43,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.1.2",
+    "@notifire/core": "^0.1.4",
     "@sendgrid/mail": "^7.4.6"
   },
   "devDependencies": {
