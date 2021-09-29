@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import { EventEmitter } from 'events';
 import { EmailHandler } from '../handler/email.handler';
 import { ProviderStore } from '../provider/provider.store';
 import { ChannelTypeEnum } from '../template/template.interface';

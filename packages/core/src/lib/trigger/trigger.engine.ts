@@ -1,5 +1,5 @@
 import _get from 'lodash.get';
-import EventEmitter from 'events';
+import { EventEmitter } from 'events';
 
 import { getHandlebarsVariables } from '../content/content.engine';
 
