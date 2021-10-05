@@ -8,7 +8,7 @@
 <h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
-The ultimate library for managing multi-channel transactional notifications with a single API. 
+The ultimate library for managing multi-channel notifications with a single API. 
 </div>
 
   <p align="center">
@@ -24,7 +24,7 @@ The ultimate library for managing multi-channel transactional notifications with
   </p>
   
 ## ⭐️ Why
-Building a transactional notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, direct and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Notifire's goal is to simplify transactional notifications and provide developers the tools to create meaningful communication between the system and it's users.
+Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, direct and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Notifire's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
 
 ## ✨ Features
 
