@@ -5,7 +5,7 @@ sidebar_position: 4
 # How to Create Provider?
 All of our providers need to implement one or more of our provider interfaces, based on provider feature, from Email, and SMS through Direct, In-app, and push.
 
-For a provider template you can use our [GitHub Template][github-template].
+For a provider template you can copy one of our existing provider in the `providers` folder in the notifire project, make the relevant changes and create a PR against the monorepo.
 
 ## Email Provider
 
