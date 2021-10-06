@@ -2,7 +2,7 @@ name: Test @notifire/core
 on:
   push:
     paths:
-      - "packages/core"
+      - "packages/core/**"
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -13,4 +13,7 @@ jobs:
           node-version: "14"
       - run: rm -rf build
       - run: yarn install
-      - run: yarn test
+      - run: yarn bootstrap
+      - name: Test
+        working-directory: "packages/core"
+        run: yarn test

@@ -1,0 +1,20 @@
+name: Test @notifire/mailgun
+on:
+  push:
+    paths:
+      - "providers/mailgun/**"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+      - run: rm -rf build
+      - run: yarn install
+      - run: yarn bootstrap
+      - run: yarn build
+      - name: Test
+        working-directory: "providers/mailgun"
+        run: yarn run test

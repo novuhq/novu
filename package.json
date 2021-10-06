@@ -2,7 +2,9 @@
   "name": "notifirehq",
   "private": true,
   "scripts": {
-    "bootstrap": "lerna bootstrap"
+    "bootstrap": "lerna bootstrap",
+    "test": "lerna run test",
+    "build": "lerna run build"
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",
@@ -23,6 +25,7 @@
     "typescript": "^4.4.3"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "providers/*"
   ]
 }

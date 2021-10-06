@@ -1,6 +1,5 @@
 import merge from 'lodash.merge';
-import EventEmitter from 'events';
-
+import { EventEmitter } from 'events';
 import { INotifireConfig } from './notifire.interface';
 import { IEmailProvider, ISmsProvider } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
@@ -9,6 +8,7 @@ import { TemplateStore } from './template/template.store';
 import { TriggerEngine } from './trigger/trigger.engine';
 import { ThemeStore } from './theme/theme.store';
 import { ITheme } from './theme/theme.interface';
+
 
 export class Notifire extends EventEmitter {
   private readonly templateStore: TemplateStore;
