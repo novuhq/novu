@@ -14,11 +14,13 @@ import {
   ITriggerPayload,
 } from '../template/template.interface';
 import { TemplateStore } from '../template/template.store';
+import { ThemeStore } from '../theme/theme.store';
 
 export class TriggerEngine {
   constructor(
     private templateStore: TemplateStore,
     private providerStore: ProviderStore,
+    private themeStore: ThemeStore,
     private config: INotifireConfig,
     private eventEmitter: EventEmitter
   ) {}
@@ -66,8 +68,15 @@ export class TriggerEngine {
       triggerPayload: data,
     });
 
+    let theme = await this.themeStore.getDefaultTheme();
+    if (data.$theme_id) {
+      theme = await this.themeStore.getThemeById(data?.$theme_id);
+    } else if (template.themeId) {
+      theme = await this.themeStore.getThemeById(template.themeId);
+    }
+
     if (provider.channelType === ChannelTypeEnum.EMAIL) {
-      const emailHandler = new EmailHandler(message, provider);
+      const emailHandler = new EmailHandler(message, provider, theme);
       await emailHandler.send(data);
     } else if (provider.channelType === ChannelTypeEnum.SMS) {
       const smsHandler = new SmsHandler(message, provider);
