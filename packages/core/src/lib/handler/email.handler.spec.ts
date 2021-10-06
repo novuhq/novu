@@ -1,6 +1,6 @@
 import { IEmailProvider } from '../provider/provider.interface';
 import { ChannelTypeEnum } from '../template/template.interface';
-import { ITheme } from '../theme/theme.interface';
+import { IEmailTemplate, ITheme } from '../theme/theme.interface';
 import { EmailHandler } from './email.handler';
 
 test('send should call the provider method correctly', async () => {
@@ -10,15 +10,15 @@ test('send should call the provider method correctly', async () => {
     sendMessage: () => null,
   };
 
+
+
   const theme: ITheme = {
-    id: 'theme-id',
     branding: {
       logo: 'logo-url',
     },
-    email: {
-      layout: `<div data-test-id="theme-layout-wrapper"><img src="{{$branding.logo}}"/>{{{body}}}</div>`,
-    },
+    emailTemplate: new EmailTemplate('logo-url')
   };
+
   const spy = jest.spyOn(provider, 'sendMessage');
   const emailHandler = new EmailHandler(
     {
@@ -44,3 +44,16 @@ test('send should call the provider method correctly', async () => {
   });
   spy.mockRestore();
 });
+
+class EmailTemplate implements IEmailTemplate {
+  constructor(private logo: string) {
+  }
+
+  getEmailLayout() {
+    return `<div data-test-id="theme-layout-wrapper"><img src="${this.logo}"/>{{{body}}}</div>`
+  }
+
+  getTemplateVariables() {
+    return {}
+  }
+}

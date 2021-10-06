@@ -1,9 +1,14 @@
 export interface ITheme {
-  id: string;
   branding: {
-    logo: string;
+    mainColor?: string;
+    logo?: string;
+    [key: string]: string;
   };
-  email: {
-    layout: string;
-  };
+  emailTemplate: IEmailTemplate;
 }
+
+export interface IEmailTemplate {
+  getEmailLayout(): string;
+  getTemplateVariables(): Record<string, unknown>;
+}
+

@@ -12,11 +12,9 @@ export class EmailHandler {
 
   async send(data: ITriggerPayload) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let branding: any = {};
+    const branding: any = data?.$branding || {};
 
-    if (this.theme?.branding) {
-      branding = this.theme?.branding;
-    }
+    const templateVariables = this.theme?.emailTemplate?.getTemplateVariables() || {};
 
     const templatePayload = {
       $branding: branding,
@@ -26,9 +24,10 @@ export class EmailHandler {
     let html = compileTemplate(this.message.template, templatePayload);
     const subject = compileTemplate(this.message.subject || '', data);
 
-    if (this.theme?.email?.layout) {
-      html = compileTemplate(this.theme.email.layout, {
+    if (this.theme?.emailTemplate?.getEmailLayout()) {
+      html = compileTemplate(this.theme?.emailTemplate?.getEmailLayout(), {
         ...templatePayload,
+        ...templateVariables,
         body: html,
       });
     }

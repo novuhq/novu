@@ -28,8 +28,8 @@ export class Notifire extends EventEmitter {
     this.providerStore = this.config?.providerStore || new ProviderStore();
   }
 
-  async registerTheme(theme: ITheme) {
-    return await this.themeStore.addTheme(theme);
+  async registerTheme(id: string, theme: ITheme) {
+    return await this.themeStore.addTheme(id, theme);
   }
 
   async setDefaultTheme(themeId: string) {

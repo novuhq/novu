@@ -1,17 +1,24 @@
 import { ITheme } from './theme.interface';
 
+interface IThemeStorage {
+  id: string;
+  theme: ITheme;
+}
 export class ThemeStore {
-  private themes: Array<ITheme> = [];
+  private themes: Array<IThemeStorage> = [];
   private defaultTheme?: ITheme;
 
-  async addTheme(theme: ITheme) {
-    this.themes.push(theme);
+  async addTheme(id: string, theme: ITheme) {
+    this.themes.push({
+      id,
+      theme
+    });
 
-    return await this.getThemeById(theme.id);
+    return await this.getThemeById(id);
   }
 
   async getThemeById(id: string) {
-    return this.themes.find((theme) => theme.id === id);
+    return this.themes.find((theme) => theme.id === id)?.theme;
   }
 
   async setDefaultTheme(themeId: string) {
