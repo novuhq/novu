@@ -14,8 +14,6 @@ export class EmailHandler {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const branding: any = data?.$branding || {};
 
-    const templateVariables = this.theme?.emailTemplate?.getTemplateVariables() || {};
-
     const templatePayload = {
       $branding: branding,
       ...data,
@@ -25,9 +23,11 @@ export class EmailHandler {
     const subject = compileTemplate(this.message.subject || '', data);
 
     if (this.theme?.emailTemplate?.getEmailLayout()) {
+      const themeVariables = this.theme?.emailTemplate?.getTemplateVariables() || {};
+
       html = compileTemplate(this.theme?.emailTemplate?.getEmailLayout(), {
         ...templatePayload,
-        ...templateVariables,
+        ...themeVariables,
         body: html,
       });
     }
