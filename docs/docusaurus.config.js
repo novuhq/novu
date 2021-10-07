@@ -53,6 +53,11 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
               label: "Documentation",
             },
             {
+              href: "https://discord.gg/9wcGSf22PM",
+              className: "navbar-item-discord",
+              position: "right",
+            },
+            {
               href: "https://github.com/notifirehq/notifire",
               className: "navbar-item-github",
               position: "right",
@@ -77,6 +82,10 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
                 {
                   label: "GitHub",
                   href: "https://github.com/notifirehq/notifire",
+                },
+                {
+                  label: "Discord",
+                  href: "https://discord.gg/9wcGSf22PM",
                 },
               ],
             },
