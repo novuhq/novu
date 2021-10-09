@@ -1,10 +1,10 @@
 import { ChannelTypeEnum, IEmailOptions, IEmailProvider } from '@notifire/core';
-import nodemailer from 'nodemailer';
+import nodemailer, { Transporter } from 'nodemailer';
 
 export class NodemailerProvider implements IEmailProvider {
   id = 'nodemailer';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  transporter;
+  private transports: Transporter;
 
   constructor(
     private config: {
@@ -16,7 +16,7 @@ export class NodemailerProvider implements IEmailProvider {
       password: string;
     }
   ) {
-    this.transporter = nodemailer.createTransport({
+    this.transports = nodemailer.createTransport({
       host: this.config.host,
       port: this.config.port,
       secure: this.config.secure,
@@ -29,7 +29,7 @@ export class NodemailerProvider implements IEmailProvider {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async sendMessage(options: IEmailOptions): Promise<any> {
-    return await this.transporter.sendMail({
+    return await this.transports.sendMail({
       from: options.from || this.config.from,
       to: options.to,
       subject: options.subject,
