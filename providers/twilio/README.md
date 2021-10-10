@@ -1,6 +1,6 @@
 # Nodejs Twilio Provider
 
-A twilio email provider library for [@notifire/core](https://github.com/notifirehq/notifire).
+A twilio sms provider library for [@notifire/core](https://github.com/notifirehq/notifire).
 
 ## Usage
 
