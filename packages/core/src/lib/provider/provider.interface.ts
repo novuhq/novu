@@ -18,11 +18,15 @@ export interface ISmsOptions {
   from?: string;
 }
 
+export interface ISendMessageSuccessResponse {
+  id: string;
+  date?: string;
+}
+
 export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sendMessage(options: IEmailOptions): Promise<any>;
+  sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 }
 
 export interface ISmsProvider extends IProvider {

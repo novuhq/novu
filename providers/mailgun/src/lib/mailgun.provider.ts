@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, IEmailOptions, IEmailProvider } from '@notifire/core';
+import {
+  ChannelTypeEnum,
+  IEmailOptions,
+  IEmailProvider,
+  ISendMessageSuccessResponse,
+} from '@notifire/core';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import Client from 'mailgun.js/dist/lib/client';
@@ -24,13 +29,20 @@ export class MailgunEmailProvider implements IEmailProvider {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async sendMessage(data: IEmailOptions): Promise<any> {
-    return await this.mailgunClient.messages.create(this.config.domain, {
-      from: data.from || this.config.from,
-      to: [data.to],
-      subject: data.subject,
-      html: data.html,
-    });
+  async sendMessage(data: IEmailOptions): Promise<ISendMessageSuccessResponse> {
+    const response = await this.mailgunClient.messages.create(
+      this.config.domain,
+      {
+        from: data.from || this.config.from,
+        to: [data.to],
+        subject: data.subject,
+        html: data.html,
+      }
+    );
+
+    return {
+      id: response.id,
+      date: new Date().toISOString(),
+    };
   }
 }

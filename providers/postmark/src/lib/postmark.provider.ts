@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, IEmailOptions, IEmailProvider } from '@notifire/core';
+import {
+  ChannelTypeEnum,
+  IEmailOptions,
+  IEmailProvider,
+  ISendMessageSuccessResponse,
+} from '@notifire/core';
 import * as postmark from 'postmark';
 
 export class PostmarkEmailProvider implements IEmailProvider {
@@ -15,18 +20,24 @@ export class PostmarkEmailProvider implements IEmailProvider {
     this.client = new postmark.ServerClient(this.config.apiKey);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async sendMessage(options: IEmailOptions): Promise<any> {
+  async sendMessage(
+    options: IEmailOptions
+  ): Promise<ISendMessageSuccessResponse> {
     let to = options.to as string;
 
     if (Array.isArray(options.to)) to = options.to.join(', ');
 
-    return await this.client.sendEmail({
+    const response = await this.client.sendEmail({
       From: options.from || this.config.from,
       To: to,
       HtmlBody: options.html,
       TextBody: options.html,
       Subject: options.subject,
     });
+
+    return {
+      id: response.MessageID,
+      date: response.SubmittedAt,
+    };
   }
 }
