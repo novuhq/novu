@@ -21,6 +21,7 @@ export interface IEmailOptions {
   subject: string;
   html: string;
   from?: string;
+  text?: string;
 }
 
 export interface IEmailProvider extends IProvider {
