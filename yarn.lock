@@ -1807,18 +1807,17 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-16.9.6.tgz#040a64d7faf9e5d9e940357125f0963012e66f04"
   integrity sha512-YHUZhBOMTM3mjFkXVcK+WwAcYmyhe1wL4lfqNtzI0b3qAy7yuSetnM7QJazgE5PFmgVTNGiLOgRFfJMqW7XpSQ==
 
+"@types/node@^14.14.14":
+  version "14.17.21"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.17.21.tgz#6359d8cf73481e312a43886fa50afc70ce5592c6"
+  integrity sha512-zv8ukKci1mrILYiQOwGSV4FpkZhyxQtuFWGya2GujWg+zVAeRQ4qbaMmWp9vb9889CFA8JECH7lkwCL6Ygg8kA==
+
 "@types/nodemailer@^6.4.4":
   version "6.4.4"
   resolved "https://registry.yarnpkg.com/@types/nodemailer/-/nodemailer-6.4.4.tgz#c265f7e7a51df587597b3a49a023acaf0c741f4b"
   integrity sha512-Ksw4t7iliXeYGvIQcSIgWQ5BLuC/mljIEbjf615svhZL10PE9t+ei8O9gDaD3FPCasUJn9KTLwz2JFJyiiyuqw==
   dependencies:
     "@types/node" "*"
-    
-"@types/node@^14.14.14":
-  version "14.17.21"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.17.21.tgz#6359d8cf73481e312a43886fa50afc70ce5592c6"
-  integrity sha512-zv8ukKci1mrILYiQOwGSV4FpkZhyxQtuFWGya2GujWg+zVAeRQ4qbaMmWp9vb9889CFA8JECH7lkwCL6Ygg8kA==
-
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
@@ -2285,11 +2284,6 @@ async@^2.6.1:
   integrity sha512-zflvls11DCy+dQWzTW2dzuilv8Z5X/pjfmZOWba6TNIVDm+2UDaJmXSOXlasHKfNBs8oo3M0aT50fDEWfKZjXg==
   dependencies:
     lodash "^4.17.14"
-
-async@~0.2.7:
-  version "0.2.10"
-  resolved "https://registry.yarnpkg.com/async/-/async-0.2.10.tgz#b6bbe0b0674b9d719708ca38de8c237cb526c3d1"
-  integrity sha1-trvgsGdLnXGXCMo43owjfLUmw9E=
 
 asynckit@^0.4.0:
   version "0.4.0"
@@ -2863,13 +2857,6 @@ combined-stream@^1.0.6, combined-stream@^1.0.8, combined-stream@~1.0.6:
   integrity sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==
   dependencies:
     delayed-stream "~1.0.0"
-
-combined-stream@~0.0.4:
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/combined-stream/-/combined-stream-0.0.7.tgz#0137e657baa5a7541c57ac37ac5fc07d73b4dc1f"
-  integrity sha1-ATfmV7qlp1QcV6w3rF/AfXO03B8=
-  dependencies:
-    delayed-stream "0.0.5"
 
 commander@^2.18.0:
   version "2.20.3"
@@ -3597,11 +3584,6 @@ define-property@^2.0.2:
   dependencies:
     is-descriptor "^1.0.2"
     isobject "^3.0.1"
-
-delayed-stream@0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/delayed-stream/-/delayed-stream-0.0.5.tgz#d4b1f43a93e8296dfe02694f4680bc37a313c73f"
-  integrity sha1-1LH0OpPoKW3+AmlPRoC8N6MTxz8=
 
 delayed-stream@~1.0.0:
   version "1.0.0"
@@ -4500,15 +4482,6 @@ form-data@^4.0.0:
     asynckit "^0.4.0"
     combined-stream "^1.0.8"
     mime-types "^2.1.12"
-
-form-data@~0.0.3:
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/form-data/-/form-data-0.0.10.tgz#db345a5378d86aeeb1ed5d553b869ac192d2f5ed"
-  integrity sha1-2zRaU3jYau6x7V1VO4aawZLS9e0=
-  dependencies:
-    async "~0.2.7"
-    combined-stream "~0.0.4"
-    mime "~1.2.2"
 
 form-data@~2.3.2:
   version "2.3.3"
@@ -6815,11 +6788,6 @@ mime-types@^2.1.12, mime-types@~2.1.19:
   dependencies:
     mime-db "1.49.0"
 
-mime@~1.2.2, mime@~1.2.7:
-  version "1.2.11"
-  resolved "https://registry.yarnpkg.com/mime/-/mime-1.2.11.tgz#58203eed86e3a5ef17aed2b7d9ebd47f0a60dd10"
-  integrity sha1-WCA+7Ybjpe8XrtK32evUfwpg3RA=
-
 mimic-fn@^1.0.0:
   version "1.2.0"
   resolved "https://registry.npmjs.org/mimic-fn/-/mimic-fn-1.2.0.tgz"
@@ -7806,14 +7774,6 @@ pkg-up@^2.0.0:
   dependencies:
     find-up "^2.1.0"
 
-plivo-node@^0.2.5:
-  version "0.2.5"
-  resolved "https://registry.yarnpkg.com/plivo-node/-/plivo-node-0.2.5.tgz#1bb7d23a6c3ec93c309d2b0561e2903effdd18d1"
-  integrity sha1-G7fSOmw+yTwwnSsFYeKQPv/dGNE=
-  dependencies:
-    request "~2.12.0"
-    xmlbuilder "~0.4.2"
-
 plivo@^4.22.4:
   version "4.22.4"
   resolved "https://registry.yarnpkg.com/plivo/-/plivo-4.22.4.tgz#eea1524f9b272f8f1ef7e1043ba60587e9326558"
@@ -8274,14 +8234,6 @@ request@^2.88.0:
     tough-cookie "~2.5.0"
     tunnel-agent "^0.6.0"
     uuid "^3.3.2"
-
-request@~2.12.0:
-  version "2.12.0"
-  resolved "https://registry.yarnpkg.com/request/-/request-2.12.0.tgz#11f46f20b3d0f4848c6383991c80790af16c8e48"
-  integrity sha1-EfRvILPQ9ISMY4OZHIB5CvFsjkg=
-  dependencies:
-    form-data "~0.0.3"
-    mime "~1.2.7"
 
 require-directory@^2.1.1:
   version "2.1.1"
@@ -9994,11 +9946,6 @@ xmlbuilder@^9.0.1:
   version "9.0.7"
   resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-9.0.7.tgz#132ee63d2ec5565c557e20f4c22df9aca686b10d"
   integrity sha1-Ey7mPS7FVlxVfiD0wi35rKaGsQ0=
-
-xmlbuilder@~0.4.2:
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-0.4.3.tgz#c4614ba74e0ad196e609c9272cd9e1ddb28a8a58"
-  integrity sha1-xGFLp04K0ZbmCcknLNnh3bKKilg=
 
 xmlbuilder@~11.0.0:
   version "11.0.1"

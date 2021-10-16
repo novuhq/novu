@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, IEmailOptions, IEmailProvider } from '@notifire/core';
+import {
+  ChannelTypeEnum,
+  IEmailOptions,
+  IEmailProvider,
+  ISendMessageSuccessResponse,
+} from '@notifire/core';
 
 import sendgridMail from '@sendgrid/mail';
 
@@ -15,14 +20,20 @@ export class SendgridEmailProvider implements IEmailProvider {
     sendgridMail.setApiKey(this.config.apiKey);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async sendMessage(options: IEmailOptions): Promise<any> {
-    return await sendgridMail.send({
+  async sendMessage(
+    options: IEmailOptions
+  ): Promise<ISendMessageSuccessResponse> {
+    const response = await sendgridMail.send({
       from: options.from || this.config.from,
       to: options.to,
       html: options.html,
       subject: options.subject,
       substitutions: {},
     });
+
+    return {
+      id: response[0]?.headers['x-message-id'],
+      date: response[0]?.headers?.date,
+    };
   }
 }

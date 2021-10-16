@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, IEmailOptions, IEmailProvider } from '@notifire/core';
+import {
+  ChannelTypeEnum,
+  IEmailOptions,
+  IEmailProvider,
+  ISendMessageSuccessResponse,
+} from '@notifire/core';
 import nodemailer, { Transporter } from 'nodemailer';
 
 export class NodemailerProvider implements IEmailProvider {
@@ -27,13 +32,19 @@ export class NodemailerProvider implements IEmailProvider {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async sendMessage(options: IEmailOptions): Promise<any> {
-    return await this.transports.sendMail({
+  async sendMessage(
+    options: IEmailOptions
+  ): Promise<ISendMessageSuccessResponse> {
+    const info = await this.transports.sendMail({
       from: options.from || this.config.from,
       to: options.to,
       subject: options.subject,
       html: options.html,
     });
+
+    return {
+      id: info?.messageId,
+      date: new Date().toISOString(),
+    };
   }
 }
