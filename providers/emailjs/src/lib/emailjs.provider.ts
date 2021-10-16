@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, IEmailOptions, IEmailProvider } from '@notifire/core';
+import {
+  ChannelTypeEnum,
+  IEmailOptions,
+  IEmailProvider,
+  ISendMessageSuccessResponse,
+} from '@notifire/core';
 import { Message, SMTPClient } from 'emailjs';
 import { EmailJsConfig } from './emailjs.config';
 
@@ -24,9 +29,8 @@ export class EmailJsProvider implements IEmailProvider {
     subject,
     text,
     html,
-  }: // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  IEmailOptions): Promise<any> {
-    return await this.client.sendAsync(
+  }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
+    const sent = await this.client.sendAsync(
       new Message({
         from: from || this.config.from,
         to,
@@ -35,5 +39,10 @@ export class EmailJsProvider implements IEmailProvider {
         attachment: { data: html, alternative: true },
       })
     );
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      id: sent.header['message-id']!,
+      date: sent.header['date'],
+    };
   }
 }

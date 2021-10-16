@@ -1,4 +1,5 @@
-const sendAsyncMock = jest.fn().mockResolvedValue(undefined);
+const mockResponse = { header: { 'message-id': 'message-id', date: 'date' } };
+const sendAsyncMock = jest.fn().mockResolvedValue(mockResponse);
 const SMTPClientMock = jest.fn().mockImplementation(() => {
   return { sendAsync: sendAsyncMock };
 });
@@ -23,7 +24,7 @@ test('should trigger emailjs correctly', async () => {
     secure: false,
   });
 
-  await provider.sendMessage({
+  const response = await provider.sendMessage({
     to: 'test@test2.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
@@ -53,5 +54,9 @@ test('should trigger emailjs correctly', async () => {
     subject: 'test subject',
     text: 'Mail content',
     attachment: { data: '<div> Mail Content </div>', alternative: true },
+  });
+  expect(response).toEqual({
+    id: mockResponse.header['message-id'],
+    date: mockResponse.header.date,
   });
 });
