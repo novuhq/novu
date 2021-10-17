@@ -3740,6 +3740,11 @@ email-addresses@^3.0.1:
   resolved "https://registry.yarnpkg.com/email-addresses/-/email-addresses-3.1.0.tgz#cabf7e085cbdb63008a70319a74e6136188812fb"
   integrity sha512-k0/r7GrWVL32kZlGwfPNgB2Y/mMXVTq/decgLczm/j34whdaspNrZO8CnXPf1laaHxI6ptUlsnAxN+UAPw+fzg==
 
+emailjs@^3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/emailjs/-/emailjs-3.6.0.tgz#a055d8b8a611a0557488760d36e80ac53f9a56fc"
+  integrity sha512-dvg/AF2YR50AjNlGLWuA/9zN0FQxuZ6f3aTNm61iJOVTsMLphBwlzWXDyPAG3NK1RC+MVgGvBFk/x2F/Dvd0rQ==
+
 emittery@^0.8.1:
   version "0.8.1"
   resolved "https://registry.yarnpkg.com/emittery/-/emittery-0.8.1.tgz#bb23cc86d03b30aa75a7f734819dee2e1ba70860"
