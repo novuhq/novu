@@ -1,0 +1,56 @@
+{
+  "folders": [
+    {
+      "name": "✨ notifirehq",
+      "path": "."
+    },
+    {
+      "name": "📦 @notifire/core",
+      "path": "packages/core"
+    },
+    {
+      "name": "🔔 @notifire/emailjs",
+      "path": "providers/emailjs"
+    },
+    {
+      "name": "🔔 @notifire/mailgun",
+      "path": "providers/mailgun"
+    },
+    {
+      "name": "🔔 @notifire/nodemailer",
+      "path": "providers/nodemailer"
+    },
+    {
+      "name": "🔔 @notifire/plivo",
+      "path": "providers/plivo"
+    },
+    {
+      "name": "🔔 @notifire/postmark",
+      "path": "providers/postmark"
+    },
+    {
+      "name": "🔔 @notifire/sendgrid",
+      "path": "providers/sendgrid"
+    },
+    {
+      "name": "🔔 @notifire/twilio",
+      "path": "providers/twilio"
+    }
+  ],
+  "settings": {
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true
+  },
+  "extensions": {
+    "recommendations": [
+      "folke.vscode-monorepo-workspace",
+      "vtrois.gitmoji-vscode",
+      "jondot.vscode-hygen",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint"
+    ]
+  }
+}
