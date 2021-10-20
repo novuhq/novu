@@ -40,6 +40,9 @@
   "engines": {
     "node": ">=10"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@notifire/core": "^0.2.2",
     "form-data": "^4.0.0",
@@ -97,5 +100,6 @@
     "exclude": [
       "**/*.spec.js"
     ]
-  }
+  },
+  "gitHead": "5af1be86c8995bd161c0c41c8a43afdd42cde138"
 }
