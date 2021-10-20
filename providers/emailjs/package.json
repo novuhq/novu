@@ -1,6 +1,6 @@
 {
   "name": "@notifire/emailjs",
-  "version": "0.1.4",
+  "version": "0.2.1",
   "description": "An emailjs provider for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -42,7 +42,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.1.4",
+    "@notifire/core": "^0.2.1",
     "emailjs": "^3.6.0"
   },
   "devDependencies": {
