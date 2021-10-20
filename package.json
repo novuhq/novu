@@ -4,7 +4,8 @@
   "scripts": {
     "bootstrap": "lerna bootstrap",
     "test": "lerna run test",
-    "build": "lerna run build"
+    "build": "lerna run build",
+    "version": "lerna version --conventional-commits --no-push"
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",
