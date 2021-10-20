@@ -329,6 +329,18 @@
     resolve-global "1.0.0"
     yargs "^17.0.0"
 
+"@commitlint/config-angular-type-enum@^13.2.0":
+  version "13.2.0"
+  resolved "https://registry.yarnpkg.com/@commitlint/config-angular-type-enum/-/config-angular-type-enum-13.2.0.tgz#e3f9b8a07118ed8e060b0b1d04a549f74957634d"
+  integrity sha512-HSP9lzCoHC9+bjJquvByiSUpo0GbAipbjcT6l3Jl6XOzkCjhnUkYcQ2b/O5nXv3mf8Vv/n5k2Sk4nbCYEVpSGQ==
+
+"@commitlint/config-angular@^13.2.0":
+  version "13.2.0"
+  resolved "https://registry.yarnpkg.com/@commitlint/config-angular/-/config-angular-13.2.0.tgz#78c62551279bdf7ed3a9bf993751f346c42b2944"
+  integrity sha512-mfytI8ZrPt7kuxjZo0ZfFw0bg1zEa2kI6/prVaYJ0FJgOE8EP1Co9Y4DJZEegohfYFeRcFK3radog7WOr2pzdw==
+  dependencies:
+    "@commitlint/config-angular-type-enum" "^13.2.0"
+
 "@commitlint/ensure@^13.2.0":
   version "13.2.0"
   resolved "https://registry.yarnpkg.com/@commitlint/ensure/-/ensure-13.2.0.tgz#990c24f753781d1f14c1647c52d34a5730892e3d"
@@ -3047,7 +3059,7 @@ comment-json@^4.0.6, comment-json@^4.1.0:
     has-own-prop "^2.0.0"
     repeat-string "^1.6.1"
 
-commitizen@^4.0.3:
+commitizen@^4.0.3, commitizen@^4.2.4:
   version "4.2.4"
   resolved "https://registry.yarnpkg.com/commitizen/-/commitizen-4.2.4.tgz#a3e5b36bd7575f6bf6e7aa19dbbf06b0d8f37165"
   integrity sha512-LlZChbDzg3Ir3O2S7jSo/cgWp5/QwylQVr59K4xayVq8S4/RdKzSyJkghAiZZHfhh5t4pxunUoyeg0ml1q/7aw==
@@ -3582,7 +3594,7 @@ cz-conventional-changelog@3.2.0:
   optionalDependencies:
     "@commitlint/load" ">6.1.1"
 
-cz-conventional-changelog@^3.3.0:
+cz-conventional-changelog@3.3.0, cz-conventional-changelog@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/cz-conventional-changelog/-/cz-conventional-changelog-3.3.0.tgz#9246947c90404149b3fe2cf7ee91acad3b7d22d2"
   integrity sha512-U466fIzU5U22eES5lTNiNbZ+d8dfcHcssH4o7QsdWaCcRs/feIPCxKYSWkYBNs5mny7MvEfwpTLWjvbm94hecw==
