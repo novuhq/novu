@@ -5,6 +5,7 @@
     "bootstrap": "lerna bootstrap",
     "test": "lerna run test",
     "build": "lerna run build",
+    "publish": "lerna publish from-package",
     "version": "lerna version --conventional-commits --no-push",
     "prepare": "husky install",
     "commit": "cz"
