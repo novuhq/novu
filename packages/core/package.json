@@ -5,7 +5,7 @@
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "repository": "https://github.com/notifirehq/lib",
+  "repository": "https://github.com/notifirehq/notifire",
   "license": "MIT",
   "keywords": [],
   "private": false,
