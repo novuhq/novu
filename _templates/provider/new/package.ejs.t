@@ -1,12 +1,17 @@
+---
+    to: providers/<%= name %>/package.json
+---
+
+
 {
-  "name": "@notifire/nodemailer",
+  "name": "@notifire/<%= name %>",
   "version": "0.2.3",
-  "description": "A nodemailer wrapper for notifire",
+  "description": "A <%= name %> wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/notifirehq/nodemailer",
+  "repository": "https://github.com/notifirehq/notifire",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -18,22 +23,9 @@
     "fix:lint": "eslint src --ext .ts --fix",
     "test": "run-s build test:*",
     "test:lint": "eslint src --ext .ts",
-    "test:prettier": "prettier \"src/**/*.ts\" --list-different",
     "test:unit": "jest src",
-    "check-cli": "run-s test diff-integration-tests check-integration-tests",
-    "check-integration-tests": "run-s check-integration-test:*",
-    "diff-integration-tests": "mkdir -p diff && rm -rf diff/test && cp -r test diff/test && rm -rf diff/test/test-*/.git && cd diff && git init --quiet && git add -A && git commit --quiet --no-verify --allow-empty -m 'WIP' && echo '\\n\\nCommitted most recent integration test output in the \"diff\" directory. Review the changes with \"cd diff && git diff HEAD\" or your preferred git diff viewer.'",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
-    "cov": "run-s build test:unit cov:html cov:lcov && open-cli coverage/index.html",
-    "cov:html": "nyc report --reporter=html",
-    "cov:lcov": "nyc report --reporter=lcov",
-    "cov:send": "run-s cov:lcov && codecov",
-    "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
-    "doc": "run-s doc:html && open-cli build/docs/index.html",
-    "doc:html": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --out build/docs",
-    "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
-    "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
     "reset-hard": "git clean -dfx && git reset --hard && yarn",
     "prepare-release": "run-s reset-hard test"
   },
@@ -44,13 +36,11 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.2.3",
-    "nodemailer": "^6.6.5"
+    "@notifire/core": "^0.2.3"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/jest": "^27.0.1",
-    "@types/nodemailer": "^6.4.4",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
@@ -99,6 +89,5 @@
     "exclude": [
       "**/*.spec.js"
     ]
-  },
-  "gitHead": "5af1be86c8995bd161c0c41c8a43afdd42cde138"
+  }
 }
