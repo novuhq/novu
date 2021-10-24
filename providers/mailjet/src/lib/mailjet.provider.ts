@@ -5,7 +5,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@notifire/core';
 import Client, { Email } from 'node-mailjet';
-import { MailjetResponse } from './majilet-response.interface';
+import { MailjetResponse } from './mailjet-response.interface';
 
 const MAILJET_API_VERSION = 'v3.1';
 
