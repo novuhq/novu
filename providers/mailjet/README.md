@@ -5,5 +5,10 @@ A Mailjet email provider library for [@notifire/core](https://github.com/notifir
 ## Usage
 
 ```javascript
-    FILL IN THE INITIALIZATION USAGE
+    import { MailjetEmailProvider } from "@notifire/mailjet";
+    const provider = new MailjetEmailProvider({
+      apiKey: process.env.MAILJET_APIKEY,
+      apiSecret: process.env.MAILJET_API_SECRET,
+      from: process.env.MAILJET_FROM_EMAIL,
+    });
 ```
