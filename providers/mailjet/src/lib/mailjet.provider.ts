@@ -5,9 +5,9 @@ import {
   ISendMessageSuccessResponse,
 } from '@notifire/core';
 import Client, { Email } from 'node-mailjet';
-import { MailjetResponse } from './majilet.respose';
+import { MailjetResponse } from './majilet-response.interface';
 
-const MAILJET_API_VERSION = 'v3.1'
+const MAILJET_API_VERSION = 'v3.1';
 
 export class MailjetEmailProvider implements IEmailProvider {
   id = 'mailjet';
@@ -27,7 +27,9 @@ export class MailjetEmailProvider implements IEmailProvider {
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const send = this.mailjetClient.post('send', { version: MAILJET_API_VERSION });
+    const send = this.mailjetClient.post('send', {
+      version: MAILJET_API_VERSION,
+    });
     const requestObject = {
       Messages: [
         {
