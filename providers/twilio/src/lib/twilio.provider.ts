@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from '@notifire/core';
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  ISmsOptions,
+  ISmsProvider,
+} from '@notifire/core';
 
 import { Twilio } from 'twilio';
 
@@ -17,12 +22,18 @@ export class TwilioSmsProvider implements ISmsProvider {
     this.twilioClient = new Twilio(config.accountSid, config.authToken);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async sendMessage(options: ISmsOptions): Promise<any> {
-    return await this.twilioClient.messages.create({
+  async sendMessage(
+    options: ISmsOptions
+  ): Promise<ISendMessageSuccessResponse> {
+    const twilioResponse = await this.twilioClient.messages.create({
       body: options.content,
       to: options.to,
       from: this.config.from,
     });
+
+    return {
+      id: twilioResponse.sid,
+      date: twilioResponse.dateCreated.toISOString(),
+    };
   }
 }

@@ -1,4 +1,9 @@
-import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from '@notifire/core';
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  ISmsOptions,
+  ISmsProvider,
+} from '@notifire/core';
 
 import * as plivo from 'plivo';
 
@@ -17,12 +22,18 @@ export class PlivoSmsProvider implements ISmsProvider {
     this.plivoClient = new plivo.Client(config.accountSid, config.authToken);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async sendMessage(options: ISmsOptions): Promise<any> {
-    return await this.plivoClient.messages.create(
+  async sendMessage(
+    options: ISmsOptions
+  ): Promise<ISendMessageSuccessResponse> {
+    const plivoResponse = await this.plivoClient.messages.create(
       this.config.from,
       options.to,
       options.content
     );
+
+    return {
+      id: plivoResponse.apiId,
+      date: new Date().toISOString(),
+    };
   }
 }
