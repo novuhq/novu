@@ -100,6 +100,7 @@ Notifire provides a single API to manage providers across multiple channels with
 - [ ] SES
 - [x] [Postmark](https://github.com/notifirehq/notifire/tree/master/providers/postmark)
 - [x] [NodeMailer](https://github.com/notifirehq/notifire/tree/master/providers/nodemailer)
+- [x] [Mailjet](https://github.com/notifirehq/notifire/tree/master/providers/mailjet)
 
 #### 📞 SMS
 - [x] [Twilio](https://github.com/notifirehq/notifire/tree/master/providers/twilio)
