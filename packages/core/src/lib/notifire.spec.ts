@@ -42,6 +42,7 @@ test('should call 2 hooks', async () => {
   await notifire.trigger('test-template', {
     $user_id: 'test-user',
     $email: 'test-user@sd.com',
+    $phone: '+12222222'
   });
 
   expect(spyOn).toHaveBeenCalledTimes(2);
