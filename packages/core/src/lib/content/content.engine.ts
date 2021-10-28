@@ -1,26 +1,23 @@
 import * as Handlebars from 'handlebars';
 
-Handlebars.registerHelper('equals', function (this: typeof Handlebars, arg1, arg2, options) {
+Handlebars.registerHelper('equals', function (arg1, arg2, options) {
   return arg1 == arg2 ? options.fn(this) : options.inverse(this);
 });
 
-type HandlebarsContext = {
-  [key: string]:
-    | string
-    | { key: string }[]
-    | { key: string | number }
-    | string[]
-    | number[]
-    | boolean
-    | number
-    | undefined;
-}
-
 export function compileTemplate(
   content: string,
-  data: HandlebarsContext
+  data: {
+    [key: string]:
+      | string
+      | { key: string }[]
+      | { key: string | number }
+      | string[]
+      | number[]
+      | boolean
+      | number;
+  }
 ) {
-  const template = Handlebars.compile<HandlebarsContext>(content);
+  const template = Handlebars.compile(content);
 
   return template(data);
 }

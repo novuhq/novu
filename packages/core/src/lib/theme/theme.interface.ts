@@ -2,7 +2,7 @@ export interface ITheme {
   branding: {
     mainColor?: string;
     logo?: string;
-    [key: string]: string | undefined | null;
+    [key: string]: string;
   };
   emailTemplate: IEmailTemplate;
 }

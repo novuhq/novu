@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IMessage, ITemplate } from './template.interface';
+import { ChannelTypeEnum } from './template.interface';
 import { TemplateStore } from './template.store';
 
 test('should register a template', async () => {
@@ -29,7 +29,7 @@ test('should get a template by id', async () => {
 
   const template = await store.getTemplateById('test');
   expect(template).toBeTruthy();
-  expect(template?.id).toEqual('test');
+  expect(template.id).toEqual('test');
 });
 
 describe('active messages', () => {
@@ -56,7 +56,7 @@ describe('active messages', () => {
       ],
     });
 
-    const template = await store.getTemplateById('test') as ITemplate;
+    const template = await store.getTemplateById('test');
     const messages = await store.getActiveMessages(template, {
       $user_id: '1234',
       companyType: 'pro',
@@ -92,7 +92,7 @@ describe('active messages', () => {
       ],
     });
 
-    const template = await store.getTemplateById('test') as ITemplate;
+    const template = await store.getTemplateById('test');
     const messages = await store.getActiveMessages(template, {
       $user_id: '1234',
       companyType: 'pro',
@@ -106,6 +106,6 @@ describe('active messages', () => {
   });
 });
 
-function getMessageByTemplate(messages: IMessage[], template: string) {
+function getMessageByTemplate(messages, template) {
   return messages.find((message) => message.template === template);
 }

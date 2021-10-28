@@ -7,14 +7,14 @@ test('should register an SMS provider and return it', async () => {
   const template = {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => null,
   };
 
   await notifire.registerProvider(template);
   const provider = await notifire.getProviderById('test');
 
   expect(provider).toBeTruthy();
-  expect(provider?.id).toEqual('test');
+  expect(provider.id).toEqual('test');
 });
 
 test('should call 2 hooks', async () => {
@@ -23,7 +23,7 @@ test('should call 2 hooks', async () => {
   const template = {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => null,
   };
 
   await notifire.registerProvider(template);

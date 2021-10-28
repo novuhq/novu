@@ -43,8 +43,6 @@
     "lodash.merge": "^4.6.2"
   },
   "devDependencies": {
-    "@types/lodash.merge": "^4.6.6",
-    "@types/lodash.get": "^4.4.6",
     "@sendgrid/mail": "^7.4.6",
     "@types/jest": "27.0.2",
     "codecov": "^3.5.0",
