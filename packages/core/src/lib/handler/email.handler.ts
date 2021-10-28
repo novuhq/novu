@@ -7,7 +7,7 @@ export class EmailHandler {
   constructor(
     private message: IMessage,
     private provider: IEmailProvider,
-    private theme: ITheme
+    private theme?: ITheme
   ) {}
 
   async send(data: ITriggerPayload) {
@@ -30,6 +30,10 @@ export class EmailHandler {
         ...themeVariables,
         body: html,
       });
+    }
+
+    if (!data.$email) {
+      throw new Error('$email on the trigger payload is missing. To send an email, you must provider it.')
     }
 
     await this.provider.sendMessage({

@@ -6,7 +6,7 @@ test('send sms should call the provider method correctly', async () => {
   const provider: ISmsProvider = {
     id: 'sms-provider',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => null,
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
   const spy = jest.spyOn(provider, 'sendMessage');
