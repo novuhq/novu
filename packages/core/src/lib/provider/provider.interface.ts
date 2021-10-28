@@ -20,7 +20,7 @@ export interface ISmsOptions {
 }
 
 export interface ISendMessageSuccessResponse {
-  id: string;
+  id?: string;
   date?: string;
 }
 

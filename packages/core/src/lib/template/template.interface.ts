@@ -23,5 +23,5 @@ export interface ITriggerPayload {
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
-  [key: string]: string | boolean | number;
+  [key: string]: string | boolean | number | undefined;
 }

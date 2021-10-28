@@ -7,10 +7,19 @@ test('should get a theme by id', async () => {
     branding: {
       logo: 'https://example.com/logo.png',
     },
-    emailTemplate: null
+    emailTemplate: {
+      getEmailLayout(): string {
+        return '';
+      },
+      getTemplateVariables(): Record<string, unknown> {
+        return {
+
+        }
+      }
+    },
   });
 
   const theme = await store.getThemeById('test1');
   expect(theme).toBeTruthy();
-  expect(theme.branding.logo).toEqual('https://example.com/logo.png');
+  expect(theme?.branding.logo).toEqual('https://example.com/logo.png');
 });
