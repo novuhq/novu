@@ -39,7 +39,7 @@ export function PasswordResetForm({ token }: Props) {
       setToken(response.token);
       message.success('Password was changed successfully');
       history.push('/templates');
-    } catch (e) {
+    } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
       }

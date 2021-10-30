@@ -31,7 +31,7 @@ export function LoginForm({}: Props) {
       const response = await mutateAsync(itemData);
       setToken((response as any).token);
       router.push('/templates');
-    } catch (e) {
+    } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
       }

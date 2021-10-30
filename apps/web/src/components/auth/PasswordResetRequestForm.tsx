@@ -26,7 +26,7 @@ export function PasswordRequestResetForm({ onSent }: Props) {
     try {
       const response = await mutateAsync(itemData);
       onSent();
-    } catch (e) {
+    } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
       }
