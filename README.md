@@ -97,7 +97,7 @@ Notifire provides a single API to manage providers across multiple channels with
 #### 💌 Email
 - [x] [Sendgrid](https://github.com/notifirehq/notifire/tree/master/providers/sendgrid)
 - [x] [Mailgun](https://github.com/notifirehq/notifire/tree/master/providers/mailgun)
-- [ ] SES
+- [x] [SES](https://github.com/notifirehq/notifire/tree/master/providers/ses)
 - [x] [Postmark](https://github.com/notifirehq/notifire/tree/master/providers/postmark)
 - [x] [NodeMailer](https://github.com/notifirehq/notifire/tree/master/providers/nodemailer)
 - [x] [Mailjet](https://github.com/notifirehq/notifire/tree/master/providers/mailjet)
