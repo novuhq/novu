@@ -7,10 +7,8 @@ test('send should call the provider method correctly', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () => null,
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   };
-
-
 
   const theme: ITheme = {
     branding: {
