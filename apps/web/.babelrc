@@ -9,7 +9,7 @@
     ],
     "@babel/preset-env"
   ],
-  "plugins": ["babel-plugin-styled-components", [
+  "plugins": ["babel-plugin-styled-components", "@babel/plugin-proposal-optional-chaining",[
     "@babel/plugin-transform-runtime",
     {
       "regenerator": true

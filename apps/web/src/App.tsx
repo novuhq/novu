@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { createBrowserHistory } from 'history';
-import { ThemeProvider } from 'styled-components';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
 import './styles/index.less';
@@ -48,7 +47,7 @@ const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: defaultQueryFn,
+      queryFn: defaultQueryFn as any,
     },
   },
 });

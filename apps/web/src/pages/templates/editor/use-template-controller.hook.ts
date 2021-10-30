@@ -133,7 +133,11 @@ export function useTemplateController(templateId: string) {
     formState: { errors },
   } = methods;
 
-  const { fields: emailMessagesFields, append: addEmailMessageField, remove: removeEmailField } = useFieldArray({
+  const {
+    fields: emailMessagesFields,
+    append: addEmailMessageField,
+    remove: removeEmailField,
+  } = useFieldArray({
     control,
     name: 'emailMessages',
   });
@@ -293,7 +297,7 @@ export function useTemplateController(templateId: string) {
         setIsEmbedModalVisible(true);
         message.success('Template saved successfully');
       }
-    } catch (e) {
+    } catch (e: any) {
       Sentry.captureException(e);
       message.error(e.message || 'Un-expected error occurred');
     }
