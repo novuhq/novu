@@ -44,7 +44,7 @@ jobs:
       with:
         path: |
           node_modules
-          **/node_modules
+          */*/node_modules
         key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
 
     # Runs a single command using the runners shell
