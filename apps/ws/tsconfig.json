@@ -4,6 +4,7 @@
     "module": "commonjs",
     "allowSyntheticDefaultImports": true,
     "types": ["node"],
+    "esModuleInterop": false,
     "target": "es2017",
     "allowJs": false,
     "declarationMap": true
