@@ -4,7 +4,7 @@
     "target": "esnext",
     "outDir": "build/module",
     "module": "esnext",
-    "types": ["jest"]
+    "types": ["jest", "node"]
   },
   "exclude": ["node_modules/**"]
 }
