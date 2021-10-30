@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["./**/*.ts", "global.d.ts"],
+  "exclude": [],
+  "compilerOptions": {
+    "types": ["cypress", "cypress-file-upload"],
+    "lib": ["es2015", "dom"],
+    "isolatedModules": false,
+    "allowJs": true,
+    "noEmit": true
+  }
+}

@@ -1,0 +1,25 @@
+service: api
+
+plugins:
+  - 'serverless-plugin-typescript'
+  - serverless-plugin-optimize
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+
+functions:
+  api:
+    handler: src/lambda.handler
+    environment:
+      NODE_ENV: dev
+    events:
+      - http:
+          method: any
+          path: /{any+}
+
+custom:
+  dotenv:
+    path: src/.env.development
