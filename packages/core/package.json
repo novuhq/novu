@@ -40,7 +40,8 @@
   },
   "dependencies": {
     "lodash.get": "^4.4.2",
-    "lodash.merge": "^4.6.2"
+    "lodash.merge": "^4.6.2",
+    "handlebars": "^4.7.7"
   },
   "devDependencies": {
     "@types/lodash.merge": "^4.6.6",
