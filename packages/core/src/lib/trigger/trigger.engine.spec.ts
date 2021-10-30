@@ -15,7 +15,7 @@ test('emailHandler should be called correctly', async () => {
   await providerStore.addProvider({
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () => null,
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   await templateStore.addTemplate({
@@ -68,7 +68,7 @@ test('variable protection should throw if missing variable provided', async () =
   await providerStore.addProvider({
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () => null,
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   await templateStore.addTemplate({

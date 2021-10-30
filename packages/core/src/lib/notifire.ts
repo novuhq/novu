@@ -14,13 +14,15 @@ export class Notifire extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
   private readonly themeStore: ThemeStore;
+  private readonly config: INotifireConfig;
 
-  constructor(private config?: INotifireConfig) {
+  constructor(config?: INotifireConfig) {
     super();
 
     const defaultConfig: Partial<INotifireConfig> = {
       variableProtection: true,
     };
+
     this.config = merge(defaultConfig, config);
 
     this.themeStore = this.config?.themeStore || new ThemeStore();

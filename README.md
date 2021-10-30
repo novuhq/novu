@@ -73,7 +73,7 @@ const passwordResetTemplate = await notifire.registerTemplate({
           To reset your password click <a href="{{resetLink}}">here.</a>
           
           {{#if organization}}
-            <img src="organization.logo" />
+            <img src="{{organization.logo}}" />
           {{/if}}
       `
     },
