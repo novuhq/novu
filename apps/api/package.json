@@ -37,7 +37,6 @@
     "@sentry/tracing": "^6.3.6",
     "@types/handlebars": "^4.1.0",
     "@vendia/serverless-express": "^4.3.4",
-    "aws-lambda": "^1.0.6",
     "bcrypt": "^5.0.0",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.12.2",
