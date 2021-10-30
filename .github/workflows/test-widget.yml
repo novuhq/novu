@@ -79,7 +79,6 @@ jobs:
         uses: cypress-io/github-action@v2
         env:
           NODE_ENV: test
-          CYPRESS_RECORD_KEY: 8d46726d-57b2-48da-9aca-19bad108964c
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           working-directory: apps/widget
