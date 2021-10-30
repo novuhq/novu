@@ -1,0 +1,20 @@
+{
+  "baseUrl": "http://localhost:4200",
+  "integrationFolder": "cypress/tests",
+  "viewportHeight": 700,
+  "viewportWidth": 1200,
+  "componentFolder": "src",
+  "testFiles": "**/*.spec.*",
+  "firefoxGcInterval": null,
+  "video": false,
+  "retries": {
+    "runMode": 2,
+    "openMode": 1
+  },
+  "env": {
+    "NODE_ENV": "test",
+    "apiUrl": "http://localhost:1336",
+    "coverage": false
+  },
+  "projectId": "cayav5"
+}

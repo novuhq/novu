@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+    "target": "es2017",
+    "allowJs": false,
+    "declarationMap": true
+  }
+}

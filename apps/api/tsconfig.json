@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "types": ["node", "mocha", "chai", "sinon"],
+    "target": "es2017",
+    "allowJs": false,
+    "declarationMap": true
+  }
+}
