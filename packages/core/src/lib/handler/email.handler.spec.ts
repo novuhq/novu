@@ -7,14 +7,15 @@ test('send should call the provider method correctly', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
   const theme: ITheme = {
     branding: {
       logo: 'logo-url',
     },
-    emailTemplate: new EmailTemplate('logo-url')
+    emailTemplate: new EmailTemplate('logo-url'),
   };
 
   const spy = jest.spyOn(provider, 'sendMessage');
@@ -44,14 +45,13 @@ test('send should call the provider method correctly', async () => {
 });
 
 class EmailTemplate implements IEmailTemplate {
-  constructor(private logo: string) {
-  }
+  constructor(private logo: string) {}
 
   getEmailLayout() {
-    return `<div data-test-id="theme-layout-wrapper"><img src="${this.logo}"/>{{{body}}}</div>`
+    return `<div data-test-id="theme-layout-wrapper"><img src="${this.logo}"/>{{{body}}}</div>`;
   }
 
   getTemplateVariables() {
-    return {}
+    return {};
   }
 }

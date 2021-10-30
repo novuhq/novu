@@ -23,7 +23,8 @@ export class EmailHandler {
     const subject = compileTemplate(this.message.subject || '', data);
 
     if (this.theme?.emailTemplate?.getEmailLayout()) {
-      const themeVariables = this.theme?.emailTemplate?.getTemplateVariables() || {};
+      const themeVariables =
+        this.theme?.emailTemplate?.getTemplateVariables() || {};
 
       html = compileTemplate(this.theme?.emailTemplate?.getEmailLayout(), {
         ...templatePayload,
@@ -33,7 +34,9 @@ export class EmailHandler {
     }
 
     if (!data.$email) {
-      throw new Error('$email on the trigger payload is missing. To send an email, you must provider it.')
+      throw new Error(
+        '$email on the trigger payload is missing. To send an email, you must provider it.'
+      );
     }
 
     await this.provider.sendMessage({

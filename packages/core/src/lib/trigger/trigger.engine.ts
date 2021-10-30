@@ -57,7 +57,7 @@ export class TriggerEngine {
     const missingVariables = this.getMissingVariables(message, data);
     if (missingVariables.length && this.config.variableProtection) {
       throw new Error(
-        'Missing variables passed. ' + missingVariables.toString()
+        `Missing variables passed. ${missingVariables.toString()}`
       );
     }
 
