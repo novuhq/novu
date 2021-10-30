@@ -3,6 +3,7 @@
     "strictNullChecks": false,
     "declaration": true,
     "noImplicitAny": false,
+    "esModuleInterop": true,
     "removeComments": true,
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
