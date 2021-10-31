@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://discord.gg/9wcGSf22PM">
-    <img src="https://user-images.githubusercontent.com/8877285/139586560-c7e29b10-f3d2-49e3-9bbc-70be1a834d0e.png">
+    <img src="https://user-images.githubusercontent.com/8877285/139587750-7c25adbc-1417-4c6a-8763-440eab6fece4.png">
   </a>
 
   <a href="https://notifire.co">
