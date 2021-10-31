@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://discord.gg/9wcGSf22PM">
-    <img src="https://user-images.githubusercontent.com/8877285/139587750-7c25adbc-1417-4c6a-8763-440eab6fece4.png">
+    <img src="https://user-images.githubusercontent.com/8877285/139603641-66966234-84f4-42aa-9c31-9d296fab7ba1.png">
   </a>
 
   <a href="https://notifire.co">
@@ -105,14 +105,23 @@ Notifire provides a single API to manage providers across multiple channels with
 - [x] [Postmark](https://github.com/notifirehq/notifire/tree/master/providers/postmark)
 - [x] [NodeMailer](https://github.com/notifirehq/notifire/tree/master/providers/nodemailer)
 - [x] [Mailjet](https://github.com/notifirehq/notifire/tree/master/providers/mailjet)
+- [ ] SendinBlue
+- [ ] SparkPost
 
 #### 📞 SMS
 - [x] [Twilio](https://github.com/notifirehq/notifire/tree/master/providers/twilio)
 - [x] [Plivo](https://github.com/notifirehq/notifire/tree/master/providers/plivo)
 - [ ] Nexmo (Vonage)
+- [ ] node-messaging
+- [ ] RingCentral
 
-#### 📱 Push
+#### 📱 Push (Coming Soon...)
 - [ ] Pushwoosh
+
+
+#### 📱 In-App (Coming Soon...)
+- [ ] Notifire
+- [ ] MagicBell
 
 ## 🔗 Links
 - [Home page](https://notifire.co/)
