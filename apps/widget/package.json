@@ -75,6 +75,14 @@
       "last 1 safari version"
     ]
   },
+  "workspaces": {
+    "nohoist": [
+      "**/react-scripts",
+      "**/react-scripts/**",
+      "**/react",
+      "**/react-dom"
+    ]
+  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint"

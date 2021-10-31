@@ -4,7 +4,7 @@
     "allowSyntheticDefaultImports": true,
     "outDir": "build/main",
     "module": "commonjs",
-    "esModuleInterop": true,
+    "esModuleInterop": false,
     "rootDir": "src",
     "strict": true,
     "types": ["node", "jest"],

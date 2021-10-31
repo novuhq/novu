@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
+import { Router, Switch, Route, Redirect } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { createBrowserHistory } from 'history';
 import { AuthContext } from './store/authContext';
