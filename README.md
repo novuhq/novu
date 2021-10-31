@@ -1,4 +1,9 @@
 <p align="center">
+
+  <a href="https://discord.gg/9wcGSf22PM">
+    <img src="https://user-images.githubusercontent.com/8877285/139585955-6434ff3a-c69e-4aaf-8265-c17d75c8a232.png">
+  </a>
+
   <a href="https://notifire.co">
     <img width="200" src="https://uploads-ssl.webflow.com/6130b4d29bb0ab09e14ae9ee/6130e6931f755df302203fcc_SideLogo%20-%20BLack-p-800.png">
   </a>
