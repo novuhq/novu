@@ -80,7 +80,9 @@
       "**/react-scripts",
       "**/react-scripts/**",
       "**/react",
-      "**/react-dom"
+      "**/react-dom",
+      "**/@cypress",
+      "**/@cypress/**"
     ]
   },
   "lint-staged": {
