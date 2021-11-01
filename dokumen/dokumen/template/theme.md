@@ -4,4 +4,5 @@ sidebar_position: 6
 
 # Theme
 
-Coming soon.
+
+Soon a new one is coming.
