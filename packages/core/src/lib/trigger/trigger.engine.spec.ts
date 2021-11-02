@@ -90,6 +90,30 @@ test('variable protection should throw if missing variable provided', async () =
       $email: 'test@gmail.com',
     })
   ).rejects.toEqual(new Error('Missing variables passed. firstName'));
+});
+
+test('variable protection should throw if missing variable provided with template method', async () => {
+  const templateStore = new TemplateStore();
+  const providerStore = new ProviderStore();
+  const themeStore = new ThemeStore();
+  const ee = new EventEmitter();
+
+  const triggerEngine = new TriggerEngine(
+    templateStore,
+    providerStore,
+    themeStore,
+    {
+      variableProtection: true,
+    },
+    ee
+  );
+
+  await providerStore.addProvider({
+    channelType: ChannelTypeEnum.EMAIL,
+    id: 'email-provider',
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
+  });
 
   await templateStore.addTemplate({
     id: 'test-notification-promise',

@@ -19,7 +19,7 @@ test('send should call the provider method correctly', async () => {
   };
 
   const spy = jest.spyOn(provider, 'sendMessage');
-  let emailHandler = new EmailHandler(
+  const emailHandler = new EmailHandler(
     {
       subject: 'test',
       channel: ChannelTypeEnum.EMAIL as ChannelTypeEnum,
@@ -42,12 +42,28 @@ test('send should call the provider method correctly', async () => {
     to: 'test@email.com',
   });
   spy.mockRestore();
+});
+
+test('send should call template method correctly', async () => {
+  const provider: IEmailProvider = {
+    id: 'email-provider',
+    channelType: ChannelTypeEnum.EMAIL,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
+  };
+
+  const theme: ITheme = {
+    branding: {
+      logo: 'logo-url',
+    },
+    emailTemplate: new EmailTemplate('logo-url'),
+  };
 
   const spyTemplateFunction = jest
     .fn()
     .mockImplementation(() => Promise.resolve('test'));
 
-  emailHandler = new EmailHandler(
+  const emailHandler = new EmailHandler(
     {
       subject: 'test',
       channel: ChannelTypeEnum.EMAIL as ChannelTypeEnum,
