@@ -5,15 +5,13 @@ import {
   ISendMessageSuccessResponse,
 } from '@notifire/core';
 
-import nodemailer,{Transporter} from "nodemailer";
-
-import mandrillTransport from "mandrill-nodemailer-transport";
+import mailchimp from "@mailchimp/mailchimp_transactional"
 
 export class MandrillProvider implements IEmailProvider {
   id = 'mandrill';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  private transporter:Transporter;
+  private Transporter:any;
 
   constructor(
 	  private config: {
@@ -21,32 +19,21 @@ export class MandrillProvider implements IEmailProvider {
 		  from: string;
 	  }
   ){
-	 	this.transporter = nodemailer.createTransport(new mandrillTransport({
-			apiKey: this.config.apiKey
-	}));
+		this.Transporter = mailchimp(this.config.apiKey)
   }
 
   async sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>{
-	  this.transporter.sendMail({
-		  from: this.config.from || options.from,
-		  to: options.to,
-		  subject: options.subject,
-		  html: options.html
-	  },(err,info) => {
-		  if(err){
-			  return {
-				  id: err.message,
-				  date: new Date().toISOString()
-			  }
-		  }
-		  else
-			  {
-					return {
-						id: info.messageId,
-						date: new Date().toISOString()
-					}
-			  }
-	  })
+	  const response1 =  await  this.Transporter.messages.send(
+		  {"message": {"from_email": this.config.from, 
+			  "subject": options.subject, 
+			  "html" : options.html, 
+			  "to": [{ "email": options.to, 
+				  "type": "to" }]}
+  } )
+    return {
+      id: response1[0]._id,
+      date: new Date().toISOString(),
+    };
   }
 
 

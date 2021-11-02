@@ -1,13 +1,14 @@
 # Nodejs Postmark Provider
 
-A postmark email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A mandrill email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
 
 ## Usage
 
 ```javascript
-import { PostmarkEmailProvider } from '@notifire/postmark';
+import { MandrillProvider } from '@notifire/postmark';
 
-const provider = new PostmarkEmailProvider({
-  apiKey: process.env.POSTMARK_API_KEY
+const provider = new MandrillProvider({
+  apiKey: process.env.apiKey,
+  from: process.env.email
 });
 ```

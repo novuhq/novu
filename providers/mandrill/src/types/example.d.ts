@@ -17,4 +17,4 @@
  * something();
  * ```
  */
-declare module 'module-name' {}
+declare module '@mailchimp/mailchimp_transactional';
