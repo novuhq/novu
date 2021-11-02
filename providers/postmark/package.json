@@ -1,6 +1,6 @@
 {
   "name": "@notifire/postmark",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A postmark wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -19,7 +19,6 @@
     "test": "run-s build test:*",
     "test:lint": "eslint src --ext .ts",
     "test:prettier": "prettier \"src/**/*.ts\" --list-different",
-    "test:spelling": "cspell \"{README.md,.github/*.md,src/**/*.ts}\"",
     "test:unit": "jest src",
     "check-cli": "run-s test diff-integration-tests check-integration-tests",
     "check-integration-tests": "run-s check-integration-test:*",
@@ -45,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.2.3",
+    "@notifire/core": "^0.2.4",
     "postmark": "^2.7.8"
   },
   "devDependencies": {

@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Introduction
 
-Notifire is and Open-source library for managing multi-channel transactional notifications with a single API.
+Notifire is an Open-source library for managing multi-channel transactional notifications with a single API.
 
 ## Why?
 

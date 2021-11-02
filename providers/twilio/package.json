@@ -1,6 +1,6 @@
 {
   "name": "@notifire/twilio",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A twilio wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -18,7 +18,6 @@
     "fix:lint": "eslint src --ext .ts --fix",
     "test": "run-s build test:*",
     "test:lint": "eslint src --ext .ts",
-    "test:spelling": "cspell \"{README.md,.github/*.md,src/**/*.ts}\"",
     "test:unit": "jest src --passWithNoTests",
     "check-cli": "run-s test diff-integration-tests check-integration-tests",
     "check-integration-tests": "run-s check-integration-test:*",
@@ -44,7 +43,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@notifire/core": "^0.2.3",
+    "@notifire/core": "^0.2.4",
     "twilio": "^3.67.2"
   },
   "devDependencies": {

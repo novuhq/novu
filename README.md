@@ -1,10 +1,15 @@
 <p align="center">
+  <a href="https://discord.gg/9wcGSf22PM">
+    <img src="https://user-images.githubusercontent.com/8877285/139603641-66966234-84f4-42aa-9c31-9d296fab7ba1.png">
+  </a>
+<p align="center">Read <a href="https://github.com/notifirehq/notifire/discussions/70">here</a> our plans for the upcoming weeks.</p>
+
+</p>
+<p align="center">
   <a href="https://notifire.co">
     <img width="200" src="https://uploads-ssl.webflow.com/6130b4d29bb0ab09e14ae9ee/6130e6931f755df302203fcc_SideLogo%20-%20BLack-p-800.png">
   </a>
 </p>
-
-
 <h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
@@ -73,7 +78,7 @@ const passwordResetTemplate = await notifire.registerTemplate({
           To reset your password click <a href="{{resetLink}}">here.</a>
           
           {{#if organization}}
-            <img src="organization.logo" />
+            <img src="{{organization.logo}}" />
           {{/if}}
       `
     },
@@ -97,17 +102,27 @@ Notifire provides a single API to manage providers across multiple channels with
 #### 💌 Email
 - [x] [Sendgrid](https://github.com/notifirehq/notifire/tree/master/providers/sendgrid)
 - [x] [Mailgun](https://github.com/notifirehq/notifire/tree/master/providers/mailgun)
-- [ ] SES
+- [x] [SES](https://github.com/notifirehq/notifire/tree/master/providers/ses)
 - [x] [Postmark](https://github.com/notifirehq/notifire/tree/master/providers/postmark)
 - [x] [NodeMailer](https://github.com/notifirehq/notifire/tree/master/providers/nodemailer)
+- [x] [Mailjet](https://github.com/notifirehq/notifire/tree/master/providers/mailjet)
+- [ ] SendinBlue
+- [ ] SparkPost
 
 #### 📞 SMS
 - [x] [Twilio](https://github.com/notifirehq/notifire/tree/master/providers/twilio)
 - [x] [Plivo](https://github.com/notifirehq/notifire/tree/master/providers/plivo)
 - [ ] Nexmo (Vonage)
+- [ ] Bandwidth
+- [ ] RingCentral
 
-#### 📱 Push
+#### 📱 Push (Coming Soon...)
 - [ ] Pushwoosh
+
+
+#### 📱 In-App (Coming Soon...)
+- [ ] Notifire
+- [ ] MagicBell
 
 ## 🔗 Links
 - [Home page](https://notifire.co/)
