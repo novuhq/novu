@@ -9,7 +9,7 @@ export interface ITemplate {
 export interface IMessage {
   subject?: string;
   channel: ChannelTypeEnum;
-  template: string;
+  template: string | ((payload: ITriggerPayload) => Promise<string> | string);
   active?: boolean | ((payload: ITriggerPayload) => Promise<boolean> | boolean);
 }
 

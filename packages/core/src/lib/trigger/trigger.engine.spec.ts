@@ -15,7 +15,8 @@ test('emailHandler should be called correctly', async () => {
   await providerStore.addProvider({
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   await templateStore.addTemplate({
@@ -68,7 +69,8 @@ test('variable protection should throw if missing variable provided', async () =
   await providerStore.addProvider({
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   await templateStore.addTemplate({
@@ -84,6 +86,24 @@ test('variable protection should throw if missing variable provided', async () =
 
   await expect(
     triggerEngine.trigger('test-notification', {
+      $user_id: '12345',
+      $email: 'test@gmail.com',
+    })
+  ).rejects.toEqual(new Error('Missing variables passed. firstName'));
+
+  await templateStore.addTemplate({
+    id: 'test-notification-promise',
+    messages: [
+      {
+        subject: '<div>{{firstName}}</div>',
+        channel: ChannelTypeEnum.EMAIL,
+        template: () => Promise.resolve('test'),
+      },
+    ],
+  });
+
+  await expect(
+    triggerEngine.trigger('test-notification-promise', {
       $user_id: '12345',
       $email: 'test@gmail.com',
     })
