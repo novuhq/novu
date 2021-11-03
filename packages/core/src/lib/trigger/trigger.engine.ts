@@ -107,7 +107,7 @@ export class TriggerEngine {
   private extractMessageVariables(message: IMessage) {
     const mergedResults: string[] = [];
 
-    if (message.template) {
+    if (message.template && typeof message.template === 'string') {
       mergedResults.push(...getHandlebarsVariables(message.template));
     }
     if (message.subject) {

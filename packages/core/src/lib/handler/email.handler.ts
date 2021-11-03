@@ -19,7 +19,13 @@ export class EmailHandler {
       ...data,
     };
 
-    let html = compileTemplate(this.message.template, templatePayload);
+    let html = '';
+
+    if (typeof this.message.template === 'string') {
+      html = compileTemplate(this.message.template, templatePayload);
+    } else {
+      html = await this.message.template(templatePayload);
+    }
     const subject = compileTemplate(this.message.subject || '', data);
 
     if (this.theme?.emailTemplate?.getEmailLayout()) {
