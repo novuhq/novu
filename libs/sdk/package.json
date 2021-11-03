@@ -101,7 +101,7 @@
     "cz-conventional-changelog": "^2.1.0",
     "http-server": "^0.12.3",
     "husky": "^1.0.1",
-    "jest": "^26.6.3",
+    "jest": "^27.0.6",
     "jest-config": "^23.6.0",
     "lint-staged": "^8.0.0",
     "lodash.camelcase": "^4.3.0",
