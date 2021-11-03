@@ -6,7 +6,12 @@ export class SmsHandler {
   constructor(private message: IMessage, private provider: ISmsProvider) {}
 
   async send(data: ITriggerPayload) {
-    const content = compileTemplate(this.message.template, data);
+    let content = '';
+    if (typeof this.message.template === 'string') {
+      content = compileTemplate(this.message.template, data);
+    } else {
+      content = await this.message.template(data);
+    }
 
     if (!data.$phone) {
       throw new Error(
