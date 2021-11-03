@@ -1,6 +1,6 @@
 {
   "name": "@notifire/web",
-  "version": "1.2.58",
+  "version": "0.2.58",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
