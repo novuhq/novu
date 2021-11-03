@@ -124,6 +124,7 @@ Notifire provides a single API to manage providers across multiple channels with
 - [ ] Slack
 - [ ] MS Teams
 - [ ] Discord
+- [ ] Mattermost
 
 #### 📱 In-App (Coming Soon...)
 - [ ] Notifire
