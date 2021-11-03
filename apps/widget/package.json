@@ -53,7 +53,7 @@
   "scripts": {
     "start": "craco start",
     "start:dev": "PORT=4500 npm run start",
-    "start:test": "yarn run start:shell:test & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 npm run start",
+    "start:test": "yarn run start:shell:test & yarn run start:shell:sdk & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 npm run start",
     "build": "craco build",
     "test": "craco test",
     "precommit": "lint-staged",
@@ -61,6 +61,7 @@
     "cypress:run": "cypress run",
     "cypress:open": "npm run start:shell:test & cypress open",
     "start:shell:test": "http-server . -p 4700",
+    "start:shell:sdk": "http-server ../../node_modules/@notifire/sdk/dist -p 4702",
     "start:api": "cd ../../ && yarn run start:e2e:api"
   },
   "browserslist": {
@@ -73,6 +74,16 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
+    ]
+  },
+  "workspaces": {
+    "nohoist": [
+      "**/react-scripts",
+      "**/react-scripts/**",
+      "**/react",
+      "**/react-dom",
+      "**/@cypress",
+      "**/@cypress/**"
     ]
   },
   "lint-staged": {
