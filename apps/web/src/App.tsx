@@ -1,9 +1,8 @@
 import React from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
+import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
-import { createBrowserHistory } from 'history';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
 import './styles/index.less';
@@ -21,17 +20,10 @@ import InvitationScreen from './pages/auth/InvitationScreen';
 import { api } from './api/api.client';
 import PasswordResetPage from './pages/auth/password-reset';
 
-const history = createBrowserHistory() as any;
-
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.REACT_APP_SENTRY_DSN,
-    integrations: [
-      new Integrations.BrowserTracing({
-        // Can also use reactRouterV3Instrumentation or reactRouterV4Instrumentation
-        routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
-      }),
-    ],
+    integrations: [new Integrations.BrowserTracing()],
     environment: process.env.REACT_APP_ENVIRONMENT,
     // Set tracesSampleRate to 1.0 to capture 100%
     // of transactions for performance monitoring.
@@ -39,6 +31,7 @@ if (process.env.REACT_APP_SENTRY_DSN) {
     tracesSampleRate: 1.0,
   });
 }
+
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
   return response.data?.data;
@@ -57,7 +50,7 @@ applyToken(tokenStoredToken);
 
 function App() {
   return (
-    <Router history={history}>
+    <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <AuthHandlerComponent>
           <Switch>
@@ -111,7 +104,7 @@ function App() {
           </Switch>
         </AuthHandlerComponent>
       </QueryClientProvider>
-    </Router>
+    </BrowserRouter>
   );
 }
 
