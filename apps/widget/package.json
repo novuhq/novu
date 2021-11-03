@@ -45,7 +45,7 @@
     "cypress-intellij-reporter": "^0.0.6",
     "faker": "^5.4.0",
     "http-server": "^0.12.3",
-    "jest": "26.6.0",
+    "jest": "27.0.6",
     "less": "^4.1.0",
     "less-loader": "4.1.0",
     "start-server-and-test": "1.11.6"
