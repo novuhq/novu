@@ -100,7 +100,6 @@ export class WidgetsController {
   ) {
     this.analyticsService.track(body.name, subscriberSession._organizationId, {
       applicationId: subscriberSession._applicationId,
-      subscriberId: subscriberSession.subscriberId,
       ...(body.payload || {}),
     });
 
