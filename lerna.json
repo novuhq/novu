@@ -11,6 +11,5 @@
       "message": "chore(release): publish - ci skip"
     }
   },
-  "useWorkspaces": true,
-  "version": "independent"
+  "useWorkspaces": true
 }
