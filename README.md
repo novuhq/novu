@@ -118,11 +118,19 @@ Notifire provides a single API to manage providers across multiple channels with
 
 #### 📱 Push (Coming Soon...)
 - [ ] Pushwoosh
+- [ ] SNS
 
+#### 👇 Direct (Coming Soon...)
+- [ ] Slack
+- [ ] MS Teams
+- [ ] Discord
 
 #### 📱 In-App (Coming Soon...)
 - [ ] Notifire
 - [ ] MagicBell
+
+#### Other (Coming Soon...)
+- [ ] PagerDuty
 
 ## 🔗 Links
 - [Home page](https://notifire.co/)
