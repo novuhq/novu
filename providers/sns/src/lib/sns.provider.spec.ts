@@ -1,20 +1,19 @@
 import { SNSClient } from '@aws-sdk/client-sns';
 
-import { SnsEmailProvider } from './sns.provider';
+import { SNSSmsProvider } from './sns.provider';
 
 test('should trigger sns library correctly', async () => {
-  const mockResponse = { MessageId: 'mock-message-id'  };
+  const mockResponse = { MessageId: 'mock-message-id' };
   const spy = jest
     .spyOn(SNSClient.prototype, 'send')
     .mockImplementation(async () => mockResponse);
 
   const mockConfig = {
-    from: '',
     accessKeyId: 'TEST',
     secretAccessKey: 'TEST',
     region: 'test-1',
   };
-  const provider = new SnsEmailProvider(mockConfig);
+  const provider = new SNSSmsProvider(mockConfig);
 
   const mockNotifireMessage = {
     to: '0123456789',
@@ -25,11 +24,11 @@ test('should trigger sns library correctly', async () => {
   const publishInput = {
     input: {
       PhoneNumber: mockNotifireMessage.to,
-      Message: mockNotifireMessage.content
-    }
-  }
+      Message: mockNotifireMessage.content,
+    },
+  };
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith(expect.objectContaining(publishInput))
-  expect(response.id).toBe(mockResponse.MessageId)
+  expect(spy).toHaveBeenCalledWith(expect.objectContaining(publishInput));
+  expect(response.id).toBe(mockResponse.MessageId);
 });

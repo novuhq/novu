@@ -2,13 +2,13 @@ import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
   ISmsOptions,
-  ISmsProvider
+  ISmsProvider,
 } from '@notifire/core';
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 
-import { SNSConfig  } from './sns.config';
+import { SNSConfig } from './sns.config';
 
-export class SnsEmailProvider implements ISmsProvider {
+export class SNSSmsProvider implements ISmsProvider {
   id = 'sns';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private client: SNSClient;
@@ -26,18 +26,18 @@ export class SnsEmailProvider implements ISmsProvider {
   async sendMessage(
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const {to, content } = options
+    const { to, content } = options;
 
     const publish = new PublishCommand({
       PhoneNumber: to,
-      Message: content
-    })
+      Message: content,
+    });
 
-    const snsResponse = await this.client.send(publish)
+    const snsResponse = await this.client.send(publish);
 
     return {
       id: snsResponse.MessageId,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
     };
   }
 }

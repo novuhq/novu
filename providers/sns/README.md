@@ -1,9 +1,15 @@
 # Notifire Sns Provider
 
-A Sns email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A SNS SMS provider library for [@notifire/core](https://github.com/notifirehq/notifire)
 
 ## Usage
 
 ```javascript
-    FILL IN THE INITIALIZATION USAGE
+import { SNSSmsProvider } from "@notifire/sns"
+
+const provider = new SNSSmsProvider({
+    region: "eu-west-1",
+    accessKeyId: "AWS_ACCESS_KEY_ID",
+    secretAccessKey: "AWS_SECRET_ACCESS_KEY",
+});
 ```
