@@ -6,11 +6,16 @@ export interface ITemplate {
   messages: IMessage[];
 }
 
+export interface IMessageValidator {
+  validate(payload: ITriggerPayload): Promise<boolean> | boolean;
+}
+
 export interface IMessage {
   subject?: string;
   channel: ChannelTypeEnum;
   template: string | ((payload: ITriggerPayload) => Promise<string> | string);
   active?: boolean | ((payload: ITriggerPayload) => Promise<boolean> | boolean);
+  validator?: IMessageValidator;
 }
 
 export enum ChannelTypeEnum {
