@@ -1,6 +1,6 @@
 {
   "name": "@notifire/mandrill",
-  "version": "0.0.1",
+  "version": "0.2.6",
   "description": "A mandrill wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@mailchimp/mailchimp_transactional": "^1.0.46",
-    "@notifire/core": "^0.2.3"
+    "@notifire/core": "^0.2.5"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
