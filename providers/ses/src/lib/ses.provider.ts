@@ -47,14 +47,14 @@ export class SESEmailProvider implements IEmailProvider {
       ReplyToAddresses: [fromAddress],
     };
 
-    if (html) {
+    if (html && message?.Content?.Simple?.Body?.Html) {
       message.Content.Simple.Body.Html = {
         Data: html,
         Charset: 'UTF-8',
       };
     }
 
-    if (text) {
+    if (text && message?.Content?.Simple?.Body?.Text) {
       message.Content.Simple.Body.Text = {
         Data: text,
         Charset: 'UTF-8',
