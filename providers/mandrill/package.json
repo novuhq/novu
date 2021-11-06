@@ -49,7 +49,6 @@
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
-    "eslint": "^8.1.0",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "gh-pages": "^3.1.0",
     "jest": "^27.1.0",
