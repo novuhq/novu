@@ -1,6 +1,6 @@
 {
   "name": "@notifire/mailjet",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "A mailjet wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -31,7 +31,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.2.4",
+    "@notifire/core": "^0.2.5",
     "node-mailjet": "^3.3.4"
   },
   "devDependencies": {
@@ -86,5 +86,6 @@
     "exclude": [
       "**/*.spec.js"
     ]
-  }
+  },
+  "gitHead": "29e2f6749f25860471f563d70b7fbf7ee304d6d4"
 }

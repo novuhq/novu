@@ -61,6 +61,8 @@ export class TriggerEngine {
       );
     }
 
+    await this.validate(message, data);
+
     this.eventEmitter.emit('pre:send', {
       id: template.id,
       channel: message.channel,
@@ -116,5 +118,15 @@ export class TriggerEngine {
 
     const deduplicatedResults = [...new Set(mergedResults)];
     return deduplicatedResults;
+  }
+
+  private async validate(message: IMessage, data: ITriggerPayload) {
+    if (!message.validator) {
+      return;
+    }
+    const valid = await message.validator?.validate(data);
+    if (!valid) {
+      throw new Error(`Payload for ${message.channel} is invalid`);
+    }
   }
 }

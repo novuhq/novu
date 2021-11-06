@@ -1,6 +1,6 @@
 {
   "name": "@notifire/core",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -74,5 +74,5 @@
   "prettier": {
     "singleQuote": true
   },
-  "gitHead": "5af1be86c8995bd161c0c41c8a43afdd42cde138"
+  "gitHead": "29e2f6749f25860471f563d70b7fbf7ee304d6d4"
 }
