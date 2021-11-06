@@ -1,4 +1,7 @@
-import { ChannelTypeEnum } from '../template/template.interface';
+import {
+  ChannelTypeEnum,
+  IAttachmentOptions,
+} from '../template/template.interface';
 
 export interface IProvider {
   id: string;
@@ -11,12 +14,14 @@ export interface IEmailOptions {
   html: string;
   from?: string;
   text?: string;
+  attachments?: IAttachmentOptions[];
 }
 
 export interface ISmsOptions {
   to: string;
   content: string;
   from?: string;
+  attachments?: IAttachmentOptions[];
 }
 
 export interface ISendMessageSuccessResponse {
