@@ -42,7 +42,7 @@
     "@auto-it/released": "^10.27.1",
     "@hewmen/serverless-plugin-typescript": "^1.1.17",
     "@types/node": "^14.6.0",
-    "@typescript-eslint/eslint-plugin": "^4.13.0",
+    "@typescript-eslint/eslint-plugin": "4.13.0",
     "@typescript-eslint/parser": "^4.13.0",
     "auto": "^10.27.1",
     "cross-env": "^7.0.3",
