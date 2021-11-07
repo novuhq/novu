@@ -11,4 +11,3 @@ export interface IEmailTemplate {
   getEmailLayout(): string;
   getTemplateVariables(): Record<string, unknown>;
 }
-
