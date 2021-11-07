@@ -1,0 +1,20 @@
+import { OrganizationEntity } from './organization.entity';
+import { BaseRepository } from '../base-repository';
+import { Organization } from './organization.schema';
+import { MemberRepository } from '../member';
+
+export class OrganizationRepository extends BaseRepository<OrganizationEntity> {
+  private memberRepository = new MemberRepository();
+
+  constructor() {
+    super(Organization, OrganizationEntity);
+  }
+
+  async findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]> {
+    const members = await this.memberRepository.findUserActiveMembers(userId);
+
+    return await this.find({
+      _id: members.map((m) => m._organizationId),
+    });
+  }
+}

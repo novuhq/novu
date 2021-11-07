@@ -7,7 +7,8 @@ test('should register an SMS provider and return it', async () => {
   const template = {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
   await notifire.registerProvider(template);
@@ -23,7 +24,8 @@ test('should call 2 hooks', async () => {
   const template = {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
   await notifire.registerProvider(template);
@@ -42,7 +44,7 @@ test('should call 2 hooks', async () => {
   await notifire.trigger('test-template', {
     $user_id: 'test-user',
     $email: 'test-user@sd.com',
-    $phone: '+12222222'
+    $phone: '+12222222',
   });
 
   expect(spyOn).toHaveBeenCalledTimes(2);

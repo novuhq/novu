@@ -1,8 +1,36 @@
 {
   "folders": [
     {
-      "name": "✨ notifirehq",
+      "name": "✨ notifire root",
       "path": "."
+    },
+    {
+      "name": "🚀 @notifire/api",
+      "path": "apps/api"
+    },
+    {
+      "name": "🚀 @notifire/web",
+      "path": "apps/web"
+    },
+    {
+      "name": "🚀 @notifire/ws",
+      "path": "apps/ws"
+    },
+    {
+      "name": "🚀 @notifire/widget",
+      "path": "apps/widget"
+    },
+    {
+      "name": "📦 @notifire/dal",
+      "path": "libs/core"
+    },
+    {
+      "name": "📦 @notifire/sdk",
+      "path": "libs/sdk"
+    },
+    {
+      "name": "📦 @notifire/shared",
+      "path": "libs/shared"
     },
     {
       "name": "📦 @notifire/core",

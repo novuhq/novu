@@ -3,6 +3,7 @@ const sendMailMock = jest.fn().mockReturnValue(() => {
   return {} as any;
 });
 
+// eslint-disable-next-line import/first
 import { NodemailerProvider } from './nodemailer.provider';
 
 jest.mock('nodemailer', () => {

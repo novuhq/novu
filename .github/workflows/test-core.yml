@@ -12,6 +12,15 @@ jobs:
         with:
           node-version: "14"
       - run: rm -rf build
+
+      - name: restore lerna
+        uses: actions/cache@master
+        with:
+          path: |
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+
       - run: yarn install
       - run: yarn bootstrap
       - name: Test

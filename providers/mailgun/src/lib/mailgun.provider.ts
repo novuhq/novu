@@ -10,9 +10,11 @@ import Client from 'mailgun.js/dist/lib/client';
 
 export class MailgunEmailProvider implements IEmailProvider {
   id = 'mailgun';
+
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   private mailgunClient: Client;
+
   constructor(
     private config: {
       apiKey: string;
