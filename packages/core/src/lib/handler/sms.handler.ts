@@ -10,8 +10,10 @@ export class SmsHandler {
   constructor(private message: IMessage, private provider: ISmsProvider) {}
 
   async send(data: ITriggerPayload) {
-    data.$attachments = data.$attachments?.filter((item) =>
-      item.channels?.includes(ChannelTypeEnum.SMS)
+    const attachments = data.$attachments?.filter((item) =>
+      item.channels?.length
+        ? item.channels?.includes(ChannelTypeEnum.SMS)
+        : true
     );
 
     let content = '';
@@ -30,7 +32,7 @@ export class SmsHandler {
     await this.provider.sendMessage({
       to: data.$phone,
       content,
-      attachments: data.$attachments,
+      attachments: attachments,
     });
   }
 }

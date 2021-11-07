@@ -15,8 +15,10 @@ export class EmailHandler {
   ) {}
 
   async send(data: ITriggerPayload) {
-    data.$attachments = data.$attachments?.filter((item) =>
-      item.channels?.includes(ChannelTypeEnum.EMAIL)
+    const attachments = data.$attachments?.filter((item) =>
+      item.channels?.length
+        ? item.channels?.includes(ChannelTypeEnum.EMAIL)
+        : true
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,7 +59,7 @@ export class EmailHandler {
       to: data.$email,
       subject,
       html,
-      attachments: data.$attachments,
+      attachments,
     });
   }
 }

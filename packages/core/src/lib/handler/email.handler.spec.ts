@@ -128,14 +128,19 @@ test('send should handle attachments correctly', async () => {
         file: Buffer.from(''),
         channels: [ChannelTypeEnum.SMS],
       },
+      {
+        mime: 'all',
+        file: Buffer.from(''),
+      },
     ],
     firstName: 'test name',
   });
 
   expect(spy).toHaveBeenCalled();
   const attachments = spy.mock.calls[0][0].attachments || [];
-  expect(attachments?.length).toBe(1);
+  expect(attachments?.length).toBe(2);
   expect(attachments[0].channels?.includes(ChannelTypeEnum.EMAIL)).toBeTruthy();
+  expect(attachments[1].channels).toBeUndefined();
   spy.mockRestore();
 });
 
