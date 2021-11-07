@@ -1,5 +1,5 @@
 import * as Handlebars from 'handlebars';
-import { IAttachmentOptions } from '../..';
+import { IAttachmentOptions } from '../template/template.interface';
 
 Handlebars.registerHelper(
   'equals',
