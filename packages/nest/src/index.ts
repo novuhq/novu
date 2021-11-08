@@ -1,2 +1,2 @@
-export { NOTIFIRE_INSTANCE as NOTIFIRE } from './helpers';
+export { NOTIFIRE } from './helpers';
 export * from './module';
