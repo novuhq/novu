@@ -1,0 +1,2 @@
+export const NOTIFIRE_OPTIONS = 'NOTIFIRE_OPTIONS';
+export const NOTIFIRE = 'NOTIFIRE';
