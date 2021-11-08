@@ -10,11 +10,11 @@ import { createNotifireProviders, instanceFactory } from '../providers';
 })
 export class NotifireModule {
   public static forRoot(options: NotifireOptions): DynamicModule {
-    const _providers = createNotifireProviders(options);
+    const providers = createNotifireProviders(options);
     return {
       module: NotifireModule,
-      providers: _providers,
-      exports: _providers,
+      providers,
+      exports: providers,
     };
   }
 }

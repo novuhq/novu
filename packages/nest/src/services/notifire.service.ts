@@ -10,11 +10,11 @@ export class NotifireService {
   private readonly templates: Array<any>;
 
   constructor(
-    @Inject(NOTIFIRE_OPTIONS) private _NotifireOptions: NotifireOptions,
+    @Inject(NOTIFIRE_OPTIONS) private _NotifireOptions: NotifireOptions
   ) {
     this.notifire = new Notifire();
-    this.providers = this._NotifireOptions['providers'];
-    this.templates = this._NotifireOptions['templates'];
+    this.providers = this._NotifireOptions.providers;
+    this.templates = this._NotifireOptions.templates;
   }
 
   get() {
