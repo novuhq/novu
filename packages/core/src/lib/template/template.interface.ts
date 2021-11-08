@@ -28,5 +28,19 @@ export interface ITriggerPayload {
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
-  [key: string]: string | boolean | number | undefined;
+  $attachments?: IAttachmentOptions[];
+  [key: string]:
+    | string
+    | boolean
+    | number
+    | undefined
+    | IAttachmentOptions
+    | IAttachmentOptions[];
+}
+
+export interface IAttachmentOptions {
+  mime: string;
+  file: Buffer;
+  name?: string;
+  channels?: ChannelTypeEnum[];
 }
