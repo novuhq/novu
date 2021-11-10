@@ -27,7 +27,7 @@ if (error && !process.env.LAMBDA_TASK_ROOT) throw error;
 
 envalid.cleanEnv(process.env, {
   NODE_ENV: str({
-    choices: ['dev', 'test', 'prod', 'ci'],
+    choices: ['dev', 'test', 'prod', 'ci', 'local'],
     default: 'dev',
   }),
   PORT: port(),

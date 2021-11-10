@@ -7,6 +7,7 @@
   "module": "build/module/index.js",
   "repository": "https://github.com/notifirehq/notifire",
   "license": "MIT",
+  "readme": "https://github.com/notifirehq/notifire/README.md",
   "keywords": [],
   "private": false,
   "scripts": {

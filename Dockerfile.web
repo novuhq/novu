@@ -1,0 +1,24 @@
+FROM node:15.11.0
+
+WORKDIR /usr/src/app
+
+RUN npm i yarn -g --loglevel notice --force
+
+COPY package.json .
+
+COPY apps/web ./apps/web
+COPY libs/dal ./libs/dal
+COPY libs/testing ./libs/testing
+COPY libs/shared ./libs/shared
+
+COPY lerna.json .
+COPY tsconfig.json .
+COPY tsconfig.base.json .
+
+RUN yarn install
+RUN yarn add @babel/core -W
+RUN yarn bootstrap
+
+COPY apps/web/build ./apps/web/build
+
+CMD [ "npm", "run", "start:web" ]
