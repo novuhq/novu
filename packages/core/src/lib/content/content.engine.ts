@@ -1,4 +1,5 @@
 import * as Handlebars from 'handlebars';
+import { IAttachmentOptions } from '../template/template.interface';
 
 Handlebars.registerHelper(
   'equals',
@@ -16,7 +17,9 @@ type HandlebarsContext = {
     | number[]
     | boolean
     | number
-    | undefined;
+    | undefined
+    | IAttachmentOptions
+    | IAttachmentOptions[];
 };
 
 export function compileTemplate(content: string, data: HandlebarsContext) {
