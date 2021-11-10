@@ -16,11 +16,15 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   REDIS_HOST: str(),
   REDIS_PORT: port(),
   JWT_SECRET: str(),
-  SENDGRID_API_KEY: str(),
+  SENDGRID_API_KEY: str({
+    default: '',
+  }),
   MONGO_URL: str(),
   AWS_ACCESS_KEY_ID: str(),
   AWS_SECRET_ACCESS_KEY: str(),
-  NOTIFIRE_API_KEY: str(),
+  NOTIFIRE_API_KEY: str({
+    default: '',
+  }),
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
