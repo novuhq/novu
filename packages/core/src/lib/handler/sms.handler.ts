@@ -32,7 +32,7 @@ export class SmsHandler {
     return await this.provider.sendMessage({
       to: data.$phone,
       content,
-      attachments: attachments,
+      attachments,
     });
   }
 }
