@@ -45,7 +45,7 @@ export class EmailHandler {
       );
     }
 
-    await this.provider.sendMessage({
+    return await this.provider.sendMessage({
       to: data.$email,
       subject,
       html,

@@ -21,6 +21,7 @@ export interface IMessage {
 export enum ChannelTypeEnum {
   EMAIL = 'email',
   SMS = 'sms',
+  DIRECT = 'direct',
 }
 
 export interface ITriggerPayload {
@@ -28,5 +29,6 @@ export interface ITriggerPayload {
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
+  $channel_id?: string;
   [key: string]: string | boolean | number | undefined;
 }
