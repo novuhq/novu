@@ -1,7 +1,7 @@
 {
   "name": "@notifire/notifire",
   "version": "0.2.3",
-  "description": "A notifire wrapper for notifire",
+  "description": "A nestjs wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
