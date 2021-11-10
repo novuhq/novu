@@ -4,14 +4,16 @@ interface IThemeStorage {
   id: string;
   theme: ITheme;
 }
+
 export class ThemeStore {
   private themes: Array<IThemeStorage> = [];
+
   private defaultTheme?: ITheme;
 
   async addTheme(id: string, theme: ITheme) {
     this.themes.push({
       id,
-      theme
+      theme,
     });
 
     return await this.getThemeById(id);

@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": false,
+    "declaration": true,
+    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "lib": ["es2015", "dom"],
+    "target": "es6",
+    "typeRoots": ["./node_modules/@types"],
+    "moduleResolution": "node",
+    "strictPropertyInitialization": false,
+    "resolveJsonModule": true,
+    "declarationMap": true
+  }
+}

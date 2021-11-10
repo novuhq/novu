@@ -56,7 +56,7 @@ describe('active messages', () => {
       ],
     });
 
-    const template = await store.getTemplateById('test') as ITemplate;
+    const template = (await store.getTemplateById('test')) as ITemplate;
     const messages = await store.getActiveMessages(template, {
       $user_id: '1234',
       companyType: 'pro',
@@ -92,7 +92,7 @@ describe('active messages', () => {
       ],
     });
 
-    const template = await store.getTemplateById('test') as ITemplate;
+    const template = (await store.getTemplateById('test')) as ITemplate;
     const messages = await store.getActiveMessages(template, {
       $user_id: '1234',
       companyType: 'pro',
