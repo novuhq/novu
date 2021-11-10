@@ -1,10 +1,10 @@
-import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from '@notifire/core';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@notifire/core';
 import whispirSDK from 'whispir-node-sdk';
 
 export class WhispirSmsProvider implements ISmsProvider {
   id = 'whispir';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  private whispirClient: typeof whispirSDK;
+  private whispirClient: whispirSDK;
 
   constructor(
     private config: {
