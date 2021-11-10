@@ -8,7 +8,9 @@ import nodemailer, { Transporter } from 'nodemailer';
 
 export class NodemailerProvider implements IEmailProvider {
   id = 'nodemailer';
+
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+
   private transports: Transporter;
 
   constructor(

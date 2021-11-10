@@ -45,15 +45,17 @@
   },
   "devDependencies": {
     "@sendgrid/mail": "^7.4.6",
-    "@types/jest": "27.0.2",
-    "@types/lodash.get": "^4.4.6",
-    "@types/lodash.merge": "^4.6.6",
     "codecov": "^3.5.0",
+    "@types/lodash.merge": "^4.6.6",
+    "@types/lodash.get": "^4.4.6",
     "cz-conventional-changelog": "^3.3.0",
     "npm-run-all": "^4.1.5",
     "open-cli": "^6.0.1",
-    "standard-version": "^9.0.0",
-    "typedoc": "^0.19.0"
+    "typedoc": "^0.19.0",
+    "@types/jest": "^27.0.1",
+    "@types/node": "^14.6.0",
+    "ts-jest": "^27.0.5",
+    "jest": "^27.0.6"
   },
   "files": [
     "build/main",
