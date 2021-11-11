@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Notifire } from '@notifire/core';
+import { IProvider, ITemplate, Notifire } from '@notifire/core';
 import { NotifireOptions } from '../interfaces';
 import { NOTIFIRE_OPTIONS } from '../helpers';
 
 @Injectable()
 export class NotifireService {
   private notifire: any;
-  private readonly providers: Array<any>;
-  private readonly templates: Array<any>;
+  private readonly providers: IProvider[];
+  private readonly templates: ITemplate[];
 
   constructor(
     @Inject(NOTIFIRE_OPTIONS) private _NotifireOptions: NotifireOptions
@@ -24,25 +24,15 @@ export class NotifireService {
     return this.notifire;
   }
 
-  async registerProviders(): Promise<any> {
-    const providerPromises = [];
-
-    for (let i = 0; i < this.providers.length; i += 1) {
-      const waiting = await this.notifire.registerProvider(this.providers[i]);
-      providerPromises.push(waiting);
+  async registerProviders(): Promise<void> {
+    for (const provider of this.providers) {
+      await this.notifire.registerProvider(provider);
     }
-
-    return await Promise.all(providerPromises);
   }
 
-  async registerTemplates(): Promise<any> {
-    const templatePromises = [];
-
-    for (let i = 0; i < this.templates.length; i += 1) {
-      const waiting = await this.notifire.registerTemplate(this.templates[i]);
-      templatePromises.push(waiting);
+  async registerTemplates(): Promise<void> {
+    for (const template of this.templates) {
+      await this.notifire.registerTemplate(template);
     }
-
-    return await Promise.all(templatePromises);
   }
 }

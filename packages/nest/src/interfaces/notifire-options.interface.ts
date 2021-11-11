@@ -1,9 +1,10 @@
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+import { IProvider, ITemplate } from '@notifire/core';
+
 export interface NotifireOptions {
   //
   // This interface describes the options you want to pass to
   // NotifireModule.
   //
-  providers: Array<any>;
-  templates: Array<any>;
+  providers: IProvider[];
+  templates: ITemplate[];
 }
