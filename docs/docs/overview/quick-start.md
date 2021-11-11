@@ -63,7 +63,7 @@ const passwordResetTemplate = await notifire.registerTemplate({
 
 ### Trigger
 
-On the relevant business logic unit, just declare the trigger event, pass pre-defined parameters, you'r done 🎊.
+On the relevant business logic unit, just declare the trigger event, pass pre-defined parameters, you're done 🎊.
 
 ```ts
 await notifire.trigger("<REPLACE_WITH_EVENT_NAME>", {
