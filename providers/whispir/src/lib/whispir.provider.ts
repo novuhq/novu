@@ -1,10 +1,10 @@
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@notifire/core';
-import whispirSDK from 'whispir-node-sdk';
+import WhispirSDK from 'whispir-node-sdk';
 
 export class WhispirSmsProvider implements ISmsProvider {
   id = 'whispir';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  private whispirClient: whispirSDK;
+  private whispirClient: WhispirSDK;
 
   constructor(
     private config: {
@@ -13,13 +13,13 @@ export class WhispirSmsProvider implements ISmsProvider {
       apiKey: string;
     }
   ) {
-    this.whispirClient = new whispirSDK(config.username, config.password, config.apiKey);
+    this.whispirClient = new WhispirSDK(config.username, config.password, config.apiKey);
   }
 
    async sendMessage(options: ISmsOptions): Promise<any> {
     return await this.whispirClient.SMS()
-    .to(options.to)
-    .body(options.content)
-    .subject('');
+      .to(options.to)
+      .body(options.content)
+      .subject('');
   }
 }
