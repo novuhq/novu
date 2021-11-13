@@ -1,5 +1,5 @@
 {
-  "name": "@notifire/notifire",
+  "name": "@notifire/nest",
   "version": "0.2.3",
   "description": "A nestjs wrapper for notifire",
   "main": "build/main/index.js",
