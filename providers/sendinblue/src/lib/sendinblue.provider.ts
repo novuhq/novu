@@ -37,6 +37,11 @@ export class SendinblueEmailProvider implements IEmailProvider {
     email.subject = options.subject;
     email.htmlContent = options.html;
     email.textContent = options.text;
+    email.attachment = options.attachments?.map((attachment) => ({
+      name: attachment.name,
+      content: attachment?.file?.toString('base64'),
+      contentType: attachment.mime,
+    }));
 
     const { response, body } =
       await this.transactionalEmailsApi.sendTransacEmail(email);
