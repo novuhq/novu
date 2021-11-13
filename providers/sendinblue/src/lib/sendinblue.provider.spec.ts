@@ -2,8 +2,7 @@ import { SendinblueEmailProvider } from './sendinblue.provider';
 
 test('should trigger sendinblue library correctly', async () => {
   const provider = new SendinblueEmailProvider({
-    apiKey:
-      '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',
+    apiKey: '<sendinblue-id>',
   });
   const spy = jest
     .spyOn(provider, 'sendMessage')
