@@ -3,7 +3,7 @@ import { IAttachmentOptions } from '../template/template.interface';
 
 Handlebars.registerHelper(
   'equals',
-  function (this: typeof Handlebars, arg1, arg2, options) {
+  function helper(this: typeof Handlebars, arg1, arg2, options) {
     // eslint-disable-next-line eqeqeq
     return arg1 == arg2 ? options.fn(this) : options.inverse(this);
   }
@@ -18,9 +18,9 @@ type HandlebarsContext = {
     | number[]
     | boolean
     | number
+    | undefined
     | IAttachmentOptions
-    | IAttachmentOptions[]
-    | undefined;
+    | IAttachmentOptions[];
 };
 
 export function compileTemplate(content: string, data: HandlebarsContext) {
