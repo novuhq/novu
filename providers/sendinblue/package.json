@@ -31,7 +31,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.2.3",
+    "@notifire/core": "^0.2.5",
     "@sendinblue/client": "^3.0.1",
     "@types/request": "^2.48.7"
   },
