@@ -1,0 +1,18 @@
+{
+  "presets": [
+    "@babel/preset-typescript",
+    [
+      "@babel/preset-react",
+      {
+        "runtime": "automatic"
+      }
+    ],
+    "@babel/preset-env"
+  ],
+  "plugins": ["babel-plugin-styled-components", "@babel/plugin-proposal-optional-chaining",[
+    "@babel/plugin-transform-runtime",
+    {
+      "regenerator": true
+    }
+  ]]
+}

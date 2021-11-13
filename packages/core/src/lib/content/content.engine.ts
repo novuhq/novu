@@ -1,8 +1,11 @@
 import * as Handlebars from 'handlebars';
 
-Handlebars.registerHelper('equals', function (this: typeof Handlebars, arg1, arg2, options) {
-  return arg1 == arg2 ? options.fn(this) : options.inverse(this);
-});
+Handlebars.registerHelper(
+  'equals',
+  function (this: typeof Handlebars, arg1, arg2, options) {
+    return arg1 === arg2 ? options.fn(this) : options.inverse(this);
+  }
+);
 
 type HandlebarsContext = {
   [key: string]:
@@ -14,12 +17,9 @@ type HandlebarsContext = {
     | boolean
     | number
     | undefined;
-}
+};
 
-export function compileTemplate(
-  content: string,
-  data: HandlebarsContext
-) {
+export function compileTemplate(content: string, data: HandlebarsContext) {
   const template = Handlebars.compile<HandlebarsContext>(content);
 
   return template(data);

@@ -12,10 +12,8 @@ test('should get a theme by id', async () => {
         return '';
       },
       getTemplateVariables(): Record<string, unknown> {
-        return {
-
-        }
-      }
+        return {};
+      },
     },
   });
 
