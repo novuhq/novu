@@ -8,8 +8,8 @@ A Whispir email provider library for [@notifire/core](https://github.com/notifir
 import { WhispirSmsProvider } from './whispir.provider';
 
 const provider = new WhispirSmsProvider({
-    username: "john.smith",
-    password: "one2three",
-    apiKey: "ds0dsf09hdfsh90df90hdfsj",
+    username: process.env.WHISPIR_USERNAME,
+    password: process.env.WHISPIR_PASSWORD,
+    apiKey: process.env.WHISPIR_API_KEY
 });
 ```
