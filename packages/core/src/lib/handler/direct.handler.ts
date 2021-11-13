@@ -15,7 +15,7 @@ export class DirectHandler {
 
     if (!data.$channel_id) {
       throw new Error(
-        '$channel_id is missing in trigger payload. To send an SMS You must specify a $phone property.'
+        '$channel_id is missing in trigger payload. To send an a direct message you must specify a $channel_id property.'
       );
     }
 
