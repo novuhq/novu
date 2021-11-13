@@ -1,9 +1,11 @@
 import * as Handlebars from 'handlebars';
+import { IAttachmentOptions } from '../template/template.interface';
 
 Handlebars.registerHelper(
   'equals',
   function (this: typeof Handlebars, arg1, arg2, options) {
-    return arg1 === arg2 ? options.fn(this) : options.inverse(this);
+    // eslint-disable-next-line eqeqeq
+    return arg1 == arg2 ? options.fn(this) : options.inverse(this);
   }
 );
 
@@ -16,6 +18,8 @@ type HandlebarsContext = {
     | number[]
     | boolean
     | number
+    | IAttachmentOptions
+    | IAttachmentOptions[]
     | undefined;
 };
 
