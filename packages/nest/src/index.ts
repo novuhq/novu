@@ -1,2 +1,2 @@
-export { NOTIFIRE } from './helpers';
 export * from './module';
+export * from './services';

@@ -38,19 +38,20 @@ Initializing module with templates and providers:
     })
 ```
 
-Using notifire's singelton service in other services and modules:
+Using notifire's singleton service in other services and modules:
 
 ```javascript
 import { Injectable, Inject } from '@nestjs/common';
-import { NOTIFIRE } from '@notifire/nest';
+import { NotifireService } from '@notifire/nest';
 
 @Injectable()
 export class UserService {
-  constructor(@Inject(NOTIFIRE) private readonly notifire) {}
+  constructor(private readonly notifire: NotifireService) {}
 
   async triggerEvent() {
     await this.notifire.trigger('password-reset', {
       $email: 'reciever@mail.com',
+      $user_id: 'id'
     });
   }
 }
