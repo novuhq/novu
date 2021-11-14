@@ -27,6 +27,8 @@ test('should trigger sendinblue library correctly', async () => {
     to: 'test@test.com',
     html: '<div> Mail Content </div>',
     subject: 'Test subject',
-    attachments: [{ mime: 'text/plain', file: Buffer.from('dGVzdA==') }],
+    attachments: [
+      { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
+    ],
   });
 });
