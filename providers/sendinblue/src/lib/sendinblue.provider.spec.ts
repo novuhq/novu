@@ -13,10 +13,12 @@ test('should trigger sendinblue library correctly', async () => {
 
   await provider.sendMessage({
     from: 'test@test.com',
-    to: 'galezdel@gmail.com',
+    to: 'test@test.com',
     html: '<div> Mail Content </div>',
     subject: 'Test subject',
-    attachments: [{ mime: 'text/plain', file: Buffer.from('dGVzdA==') }],
+    attachments: [
+      { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
+    ],
   });
 
   expect(spy).toBeCalled();

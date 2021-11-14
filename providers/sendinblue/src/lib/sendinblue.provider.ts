@@ -38,8 +38,8 @@ export class SendinblueEmailProvider implements IEmailProvider {
     email.htmlContent = options.html;
     email.textContent = options.text;
     email.attachment = options.attachments?.map((attachment) => ({
-      name: attachment.name,
-      content: attachment?.file?.toString('base64'),
+      name: attachment?.name,
+      content: attachment?.file?.toString('utf8'),
       contentType: attachment.mime,
     }));
 
