@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Messages
 
-Messages are part of the notificaton template configuration. Each message is tied to a specific channel but not to specific provider. You customize the channel experience by adding channel related metadata (like subject in email, and CTA buttons in Direct messaging).
+Messages are part of the notification template configuration. Each message is tied to a specific channel but not to specific provider. You customize the channel experience by adding channel related metadata (like subject in email, and CTA buttons in Direct messaging).
 
 Here's an example of a template with a single message:
 
@@ -52,5 +52,5 @@ The template is the main content area of the notification. In case of other chan
 
 ## Active
 
-A switch to indicate wether this message should be sent or not. This can be a simple boolean, function or a promise that returns a boolean.
+A switch to indicate whether this message should be sent or not. This can be a simple boolean, function or a promise that returns a boolean.
 You can use it to conditionally send a message based on the trigger inputs.
