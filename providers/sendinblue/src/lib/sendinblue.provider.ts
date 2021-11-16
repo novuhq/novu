@@ -39,7 +39,7 @@ export class SendinblueEmailProvider implements IEmailProvider {
     email.textContent = options.text;
     email.attachment = options.attachments?.map((attachment) => ({
       name: attachment?.name,
-      content: attachment?.file?.toString('utf8'),
+      content: attachment?.file?.toString(),
       contentType: attachment.mime,
     }));
 
