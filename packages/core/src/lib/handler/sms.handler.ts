@@ -29,10 +29,10 @@ export class SmsHandler {
       );
     }
 
-    await this.provider.sendMessage({
+    return await this.provider.sendMessage({
       to: data.$phone,
       content,
-      attachments: attachments,
+      attachments,
     });
   }
 }

@@ -23,7 +23,7 @@ test('should call 2 hooks', async () => {
 
   const template = {
     id: 'test',
-    channelType: ChannelTypeEnum.SMS,
+    channelType: ChannelTypeEnum.SMS as ChannelTypeEnum,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
   };

@@ -15,6 +15,7 @@ import {
 } from '../template/template.interface';
 import { TemplateStore } from '../template/template.store';
 import { ThemeStore } from '../theme/theme.store';
+import { DirectHandler } from '../handler/direct.handler';
 
 export class TriggerEngine {
   constructor(
@@ -83,6 +84,9 @@ export class TriggerEngine {
     } else if (provider.channelType === ChannelTypeEnum.SMS) {
       const smsHandler = new SmsHandler(message, provider);
       await smsHandler.send(data);
+    } else if (provider.channelType === ChannelTypeEnum.DIRECT) {
+      const directHandler = new DirectHandler(message, provider);
+      await directHandler.send(data);
     }
 
     this.eventEmitter.emit('post:send', {

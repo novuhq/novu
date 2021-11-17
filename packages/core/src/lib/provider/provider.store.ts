@@ -1,11 +1,16 @@
 import { ChannelTypeEnum } from '../template/template.interface';
 
-import { IEmailProvider, ISmsProvider } from './provider.interface';
+import {
+  IEmailProvider,
+  ISmsProvider,
+  IDirectProvider,
+} from './provider.interface';
 
 export class ProviderStore {
-  private providers: Array<ISmsProvider | IEmailProvider> = [];
+  private providers: Array<ISmsProvider | IEmailProvider | IDirectProvider> =
+    [];
 
-  async addProvider(provider: IEmailProvider | ISmsProvider) {
+  async addProvider(provider: IEmailProvider | ISmsProvider | IDirectProvider) {
     this.providers.push(provider);
   }
 
