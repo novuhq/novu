@@ -44,7 +44,7 @@ export class MailjetEmailProvider implements IEmailProvider {
           Subject: options.subject,
           TextPart: options.text,
           HTMLPart: options.html,
-          Attachments: options.attachments.map((attachment) => ({
+          Attachments: options.attachments?.map((attachment) => ({
             ContentType: attachment.mime,
             Filename: attachment.name,
             Base64Content: attachment.file.toString('base64'),
