@@ -15,13 +15,24 @@ test('should trigger sendgrid correctly', async () => {
     to: 'test@test2.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
+    from: 'test@tet.com',
+    attachments: [
+      { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
+    ],
   });
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    from: 'test@tet.com',
-    html: '<div> Mail Content </div>',
-    subject: 'test subject',
-    substitutions: {},
     to: 'test@test2.com',
+    subject: 'test subject',
+    html: '<div> Mail Content </div>',
+    from: 'test@tet.com',
+    substitutions: {},
+    attachments: [
+      {
+        type: 'text/plain',
+        content: Buffer.from('dGVzdA==').toString(),
+        filename: 'test.txt',
+      },
+    ],
   });
 });
