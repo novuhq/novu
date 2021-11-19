@@ -6,6 +6,7 @@ test('should trigger postmark correctly', async () => {
     from: 'test@test.com',
   });
   const spy = jest
+    // eslint-disable-next-line @typescript-eslint/dot-notation
     .spyOn(provider['client'], 'sendEmail')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,6 +16,9 @@ test('should trigger postmark correctly', async () => {
     to: 'test2@test.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
+    attachments: [
+      { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
+    ],
   });
 
   expect(spy).toHaveBeenCalled();
@@ -24,5 +28,13 @@ test('should trigger postmark correctly', async () => {
     HtmlBody: '<div> Mail Content </div>',
     TextBody: '<div> Mail Content </div>',
     Subject: 'test subject',
+    Attachments: [
+      {
+        Name: 'test.txt',
+        Content: 'dGVzdA==',
+        ContentID: null,
+        ContentType: 'text/plain',
+      },
+    ],
   });
 });
