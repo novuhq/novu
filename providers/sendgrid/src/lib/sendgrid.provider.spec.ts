@@ -1,7 +1,7 @@
 import sendgridMail from '@sendgrid/mail';
 import { SendgridEmailProvider } from './sendgrid.provider';
 
-const mocKconfig = {
+const mockConfig = {
   apiKey: 'SG.1234',
   from: 'test@tet.com',
 };
@@ -16,7 +16,7 @@ const mockNotifireMessage = {
   ],
 };
 test('should trigger sendgrid correctly', async () => {
-  const provider = new SendgridEmailProvider(mocKconfig);
+  const provider = new SendgridEmailProvider(mockConfig);
   const spy = jest.spyOn(sendgridMail, 'send').mockImplementation(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {} as any;
