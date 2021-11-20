@@ -28,6 +28,9 @@ test('should trigger nodemailer correctly', async () => {
     to: 'test@test2.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
+    attachments: [
+      { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
+    ],
   });
 
   expect(sendMailMock).toHaveBeenCalled();
@@ -36,5 +39,12 @@ test('should trigger nodemailer correctly', async () => {
     html: '<div> Mail Content </div>',
     subject: 'test subject',
     to: 'test@test2.com',
+    attachments: [
+      {
+        contentType: 'text/plain',
+        content: 'test',
+        filename: 'test.txt',
+      },
+    ],
   });
 });
