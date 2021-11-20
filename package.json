@@ -4,7 +4,9 @@
   "scripts": {
     "bootstrap": "lerna bootstrap",
     "test": "lerna run test",
-    "build": "lerna run build"
+    "build": "lerna run build",
+    "copy:files": "npx cpx README.md packages/core",
+    "prerelease": "npm run copy:files"
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",
