@@ -39,6 +39,12 @@ export class MailgunEmailProvider implements IEmailProvider {
         to: [data.to],
         subject: data.subject,
         html: data.html,
+        attachment: data.attachments?.map((attachment) => {
+          return {
+            data: attachment.file,
+            filename: attachment.name,
+          };
+        }),
       }
     );
 
