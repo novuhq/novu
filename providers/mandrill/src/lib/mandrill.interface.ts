@@ -1,3 +1,5 @@
+import {IAttachmentOptions} from "@notifire/core"
+
 export interface MandrillInterface {
   messages: {
     send: (options: IMandrillSendOptions) => Promise<IMandrillSendResponse[]>;
@@ -10,7 +12,7 @@ export interface IMandrillSendOptions {
     subject: string;
     html: string;
     to: { email: string; type: 'to' | string }[];
-	attachments: IMandrillAttachmentOptions[];	
+	attachments: IAttachmentOptions[];	
   };
 }
 
@@ -18,15 +20,3 @@ export interface IMandrillSendResponse {
   _id: string;
 }
 
-export interface IMandrillAttachmentOptions {
-  mime: string;
-  file: Buffer;
-  name?: string;
-  channels?: MandrillChannelTypeEnum[];
-}
-
-export enum MandrillChannelTypeEnum {
-  EMAIL = 'email',
-  SMS = 'sms',
-  DIRECT = 'direct',
-}
