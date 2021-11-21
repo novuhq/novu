@@ -1,15 +1,25 @@
 import Mailgun from 'mailgun.js';
 import nock from 'nock';
-
 import { MailgunEmailProvider } from './mailgun.provider';
 
+const mockConfig = {
+  apiKey: 'SG.1234',
+  domain: 'test.com',
+  username: 'api',
+  from: 'test@test.com',
+};
+
+const mockNotifireMessage = {
+  to: 'test@test2.com',
+  subject: 'test subject',
+  html: '<div> Mail Content </div>',
+  attachments: [
+    { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
+  ],
+};
+
 test('should trigger mailgun correctly', async () => {
-  const provider = new MailgunEmailProvider({
-    apiKey: 'SG.1234',
-    domain: 'test.com',
-    username: 'api',
-    from: 'test@tet.com',
-  });
+  const provider = new MailgunEmailProvider(mockConfig);
   const createFn = jest.fn();
   jest.spyOn(Mailgun.prototype, 'client').mockImplementation(() => {
     return {
@@ -25,11 +35,7 @@ test('should trigger mailgun correctly', async () => {
     id: '<20111114174239.25659.5817@samples.mailgun.org>',
   });
 
-  await provider.sendMessage({
-    to: 'test@test2.com',
-    subject: 'test subject',
-    html: '<div> Mail Content </div>',
-  });
+  await provider.sendMessage(mockNotifireMessage);
 
   api.done();
 });

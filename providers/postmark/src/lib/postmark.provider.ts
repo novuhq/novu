@@ -4,12 +4,12 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@notifire/core';
-import * as postmark from 'postmark';
+import { ServerClient, Models } from 'postmark';
 
 export class PostmarkEmailProvider implements IEmailProvider {
   id = 'postmark';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private client: postmark.ServerClient;
+  private client: ServerClient;
 
   constructor(
     private config: {
@@ -17,22 +17,26 @@ export class PostmarkEmailProvider implements IEmailProvider {
       from: string;
     }
   ) {
-    this.client = new postmark.ServerClient(this.config.apiKey);
+    this.client = new ServerClient(this.config.apiKey);
   }
 
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    let to = options.to as string;
-
-    if (Array.isArray(options.to)) to = options.to.join(', ');
-
     const response = await this.client.sendEmail({
       From: options.from || this.config.from,
-      To: to,
+      To: getFormattedTo(options.to),
       HtmlBody: options.html,
       TextBody: options.html,
       Subject: options.subject,
+      Attachments: options.attachments?.map(
+        (attachment) =>
+          new Models.Attachment(
+            attachment.name,
+            attachment.file.toString(),
+            attachment.mime
+          )
+      ),
     });
 
     return {
@@ -41,3 +45,8 @@ export class PostmarkEmailProvider implements IEmailProvider {
     };
   }
 }
+
+const getFormattedTo = (to: string | string[]): string => {
+  if (Array.isArray(to)) return to.join(', ');
+  return to;
+};

@@ -1,4 +1,7 @@
-import { ChannelTypeEnum } from '../template/template.interface';
+import {
+  ChannelTypeEnum,
+  IAttachmentOptions,
+} from '../template/template.interface';
 
 export interface IProvider {
   id: string;
@@ -11,16 +14,23 @@ export interface IEmailOptions {
   html: string;
   from?: string;
   text?: string;
+  attachments?: IAttachmentOptions[];
 }
 
 export interface ISmsOptions {
   to: string;
   content: string;
   from?: string;
+  attachments?: IAttachmentOptions[];
+}
+
+export interface IDirectOptions {
+  channelId: string;
+  content: string;
 }
 
 export interface ISendMessageSuccessResponse {
-  id: string;
+  id?: string;
   date?: string;
 }
 
@@ -31,8 +41,13 @@ export interface IEmailProvider extends IProvider {
 }
 
 export interface ISmsProvider extends IProvider {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sendMessage(options: ISmsOptions): Promise<any>;
+  sendMessage(options: ISmsOptions): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.SMS;
+}
+
+export interface IDirectProvider extends IProvider {
+  sendMessage(options: IDirectOptions): Promise<ISendMessageSuccessResponse>;
+
+  channelType: ChannelTypeEnum.DIRECT;
 }

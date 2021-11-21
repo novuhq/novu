@@ -29,6 +29,13 @@ export class SendgridEmailProvider implements IEmailProvider {
       html: options.html,
       subject: options.subject,
       substitutions: {},
+      attachments: options.attachments?.map((attachment) => {
+        return {
+          content: attachment.file.toString(),
+          filename: attachment.name,
+          type: attachment.mime,
+        };
+      }),
     });
 
     return {

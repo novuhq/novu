@@ -12,6 +12,7 @@ you can see here our guidelines, making sure our code base is [readable](https:/
 - [Feature Requests](#feature)
 - [Missing Provider](#provider)
 - [Submission Guidelines](#submit)
+- [Programming Languages for Contribution](#language)
 - [Development Setup](#development)
 - [Coding Rules](#rules)
 
@@ -140,6 +141,13 @@ from the main (upstream) repository:
   ```shell
   git pull --ff upstream master
   ```
+## <a name="language"></a> Programming Languages for Contribution
+
+Our project primarily uses following programming languages:
+
+- [Nodejs](https://nodejs.org/en/)
+- [Typescript](https://www.typescriptlang.org/)
+- [Javascript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
 ## <a name="development"></a> Development Setup
 

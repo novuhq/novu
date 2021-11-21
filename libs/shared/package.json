@@ -1,0 +1,39 @@
+{
+  "name": "@notifire/shared",
+  "version": "0.2.29",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "afterinstall": "npm run build",
+    "build": "node_modules/.bin/tsc -p tsconfig.build.json",
+    "build:watch": "node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
+    "start:dev": "npm run build:watch",
+    "precommit": "lint-staged",
+    "test": "",
+    "test:watch": ""
+  },
+  "author": "",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "class-transformer": "^0.4.0",
+    "class-validator": "^0.9.1",
+    "mixpanel": "^0.13.0",
+    "typescript": "^4.1.3"
+  },
+  "devDependencies": {
+    "@types/bluebird": "^3.5.24"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --ignore-path .eslintignore --write"
+    ],
+    "{*.json,.{babelrc,eslintrc,prettierrc,stylelintrc}}": [
+      "prettier --ignore-path .eslintignore --parser json --write"
+    ],
+    "*.{html,md,yml}": [
+      "prettier --ignore-path .eslintignore --single-quote --write"
+    ]
+  }
+}

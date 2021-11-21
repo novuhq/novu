@@ -1,23 +1,30 @@
 import * as Handlebars from 'handlebars';
+import { IAttachmentOptions } from '../template/template.interface';
 
-Handlebars.registerHelper('equals', function (arg1, arg2, options) {
-  return arg1 == arg2 ? options.fn(this) : options.inverse(this);
-});
-
-export function compileTemplate(
-  content: string,
-  data: {
-    [key: string]:
-      | string
-      | { key: string }[]
-      | { key: string | number }
-      | string[]
-      | number[]
-      | boolean
-      | number;
+Handlebars.registerHelper(
+  'equals',
+  function helper(this: typeof Handlebars, arg1, arg2, options) {
+    // eslint-disable-next-line eqeqeq
+    return arg1 == arg2 ? options.fn(this) : options.inverse(this);
   }
-) {
-  const template = Handlebars.compile(content);
+);
+
+type HandlebarsContext = {
+  [key: string]:
+    | string
+    | { key: string }[]
+    | { key: string | number }
+    | string[]
+    | number[]
+    | boolean
+    | number
+    | undefined
+    | IAttachmentOptions
+    | IAttachmentOptions[];
+};
+
+export function compileTemplate(content: string, data: HandlebarsContext) {
+  const template = Handlebars.compile<HandlebarsContext>(content);
 
   return template(data);
 }

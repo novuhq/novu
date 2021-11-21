@@ -7,7 +7,8 @@ test('should register a provider', async () => {
   await store.addProvider({
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => null,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   const providers = await store.getProviders();
@@ -21,18 +22,20 @@ test('should get a provider by id', async () => {
   await store.addProvider({
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => null,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   await store.addProvider({
     id: 'test 2',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () => null,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   const provider = await store.getProviderById('test');
   expect(provider).toBeTruthy();
-  expect(provider.id).toEqual('test');
+  expect(provider?.id).toEqual('test');
 });
 
 test('should get a provider by channel', async () => {
@@ -41,16 +44,18 @@ test('should get a provider by channel', async () => {
   await store.addProvider({
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => null,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   await store.addProvider({
     id: 'test 2',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () => null,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   });
 
   const provider = await store.getProviderByChannel(ChannelTypeEnum.EMAIL);
   expect(provider).toBeTruthy();
-  expect(provider.id).toEqual('test 2');
+  expect(provider?.id).toEqual('test 2');
 });

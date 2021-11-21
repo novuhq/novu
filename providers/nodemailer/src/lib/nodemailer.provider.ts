@@ -8,7 +8,9 @@ import nodemailer, { Transporter } from 'nodemailer';
 
 export class NodemailerProvider implements IEmailProvider {
   id = 'nodemailer';
+
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+
   private transports: Transporter;
 
   constructor(
@@ -40,6 +42,11 @@ export class NodemailerProvider implements IEmailProvider {
       to: options.to,
       subject: options.subject,
       html: options.html,
+      attachments: options.attachments?.map((attachment) => ({
+        filename: attachment?.name,
+        content: attachment.file.toString(),
+        contentType: attachment.mime,
+      })),
     });
 
     return {
