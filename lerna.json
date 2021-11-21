@@ -1,6 +1,16 @@
 {
   "npmClient": "yarn",
+  "packages": [
+    "apps/*",
+    "libs/*",
+    "packages/*",
+    "providers/*"
+  ],
+  "command": {
+    "publish": {
+      "message": "chore(release): publish - ci skip"
+    }
+  },
   "useWorkspaces": true,
-  "packages": ["packages/*", "providers/*"],
-  "version": "0.0.0"
+  "version": "0.2.5"
 }

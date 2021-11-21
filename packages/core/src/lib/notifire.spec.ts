@@ -7,14 +7,15 @@ test('should register an SMS provider and return it', async () => {
   const template = {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => null,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
   await notifire.registerProvider(template);
   const provider = await notifire.getProviderById('test');
 
   expect(provider).toBeTruthy();
-  expect(provider.id).toEqual('test');
+  expect(provider?.id).toEqual('test');
 });
 
 test('should call 2 hooks', async () => {
@@ -22,8 +23,9 @@ test('should call 2 hooks', async () => {
 
   const template = {
     id: 'test',
-    channelType: ChannelTypeEnum.SMS,
-    sendMessage: () => null,
+    channelType: ChannelTypeEnum.SMS as ChannelTypeEnum,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
   await notifire.registerProvider(template);
@@ -42,6 +44,7 @@ test('should call 2 hooks', async () => {
   await notifire.trigger('test-template', {
     $user_id: 'test-user',
     $email: 'test-user@sd.com',
+    $phone: '+12222222',
   });
 
   expect(spyOn).toHaveBeenCalledTimes(2);

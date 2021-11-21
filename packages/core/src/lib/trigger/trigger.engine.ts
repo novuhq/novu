@@ -15,6 +15,7 @@ import {
 } from '../template/template.interface';
 import { TemplateStore } from '../template/template.store';
 import { ThemeStore } from '../theme/theme.store';
+import { DirectHandler } from '../handler/direct.handler';
 
 export class TriggerEngine {
   constructor(
@@ -57,9 +58,11 @@ export class TriggerEngine {
     const missingVariables = this.getMissingVariables(message, data);
     if (missingVariables.length && this.config.variableProtection) {
       throw new Error(
-        'Missing variables passed. ' + missingVariables.toString()
+        `Missing variables passed. ${missingVariables.toString()}`
       );
     }
+
+    await this.validate(message, data);
 
     this.eventEmitter.emit('pre:send', {
       id: template.id,
@@ -81,6 +84,9 @@ export class TriggerEngine {
     } else if (provider.channelType === ChannelTypeEnum.SMS) {
       const smsHandler = new SmsHandler(message, provider);
       await smsHandler.send(data);
+    } else if (provider.channelType === ChannelTypeEnum.DIRECT) {
+      const directHandler = new DirectHandler(message, provider);
+      await directHandler.send(data);
     }
 
     this.eventEmitter.emit('post:send', {
@@ -107,7 +113,7 @@ export class TriggerEngine {
   private extractMessageVariables(message: IMessage) {
     const mergedResults: string[] = [];
 
-    if (message.template) {
+    if (message.template && typeof message.template === 'string') {
       mergedResults.push(...getHandlebarsVariables(message.template));
     }
     if (message.subject) {
@@ -116,5 +122,15 @@ export class TriggerEngine {
 
     const deduplicatedResults = [...new Set(mergedResults)];
     return deduplicatedResults;
+  }
+
+  private async validate(message: IMessage, data: ITriggerPayload) {
+    if (!message.validator) {
+      return;
+    }
+    const valid = await message.validator?.validate(data);
+    if (!valid) {
+      throw new Error(`Payload for ${message.channel} is invalid`);
+    }
   }
 }

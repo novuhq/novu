@@ -1,27 +1,40 @@
 import sendgridMail from '@sendgrid/mail';
-
 import { SendgridEmailProvider } from './sendgrid.provider';
 
+const mockConfig = {
+  apiKey: 'SG.1234',
+  from: 'test@tet.com',
+};
+
+const mockNotifireMessage = {
+  to: 'test@test2.com',
+  subject: 'test subject',
+  html: '<div> Mail Content </div>',
+  from: 'test@tet.com',
+  attachments: [
+    { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
+  ],
+};
 test('should trigger sendgrid correctly', async () => {
-  const provider = new SendgridEmailProvider({
-    apiKey: 'SG.1234',
-    from: 'test@tet.com',
-  });
+  const provider = new SendgridEmailProvider(mockConfig);
   const spy = jest.spyOn(sendgridMail, 'send').mockImplementation(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {} as any;
   });
-  await provider.sendMessage({
-    to: 'test@test2.com',
-    subject: 'test subject',
-    html: '<div> Mail Content </div>',
-  });
+  await provider.sendMessage(mockNotifireMessage);
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    from: 'test@tet.com',
-    html: '<div> Mail Content </div>',
-    subject: 'test subject',
+    to: mockNotifireMessage.to,
+    subject: mockNotifireMessage.subject,
+    html: mockNotifireMessage.html,
+    from: mockNotifireMessage.from,
     substitutions: {},
-    to: 'test@test2.com',
+    attachments: [
+      {
+        type: 'text/plain',
+        content: Buffer.from('dGVzdA==').toString(),
+        filename: 'test.txt',
+      },
+    ],
   });
 });

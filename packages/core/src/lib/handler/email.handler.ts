@@ -1,16 +1,26 @@
 import { compileTemplate } from '../content/content.engine';
 import { IEmailProvider } from '../provider/provider.interface';
-import { IMessage, ITriggerPayload } from '../template/template.interface';
+import {
+  ChannelTypeEnum,
+  IMessage,
+  ITriggerPayload,
+} from '../template/template.interface';
 import { ITheme } from '../theme/theme.interface';
 
 export class EmailHandler {
   constructor(
     private message: IMessage,
     private provider: IEmailProvider,
-    private theme: ITheme
+    private theme?: ITheme
   ) {}
 
   async send(data: ITriggerPayload) {
+    const attachments = data.$attachments?.filter((item) =>
+      item.channels?.length
+        ? item.channels?.includes(ChannelTypeEnum.EMAIL)
+        : true
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const branding: any = data?.$branding || {};
 
@@ -19,11 +29,18 @@ export class EmailHandler {
       ...data,
     };
 
-    let html = compileTemplate(this.message.template, templatePayload);
+    let html = '';
+
+    if (typeof this.message.template === 'string') {
+      html = compileTemplate(this.message.template, templatePayload);
+    } else {
+      html = await this.message.template(templatePayload);
+    }
     const subject = compileTemplate(this.message.subject || '', data);
 
     if (this.theme?.emailTemplate?.getEmailLayout()) {
-      const themeVariables = this.theme?.emailTemplate?.getTemplateVariables() || {};
+      const themeVariables =
+        this.theme?.emailTemplate?.getTemplateVariables() || {};
 
       html = compileTemplate(this.theme?.emailTemplate?.getEmailLayout(), {
         ...templatePayload,
@@ -32,10 +49,17 @@ export class EmailHandler {
       });
     }
 
-    await this.provider.sendMessage({
+    if (!data.$email) {
+      throw new Error(
+        '$email on the trigger payload is missing. To send an email, you must provider it.'
+      );
+    }
+
+    return await this.provider.sendMessage({
       to: data.$email,
       subject,
       html,
+      attachments,
     });
   }
 }
