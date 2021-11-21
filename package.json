@@ -5,7 +5,7 @@
     "bootstrap": "lerna bootstrap",
     "test": "lerna run test",
     "build": "lerna run build",
-    "copy:files": "npx cpx README.md packages/core",
+    "copy:files": "cpx README.md packages/core",
     "prerelease": "npm run copy:files"
   },
   "devDependencies": {
@@ -24,7 +24,8 @@
     "prettier": "^2.1.1",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.3",
+    "cpx": "^1.5.0"
   },
   "workspaces": [
     "packages/*",
