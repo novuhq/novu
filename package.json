@@ -11,8 +11,6 @@
     "test": "cross-env CI=true mono-run test:watch --stream --parallel",
     "clean": "lerna clean",
     "bootstrap": "lerna bootstrap",
-    "test": "lerna run test",
-    "build": "lerna run build",
     "copy:files": "cpx README.md packages/core",
     "prerelease": "npm run copy:files",
     "start:web": "cross-env lerna run --parallel --include-dependencies --scope @notifire/web start:static:build",
