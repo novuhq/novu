@@ -1,4 +1,4 @@
-import {IAttachmentOptions} from "@notifire/core"
+import { IAttachmentOptions } from '@notifire/core';
 
 export interface MandrillInterface {
   messages: {
@@ -12,11 +12,10 @@ export interface IMandrillSendOptions {
     subject: string;
     html: string;
     to: { email: string; type: 'to' | string }[];
-	attachments: IAttachmentOptions[];	
+    attachments: IAttachmentOptions[];
   };
 }
 
 export interface IMandrillSendResponse {
   _id: string;
 }
-

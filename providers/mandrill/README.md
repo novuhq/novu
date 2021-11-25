@@ -9,6 +9,6 @@ import { MandrillProvider } from '@notifire/mandrill';
 
 const provider = new MandrillProvider({
   apiKey: process.env.apiKey,
-  from: process.env.email
+  from: process.env.email,
 });
 ```
