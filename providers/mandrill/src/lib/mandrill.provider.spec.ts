@@ -16,6 +16,9 @@ test('should trigger mandrill correctly', async () => {
     to: 'test2@test.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
+    attachments: [
+      { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
+    ],
   });
 
   expect(spy).toHaveBeenCalled();
@@ -23,5 +26,8 @@ test('should trigger mandrill correctly', async () => {
     to: 'test2@test.com',
     html: '<div> Mail Content </div>',
     subject: 'test subject',
+    attachments: [
+      { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
+    ],
   });
 });
