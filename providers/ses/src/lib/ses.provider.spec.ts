@@ -1,5 +1,5 @@
-import { SESEmailProvider } from './ses.provider';
 import { SESv2 } from '@aws-sdk/client-sesv2';
+import { SESEmailProvider } from './ses.provider';
 
 test('should trigger ses library correctly', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
