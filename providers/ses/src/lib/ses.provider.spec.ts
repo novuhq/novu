@@ -22,34 +22,24 @@ test('should trigger ses library correctly', async () => {
     to: 'test@test2.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
-    text: 'Mail content',
+    attachments: [
+      { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
+    ],
   };
   const response = await provider.sendMessage(mockNotifireMessage);
 
   const expectedSESEmail = {
-    Content: {
-      Simple: {
-        Body: {
-          Html: {
-            Data: mockNotifireMessage.html,
-            Charset: 'UTF-8',
-          },
-          Text: {
-            Data: mockNotifireMessage.text,
-            Charset: 'UTF-8',
-          },
-        },
-        Subject: {
-          Data: mockNotifireMessage.subject,
-          Charset: 'UTF-8',
-        },
+    from: mockConfig.from,
+    html: mockNotifireMessage.html,
+    subject: mockNotifireMessage.subject,
+    to: mockNotifireMessage.to,
+    attachments: [
+      {
+        contentType: 'text/plain',
+        content: 'test',
+        filename: 'test.txt',
       },
-    },
-    Destination: {
-      ToAddresses: [mockNotifireMessage.to],
-    },
-    FromEmailAddress: mockConfig.from,
-    ReplyToAddresses: [mockConfig.from],
+    ],
   };
 
   expect(spy).toHaveBeenCalled();

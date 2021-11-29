@@ -32,7 +32,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.39.0",
-    "@notifire/core": "^0.2.5"
+    "@notifire/core": "^0.2.5",
+    "nodemailer-ses-transport": "^1.5.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

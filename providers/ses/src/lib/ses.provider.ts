@@ -36,13 +36,18 @@ export class SESEmailProvider implements IEmailProvider {
     to,
     from,
     subject,
+    attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
     const result = await this.transporter.sendMail({
       from: from || this.config.from,
-      to: Array.isArray(to) ? to : [to],
+      to,
       subject,
-      text,
       html,
+      attachments: attachments?.map((attachment) => ({
+        filename: attachment?.name,
+        content: attachment.file.toString(),
+        contentType: attachment.mime,
+      })),
     });
 
     return {
