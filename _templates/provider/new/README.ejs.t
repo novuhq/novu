@@ -1,10 +1,11 @@
 ---
     to: providers/<%= name %>/README.md
 ---
-
+<% LowerType = h.changeCase.lower(type) -%>
+<% PascalName = h.changeCase.pascal(name) -%>
 # Notifire <%= h.changeCase.pascal(name) %> Provider
 
-A <%= h.changeCase.pascal(name) %> email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A <%= PascalName %> <%= LowerType %> provider library for [@notifire/core](https://github.com/notifirehq/notifire)
 
 ## Usage
 

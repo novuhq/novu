@@ -2,25 +2,28 @@
     to: providers/<%= name %>/src/lib/<%= name %>.provider.ts
 ---
 
+<% PascalType = h.changeCase.pascal(type) -%>
+<% UpperType = h.changeCase.upper(type) -%>
+<% PascalName = h.changeCase.pascal(name) -%>
 import {
   ChannelTypeEnum,
-  IEmailOptions,
-  IEmailProvider,
   ISendMessageSuccessResponse,
+  I<%= PascalType %>Options,
+  I<%= PascalType %>Provider,
 } from '@notifire/core';
 
-export class <%= h.changeCase.pascal(name) %>EmailProvider implements IEmailProvider {
-  channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+export class <%= PascalName %><%= PascalType %>Provider implements I<%= PascalType %>Provider {
+  channelType = ChannelTypeEnum.<%= UpperType %> as ChannelTypeEnum.<%= UpperType %>;
 
   constructor(
     private config: {
-      apiKey: string;
+      <%= UpperType === 'EMAIL' ? 'apiKey: string;' : null %>
     }
   ) {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    options: I<%= PascalType %>Options
   ): Promise<ISendMessageSuccessResponse> {
 
 
