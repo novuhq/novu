@@ -1,7 +1,7 @@
 ---
-    to: providers/<%= name %>/.eslintrc.json
+    to: providers/<%= name %>/.eslintrc.js
 ---
 
 {
-  "extends": "../../.eslintrc.json"
+  "extends": "../../.eslintrc.js"
 }
