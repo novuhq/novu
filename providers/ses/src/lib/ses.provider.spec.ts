@@ -1,10 +1,10 @@
-import { SESv2 } from '@aws-sdk/client-sesv2';
+import { SESClient } from '@aws-sdk/client-ses';
 import { SESEmailProvider } from './ses.provider';
 
 test('should trigger ses library correctly', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
   const spy = jest
-    .spyOn(SESv2.prototype, 'sendEmail')
+    .spyOn(SESClient.prototype, 'send')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return mockResponse as any;
@@ -28,21 +28,6 @@ test('should trigger ses library correctly', async () => {
   };
   const response = await provider.sendMessage(mockNotifireMessage);
 
-  const expectedSESEmail = {
-    from: mockConfig.from,
-    html: mockNotifireMessage.html,
-    subject: mockNotifireMessage.subject,
-    to: mockNotifireMessage.to,
-    attachments: [
-      {
-        contentType: 'text/plain',
-        content: 'test',
-        filename: 'test.txt',
-      },
-    ],
-  };
-
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith(expectedSESEmail);
   expect(response.id).toEqual(mockResponse.MessageId);
 });
