@@ -9,7 +9,7 @@ For a provider template you can copy one of our existing provider in the `provid
 
 ## Description
 
-Providers allow us to handle message delivery over multiple channels. We have multiple providers for each channel (SMS, Email, Push, Direct, and orthers). To get started with adding a new provider lets look at setting up our repository. 
+Providers allow us to handle message delivery over multiple channels. We have multiple providers for each channel (SMS, Email, Push, Direct, and others). To get started with adding a new provider let's look at setting up our repository.
 
 ## Initialization
 
@@ -43,13 +43,13 @@ $ npx hygen provider new
   SMS
 ```
 
-For this example we will be selecting `EMAIL` as our provider type. The name for our provider will be exampleProvider.
+For this example, we will be selecting `EMAIL` as our provider type. The name for our provider will be exampleProvider.
 
 ```zsh
 ? Write the provider name camelCased: › exampleProvider
 ```
 
-Once our exampleProvider is generated we will need to begin working from within `/providers/exampleProvider` to begin adding our provider. Be sure to write test alongside your provider. See below for template examples for our `exampleProvider`.
+Once our exampleProvider is generated we will need to begin working from within `/providers/exampleProvider` to begin adding our provider. Be sure to write the test alongside your provider. See below for template examples for our `exampleProvider`.
 
 ```ts
 import {
