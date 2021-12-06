@@ -31,7 +31,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@aws-sdk/client-sesv2": "^3.39.0",
+    "emailjs": "3.7.0",
+    "@aws-sdk/client-ses": "3.43.0",
     "@notifire/core": "^0.2.5"
   },
   "devDependencies": {
