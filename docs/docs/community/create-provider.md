@@ -49,7 +49,7 @@ For this example we will be selecting `EMAIL` as our provider type. The name for
 ? Write the provider name camelCased: › exampleProvider
 ```
 
-Once our exampleProvider is generated we will need to begin working from within `/providers/exampleProvider` to begin adding our provider. Be sure to write test alongside your provider. See below for template instances for our `exampleProvider`.
+Once our exampleProvider is generated we will need to begin working from within `/providers/exampleProvider` to begin adding our provider. Be sure to write test alongside your provider. See below for template examples for our `exampleProvider`.
 
 ```ts
 import {
