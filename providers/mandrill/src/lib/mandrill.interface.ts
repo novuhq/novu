@@ -12,8 +12,14 @@ export interface IMandrillSendOptions {
     subject: string;
     html: string;
     to: { email: string; type: 'to' | string }[];
-    attachments: IAttachmentOptions[];
+    attachments: IMandrillAttachment[];
   };
+}
+
+export interface IMandrillAttachment {
+  content: string;
+          type: string;
+          name: string;
 }
 
 export interface IMandrillSendResponse {
