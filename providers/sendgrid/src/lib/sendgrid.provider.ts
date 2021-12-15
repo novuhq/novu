@@ -31,7 +31,7 @@ export class SendgridEmailProvider implements IEmailProvider {
       substitutions: {},
       attachments: options.attachments?.map((attachment) => {
         return {
-          content: attachment.file.toString(),
+          content: attachment.file.toString('base64'),
           filename: attachment.name,
           type: attachment.mime,
         };
