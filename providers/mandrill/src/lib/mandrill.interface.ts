@@ -18,8 +18,8 @@ export interface IMandrillSendOptions {
 
 export interface IMandrillAttachment {
   content: string;
-          type: string;
-          name: string;
+  type: string;
+  name: string;
 }
 
 export interface IMandrillSendResponse {
