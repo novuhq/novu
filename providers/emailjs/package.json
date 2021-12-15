@@ -1,6 +1,6 @@
 {
   "name": "@notifire/emailjs",
-  "version": "0.2.5",
+  "version": "0.3.2-alpha.3",
   "description": "An emailjs provider for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -44,13 +44,12 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.2.5",
+    "@notifire/core": "^0.3.2-alpha.3",
     "emailjs": "^3.6.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/jest": "^27.0.1",
-    "ts-jest": "^27.0.5",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
@@ -61,7 +60,7 @@
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
     "standard-version": "^9.0.0",
-
+    "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
     "typedoc": "^0.19.0"
   },

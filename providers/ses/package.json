@@ -1,6 +1,6 @@
 {
   "name": "@notifire/ses",
-  "version": "0.2.5",
+  "version": "0.3.2-alpha.3",
   "description": "A ses wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -31,9 +31,9 @@
     "node": ">=10"
   },
   "dependencies": {
-    "emailjs": "3.7.0",
     "@aws-sdk/client-ses": "3.43.0",
-    "@notifire/core": "^0.2.5"
+    "@notifire/core": "^0.3.2-alpha.3",
+    "emailjs": "3.7.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
