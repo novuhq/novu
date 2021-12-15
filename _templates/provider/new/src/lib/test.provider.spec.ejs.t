@@ -2,7 +2,9 @@
     to: providers/<%= name %>/src/lib/<%= name %>.provider.spec.ts
 ---
 
-import { <%= h.changeCase.pascal(name) %>EmailProvider } from './<%= name %>.provider';
+<% PascalName = h.changeCase.pascal(name) -%>
+<% PascalType = h.changeCase.pascal(type) -%>
+import { <%= PascalName %><%= PascalType %>Provider } from './<%= name %>.provider';
 
 test('should trigger <%= name %> library correctly', async () => {
 
