@@ -1,6 +1,6 @@
 # Notifire Nexmo Provider
 
-A Nexmo sns provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A Nexmo SMS provider library for [@notifire/core](https://github.com/notifirehq/notifire)
 
 ## Usage
 

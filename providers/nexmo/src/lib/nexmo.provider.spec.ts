@@ -10,7 +10,7 @@ test('should trigger nexmo library correctly', async () => {
     .spyOn(provider['vonageClient']['message'], 'sendSms')
     .mockImplementation(async () => {
       return {
-        messages: [{'message-id': '123'}]
+        messages: [{ 'message-id': '123' }],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
     });

@@ -19,28 +19,31 @@ export class NexmoSmsProvider implements ISmsProvider {
       from: string;
     }
   ) {
-    this.vonageClient = new Vonage({apiKey: config.apiKey, apiSecret: config.apiSecret});
+    this.vonageClient = new Vonage({
+      apiKey: config.apiKey,
+      apiSecret: config.apiSecret,
+    });
   }
 
   async sendMessage(
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const vonageResponseId : string = await new Promise((resolve, reject) => {
+    const vonageResponseId: string = await new Promise((resolve, reject) => {
       this.vonageClient.message.sendSms(
         this.config.from,
         options.to,
         options.content,
         {},
         (err, responseData) => {
-          if (err) reject(err);
-          resolve(responseData.messages[0]["message-id"])
+          if (err) return reject(err);
+          return resolve(responseData.messages[0]['message-id']);
         }
       );
     });
 
     return {
       id: vonageResponseId,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
     };
   }
 }
