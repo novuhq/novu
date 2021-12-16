@@ -1,6 +1,6 @@
 {
   "name": "@notifire/nexmo",
-  "version": "0.2.3",
+  "version": "0.3.2",
   "description": "A nexmo wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",

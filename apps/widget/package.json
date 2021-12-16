@@ -1,11 +1,11 @@
 {
   "name": "@notifire/widget",
-  "version": "0.3.2-alpha.5",
+  "version": "0.3.2",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
-    "@notifire/sdk": "^0.3.2-alpha.5",
-    "@notifire/shared": "^0.3.2-alpha.5",
+    "@notifire/sdk": "^0.3.2",
+    "@notifire/shared": "^0.3.2",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
@@ -34,8 +34,8 @@
   },
   "devDependencies": {
     "@craco/craco": "^6.1.1",
-    "@notifire/dal": "^0.3.2-alpha.5",
-    "@notifire/testing": "^0.3.2-alpha.5",
+    "@notifire/dal": "^0.3.2",
+    "@notifire/testing": "^0.3.2",
     "@types/moment": "^2.13.0",
     "@types/react-router-dom": "^5.1.7",
     "@types/styled-components": "^5.1.7",

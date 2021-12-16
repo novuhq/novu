@@ -1,6 +1,6 @@
 {
   "name": "@notifire/nodemailer",
-  "version": "0.3.2-alpha.5",
+  "version": "0.3.2",
   "description": "A nodemailer wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -44,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.3.2-alpha.5",
+    "@notifire/core": "^0.3.2",
     "nodemailer": "^6.6.5"
   },
   "devDependencies": {
