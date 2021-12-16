@@ -5,8 +5,11 @@ test('should trigger sms77 correctly', async () => {
     apiKey: '<sms77-api-key>',
     from: '+1145678',
   });
+
   const spy = jest
-    .spyOn(provider['sms77Client'], 'sms')
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    .spyOn(provider.sms77Client, 'sms')
     .mockImplementation(async () => {
       return {
         messages: [{ id: null }],

@@ -1,8 +1,8 @@
-name: Test @notifire/twilio
+name: Test providers
 on:
   push:
     paths:
-      - "providers/twilio/**"
+      - "providers/**"
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -16,5 +16,4 @@ jobs:
       - run: yarn bootstrap
       - run: yarn build
       - name: Test
-        working-directory: "providers/twilio"
-        run: yarn run build
+        run: yarn test:providers

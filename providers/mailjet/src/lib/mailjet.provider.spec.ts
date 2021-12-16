@@ -54,7 +54,7 @@ test('should trigger mailjet library correctly and return proper response', asyn
     from: 'testFrom@test.com',
   });
 
-  const response = await provider.sendMessage({
+  const messageResponse = await provider.sendMessage({
     to: 'testTo@test2.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
@@ -72,7 +72,7 @@ test('should trigger mailjet library correctly and return proper response', asyn
       },
     ],
   });
-  expect(response).toStrictEqual({
+  expect(messageResponse).toStrictEqual({
     id: 'a9e7-437c-84f8-e2c2d5958014',
     date: 'Sun, 24 Oct 2021 15:56:29 GMT',
   });

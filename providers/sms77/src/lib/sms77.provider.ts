@@ -8,6 +8,7 @@ import {
 import Sms77Client, { SmsJsonResponse, SmsParams } from 'sms77-client';
 
 if (!globalThis.fetch) {
+  // eslint-disable-next-line global-require
   globalThis.fetch = require('node-fetch');
 }
 

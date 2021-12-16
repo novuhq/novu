@@ -23,6 +23,7 @@
     "build:web": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --ignore '{@notifire/widget,@notifire/sdk,@notifire/api}'",
     "build:widget": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --ignore '{@notifire/web,@notifire/ws}'",
     "build:sdk": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --scope @notifire/sdk",
+    "test:providers": "find providers -name package.json -not -path \"*/node_modules/*\" -exec bash -c \"npm --prefix \\$(dirname {}) test\" \\;",
     "release:patch": "lerna version patch",
     "release:prerelease": "lerna version prerelease",
     "start:e2e:api": "cd apps/api && yarn run start:test",

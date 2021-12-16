@@ -6,8 +6,11 @@ test('should trigger nexmo library correctly', async () => {
     apiSecret: '<vonage-api-secret>',
     from: '+112345',
   });
+
   const spy = jest
-    .spyOn(provider['vonageClient']['message'], 'sendSms')
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    .spyOn(provider.vonageClient.message, 'sendSms')
     .mockImplementation(async () => {
       return {
         messages: [{ 'message-id': '123' }],

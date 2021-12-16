@@ -7,13 +7,16 @@ test('should trigger Twilio correctly', async () => {
     from: '+112345',
   });
   const spy = jest
-    .spyOn(provider['twilioClient']['messages'], 'create')
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    .spyOn(provider.twilioClient.messages, 'create')
     .mockImplementation(async () => {
       return {
-        dateCreated: new Date()
+        dateCreated: new Date(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
     });
+
   await provider.sendMessage({
     to: '+176543',
     content: 'SMS Content',

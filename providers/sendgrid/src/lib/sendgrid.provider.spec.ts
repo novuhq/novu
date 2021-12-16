@@ -32,7 +32,7 @@ test('should trigger sendgrid correctly', async () => {
     attachments: [
       {
         type: 'text/plain',
-        content: Buffer.from('dGVzdA==').toString(),
+        content: Buffer.from('ZEdWemRBPT0=').toString(),
         filename: 'test.txt',
       },
     ],
