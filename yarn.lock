@@ -4739,6 +4739,15 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@notifire/core@^0.2.3":
+  version "0.2.5"
+  resolved "https://registry.yarnpkg.com/@notifire/core/-/core-0.2.5.tgz#a0de22c5584f3d0ce3acf0c97c3af4d4ee83142e"
+  integrity sha512-0SC2T7lx/j9uJZu8fgCj8jq6IHXfYtqx63G+1iz+X487kOlK3dODDehokcKAtp82woKkcro7q6m9RaugDmQu9Q==
+  dependencies:
+    handlebars "^4.7.7"
+    lodash.get "^4.4.2"
+    lodash.merge "^4.6.2"
+
 "@notifire/node@^1.0.4":
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/@notifire/node/-/node-1.0.5.tgz#63323042d9dd6e5ffed699cf62d53dbe56bd1132"
@@ -6557,6 +6566,15 @@
   version "4.5.2"
   resolved "https://registry.yarnpkg.com/@vendia/serverless-express/-/serverless-express-4.5.2.tgz#b9ddcea0590fb171cf9f64b9a677f183708e62b6"
   integrity sha512-mekBOPnBxfhIvBYKVwfvjp9NtS+bOs3F08Vudxa3Fb7zkxtdjRn0UMLRT6zwWf6i4V5rjk2aEhzbIDSCV1GQ0w==
+
+"@vonage/server-sdk@^2.10.10":
+  version "2.10.10"
+  resolved "https://registry.yarnpkg.com/@vonage/server-sdk/-/server-sdk-2.10.10.tgz#fa815d285b075b2b82d3df49ad8441a013cb2147"
+  integrity sha512-rqYmwVMnmvJUwjq8sgUrfA7Ynw4NMdQ+UUY+aoMTpNDRmWr/UZ6uP/G5p+CuAukO58EvmOfCMD5kuRHjHObvMw==
+  dependencies:
+    jsonwebtoken "^8.4.0"
+    request "^2.88.2"
+    uuid "^8.3.0"
 
 "@webassemblyjs/ast@1.11.0":
   version "1.11.0"
@@ -17894,7 +17912,7 @@ jsonparse@^1.2.0:
   resolved "https://registry.yarnpkg.com/jsonparse/-/jsonparse-1.3.1.tgz#3f4dae4a91fac315f71062f8521cc239f1366280"
   integrity sha1-P02uSpH6wxX3EGL4UhzCOfE2YoA=
 
-jsonwebtoken@8.5.1, jsonwebtoken@^8.2.0, jsonwebtoken@^8.5.1:
+jsonwebtoken@8.5.1, jsonwebtoken@^8.2.0, jsonwebtoken@^8.4.0, jsonwebtoken@^8.5.1:
   version "8.5.1"
   resolved "https://registry.yarnpkg.com/jsonwebtoken/-/jsonwebtoken-8.5.1.tgz#00e71e0b8df54c2121a1f26137df2280673bcc0d"
   integrity sha512-XjwVfRS6jTMsqYs0EsuJ4LGxXV14zQybNd4L2r0UvbVnSF9Af8x7p5MzbJ90Ioz/9TI41/hTCvznF/loiSzn8w==
@@ -27661,7 +27679,7 @@ typescript@^2.2.2:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.9.2.tgz#1cbf61d05d6b96269244eb6a3bce4bd914e0f00c"
   integrity sha512-Gr4p6nFNaoufRIY4NMdpQRNmgxVIGMs4Fcu/ujdYk3nAZqk7supzBE9idmvfZIlH/Cuj//dvi+019qEue9lV0w==
 
-typescript@^4.0.2, typescript@^4.0.3, typescript@^4.0.5, typescript@^4.1.2, typescript@^4.1.3, typescript@^4.4.3:
+typescript@^4.0.3, typescript@^4.0.5, typescript@^4.1.2, typescript@^4.1.3, typescript@^4.4.3:
   version "4.4.4"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.4.4.tgz#2cd01a1a1f160704d3101fd5a58ff0f9fcb8030c"
   integrity sha512-DqGhF5IKoBl8WNf8C1gu8q0xZSInh9j1kJJMqT3a94w1JzVaBU4EXOSMrz9yDqMT0xt3selp83fuFMQ0uzv6qA==
