@@ -6,8 +6,11 @@ test('should trigger plivo correctly', async () => {
     authToken: '<plivo-token>',
     from: '+1145678',
   });
+
   const spy = jest
-    .spyOn(provider['plivoClient']['messages'], 'create')
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    .spyOn(provider.plivoClient.messages, 'create')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;

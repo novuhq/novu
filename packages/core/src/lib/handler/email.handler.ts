@@ -1,6 +1,10 @@
 import { compileTemplate } from '../content/content.engine';
 import { IEmailProvider } from '../provider/provider.interface';
-import { IMessage, ITriggerPayload } from '../template/template.interface';
+import {
+  ChannelTypeEnum,
+  IMessage,
+  ITriggerPayload,
+} from '../template/template.interface';
 import { ITheme } from '../theme/theme.interface';
 
 export class EmailHandler {
@@ -11,6 +15,12 @@ export class EmailHandler {
   ) {}
 
   async send(data: ITriggerPayload) {
+    const attachments = data.$attachments?.filter((item) =>
+      item.channels?.length
+        ? item.channels?.includes(ChannelTypeEnum.EMAIL)
+        : true
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const branding: any = data?.$branding || {};
 
@@ -45,10 +55,11 @@ export class EmailHandler {
       );
     }
 
-    await this.provider.sendMessage({
+    return await this.provider.sendMessage({
       to: data.$email,
       subject,
       html,
+      attachments,
     });
   }
 }

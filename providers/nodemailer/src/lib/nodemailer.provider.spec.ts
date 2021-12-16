@@ -14,27 +14,40 @@ jest.mock('nodemailer', () => {
   };
 });
 
-test('should trigger nodemailer correctly', async () => {
-  const provider = new NodemailerProvider({
-    from: 'test@test.com',
-    host: 'test.test.email',
-    user: 'test@test.com',
-    password: 'test123',
-    port: 587,
-    secure: false,
-  });
+const mockConfig = {
+  host: 'test.test.email',
+  port: 587,
+  secure: false,
+  from: 'test@test.com',
+  user: 'test@test.com',
+  password: 'test123',
+};
 
-  await provider.sendMessage({
-    to: 'test@test2.com',
-    subject: 'test subject',
-    html: '<div> Mail Content </div>',
-  });
+const mockNotifireMessage = {
+  to: 'test@test2.com',
+  subject: 'test subject',
+  html: '<div> Mail Content </div>',
+  attachments: [
+    { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
+  ],
+};
+
+test('should trigger nodemailer correctly', async () => {
+  const provider = new NodemailerProvider(mockConfig);
+  await provider.sendMessage(mockNotifireMessage);
 
   expect(sendMailMock).toHaveBeenCalled();
   expect(sendMailMock).toHaveBeenCalledWith({
-    from: 'test@test.com',
-    html: '<div> Mail Content </div>',
-    subject: 'test subject',
-    to: 'test@test2.com',
+    from: mockConfig.from,
+    html: mockNotifireMessage.html,
+    subject: mockNotifireMessage.subject,
+    to: mockNotifireMessage.to,
+    attachments: [
+      {
+        contentType: 'text/plain',
+        content: 'test',
+        filename: 'test.txt',
+      },
+    ],
   });
 });

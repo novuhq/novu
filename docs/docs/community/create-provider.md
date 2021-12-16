@@ -30,7 +30,7 @@ cd packages/core && yarn run build
 After the project is initialized creating a new provider is achievable with the following.
 
 ```zsh
-yarn run generate:provide
+yarn run generate:provider
 ```
 
 Choose the provider type.

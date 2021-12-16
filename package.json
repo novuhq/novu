@@ -3,7 +3,6 @@
   "private": true,
   "scripts": {
     "publish": "lerna publish from-package",
-    "version": "lerna version --conventional-commits --no-push",
     "commit": "cz",
     "generate:provider": "npx hygen provider new",
     "start": "cross-env TZ=UTC mono-run start:dev --stream 500",
@@ -11,6 +10,8 @@
     "test": "cross-env CI=true mono-run test:watch --stream --parallel",
     "clean": "lerna clean",
     "bootstrap": "lerna bootstrap",
+    "copy:files": "cpx README.md packages/core",
+    "prerelease": "npm run copy:files",
     "start:web": "cross-env lerna run --parallel --include-dependencies --scope @notifire/web start:static:build",
     "start:widget": "cross-env lerna run --parallel --include-dependencies --scope @notifire/widget start:test",
     "start:ws": "cross-env lerna run --parallel --include-dependencies --scope @notifire/ws start:test",
@@ -22,6 +23,7 @@
     "build:web": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --ignore '{@notifire/widget,@notifire/sdk,@notifire/api}'",
     "build:widget": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --ignore '{@notifire/web,@notifire/ws}'",
     "build:sdk": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --scope @notifire/sdk",
+    "test:providers": "find providers -name package.json -not -path \"*/node_modules/*\" -exec bash -c \"npm --prefix \\$(dirname {}) test\" \\;",
     "release:patch": "lerna version patch",
     "release:prerelease": "lerna version prerelease",
     "start:e2e:api": "cd apps/api && yarn run start:test",
@@ -37,6 +39,8 @@
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-functional": "^3.0.2",
     "ts-node": "^9.0.0",
+    "typescript": "^4.4.3",
+    "cpx": "^1.5.0",
     "@auto-it/jira": "^10.27.1",
     "@auto-it/npm": "^10.27.1",
     "@auto-it/released": "^10.27.1",
@@ -64,8 +68,7 @@
     "lint-staged": "^10.2.2",
     "monorepo-run": "git+https://github.com/scopsy/monorepo-run.git",
     "prettier": "^2.0.5",
-    "rimraf": "^3.0.2",
-    "typescript": "^4.0.2"
+    "rimraf": "^3.0.2"
   },
   "workspaces": {
     "packages": [

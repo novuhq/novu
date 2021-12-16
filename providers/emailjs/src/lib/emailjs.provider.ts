@@ -4,7 +4,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@notifire/core';
-import { Message, SMTPClient } from 'emailjs';
+import { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { EmailJsConfig } from './emailjs.config';
 
 export class EmailJsProvider implements IEmailProvider {
@@ -29,20 +29,33 @@ export class EmailJsProvider implements IEmailProvider {
     subject,
     text,
     html,
+    attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
+    const attachmentsModel: MessageAttachment[] = attachments?.map(
+      (attachment) => {
+        return {
+          name: attachment.name,
+          data: attachment.file.toString(),
+          type: attachment.mime,
+        };
+      }
+    );
+
+    attachmentsModel?.push({ data: html, alternative: true });
+
     const sent = await this.client.sendAsync(
       new Message({
         from: from || this.config.from,
         to,
         subject,
         text,
-        attachment: { data: html, alternative: true },
+        attachment: attachmentsModel,
       })
     );
     return {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       id: sent.header['message-id']!,
-      date: sent.header['date'],
+      date: sent.header.date,
     };
   }
 }
