@@ -114,7 +114,7 @@ Notifire provides a single API to manage providers across multiple channels with
 - [x] [Twilio](https://github.com/notifirehq/notifire/tree/master/providers/twilio)
 - [x] [Plivo](https://github.com/notifirehq/notifire/tree/master/providers/plivo)
 - [x] [SNS](https://github.com/notifirehq/notifire/tree/master/providers/sns)
-- [ ] Nexmo (Vonage)
+- [x] Nexmo (Vonage)(https://github.com/notifirehq/notifire/tree/master/providers/nexmo)
 - [ ] Bandwidth
 - [ ] RingCentral
 
