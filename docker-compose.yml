@@ -25,8 +25,8 @@ services:
       context: .
       dockerfile: Dockerfile.api
     environment:
-      NODE_ENV: local
-      MONGO_URL: mongodb://mongodb:27017/notifire-db
+      NODE_ENV: ${NODE_ENV}
+      MONGO_URL: ${MONGO_URL}
       REDIS_HOST: redis
     ports:
       - "3000:3000"
@@ -40,8 +40,8 @@ services:
       context: .
       dockerfile: Dockerfile.ws
     environment:
-      NODE_ENV: local
-      MONGO_URL: mongodb://mongodb:27017/notifire-db
+      NODE_ENV: ${NODE_ENV}
+      MONGO_URL: ${MONGO_URL}
       REDIS_HOST: redis
     ports:
       - "3002:3002"
