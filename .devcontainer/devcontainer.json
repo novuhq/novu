@@ -1,23 +1,30 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.202.3/containers/typescript-node
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.208.0/containers/javascript-node-mongo
+// Update the VARIANT arg in docker-compose.yml to pick a Node.js version
 {
-  "name": "Notifire ENV",
-  "runArgs": ["--init"],
-  "build": {
-    "dockerfile": "Dockerfile",
-    "args": {
-      "VARIANT": "14"
-    }
-  },
+	"name": "Notifire",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
 
-  "postCreateCommand": ["yarn install && yarn bootstrap"],
+	// Set *default* container specific settings.json values on container create.
+	"settings": {},
 
-  // Set *default* container specific settings.json values on container create.
-  "settings": {},
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"dbaeumer.vscode-eslint",
+		"mongodb.mongodb-vscode" 
+	],
 
-  // Add the IDs of extensions you want installed when the container is created.
-  "extensions": ["dbaeumer.vscode-eslint"],
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [4200, 3000, 27017],
 
-  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-  "remoteUser": "node"
+  "onCreateCommand": ["yarn", "install"],
+  "postCreateCommand": ["yarn", "start"],
+
+	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "node",
+	"features": {
+		"github-cli": "latest"
+	}
 }
