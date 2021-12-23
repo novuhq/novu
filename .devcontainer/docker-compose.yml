@@ -28,7 +28,7 @@ services:
     image: mongo:latest
     restart: unless-stopped
     volumes:
-      - mongodb-data:/data/db
+      - mongodb-content:/data/db
     # Uncomment to change startup options
     # environment:
     #  MONGO_INITDB_ROOT_USERNAME: root
@@ -39,4 +39,4 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
 volumes:
-  mongodb-data: null
+  mongodb-content: null
