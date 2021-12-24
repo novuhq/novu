@@ -1,6 +1,6 @@
 {
   "name": "@notifire/core",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -52,9 +52,9 @@
     "codecov": "^3.5.0",
     "cz-conventional-changelog": "^3.3.0",
     "jest": "^27.0.6",
-    "run-p": "0.0.0",
     "npm-run-all": "^4.1.5",
     "open-cli": "^6.0.1",
+    "run-p": "0.0.0",
     "ts-jest": "^27.0.5",
     "typedoc": "^0.19.0"
   },

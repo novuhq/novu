@@ -1,6 +1,6 @@
 {
   "name": "@notifire/web",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
@@ -13,7 +13,7 @@
     "@editorjs/editorjs": "^2.19.3",
     "@editorjs/paragraph": "^2.8.0",
     "@jackwilsdon/craco-use-babelrc": "^1.0.0",
-    "@notifire/shared": "^0.3.3",
+    "@notifire/shared": "^0.3.4",
     "@sentry/react": "^6.3.1",
     "@sentry/tracing": "^6.3.1",
     "@testing-library/jest-dom": "^5.11.4",
@@ -59,8 +59,8 @@
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/runtime": "^7.14.6",
-    "@notifire/dal": "^0.3.3",
-    "@notifire/testing": "^0.3.3",
+    "@notifire/dal": "^0.3.4",
+    "@notifire/testing": "^0.3.4",
     "@types/react": "^17.0.0",
     "@types/styled-components": "^5.1.7",
     "babel-plugin-styled-components": "^1.12.0",
