@@ -11,7 +11,7 @@ export interface IMessageValidator {
 }
 
 export interface IMessage {
-  subject?: string;
+  subject?: string | ((config: IMessage) => string);
   channel: ChannelTypeEnum;
   template: string | ((payload: ITriggerPayload) => Promise<string> | string);
   active?: boolean | ((payload: ITriggerPayload) => Promise<boolean> | boolean);

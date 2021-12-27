@@ -116,8 +116,17 @@ export class TriggerEngine {
     if (message.template && typeof message.template === 'string') {
       mergedResults.push(...getHandlebarsVariables(message.template));
     }
+
     if (message.subject) {
-      mergedResults.push(...getHandlebarsVariables(message.subject));
+      if (typeof message.subject === 'string') {
+        mergedResults.push(...getHandlebarsVariables(message.subject));
+      } else if (typeof message.subject === 'function') {
+        mergedResults.push(...getHandlebarsVariables(message.subject(message)));
+      } else {
+        throw new Error(
+          "Subject must be either of 'string' or 'function' type"
+        );
+      }
     }
 
     const deduplicatedResults = [...new Set(mergedResults)];

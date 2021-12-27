@@ -1,7 +1,140 @@
 import { IEmailProvider } from '../provider/provider.interface';
-import { ChannelTypeEnum } from '../template/template.interface';
+import { ChannelTypeEnum, IMessage } from '../template/template.interface';
 import { IEmailTemplate, ITheme } from '../theme/theme.interface';
 import { EmailHandler } from './email.handler';
+
+test('it should be able to accept subject as a function and read message configuration', async () => {
+  const provider: IEmailProvider = {
+    id: 'email-provider',
+    channelType: ChannelTypeEnum.EMAIL,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
+  };
+
+  const theme: ITheme = {
+    branding: {
+      logo: 'logo-url',
+    },
+    emailTemplate: new EmailTemplate('logo-url'),
+  };
+
+  const subjectCallback = (message: IMessage) =>
+    (message.active as boolean) ? 'should pass' : 'should fail';
+
+  const spy = jest.spyOn(provider, 'sendMessage');
+  const emailHandler = new EmailHandler(
+    {
+      subject: subjectCallback,
+      channel: ChannelTypeEnum.EMAIL as ChannelTypeEnum,
+      template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
+      active: true,
+    },
+    provider,
+    theme
+  );
+
+  await emailHandler.send({
+    $email: 'test@email.com',
+    $user_id: '1234',
+    firstName: 'test name',
+  });
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
+    subject: 'should pass',
+    to: 'test@email.com',
+  });
+  spy.mockRestore();
+});
+
+test('it should be able to accept subject as a function and access outer scope', async () => {
+  const provider: IEmailProvider = {
+    id: 'email-provider',
+    channelType: ChannelTypeEnum.EMAIL,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
+  };
+
+  const theme: ITheme = {
+    branding: {
+      logo: 'logo-url',
+    },
+    emailTemplate: new EmailTemplate('logo-url'),
+  };
+
+  const outScopeVariable = 'test';
+
+  const subjectCallback = () => outScopeVariable;
+
+  const spy = jest.spyOn(provider, 'sendMessage');
+  const emailHandler = new EmailHandler(
+    {
+      subject: subjectCallback,
+      channel: ChannelTypeEnum.EMAIL as ChannelTypeEnum,
+      template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
+    },
+    provider,
+    theme
+  );
+
+  await emailHandler.send({
+    $email: 'test@email.com',
+    $user_id: '1234',
+    firstName: 'test name',
+  });
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
+    subject: 'test',
+    to: 'test@email.com',
+  });
+  spy.mockRestore();
+});
+
+test('it should be able to accept subject as a function', async () => {
+  const provider: IEmailProvider = {
+    id: 'email-provider',
+    channelType: ChannelTypeEnum.EMAIL,
+    sendMessage: () =>
+      Promise.resolve({ id: '1', date: new Date().toString() }),
+  };
+
+  const theme: ITheme = {
+    branding: {
+      logo: 'logo-url',
+    },
+    emailTemplate: new EmailTemplate('logo-url'),
+  };
+
+  const subjectCallback = () => 'test';
+
+  const spy = jest.spyOn(provider, 'sendMessage');
+  const emailHandler = new EmailHandler(
+    {
+      subject: subjectCallback,
+      channel: ChannelTypeEnum.EMAIL as ChannelTypeEnum,
+      template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
+    },
+    provider,
+    theme
+  );
+
+  await emailHandler.send({
+    $email: 'test@email.com',
+    $user_id: '1234',
+    firstName: 'test name',
+  });
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    html: `<div data-test-id="theme-layout-wrapper"><img src="logo-url"/><div><h1>Test Header</div> Name: test name</div></div>`,
+    subject: 'test',
+    to: 'test@email.com',
+  });
+  spy.mockRestore();
+});
 
 test('send should call the provider method correctly', async () => {
   const provider: IEmailProvider = {
