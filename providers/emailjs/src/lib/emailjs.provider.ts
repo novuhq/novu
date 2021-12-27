@@ -31,7 +31,7 @@ export class EmailJsProvider implements IEmailProvider {
     html,
     attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const attachmentsModel: MessageAttachment[] = attachments?.map(
+    const attachmentsModel: MessageAttachment[] = attachments ? attachments.map(
       (attachment) => {
         return {
           name: attachment.name,
@@ -39,7 +39,7 @@ export class EmailJsProvider implements IEmailProvider {
           type: attachment.mime,
         };
       }
-    );
+    ) : [];
 
     attachmentsModel?.push({ data: html, alternative: true });
 
