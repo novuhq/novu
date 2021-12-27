@@ -1,6 +1,6 @@
 {
   "name": "@notifire/emailjs",
-  "version": "0.3.4",
+  "version": "0.3.5-alpha.0",
   "description": "An emailjs provider for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
