@@ -19,19 +19,19 @@ test('it should be able to accept subject as a function and read message configu
   };
 
   const subjectCallback = (message: IMessage) =>
-    (message.active as boolean) ? 'should pass' : 'should fail';
+    (message.active as typeof emailHandlerMessage['active'])
+      ? 'should pass'
+      : 'should fail';
+
+  const emailHandlerMessage = {
+    subject: subjectCallback,
+    channel: ChannelTypeEnum.EMAIL as ChannelTypeEnum,
+    template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
+    active: true,
+  };
 
   const spy = jest.spyOn(provider, 'sendMessage');
-  const emailHandler = new EmailHandler(
-    {
-      subject: subjectCallback,
-      channel: ChannelTypeEnum.EMAIL as ChannelTypeEnum,
-      template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
-      active: true,
-    },
-    provider,
-    theme
-  );
+  const emailHandler = new EmailHandler(emailHandlerMessage, provider, theme);
 
   await emailHandler.send({
     $email: 'test@email.com',
