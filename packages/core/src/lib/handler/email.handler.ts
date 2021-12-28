@@ -34,7 +34,10 @@ export class EmailHandler {
     if (typeof this.message.template === 'string') {
       html = compileTemplate(this.message.template, templatePayload);
     } else {
-      html = await this.message.template(templatePayload);
+      html = compileTemplate(
+        await this.message.template(templatePayload),
+        templatePayload
+      );
     }
 
     let subjectParsed;
