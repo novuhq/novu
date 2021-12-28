@@ -1,5 +1,8 @@
 import { IEmailProvider } from '../provider/provider.interface';
-import { ChannelTypeEnum, IMessage } from '../template/template.interface';
+import {
+  ChannelTypeEnum,
+  ITriggerPayload,
+} from '../template/template.interface';
 import { IEmailTemplate, ITheme } from '../theme/theme.interface';
 import { EmailHandler } from './email.handler';
 
@@ -18,10 +21,8 @@ test('it should be able to accept subject as a function and read message configu
     emailTemplate: new EmailTemplate('logo-url'),
   };
 
-  const subjectCallback = (message: IMessage) =>
-    (message.active as typeof emailHandlerMessage['active'])
-      ? 'should pass'
-      : 'should fail';
+  const subjectCallback = (message: ITriggerPayload) =>
+    message.$email === 'test@email.com' ? 'should pass' : 'should fail';
 
   const emailHandlerMessage = {
     subject: subjectCallback,

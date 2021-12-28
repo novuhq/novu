@@ -98,7 +98,7 @@ export class TriggerEngine {
   }
 
   private getMissingVariables(message: IMessage, data: ITriggerPayload) {
-    const variables = this.extractMessageVariables(message);
+    const variables = this.extractMessageVariables(message, data);
 
     const missingVariables: string[] = [];
     for (const variable of variables) {
@@ -110,7 +110,7 @@ export class TriggerEngine {
     return missingVariables;
   }
 
-  private extractMessageVariables(message: IMessage) {
+  private extractMessageVariables(message: IMessage, data: ITriggerPayload) {
     const mergedResults: string[] = [];
 
     if (message.template && typeof message.template === 'string') {
@@ -121,7 +121,7 @@ export class TriggerEngine {
       if (typeof message.subject === 'string') {
         mergedResults.push(...getHandlebarsVariables(message.subject));
       } else if (typeof message.subject === 'function') {
-        mergedResults.push(...getHandlebarsVariables(message.subject(message)));
+        mergedResults.push(...getHandlebarsVariables(message.subject(data)));
       } else {
         throw new Error(
           "Subject must be either of 'string' or 'function' type"

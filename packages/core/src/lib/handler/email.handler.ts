@@ -42,7 +42,7 @@ export class EmailHandler {
     if (typeof this.message.subject === 'string') {
       subjectParsed = this.message.subject || '';
     } else if (typeof this.message.subject === 'function') {
-      subjectParsed = this.message.subject(this.message);
+      subjectParsed = this.message.subject(data);
     } else {
       throw new Error(
         `Subject must be either of 'string' or 'function' type. Type ${typeof this
