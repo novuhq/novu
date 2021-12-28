@@ -34,9 +34,26 @@ export class EmailHandler {
     if (typeof this.message.template === 'string') {
       html = compileTemplate(this.message.template, templatePayload);
     } else {
-      html = await this.message.template(templatePayload);
+      html = compileTemplate(
+        await this.message.template(templatePayload),
+        templatePayload
+      );
     }
-    const subject = compileTemplate(this.message.subject || '', data);
+
+    let subjectParsed;
+
+    if (typeof this.message.subject === 'string') {
+      subjectParsed = this.message.subject || '';
+    } else if (typeof this.message.subject === 'function') {
+      subjectParsed = this.message.subject(data);
+    } else {
+      throw new Error(
+        `Subject must be either of 'string' or 'function' type. Type ${typeof this
+          .message.subject} passed`
+      );
+    }
+
+    const subject = compileTemplate(subjectParsed, data);
 
     if (this.theme?.emailTemplate?.getEmailLayout()) {
       const themeVariables =
