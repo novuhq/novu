@@ -1,6 +1,6 @@
 {
   "name": "@notifire/sns",
-  "version": "0.3.3",
+  "version": "0.3.6-alpha.0",
   "description": "A sns wrapper for notifire",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.39.0",
-    "@notifire/core": "^0.3.3"
+    "@notifire/core": "^0.3.6-alpha.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

@@ -4,7 +4,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@notifire/core';
-import { Message } from 'emailjs';
+import { Message, MessageAttachment, MessageHeaders } from 'emailjs';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { SESConfig } from './ses.config';
 
@@ -31,20 +31,29 @@ export class SESEmailProvider implements IEmailProvider {
     subject,
     attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const message = new Message({
-      from: from || this.config.from,
-      to,
-      text,
-      subject,
-      attachment: [
-        { data: html, alternative: true },
+    const attachmentsPayload: MessageAttachment[] = [
+      { data: html, alternative: true },
+    ];
+
+    if (attachments && Array.isArray(attachments) && attachments.length) {
+      attachmentsPayload.push(
         ...attachments?.map((attachment) => ({
           name: attachment?.name,
           data: attachment.file.toString(),
           type: attachment.mime,
-        })),
-      ],
-    });
+        }))
+      );
+    }
+
+    const messagePayload: Partial<MessageHeaders> = {
+      from: from || this.config.from,
+      to,
+      text,
+      subject,
+      attachment: attachmentsPayload,
+    };
+
+    const message = new Message(messagePayload);
 
     const rawMessage = await message.readAsync();
     const command = new SendRawEmailCommand({
@@ -52,6 +61,7 @@ export class SESEmailProvider implements IEmailProvider {
         Data: new Uint8Array(Buffer.from(rawMessage, 'utf8')),
       },
     });
+
     const result = await this.ses.send(command);
 
     return {

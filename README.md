@@ -70,6 +70,8 @@ const passwordResetTemplate = await notifire.registerTemplate({
   id: 'password-reset',
   messages: [
     {
+      // you can pass here a function as well:
+      // subject: (message: IMessage) => getTranslation('common.users')
       subject: 'Your password reset request',
       channel: ChannelTypeEnum.EMAIL,
       template: `
@@ -108,6 +110,7 @@ Notifire provides a single API to manage providers across multiple channels with
 - [x] [Mailjet](https://github.com/notifirehq/notifire/tree/master/providers/mailjet)
 - [x] [Mandrill](https://github.com/notifirehq/notifire/tree/master/providers/mandrill)
 - [x] [SendinBlue](https://github.com/notifirehq/notifire/tree/master/providers/sendinblue)
+- [x] [EmailJS](https://github.com/notifirehq/notifire/tree/master/providers/emailjs)
 - [ ] SparkPost
 
 #### 📞 SMS

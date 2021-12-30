@@ -13,6 +13,8 @@ const passwordResetTemplate = await notifire.registerTemplate({
   id: "password-reset",
   messages: [
     {
+      // you can pass here a function as well:
+      // subject: (message: IMessage) => getTranslation('common.users')
       subject: "Your password reset request",
       channel: ChannelTypeEnum.EMAIL,
       template: `

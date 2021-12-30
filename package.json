@@ -17,7 +17,7 @@
     "start:ws": "cross-env lerna run --parallel --include-dependencies --scope @notifire/ws start:test",
     "start:server": "cross-env lerna run --parallel --ignore @notifire/client start:dev",
     "start:server:prod": "lerna run --parallel --ignore @notifire/client start",
-    "build": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build",
+    "build": "lerna run build",
     "build:api": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --ignore '{@notifire/web,@notifire/widget,@notifire/sdk,@notifire/ws}'",
     "build:ws": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --ignore '{@notifire/web,@notifire/widget,@notifire/sdk,@notifire/api}'",
     "build:web": "node --max-old-space-size=1900 ./node_modules/.bin/lerna run build --ignore '{@notifire/widget,@notifire/sdk,@notifire/api}'",
