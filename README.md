@@ -70,9 +70,9 @@ const passwordResetTemplate = await notifire.registerTemplate({
   id: 'password-reset',
   messages: [
     {
-      // you can pass here a function as well:
-      // subject: (message: IMessage) => getTranslation('common.users')
-      subject: 'Your password reset request',
+      subject: `You password reset request`,
+      // Or for translation or custom logic you can use function syntax
+      // subject: (payload: ITriggerPayload) => getTranslation('resetPasswordSubject', payload.language),
       channel: ChannelTypeEnum.EMAIL,
       template: `
           Hi {{firstName}}!
@@ -92,6 +92,7 @@ await notifire.trigger('<REPLACE_WITH_EVENT_NAME>', {
   $email: "test@email.com",
   firstName: "John",
   lastName: "Doe",
+  language: "en",
   organization: {
     logo: 'https://evilcorp.com/logo.png'
   }
