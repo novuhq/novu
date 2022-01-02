@@ -21,7 +21,7 @@ yarn add @notifire/core
 ### Register Providers
 
 Choose the providers you need, and register them to with Notifire,
-full list of providers is available [here](https://www.notifire.co/communication-providers), full documentation for providers, and interfaces is available at [?? no link?].
+full list of providers is available at [full_providers_list], full documentation for providers, and interfaces is available at [].
 
 ```ts
 import { Notifire, ChannelTypeEnum } from "@notifire/core";
