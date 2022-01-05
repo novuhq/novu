@@ -54,13 +54,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthHandlerComponent>
           <Switch>
-            {/*   <Route path="/auth/signup">
+            <Route path="/auth/signup">
               <SignUpPage />
-            </Route> */}
+            </Route>
             <Route path="/auth/login">
               <LoginPage />
             </Route>
-            {/* <Route path="/auth/reset/request">
+            <Route path="/auth/reset/request">
               <PasswordResetPage />
             </Route>
             <Route path="/auth/reset/:token">
@@ -100,7 +100,7 @@ function App() {
                   </AppLayout>
                 </Switch>
               </PrivateRoute>
-            </Route> */}
+            </Route>
           </Switch>
         </AuthHandlerComponent>
       </QueryClientProvider>
