@@ -34,6 +34,7 @@
     "@notifire/shared": "^0.3.5",
     "@notifire/testing": "^0.3.5",
     "@sentry/node": "^6.3.3",
+    "class-transformer": "^0.5.1",
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",
     "nest-raven": "^7.2.0",
