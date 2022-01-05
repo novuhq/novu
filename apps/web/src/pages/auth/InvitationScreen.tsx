@@ -10,7 +10,7 @@ export default function InvitationScreen() {
   const { token } = useParams<{ token: string }>();
   const { data, isLoading } = useQuery<IGetInviteResponseDto, IGetInviteResponseDto>(
     'getInviteTokenData',
-    () => getInviteTokenData(token),
+    () => getInviteTokenData(token || ''),
     {
       enabled: !!token,
     }

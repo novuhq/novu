@@ -80,15 +80,31 @@
   },
   "workspaces": {
     "nohoist": [
+      "**/@cypress",
+      "**/@cypress/**",
+      "**/@ant-design/icons",
+      "**/@ant-design/icons/**",
+      "**/antd",
+      "**/antd/**",
       "**/react-scripts",
       "**/react-scripts/**",
       "**/react",
       "**/react-dom",
       "**/react/**",
+      "**/react-router",
+      "**/react-router/**",
       "**/react-router-dom",
       "**/react-router-dom/**",
+      "**/styled-components",
+      "**/styled-components/**",
       "**/@cypress",
-      "**/@cypress/**"
+      "**/@cypress/**",
+      "**/@storybook/**",
+      "**/@storybook",
+      "**/@craco",
+      "**/@craco/**",
+      "**/@babel",
+      "**/@babel/**"
     ]
   },
   "lint-staged": {
