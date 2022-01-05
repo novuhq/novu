@@ -5,7 +5,7 @@ import styled from 'styled-components';
 export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type: 'button' | 'text') => void }) {
   const menu = (
     <Menu>
-      <Menu.Item>
+      <Menu.Item key="control-bar-add">
         <Button
           icon={<BuildOutlined />}
           type="link"
@@ -15,7 +15,7 @@ export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type
           Add Button
         </Button>
       </Menu.Item>
-      <Menu.Item>
+      <Menu.Item key="add-text-button">
         <Button
           icon={<MenuOutlined />}
           type="link"

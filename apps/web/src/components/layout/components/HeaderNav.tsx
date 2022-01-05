@@ -92,7 +92,7 @@ export function HeaderNav({}: Props) {
 
             <Dropdown placement="bottomRight" overlay={profileMenu} trigger={['click']}>
               <Menu className="d-flex align-item-center" mode="horizontal">
-                <Menu.Item>
+                <Menu.Item key="avatar">
                   <Avatar
                     data-test-id="header-profile-avatar"
                     src={user?.profilePicture || '/static/images/avatar.png'}
