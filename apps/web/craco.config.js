@@ -8,7 +8,6 @@ module.exports = {
   },
   plugins: [
     { plugin: BabelRcPlugin },
-
     {
       plugin: CracoAntDesignPlugin,
       options: {

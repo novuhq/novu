@@ -26,9 +26,7 @@ export default function PasswordResetPage() {
                     <h1>Password Reset</h1>
                     <p>
                       Know your password?
-                      <Link to="/auth/login">
-                        <a> Login</a>
-                      </Link>
+                      <Link to="/auth/login">Login</Link>
                     </p>
                     <div className="mt-4">
                       <PasswordRequestResetForm onSent={onSent} />
