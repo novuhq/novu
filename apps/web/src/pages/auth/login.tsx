@@ -15,9 +15,7 @@ export default function LoginPage() {
                   <h1>Sign In</h1>
                   <p>
                     Don't have an account yet?
-                    <Link to="/auth/signup">
-                      <a> Sign Up</a>
-                    </Link>
+                    <Link to="/auth/signup">Sign Up</Link>
                   </p>
                   <div className="mt-4">
                     <LoginForm />

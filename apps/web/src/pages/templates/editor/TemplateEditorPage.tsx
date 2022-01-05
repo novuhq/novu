@@ -43,10 +43,11 @@ import { getNotificationGroups } from '../../../api/notifications';
 import { api } from '../../../api/api.client';
 
 function TemplateEditorPage() {
-  const { data: serverGroups, isLoading: loadingGroups, refetch: refetchGroups } = useQuery(
-    'notificationGroups',
-    getNotificationGroups
-  );
+  const {
+    data: serverGroups,
+    isLoading: loadingGroups,
+    refetch: refetchGroups,
+  } = useQuery('notificationGroups', getNotificationGroups);
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },
     { error: string; message: string; statusCode: number },

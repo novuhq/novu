@@ -19,9 +19,11 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             <Controller
               name={`inAppMessages.${index}.template.content` as any}
               control={control}
-              render={({ field }) => (
-                <InAppEditorBlock {...field} contentPlaceholder="Notification content goes here" />
-              )}
+              render={({ field }) => {
+                const { ref, ...fieldRefs } = field;
+
+                return <InAppEditorBlock {...fieldRefs} contentPlaceholder="Notification content goes here" />;
+              }}
             />
           </Form.Item>
         </Col>

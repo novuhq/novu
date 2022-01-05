@@ -63,7 +63,7 @@
     "cypress:run": "cypress run",
     "cypress:open": "npm run start:shell:test & cypress open",
     "start:shell:test": "http-server . -p 4700",
-    "start:shell:sdk": "http-server ../../node_modules/@notifire/sdk/dist -p 4702",
+    "start:shell:sdk": "http-server ../../libs/sdk/dist -p 4702",
     "start:api": "cd ../../ && yarn run start:e2e:api"
   },
   "browserslist": {
@@ -80,12 +80,31 @@
   },
   "workspaces": {
     "nohoist": [
+      "**/@cypress",
+      "**/@cypress/**",
+      "**/@ant-design/icons",
+      "**/@ant-design/icons/**",
+      "**/antd",
+      "**/antd/**",
       "**/react-scripts",
       "**/react-scripts/**",
       "**/react",
       "**/react-dom",
+      "**/react/**",
+      "**/react-router",
+      "**/react-router/**",
+      "**/react-router-dom",
+      "**/react-router-dom/**",
+      "**/styled-components",
+      "**/styled-components/**",
       "**/@cypress",
-      "**/@cypress/**"
+      "**/@cypress/**",
+      "**/@storybook/**",
+      "**/@storybook",
+      "**/@craco",
+      "**/@craco/**",
+      "**/@babel",
+      "**/@babel/**"
     ]
   },
   "lint-staged": {

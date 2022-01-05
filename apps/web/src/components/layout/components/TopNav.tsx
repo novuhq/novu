@@ -9,7 +9,7 @@ export function TopNav({}: Props) {
       <div className="top-nav light">
         <div className="top-nav-wrapper">
           <Menu mode="horizontal">
-            <Menu.Item>
+            <Menu.Item key="test">
               <span>Test Path</span>
             </Menu.Item>
           </Menu>

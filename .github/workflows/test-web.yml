@@ -41,23 +41,18 @@ jobs:
         with:
           mongodb-version: 4.2.8
 
-      - name: restore lerna
-        uses: actions/cache@master
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
         with:
-          path: |
-            node_modules
-            **/node_modules
-            /home/runner/.cache/Cypress
-          key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
 
-
-      # Runs a single command using the runners shell
-      - name: Install project dependencies
-        run: yarn install
-
-      # Runs a single command using the runners shell
-      - name: Bootstrap
-        run: yarn run bootstrap
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.0.2
+          run_install: true
 
       - name: Start Local Stack
         env:
@@ -103,3 +98,4 @@ jobs:
           wait-on: http://localhost:1336/v1/health-check
           browser: chrome
           headless: true
+          install: false

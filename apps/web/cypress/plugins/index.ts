@@ -5,8 +5,6 @@ const injectReactScriptsDevServer = require('@cypress/react/plugins/react-script
 import { DalService, NotificationTemplateEntity, UserRepository } from '@notifire/dal';
 import { UserSession, SubscribersService, NotificationTemplateService, NotificationsService } from '@notifire/testing';
 
-const preprocess = require('@cypress/react/plugins/react-scripts');
-
 const userRepository = new UserRepository();
 module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits

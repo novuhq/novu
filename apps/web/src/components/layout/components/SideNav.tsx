@@ -11,30 +11,29 @@ const { Sider } = Layout;
 type Props = {};
 
 export function SideNav({}: Props) {
-  const { data: organization, isLoading: isOrganizationLoading } = useQuery<IOrganizationEntity>(
-    '/v1/organizations/me'
-  );
+  const { data: organization, isLoading: isOrganizationLoading } =
+    useQuery<IOrganizationEntity>('/v1/organizations/me');
 
   return (
     <Sider className="side-nav" width={250} collapsed={false} theme="light">
       <Scrollbars autoHide>
         <Menu mode="inline">
-          <Menu.Item icon={<NotificationOutlined />}>
+          <Menu.Item icon={<NotificationOutlined />} key="templates">
             <NavLink to="/templates" className="nav-text" data-test-id="side-nav-templates-link">
               <span>Notifications</span>
             </NavLink>
           </Menu.Item>
-          <Menu.Item icon={<MonitorOutlined />}>
+          <Menu.Item icon={<MonitorOutlined />} key="activities">
             <NavLink to="/activities" className="nav-text" data-test-id="side-nav-activities-link">
               <span>Activity Feed</span>
             </NavLink>
           </Menu.Item>
-          <Menu.Item icon={<SettingOutlined />}>
+          <Menu.Item icon={<SettingOutlined />} key="settings">
             <NavLink to="/settings/widget" className="nav-text" data-test-id="side-nav-settings-link">
               <span>Settings</span>
             </NavLink>
           </Menu.Item>
-          <Menu.Item icon={<TeamOutlined />}>
+          <Menu.Item icon={<TeamOutlined />} key="members">
             <NavLink to="/settings/organization" className="nav-text" data-test-id="side-nav-settings-organization">
               <span>Team Members</span>
             </NavLink>
