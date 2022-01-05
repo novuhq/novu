@@ -98,3 +98,4 @@ jobs:
           wait-on: http://localhost:1336/v1/health-check
           browser: chrome
           headless: true
+          install: false

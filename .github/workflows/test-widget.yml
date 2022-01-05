@@ -82,5 +82,6 @@ jobs:
           wait-on: http://localhost:3500/v1/health-check
           record: true
           browser: chrome
+          install: false
           headless: true
 
