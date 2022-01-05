@@ -16,7 +16,7 @@ Providers allow us to handle message delivery over multiple channels. We have mu
 To setup the repository, be sure to install the required packages. 
 
 ```zsh
-yarn install
+npm run setup:dev
 ```
 
 At the root of the project build the `core` package to get started.
