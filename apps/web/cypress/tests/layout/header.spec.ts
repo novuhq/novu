@@ -4,6 +4,8 @@ describe('App Header', function () {
     cy.visit('/');
   });
 
+  it.only('should switch to dark mode', function () {});
+
   it('should display correct user photo', function () {
     cy.getByTestId('header-profile-avatar')
       .find('img')

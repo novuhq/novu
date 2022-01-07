@@ -8,6 +8,7 @@ import * as capitalize from 'lodash.capitalize';
 import { AuthContext } from '../../../store/authContext';
 import { getUser } from '../../../api/user';
 import { getCurrentOrganization } from '../../../api/organization';
+import { ThemeContext } from '../../../store/themeContext';
 
 const { Header } = Layout;
 
@@ -22,6 +23,7 @@ const menuItem = [
 
 export function HeaderNav({}: Props) {
   const authContext = useContext(AuthContext);
+  const themeContext = useContext(ThemeContext);
   const { data: user, isLoading: isUserLoading } = useQuery<IUserEntity>('/v1/users/me', getUser);
   const { data: organization, isLoading: isOrganizationLoading } = useQuery<IOrganizationEntity>(
     '/v1/organizations/me',
@@ -29,7 +31,7 @@ export function HeaderNav({}: Props) {
   );
 
   const profileMenu = (
-    <div className="nav-profile nav-dropdown" style={{ background: 'white' }}>
+    <div className="nav-profile nav-dropdown">
       <div className="nav-profile-header">
         <div className="d-flex" style={{ display: 'flex' }}>
           <Avatar style={{ minWidth: 45 }} size={45} src={user?.profilePicture || '/static/images/avatar.png'} />
@@ -73,7 +75,6 @@ export function HeaderNav({}: Props) {
         style={{
           padding: 0,
           display: 'flex',
-          background: 'white',
           borderBottom: '1px solid #edf2f9',
           boxShadow: '0 1px 4px -1px rgb(0 0 0 / 15%)',
         }}>
@@ -82,6 +83,7 @@ export function HeaderNav({}: Props) {
         </div>
         <div className="nav" style={{ width: `calc(100% - 250px)`, display: 'flex' }}>
           <div className="nav-right" style={{ marginLeft: 'auto' }}>
+            <Button onClick={() => themeContext.toggleTheme()}>TEST</Button>
             <div
               className="d-flex align-item-center"
               style={{ lineHeight: 40, alignItems: 'center', justifyContent: 'center' }}>

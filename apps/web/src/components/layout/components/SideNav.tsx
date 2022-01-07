@@ -5,17 +5,21 @@ import { useQuery } from 'react-query';
 import { IOrganizationEntity } from '@notifire/shared';
 import { NavLink } from 'react-router-dom';
 import { SettingOutlined, NotificationOutlined, MonitorOutlined, TeamOutlined } from '@ant-design/icons';
+import { useContext } from 'react';
+import { ThemeContext } from '../../../store/themeContext';
 
 const { Sider } = Layout;
 
 type Props = {};
 
 export function SideNav({}: Props) {
+  const themeContext = useContext(ThemeContext);
+
   const { data: organization, isLoading: isOrganizationLoading } =
     useQuery<IOrganizationEntity>('/v1/organizations/me');
 
   return (
-    <Sider className="side-nav" width={250} collapsed={false} theme="light">
+    <Sider className="side-nav" width={250} collapsed={false} theme={themeContext.theme}>
       <Scrollbars autoHide>
         <Menu mode="inline">
           <Menu.Item icon={<NotificationOutlined />} key="templates">
