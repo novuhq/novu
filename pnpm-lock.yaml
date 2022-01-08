@@ -11,6 +11,7 @@ importers:
       '@commitlint/config-angular': ^13.2.0
       '@hewmen/serverless-plugin-typescript': ^1.1.17
       '@nrwl/cli': ^13.4.3
+      '@nrwl/nx-cloud': ^13.0.2
       '@nrwl/tao': ^13.4.3
       '@nrwl/workspace': ^13.4.3
       '@types/node': ^14.6.0
@@ -41,6 +42,7 @@ importers:
       lerna: ^3.20.2
       lint-staged: ^10.2.2
       monorepo-run: git+https://github.com/scopsy/monorepo-run.git
+      pnpm: ^6.25.0
       prettier: ^2.0.5
       rimraf: ^3.0.2
       ts-node: ^9.0.0
@@ -53,6 +55,7 @@ importers:
       '@commitlint/config-angular': 13.2.0
       '@hewmen/serverless-plugin-typescript': 1.1.17
       '@nrwl/cli': 13.4.3
+      '@nrwl/nx-cloud': 13.0.2
       '@nrwl/tao': 13.4.3
       '@nrwl/workspace': 13.4.3_f4724441d51958646230fbbccce44345
       '@types/node': 14.18.3
@@ -83,6 +86,7 @@ importers:
       lerna: 3.22.1
       lint-staged: 10.5.4
       monorepo-run: github.com/scopsy/monorepo-run/aa7f44fa44321f1350a6f46ec37d843b49185160
+      pnpm: 6.25.0
       prettier: 2.5.1
       rimraf: 3.0.2
       ts-node: 9.1.1_typescript@4.5.4
@@ -3118,7 +3122,7 @@ packages:
     dependencies:
       '@babel/compat-data': 7.16.4
       '@babel/core': 7.16.5
-      '@babel/helper-validator-option': 7.14.5
+      '@babel/helper-validator-option': 7.16.7
       browserslist: 4.19.1
       semver: 6.3.0
 
@@ -3401,7 +3405,6 @@ packages:
   /@babel/helper-validator-option/7.16.7:
     resolution: {integrity: sha512-TRtenOuRUVo9oIQGPC5G9DgK4743cdxvtOw0weQNpZXaS16SCBi5MNjZF8vba3ETURjZpTbVn7Vvcf2eAwFozQ==}
     engines: {node: '>=6.9.0'}
-    dev: true
 
   /@babel/helper-wrap-function/7.16.5:
     resolution: {integrity: sha512-2J2pmLBqUqVdJw78U0KPNdeE2qeuIyKoG4mKV7wAq3mc4jJG282UgjZw4ZYDnqiWQuS3Y3IYdF/AQ6CpyBV3VA==}
@@ -9525,7 +9528,7 @@ packages:
     peerDependencies:
       '@nestjs/common': ^6.0.0 || ^7.0.0
     dependencies:
-      '@nestjs/common': 7.6.18_4ab6445a855071205dd8b6fcfe0156b2
+      '@nestjs/common': 7.6.18_8e660063ba811a43d6111680a474f992
       '@types/jsonwebtoken': 8.5.0
       jsonwebtoken: 8.5.1
     dev: false
@@ -9573,8 +9576,8 @@ packages:
       '@nestjs/common': ^7.0.0
       '@nestjs/core': ^7.0.0
     dependencies:
-      '@nestjs/common': 7.6.18_4ab6445a855071205dd8b6fcfe0156b2
-      '@nestjs/core': 7.6.18_cf22c14faf7a8288645a80ae61717d6f
+      '@nestjs/common': 7.6.18_8e660063ba811a43d6111680a474f992
+      '@nestjs/core': 7.6.18_fca22a7f84480a15cc73c053da5814a6
       body-parser: 1.19.0
       cors: 2.8.5
       express: 4.17.1
@@ -9684,8 +9687,8 @@ packages:
       reflect-metadata: ^0.1.13
       rxjs: ^6.5.4
     dependencies:
-      '@nestjs/common': 7.6.18_4ab6445a855071205dd8b6fcfe0156b2
-      '@nestjs/core': 7.6.18_cf22c14faf7a8288645a80ae61717d6f
+      '@nestjs/common': 7.6.18_8e660063ba811a43d6111680a474f992
+      '@nestjs/core': 7.6.18_fca22a7f84480a15cc73c053da5814a6
       check-disk-space: 2.1.0
       deprecate: 1.1.1
       reflect-metadata: 0.1.13
@@ -9706,8 +9709,8 @@ packages:
         optional: true
     dependencies:
       optional: 0.1.4
-      '@nestjs/common': 7.6.18_4ab6445a855071205dd8b6fcfe0156b2
-      '@nestjs/core': 7.6.18_cf22c14faf7a8288645a80ae61717d6f
+      '@nestjs/common': 7.6.18_8e660063ba811a43d6111680a474f992
+      '@nestjs/core': 7.6.18_fca22a7f84480a15cc73c053da5814a6
       '@nestjs/platform-express': 7.6.18_2664420588e0901c7943acb4693cbaf4
       tslib: 2.2.0
     dev: true
@@ -9911,6 +9914,20 @@ packages:
       - ts-node
       - typescript
       - utf-8-validate
+    dev: true
+
+  /@nrwl/nx-cloud/13.0.2:
+    resolution: {integrity: sha512-Y29iEks9Yb7VoY1RsuoCGsFtbnWP3J256haqTDx/SMYNYJBuZ0p7Cgg9EBjf5AHusnqT/YxE47iuv6CKNzd7Wg==}
+    hasBin: true
+    dependencies:
+      axios: 0.21.4
+      chalk: 4.1.0
+      node-machine-id: 1.1.12
+      rxjs: 6.5.5
+      strip-json-comments: 3.1.1
+      tar: 6.1.11
+    transitivePeerDependencies:
+      - debug
     dev: true
 
   /@nrwl/tao/13.4.3:
@@ -10154,7 +10171,7 @@ packages:
   /@octokit/types/2.16.2:
     resolution: {integrity: sha512-O75k56TYvJ8WpAakWwYRN8Bgu60KrmX0z1KqFp1kNiFNkgW+JW+9EBKZ+S33PU6SLvbihqd+3drvPxKK68Ee8Q==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: true
 
   /@octokit/types/6.34.0:
@@ -16183,7 +16200,7 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001292
+      caniuse-lite: 1.0.30001296
       electron-to-chromium: 1.4.28
       escalade: 3.1.1
       node-releases: 2.0.1
@@ -28353,6 +28370,10 @@ packages:
       util: 0.11.1
       vm-browserify: 1.1.2
 
+  /node-machine-id/1.1.12:
+    resolution: {integrity: sha512-QNABxbrPa3qEIfrE6GOJ7BYIuignnJw7iQ2YPbc3Nla1HzRJjXzZOiikfF8m7eAMfichLt3M4VgLOetqgDmgGQ==}
+    dev: true
+
   /node-mailjet/3.3.4:
     resolution: {integrity: sha512-+IW2swcjiL2Sq1VHpeaqOzU5m++aYSA/ES2IdHvUD6Gchfwb6znioVDfKirPtust+zKw0zKsdivLI1M2QBqcDg==}
     dependencies:
@@ -29891,6 +29912,12 @@ packages:
       ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
+
+  /pnpm/6.25.0:
+    resolution: {integrity: sha512-Hlck6S8j7obFkkfQCnDJXIEBRNK4wIanMzDfpRE5TNbLsJnxbWXGbMV5ZhDf8Q8xy6RkBWdoKAmliL0nLmzxHQ==}
+    engines: {node: '>=12.17'}
+    hasBin: true
+    dev: true
 
   /polished/4.1.3:
     resolution: {integrity: sha512-ocPAcVBUOryJEKe0z2KLd1l9EBa1r5mSwlKpExmrLzsnIzJo4axsoU9O2BjOTkDGDT4mZ0WFE5XKTlR3nLnZOA==}
@@ -33744,6 +33771,13 @@ packages:
       rxjs: ^6.0.0
     dependencies:
       rxjs: 6.6.7
+    dev: true
+
+  /rxjs/6.5.5:
+    resolution: {integrity: sha512-WfQI+1gohdf0Dai/Bbmk5L5ItH5tYqm3ki2c5GdWhKjalzjg93N3avFjVStyZZz+A2Em+ZxKH5bNghw9UeylGQ==}
+    engines: {npm: '>=2.0.0'}
+    dependencies:
+      tslib: 1.14.1
     dev: true
 
   /rxjs/6.6.3:

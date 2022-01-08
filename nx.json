@@ -3,7 +3,7 @@
   "npmScope": "notifirehq",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "@nrwl/workspace/tasks-runners/default",
+      "runner": "@nrwl/nx-cloud",
       "options": {
         "cacheableOperations": [
           "build",
@@ -11,7 +11,9 @@
           "lint",
           "package",
           "prepare"
-        ]
+        ],
+        "canTrackAnalytics": false,
+        "accessToken": "N2EyNDhhMGUtYmJkNS00YzQ5LTg5NDYtODg5ZmE2NDE5YWNmfHJlYWQtd3JpdGU="
       }
     }
   },

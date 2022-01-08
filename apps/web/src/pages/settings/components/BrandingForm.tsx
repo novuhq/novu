@@ -285,7 +285,7 @@ export function BrandingForm({
             placeholder="Select a font family"
             optionFilterProp="children"
             onChange={(value) => setFontFamily(value as string)}
-            filterOption={(input, option) => option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}>
+            filterOption={(input, option) => option?.children?.toLowerCase().indexOf(input.toLowerCase()) >= 0}>
             <Select.Option value="Roboto">Roboto</Select.Option>
             <Select.Option value="Montserrat">Montserrat</Select.Option>
             <Select.Option value="Open Sans">Open Sans</Select.Option>
