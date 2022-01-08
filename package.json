@@ -2,6 +2,7 @@
   "name": "notifirehq",
   "private": true,
   "scripts": {
+    "nx:build": "pnpm nx run-many --target=build --all",
     "publish": "lerna publish from-package",
     "setup:dev": "npx pnpm i",
     "commit": "cz",
@@ -69,7 +70,10 @@
     "lint-staged": "^10.2.2",
     "monorepo-run": "git+https://github.com/scopsy/monorepo-run.git",
     "prettier": "^2.0.5",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "@nrwl/workspace": "latest",
+    "@nrwl/cli": "latest",
+    "@nrwl/tao": "latest"
   },
   "workspaces": {
     "packages": [
