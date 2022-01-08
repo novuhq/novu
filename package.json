@@ -9,8 +9,7 @@
     "start": "cross-env TZ=UTC mono-run start:dev --stream 500",
     "lint": "mono-run lint -- . --cache --ext .js,.jsx,.ts,.tsx",
     "test": "cross-env CI=true mono-run test:watch --stream --parallel",
-    "clean": "lerna clean",
-    "bootstrap": "lerna bootstrap",
+    "bootstrap": "pnpm setup:dev",
     "copy:files": "cpx README.md packages/core",
     "prerelease": "npm run copy:files",
     "start:web": "cross-env lerna run --parallel --include-dependencies --scope @notifire/web start:static:build",
@@ -19,11 +18,11 @@
     "start:server": "cross-env lerna run --parallel --ignore @notifire/client start:dev",
     "start:server:prod": "lerna run --parallel --ignore @notifire/client start",
     "build": "nx run-many --target=build --all",
-    "build:api": "lerna run build --ignore '{@notifire/web,@notifire/widget,@notifire/sdk,@notifire/ws}'",
-    "build:ws": "lerna run build --ignore '{@notifire/web,@notifire/widget,@notifire/sdk,@notifire/api}'",
-    "build:web": "lerna run build --ignore '{@notifire/widget,@notifire/sdk,@notifire/api}'",
-    "build:widget": "lerna run build --ignore '{@notifire/web,@notifire/ws}'",
-    "build:sdk": "lerna run build --scope @notifire/sdk",
+    "build:api": "nx build @notifire/api",
+    "build:ws": "nx build @notifire/ws",
+    "build:web": "nx build @notifire/web",
+    "build:widget": "nx build @notifire/widget",
+    "build:sdk": "nx build @notifire/sdk",
     "test:providers": "find providers -name package.json -not -path \"*/node_modules/*\" -exec bash -c \"npm --prefix \\$(dirname {}) test\" \\;",
     "release:patch": "lerna version patch",
     "release:prerelease": "lerna version prerelease",
@@ -72,8 +71,7 @@
     "rimraf": "^3.0.2",
     "@nrwl/workspace": "^13.4.3",
     "@nrwl/cli": "^13.4.3",
-    "@nrwl/tao": "^13.4.3",
-    "pnpm": "^6.25.0"
+    "@nrwl/tao": "^13.4.3"
   },
   "workspaces": {
     "packages": [
@@ -82,11 +80,6 @@
       "packages/*",
       "providers/*"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lerna run --concurrency 1 --stream precommit --since HEAD --exclude-dependents"
-    }
   },
   "lint-staged": {
     "packages/**/*.{ts,json}": [
