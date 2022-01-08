@@ -32,7 +32,7 @@ if (process.env.SENTRY_DSN) {
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
-//
+
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   let app;
   if (expressApp) {

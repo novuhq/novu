@@ -1,10 +1,10 @@
 image:
   file: .gitpod.dockerfile
 tasks:
-  - init: yarn install && yarn run build 
+  - init: pnpm install && pnpm build
     command: mkdir -p /workspace/data && mongod --dbpath /workspace/data 
   - command: redis-server
-  - command: yarn start
+  - command: pnpm start
 ports:
   - port: 4200
     onOpen: open-preview
