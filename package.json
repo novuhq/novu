@@ -71,8 +71,7 @@
     "rimraf": "^3.0.2",
     "@nrwl/workspace": "^13.4.3",
     "@nrwl/cli": "^13.4.3",
-    "@nrwl/tao": "^13.4.3",
-    "pnpm": "^6.25.0"
+    "@nrwl/tao": "^13.4.3"
   },
   "workspaces": {
     "packages": [
