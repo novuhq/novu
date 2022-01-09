@@ -13,10 +13,10 @@ Providers allow us to handle message delivery over multiple channels. We have mu
 
 ## Initialization
 
-To setup the repository, be sure to install the required packages. 
+To setup the repository, run the initial setup command: 
 
 ```zsh
-npm run setup:dev
+npm run setup:project
 ```
 
 At the root of the project build the `core` package to get started.
