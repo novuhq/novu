@@ -55,7 +55,7 @@
   "scripts": {
     "start": "craco start",
     "start:dev": "PORT=4500 npm run start",
-    "start:test": "yarn run start:shell:test & yarn run start:shell:sdk & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 npm run start",
+    "start:test": "pnpm run start:shell:test & pnpm run start:shell:sdk & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 npm run start",
     "build": "craco build",
     "test": "craco test",
     "precommit": "lint-staged",
@@ -64,7 +64,7 @@
     "cypress:open": "npm run start:shell:test & cypress open",
     "start:shell:test": "http-server . -p 4700",
     "start:shell:sdk": "http-server ../../libs/sdk/dist -p 4702",
-    "start:api": "cd ../../ && yarn run start:e2e:api"
+    "start:api": "cd ../../ && pnpm run start:e2e:api"
   },
   "browserslist": {
     "production": [
