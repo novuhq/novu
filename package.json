@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "publish": "lerna publish from-package",
-    "setup:project": "npx pnpm i && node scripts/setup-env-files.js && npm run build",
+    "setup:project": "npx pnpm i && node scripts/setup-env-files.js && npx pnpm build",
     "commit": "cz",
     "generate:provider": "npx hygen provider new",
     "start": "cross-env TZ=UTC mono-run start:dev --stream 500",
