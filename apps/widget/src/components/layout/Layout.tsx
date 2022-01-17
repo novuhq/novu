@@ -37,7 +37,6 @@ const ContentWrapper = styled.div`
 `;
 
 const LayoutWrapper = styled.div`
-  border-radius: 7px;
   background: white;
   height: auto;
 `;
