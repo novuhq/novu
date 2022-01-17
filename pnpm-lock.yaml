@@ -128,6 +128,7 @@ importers:
       agenda: ^4.2.1
       axios: ^0.24.0
       bcrypt: ^5.0.0
+      bull: ^4.2.1
       chai: ^4.2.0
       class-transformer: ^0.5.1
       class-validator: ^0.12.2
@@ -185,6 +186,7 @@ importers:
       agenda: 4.2.1
       axios: 0.24.0
       bcrypt: 5.0.1
+      bull: 4.2.1
       class-transformer: 0.5.1
       class-validator: 0.12.2
       compression: 1.7.4
@@ -3097,7 +3099,7 @@ packages:
       '@babel/core': ^7.0.0
     dependencies:
       '@babel/compat-data': 7.16.4
-      '@babel/helper-validator-option': 7.14.5
+      '@babel/helper-validator-option': 7.16.7
       browserslist: 4.19.1
       semver: 6.3.0
 
@@ -3109,7 +3111,7 @@ packages:
     dependencies:
       '@babel/compat-data': 7.16.4
       '@babel/core': 7.12.3
-      '@babel/helper-validator-option': 7.14.5
+      '@babel/helper-validator-option': 7.16.7
       browserslist: 4.19.1
       semver: 6.3.0
     dev: false
@@ -9528,7 +9530,7 @@ packages:
     peerDependencies:
       '@nestjs/common': ^6.0.0 || ^7.0.0
     dependencies:
-      '@nestjs/common': 7.6.18_8e660063ba811a43d6111680a474f992
+      '@nestjs/common': 7.6.18_4ab6445a855071205dd8b6fcfe0156b2
       '@types/jsonwebtoken': 8.5.0
       jsonwebtoken: 8.5.1
     dev: false
@@ -9576,8 +9578,8 @@ packages:
       '@nestjs/common': ^7.0.0
       '@nestjs/core': ^7.0.0
     dependencies:
-      '@nestjs/common': 7.6.18_8e660063ba811a43d6111680a474f992
-      '@nestjs/core': 7.6.18_fca22a7f84480a15cc73c053da5814a6
+      '@nestjs/common': 7.6.18_4ab6445a855071205dd8b6fcfe0156b2
+      '@nestjs/core': 7.6.18_cf22c14faf7a8288645a80ae61717d6f
       body-parser: 1.19.0
       cors: 2.8.5
       express: 4.17.1
@@ -9687,8 +9689,8 @@ packages:
       reflect-metadata: ^0.1.13
       rxjs: ^6.5.4
     dependencies:
-      '@nestjs/common': 7.6.18_8e660063ba811a43d6111680a474f992
-      '@nestjs/core': 7.6.18_fca22a7f84480a15cc73c053da5814a6
+      '@nestjs/common': 7.6.18_4ab6445a855071205dd8b6fcfe0156b2
+      '@nestjs/core': 7.6.18_cf22c14faf7a8288645a80ae61717d6f
       check-disk-space: 2.1.0
       deprecate: 1.1.1
       reflect-metadata: 0.1.13
@@ -9709,8 +9711,8 @@ packages:
         optional: true
     dependencies:
       optional: 0.1.4
-      '@nestjs/common': 7.6.18_8e660063ba811a43d6111680a474f992
-      '@nestjs/core': 7.6.18_fca22a7f84480a15cc73c053da5814a6
+      '@nestjs/common': 7.6.18_4ab6445a855071205dd8b6fcfe0156b2
+      '@nestjs/core': 7.6.18_cf22c14faf7a8288645a80ae61717d6f
       '@nestjs/platform-express': 7.6.18_2664420588e0901c7943acb4693cbaf4
       tslib: 2.2.0
     dev: true
@@ -16316,6 +16318,22 @@ packages:
       - supports-color
     dev: false
 
+  /bull/4.2.1:
+    resolution: {integrity: sha512-YkCQZMOub++siHw3SbYYXZ5xGEn6Tt3BPoCVq/irPNCxUqUYzta8yDlXyyAsfMKMVj0M7PcnynUabfMf9PFpOA==}
+    engines: {node: '>=10.1'}
+    dependencies:
+      cron-parser: 2.18.0
+      debuglog: 1.0.1
+      get-port: 5.1.1
+      ioredis: 4.28.2
+      lodash: 4.17.21
+      p-timeout: 3.2.0
+      semver: 7.3.5
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /busboy/0.2.14:
     resolution: {integrity: sha1-bCpiLvz0fFe7vh4qnDetNseSVFM=}
     engines: {node: '>=0.8.0'}
@@ -18731,7 +18749,7 @@ packages:
   /cypress-intellij-reporter/0.0.6:
     resolution: {integrity: sha512-KDxeWKKAAGekhg1xmGToSsHDWgogM1hUYakAL4yjKQr9gSI2iyRxcrKlq1/jG4omCbUEY+AZGiiwyKOscY9+Gg==}
     dependencies:
-      mocha: 9.1.3
+      mocha: 9.1.4
     dev: true
 
   /cypress-localstorage-commands/1.6.1_cypress@7.7.0:
@@ -27789,8 +27807,8 @@ packages:
       yargs-unparser: 2.0.0
     dev: true
 
-  /mocha/9.1.3:
-    resolution: {integrity: sha512-Xcpl9FqXOAYqI3j79pEtHBBnQgVXIhpULjGQa7DVb0Po+VzmSIK9kanAiWLHoRR/dbZ2qpdPshuXr8l1VaHCzw==}
+  /mocha/9.1.4:
+    resolution: {integrity: sha512-+q2aV5VlJZuLgCWoBvGI5zEwPF9eEI0kr/sAA9Jm4xMND7RfIEyF8JE7C0JIg8WXRG+P1sdIAb5ccoHPlXLzcw==}
     engines: {node: '>= 12.0.0'}
     hasBin: true
     dependencies:

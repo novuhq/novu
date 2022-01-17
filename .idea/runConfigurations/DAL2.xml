@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="CORE" type="js.build_tools.npm">
+  <configuration default="false" name="DAL" type="js.build_tools.npm">
     <package-json value="$PROJECT_DIR$/libs/dal/package.json" />
     <command value="run" />
     <scripts>
