@@ -28,7 +28,8 @@
     "release:prerelease": "lerna version prerelease",
     "start:e2e:api": "cd apps/api && yarn run start:test",
     "g:module": "hygen module new --name=$npm_config_name",
-    "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module"
+    "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
+    "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env"
   },
   "devDependencies": {
     "@auto-it/jira": "^10.27.1",
