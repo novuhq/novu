@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { authenticate } from 'passport';
+import * as passport from 'passport';
 import { RolesGuard } from './framework/roles.guard';
 import { JwtStrategy } from './services/passport/jwt.strategy';
 import { AuthController } from './auth.controller';
@@ -54,9 +54,9 @@ export class AuthModule implements NestModule {
     if (process.env.GITHUB_OAUTH_CLIENT_ID) {
       consumer
         .apply(
-          authenticate('github', {
+          passport.authenticate('github', {
             session: false,
-            scope: [],
+            scope: ['user:email'],
           })
         )
         .forRoutes({
