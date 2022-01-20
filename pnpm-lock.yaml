@@ -424,7 +424,7 @@ importers:
       react-refresh: ^0.11.0
       react-router-dom: ^5.2.0
       react-scripts: 4.0.1
-      socket.io-client: 2.3.1
+      socket.io-client: 2.4.0
       start-server-and-test: 1.11.6
       styled-components: ^5.2.1
       typescript: ^4.0.3
@@ -456,7 +456,7 @@ importers:
       react-refresh: 0.11.0
       react-router-dom: 5.3.0_react@17.0.2
       react-scripts: 4.0.1_ts-node@9.1.1+typescript@4.5.4
-      socket.io-client: 2.3.1
+      socket.io-client: 2.4.0
       styled-components: 5.3.3_react-dom@17.0.2+react@17.0.2
       typescript: 4.5.4
       web-vitals: 0.2.4
@@ -513,8 +513,8 @@ importers:
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       rxjs: ^6.5.5
-      socket.io: ^4.0.0
-      socket.io-redis: ^5.4.0
+      socket.io: 4.4.1
+      socket.io-redis: 5.4.0
       supertest: ^6.0.0
       ts-jest: ^27.0.7
       ts-loader: ^8.0.8
@@ -542,7 +542,7 @@ importers:
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       rxjs: 6.6.7
-      socket.io: 4.4.0
+      socket.io: 4.4.1
       socket.io-redis: 5.4.0
     devDependencies:
       '@nestjs/cli': 7.6.0
@@ -12640,7 +12640,7 @@ packages:
   /@types/engine.io/3.1.7:
     resolution: {integrity: sha512-qNjVXcrp+1sS8YpRUa714r0pgzOwESdW5UjHL7D/2ZFdBX0BXUXtg1LUrp+ylvqbvMcMWUy73YpRoxPN2VoKAQ==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: true
 
   /@types/eslint-scope/3.7.2:
@@ -15955,6 +15955,7 @@ packages:
 
   /bindings/1.5.0:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
+    requiresBuild: true
     dependencies:
       file-uri-to-path: 1.0.0
     optional: true
@@ -19769,22 +19770,6 @@ packages:
       fast-json-parse: 1.0.3
       objectorarray: 1.0.5
 
-  /engine.io-client/3.4.4:
-    resolution: {integrity: sha512-iU4CRr38Fecj8HoZEnFtm2EiKGbYZcPn3cHxqNGl/tmdWRf60KhK+9vE0JeSjgnlS/0oynEfLgKbT9ALpim0sQ==}
-    dependencies:
-      component-emitter: 1.3.0
-      component-inherit: 0.0.3
-      debug: 3.1.0
-      engine.io-parser: 2.2.1
-      has-cors: 1.1.0
-      indexof: 0.0.1
-      parseqs: 0.0.6
-      parseuri: 0.0.6
-      ws: 6.1.4
-      xmlhttprequest-ssl: 1.5.5
-      yeast: 0.1.2
-    dev: false
-
   /engine.io-client/3.5.2:
     resolution: {integrity: sha512-QEqIp+gJ/kMHeUun7f5Vv3bteRHppHH/FMBQX/esFj/fuYfjyUKWGMo3VCvIP/V8bE9KcjHmRZrhIz2Z9oNsDA==}
     dependencies:
@@ -19842,7 +19827,7 @@ packages:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.12
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
       accepts: 1.3.7
       base64id: 2.0.0
       cookie: 0.4.1
@@ -21293,6 +21278,7 @@ packages:
 
   /file-uri-to-path/1.0.0:
     resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
+    requiresBuild: true
     optional: true
 
   /file-uri-to-path/2.0.0:
@@ -34506,22 +34492,6 @@ packages:
     resolution: {integrity: sha512-Qd/iwn3VskrpNO60BeRyCyr8ZWw9CPZyitW4AQwmRZ8zCiyDiL+znRnWX6tDHXnWn1sJrM1+b6Mn6wEDJJ4aYQ==}
     dev: false
 
-  /socket.io-client/2.3.1:
-    resolution: {integrity: sha512-YXmXn3pA8abPOY//JtYxou95Ihvzmg8U6kQyolArkIyLd0pgVhrfor/iMsox8cn07WCOOvvuJ6XKegzIucPutQ==}
-    dependencies:
-      backo2: 1.0.2
-      component-bind: 1.0.0
-      component-emitter: 1.3.0
-      debug: 3.1.0
-      engine.io-client: 3.4.4
-      has-binary2: 1.0.3
-      indexof: 0.0.1
-      parseqs: 0.0.6
-      parseuri: 0.0.6
-      socket.io-parser: 3.3.2
-      to-array: 0.1.4
-    dev: false
-
   /socket.io-client/2.4.0:
     resolution: {integrity: sha512-M6xhnKQHuuZd4Ba9vltCLT9oa+YvTsP8j9NcEiLElfIg8KeYPyhWOes6x4t+LTAC8enQbE/995AdTem2uNyKKQ==}
     dependencies:
@@ -34602,8 +34572,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /socket.io/4.4.0:
-    resolution: {integrity: sha512-bnpJxswR9ov0Bw6ilhCvO38/1WPtE3eA2dtxi2Iq4/sFebiDJQzgKNYA7AuVVdGW09nrESXd90NbZqtDd9dzRQ==}
+  /socket.io/4.4.1:
+    resolution: {integrity: sha512-s04vrBswdQBUmuWJuuNTmXUVJhP0cVky8bBDhdkf8y0Ptsu7fKU2LuLbts9g+pdmAdyMMn8F/9Mf1/wbtUN0fg==}
     engines: {node: '>=10.0.0'}
     dependencies:
       accepts: 1.3.7
@@ -38349,12 +38319,6 @@ packages:
       async-limiter: 1.0.1
     dev: true
 
-  /ws/6.1.4:
-    resolution: {integrity: sha512-eqZfL+NE/YQc1/ZynhojeV8q+H050oR8AZ2uIev7RU10svA9ZnJUddHcOUZTJLinZ9yEfdA2kSATS2qZK5fhJA==}
-    dependencies:
-      async-limiter: 1.0.1
-    dev: false
-
   /ws/6.2.2:
     resolution: {integrity: sha512-zmhltoSR8u1cnDsD43TX59mzoMZsLKqUweyYBAIvTngR3shc0W6aOZylZmq/7hqyVxPdi+5Ud2QInblgyE72fw==}
     dependencies:
@@ -38448,11 +38412,6 @@ packages:
 
   /xmlchars/2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
-
-  /xmlhttprequest-ssl/1.5.5:
-    resolution: {integrity: sha1-wodrBhaKrcQOV9l+gRkayPQ5iz4=}
-    engines: {node: '>=0.4.0'}
-    dev: false
 
   /xmlhttprequest-ssl/1.6.3:
     resolution: {integrity: sha512-3XfeQE/wNkvrIktn2Kf0869fC0BN6UpydVasGIeSm2B1Llihf7/0UfZM+eCkOw3P7bP4+qPgqhm7ZoxuJtFU0Q==}
