@@ -40,14 +40,6 @@ jobs:
           run_install: true
 
       # Runs a single command using the runners shell
-      - name: Install project dependencies
-        run: pnpm install
-
-      # Runs a single command using the runners shell
-      - name: Bootstrap
-        run: pnpm bootstrap
-
-      # Runs a single command using the runners shell
       - name: Build
         working-directory: libs/sdk
         run: CI='' pnpm build:dev
