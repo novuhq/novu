@@ -44,7 +44,7 @@
     "babel-plugin-styled-components": "^1.12.0",
     "craco-antd": "^1.19.0",
     "cypress": "^7.3.0",
-    "cypress-intellij-reporter": "^0.0.6",
+    "cypress-intellij-reporter": "0.0.7",
     "faker": "^5.4.0",
     "http-server": "^0.12.3",
     "jest": "27.0.6",
