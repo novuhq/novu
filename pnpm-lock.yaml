@@ -149,6 +149,7 @@ importers:
       nodemon: ^2.0.3
       passport: ^0.4.1
       passport-github: ^1.1.0
+      passport-github2: ^0.1.12
       passport-jwt: ^4.0.0
       reflect-metadata: ^0.1.13
       rxjs: ^6.5.5
@@ -203,6 +204,7 @@ importers:
       newrelic: 7.5.2
       passport: 0.4.1
       passport-github: 1.1.0
+      passport-github2: 0.1.12
       passport-jwt: 4.0.0
       reflect-metadata: 0.1.13
       rxjs: 6.6.7
@@ -29649,6 +29651,13 @@ packages:
   /passport-github/1.1.0:
     resolution: {integrity: sha1-jOHj/NYa11eOsd9ZWDnkrqEjVdQ=}
     engines: {node: '>= 0.4.0'}
+    dependencies:
+      passport-oauth2: 1.6.1
+    dev: false
+
+  /passport-github2/0.1.12:
+    resolution: {integrity: sha512-3nPUCc7ttF/3HSP/k9sAXjz3SkGv5Nki84I05kSQPo01Jqq1NzJACgMblCK0fGcv9pKCG/KXU3AJRDGLqHLoIw==}
+    engines: {node: '>= 0.8.0'}
     dependencies:
       passport-oauth2: 1.6.1
     dev: false
