@@ -7,7 +7,6 @@ export interface IUserToken {
   accessToken: string;
   refreshToken: string;
   valid: boolean;
-  lastUsed: Date;
 }
 
 export class UserEntity {
