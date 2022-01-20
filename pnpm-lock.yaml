@@ -116,7 +116,7 @@ importers:
       '@sentry/tracing': ^6.3.6
       '@types/bcrypt': ^3.0.0
       '@types/chai': ^4.2.11
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
       '@types/handlebars': ^4.1.0
       '@types/mocha': ^8.0.1
       '@types/node': ^14.6.0
@@ -217,7 +217,7 @@ importers:
       '@nestjs/testing': 7.6.18_9cd0f963ae6f35bf288217e4f1c45cb4
       '@types/bcrypt': 3.0.1
       '@types/chai': 4.3.0
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
       '@types/mocha': 8.2.3
       '@types/node': 14.18.3
       '@types/passport-github': 1.1.7
@@ -1785,7 +1785,7 @@ packages:
     peerDependencies:
       graphql: 0.13.1 - 15
     dependencies:
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
       '@types/fs-capacitor': 2.0.0
       '@types/koa': 2.13.4
       busboy: 0.3.1
@@ -7856,7 +7856,7 @@ packages:
     engines: {node: ^8.13.0 || >=10.10.0}
     dependencies:
       '@grpc/proto-loader': 0.6.7
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: false
 
   /@grpc/proto-loader/0.5.6:
@@ -12510,7 +12510,7 @@ packages:
   /@types/accepts/1.3.5:
     resolution: {integrity: sha512-jOdnI/3qTpHABjM5cx1Hc0sKsPoYCp+DP/GJRGtDlPd7fiV9oXGGIcjW/ZOxLIvjGz8MA+uMZI9metHlgqbgwQ==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: false
     optional: true
 
@@ -12559,7 +12559,7 @@ packages:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
 
   /@types/bson/4.2.0:
     resolution: {integrity: sha512-ELCPqAdroMdcuxqwMgUpifQyRoTpyYCNr1V9xKyF40VsBobsj+BbWNRvwGchMgBPGqkw655ypkjj2MEF5ywVwg==}
@@ -12608,7 +12608,7 @@ packages:
   /@types/connect/3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
 
   /@types/content-disposition/0.5.4:
     resolution: {integrity: sha512-0mPF08jn9zYI0n0Q/Pnz7C4kThdSt+6LD4amsrYDDpgBfrVWa3TcCOxKX1zkGgYniGagRv8heN2cbh+CAn+uuQ==}
@@ -12627,9 +12627,9 @@ packages:
     resolution: {integrity: sha512-h7BcvPUogWbKCzBR2lY4oqaZbO3jXZksexYJVFvkrFeLgbZjQkU4x8pRq6eg2MHXQhY0McQdqmmsxRWlVAHooA==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
       '@types/keygrip': 1.0.2
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: false
     optional: true
 
@@ -12675,7 +12675,7 @@ packages:
   /@types/express-serve-static-core/4.17.27:
     resolution: {integrity: sha512-e/sVallzUTPdyOTiqi8O8pMdBBphscvI6E4JYaKlja4Lm+zh7UFSSdW5VMkRbhDtmrONqOUHOXRguPsDckzxNA==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
 
@@ -12686,20 +12686,11 @@ packages:
       '@types/express-serve-static-core': 4.17.27
       '@types/qs': 6.9.7
       '@types/serve-static': 1.13.10
-    dev: true
-
-  /@types/express/4.17.7:
-    resolution: {integrity: sha512-dCOT5lcmV/uC2J9k0rPafATeeyz+99xTt54ReX11/LObZgfzJqZNcW27zGhYyX+9iSEGXGt5qLPwRSvBZcLvtQ==}
-    dependencies:
-      '@types/body-parser': 1.19.2
-      '@types/express-serve-static-core': 4.17.27
-      '@types/qs': 6.9.7
-      '@types/serve-static': 1.13.10
 
   /@types/fs-capacitor/2.0.0:
     resolution: {integrity: sha512-FKVPOCFbhCvZxpVAMhdBdTfVfXUpsh15wFHgqOKxh9N9vzWZVuWCSijZ5T4U34XYNnuj2oduh6xcs1i+LPI+BQ==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: false
     optional: true
 
@@ -12820,13 +12811,13 @@ packages:
   /@types/jsonwebtoken/8.5.0:
     resolution: {integrity: sha512-9bVao7LvyorRGZCw0VmH/dr7Og+NdjYSsKAxB43OQoComFbBgsEpoR9JW6+qSq/ogwVBg8GI2MfAlk4SYI4OLg==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: false
 
   /@types/jsonwebtoken/8.5.6:
     resolution: {integrity: sha512-+P3O/xC7nzVizIi5VbF34YtqSonFsdnbXBnWUCYRiKOi1f9gA4sEFvXkrGr/QVV23IbMYvcoerI7nnhDUiWXRQ==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: true
 
   /@types/keygrip/1.0.2:
@@ -12851,7 +12842,7 @@ packages:
       '@types/http-errors': 1.8.1
       '@types/keygrip': 1.0.2
       '@types/koa-compose': 3.2.5
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: false
     optional: true
 
@@ -12911,7 +12902,7 @@ packages:
   /@types/node-fetch/2.5.10:
     resolution: {integrity: sha512-IpkX0AasN44hgEad0gEF/V6EgR5n69VEqPEgnmoM8GsIGro3PowbWs4tR6IhxUTyPLpOn+fiGG6nrQhcmoCuIQ==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
       form-data: 3.0.1
 
   /@types/node-mailjet/3.3.7:
@@ -12949,7 +12940,7 @@ packages:
   /@types/oauth/0.9.1:
     resolution: {integrity: sha512-a1iY62/a3yhZ7qH7cNUsxoI3U/0Fe9+RnuFrpTKr+0WVOzbKlSLojShCKe20aOD1Sppv+i8Zlq0pLDuTJnwS4A==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: true
 
   /@types/overlayscrollbars/1.12.1:
@@ -12965,7 +12956,7 @@ packages:
   /@types/passport-github/1.1.7:
     resolution: {integrity: sha512-CCBwZyBRy3fLOd96Idn00TLHMDXZIzUGXq+gSvB70h8k4j61dkbZCI6m5ZauL+hLdyJur7Z94tdfd8DBjFA0og==}
     dependencies:
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
       '@types/passport': 1.0.7
       '@types/passport-oauth2': 1.4.11
     dev: true
@@ -12973,7 +12964,7 @@ packages:
   /@types/passport-jwt/3.0.6:
     resolution: {integrity: sha512-cmAAMIRTaEwpqxlrZyiEY9kdibk94gP5KTF8AT1Ra4rWNZYHNMreqhKUEeC5WJtuN5SJZjPQmV+XO2P5PlnvNQ==}
     dependencies:
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
       '@types/jsonwebtoken': 8.5.6
       '@types/passport-strategy': 0.2.35
     dev: true
@@ -12981,7 +12972,7 @@ packages:
   /@types/passport-oauth2/1.4.11:
     resolution: {integrity: sha512-KUNwmGhe/3xPbjkzkPwwcPmyFwfyiSgtV1qOrPBLaU4i4q9GSCdAOyCbkFG0gUxAyEmYwqo9OAF/rjPjJ6ImdA==}
     dependencies:
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
       '@types/oauth': 0.9.1
       '@types/passport': 1.0.7
     dev: true
@@ -12989,14 +12980,14 @@ packages:
   /@types/passport-strategy/0.2.35:
     resolution: {integrity: sha512-o5D19Jy2XPFoX2rKApykY15et3Apgax00RRLf0RUotPDUsYrQa7x4howLYr9El2mlUApHmCMv5CZ1IXqKFQ2+g==}
     dependencies:
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
       '@types/passport': 1.0.7
     dev: true
 
   /@types/passport/1.0.7:
     resolution: {integrity: sha512-JtswU8N3kxBYgo+n9of7C97YQBT+AYPP2aBfNGTzABqPAZnK/WOAaKfh3XesUYMZRrXFuoPc2Hv0/G/nQFveHw==}
     dependencies:
-      '@types/express': 4.17.7
+      '@types/express': 4.17.13
     dev: true
 
   /@types/prettier/2.4.2:
@@ -13111,7 +13102,7 @@ packages:
     resolution: {integrity: sha512-nCkHGI4w7ZgAdNkrEu0bv+4xNV/XDqW+DydknebMOQwkpDGx8G+HTlj7R7ABI8i8nKxVw0wtKPi1D+lPOkh4YQ==}
     dependencies:
       '@types/mime': 1.3.2
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
 
   /@types/sinon/9.0.11:
     resolution: {integrity: sha512-PwP4UY33SeeVKodNE37ZlOsR9cReypbMJOhZ7BVE0lB+Hix3efCOxiJWiE5Ia+yL9Cn2Ch72EjFTRze8RZsNtg==}
@@ -13168,7 +13159,7 @@ packages:
     resolution: {integrity: sha512-YIGelp3ZyMiH0/A09PMAORO0EBGlF5xIKfDpK74wdYvWUs2o96b5CItJcWPdH409b7SAXIIG6p8NdU/4U2Maww==}
     dependencies:
       '@types/cookiejar': 2.1.2
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: true
 
   /@types/supertest/2.0.11:
@@ -13247,7 +13238,7 @@ packages:
   /@types/ws/7.4.7:
     resolution: {integrity: sha512-JQbbmxZTZehdc2iszGKs5oC3NFnjeay7mtAWrdt7qNtAVK0g19muApzAy4bm9byz79xa2ZnO/BOBC2R8RC5Lww==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: false
     optional: true
 
@@ -31285,7 +31276,7 @@ packages:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/long': 4.0.1
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
       long: 4.0.0
     dev: false
 
