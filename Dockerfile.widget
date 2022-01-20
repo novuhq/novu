@@ -2,7 +2,7 @@ FROM node:15.11.0
 
 WORKDIR /usr/src/app
 
-RUN npm i yarn -g --loglevel notice --force
+RUN npm i pnpm -g --loglevel notice --force
 
 COPY package.json .
 
@@ -17,9 +17,8 @@ COPY lerna.json .
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
-RUN yarn install
-RUN yarn bootstrap
+RUN pnpm install
 
 COPY apps/widget/build ./apps/widget/build
 
-CMD [ "npm", "run", "start:widget" ]
+CMD [ "pnpm", "run", "start:widget" ]
