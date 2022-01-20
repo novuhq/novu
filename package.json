@@ -2,6 +2,7 @@
   "name": "notifirehq",
   "private": true,
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "publish": "lerna publish from-package",
     "setup:project": "npx pnpm i && node scripts/setup-env-files.js && npx pnpm build",
     "commit": "cz",
