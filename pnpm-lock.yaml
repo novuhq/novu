@@ -22,7 +22,7 @@ importers:
       cpx: ^1.5.0
       cross-env: ^7.0.3
       cspell: ^4.1.0
-      cypress-intellij-reporter: ^0.0.6
+      cypress-intellij-reporter: 0.0.7
       cz-conventional-changelog: 3.3.0
       eslint: ^7.22.0
       eslint-config-airbnb-typescript: ^12.0.0
@@ -66,7 +66,7 @@ importers:
       cpx: 1.5.0
       cross-env: 7.0.3
       cspell: 4.2.8
-      cypress-intellij-reporter: 0.0.6
+      cypress-intellij-reporter: 0.0.7
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       eslint: 7.32.0
       eslint-config-airbnb-typescript: 12.3.1_93ef1b3d2d5b39c540567a652dd21044
@@ -406,7 +406,7 @@ importers:
       babel-plugin-styled-components: ^1.12.0
       craco-antd: ^1.19.0
       cypress: ^7.3.0
-      cypress-intellij-reporter: ^0.0.6
+      cypress-intellij-reporter: 0.0.7
       faker: ^5.4.0
       http-server: ^0.12.3
       iframe-resizer: ^4.3.1
@@ -471,7 +471,7 @@ importers:
       babel-plugin-styled-components: 1.13.3_styled-components@5.3.3
       craco-antd: 1.19.0_dfde1d0ed77ea674417340876cd31668
       cypress: 7.7.0
-      cypress-intellij-reporter: 0.0.6
+      cypress-intellij-reporter: 0.0.7
       faker: 5.5.3
       http-server: 0.12.3
       jest: 27.0.6_ts-node@9.1.1
@@ -18738,8 +18738,8 @@ packages:
       cypress: 7.7.0
     dev: true
 
-  /cypress-intellij-reporter/0.0.6:
-    resolution: {integrity: sha512-KDxeWKKAAGekhg1xmGToSsHDWgogM1hUYakAL4yjKQr9gSI2iyRxcrKlq1/jG4omCbUEY+AZGiiwyKOscY9+Gg==}
+  /cypress-intellij-reporter/0.0.7:
+    resolution: {integrity: sha512-P4A0BPz5h9TWLZFVhMJsAMktqCEdeKA0+bS+zfTGLohUtM89pmU5kAWLEGFOYRcRlVR39XbUWhyFyTjs8AoFLA==}
     dependencies:
       mocha: 9.1.4
     dev: true
