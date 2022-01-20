@@ -617,7 +617,7 @@ importers:
       '@types/twilio': ^3.19.3
       '@typescript-eslint/parser': ^4.14.2
       agenda: ^4.0.1
-      apollo-boost: ^0.4.8
+      apollo-boost: 0.4.9
       archiver: ^5.0.0
       async: ^3.2.0
       aws-sdk: ^2.665.0
@@ -790,7 +790,7 @@ importers:
       '@types/bluebird': ^3.5.30
       '@types/node': ^14.6.0
       '@typescript-eslint/parser': ^4.14.2
-      apollo-boost: ^0.4.8
+      apollo-boost: 0.4.9
       async: ^3.2.0
       axios: ^0.24.0
       class-transformer: 0.5.1
@@ -12773,7 +12773,7 @@ packages:
   /@types/ioredis/4.28.5:
     resolution: {integrity: sha512-bp5mdpzscWZMEE/jLvvzze5TZFYGhynB1am69l/a0XPqZRXWpbswY6lb5buEht57jOnw5pPG5zL9pFUWw1nggw==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: true
 
   /@types/is-function/1.0.1:
@@ -12905,7 +12905,7 @@ packages:
     resolution: {integrity: sha512-WcdpPJCakFzcWWD9juKoZbRtQxKIMYF/JIAM4JrNHrMcnJL6/a2NWjXxW7fo9hxboxxkg+icff8d7+WIEvKgYQ==}
     dependencies:
       '@types/bson': 4.2.0
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: false
 
   /@types/node-fetch/2.5.10:
@@ -13076,7 +13076,7 @@ packages:
   /@types/redis/2.8.32:
     resolution: {integrity: sha512-7jkMKxcGq9p242exlbsVzuJb57KqHRhNl4dHoQu2Y5v9bCAbtIXXH0R3HleSQW4CTOqpHIYUW3t6tpUj4BVQ+w==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
     dev: true
 
   /@types/request/2.48.7:
@@ -13240,7 +13240,7 @@ packages:
   /@types/whatwg-url/8.2.1:
     resolution: {integrity: sha512-2YubE1sjj5ifxievI5Ge1sckb9k/Er66HyR2c+3+I6VDUUg1TLPdYYTEbQ+DjRkS4nTxMJhgWfSfMRD2sl2EYQ==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
       '@types/webidl-conversions': 6.1.1
     dev: false
 
@@ -13860,7 +13860,7 @@ packages:
   /@wry/context/0.4.4:
     resolution: {integrity: sha512-LrKVLove/zw6h2Md/KZyWxIkFM6AoyKp71OqpH9Hiip1csjPVoD3tPxlbQUNxEnHENks3UGgNpSBCAfq9KWuag==}
     dependencies:
-      '@types/node': 14.18.3
+      '@types/node': 17.0.5
       tslib: 1.14.1
     dev: true
 
@@ -15955,6 +15955,7 @@ packages:
 
   /bindings/1.5.0:
     resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
+    requiresBuild: true
     dependencies:
       file-uri-to-path: 1.0.0
     optional: true
@@ -21293,6 +21294,7 @@ packages:
 
   /file-uri-to-path/1.0.0:
     resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
+    requiresBuild: true
     optional: true
 
   /file-uri-to-path/2.0.0:
