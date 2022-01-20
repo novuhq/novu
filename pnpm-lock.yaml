@@ -573,7 +573,7 @@ importers:
       '@svgr/webpack': ^5.5.0
       '@tsconfig/docusaurus': ^1.0.4
       '@types/react': ^17.0.14
-      '@types/react-helmet': ^6.1.2
+      '@types/react-helmet': 6.1.5
       '@types/react-router-dom': ^5.1.8
       clsx: ^1.1.1
       file-loader: ^6.2.0
