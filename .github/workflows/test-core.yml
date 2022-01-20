@@ -13,16 +13,20 @@ jobs:
           node-version: "14"
       - run: rm -rf build
 
-      - name: restore lerna
-        uses: actions/cache@master
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
         with:
-          path: |
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
 
-      - run: yarn install
-      - run: yarn bootstrap
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.0.2
+          run_install: true
+
+      - run: pnpm install
       - name: Test
         working-directory: "packages/core"
-        run: yarn test
+        run: pnpm test

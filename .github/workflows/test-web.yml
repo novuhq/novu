@@ -80,11 +80,11 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build
-        run: CI='' yarn run build:web
+        run: CI='' pnpm build:web
 
       # Runs a single command using the runners shell
       - name: Start Client
-        run: yarn run start:web &
+        run: pnpm start:web &
 
       - name: Cypress run
         uses: cypress-io/github-action@v2
@@ -94,7 +94,7 @@ jobs:
         with:
           record: true
           working-directory: apps/web
-          start: yarn run start:api
+          start: pnpm start:api
           wait-on: http://localhost:1336/v1/health-check
           browser: chrome
           headless: true

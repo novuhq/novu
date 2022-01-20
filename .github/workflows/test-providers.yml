@@ -12,8 +12,7 @@ jobs:
         with:
           node-version: "14"
       - run: rm -rf build
-      - run: yarn install
-      - run: yarn bootstrap
-      - run: yarn build
+      - run: pnpm install
+      - run: pnpm build
       - name: Test
-        run: yarn test:providers
+        run: pnpm test:providers
