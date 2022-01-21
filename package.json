@@ -43,7 +43,7 @@
     "@nrwl/cli": "^13.4.3",
     "@nrwl/tao": "^13.4.3",
     "@types/node": "^14.6.0",
-    "@typescript-eslint/eslint-plugin": "4.13.0",
+    "@typescript-eslint/eslint-plugin": "4.33.0",
     "@typescript-eslint/parser": "^4.13.0",
     "auto": "^10.27.1",
     "commitizen": "^4.2.4",
