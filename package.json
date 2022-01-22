@@ -66,7 +66,7 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "husky": "^4.2.5",
     "hygen": "6.1.0",
-    "jira-prepare-commit-msg": "1.5.2",
+    "jira-prepare-commit-msg": "1.6.2",
     "lerna": "^3.20.2",
     "lint-staged": "^10.2.2",
     "monorepo-run": "git+https://github.com/scopsy/monorepo-run.git",

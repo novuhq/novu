@@ -38,7 +38,7 @@ importers:
       eslint-plugin-react-hooks: ^4.2.0
       husky: ^4.2.5
       hygen: 6.1.0
-      jira-prepare-commit-msg: 1.5.2
+      jira-prepare-commit-msg: 1.6.2
       lerna: ^3.20.2
       lint-staged: ^10.2.2
       monorepo-run: git+https://github.com/scopsy/monorepo-run.git
@@ -82,7 +82,7 @@ importers:
       eslint-plugin-react-hooks: 4.3.0_eslint@7.32.0
       husky: 4.3.8
       hygen: 6.1.0
-      jira-prepare-commit-msg: 1.5.2
+      jira-prepare-commit-msg: 1.6.2
       lerna: 3.22.1
       lint-staged: 10.5.4
       monorepo-run: github.com/scopsy/monorepo-run/aa7f44fa44321f1350a6f46ec37d843b49185160
@@ -25039,8 +25039,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /jira-prepare-commit-msg/1.5.2:
-    resolution: {integrity: sha512-1NBfx3+IzoAlQEHaPNFDSn3vKyGMTfBwG38WZkI0IR6bu7RcvDXkCcR+xTmnnVAgyHTM5oO/8F+t4gLzaKi32A==}
+  /jira-prepare-commit-msg/1.6.2:
+    resolution: {integrity: sha512-U9nuFs8JEH4mIkb9Q0jDdbPzC5MDz1mCaD5H5Uq2IPm4gTYutB+i+Ubnp5dIjrtY1URjySK3V/ZHF0EzKcuRTg==}
     engines: {node: '>=10.13'}
     hasBin: true
     dependencies:
