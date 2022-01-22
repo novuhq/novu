@@ -574,7 +574,7 @@ importers:
       '@tsconfig/docusaurus': ^1.0.4
       '@types/react': ^17.0.14
       '@types/react-helmet': 6.1.5
-      '@types/react-router-dom': ^5.1.8
+      '@types/react-router-dom': 5.3.3
       clsx: ^1.1.1
       file-loader: ^6.2.0
       prism-react-renderer: ^1.2.1
@@ -600,7 +600,7 @@ importers:
       '@tsconfig/docusaurus': 1.0.4
       '@types/react': 17.0.38
       '@types/react-helmet': 6.1.5
-      '@types/react-router-dom': 5.3.2
+      '@types/react-router-dom': 5.3.3
       typescript: 4.5.4
 
   libs/dal:
@@ -6217,7 +6217,7 @@ packages:
       '@types/react': 17.0.38
       '@types/react-helmet': 6.1.5
       '@types/react-router-config': 5.0.6
-      '@types/react-router-dom': 5.3.2
+      '@types/react-router-dom': 5.3.3
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
@@ -12377,6 +12377,14 @@ packages:
     resolution: {integrity: sha512-ELEYRUie2czuJzaZ5+ziIp9Hhw+juEw8b7C11YNA4QdLCVbQ3qLi2l4aq8XnlqM7V31LZX8dxUuFUCrzHm6sqQ==}
     dependencies:
       '@types/history': 4.7.9
+      '@types/react': 17.0.38
+      '@types/react-router': 5.1.17
+    dev: true
+
+  /@types/react-router-dom/5.3.3:
+    resolution: {integrity: sha512-kpqnYK4wcdm5UaWI3fLcELopqLrHgLqNsdpHauzlQktfkHL3npOSwtj1Uz9oKBAzs7lFtVkV8j83voAz2D8fhw==}
+    dependencies:
+      '@types/history': 4.7.11
       '@types/react': 17.0.38
       '@types/react-router': 5.1.17
     dev: true
