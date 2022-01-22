@@ -65,7 +65,7 @@
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^4.2.0",
     "husky": "^4.2.5",
-    "hygen": "6.0.4",
+    "hygen": "6.1.0",
     "jira-prepare-commit-msg": "1.5.2",
     "lerna": "^3.20.2",
     "lint-staged": "^10.2.2",
