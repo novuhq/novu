@@ -80,11 +80,11 @@ jobs:
 
       # Runs a single command using the runners shell
     - name: Build API
-      run: CI='' yarn run build:api
+      run: CI='' pnpm build:api
 
     # Runs a set of commands using the runners shell
     - name: Run a test
       run: |
-        cd apps/api && yarn run test:e2e
-        yarn run test
+        cd apps/api && pnpm test:e2e
+        pnpm test
 
