@@ -4,6 +4,7 @@ import moment from 'moment';
 import { ChannelTypeEnum } from '@notifire/shared';
 import styled from 'styled-components';
 import { useState } from 'react';
+import * as capitalize from 'lodash.capitalize';
 import { PageHeader } from '../../components/layout/components/PageHeader';
 import { getActivityList, getActivityStats } from '../../api/activity';
 import { useTemplates } from '../../api/hooks/use-templates';
@@ -139,7 +140,7 @@ export function ActivitiesPage() {
               key="name"
               render={(status, record: any) => (
                 <>
-                  {record.subscriber.firstName} {record.subscriber.lastName}
+                  {capitalize(record.subscriber.firstName)} {capitalize(record.subscriber.lastName)}
                 </>
               )}
             />
