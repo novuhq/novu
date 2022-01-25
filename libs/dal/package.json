@@ -39,7 +39,7 @@
     "intercom-client": "^2.11.0",
     "jsonfile": "^6.0.1",
     "mixpanel": "^0.13.0",
-    "mongoose": "5.11.18",
+    "mongoose": "5.13.14",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
     "superagent-defaults": "^0.1.14",

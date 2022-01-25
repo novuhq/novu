@@ -28,7 +28,7 @@
     "fs-extra": "^9.0.0",
     "axios": "^0.24.0",
     "jsonfile": "^6.0.1",
-    "mongoose": "5.11.18",
+    "mongoose": "5.13.14",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
     "superagent-defaults": "^0.1.14",
