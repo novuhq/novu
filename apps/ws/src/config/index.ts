@@ -19,7 +19,7 @@ switch (process.env.NODE_ENV) {
     path = `${__dirname}/../.env.development`;
     break;
   default:
-    path = `${__dirname}/../.env.local`;
+    path = `${__dirname}/../.env`;
 }
 
 const { error } = dotenv.config({ path });

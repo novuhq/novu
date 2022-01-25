@@ -20,7 +20,6 @@ export class CreateUser {
         accessToken: data.auth.accessToken,
         refreshToken: data.auth.refreshToken,
         valid: true,
-        lastUsed: null,
       },
     ];
 

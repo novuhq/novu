@@ -8,10 +8,10 @@ const envFileMapper = {
   prod: '.env.production',
   test: '.env.test',
   ci: '.env.ci',
-  local: '.env.local',
+  local: '.env',
   dev: '.env.development',
 };
-const selectedEnvFile = envFileMapper[process.env.NODE_ENV] || '.env.local';
+const selectedEnvFile = envFileMapper[process.env.NODE_ENV] || '.env';
 
 const path = `${__dirname}/../${selectedEnvFile}`;
 

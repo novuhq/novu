@@ -1,4 +1,3 @@
-.idea/*
 .nyc_output
 build
 node_modules
@@ -93,3 +92,5 @@ fabric.properties
 .terraform.tfstate.lock.info
 # Module directory
 .terraform/
+
+.env

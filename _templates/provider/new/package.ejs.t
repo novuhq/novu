@@ -76,11 +76,6 @@
       "!build/module/**"
     ]
   },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
-  },
   "prettier": {
     "singleQuote": true
   },
