@@ -921,7 +921,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -941,7 +941,7 @@ importers:
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -952,7 +952,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
+      ts-jest: 27.1.2_9364f2ad0b7b67f00a4d081c662c6871
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -960,7 +960,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -984,7 +984,7 @@ importers:
       nock: 13.2.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -995,7 +995,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
+      ts-jest: 27.1.2_9364f2ad0b7b67f00a4d081c662c6871
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1045,7 +1045,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@mailchimp/mailchimp_transactional': ^1.0.46
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -1065,7 +1065,7 @@ importers:
       '@notifire/core': link:../../packages/core
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1077,7 +1077,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.4.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
+      ts-jest: 27.1.2_9364f2ad0b7b67f00a4d081c662c6871
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1124,7 +1124,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       '@types/nodemailer': ^6.4.4
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1145,7 +1145,7 @@ importers:
       nodemailer: 6.7.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       '@types/nodemailer': 6.4.4
       codecov: 3.8.3
       cspell: 4.2.8
@@ -1157,7 +1157,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
+      ts-jest: 27.1.2_9364f2ad0b7b67f00a4d081c662c6871
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1165,7 +1165,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -1185,7 +1185,7 @@ importers:
       plivo: 4.26.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1196,7 +1196,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
+      ts-jest: 27.1.2_9364f2ad0b7b67f00a4d081c662c6871
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1204,7 +1204,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -1224,7 +1224,7 @@ importers:
       postmark: 2.8.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1235,7 +1235,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
+      ts-jest: 27.1.2_9364f2ad0b7b67f00a4d081c662c6871
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1244,7 +1244,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
       '@sendgrid/mail': ^7.4.6
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -1263,7 +1263,7 @@ importers:
       '@sendgrid/mail': 7.6.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1274,7 +1274,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
+      ts-jest: 27.1.2_9364f2ad0b7b67f00a4d081c662c6871
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1446,7 +1446,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -1466,7 +1466,7 @@ importers:
       twilio: 3.72.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1477,7 +1477,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
+      ts-jest: 27.1.2_9364f2ad0b7b67f00a4d081c662c6871
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -12660,13 +12660,6 @@ packages:
       jest-diff: 26.6.2
       pretty-format: 26.6.2
     dev: false
-
-  /@types/jest/27.0.1:
-    resolution: {integrity: sha512-HTLpVXHrY69556ozYkcq47TtQJXpcWAWfkoqz+ZGz2JnmZhzlRjprCIyFnetSy8gpDWwTTGBcRVv1J1I1vBrHw==}
-    dependencies:
-      jest-diff: 27.4.6
-      pretty-format: 27.4.6
-    dev: true
 
   /@types/jest/27.4.0:
     resolution: {integrity: sha512-gHl8XuC1RZ8H2j5sHv/JqsaxXkDDM9iDOgu0Wp8sjs4u/snb2PVehyWXJPr+ORA0RPpgw231mnutWI1+0hgjIQ==}
@@ -35940,7 +35933,7 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-jest/27.1.2_f5cc9e4b4142f9cf533ebd59baeed990:
+  /ts-jest/27.1.2_9364f2ad0b7b67f00a4d081c662c6871:
     resolution: {integrity: sha512-eSOiJOWq6Hhs6Khzk5wKC5sgWIXgXqOCiIl1+3lfnearu58Hj4QpE5tUhQcA3xtZrELbcvAGCsd6HB8OsaVaTA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -35961,7 +35954,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@types/jest': 27.0.1
+      '@types/jest': 27.4.0
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.4.7_ts-node@9.1.1
