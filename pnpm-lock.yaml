@@ -262,7 +262,7 @@ importers:
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
-      '@types/jest': ^26.0.15
+      '@types/jest': 26.0.24
       '@types/node': ^12.0.0
       '@types/react': ^17.0.0
       '@types/react-dom': ^17.0.0
@@ -393,7 +393,7 @@ importers:
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
-      '@types/jest': ^26.0.15
+      '@types/jest': 26.0.24
       '@types/moment': ^2.13.0
       '@types/node': ^12.0.0
       '@types/react': ^16.9.53
@@ -410,7 +410,7 @@ importers:
       faker: ^5.4.0
       http-server: ^0.12.3
       iframe-resizer: ^4.3.1
-      jest: 27.0.6
+      jest: 27.4.7
       jwt-decode: ^3.1.2
       less: ^4.1.0
       less-loader: 4.1.0
@@ -474,7 +474,7 @@ importers:
       cypress-intellij-reporter: 0.0.7
       faker: 5.5.3
       http-server: 0.12.3
-      jest: 27.0.6_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       less: 4.1.2
       less-loader: 4.1.0_less@4.1.2
       start-server-and-test: 1.11.6
@@ -498,7 +498,7 @@ importers:
       '@notifire/testing': ^0.3.5
       '@sentry/node': ^6.3.3
       '@types/express': ^4.17.8
-      '@types/jest': ^27.0.2
+      '@types/jest': 27.4.0
       '@types/node': ^14.14.6
       '@types/socket.io': ^2.1.13
       '@types/supertest': ^2.0.10
@@ -549,7 +549,7 @@ importers:
       '@nestjs/schematics': 7.3.1_typescript@4.5.4
       '@nestjs/testing': 7.6.18_9cd0f963ae6f35bf288217e4f1c45cb4
       '@types/express': 4.17.13
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       '@types/node': 14.18.3
       '@types/socket.io': 2.1.13
       '@types/supertest': 2.0.11
@@ -558,7 +558,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.5.1
       supertest: 6.1.6
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       ts-loader: 8.3.0_typescript@4.5.4
       ts-node: 9.1.1_typescript@4.5.4
       tsconfig-paths: 3.12.0
@@ -696,7 +696,7 @@ importers:
       '@commitlint/config-conventional': ^7.1.2
       '@rollup/plugin-replace': ^2.4.2
       '@types/iframe-resizer': ^3.5.8
-      '@types/jest': ^27.4.0
+      '@types/jest': 27.4.0
       '@types/node': ^14.14.16
       colors: ^1.3.2
       commitizen: ^3.0.0
@@ -844,7 +844,7 @@ importers:
   packages/core:
     specifiers:
       '@sendgrid/mail': ^7.4.6
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.4.0
       '@types/lodash.get': ^4.4.6
       '@types/lodash.merge': ^4.6.6
       '@types/node': ^14.6.0
@@ -865,7 +865,7 @@ importers:
       lodash.merge: 4.6.2
     devDependencies:
       '@sendgrid/mail': 7.6.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       '@types/lodash.get': 4.4.6
       '@types/lodash.merge': 4.6.6
       '@types/node': 14.18.3
@@ -875,7 +875,7 @@ importers:
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       run-p: 0.0.0
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       typedoc: 0.19.2_typescript@4.5.4
 
   packages/nest:
@@ -883,7 +883,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^8.2.0
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -902,7 +902,7 @@ importers:
       '@notifire/core': link:../core
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -913,7 +913,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -921,13 +921,13 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
       emailjs: ^3.6.0
       gh-pages: ^3.1.0
-      jest: ^27.1.0
+      jest: 27.4.7
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
@@ -941,18 +941,18 @@ importers:
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.0.1
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       gh-pages: 3.2.3
-      jest: 27.4.5_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -960,13 +960,13 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
       form-data: ^4.0.0
       gh-pages: ^3.1.0
-      jest: ^27.1.0
+      jest: 27.4.7
       mailgun.js: ^3.5.8
       nock: ^13.1.3
       npm-run-all: ^4.1.5
@@ -984,18 +984,18 @@ importers:
       nock: 13.2.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.0.1
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       gh-pages: 3.2.3
-      jest: 27.4.5_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1003,7 +1003,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.4.0
       '@types/node-mailjet': ^3.3.7
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1024,7 +1024,7 @@ importers:
       node-mailjet: 3.3.4
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       '@types/node-mailjet': 3.3.7
       codecov: 3.8.3
       cspell: 4.2.8
@@ -1036,7 +1036,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1045,13 +1045,13 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@mailchimp/mailchimp_transactional': ^1.0.46
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
       eslint-plugin-eslint-comments: ^3.2.0
       gh-pages: ^3.1.0
-      jest: ^27.1.0
+      jest: 27.4.7
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
@@ -1065,19 +1065,19 @@ importers:
       '@notifire/core': link:../../packages/core
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.0.1
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       eslint-plugin-eslint-comments: 3.2.0_eslint@7.32.0
       gh-pages: 3.2.3
-      jest: 27.4.5_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.4.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1085,7 +1085,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.2.3
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.4.0
       '@vonage/server-sdk': ^2.10.10
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1105,7 +1105,7 @@ importers:
       '@vonage/server-sdk': 2.10.10
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1116,7 +1116,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1124,13 +1124,13 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.0.1
       '@types/nodemailer': ^6.4.4
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
-      jest: ^27.1.0
+      jest: 27.4.7
       nodemailer: ^6.6.5
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
@@ -1145,19 +1145,19 @@ importers:
       nodemailer: 6.7.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.0.1
       '@types/nodemailer': 6.4.4
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       gh-pages: 3.2.3
-      jest: 27.4.5_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1165,12 +1165,12 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
-      jest: ^27.1.0
+      jest: 27.4.7
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
@@ -1185,18 +1185,18 @@ importers:
       plivo: 4.26.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.0.1
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       gh-pages: 3.2.3
-      jest: 27.4.5_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1204,12 +1204,12 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
-      jest: ^27.1.0
+      jest: 27.4.7
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
@@ -1224,18 +1224,18 @@ importers:
       postmark: 2.8.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.0.1
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       gh-pages: 3.2.3
-      jest: 27.4.5_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1244,12 +1244,12 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
       '@sendgrid/mail': ^7.4.6
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
-      jest: ^27.1.0
+      jest: 27.4.7
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
@@ -1263,18 +1263,18 @@ importers:
       '@sendgrid/mail': 7.6.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.0.1
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       gh-pages: 3.2.3
-      jest: 27.4.5_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1283,7 +1283,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
       '@sendinblue/client': ^3.0.1
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.4.0
       '@types/request': ^2.48.7
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1304,7 +1304,7 @@ importers:
       '@types/request': 2.48.7
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1315,7 +1315,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1324,7 +1324,7 @@ importers:
       '@aws-sdk/client-ses': 3.43.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -1346,7 +1346,7 @@ importers:
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1357,7 +1357,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
       typescript: 4.5.4
@@ -1366,7 +1366,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -1388,7 +1388,7 @@ importers:
       sms77-client: 2.14.0_node-fetch@2.6.6
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1399,7 +1399,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1408,7 +1408,7 @@ importers:
       '@aws-sdk/client-sns': ^3.39.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -1427,7 +1427,7 @@ importers:
       '@notifire/core': link:../../packages/core
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
@@ -1438,7 +1438,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_334772dd386c536d54092d15fe05a291
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -1446,12 +1446,12 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@notifire/core': ^0.3.6-alpha.0
-      '@types/jest': ^27.0.1
+      '@types/jest': 27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
-      jest: ^27.1.0
+      jest: 27.4.7
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
@@ -1466,18 +1466,18 @@ importers:
       twilio: 3.72.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
-      '@types/jest': 27.0.3
+      '@types/jest': 27.0.1
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0_@types+node@14.18.3
       gh-pages: 3.2.3
-      jest: 27.4.5_ts-node@9.1.1
+      jest: 27.4.7_ts-node@9.1.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.5.1
       standard-version: 9.3.2
-      ts-jest: 27.1.2_b65cae1b46840061996b6cc0ea16ca56
+      ts-jest: 27.1.2_f5cc9e4b4142f9cf533ebd59baeed990
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
@@ -5524,7 +5524,7 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       babel-runtime: 6.26.0
-      chalk: 2.3.1
+      chalk: 2.4.2
     dev: true
 
   /@commitlint/is-ignored/13.2.0:
@@ -7401,6 +7401,51 @@ packages:
       - utf-8-validate
     dev: true
 
+  /@jest/core/27.4.7_ts-node@9.1.1:
+    resolution: {integrity: sha512-n181PurSJkVMS+kClIFSX/LLvw9ExSb+4IMtD6YnfxZVerw9ANYtW0bPrm0MJu2pfe9SY9FJ9FtQ+MdZkrZwjg==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    peerDependencies:
+      node-notifier: ^8.0.1 || ^9.0.0 || ^10.0.0
+    peerDependenciesMeta:
+      node-notifier:
+        optional: true
+    dependencies:
+      '@jest/console': 27.4.6
+      '@jest/reporters': 27.4.6
+      '@jest/test-result': 27.4.6
+      '@jest/transform': 27.4.6
+      '@jest/types': 27.4.2
+      '@types/node': 17.0.5
+      ansi-escapes: 4.3.2
+      chalk: 4.1.2
+      emittery: 0.8.1
+      exit: 0.1.2
+      graceful-fs: 4.2.8
+      jest-changed-files: 27.4.2
+      jest-config: 27.4.7_ts-node@9.1.1
+      jest-haste-map: 27.4.6
+      jest-message-util: 27.4.6
+      jest-regex-util: 27.4.0
+      jest-resolve: 27.4.6
+      jest-resolve-dependencies: 27.4.6
+      jest-runner: 27.4.6
+      jest-runtime: 27.4.6
+      jest-snapshot: 27.4.6
+      jest-util: 27.4.2
+      jest-validate: 27.4.6
+      jest-watcher: 27.4.6
+      micromatch: 4.0.4
+      rimraf: 3.0.2
+      slash: 3.0.0
+      strip-ansi: 6.0.1
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - ts-node
+      - utf-8-validate
+    dev: true
+
   /@jest/environment/26.6.2:
     resolution: {integrity: sha512-nFy+fHl28zUrRsCeMB61VDThV1pVTtlEokBRgqPrcT1JNq4yRNIyTHfyht6PqtUvY9IsuLGTrbG8kPXjSZIZwA==}
     engines: {node: '>= 10.14.2'}
@@ -7594,6 +7639,44 @@ packages:
       jest-resolve: 27.4.6
       jest-util: 27.4.2
       jest-worker: 27.4.5
+      slash: 3.0.0
+      source-map: 0.6.1
+      string-length: 4.0.2
+      terminal-link: 2.1.1
+      v8-to-istanbul: 8.1.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@jest/reporters/27.4.6:
+    resolution: {integrity: sha512-+Zo9gV81R14+PSq4wzee4GC2mhAN9i9a7qgJWL90Gpx7fHYkWpTBvwWNZUXvJByYR9tAVBdc8VxDWqfJyIUrIQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    peerDependencies:
+      node-notifier: ^8.0.1 || ^9.0.0 || ^10.0.0
+    peerDependenciesMeta:
+      node-notifier:
+        optional: true
+    dependencies:
+      '@bcoe/v8-coverage': 0.2.3
+      '@jest/console': 27.4.6
+      '@jest/test-result': 27.4.6
+      '@jest/transform': 27.4.6
+      '@jest/types': 27.4.2
+      '@types/node': 17.0.5
+      chalk: 4.1.2
+      collect-v8-coverage: 1.0.1
+      exit: 0.1.2
+      glob: 7.2.0
+      graceful-fs: 4.2.8
+      istanbul-lib-coverage: 3.2.0
+      istanbul-lib-instrument: 5.1.0
+      istanbul-lib-report: 3.0.0
+      istanbul-lib-source-maps: 4.0.1
+      istanbul-reports: 3.1.3
+      jest-haste-map: 27.4.6
+      jest-resolve: 27.4.6
+      jest-util: 27.4.2
+      jest-worker: 27.4.6
       slash: 3.0.0
       source-map: 0.6.1
       string-length: 4.0.2
@@ -12216,19 +12299,18 @@ packages:
       pretty-format: 26.6.2
     dev: false
 
-  /@types/jest/27.0.3:
-    resolution: {integrity: sha512-cmmwv9t7gBYt7hNKH5Spu7Kuu/DotGa+Ff+JGRKZ4db5eh8PnKS4LuebJ3YLUoyOyIHraTGyULn23YtEAm0VSg==}
+  /@types/jest/27.0.1:
+    resolution: {integrity: sha512-HTLpVXHrY69556ozYkcq47TtQJXpcWAWfkoqz+ZGz2JnmZhzlRjprCIyFnetSy8gpDWwTTGBcRVv1J1I1vBrHw==}
     dependencies:
-      jest-diff: 27.4.2
-      pretty-format: 27.4.2
+      jest-diff: 27.4.6
+      pretty-format: 27.4.6
     dev: true
 
   /@types/jest/27.4.0:
     resolution: {integrity: sha512-gHl8XuC1RZ8H2j5sHv/JqsaxXkDDM9iDOgu0Wp8sjs4u/snb2PVehyWXJPr+ORA0RPpgw231mnutWI1+0hgjIQ==}
     dependencies:
-      jest-diff: 27.4.2
-      pretty-format: 27.4.2
-    dev: true
+      jest-diff: 27.4.6
+      pretty-format: 27.4.6
 
   /@types/json-schema/7.0.9:
     resolution: {integrity: sha512-qcUXuemtEu+E5wZSJHNxUXeCZhAfXKQ41D+duX+VYPde7xyEVZci+/oXKJL13tnRs9lR2pr4fod59GT6/X1/yQ==}
@@ -12629,7 +12711,7 @@ packages:
   /@types/testing-library__jest-dom/5.14.2:
     resolution: {integrity: sha512-vehbtyHUShPxIa9SioxDwCvgxukDMH//icJG90sXQBUm5lJOHLT5kNeU9tnivhnA/TkOFMzGIXN2cTc4hY8/kg==}
     dependencies:
-      '@types/jest': 26.0.24
+      '@types/jest': 27.4.0
     dev: false
 
   /@types/tough-cookie/4.0.1:
@@ -13615,7 +13697,6 @@ packages:
   /ansi-styles/5.2.0:
     resolution: {integrity: sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA==}
     engines: {node: '>=10'}
-    dev: true
 
   /ansi-to-html/0.6.15:
     resolution: {integrity: sha512-28ijx2aHJGdzbs+O5SNQF65r6rrKYnkuwTYm8lZlChuoJ9P1vVzIpWO20sQTqTPDXYp6NFwk326vApTtLVFXpQ==}
@@ -18535,7 +18616,6 @@ packages:
   /diff-sequences/27.4.0:
     resolution: {integrity: sha512-YqiQzkrsmHMH5uuh8OdQFU9/ZpADnwzml8z0O5HvRNda+5UZsaX/xN+AAxfR2hWq1Y7HZnAzO9J5lJXOuDz2Ww==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dev: true
 
   /diff/3.5.0:
     resolution: {integrity: sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==}
@@ -23565,6 +23645,14 @@ packages:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.0
 
+  /istanbul-reports/3.1.3:
+    resolution: {integrity: sha512-x9LtDVtfm/t1GFiLl3NffC7hz+I1ragvgX1P/Lg1NlIagifZDKUkuuaAxH/qpwj2IuEfD8G2Bs/UKp+sZ/pKkg==}
+    engines: {node: '>=8'}
+    dependencies:
+      html-escaper: 2.0.2
+      istanbul-lib-report: 3.0.0
+    dev: true
+
   /iterable-to-stream/1.0.1:
     resolution: {integrity: sha512-O62gD5ADMUGtJoOoM9U6LQ7i4byPXUNoHJ6mqsmkQJcom331ZJGDApWgDESWyBMEHEJRjtHozgIiTzYo9RU4UA==}
     engines: {node: '>=8.0.0'}
@@ -23796,6 +23884,36 @@ packages:
       - utf-8-validate
     dev: true
 
+  /jest-cli/27.4.7_ts-node@9.1.1:
+    resolution: {integrity: sha512-zREYhvjjqe1KsGV15mdnxjThKNDgza1fhDT+iUsXWLCq3sxe9w5xnvyctcYVT5PcdLSjv7Y5dCwTS3FCF1tiuw==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      node-notifier: ^8.0.1 || ^9.0.0 || ^10.0.0
+    peerDependenciesMeta:
+      node-notifier:
+        optional: true
+    dependencies:
+      '@jest/core': 27.4.7_ts-node@9.1.1
+      '@jest/test-result': 27.4.6
+      '@jest/types': 27.4.2
+      chalk: 4.1.2
+      exit: 0.1.2
+      graceful-fs: 4.2.8
+      import-local: 3.0.3
+      jest-config: 27.4.7_ts-node@9.1.1
+      jest-util: 27.4.2
+      jest-validate: 27.4.6
+      prompts: 2.4.2
+      yargs: 16.2.0
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - ts-node
+      - utf-8-validate
+    dev: true
+
   /jest-config/26.6.3_ts-node@9.1.1:
     resolution: {integrity: sha512-t5qdIj/bCj2j7NFVHb2nFB4aUdfucDn3JRKgrZnplb8nieAirAzRSHP8uDEd+qV6ygzg9Pz4YG7UTJf94LPSyg==}
     engines: {node: '>= 10.14.2'}
@@ -23957,16 +24075,6 @@ packages:
       pretty-format: 26.6.2
     dev: false
 
-  /jest-diff/27.4.2:
-    resolution: {integrity: sha512-ujc9ToyUZDh9KcqvQDkk/gkbf6zSaeEg9AiBxtttXW59H/AcqEYp1ciXAtJp+jXWva5nAf/ePtSsgWwE5mqp4Q==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dependencies:
-      chalk: 4.1.2
-      diff-sequences: 27.4.0
-      jest-get-type: 27.4.0
-      pretty-format: 27.4.2
-    dev: true
-
   /jest-diff/27.4.6:
     resolution: {integrity: sha512-zjaB0sh0Lb13VyPsd92V7HkqF6yKRH9vm33rwBt7rPYrpQvS1nCvlIy2pICbKta+ZjWngYLNn4cCK4nyZkjS/w==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -23975,7 +24083,6 @@ packages:
       diff-sequences: 27.4.0
       jest-get-type: 27.4.0
       pretty-format: 27.4.6
-    dev: true
 
   /jest-docblock/26.0.0:
     resolution: {integrity: sha512-RDZ4Iz3QbtRWycd8bUEPxQsTlYazfYn/h5R65Fc6gOfwozFhoImx+affzky/FFBuqISPTqjXomoIGJVKBWoo0w==}
@@ -24122,7 +24229,6 @@ packages:
   /jest-get-type/27.4.0:
     resolution: {integrity: sha512-tk9o+ld5TWq41DkK14L4wox4s2D9MtTpKaAVzXfr5CUKm5ZK2ExcaFE0qls2W71zE/6R2TxxrK9w2r6svAFDBQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dev: true
 
   /jest-haste-map/26.6.2:
     resolution: {integrity: sha512-easWIJXIw71B2RdR8kgqpjQrbMRWQBgiBwXYEhtGUTaX+doCjBheluShdDMeR8IMfJiTqH4+zfhtg29apJf/8w==}
@@ -24477,6 +24583,17 @@ packages:
       - supports-color
     dev: true
 
+  /jest-resolve-dependencies/27.4.6:
+    resolution: {integrity: sha512-W85uJZcFXEVZ7+MZqIPCscdjuctruNGXUZ3OHSXOfXR9ITgbUKeHj+uGcies+0SsvI5GtUfTw4dY7u9qjTvQOw==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    dependencies:
+      '@jest/types': 27.4.2
+      jest-regex-util: 27.4.0
+      jest-snapshot: 27.4.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /jest-resolve/26.6.0:
     resolution: {integrity: sha512-tRAz2bwraHufNp+CCmAD8ciyCpXCs1NQxB5EJAmtCFy6BN81loFEGWKzYu26Y62lAJJe4X4jg36Kf+NsQyiStQ==}
     engines: {node: '>= 10.14.2'}
@@ -24810,7 +24927,7 @@ packages:
       chalk: 4.1.2
       expect: 27.4.2
       graceful-fs: 4.2.8
-      jest-diff: 27.4.2
+      jest-diff: 27.4.6
       jest-get-type: 27.4.0
       jest-haste-map: 27.4.5
       jest-matcher-utils: 27.4.2
@@ -24967,6 +25084,19 @@ packages:
       string-length: 4.0.2
     dev: true
 
+  /jest-watcher/27.4.6:
+    resolution: {integrity: sha512-yKQ20OMBiCDigbD0quhQKLkBO+ObGN79MO4nT7YaCuQ5SM+dkBNWE8cZX0FjU6czwMvWw6StWbe+Wv4jJPJ+fw==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    dependencies:
+      '@jest/test-result': 27.4.6
+      '@jest/types': 27.4.2
+      '@types/node': 17.0.5
+      ansi-escapes: 4.3.2
+      chalk: 4.1.2
+      jest-util: 27.4.2
+      string-length: 4.0.2
+    dev: true
+
   /jest-worker/24.9.0:
     resolution: {integrity: sha512-51PE4haMSXcHohnSMdM42anbvZANYTqMrr52tVKPqqsPJMzoP6FYYDVqahX/HrAoKEKz3uUPzSvKs9A3qR4iVw==}
     engines: {node: '>= 6'}
@@ -25016,27 +25146,6 @@ packages:
       - utf-8-validate
     dev: false
 
-  /jest/27.0.6_ts-node@9.1.1:
-    resolution: {integrity: sha512-EjV8aETrsD0wHl7CKMibKwQNQc3gIRBXlTikBmmHUeVMKaPFxdcUIBfoDqTSXDoGJIivAYGqCWVlzCSaVjPQsA==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      node-notifier: ^8.0.1 || ^9.0.0 || ^10.0.0
-    peerDependenciesMeta:
-      node-notifier:
-        optional: true
-    dependencies:
-      '@jest/core': 27.4.5_ts-node@9.1.1
-      import-local: 3.0.3
-      jest-cli: 27.4.5_ts-node@9.1.1
-    transitivePeerDependencies:
-      - bufferutil
-      - canvas
-      - supports-color
-      - ts-node
-      - utf-8-validate
-    dev: true
-
   /jest/27.4.5_ts-node@7.0.1:
     resolution: {integrity: sha512-uT5MiVN3Jppt314kidCk47MYIRilJjA/l2mxwiuzzxGUeJIvA8/pDaJOAX5KWvjAo7SCydcW0/4WEtgbLMiJkg==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -25071,6 +25180,27 @@ packages:
       '@jest/core': 27.4.5_ts-node@9.1.1
       import-local: 3.0.3
       jest-cli: 27.4.5_ts-node@9.1.1
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - ts-node
+      - utf-8-validate
+    dev: true
+
+  /jest/27.4.7_ts-node@9.1.1:
+    resolution: {integrity: sha512-8heYvsx7nV/m8m24Vk26Y87g73Ba6ueUd0MWed/NXMhSZIm62U/llVbS0PJe1SHunbyXjJ/BqG1z9bFjGUIvTg==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      node-notifier: ^8.0.1 || ^9.0.0 || ^10.0.0
+    peerDependenciesMeta:
+      node-notifier:
+        optional: true
+    dependencies:
+      '@jest/core': 27.4.7_ts-node@9.1.1
+      import-local: 3.0.3
+      jest-cli: 27.4.7_ts-node@9.1.1
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -30350,7 +30480,6 @@ packages:
       ansi-regex: 5.0.1
       ansi-styles: 5.2.0
       react-is: 17.0.2
-    dev: true
 
   /pretty-hrtime/1.0.3:
     resolution: {integrity: sha1-t+PqQkNaTJsnWdmeDyAesZWALuE=}
@@ -35415,7 +35544,7 @@ packages:
     dependencies:
       tslib: 1.14.1
 
-  /ts-jest/27.1.2_b65cae1b46840061996b6cc0ea16ca56:
+  /ts-jest/27.1.2_334772dd386c536d54092d15fe05a291:
     resolution: {integrity: sha512-eSOiJOWq6Hhs6Khzk5wKC5sgWIXgXqOCiIl1+3lfnearu58Hj4QpE5tUhQcA3xtZrELbcvAGCsd6HB8OsaVaTA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -35436,10 +35565,44 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@types/jest': 27.0.3
+      '@types/jest': 27.4.0
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.4.5_ts-node@9.1.1
+      jest-util: 27.4.2
+      json5: 2.2.0
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.5
+      typescript: 4.5.4
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.2_f5cc9e4b4142f9cf533ebd59baeed990:
+    resolution: {integrity: sha512-eSOiJOWq6Hhs6Khzk5wKC5sgWIXgXqOCiIl1+3lfnearu58Hj4QpE5tUhQcA3xtZrELbcvAGCsd6HB8OsaVaTA==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: ~0.14.0
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.0.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.4.7_ts-node@9.1.1
       jest-util: 27.4.2
       json5: 2.2.0
       lodash.memoize: 4.1.2
