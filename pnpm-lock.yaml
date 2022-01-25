@@ -140,7 +140,7 @@ importers:
       hat: ^0.0.3
       jsonwebtoken: ^8.5.1
       lodash: ^4.17.15
-      mixpanel: ^0.13.0
+      mixpanel: 0.14.0
       mocha: ^8.1.1
       moment: ^2.29.1
       nanoid: ^3.1.20
@@ -196,7 +196,7 @@ importers:
       hat: 0.0.3
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
-      mixpanel: 0.13.0
+      mixpanel: 0.14.0
       moment: 2.29.1
       nanoid: 3.1.30
       nest-raven: 7.2.0_7f27b67cb5c5b9fdca4c9b88d02ee90c
@@ -634,7 +634,7 @@ importers:
       intercom-client: ^2.11.0
       jsonfile: ^6.0.1
       JSONStream: ^1.3.5
-      mixpanel: ^0.13.0
+      mixpanel: 0.14.0
       mongoose: 5.11.18
       ng-intercom: ^8.0.2
       nodemon: ^2.0.3
@@ -668,7 +668,7 @@ importers:
       intercom-client: 2.11.2
       jsonfile: 6.1.0
       JSONStream: 1.3.5
-      mixpanel: 0.13.0
+      mixpanel: 0.14.0
       mongoose: 5.11.18
       ng-intercom: 8.0.2
       reflect-metadata: 0.1.13
@@ -772,12 +772,12 @@ importers:
       '@types/bluebird': ^3.5.24
       class-transformer: 0.5.1
       class-validator: ^0.9.1
-      mixpanel: ^0.13.0
+      mixpanel: 0.14.0
       typescript: ^4.1.3
     dependencies:
       class-transformer: 0.5.1
       class-validator: 0.9.1
-      mixpanel: 0.13.0
+      mixpanel: 0.14.0
       typescript: 4.5.4
     devDependencies:
       '@types/bluebird': 3.5.36
@@ -27465,8 +27465,8 @@ packages:
       for-in: 1.0.2
       is-extendable: 1.0.1
 
-  /mixpanel/0.13.0:
-    resolution: {integrity: sha512-YOWmpr/o4+zJ8LPjuLUkWLc2ImFeIkX6hF1t62Wlvq6loC6e8EK8qieYO4gYPTPxxtjAryl7xmIvf/7qnPwjrQ==}
+  /mixpanel/0.14.0:
+    resolution: {integrity: sha512-PY2zSMXCGHSEnuuFnlPeSX3R7YeU3/8IaSUgmGc9DnM2U7weg6sfdKu7s5+3euwGz0R1KHQoUJOUbIuXtHgGmA==}
     engines: {node: '>=10.0'}
     dependencies:
       https-proxy-agent: 5.0.0
