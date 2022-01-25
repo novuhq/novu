@@ -139,9 +139,9 @@ export function ActivitiesPage() {
               dataIndex="name"
               key="name"
               render={(status, record: any) => (
-                <>
+                <span data-test-id="subscriber-name">
                   {capitalize(record.subscriber.firstName)} {capitalize(record.subscriber.lastName)}
-                </>
+                </span>
               )}
             />
             <Column
