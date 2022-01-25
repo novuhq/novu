@@ -48,7 +48,7 @@
     "@sendgrid/mail": "^7.4.6"
   },
   "devDependencies": {
-    "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@types/jest": "27.0.1",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",

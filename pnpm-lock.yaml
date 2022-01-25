@@ -919,7 +919,7 @@ importers:
 
   providers/emailjs:
     specifiers:
-      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
       '@types/jest': 27.0.1
       codecov: ^3.5.0
@@ -958,7 +958,7 @@ importers:
 
   providers/mailgun:
     specifiers:
-      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
       '@types/jest': 27.0.1
       codecov: ^3.5.0
@@ -1042,7 +1042,7 @@ importers:
 
   providers/mandrill:
     specifiers:
-      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@istanbuljs/nyc-config-typescript': 1.0.2
       '@mailchimp/mailchimp_transactional': ^1.0.46
       '@notifire/core': ^0.3.6-alpha.0
       '@types/jest': 27.0.1
@@ -1122,7 +1122,7 @@ importers:
 
   providers/nodemailer:
     specifiers:
-      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
       '@types/jest': 27.0.1
       '@types/nodemailer': ^6.4.4
@@ -1163,7 +1163,7 @@ importers:
 
   providers/plivo:
     specifiers:
-      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
       '@types/jest': 27.0.1
       codecov: ^3.5.0
@@ -1202,7 +1202,7 @@ importers:
 
   providers/postmark:
     specifiers:
-      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
       '@types/jest': 27.0.1
       codecov: ^3.5.0
@@ -1241,7 +1241,7 @@ importers:
 
   providers/sendgrid:
     specifiers:
-      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
       '@sendgrid/mail': ^7.4.6
       '@types/jest': 27.0.1
@@ -1444,7 +1444,7 @@ importers:
 
   providers/twilio:
     specifiers:
-      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@istanbuljs/nyc-config-typescript': 1.0.2
       '@notifire/core': ^0.3.6-alpha.0
       '@types/jest': 27.0.1
       codecov: ^3.5.0
