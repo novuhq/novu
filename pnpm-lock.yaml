@@ -932,7 +932,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       prettier: ^2.1.1
-      standard-version: ^9.0.0
+      standard-version: 9.3.2
       ts-jest: ^27.0.5
       ts-node: ^9.0.0
       typedoc: ^0.19.0
@@ -973,7 +973,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       prettier: ^2.1.1
-      standard-version: ^9.0.0
+      standard-version: 9.3.2
       ts-jest: ^27.0.5
       ts-node: ^9.0.0
       typedoc: ^0.19.0
@@ -1056,7 +1056,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       prettier: 2.4.1
-      standard-version: ^9.0.0
+      standard-version: 9.3.2
       ts-jest: ^27.0.5
       ts-node: ^9.0.0
       typedoc: ^0.19.0
@@ -1136,7 +1136,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       prettier: ^2.1.1
-      standard-version: ^9.0.0
+      standard-version: 9.3.2
       ts-jest: ^27.0.7
       ts-node: ^9.0.0
       typedoc: ^0.19.0
@@ -1176,7 +1176,7 @@ importers:
       open-cli: ^6.0.1
       plivo: ^4.22.4
       prettier: ^2.1.1
-      standard-version: ^9.0.0
+      standard-version: 9.3.2
       ts-jest: ^27.0.5
       ts-node: ^9.0.0
       typedoc: ^0.19.0
@@ -1215,7 +1215,7 @@ importers:
       open-cli: ^6.0.1
       postmark: ^2.7.8
       prettier: ^2.1.1
-      standard-version: ^9.0.0
+      standard-version: 9.3.2
       ts-jest: ^27.0.5
       ts-node: ^9.0.0
       typedoc: ^0.19.0
@@ -1254,7 +1254,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       prettier: ^2.1.1
-      standard-version: ^9.0.0
+      standard-version: 9.3.2
       ts-jest: ^27.0.5
       ts-node: ^9.0.0
       typedoc: ^0.19.0
@@ -1456,7 +1456,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       prettier: ^2.1.1
-      standard-version: ^9.0.0
+      standard-version: 9.3.2
       ts-jest: ^27.0.5
       ts-node: ^9.0.0
       twilio: ^3.67.2
