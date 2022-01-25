@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "start": "npm run start:dev",
+    "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nodemon",
     "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon",
     "start:debug": "TZ=UTC nodemon --config nodemon-debug.json",
