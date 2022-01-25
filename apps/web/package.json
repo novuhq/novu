@@ -76,7 +76,7 @@
     "cypress-file-upload": "^5.0.7",
     "cypress-localstorage-commands": "^1.4.0",
     "eslint-plugin-cypress": "^2.11.2",
-    "http-server": "^0.12.3",
+    "http-server": "0.13.0",
     "less-loader": "4.1.0",
     "start-server-and-test": "1.11.6"
   },

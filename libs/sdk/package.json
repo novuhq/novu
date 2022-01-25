@@ -99,7 +99,7 @@
     "coveralls": "^3.0.2",
     "cross-env": "^5.2.0",
     "cz-conventional-changelog": "^2.1.0",
-    "http-server": "^0.12.3",
+    "http-server": "0.13.0",
     "husky": "^1.0.1",
     "jest": "^27.0.6",
     "jest-config": "^27.4.7",

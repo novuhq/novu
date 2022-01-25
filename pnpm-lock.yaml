@@ -280,7 +280,7 @@ importers:
       eslint-plugin-cypress: ^2.11.2
       graphql: ^15.4.0
       history: ^5.0.0
-      http-server: ^0.12.3
+      http-server: 0.13.0
       jwt-decode: ^3.1.2
       less: ^4.1.0
       less-loader: 4.1.0
@@ -378,7 +378,7 @@ importers:
       cypress-file-upload: 5.0.8_cypress@7.7.0
       cypress-localstorage-commands: 1.6.1_cypress@7.7.0
       eslint-plugin-cypress: 2.12.1_eslint@7.32.0
-      http-server: 0.12.3
+      http-server: 0.13.0
       less-loader: 4.1.0_less@4.1.2
       start-server-and-test: 1.11.6
 
@@ -408,7 +408,7 @@ importers:
       cypress: ^7.3.0
       cypress-intellij-reporter: 0.0.7
       faker: ^5.4.0
-      http-server: ^0.12.3
+      http-server: 0.13.0
       iframe-resizer: ^4.3.1
       jest: 27.4.7
       jwt-decode: ^3.1.2
@@ -473,7 +473,7 @@ importers:
       cypress: 7.7.0
       cypress-intellij-reporter: 0.0.7
       faker: 5.5.3
-      http-server: 0.12.3
+      http-server: 0.13.0
       jest: 27.4.7_ts-node@9.1.1
       less: 4.1.2
       less-loader: 4.1.0_less@4.1.2
@@ -704,7 +704,7 @@ importers:
       coveralls: ^3.0.2
       cross-env: ^5.2.0
       cz-conventional-changelog: ^2.1.0
-      http-server: ^0.12.3
+      http-server: 0.13.0
       husky: ^1.0.1
       iframe-resizer: ^4.3.1
       jest: ^27.0.6
@@ -743,7 +743,7 @@ importers:
       coveralls: 3.1.1
       cross-env: 5.2.1
       cz-conventional-changelog: 2.1.0
-      http-server: 0.12.3
+      http-server: 0.13.0
       husky: 1.3.1
       jest: 27.4.5_ts-node@7.0.1
       jest-config: 27.4.7_ts-node@7.0.1
@@ -5637,7 +5637,7 @@ packages:
     dependencies:
       conventional-changelog-angular: 1.6.6
       conventional-commits-parser: 2.1.7
-      lodash: 4.17.11
+      lodash: 4.17.21
     dev: true
 
   /@commitlint/read/13.2.0:
@@ -18877,17 +18877,6 @@ packages:
     dependencies:
       safe-buffer: 5.2.1
 
-  /ecstatic/3.3.2:
-    resolution: {integrity: sha512-fLf9l1hnwrHI2xn9mEDT7KIi22UDqA2jaCwyCbSUJh9a1V+LEUSL/JO/6TIz/QyuBURWUHrFL5Kg2TtO1bkkog==}
-    deprecated: This package is unmaintained and deprecated. See the GH Issue 259.
-    hasBin: true
-    dependencies:
-      he: 1.2.0
-      mime: 1.6.0
-      minimist: 1.2.5
-      url-join: 2.0.5
-    dev: true
-
   /ee-first/1.1.1:
     resolution: {integrity: sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=}
 
@@ -22429,21 +22418,23 @@ packages:
       - debug
     dev: false
 
-  /http-server/0.12.3:
-    resolution: {integrity: sha512-be0dKG6pni92bRjq0kvExtj/NrrAd28/8fCXkaI/4piTwQMSDSLMhWyW0NI1V+DBI3aa1HMlQu46/HjVLfmugA==}
+  /http-server/0.13.0:
+    resolution: {integrity: sha512-/MjH9k/y470zbtXzKLkP8vioIVvxRArTkz8f9UX1ztkLZzr6S0hg6BW8h6MBn/HUfwjlTQvIe9DRknorN2u20Q==}
     engines: {node: '>=6'}
     hasBin: true
     dependencies:
       basic-auth: 1.1.0
       colors: 1.4.0
       corser: 2.0.1
-      ecstatic: 3.3.2
+      he: 1.2.0
       http-proxy: 1.18.1
+      mime: 1.6.0
       minimist: 1.2.5
       opener: 1.5.2
       portfinder: 1.0.28
       secure-compare: 3.0.1
       union: 0.5.0
+      url-join: 2.0.5
     transitivePeerDependencies:
       - debug
     dev: true
@@ -22801,7 +22792,7 @@ packages:
       cli-width: 2.2.1
       external-editor: 3.1.0
       figures: 2.0.0
-      lodash: 4.17.14
+      lodash: 4.17.21
       mute-stream: 0.0.7
       run-async: 2.4.1
       rxjs: 6.6.7
