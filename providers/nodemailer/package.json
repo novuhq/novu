@@ -48,7 +48,7 @@
     "nodemailer": "^6.6.5"
   },
   "devDependencies": {
-    "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@types/jest": "27.0.1",
     "@types/nodemailer": "^6.4.4",
     "codecov": "^3.5.0",
