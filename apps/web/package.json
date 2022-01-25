@@ -86,10 +86,10 @@
     "test": "craco test",
     "precommit": "lint-staged",
     "start:static:build": "http-server build -p 4200 --proxy http://localhost:4200?",
-    "start:dev": "npm run start",
+    "start:dev": "pnpm start",
     "cypress:run": "NODE_ENV=test cypress run",
     "cypress:open": "NODE_ENV=test cypress open",
-    "start:api": "cd ../../ && yarn run start:e2e:api",
+    "start:api": "cd ../../ && pnpm start:e2e:api",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public"
   },

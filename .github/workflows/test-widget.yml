@@ -57,15 +57,15 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build
-        run: CI='' yarn run build:widget
+        run: CI='' pnpm build:widget
 
       # Runs a single command using the runners shell
       - name: Start Client
-        run: yarn run start:widget &
+        run: pnpm start:widget &
 
       # Runs a single command using the runners shell
       - name: Start WS
-        run: yarn run start:ws &
+        run: pnpm start:ws &
 
       # Runs a single command using the runners shell
       - name: Wait for WS
@@ -78,7 +78,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           working-directory: apps/widget
-          start: yarn run start:api
+          start: pnpm start:api
           wait-on: http://localhost:3500/v1/health-check
           record: true
           browser: chrome

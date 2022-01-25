@@ -7,7 +7,7 @@ const pkg = JSON.parse(
   readFileSync(path.resolve(__dirname, "..", "package.json"))
 )
 
-pkg.scripts.prepush = "npm run test:prod && npm run build"
+pkg.scripts.prepush = "pnpm test:prod && pnpm build"
 pkg.scripts.commitmsg = "commitlint -E HUSKY_GIT_PARAMS"
 
 writeFileSync(
@@ -24,7 +24,7 @@ console.log()
 
 if (pkg.repository.url.trim()) {
   console.log(colors.cyan("Now run:"))
-  console.log(colors.cyan("  npm install -g semantic-release-cli"))
+  console.log(colors.cyan("  pnpm install -g semantic-release-cli"))
   console.log(colors.cyan("  semantic-release-cli setup"))
   console.log()
   console.log(
@@ -43,7 +43,7 @@ if (pkg.repository.url.trim()) {
     )
   )
   console.log(colors.cyan("Then run:"))
-  console.log(colors.cyan("  npm install -g semantic-release-cli"))
+  console.log(colors.cyan("  pnpm install -g semantic-release-cli"))
   console.log(colors.cyan("  semantic-release-cli setup"))
   console.log()
   console.log(
