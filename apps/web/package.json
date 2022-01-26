@@ -12,6 +12,8 @@
     "@cypress/webpack-dev-server": "^1.1.2",
     "@editorjs/editorjs": "^2.19.3",
     "@editorjs/paragraph": "^2.8.0",
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
     "@jackwilsdon/craco-use-babelrc": "^1.0.0",
     "@mantine/core": "^3.6.3",
     "@mantine/hooks": "^3.6.3",

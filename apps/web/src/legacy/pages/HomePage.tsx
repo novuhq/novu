@@ -1,7 +1,5 @@
-import { Button } from '@mantine/core';
-
 function HomePage() {
-  return <Button>s</Button>;
+  return null;
 }
 
 export default HomePage;
