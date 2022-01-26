@@ -9,7 +9,7 @@ export function applyToken(token: string | null) {
     axios.defaults.headers.common.Authorization = `Bearer ${token}`;
   } else {
     localStorage.removeItem('widget_user_auth_token');
-    axios.defaults.headers.common.Authorization = undefined;
+    delete axios.defaults.headers.common.Authorization;
   }
 }
 

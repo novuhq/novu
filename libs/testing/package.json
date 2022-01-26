@@ -4,10 +4,10 @@
   "description": "",
   "private": true,
   "scripts": {
-    "afterinstall": "npm run build",
+    "afterinstall": "pnpm build",
     "build": "node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
-    "start:dev": "npm run build:watch",
+    "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
     "test": "",
     "test:watch": ""
@@ -26,7 +26,7 @@
     "event-stream": "^4.0.1",
     "faker": "^5.5.3",
     "fs-extra": "^9.0.0",
-    "axios": "^0.24.0",
+    "axios": "0.25.0",
     "jsonfile": "^6.0.1",
     "mongoose": "5.11.18",
     "ng-intercom": "^8.0.2",

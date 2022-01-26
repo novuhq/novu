@@ -2,9 +2,9 @@
   <a href="https://discord.gg/9wcGSf22PM">
     <img src="https://user-images.githubusercontent.com/8877285/139603641-66966234-84f4-42aa-9c31-9d296fab7ba1.png">
   </a>
+</p>
 <p align="center">Read <a href="https://github.com/notifirehq/notifire/discussions/70">here</a> our plans for the upcoming weeks.</p>
 
-</p>
 <p align="center">
   <a href="https://notifire.co">
     <img width="200" src="https://uploads-ssl.webflow.com/6130b4d29bb0ab09e14ae9ee/6130e6931f755df302203fcc_SideLogo%20-%20BLack-p-800.png">

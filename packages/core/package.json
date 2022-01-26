@@ -29,7 +29,7 @@
     "doc:html": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --out build/docs",
     "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
     "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
-    "reset-hard": "git clean -dfx && git reset --hard && yarn",
+    "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
     "prepare-release": "run-s reset-hard test"
   },
   "publishConfig": {
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@sendgrid/mail": "^7.4.6",
-    "@types/jest": "^27.0.1",
+    "@types/jest": "27.4.0",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",

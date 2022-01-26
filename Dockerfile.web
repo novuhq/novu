@@ -2,7 +2,7 @@ FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
-RUN npm i yarn -g --loglevel notice --force
+RUN npm i pnpm -g --loglevel notice --force
 
 COPY package.json .
 
@@ -15,10 +15,9 @@ COPY lerna.json .
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
-RUN yarn install
-RUN yarn add @babel/core -W
-RUN yarn bootstrap
+RUN pnpm install
+RUN pnpm add @babel/core -W
 
 COPY apps/web/build ./apps/web/build
 
-CMD [ "npm", "run", "start:web" ]
+CMD [ "pnpm", "run", "start:web" ]

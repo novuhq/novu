@@ -2,8 +2,8 @@ FROM node:15.11.0
 
 WORKDIR /usr/src/app
 
-RUN npm i yarn -g --loglevel notice --force
-RUN npm i pm2 -g
+RUN npm i pnpm -g --loglevel notice --force
+RUN pnpm i pm2 -g
 
 COPY package.json .
 
@@ -16,9 +16,8 @@ COPY lerna.json .
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
-RUN yarn install
-RUN yarn bootstrap
-RUN yarn build:ws
+RUN pnpm install
+RUN pnpm build:ws
 
 WORKDIR /usr/src/app/apps/ws
 RUN cp src/.env.test dist/src/.env.test

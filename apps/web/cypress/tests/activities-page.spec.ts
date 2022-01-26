@@ -16,6 +16,14 @@ describe.skip('Activity Feed Screen', function () {
   });
 
   it('should display notification templates list', function () {
+    cy.intercept('*/activity*', (r) => {
+      r.continue((res) => {
+        res.body.data[0].subscriber.firstName = 'lowercase';
+
+        res.send({ body: res.body });
+      });
+    });
+
     cy.visit('/activities');
     cy.getByTestId('activities-table')
       .find('tbody tr')
@@ -25,6 +33,7 @@ describe.skip('Activity Feed Screen', function () {
 
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-in-app-channel').should('be.visible');
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-email-channel').should('be.visible');
+    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
   });
 
   it('should display stats on top of page', function () {

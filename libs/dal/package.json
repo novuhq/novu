@@ -4,10 +4,10 @@
   "description": "",
   "private": true,
   "scripts": {
-    "afterinstall": "npm run build",
+    "afterinstall": "pnpm build",
     "build": "node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
-    "start:dev": "npm run build:watch",
+    "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
     "test": "",
     "test:watch": ""

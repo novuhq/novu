@@ -93,8 +93,10 @@ export function BrandingForm({
       },
       transformRequest: [
         (data, headers) => {
-          // eslint-disable-next-line
-          delete headers.common.Authorization;
+          if (headers) {
+            // eslint-disable-next-line
+            delete headers.Authorization;
+          }
 
           return data;
         },
