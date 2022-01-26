@@ -1,4 +1,4 @@
-import { Button as AntButton } from 'antd';
+import { Button as MantineButton } from '@mantine/core';
 
 interface IButtonProps extends JSX.ElementChildrenAttribute {
   loading: boolean;
@@ -6,9 +6,5 @@ interface IButtonProps extends JSX.ElementChildrenAttribute {
 }
 
 export function Button({ loading, children, type = 'primary' }: IButtonProps) {
-  return (
-    <AntButton type={type} loading={loading}>
-      {children}
-    </AntButton>
-  );
+  return <MantineButton loading={loading}>{children}</MantineButton>;
 }
