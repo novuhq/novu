@@ -304,6 +304,7 @@ importers:
       react-scripts: 4.0.3
       react-syntax-highlighter: ^15.4.3
       start-server-and-test: 1.11.6
+      storybook-dark-mode: ^1.0.8
       storybook-preset-craco: ^0.0.6
       styled-components: ^5.2.1
       typescript: ^4.1.2
@@ -358,6 +359,7 @@ importers:
       react-router-dom: 5.2.0_react@17.0.2
       react-scripts: 4.0.3_be98eca4f71dca093b18909dfd6e01d2
       react-syntax-highlighter: 15.4.5_react@17.0.2
+      storybook-dark-mode: 1.0.8
       storybook-preset-craco: 0.0.6_e2c81e9e7d4ede2436cacaa4048b7bbd
       styled-components: 5.3.3_react-dom@17.0.2+react@17.0.2
       typescript: 4.5.4
@@ -27500,7 +27502,6 @@ packages:
 
   /map-or-similar/1.5.0:
     resolution: {integrity: sha1-beJlMXSt+12e3DPGnT6Sobdvrwg=}
-    dev: true
 
   /map-stream/0.0.7:
     resolution: {integrity: sha1-ih8HiW2CsQkmvTdEokIACfiJdKg=}
@@ -27654,7 +27655,6 @@ packages:
     resolution: {integrity: sha1-fIekZGREwy11Q4VwkF8tvRsagFo=}
     dependencies:
       map-or-similar: 1.5.0
-    dev: true
 
   /memory-fs/0.2.0:
     resolution: {integrity: sha1-8rslNovBIeORwlIN6Slpyu4KApA=}
@@ -35357,6 +35357,19 @@ packages:
   /store2/2.13.1:
     resolution: {integrity: sha512-iJtHSGmNgAUx0b/MCS6ASGxb//hGrHHRgzvN+K5bvkBTN7A9RTpPSf1WSp+nPGvWCJ1jRnvY7MKnuqfoi3OEqg==}
     dev: true
+
+  /storybook-dark-mode/1.0.8:
+    resolution: {integrity: sha512-uY6yTSd1vYE0YwlON50u+iIoNF/fmMj59ww1cpd/naUcmOmCjwawViKFG5YjichwdR/yJ5ybWRUF0tnRQfaSiw==}
+    peerDependencies:
+      '@storybook/addons': ^6.0.0
+      '@storybook/api': ^6.0.0
+      '@storybook/components': ^6.0.0
+      '@storybook/core-events': ^6.0.0
+      '@storybook/theming': ^6.0.0
+    dependencies:
+      fast-deep-equal: 3.1.3
+      memoizerific: 1.11.3
+    dev: false
 
   /storybook-preset-craco/0.0.6_e2c81e9e7d4ede2436cacaa4048b7bbd:
     resolution: {integrity: sha512-1HwDzjVDcUi7hJJvj4mYRbabvF1MGFgpnph9wQml8j9yamgLm2ISA9vaFMskWGNId9vyfPivINcEhcTNdmPhBA==}
