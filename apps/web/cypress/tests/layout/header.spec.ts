@@ -1,8 +1,10 @@
-describe('App Header', function () {
+describe.skip('App Header', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
     cy.visit('/');
   });
+
+  it.only('should switch to dark mode', function () {});
 
   it('should display correct user photo', function () {
     cy.getByTestId('header-profile-avatar')

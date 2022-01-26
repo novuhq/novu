@@ -5,20 +5,22 @@ import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
-import './styles/index.less';
-import { ActivitiesPage } from './pages/activities/ActivitiesPage';
-import LoginPage from './pages/auth/login';
-import SignUpPage from './pages/auth/signup';
-import HomePage from './pages/HomePage';
-import ApplicationOnBoarding from './pages/onboarding/application';
-import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
-import NotificationList from './pages/templates/TemplatesListPage';
-import { AppLayout } from './components/layout/app-layout/AppLayout';
-import { WidgetSettingsPage } from './pages/settings/WidgetSettingsPage';
-import { OrganizationSettingsPage } from './pages/organization-settings/OrganizationSettingsPage';
-import InvitationScreen from './pages/auth/InvitationScreen';
+import { ActivitiesPage } from './legacy/pages/activities/ActivitiesPage';
+import LoginPage from './legacy/pages/auth/login';
+import SignUpPage from './legacy/pages/auth/signup';
+import HomePage from './legacy/pages/HomePage';
+import ApplicationOnBoarding from './legacy/pages/onboarding/application';
+import TemplateEditorPage from './legacy/pages/templates/editor/TemplateEditorPage';
+import NotificationList from './legacy/pages/templates/TemplatesListPage';
+import { WidgetSettingsPage } from './legacy/pages/settings/WidgetSettingsPage';
+import { OrganizationSettingsPage } from './legacy/pages/organization-settings/OrganizationSettingsPage';
+import InvitationScreen from './legacy/pages/auth/InvitationScreen';
 import { api } from './api/api.client';
-import PasswordResetPage from './pages/auth/password-reset';
+import PasswordResetPage from './legacy/pages/auth/password-reset';
+import { ThemeContext } from './store/themeContext';
+import { useThemeController } from './store/use-theme-controller';
+import { AppLayout } from './components/layout/AppLayout';
+import { LegacyAppLayout } from './legacy/components/layout/app-layout/LegacyAppLayout';
 
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
@@ -53,55 +55,57 @@ function App() {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <AuthHandlerComponent>
-          <Switch>
-            <Route path="/auth/signup">
-              <SignUpPage />
-            </Route>
-            <Route path="/auth/login">
-              <LoginPage />
-            </Route>
-            <Route path="/auth/reset/request">
-              <PasswordResetPage />
-            </Route>
-            <Route path="/auth/reset/:token">
-              <PasswordResetPage />
-            </Route>
-            <Route path="/auth/invitation/:token">
-              <InvitationScreen />
-            </Route>
-            <Route path="/">
-              <PrivateRoute>
-                <Switch>
-                  <Route exact path="/onboarding/application">
-                    <ApplicationOnBoarding />
-                  </Route>
-                  <AppLayout>
-                    <Route exact path="/">
-                      <HomePage />
+          <ThemeHandlerComponent>
+            <Switch>
+              <Route path="/auth/signup">
+                <SignUpPage />
+              </Route>
+              <Route path="/auth/login">
+                <LoginPage />
+              </Route>
+              <Route path="/auth/reset/request">
+                <PasswordResetPage />
+              </Route>
+              <Route path="/auth/reset/:token">
+                <PasswordResetPage />
+              </Route>
+              <Route path="/auth/invitation/:token">
+                <InvitationScreen />
+              </Route>
+              <Route path="/">
+                <PrivateRoute>
+                  <Switch>
+                    <Route exact path="/onboarding/application">
+                      <ApplicationOnBoarding />
                     </Route>
-                    <Route exact path="/templates/create">
-                      <TemplateEditorPage />
-                    </Route>
-                    <Route exact path="/templates/edit/:templateId">
-                      <TemplateEditorPage />
-                    </Route>
-                    <Route exact path="/templates">
-                      <NotificationList />
-                    </Route>
-                    <Route exact path="/activities">
-                      <ActivitiesPage />
-                    </Route>
-                    <Route exact path="/settings/widget">
-                      <WidgetSettingsPage />
-                    </Route>
-                    <Route exact path="/settings/organization">
-                      <OrganizationSettingsPage />
-                    </Route>
-                  </AppLayout>
-                </Switch>
-              </PrivateRoute>
-            </Route>
-          </Switch>
+                    <AppLayout>
+                      <Route exact path="/">
+                        <HomePage />
+                      </Route>
+                      <Route exact path="/templates/create">
+                        <TemplateEditorPage />
+                      </Route>
+                      <Route exact path="/templates/edit/:templateId">
+                        <TemplateEditorPage />
+                      </Route>
+                      <Route exact path="/templates">
+                        <NotificationList />
+                      </Route>
+                      <Route exact path="/activities">
+                        <ActivitiesPage />
+                      </Route>
+                      <Route exact path="/settings/widget">
+                        <WidgetSettingsPage />
+                      </Route>
+                      <Route exact path="/settings/organization">
+                        <OrganizationSettingsPage />
+                      </Route>
+                    </AppLayout>
+                  </Switch>
+                </PrivateRoute>
+              </Route>
+            </Switch>
+          </ThemeHandlerComponent>
         </AuthHandlerComponent>
       </QueryClientProvider>
     </BrowserRouter>
@@ -128,6 +132,21 @@ function PrivateRoute({ children, ...rest }: any) {
   );
 }
 
+function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
+  const { setCurrentTheme, currentTheme, toggleTheme } = useThemeController();
+
+  return (
+    <ThemeContext.Provider
+      value={{
+        theme: currentTheme,
+        setTheme: setCurrentTheme,
+        toggleTheme,
+      }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
 function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
   const { token, setToken, user, logout } = useAuthController();
 
@@ -145,5 +164,3 @@ function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
 }
 
 export default Sentry.withProfiler(App);
-
-//

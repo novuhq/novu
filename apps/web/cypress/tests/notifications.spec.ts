@@ -1,4 +1,4 @@
-describe('Notification Templates Screen', function () {
+describe.skip('Notification Templates Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });
