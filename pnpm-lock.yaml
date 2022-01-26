@@ -126,7 +126,7 @@ importers:
       '@types/supertest': ^2.0.8
       '@vendia/serverless-express': ^4.3.4
       agenda: ^4.2.1
-      axios: ^0.24.0
+      axios: 0.25.0
       bcrypt: ^5.0.0
       bull: ^4.2.1
       chai: ^4.2.0
@@ -184,7 +184,7 @@ importers:
       '@types/handlebars': 4.1.0
       '@vendia/serverless-express': 4.5.2
       agenda: 4.2.1
-      axios: 0.24.0
+      axios: 0.25.0
       bcrypt: 5.0.1
       bull: 4.2.1
       class-transformer: 0.5.1
@@ -270,7 +270,7 @@ importers:
       ace-builds: ^1.4.12
       antd: ^4.10.0
       autoprefixer: ^9.8.6
-      axios: ^0.21.1
+      axios: 0.25.0
       babel-plugin-import: ^1.13.3
       babel-plugin-styled-components: ^1.12.0
       craco-antd: ^1.19.0
@@ -330,7 +330,7 @@ importers:
       ace-builds: 1.4.13
       antd: 4.17.4_react-dom@17.0.2+react@17.0.2
       autoprefixer: 9.8.8
-      axios: 0.21.4
+      axios: 0.25.0
       babel-plugin-import: 1.13.3
       graphql: 15.8.0
       history: 5.2.0
@@ -401,7 +401,7 @@ importers:
       '@types/react-router-dom': ^5.1.7
       '@types/styled-components': ^5.1.7
       antd: ^4.10.0
-      axios: ^0.21.1
+      axios: 0.25.0
       babel-plugin-import: ^1.13.3
       babel-plugin-styled-components: ^1.12.0
       craco-antd: ^1.19.0
@@ -442,7 +442,7 @@ importers:
       '@types/react': 16.14.21
       '@types/react-dom': 16.9.14
       antd: 4.17.4_react-dom@17.0.2+react@17.0.2
-      axios: 0.21.4
+      axios: 0.25.0
       babel-plugin-import: 1.13.3
       iframe-resizer: 4.3.2
       jwt-decode: 3.1.2
@@ -792,7 +792,7 @@ importers:
       '@typescript-eslint/parser': ^4.14.2
       apollo-boost: 0.4.9
       async: ^3.2.0
-      axios: ^0.24.0
+      axios: 0.25.0
       class-transformer: 0.5.1
       cross-fetch: ^3.0.4
       eslint-plugin-prettier: ^3.4.0
@@ -815,7 +815,7 @@ importers:
       '@notifire/dal': link:../dal
       '@notifire/shared': link:../shared
       async: 3.2.2
-      axios: 0.24.0
+      axios: 0.25.0
       class-transformer: 0.5.1
       cross-fetch: 3.1.4
       event-stream: 4.0.1
@@ -14972,6 +14972,14 @@ packages:
       - debug
     dev: false
 
+  /axios/0.25.0:
+    resolution: {integrity: sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==}
+    dependencies:
+      follow-redirects: 1.14.7
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
   /axobject-query/2.2.0:
     resolution: {integrity: sha512-Td525n+iPOOyUQIeBfcASuG6uJsDOITl7Mds5gFyerkWiX7qhUTdYUBlSgNMyVqtSJqwpt1kXGLdUt6SykLMRA==}
 
@@ -21145,6 +21153,16 @@ packages:
         optional: true
     dependencies:
       debug: 4.3.3_supports-color@6.1.0
+    dev: false
+
+  /follow-redirects/1.14.7:
+    resolution: {integrity: sha512-+hbxoLbFMbRKDwohX8GkTataGqO6Jb7jGwpAlwgy2bIz25XtRm7KEzJM76R1WiNT5SwZkX4Y75SwBolkpmE7iQ==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
     dev: false
 
   /follow-redirects/1.5.10:

@@ -26,7 +26,7 @@
     "ace-builds": "^1.4.12",
     "antd": "^4.10.0",
     "autoprefixer": "^9.8.6",
-    "axios": "^0.21.1",
+    "axios": "0.25.0",
     "babel-plugin-import": "^1.13.3",
     "graphql": "^15.4.0",
     "history": "^5.0.0",

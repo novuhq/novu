@@ -14,7 +14,7 @@
     "@types/react": "^16.9.53",
     "@types/react-dom": "^16.9.8",
     "antd": "^4.10.0",
-    "axios": "^0.21.1",
+    "axios": "0.25.0",
     "babel-plugin-import": "^1.13.3",
     "iframe-resizer": "^4.3.1",
     "jwt-decode": "^3.1.2",
