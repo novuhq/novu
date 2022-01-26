@@ -3,12 +3,6 @@ const path = require('path');
 const BabelRcPlugin = require('@jackwilsdon/craco-use-babelrc');
 
 module.exports = {
-  resolve: {
-    alias: {
-      react: path.resolve('./node_modules/react'),
-      'react-dom': path.resolve('./node_modules/react-dom'),
-    },
-  },
   eslint: {
     enable: false,
   },
@@ -17,7 +11,7 @@ module.exports = {
     {
       plugin: CracoAntDesignPlugin,
       options: {
-        customizeThemeLessPath: path.join(__dirname, 'src/styles/index.less'),
+        customizeThemeLessPath: path.join(__dirname, 'src/legacy/styles/index.less'),
       },
     },
   ],
