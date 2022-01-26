@@ -1,0 +1,36 @@
+@import "../../../node_modules/antd/lib/style/color/colorPalette.less";
+@import '../../../node_modules/antd/lib/style/themes/default.less';
+@import "variables";
+@import "utilities/utilities.less";
+@import "theme/layout";
+
+@font-family: 'Lato', sans-serif;
+
+@primary-color: #ff6f61;
+@border-radius-base: 10px;
+@card-radius: 8px;
+
+@border-width-base: 1px; // width of the border for a component
+@border-style-base: solid; // style of a components border
+@header-height: 70px;
+
+.dark {
+  @import '../../../node_modules/antd/dist/antd.dark.less';
+
+  @body-background: #000220;
+  @primary-color: #d5b50b;
+  @border-radius-base: 4px;
+
+  @border-width-base: 1px; // width of the border for a component
+  @border-style-base: solid; // style of a components border
+  @header-height: 70px;
+}
+
+.light {
+  @layout-header-background: @white;
+}
+
+
+:root {
+  --primary-color: @primary-color;
+}
