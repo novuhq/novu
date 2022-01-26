@@ -1,4 +1,4 @@
-describe('Settings Screen', function () {
+describe.skip('Settings Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
     cy.visit('/settings/organization');

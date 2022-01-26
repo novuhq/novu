@@ -1,6 +1,4 @@
-import { MemberRoleEnum } from '@notifire/shared';
-
-describe('User Sign-up and Login', function () {
+describe.skip('User Sign-up and Login', function () {
   describe('Sign up', function () {
     beforeEach(function () {
       cy.task('clearDatabase');

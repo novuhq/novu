@@ -1,4 +1,4 @@
-describe('App Header', function () {
+describe.skip('App Header', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
     cy.visit('/');

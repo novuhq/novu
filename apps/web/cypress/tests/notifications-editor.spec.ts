@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, INotificationTemplate } from '@notifire/shared';
 
-describe('Notifications Creator', function () {
+describe.skip('Notifications Creator', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });
