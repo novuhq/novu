@@ -1,12 +1,7 @@
----
-id: monorepo
-title: Monorepo Structure
-notion_page_id: b34ab7edac334e6f9a5fe457cae3c530
----
 
 In this guide, we will explore Relayed mono-repo structure and high-level structure of the different libraries and services we have.
 
-![https://miro.com/app/board/uXjVOUZtmvY=/](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/e880ab15-eae1-4069-905a-0c4bca310d58/Mono-repo_Structure.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20220128%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20220128T125253Z&X-Amz-Expires=3600&X-Amz-Signature=7a2d6f15a2d7f1ebf0a4d2d45eac8094999028aa5cfb3bf11f82b786d81bd88f&X-Amz-SignedHeaders=host&x-id=GetObject)
+![https://miro.com/app/board/uXjVOUZtmvY=/](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/e880ab15-eae1-4069-905a-0c4bca310d58/Mono-repo_Structure.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20220128%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20220128T125849Z&X-Amz-Expires=3600&X-Amz-Signature=252c37b86f3f7cd3a75f4145f7c6a3b271e0f87672ce9fc0668f2580575160fb&X-Amz-SignedHeaders=host&x-id=GetObject)
 
 # Apps
 
@@ -54,7 +49,7 @@ If you are familiar with the google analytics embed snippet or intercom-like emb
 
 ## Core
 
-A standalone Node.js library is used to [consolidate](/0f7f71d4f16b478ea8091a621be1c569) all communication providers under a single API. This library is released on NPM and can be used as a standalone tool and as a client for the Relayed API. The API consumes this library as well when it needs to communicate a message via the specified provider. 
+A standalone Node.js library is used to consolidate all communication providers under a single API. This library is released on NPM and can be used as a standalone tool and as a client for the Relayed API. The API consumes this library as well when it needs to communicate a message via the specified provider. 
 
 ## Nest
 
