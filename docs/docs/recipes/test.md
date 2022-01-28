@@ -1,3 +1,8 @@
+---
+id: monorepo
+title: Monorepo Structure
+notion_page_id: b34ab7edac334e6f9a5fe457cae3c530
+---
 
 In this guide, we will explore Relayed mono-repo structure and high-level structure of the different libraries and services we have.
 
