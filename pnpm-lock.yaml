@@ -1456,6 +1456,45 @@ importers:
       ts-node: 9.1.1_typescript@4.5.4
       typedoc: 0.19.2_typescript@4.5.4
 
+  providers/telnyx:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@notifire/core': ^0.2.3
+      '@types/jest': ^27.0.1
+      codecov: ^3.5.0
+      cspell: ^4.1.0
+      cz-conventional-changelog: ^3.3.0
+      gh-pages: ^3.1.0
+      jest: ^27.1.0
+      npm-run-all: ^4.1.5
+      nyc: ^15.1.0
+      open-cli: ^6.0.1
+      prettier: ^2.1.1
+      standard-version: ^9.0.0
+      telnyx: ^1.23.0
+      ts-jest: ^27.0.5
+      ts-node: ^9.0.0
+      typedoc: ^0.19.0
+    dependencies:
+      '@notifire/core': 0.2.5
+      telnyx: 1.23.0
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.4.0
+      codecov: 3.8.3
+      cspell: 4.2.8
+      cz-conventional-changelog: 3.3.0_@types+node@14.18.3
+      gh-pages: 3.2.3
+      jest: 27.4.7_ts-node@9.1.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      open-cli: 6.0.1
+      prettier: 2.5.1
+      standard-version: 9.3.2
+      ts-jest: 27.1.3_9364f2ad0b7b67f00a4d081c662c6871
+      ts-node: 9.1.1_typescript@4.5.4
+      typedoc: 0.19.2_typescript@4.5.4
+
   providers/twilio:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
@@ -29213,7 +29252,7 @@ packages:
       istanbul-lib-processinfo: 2.0.2
       istanbul-lib-report: 3.0.0
       istanbul-lib-source-maps: 4.0.1
-      istanbul-reports: 3.1.2
+      istanbul-reports: 3.1.3
       make-dir: 3.1.0
       node-preload: 0.2.1
       p-map: 3.0.0
@@ -36153,6 +36192,17 @@ packages:
       memoizerific: 1.11.3
     dev: true
 
+  /telnyx/1.23.0:
+    resolution: {integrity: sha512-hmXxXVyj+Fi+ips7KwmgUYQrzHCIyGo8bjm/B8tsCAJ7PZ0V3LO330CVOk0gPdlcZxIkITaXWB51swrbK09Wew==}
+    engines: {node: ^6 || >=8}
+    dependencies:
+      lodash.isplainobject: 4.0.6
+      qs: 6.10.2
+      safe-buffer: 5.2.1
+      tweetnacl: 1.0.3
+      uuid: 3.4.0
+    dev: false
+
   /temp-dir/1.0.0:
     resolution: {integrity: sha1-CnwOom06Oa+n4OvqnB/AvE2qAR0=}
     engines: {node: '>=4'}
@@ -36887,6 +36937,40 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.3_9364f2ad0b7b67f00a4d081c662c6871:
+    resolution: {integrity: sha512-6Nlura7s6uM9BVUAoqLH7JHyMXjz8gluryjpPXxr3IxZdAXnU6FhjvVLHFtfd1vsE1p8zD1OJfskkc0jhTSnkA==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: ~0.14.0
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.0
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.4.7_ts-node@9.1.1
+      jest-util: 27.4.2
+      json5: 2.2.0
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.5
+      typescript: 4.5.4
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-loader/8.3.0_typescript@4.5.4:
     resolution: {integrity: sha512-MgGly4I6cStsJy27ViE32UoqxPTN9Xly4anxxVyaIWR+9BGxboV4EyJBGfR3RePV7Ksjj3rHmPZJeIt+7o4Vag==}
     engines: {node: '>=10.0.0'}
@@ -37085,6 +37169,10 @@ packages:
 
   /tweetnacl/0.14.5:
     resolution: {integrity: sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=}
+
+  /tweetnacl/1.0.3:
+    resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
+    dev: false
 
   /twilio/3.72.0:
     resolution: {integrity: sha512-Nr5mPlPratfWa9ok2OQVSlqCtISncrUbhr1ab5j1P4jf0eRU8Og8EF0pCqn+4MKOHgoIn8yXbDjepVD4lpvctg==}
