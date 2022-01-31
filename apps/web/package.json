@@ -92,7 +92,7 @@
     "build": "craco build",
     "test": "craco test",
     "precommit": "lint-staged",
-    "start:static:build": "http-server build -p 4200 --proxy http://localhost:4200?",
+    "start-static-build": "http-server build -p 4200 --proxy http://localhost:4200?",
     "start:dev": "pnpm start",
     "cypress:run": "NODE_ENV=test cypress run",
     "cypress:open": "NODE_ENV=test cypress open",

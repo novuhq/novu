@@ -53,9 +53,10 @@
     "start-server-and-test": "1.11.6"
   },
   "scripts": {
-    "start": "craco start",
-    "start:dev": "PORT=4500 pnpm run start",
+    "start": "PORT=4500 craco run start",
+    "start:dev": "pnpm start",
     "start:test": "pnpm start:shell:test & pnpm start:shell:sdk & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 pnpm start",
+    "start-static-build": "http-server build -p 4500 --proxy http://localhost:4500?",
     "build": "craco build",
     "test": "craco test",
     "precommit": "lint-staged",

@@ -2,6 +2,7 @@ version: "3"
 services:
   redis:
     image: "redis:alpine"
+    container_name: redis
     logging:
       driver: "none"
   mongodb:
@@ -21,13 +22,14 @@ services:
     depends_on:
       - mongodb
       - redis
+    container_name: api
     build:
       context: .
       dockerfile: Dockerfile.api
     environment:
       NODE_ENV: ${NODE_ENV}
       MONGO_URL: ${MONGO_URL}
-      REDIS_HOST: redis
+      REDIS_HOST: ${REDIS_HOST}
     ports:
       - "3000:3000"
     volumes:
@@ -36,13 +38,14 @@ services:
     depends_on:
       - mongodb
       - redis
+    container_name: ws
     build:
       context: .
       dockerfile: Dockerfile.ws
     environment:
       NODE_ENV: ${NODE_ENV}
       MONGO_URL: ${MONGO_URL}
-      REDIS_HOST: redis
+      REDIS_HOST: ${REDIS_HOST}
     ports:
       - "3002:3002"
     volumes:
@@ -50,6 +53,7 @@ services:
   client:
     depends_on:
       - api
+    container_name: client
     build:
       context: .
       dockerfile: Dockerfile.web
@@ -60,6 +64,7 @@ services:
   widget:
     depends_on:
       - api
+    container_name: widget
     build:
       context: .
       dockerfile: Dockerfile.widget

@@ -7,17 +7,20 @@ RUN npm i pnpm -g --loglevel notice --force
 COPY package.json .
 
 COPY apps/web ./apps/web
+
 COPY libs/dal ./libs/dal
 COPY libs/testing ./libs/testing
 COPY libs/shared ./libs/shared
 
-COPY lerna.json .
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
+COPY nx.json .
+COPY pnpm-workspace.yaml .
+COPY pnpm-lock.yaml .
+
 RUN pnpm install
 RUN pnpm add @babel/core -W
+RUN pnpm build:web
 
-COPY apps/web/build ./apps/web/build
-
-CMD [ "pnpm", "run", "start:web" ]
+CMD [ "pnpm", "start:static:web" ]
