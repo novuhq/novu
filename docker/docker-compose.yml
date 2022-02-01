@@ -24,8 +24,8 @@ services:
       - redis
     container_name: api
     build:
-      context: .
-      dockerfile: Dockerfile.api
+      context: ../
+      dockerfile: ./Dockerfile.api
     environment:
       NODE_ENV: ${NODE_ENV}
       API_ROOT_URL: ${API_ROOT_URL}
@@ -53,8 +53,8 @@ services:
       - redis
     container_name: ws
     build:
-      context: .
-      dockerfile: Dockerfile.ws
+      context: ../
+      dockerfile: ./Dockerfile.ws
     environment:
       PORT: ${WS_PORT}
       NODE_ENV: ${NODE_ENV}
@@ -71,8 +71,8 @@ services:
       - api
     container_name: client
     build:
-      context: .
-      dockerfile: Dockerfile.web
+      context: ../
+      dockerfile: ./Dockerfile.web
     ports:
         - 4200:4200
     volumes:
@@ -82,8 +82,8 @@ services:
       - api
     container_name: widget
     build:
-      context: .
-      dockerfile: Dockerfile.widget
+      context: ../
+      dockerfile: ./Dockerfile.widget
     ports:
         - 3500:3500
     volumes:
