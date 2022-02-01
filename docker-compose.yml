@@ -28,8 +28,21 @@ services:
       dockerfile: Dockerfile.api
     environment:
       NODE_ENV: ${NODE_ENV}
+      API_ROOT_URL: ${API_ROOT_URL}
+      PORT: ${API_PORT}
+      FRONT_BASE_URL: ${FRONT_BASE_URL}
       MONGO_URL: ${MONGO_URL}
       REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB_INDEX: 2
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_REGION: ${S3_REGION}
+      NEW_RELIC_ENABLED: false
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      SENTRY_DSN: ""
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "3000:3000"
     volumes:
@@ -43,9 +56,12 @@ services:
       context: .
       dockerfile: Dockerfile.ws
     environment:
+      PORT: ${WS_PORT}
       NODE_ENV: ${NODE_ENV}
       MONGO_URL: ${MONGO_URL}
       REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "3002:3002"
     volumes:
