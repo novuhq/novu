@@ -61,7 +61,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Start Client
-        run: pnpm start:widget &
+        run: pnpm start:widget:test &
 
       # Runs a single command using the runners shell
       - name: Start WS
