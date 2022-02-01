@@ -10,7 +10,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nodemon",
     "start:dev": "nodemon",
-    "start:test": "cross-env NODE_ENV=test TZ=UTC nodemon",
+    "start-test": "cross-env NODE_ENV=test TZ=UTC nodemon",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",

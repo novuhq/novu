@@ -65,7 +65,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Start WS
-        run: pnpm start:ws &
+        run: pnpm start:ws:test &
 
       # Runs a single command using the runners shell
       - name: Wait for WS
