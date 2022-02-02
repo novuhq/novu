@@ -13,16 +13,16 @@ const Template: ComponentStory<typeof Title> = ({ ...args }) => <Title {...args}
 export const all = () => (
   <div>
     <Title>Header 1</Title>
-    <Title order={2}>Header 2</Title>
+    <Title size={1}>Header 2</Title>
   </div>
 );
 
 export const Header1 = Template.bind({});
 Header1.args = {
-  order: 1,
+  size: 1,
 };
 
 export const Header2 = Template.bind({});
 Header2.args = {
-  order: 2,
+  size: 2,
 };

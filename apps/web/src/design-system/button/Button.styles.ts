@@ -1,7 +1,6 @@
-import { createStyles } from '@mantine/core';
+import { createStyles, MantineTheme } from '@mantine/core';
 
-const getGradient = (theme, color, shade) =>
-  `linear-gradient(0deg, ${theme.fn.themeColor(color, shade)} 0%, ${theme.fn.themeColor(color, shade)} 100%)`;
+const getGradient = (color) => `linear-gradient(0deg, ${color} 0%, ${color} 100%)`;
 
 const getLabelStyles = (theme) => ({
   backgroundImage: theme.colors.gradient[8],
@@ -9,27 +8,25 @@ const getLabelStyles = (theme) => ({
   fontWeight: 'bold',
 });
 const getFilledStyles = (theme) => ({
-  backgroundImage: theme.colorScheme === 'dark' ? getGradient(theme, 'dark', 4) : getGradient(theme, 'gray', 2),
+  backgroundImage: theme.colorScheme === 'dark' ? getGradient(theme.colors.dark[4]) : getGradient(theme.colors.gray[2]),
 });
-
-const getOutlineStyles = (theme, dark, disabled) => {
-  const disabledColor = dark ? getGradient(theme, 'dark', 6) : getGradient(theme, 'gray', 5);
+const getOutlineStyles = (theme, disabled) => {
+  const dark = theme.colorScheme === 'dark';
+  const backgroundColor = getGradient(dark ? theme.black : theme.white);
+  const disabledBorderColor = getGradient(dark ? theme.colors.dark[4] : theme.colors.gray[0]);
   return {
     border: '1px solid transparent',
-    backgroundImage: `${dark ? getGradient(theme, 'dark', 7) : theme.fn.linearGradient(0, theme.white, theme.white)},${
-      !disabled ? theme.fn.themeColor('gradient', 8) : disabledColor
-    }`,
+    backgroundImage: `${backgroundColor},${!disabled ? theme.colors.gradient[8] : disabledBorderColor}`,
     backgroundClip: 'padding-box, border-box',
     backgroundOrigin: 'border-box',
-    color: theme.colorScheme === 'dark' ? theme.white : 'transparent',
+    color: dark ? theme.white : 'transparent',
   };
 };
 
-export default createStyles((theme, disabled: boolean) => {
-  const dark = theme.colorScheme === 'dark';
+export default createStyles((theme: MantineTheme, disabled: boolean) => {
   return {
     label: !disabled ? getLabelStyles(theme) : {},
-    filled: disabled ? getFilledStyles(theme) : {},
-    outline: getOutlineStyles(theme, dark, disabled),
+    filled: disabled ? getFilledStyles(theme) : { border: 'transparent' },
+    outline: getOutlineStyles(theme, disabled),
   };
 });

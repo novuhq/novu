@@ -11,7 +11,8 @@ interface IButtonProps extends JSX.ElementChildrenAttribute {
 
 /**
  * Button component
- * */
+ *
+ */
 export function Button({ loading, children, size = 'md', disabled = false, ...props }: IButtonProps) {
   const { classes } = useStyles(disabled);
   return (
