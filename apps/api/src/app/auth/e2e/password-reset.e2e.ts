@@ -30,16 +30,34 @@ describe('Password reset - /auth/reset (POST)', async () => {
     expect(body.data.success).to.equal(true);
     const foundUser = await userRepository.findById(session.user._id);
 
-    const { body: resetChange } = await session.testAgent.post('/v1/auth/reset').send({
-      password: 'ASd3ASD$Fdfdf',
-      token: foundUser.resetToken,
-    });
+    const { body: resetChange } = await session.testAgent
+      .post('/v1/auth/reset')
+      .send({
+        password: 'ASd3ASD$Fdfdf',
+        token: foundUser.resetToken,
+      })
+      .expect(201);
     expect(resetChange.data.token).to.be.ok;
 
-    const { body: loginBody } = await session.testAgent.post('/v1/auth/login').send({
-      email: session.user.email,
-      password: 'ASd3ASD$Fdfdf',
-    });
+    /**
+     * RLD-68
+     * A workaround due to a potential race condition between token reset and new password login
+     */
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const { body: loginBody } = await session.testAgent
+      .post('/v1/auth/login')
+      .send({
+        email: session.user.email,
+        password: 'ASd3ASD$Fdfdf',
+      })
+      .expect(201);
+
+    // RLD-68 A debug case to catch the error state message origin
+    if (!loginBody || !loginBody.data) {
+      // eslint-disable-next-line no-console
+      console.info(loginBody);
+    }
 
     expect(loginBody.data.token).to.be.ok;
 
