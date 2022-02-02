@@ -1,7 +1,6 @@
 import { MantineProvider, Global } from '@mantine/core';
 
 export function ThemeProvider({ children, darkMode = false }: { children: JSX.Element; darkMode?: boolean }) {
-  console.log(darkMode);
   return (
     <MantineProvider
       withGlobalStyles
@@ -12,9 +11,6 @@ export function ThemeProvider({ children, darkMode = false }: { children: JSX.El
         fontFamily: 'Lato, sans serif',
         fontSizes: { xs: 10, sm: 12, md: 14, lg: 16, xl: 18 },
         primaryColor: 'gradient',
-        // default mantine :
-        // dark color scheme ->  background: theme.colors.dark[7], color: theme.colors.dark[0]
-        // light color scheme -> background: theme.white         , color: theme.black
         colors: {
           gray: [
             '#EDF0F2', // LightBG

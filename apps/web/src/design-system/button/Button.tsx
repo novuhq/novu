@@ -4,8 +4,6 @@ import useStyles from './Button.styles';
 
 interface IButtonProps extends JSX.ElementChildrenAttribute {
   loading?: boolean;
-  // leftIcon?: React.ReactNode;
-  /** The size of the button. */
   size?: 'md' | 'lg';
   variant?: 'outline' | 'filled';
   disabled?: boolean;

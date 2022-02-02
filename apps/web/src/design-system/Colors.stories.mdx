@@ -1,7 +1,6 @@
 import { Meta, ColorPalette, ColorItem } from '@storybook/addon-docs/blocks';
 import { useMantineTheme } from '@mantine/core';
 
-
 <Meta title="Components/Colors" />
 
 # Colors
@@ -9,15 +8,10 @@ import { useMantineTheme } from '@mantine/core';
 <ColorPalette>
   <ColorItem title="Gradient Horizontal" subtitle="Primary Color" colors={['linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)']} />
   <ColorItem title="Gradient Vertical"  colors={['linear-gradient(0deg,#FF512F 0%,#DD2476 100%)']} />
-  <ColorItem title={`theme.colors.gray`}  colors={
+  <ColorItem title={`theme.colors.gray`} colors={
    useMantineTheme().colors.gray
   } />
-  <ColorItem title={`theme.colors.dark`}  colors={
+  <ColorItem title={`theme.colors.dark`} colors={
     useMantineTheme().colors.dark
   } />
-
-
-
-
-
 </ColorPalette>
