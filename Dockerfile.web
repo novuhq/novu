@@ -21,6 +21,5 @@ COPY pnpm-lock.yaml .
 
 RUN pnpm install
 RUN pnpm add @babel/core -W
-RUN pnpm build:web
 
-CMD [ "pnpm", "start:static:web" ]
+CMD [ "pnpm", "start:docker:web" ]

@@ -73,6 +73,8 @@ services:
     build:
       context: ../
       dockerfile: ./Dockerfile.web
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
     ports:
         - 4200:4200
     volumes:
@@ -84,6 +86,9 @@ services:
     build:
       context: ../
       dockerfile: ./Dockerfile.widget
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
+      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
     ports:
         - 3500:3500
     volumes:

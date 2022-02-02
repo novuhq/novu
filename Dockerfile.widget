@@ -20,10 +20,8 @@ COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
-COPY .idea .
-COPY .gitignore .
+
 
 RUN pnpm install
-RUN pnpm build:widget
 
-CMD [ "pnpm", "start:static:widget" ]
+CMD [ "pnpm", "start:docker:widget" ]
