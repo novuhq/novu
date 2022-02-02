@@ -1,4 +1,4 @@
-import { AppShell, Header, MantineProvider, Navbar } from '@mantine/core';
+import { AppShell, Header, Navbar, Title } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
@@ -29,6 +29,7 @@ export function AppLayout({ children }: { children: any }) {
         }
         header={
           <Header height={60} padding="xs">
+            <Title order={1}>header</Title>
             {/* Header content */}
           </Header>
         }
