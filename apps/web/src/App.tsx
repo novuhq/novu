@@ -20,16 +20,17 @@ import PasswordResetPage from './legacy/pages/auth/password-reset';
 import { ThemeContext } from './store/themeContext';
 import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
-import { LegacyAppLayout } from './legacy/components/layout/app-layout/LegacyAppLayout';
 
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.REACT_APP_SENTRY_DSN,
     integrations: [new Integrations.BrowserTracing()],
     environment: process.env.REACT_APP_ENVIRONMENT,
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
+    /*
+     * Set tracesSampleRate to 1.0 to capture 100%
+     * of transactions for performance monitoring.
+     * We recommend adjusting this value in production
+     */
     tracesSampleRate: 1.0,
   });
 }
@@ -38,6 +39,8 @@ const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
   return response.data?.data;
 };
+
+console.log('Hi');
 
 const queryClient = new QueryClient({
   defaultOptions: {
