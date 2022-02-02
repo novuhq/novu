@@ -5,6 +5,13 @@
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/.tmp" />
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/api/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/web/build" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/widget/build" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/ws/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/docs/build" />
+      <excludeFolder url="file://$MODULE_DIR$/libs/dal/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/libs/sdk/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -3,6 +3,7 @@ import { lighten } from 'polished';
 import moment from 'moment';
 import { Badge } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
+/* eslint-disable max-len */
 
 export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
   const theme = useTheme();

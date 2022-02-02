@@ -40,5 +40,5 @@ export class CreateLogCommand extends ApplicationWithUserCommand {
   code?: LogCodeEnum;
 
   @IsOptional()
-  raw?: any;
+  raw?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

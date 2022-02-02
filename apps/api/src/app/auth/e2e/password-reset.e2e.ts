@@ -36,10 +36,22 @@ describe('Password reset - /auth/reset (POST)', async () => {
     });
     expect(resetChange.data.token).to.be.ok;
 
+    /**
+     * RLD-68
+     * A workaround due to a potential race condition between token reset and new password login
+     */
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     const { body: loginBody } = await session.testAgent.post('/v1/auth/login').send({
       email: session.user.email,
       password: 'ASd3ASD$Fdfdf',
     });
+
+    // RLD-68 A debug case to catch the error state message origin
+    if (!loginBody || !loginBody.data) {
+      // eslint-disable-next-line no-console
+      console.info(loginBody);
+    }
 
     expect(loginBody.data.token).to.be.ok;
 

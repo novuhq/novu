@@ -126,7 +126,7 @@ export const Component: React.FC<ComponentProps> = ({
         </ComponentContainer>
       );
     } catch (e) {
-      // tslint:disable-next-line: no-console
+      // eslint-disable-next-line no-console
       console.error(`Field "${fieldRef}" not found in fields definition.`);
     }
   }

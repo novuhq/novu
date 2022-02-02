@@ -12,7 +12,7 @@ export class TriggerEventCommand extends ApplicationWithUserCommand {
   identifier: string;
 
   @IsDefined()
-  payload: any;
+  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsUUID()
   @IsDefined()
