@@ -5,15 +5,15 @@ import { MemberStatusEnum } from '@notifire/shared';
 import * as capitalize from 'lodash.capitalize';
 import { PageHeader } from '../../components/layout/components/PageHeader';
 import { getOrganizationMembers, inviteMember } from '../../../api/organization';
-import { updateEmailSettings } from '../../../api/application';
 
 export function OrganizationSettingsPage() {
   const [form] = Form.useForm();
 
-  const { data: members, isLoading: loadingMembers, refetch } = useQuery<any[]>(
-    'getOrganizationMembers',
-    getOrganizationMembers
-  );
+  const {
+    data: members,
+    isLoading: loadingMembers,
+    refetch,
+  } = useQuery<any[]>('getOrganizationMembers', getOrganizationMembers);
   const { isLoading: loadingSendInvite, mutateAsync: sendInvite } = useMutation<
     string,
     { error: string; message: string; statusCode: number },

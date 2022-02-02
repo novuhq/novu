@@ -12,9 +12,7 @@ export class InitializeSession {
     private authService: AuthService
   ) {}
 
-  async execute(
-    command: InitializeSessionCommand
-  ): Promise<{
+  async execute(command: InitializeSessionCommand): Promise<{
     token: string;
     profile: Partial<SubscriberEntity>;
   }> {

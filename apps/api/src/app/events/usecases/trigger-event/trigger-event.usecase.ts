@@ -66,6 +66,7 @@ export class TriggerEvent {
           },
         })
       )
+      // eslint-disable-next-line no-console
       .catch((e) => console.error(e));
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(

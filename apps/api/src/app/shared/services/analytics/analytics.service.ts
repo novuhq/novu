@@ -36,7 +36,7 @@ export class AnalyticsService {
     this.mixpanel.people.set(userId, propertyName, value);
   }
 
-  track(name: string, userId: string, data: object = {}) {
+  track(name: string, userId: string, data: Record<string, unknown> = {}) {
     if (!this.analyticsEnabled) return;
 
     this.mixpanel.track(name, {

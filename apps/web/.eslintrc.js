@@ -1,5 +1,6 @@
 module.exports = {
   rules: {
+    'func-names': 'off',
     'react/jsx-props-no-spreading': 'off',
     'react/no-array-index-key': 'off',
     'no-empty-pattern': 'off',
@@ -12,7 +13,6 @@ module.exports = {
     'promise/catch-or-return': 'off',
     'react/jsx-one-expression-per-line': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
-    'no-console': 'off',
     'jsx-a11y/aria-role': 'off',
     'jsx-a11y/no-static-element-interactions': 'off',
     'react/require-default-props': 'off',

@@ -24,6 +24,7 @@ module.exports = {
   rules: {
     '@typescript-eslint/lines-between-class-members': 'off',
     'react/jsx-wrap-multilines': 'off',
+    'multiline-comment-style': ['error', 'starred-block'],
     'promise/catch-or-return': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-unused-expressions': 'off',
@@ -36,6 +37,7 @@ module.exports = {
     'no-return-await': 'off',
     'no-await-in-loop': 'off',
     'no-continue': 'off',
+    'no-console': 'error',
     'no-prototype-builtins': 'off',
     'import/no-cycle': 'off',
     'class-methods-use-this': 'off',
