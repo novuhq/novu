@@ -5,5 +5,5 @@ export interface IDemoQueuePayload {
 export interface IWsQueuePayload {
   userId: string;
   event: string;
-  payload: any;
+  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

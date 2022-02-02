@@ -12,9 +12,7 @@ const mimeTypes = {
 export class GetSignedUrl {
   constructor(private storageService: StorageService) {}
 
-  async execute(
-    command: GetSignedUrlCommand
-  ): Promise<{
+  async execute(command: GetSignedUrlCommand): Promise<{
     signedUrl: string;
     path: string;
   }> {

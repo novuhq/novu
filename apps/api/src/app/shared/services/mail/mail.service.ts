@@ -13,7 +13,7 @@ export interface ISendMail {
   html?: string;
   templateId?: string;
   params?: {
-    [key: string]: string | any[] | any;
+    [key: string]: string | any[] | any; // eslint-disable-line @typescript-eslint/no-explicit-any
   };
 }
 

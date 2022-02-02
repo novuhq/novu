@@ -57,7 +57,7 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
-          projects: @notifire/web
+          projects: "@notifire/web"
 
       - name: Start Local Stack
         env:

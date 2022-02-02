@@ -23,10 +23,6 @@ export class ChangeMemberRole {
       throw new ApiException('Not supported role type');
     }
 
-    /*  if (organization._creatorId === member._userId && command.role === MemberRoleEnum.MEMBER) {
-      throw new ApiException('Could not remove admin permission to organization creator');
-    }
-*/
     const roles = [command.role];
 
     await this.memberRepository.updateMemberRoles(organization._id, command.memberId, roles);
