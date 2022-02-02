@@ -12,7 +12,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
 
-  canActivate(context: ExecutionContext) {
+  async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
 
@@ -22,7 +22,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
       const key = authorizationHeader.split(' ')[1];
 
-      return this.authService.apiKeyAuthenticate(key).then((result) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return this.authService.apiKeyAuthenticate(key).then<any>((result) => {
         request.headers.authorization = `Bearer ${result}`;
 
         return super.canActivate(context);
