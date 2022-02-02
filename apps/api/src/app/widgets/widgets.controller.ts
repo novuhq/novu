@@ -96,7 +96,7 @@ export class WidgetsController {
   @Post('/usage/log')
   async logUsage(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Body() body: { name: string; payload: any }
+    @Body() body: { name: string; payload: any } // eslint-disable-line @typescript-eslint/no-explicit-any
   ) {
     this.analyticsService.track(body.name, subscriberSession._organizationId, {
       applicationId: subscriberSession._applicationId,

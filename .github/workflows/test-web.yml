@@ -54,6 +54,11 @@ jobs:
           version: 6.0.2
           run_install: true
 
+      - uses: mansagroup/nrwl-nx-action@v2
+        with:
+          targets: lint
+          projects: "@notifire/web"
+
       - name: Start Local Stack
         env:
           DEFAULT_REGION: us-east-1

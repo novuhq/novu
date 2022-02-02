@@ -9,6 +9,7 @@ export function useNotifire() {
       (process.env.REACT_APP_ENVIRONMENT === 'dev' || process.env.REACT_APP_ENVIRONMENT === 'prod') &&
       authContext.currentUser
     ) {
+      // eslint-disable-next-line func-names
       (function (n, o, t, i, f) {
         let m;
         /* eslint-disable */

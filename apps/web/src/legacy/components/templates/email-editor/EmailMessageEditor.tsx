@@ -54,8 +54,10 @@ export function EmailMessageEditor({
     const BACKSPACE_CODE = 8;
 
     if (e.keyCode === ENTER_CODE || e.keyCode === BACKSPACE_CODE) {
-      // TODO: Currently disabled, because causes to not create new line on first time
-      // setActionBarVisible(false);
+      /*
+       * TODO: Currently disabled, because causes to not create new line on first time
+       * setActionBarVisible(false);
+       */
     }
   }
 

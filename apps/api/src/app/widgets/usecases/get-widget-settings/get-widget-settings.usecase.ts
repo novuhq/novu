@@ -6,9 +6,7 @@ import { GetWidgetSettingsCommand } from './get-widget-settings.command';
 export class GetWidgetSettings {
   constructor(private applicationRepository: ApplicationRepository) {}
 
-  async execute(
-    command: GetWidgetSettingsCommand
-  ): Promise<{
+  async execute(command: GetWidgetSettingsCommand): Promise<{
     _id: string;
     _organizationId: string;
   }> {

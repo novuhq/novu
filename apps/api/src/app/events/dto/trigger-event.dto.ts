@@ -6,5 +6,5 @@ export class TriggerEventDto {
   name: string;
 
   @IsObject()
-  payload: any;
+  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
