@@ -39,7 +39,6 @@ const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
   return response.data?.data;
 };
-
 console.log('Hi');
 
 const queryClient = new QueryClient({
