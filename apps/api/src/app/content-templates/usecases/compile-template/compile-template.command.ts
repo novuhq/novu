@@ -13,5 +13,5 @@ export class CompileTemplateCommand {
   customTemplate?: string;
 
   @IsObject()
-  data: any;
+  data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

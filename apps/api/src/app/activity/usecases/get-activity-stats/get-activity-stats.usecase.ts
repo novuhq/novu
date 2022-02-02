@@ -7,9 +7,7 @@ import { GetActivityStatsCommand } from './get-activity-stats.command';
 export class GetActivityStats {
   constructor(private messageRepository: MessageRepository) {}
 
-  async execute(
-    command: GetActivityStatsCommand
-  ): Promise<{
+  async execute(command: GetActivityStatsCommand): Promise<{
     weeklySent: number;
     monthlySent: number;
   }> {

@@ -4,6 +4,7 @@ import { AgendaConfig, Processor } from 'agenda';
 import * as Agenda from 'agenda';
 
 export class CronService {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private agenda: Agenda.Agenda = new (Agenda as any)({
     db: {
       address: this.config.mongoUrl,

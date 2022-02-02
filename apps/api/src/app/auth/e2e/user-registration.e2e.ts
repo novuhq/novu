@@ -36,7 +36,7 @@ describe('User registration - /auth/register (POST)', async () => {
 
     expect(body.data.token).to.be.ok;
 
-    const jwtContent = ((await jwt.decode(body.data.token)) as unknown) as IJwtPayload;
+    const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
 
     expect(jwtContent.firstName).to.equal('test');
     expect(jwtContent.lastName).to.equal('user');
@@ -54,7 +54,7 @@ describe('User registration - /auth/register (POST)', async () => {
 
     expect(body.data.token).to.be.ok;
 
-    const jwtContent = ((await jwt.decode(body.data.token)) as unknown) as IJwtPayload;
+    const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
 
     expect(jwtContent.firstName).to.equal('test');
     expect(jwtContent.lastName).to.equal('user');

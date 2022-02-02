@@ -22,7 +22,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
       const key = authorizationHeader.split(' ')[1];
 
-      return this.authService.apiKeyAuthenticate(key).then<any>((result) => {
+      return this.authService.apiKeyAuthenticate(key).then((result) => {
         request.headers.authorization = `Bearer ${result}`;
 
         return super.canActivate(context);
