@@ -1,4 +1,4 @@
-FROM node:15.11.0
+FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
@@ -12,17 +12,19 @@ COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
 COPY libs/testing ./libs/testing
 
-COPY lerna.json .
 COPY tsconfig.json .
 COPY tsconfig.base.json .
+
+COPY nx.json .
+COPY pnpm-workspace.yaml .
 
 RUN pnpm install
 RUN pnpm build:ws
 
 WORKDIR /usr/src/app/apps/ws
+RUN cp src/.example.env dist/src/.env
 RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
-RUN cp src/.env.local dist/src/.env.local
 
 CMD [ "pm2-runtime", "dist/src/main.js" ]

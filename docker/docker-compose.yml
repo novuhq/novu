@@ -1,0 +1,97 @@
+version: "3"
+services:
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    logging:
+      driver: "none"
+  mongodb:
+    image : mongo
+    container_name: mongodb
+    logging:
+      driver: "none"
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - mongodb:/data/db
+    ports:
+      - 27017:27017
+    restart: unless-stopped
+  api:
+    depends_on:
+      - mongodb
+      - redis
+    container_name: api
+    build:
+      context: ../
+      dockerfile: ./Dockerfile.api
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      API_ROOT_URL: ${API_ROOT_URL}
+      PORT: ${API_PORT}
+      FRONT_BASE_URL: ${FRONT_BASE_URL}
+      MONGO_URL: ${MONGO_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB_INDEX: 2
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_REGION: ${S3_REGION}
+      NEW_RELIC_ENABLED: false
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      SENTRY_DSN: ""
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  ws:
+    depends_on:
+      - mongodb
+      - redis
+    container_name: ws
+    build:
+      context: ../
+      dockerfile: ./Dockerfile.ws
+    environment:
+      PORT: ${WS_PORT}
+      NODE_ENV: ${NODE_ENV}
+      MONGO_URL: ${MONGO_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3002:3002"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  client:
+    depends_on:
+      - api
+    container_name: client
+    build:
+      context: ../
+      dockerfile: ./Dockerfile.web
+    environment:
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
+    ports:
+        - 4200:4200
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  widget:
+    depends_on:
+      - api
+    container_name: widget
+    build:
+      context: ../
+      dockerfile: ./Dockerfile.widget
+    environment:
+      REACT_APP_API_URL: ${API_ROOT_URL}
+      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+    ports:
+        - 3500:3500
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  mongodb: ~

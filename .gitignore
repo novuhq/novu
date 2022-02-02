@@ -94,3 +94,4 @@ fabric.properties
 .terraform/
 
 .env
+docker/.env
