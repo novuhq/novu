@@ -1,4 +1,4 @@
-import { AppShell, Header, MantineProvider, Navbar } from '@mantine/core';
+import { AppShell, Header, Navbar } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
