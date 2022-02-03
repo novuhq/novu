@@ -66,11 +66,11 @@ services:
       - "3002:3002"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  client:
-    image: "ghcr.io/notifirehq/notifire/client:latest"
+  web:
+    image: "ghcr.io/notifirehq/notifire/web:latest"
     depends_on:
       - api
-    container_name: client
+    container_name: web
     build:
       context: ../
     environment:
