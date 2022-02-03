@@ -26,7 +26,6 @@ RUN cp src/.example.env dist/src/.env
 RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
-RUN cp src/.env.local dist/src/.env.local
 
 RUN mkdir dist/src/app/content-templates/usecases/compile-template/templates
 RUN cp src/app/content-templates/usecases/compile-template/templates/* dist/src/app/content-templates/usecases/compile-template/templates/

@@ -16,7 +16,7 @@ switch (process.env.NODE_ENV) {
     path = `${__dirname}/../.env.ci`;
     break;
   case 'local':
-    path = `${__dirname}/../.env.local`;
+    path = `${__dirname}/../.env`;
     break;
   case 'dev':
     path = `${__dirname}/../.env.development`;
