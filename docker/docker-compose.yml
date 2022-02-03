@@ -74,7 +74,7 @@ services:
       context: ../
       dockerfile: ./Dockerfile.web
     environment:
-      REACT_APP_API_URL: ${REACT_APP_API_URL}
+      REACT_APP_API_URL: ${API_ROOT_URL}
     ports:
         - 4200:4200
     volumes:
