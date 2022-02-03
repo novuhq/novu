@@ -15,6 +15,9 @@ switch (process.env.NODE_ENV) {
   case 'ci':
     path = `${__dirname}/../.env.ci`;
     break;
+  case 'local':
+    path = `${__dirname}/../.env.local`;
+    break;
   case 'dev':
     path = `${__dirname}/../.env.development`;
     break;
@@ -27,8 +30,8 @@ if (error && !process.env.LAMBDA_TASK_ROOT) throw error;
 
 envalid.cleanEnv(process.env, {
   NODE_ENV: str({
-    choices: ['dev', 'test', 'prod', 'ci'],
-    default: 'dev',
+    choices: ['dev', 'test', 'prod', 'ci', 'local'],
+    default: 'local',
   }),
   PORT: port(),
   REDIS_HOST: str(),
