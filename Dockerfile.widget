@@ -1,4 +1,4 @@
-FROM node:15.11.0
+FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
@@ -13,12 +13,15 @@ COPY libs/sdk ./libs/sdk
 COPY libs/testing ./libs/testing
 COPY libs/shared ./libs/shared
 
-COPY lerna.json .
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
+COPY nx.json .
+COPY pnpm-workspace.yaml .
+COPY pnpm-lock.yaml .
+
+
+
 RUN pnpm install
 
-COPY apps/widget/build ./apps/widget/build
-
-CMD [ "pnpm", "run", "start:widget" ]
+CMD [ "pnpm", "start:docker:widget" ]
