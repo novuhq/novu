@@ -19,13 +19,13 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
+    image : "ghcr.io/notifirehq/notifire/api:latest"
     depends_on:
       - mongodb
       - redis
     container_name: api
     build:
       context: ../
-      dockerfile: ./Dockerfile.api
     environment:
       NODE_ENV: ${NODE_ENV}
       API_ROOT_URL: ${API_ROOT_URL}
@@ -48,13 +48,13 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   ws:
+    image: "ghcr.io/notifirehq/notifire/ws:latest"
     depends_on:
       - mongodb
       - redis
     container_name: ws
     build:
       context: ../
-      dockerfile: ./Dockerfile.ws
     environment:
       PORT: ${WS_PORT}
       NODE_ENV: ${NODE_ENV}
@@ -67,12 +67,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   client:
+    image: "ghcr.io/notifirehq/notifire/client:latest"
     depends_on:
       - api
     container_name: client
     build:
       context: ../
-      dockerfile: ./Dockerfile.web
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
     ports:
@@ -80,12 +80,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   widget:
+    image: "ghcr.io/notifirehq/notifire/widget:latest"
     depends_on:
       - api
     container_name: widget
     build:
       context: ../
-      dockerfile: ./Dockerfile.widget
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
