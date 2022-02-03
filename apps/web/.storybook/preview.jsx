@@ -5,6 +5,7 @@ import { useDarkMode } from 'storybook-dark-mode';
 
 export const parameters = {
   layout: 'fullscreen',
+  viewMode: 'docs',
   actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
     matchers: {

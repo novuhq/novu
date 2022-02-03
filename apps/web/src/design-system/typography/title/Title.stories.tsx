@@ -13,7 +13,7 @@ const Template: ComponentStory<typeof Title> = ({ ...args }) => <Title {...args}
 export const all = () => (
   <div>
     <Title>Header 1</Title>
-    <Title size={1}>Header 2</Title>
+    <Title size={2}>Header 2</Title>
   </div>
 );
 

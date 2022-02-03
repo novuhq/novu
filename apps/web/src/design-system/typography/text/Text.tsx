@@ -8,7 +8,8 @@ interface ITextProps extends JSX.ElementChildrenAttribute {
 
 /**
  * Text component
- * */
+ *
+ */
 export function Text({ children, size = 'md', weight = 'normal', ...props }: ITextProps) {
   return (
     <MantineText size={size} weight={weight} {...props}>

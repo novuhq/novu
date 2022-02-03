@@ -25,7 +25,7 @@ const getOutlineStyles = (theme, disabled) => {
 
 export default createStyles((theme: MantineTheme, disabled: boolean) => {
   return {
-    label: !disabled ? getLabelStyles(theme) : {},
+    label: disabled ? {} : getLabelStyles(theme),
     filled: disabled ? getFilledStyles(theme) : { border: 'transparent' },
     outline: getOutlineStyles(theme, disabled),
   };
