@@ -2,23 +2,7 @@ import React, { useState } from 'react';
 import { Switch as MantineSwitch, SwitchProps } from '@mantine/core';
 import useStyles from './Switch.styles';
 
-/**
- * ask
- * disabled? or just switched?
- * allow one size?
- * no shadow?
- * add disabled option?
- * allow any label?
- * is it a good idea to separate our defaults for mantine components?
- * what about default state? checked? add option to component?
- * disabled meaning unchecked, yes?
- * sizesvand padding
- *
- * assumes same label- changes by checked
- * *
- */
-
-interface ISwitchProps extends JSX.ElementChildrenAttribute {
+interface ISwitchProps {
   label?: React.ReactNode;
   checked?: boolean;
 }
@@ -27,7 +11,7 @@ interface ISwitchProps extends JSX.ElementChildrenAttribute {
  * Switch component
  *
  */
-export function Switch({ label, ...props }: ISwitchProps) {
+export function Switch({ ...props }: ISwitchProps) {
   const { classes } = useStyles();
   const defaultDesign = { radius: 'xl', size: 'md' } as SwitchProps;
   const [checked, setChecked] = useState(false);
@@ -35,7 +19,6 @@ export function Switch({ label, ...props }: ISwitchProps) {
     <MantineSwitch
       classNames={classes}
       {...defaultDesign}
-      label={label}
       checked={checked}
       onChange={(event) => setChecked(event.currentTarget.checked)}
       {...props}
