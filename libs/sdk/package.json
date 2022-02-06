@@ -27,6 +27,7 @@
     "build:prod": "tsc && ENVIRONMENT=production rollup -c rollup.config.ts",
     "start": "ENVIRONMENT=local rollup -c rollup.config.ts -w",
     "start:dev": "concurrently \"pnpm start\"",
+    "start:docker": "pnpm build && http-server -p 4701 dist",
     "start:test:web": "http-server -p 4701 -o test",
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
