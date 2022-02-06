@@ -37,7 +37,6 @@ export const mantineConfig: MantineThemeOverride = {
       colors.B15,
       colors.BGDark,
       colors.B17,
-      p,
     ],
     gradient: ['', '', '', '', '', colors.error, colors.horizontal, colors.vertical, colors.horizontal, ''],
   },
