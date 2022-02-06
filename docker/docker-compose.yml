@@ -67,6 +67,7 @@ services:
     container_name: web
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
+      REACT_APP_WIDGET_SDK_PATH: ${WIDGET_SDK_PATH}
     ports:
         - 4200:4200
     volumes:
@@ -83,5 +84,12 @@ services:
         - 4500:4500
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+  sdk:
+    image: "ghcr.io/notifirehq/notifire/sdk:latest"
+    container_name: sdk
+    environment:
+      WIDGET_URL: ${WIDGET_URL}
+    ports:
+      - 4701:4701
 volumes:
   mongodb: ~
