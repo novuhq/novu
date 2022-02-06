@@ -1,12 +1,18 @@
 import { MantineThemeOverride } from '@mantine/core';
-import { colors } from './colors';
+import { colors, shadows } from '.';
 
 export const mantineConfig: MantineThemeOverride = {
   spacing: { xs: 15, sm: 20, md: 25, lg: 30, xl: 40 },
   fontFamily: 'Lato, sans serif',
   fontSizes: { xs: 10, sm: 12, md: 14, lg: 16, xl: 18 },
   primaryColor: 'gradient',
-  radius: { md: 7 },
+  radius: { md: 7, xl: 30 },
+  shadows: {
+    sm: shadows.light,
+    md: shadows.medium,
+    lg: shadows.dark,
+    xl: shadows.color,
+  },
   colors: {
     gray: [
       colors.BGLight,
