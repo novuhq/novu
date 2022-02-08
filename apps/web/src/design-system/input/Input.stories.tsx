@@ -1,10 +1,10 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { TextInput } from './TextInput';
+import { Input } from './Input';
 
 export default {
-  title: 'Input/TextInput',
-  component: TextInput,
+  title: 'Input/Input',
+  component: Input,
   argTypes: {
     value: {
       table: {
@@ -12,13 +12,20 @@ export default {
       },
     },
   },
-} as ComponentMeta<typeof TextInput>;
+} as ComponentMeta<typeof Input>;
 
-const Template: ComponentStory<typeof TextInput> = ({ ...args }) => <TextInput {...args} />;
+const Template: ComponentStory<typeof Input> = ({ ...args }) => <Input {...args} />;
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {
   label: 'Notification Name',
+  placeholder: 'Notification name goes here...',
+};
+
+export const WithDescription = Template.bind({});
+WithDescription.args = {
+  label: 'Notification Name',
+  description: 'Will be used as identifier',
   placeholder: 'Notification name goes here...',
 };
 
