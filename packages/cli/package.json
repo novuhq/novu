@@ -1,0 +1,25 @@
+{
+  "name": "cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "precommit": "lint-staged",
+    "start": "pnpm start:dev",
+    "start:dev": "cross-env TZ=UTC nodemon",
+    "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon",
+    "start:debug": "TZ=UTC nodemon --config nodemon-debug.json",
+    "start:prod": "TZ=UTC node dist/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.15",
+    "typescript": "^4.5.5"
+  },
+  "dependencies": {
+    "inquirer": "^8.2.0"
+  }
+}
