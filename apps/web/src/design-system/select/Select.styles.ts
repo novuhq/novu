@@ -1,6 +1,6 @@
 import { createStyles, MantineTheme } from '@mantine/core';
 
-export default createStyles((theme: MantineTheme, _params) => {
+export default createStyles((theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
   return {
     rightSection: {

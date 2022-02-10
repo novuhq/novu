@@ -9,7 +9,6 @@ import {
   MultiSelectValueProps,
   useMantineTheme,
 } from '@mantine/core';
-import CheckboxItem from './CheckboxItem';
 import useStyles from './Select.styles';
 import { inputStyles } from '../config/inputs.styles';
 
@@ -18,10 +17,10 @@ interface ISelectProps {
   label?: React.ReactNode;
   placeholder?: string;
   description?: string;
-  type?: 'Checkbox' | 'Label';
+  type?: 'multiselect' | 'select';
 }
 
-function Value({ label, onRemove, classNames, ...others }: MultiSelectValueProps) {
+function Value({ label, onRemove }: MultiSelectValueProps) {
   const theme = useMantineTheme();
   const dark = theme.colorScheme === 'dark';
   const backgroundColor = dark ? theme.colors.dark[4] : theme.colors.gray[0];
@@ -53,7 +52,7 @@ function Value({ label, onRemove, classNames, ...others }: MultiSelectValueProps
  * Select component
  *
  */
-export function Select({ data, type = 'Label', ...props }: ISelectProps) {
+export function Select({ data, type = 'select', ...props }: ISelectProps) {
   const { classes } = useStyles();
   const defaultDesign = {
     radius: 'md',
@@ -63,17 +62,9 @@ export function Select({ data, type = 'Label', ...props }: ISelectProps) {
     styles: inputStyles,
     classNames: classes,
   } as InputBaseProps;
-  const multiselect = type === 'Checkbox';
+  const multiselect = type === 'multiselect';
   return multiselect ? (
-    <MantineMultiSelect
-      {...defaultDesign}
-      data={data}
-      filter={() => true}
-      searchable
-      valueComponent={Value}
-      itemComponent={CheckboxItem}
-      {...props}
-    />
+    <MantineMultiSelect {...defaultDesign} data={data} valueComponent={Value} {...props} />
   ) : (
     <MantineSelect {...defaultDesign} data={data} {...props} />
   );

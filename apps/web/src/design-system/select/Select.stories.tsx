@@ -28,9 +28,9 @@ PrimaryUse.args = {
   placeholder: 'Select',
 };
 
-export const WithCheckbox = Template.bind({});
-WithCheckbox.args = {
-  type: 'Checkbox',
+export const WithMultiSelect = Template.bind({});
+WithMultiSelect.args = {
+  type: 'multiselect',
   label: 'Font Family',
   data,
   placeholder: 'Select',
