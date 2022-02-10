@@ -7,7 +7,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
   return {
     input: {
       backgroundColor: dark ? theme.colors.dark[5] : theme.colors.gray[1],
-      border: `1.5px solid ${theme.colors.gray[5]}`,
+      border: `1px solid ${theme.colors.gray[7]}`,
       '&:checked': {
         backgroundImage: theme.colors.gradient[8],
         border: 'transparent',
@@ -18,7 +18,9 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
     },
     label: {
       ref: label,
-      color: dark ? theme.colors.gray[2] : theme.colors.gray[5],
+      color: dark ? 'white' : theme.colors.gray[7],
+      fontSize: '14px',
+      paddingLeft: '10px',
     },
   };
 });

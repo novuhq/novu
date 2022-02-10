@@ -19,7 +19,5 @@ Default.args = {
 export const States = () => (
   <Group style={{ display: 'flex', flexDirection: 'column', alignItems: 'unset' }}>
     <Checkbox label="Checked checkbox" checked />
-    <Checkbox label="Disabled checkbox" disabled />
-    <Checkbox label="Disabled checked checkbox" checked disabled />
   </Group>
 );
