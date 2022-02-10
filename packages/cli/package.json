@@ -20,6 +20,10 @@
     "typescript": "^4.5.5"
   },
   "dependencies": {
-    "inquirer": "^8.2.0"
+    "@notifire/shared": "^0.3.5",
+    "axios": "^0.25.0",
+    "inquirer": "^8.2.0",
+    "open": "^8.4.0",
+    "ts-node": "^10.5.0"
   }
 }
