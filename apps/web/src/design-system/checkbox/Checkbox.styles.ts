@@ -6,7 +6,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
 
   return {
     input: {
-      backgroundColor: dark ? theme.colors.dark[5] : theme.colors.gray[1],
+      backgroundColor: 'transparent',
       border: `1px solid ${theme.colors.gray[7]}`,
       '&:checked': {
         backgroundImage: theme.colors.gradient[8],
