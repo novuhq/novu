@@ -68,7 +68,6 @@ export function Select({ data, type = 'Label', ...props }: ISelectProps) {
     <MantineMultiSelect
       {...defaultDesign}
       data={data}
-      initiallyOpened
       filter={() => true}
       searchable
       valueComponent={Value}
@@ -76,6 +75,6 @@ export function Select({ data, type = 'Label', ...props }: ISelectProps) {
       {...props}
     />
   ) : (
-    <MantineSelect {...defaultDesign} data={data} initiallyOpened {...props} />
+    <MantineSelect {...defaultDesign} data={data} {...props} />
   );
 }
