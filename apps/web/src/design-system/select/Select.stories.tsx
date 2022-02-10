@@ -35,3 +35,20 @@ WithMultiSelect.args = {
   data,
   placeholder: 'Select',
 };
+
+export const SearchWithSelect = Template.bind({});
+SearchWithSelect.args = {
+  searchable: true,
+  label: 'Font Family',
+  data,
+  placeholder: 'Find and select',
+};
+
+export const SearchWithMultiSelect = Template.bind({});
+SearchWithMultiSelect.args = {
+  searchable: true,
+  type: 'multiselect',
+  label: 'Font Family',
+  data,
+  placeholder: 'Find and select as many as you want',
+};

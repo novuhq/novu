@@ -17,6 +17,7 @@ interface ISelectProps {
   label?: React.ReactNode;
   placeholder?: string;
   description?: string;
+  searchable?: boolean;
   type?: 'multiselect' | 'select';
 }
 
@@ -52,8 +53,9 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
  * Select component
  *
  */
-export function Select({ data, type = 'select', ...props }: ISelectProps) {
+export function Select({ data, type = 'select', searchable = false, ...props }: ISelectProps) {
   const { classes } = useStyles();
+  const searchableSelectProps = searchable ? { searchable, nothingFound: 'Nothing Found', allowDeselect: true } : {};
   const defaultDesign = {
     radius: 'md',
     size: 'md',
@@ -64,8 +66,8 @@ export function Select({ data, type = 'select', ...props }: ISelectProps) {
   } as InputBaseProps;
   const multiselect = type === 'multiselect';
   return multiselect ? (
-    <MantineMultiSelect {...defaultDesign} data={data} valueComponent={Value} {...props} />
+    <MantineMultiSelect {...defaultDesign} {...searchableSelectProps} data={data} valueComponent={Value} {...props} />
   ) : (
-    <MantineSelect {...defaultDesign} data={data} {...props} />
+    <MantineSelect {...defaultDesign} {...searchableSelectProps} data={data} {...props} />
   );
 }
