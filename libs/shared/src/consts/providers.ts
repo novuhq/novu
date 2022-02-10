@@ -1,0 +1,17 @@
+export const providers = [
+  'mailjs',
+  'mailgun',
+  'mailjet',
+  'mandrill',
+  'nexmo',
+  'nodemailer',
+  'plivo',
+  'postmark',
+  'sendgrid',
+  'sendinblue',
+  'ses',
+  'sms77',
+  'sns',
+  'telnyx',
+  'twilio',
+] as string[];
