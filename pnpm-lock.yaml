@@ -862,6 +862,7 @@ importers:
   packages/cli:
     specifiers:
       '@notifire/shared': ^0.3.5
+      '@types/inquirer': ^8.2.0
       axios: ^0.25.0
       inquirer: ^8.2.0
       nodemon: ^2.0.15
@@ -870,6 +871,7 @@ importers:
       typescript: ^4.5.5
     dependencies:
       '@notifire/shared': link:../../libs/shared
+      '@types/inquirer': 8.2.0
       axios: 0.25.0
       inquirer: 8.2.0
       open: 8.4.0
@@ -13099,6 +13101,13 @@ packages:
     resolution: {integrity: sha512-RQUBI75F+uXruB95BFpC/8V8lPgJg4MQ6HxOCtAZYBB/h0FNCfrFfb4I+u2pZJIV7sKeszZbFqy1UnGeBMrvsA==}
     dev: false
 
+  /@types/inquirer/8.2.0:
+    resolution: {integrity: sha512-BNoMetRf3gmkpAlV5we+kxyZTle7YibdOntIZbU5pyIfMdcwy784KfeZDAcuyMznkh5OLa17RVXZOGA5LTlkgQ==}
+    dependencies:
+      '@types/through': 0.0.30
+      rxjs: 7.4.0
+    dev: false
+
   /@types/ioredis/4.28.5:
     resolution: {integrity: sha512-bp5mdpzscWZMEE/jLvvzze5TZFYGhynB1am69l/a0XPqZRXWpbswY6lb5buEht57jOnw5pPG5zL9pFUWw1nggw==}
     dependencies:
@@ -13535,6 +13544,12 @@ packages:
     resolution: {integrity: sha512-vehbtyHUShPxIa9SioxDwCvgxukDMH//icJG90sXQBUm5lJOHLT5kNeU9tnivhnA/TkOFMzGIXN2cTc4hY8/kg==}
     dependencies:
       '@types/jest': 27.4.0
+    dev: false
+
+  /@types/through/0.0.30:
+    resolution: {integrity: sha512-FvnCJljyxhPM3gkRgWmxmDZyAQSiBQQWLI0A0VFL0K7W1oRUrPJSqNO0NvTnLkBcotdlp3lKvaT0JrnyRDkzOg==}
+    dependencies:
+      '@types/node': 17.0.5
     dev: false
 
   /@types/tough-cookie/4.0.1:

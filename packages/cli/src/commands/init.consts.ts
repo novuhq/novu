@@ -1,19 +1,16 @@
-import { providers } from '@notifire/shared';
-import { InquirerQuestion } from '../client';
+import { Providers } from '@notifire/shared';
+import { ListQuestionOptions } from 'inquirer';
 
-export const promptIntroArray: InquirerQuestion[] = [
+export const promptIntroArray: ListQuestionOptions[] = [
   {
     name: 'applicationName',
     message: 'What is your application name?',
-    default: 'Gosha corp',
-    type: null,
-    choices: null,
+    default: 'Acme App.',
   },
   {
     type: 'checkbox',
     name: 'providers',
-    message: 'Which provider do you want to examine?',
-    choices: providers,
-    default: null,
+    message: 'What delivery providers you are using? (Optional)',
+    choices: Providers.map((provider) => `${provider.displayName} (${provider.type})`),
   },
 ];
