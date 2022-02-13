@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextInputProps, TextInput as MantineTextInput } from '@mantine/core';
-import useStyles from './Input.styles';
+import { inputStyles } from '../config/inputs.styles';
 
 interface IInputProps {
   label?: React.ReactNode;
@@ -15,7 +15,6 @@ interface IInputProps {
  *
  */
 export function Input({ value, ...props }: IInputProps) {
-  const { classes } = useStyles();
-  const defaultDesign = { radius: 'md', size: 'md' } as TextInputProps;
-  return <MantineTextInput defaultValue={value} classNames={classes} {...defaultDesign} {...props} />;
+  const defaultDesign = { radius: 'md', size: 'md', styles: inputStyles } as TextInputProps;
+  return <MantineTextInput {...defaultDesign} defaultValue={value} {...props} />;
 }
