@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@notifire/shared": "^0.3.5",
+    "configstore": "^5.0.0",
     "axios": "^0.25.0",
     "inquirer": "^8.2.0",
     "open": "^8.4.0",
