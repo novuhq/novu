@@ -1,0 +1,16 @@
+import { Providers } from '@notifire/shared';
+import { ListQuestionOptions } from 'inquirer';
+
+export const promptIntroArray: ListQuestionOptions[] = [
+  {
+    name: 'applicationName',
+    message: 'What is your application name?',
+    default: 'Acme App.',
+  },
+  {
+    type: 'checkbox',
+    name: 'providers',
+    message: 'What delivery providers you are using? (Optional)',
+    choices: Providers.map((provider) => `${provider.displayName} (${provider.type})`),
+  },
+];
