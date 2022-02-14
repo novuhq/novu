@@ -8,7 +8,7 @@ export class HttpServer {
     return new Promise((resolve) => {
       this.server = http.createServer((req) => {
         if (req.url.startsWith(REDIRECT_ROUTH)) {
-          this.token = new URLSearchParams(req.url.slice(5)).get('token');
+          this.token = new URLSearchParams(req.url.slice(REDIRECT_ROUTH.length)).get('token');
         }
       });
 
