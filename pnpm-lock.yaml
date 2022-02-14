@@ -305,6 +305,7 @@ importers:
       react-router-dom: 5.2.0
       react-scripts: 4.0.3
       react-syntax-highlighter: ^15.4.3
+      react-table: ^7.7.0
       start-server-and-test: 1.11.6
       storybook-dark-mode: ^1.0.8
       storybook-preset-craco: ^0.0.6
@@ -363,6 +364,7 @@ importers:
       react-router-dom: 5.2.0_react@17.0.2
       react-scripts: 4.0.3_be98eca4f71dca093b18909dfd6e01d2
       react-syntax-highlighter: 15.4.5_react@17.0.2
+      react-table: 7.7.0_react@17.0.2
       storybook-dark-mode: 1.0.8
       storybook-preset-craco: 0.0.6_e2c81e9e7d4ede2436cacaa4048b7bbd
       styled-components: 5.3.3_react-dom@17.0.2+react@17.0.2
@@ -10605,7 +10607,7 @@ packages:
     dependencies:
       '@types/estree': 0.0.39
       estree-walker: 1.0.1
-      picomatch: 2.3.0
+      picomatch: 2.3.1
       rollup: 1.32.1
     dev: false
 
@@ -22671,7 +22673,7 @@ packages:
     dependencies:
       array-union: 2.1.0
       dir-glob: 3.0.1
-      fast-glob: 3.2.7
+      fast-glob: 3.2.11
       ignore: 5.2.0
       merge2: 1.4.1
       slash: 3.0.0
@@ -28005,7 +28007,7 @@ packages:
     engines: {node: '>=8.6'}
     dependencies:
       braces: 3.0.2
-      picomatch: 2.3.0
+      picomatch: 2.3.1
 
   /microseconds/0.2.0:
     resolution: {integrity: sha512-n7DHHMjR1avBbSpsTBj6fmMGh2AGrifVV4e+WYc3Q9lO+xnSZ3NyhcBND3vzzatt05LFhoKFRxrIyklmLlUtyA==}
@@ -33336,6 +33338,14 @@ packages:
       prismjs: 1.25.0
       react: 17.0.2
       refractor: 3.5.0
+    dev: false
+
+  /react-table/7.7.0_react@17.0.2:
+    resolution: {integrity: sha512-jBlj70iBwOTvvImsU9t01LjFjy4sXEtclBovl3mTiqjz23Reu0DKnRza4zlLtOPACx6j2/7MrQIthIK1Wi+LIA==}
+    peerDependencies:
+      react: ^16.8.3 || ^17.0.0-0
+    dependencies:
+      react: 17.0.2
     dev: false
 
   /react-textarea-autosize/8.3.3_b08e3c15324cbe90a6ff8fcd416c932c:

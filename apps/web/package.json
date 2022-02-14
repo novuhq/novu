@@ -52,6 +52,7 @@
     "react-router-dom": "5.2.0",
     "react-scripts": "4.0.3",
     "react-syntax-highlighter": "^15.4.3",
+    "react-table": "^7.7.0",
     "storybook-dark-mode": "^1.0.8",
     "storybook-preset-craco": "^0.0.6",
     "styled-components": "^5.2.1",
