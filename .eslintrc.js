@@ -68,6 +68,21 @@ module.exports = {
       { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['if', 'for'] },
       { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
       { blankLine: 'always', prev: '*', next: 'return' },
+     ],
+    '@typescript-eslint/naming-convention': [
+      'error',
+      { selector: 'class', format: ['PascalCase'] },
+      { selector: 'variableLike', format: ['camelCase', 'UPPER_CASE'], leadingUnderscore: 'allow' },
+      {
+        selector: 'interface',
+        format: ['PascalCase'],
+        prefix: ['I'],
+      },
+      {
+        selector: ['function'],
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+      },
     ],
   },
 };

@@ -4,6 +4,8 @@ import useStyles from './Switch.styles';
 
 interface ISwitchProps {
   label?: React.ReactNode;
+  checked?: boolean;
+  onChange?: () => void;
 }
 
 /**
