@@ -270,6 +270,7 @@ importers:
       '@types/node': ^12.0.0
       '@types/react': ^17.0.0
       '@types/react-dom': ^17.0.0
+      '@types/react-table': ^7.7.9
       '@types/styled-components': ^5.1.7
       ace-builds: ^1.4.12
       antd: ^4.10.0
@@ -339,6 +340,7 @@ importers:
       '@types/node': 12.20.39
       '@types/react': 17.0.38
       '@types/react-dom': 17.0.11
+      '@types/react-table': 7.7.9
       ace-builds: 1.4.13
       antd: 4.17.4_react-dom@17.0.2+react@17.0.2
       autoprefixer: 9.8.8
@@ -13408,6 +13410,12 @@ packages:
     dependencies:
       '@types/react': 17.0.38
     dev: true
+
+  /@types/react-table/7.7.9:
+    resolution: {integrity: sha512-ejP/J20Zlj9VmuLh73YgYkW2xOSFTW39G43rPH93M4mYWdMmqv66lCCr+axZpkdtlNLGjvMG2CwzT4S6abaeGQ==}
+    dependencies:
+      '@types/react': 17.0.38
+    dev: false
 
   /@types/react/16.14.21:
     resolution: {integrity: sha512-rY4DzPKK/4aohyWiDRHS2fotN5rhBSK6/rz1X37KzNna9HJyqtaGAbq9fVttrEPWF5ywpfIP1ITL8Xi2QZn6Eg==}

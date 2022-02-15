@@ -1,11 +1,13 @@
 import React from 'react';
 import { TableProps, Table as MantineTable } from '@mantine/core';
-import { useTable } from 'react-table';
+import { useTable, Column, ColumnWithStrictAccessor } from 'react-table';
 import useStyles from './Table.styles';
 
-interface ITableProps extends JSX.ElementChildrenAttribute {
-  columns?: any;
-  data?: any;
+export type Data = Record<string, any>;
+
+export interface ITableProps extends JSX.ElementChildrenAttribute {
+  columns?: ColumnWithStrictAccessor<Data>[];
+  data?: Data[];
 }
 
 /**
@@ -15,27 +17,30 @@ interface ITableProps extends JSX.ElementChildrenAttribute {
 export function Table({ columns: userColumns, data: userData, children, ...props }: ITableProps) {
   const columns = React.useMemo(
     () =>
-      userColumns.map((col) => {
+      userColumns?.map((col) => {
         const column = {
           Header: col.Header,
           accessor: col.accessor,
         };
-        if (col.Cell) {
+        if (col?.Cell) {
           return {
             ...column,
-            Cell: ({ row }) => col.Cell(row.original),
+            /**
+             * Due to an issue with the Column accessor interface from react-table
+             * We decided to ignore the Cell type for now.
+             */
+            // eslint-disable-next-line
+            Cell: ({ row }) => (col?.Cell ? (col?.Cell as any)(row.original) : null),
           };
         }
         return column;
-      }),
+      }) as Column<Data>[],
     []
   );
 
-  const data = React.useMemo(() => userData.map((row) => ({ ...row })), []);
+  const data = React.useMemo(() => userData?.map((row) => ({ ...row })) as Data[], []);
 
-  const tableInstance = useTable({ columns, data });
-
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
 
   const { classes } = useStyles();
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
