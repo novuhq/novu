@@ -5,7 +5,14 @@ import { IOrganizationDTO } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
-import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTH, API_CREATE_ORGANIZATION_URL, API_OAUTH_URL } from '../constants';
+import {
+  SERVER_PORT,
+  SERVER_HOST,
+  REDIRECT_ROUTH,
+  API_CREATE_ORGANIZATION_URL,
+  API_OAUTH_URL,
+  API_SWITCH_ORGANIZATION_FORMAT_URL,
+} from '../constants';
 
 export async function initCommand() {
   try {
@@ -16,10 +23,14 @@ export async function initCommand() {
     const config = new Configstore('notu-cli');
     config.set('token', userJwt);
 
-    const organizationId = getOrganizationId(userJwt);
+    let organizationId = getOrganizationId(userJwt);
 
     if (!organizationId) {
-      await createOrganization(config, answers.applicationName);
+      const createOrganizationResponse = await createOrganization(config, answers.applicationName);
+      organizationId = createOrganizationResponse._id;
+
+      const newUserJwt = await switchOrganization(config, organizationId);
+      config.set('token', newUserJwt);
     }
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -65,6 +76,20 @@ async function createOrganization(config: Configstore, organizationName: string)
         headers: {
           authorization: `Bearer ${config.get('token')}`,
           host: `${SERVER_HOST}:${SERVER_PORT}`,
+        },
+      }
+    )
+  ).data.data;
+}
+
+async function switchOrganization(config: Configstore, organizationId: string): Promise<string> {
+  return (
+    await axios.post(
+      API_SWITCH_ORGANIZATION_FORMAT_URL.replace('{organizationId}', organizationId),
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${config.get('token')}`,
         },
       }
     )

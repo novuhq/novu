@@ -7,3 +7,4 @@ export const REDIRECT_ROUTH = '/cli/callback';
 const apiAddress = 'http://localhost:3000';
 export const API_OAUTH_URL = `${apiAddress}/v1/auth/github`;
 export const API_CREATE_ORGANIZATION_URL = `${apiAddress}/v1/organizations`;
+export const API_SWITCH_ORGANIZATION_FORMAT_URL = `${apiAddress}/v1/auth/organizations/{organizationId}/switch`;
