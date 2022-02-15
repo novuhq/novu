@@ -54,5 +54,6 @@ function processFilterEquality(i, payloadVariables) {
   if (i.operator === 'NOT_EQUAL') {
     return payloadVariables[i.field] !== i.value;
   }
+
   return false;
 }

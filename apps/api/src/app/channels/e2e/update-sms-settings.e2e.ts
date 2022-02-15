@@ -18,6 +18,7 @@ describe('Update SMS Settings - /channels/sms/settings (PUT)', function () {
       },
     });
     const { data } = body;
+
     expect(data.channels.sms.twillio.authToken).to.equal('5678');
     expect(data.channels.sms.twillio.accountSid).to.equal('12345');
     expect(data.channels.sms.twillio.phoneNumber).to.equal('+11111111');

@@ -3,6 +3,7 @@ import { createStyles, MantineTheme } from '@mantine/core';
 export default createStyles((theme: MantineTheme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
   const label = getRef('label');
+
   return {
     input: {
       backgroundColor: dark ? theme.colors.dark[5] : theme.colors.gray[5],

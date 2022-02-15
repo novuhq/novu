@@ -37,6 +37,7 @@ const PROVIDERS = [
     provide: DalService,
     useFactory: async () => {
       await dalService.connect(process.env.MONGO_URL);
+
       return dalService;
     },
   },

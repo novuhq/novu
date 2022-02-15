@@ -2,6 +2,7 @@ import { createStyles, MantineTheme } from '@mantine/core';
 
 export default createStyles((theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
+
   return {
     rightSection: {
       color: `${dark ? theme.white : theme.colors.gray[8]} !important`,

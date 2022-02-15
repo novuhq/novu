@@ -9,6 +9,7 @@ export class LogEntity {
 
   code: LogCodeEnum;
 
+  // eslint-disable-next-line
   raw: any;
 
   status: LogStatusEnum;

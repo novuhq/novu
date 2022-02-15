@@ -62,5 +62,12 @@ module.exports = {
         patterns: ['@notifire/shared/*', '@notifire/dal/*', '!import2/good'],
       },
     ],
+    'padding-line-between-statements': [
+      'error',
+      { blankLine: 'always', prev: ['const', 'let', 'var'], next: ['*'] },
+      { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['if', 'for'] },
+      { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
+      { blankLine: 'always', prev: '*', next: 'return' },
+    ],
   },
 };

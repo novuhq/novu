@@ -26,6 +26,7 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
   const dark = theme.colorScheme === 'dark';
   const backgroundColor = dark ? theme.colors.dark[4] : theme.colors.gray[0];
   const color = dark ? theme.colors.dark[3] : theme.colors.gray[5];
+
   return (
     <Box
       sx={{
@@ -65,6 +66,7 @@ export function Select({ data, type = 'select', searchable = false, ...props }: 
     classNames: classes,
   } as InputBaseProps;
   const multiselect = type === 'multiselect';
+
   return multiselect ? (
     <MantineMultiSelect {...defaultDesign} {...searchableSelectProps} data={data} valueComponent={Value} {...props} />
   ) : (

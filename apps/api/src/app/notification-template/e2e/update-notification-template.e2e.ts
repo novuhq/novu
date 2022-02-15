@@ -4,6 +4,7 @@ import { ChannelTypeEnum, INotificationTemplate, IUpdateNotificationTemplate } f
 
 describe('Update notification template by id - /notification-templates/:templateId (PUT)', async () => {
   let session: UserSession;
+
   before(async () => {
     session = new UserSession();
     await session.initialize();
@@ -27,6 +28,7 @@ describe('Update notification template by id - /notification-templates/:template
     };
     const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}`).send(update);
     const foundTemplate: INotificationTemplate = body.data;
+
     expect(foundTemplate._id).to.equal(template._id);
     expect(foundTemplate.name).to.equal('new name for notification');
     expect(foundTemplate.description).to.equal(template.description);
@@ -60,6 +62,7 @@ describe('Update notification template by id - /notification-templates/:template
     };
     const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}`).send(update);
     const foundTemplate: INotificationTemplate = body.data;
+
     expect(foundTemplate._id).to.equal(template._id);
     expect(foundTemplate.triggers[0].variables[0].name).to.equal('newVariableFromUpdate');
   });

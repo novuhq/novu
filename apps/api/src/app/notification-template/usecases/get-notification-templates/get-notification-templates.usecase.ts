@@ -8,6 +8,7 @@ export class GetNotificationTemplates {
 
   async execute(command: GetNotificationTemplatesCommand): Promise<NotificationTemplateEntity[]> {
     const list = await this.notificationTemplateRepository.getList(command.organizationId, command.applicationId);
+
     return list;
   }
 }

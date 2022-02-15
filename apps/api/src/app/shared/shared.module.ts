@@ -33,6 +33,7 @@ const DAL_MODELS = [
 ];
 
 const dalService = new DalService();
+
 export const ANALYTICS_SERVICE = 'AnalyticsService';
 
 const PROVIDERS = [
@@ -46,6 +47,7 @@ const PROVIDERS = [
     provide: DalService,
     useFactory: async () => {
       await dalService.connect(process.env.MONGO_URL);
+
       return dalService;
     },
   },
@@ -55,6 +57,7 @@ const PROVIDERS = [
     provide: ANALYTICS_SERVICE,
     useFactory: async () => {
       const analyticsService = new AnalyticsService();
+
       await analyticsService.initialize();
 
       return analyticsService;

@@ -2,7 +2,6 @@ import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@notifire/share
 import { MemberEntity } from './member.entity';
 import { BaseRepository } from '../base-repository';
 import { Member } from './member.schema';
-import { OrganizationEntity } from '../organization';
 
 interface IAddMemberData {
   _userId?: string;
@@ -41,6 +40,7 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
     }).populate('_userId', 'firstName lastName email _id profilePicture createdAt');
     if (!members) return [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const membersEntity: any = this.mapEntities(members);
 
     return [
@@ -61,12 +61,14 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
     if (!members) return [];
 
     const membersEntity = this.mapEntities(members);
+
     return [
       ...membersEntity
         .filter((i) => i.roles.includes(MemberRoleEnum.ADMIN))
         .map((member) => {
           return {
             ...member,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             _userId: member._userId ? (member._userId as any)._id : null,
             user: member._userId,
           };
@@ -114,6 +116,7 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
     });
 
     if (!foundMember) return null;
+
     return foundMember;
   }
 
@@ -145,6 +148,7 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
 
     if (!member) return null;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.mapEntity(member) as any;
   }
 
@@ -156,6 +160,7 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
 
     if (!member) return null;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.mapEntity(member) as any;
   }
 }

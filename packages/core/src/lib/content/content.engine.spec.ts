@@ -9,6 +9,7 @@ test('should parse basic variables correctly', () => {
       firstName: 'test variable',
     }
   );
+
   expect(html).toContain('<div> test variable </div>');
 });
 
@@ -35,6 +36,7 @@ test('should parse if statements', () => {
       flag: true,
     }
   );
+
   expect(html).toContain('Content to display');
 
   const htmlWithoutContent = compileTemplate(
@@ -45,6 +47,7 @@ test('should parse if statements', () => {
       flag: false,
     }
   );
+
   expect(htmlWithoutContent).not.toContain('second item');
 });
 

@@ -23,6 +23,7 @@ describe('Update Branding Details - /applications/branding (PUT)', function () {
     await session.testAgent.put('/v1/applications/branding').send(payload);
 
     const application = await applicationRepository.findById(session.application._id);
+
     expect(application.branding.color).to.equal(payload.color);
     expect(application.branding.logo).to.equal(payload.logo);
     expect(application.branding.fontColor).to.equal(payload.fontColor);

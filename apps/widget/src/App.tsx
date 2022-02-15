@@ -20,6 +20,7 @@ import { useAuth } from './hooks/use-auth.hook';
 const queryClient = new QueryClient();
 
 const tokenStoredToken: string = getToken();
+
 applyToken(tokenStoredToken);
 
 function App() {
