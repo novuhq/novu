@@ -22,6 +22,7 @@ const switchCell = (props) => {
   const switchHandler = () => {
     setStatus((prev) => (prev === 'Enabled' ? 'Disabled' : 'Enabled'));
   };
+
   return <Switch label={status} onChange={switchHandler} checked={status === 'Enabled'} />;
 };
 

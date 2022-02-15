@@ -33,6 +33,7 @@ export function Table({ columns: userColumns, data: userData, children, ...props
             Cell: ({ row }) => (col?.Cell ? (col?.Cell as any)(row.original) : null),
           };
         }
+
         return column;
       }) as Column<Data>[],
     []
@@ -44,6 +45,7 @@ export function Table({ columns: userColumns, data: userData, children, ...props
 
   const { classes } = useStyles();
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
+
   return (
     <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
       <thead>
@@ -58,6 +60,7 @@ export function Table({ columns: userColumns, data: userData, children, ...props
       <tbody {...getTableBodyProps()}>
         {rows.map((row) => {
           prepareRow(row);
+
           return (
             <tr {...row.getRowProps()}>
               {row.cells.map((cell) => {
