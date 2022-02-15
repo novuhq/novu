@@ -15,5 +15,6 @@ interface ISwitchProps {
 export function Switch({ ...props }: ISwitchProps) {
   const { classes } = useStyles();
   const defaultDesign = { radius: 'xl', size: 'md', classNames: classes } as SwitchProps;
+
   return <MantineSwitch {...defaultDesign} {...props} />;
 }

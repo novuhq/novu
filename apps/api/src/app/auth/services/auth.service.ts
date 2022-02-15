@@ -222,6 +222,7 @@ export class AuthService {
       _applicationId: payload.applicationId,
       _id: payload._id,
     });
+
     return subscriber;
   }
 

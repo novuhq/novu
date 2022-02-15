@@ -17,6 +17,7 @@ export function NotificationsList({
 }) {
   const totalCount = notifications.reduce((h, i) => {
     const newCount = h + i.length;
+
     return newCount;
   }, 0);
 

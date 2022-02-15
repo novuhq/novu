@@ -13,6 +13,7 @@ export class CommandHelper {
     const errors = validateSync(convertedObject);
     if (errors?.length) {
       const mappedErrors = flatten(errors.map((item) => Object.values(item.constraints)));
+
       throw new BadRequestException(mappedErrors);
     }
 

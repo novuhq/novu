@@ -24,6 +24,7 @@ export class CompileTemplate {
     }
 
     const template = Handlebars.compile(templateContent);
+
     return template(command.data);
   }
 

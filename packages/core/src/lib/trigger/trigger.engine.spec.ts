@@ -39,6 +39,7 @@ test('emailHandler should be called correctly', async () => {
   );
 
   const emailSpy = jest.spyOn(EmailHandler.prototype, 'send');
+
   await triggerEngine.trigger('test-notification', {
     $user_id: '12345',
     $email: 'test@gmail.com',

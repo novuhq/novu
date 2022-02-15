@@ -110,6 +110,7 @@ function TemplateEditorPage() {
       const response = await createNotificationGroup({
         name: categoryText,
       });
+
       await refetchGroups();
       setCategoryText('');
       setValue('notificationGroup', response._id);
@@ -117,6 +118,7 @@ function TemplateEditorPage() {
   }
 
   if (isLoading) return null;
+
   return (
     <div>
       <FormProvider {...methods}>
@@ -507,4 +509,5 @@ const StyledAddMessageButton = styled(Button)`
     }
   }
 `;
+
 export default TemplateEditorPage;

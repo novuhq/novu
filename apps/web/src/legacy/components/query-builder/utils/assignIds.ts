@@ -10,6 +10,7 @@ export const assignIds = (data: any): any => {
     if (typeof d.children !== 'undefined') {
       d.children = d.children.map((item: any) => {
         item.id = uniqid();
+
         return run(item);
       });
     }

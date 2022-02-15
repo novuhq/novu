@@ -39,6 +39,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     const { body } = await session.testAgent.get('/v1/activity?page=0');
 
     const activities = body.data;
+
     expect(body.totalCount).to.equal(4);
     expect(activities.length).to.equal(4);
     expect(activities[0].template.name).to.equal(template.name);
@@ -65,6 +66,7 @@ describe('Get activity feed - /activity (GET)', async () => {
 
     const { body } = await session.testAgent.get(`/v1/activity?page=0&channels=${ChannelTypeEnum.SMS}`);
     const activities: IMessage[] = body.data;
+
     expect(activities.length).to.equal(2);
     expect(activities[0].channel).to.equal(ChannelTypeEnum.SMS);
     expect(activities[0].template.name).to.equal(smsOnlyTemplate.name);
@@ -88,6 +90,7 @@ describe('Get activity feed - /activity (GET)', async () => {
 
     const { body } = await session.testAgent.get(`/v1/activity?page=0&templates=${template._id}`);
     const activities: IMessage[] = body.data;
+
     expect(activities.length).to.equal(4);
     expect(activities[0]._templateId).to.equal(template._id);
     expect(activities[1]._templateId).to.equal(template._id);
@@ -119,6 +122,7 @@ describe('Get activity feed - /activity (GET)', async () => {
 
     const { body } = await session.testAgent.get(`/v1/activity?page=0&search=test@email.coms`);
     const activities: IMessage[] = body.data;
+
     expect(activities.length).to.equal(2);
     expect(activities[0]._templateId).to.equal(template._id);
     expect(activities[1]._templateId).to.equal(template._id);

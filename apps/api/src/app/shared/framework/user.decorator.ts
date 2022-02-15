@@ -19,6 +19,7 @@ export const UserSession = createParamDecorator((data, ctx) => {
       if (!tokenParts[1]) throw new UnauthorizedException('bad_token');
 
       const user = jwt.decode(tokenParts[1]);
+
       return user;
     }
   }
@@ -44,6 +45,7 @@ export const SubscriberSession = createParamDecorator((data, ctx) => {
       if (!tokenParts[1]) throw new UnauthorizedException('bad_token');
 
       const user = jwt.decode(tokenParts[1]);
+
       return user;
     }
   }

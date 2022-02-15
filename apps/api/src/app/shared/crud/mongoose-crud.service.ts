@@ -28,6 +28,7 @@ export class MongooseCrudService<T> extends CrudService<T> {
 
     const where = filter.reduce((acc, { field, operator, value }) => {
       let cond = null;
+
       switch (operator) {
         case 'starts':
           cond = new RegExp(`^${value}`, 'i');
@@ -52,6 +53,7 @@ export class MongooseCrudService<T> extends CrudService<T> {
           break;
         case 'between': {
           const [min, max] = value;
+
           cond = { $gte: min, $lte: max };
           break;
         }
@@ -59,10 +61,12 @@ export class MongooseCrudService<T> extends CrudService<T> {
           cond = { [`$${operator}`]: value };
       }
       acc[field] = cond;
+
       return acc;
     }, {});
 
     const idParam = paramsFilter.find((v) => v.field === 'id');
+
     return { options, where, id: idParam ? idParam.value : null };
   }
 
@@ -84,6 +88,7 @@ export class MongooseCrudService<T> extends CrudService<T> {
     const data = await queryBuilder.exec();
     if (options.page) {
       const total = await this.model.countDocuments(where);
+
       return this.createPageInfo(
         data.map((i) => JSON.parse(JSON.stringify(i))),
         total,
@@ -91,6 +96,7 @@ export class MongooseCrudService<T> extends CrudService<T> {
         options.skip
       );
     }
+
     return data;
   }
 
@@ -104,6 +110,7 @@ export class MongooseCrudService<T> extends CrudService<T> {
       .where({
         ...where,
       });
+
     options.populate.forEach((v) => {
       queryBuilder.populate(v);
     });

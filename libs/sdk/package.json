@@ -20,7 +20,8 @@
     "node": ">=6.0.0"
   },
   "scripts": {
-    "lint": "tslint  --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
+    "lint": "eslint 'src/**/*.ts'",
+    "lint:fix": "pnpm lint -- --fix",
     "prebuild": "rimraf dist",
     "build": "tsc && ENVIRONMENT=local rollup -c rollup.config.ts",
     "build:dev": "tsc && ENVIRONMENT=dev rollup -c rollup.config.ts",

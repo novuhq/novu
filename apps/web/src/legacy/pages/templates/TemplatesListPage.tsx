@@ -82,4 +82,5 @@ function NotificationList() {
 const GroupWrapper = styled.div``;
 
 const GroupTitle = styled(Typography.Title)``;
+
 export default NotificationList;

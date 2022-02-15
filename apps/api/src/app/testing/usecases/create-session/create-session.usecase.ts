@@ -6,6 +6,7 @@ import { CreateSessionCommand } from './create-session.command';
 export class CreateSession {
   async execute(command: CreateSessionCommand) {
     const userSession = new UserSession();
+
     userSession.testServer = null;
     await userSession.initialize();
 

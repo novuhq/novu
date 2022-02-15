@@ -110,6 +110,7 @@ export function BrandingForm({
   async function saveBrandsForm() {
     if (!color || !image) {
       message.warning('Please provide a logo and a brand color');
+
       return;
     }
 

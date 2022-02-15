@@ -115,6 +115,7 @@ test('send should handle attachments correctly', async () => {
 
   expect(spy).toHaveBeenCalled();
   const attachments = spy.mock.calls[0][0].attachments || [];
+
   expect(attachments.length).toBe(2);
   expect(attachments[0].channels?.includes(ChannelTypeEnum.SMS)).toBeTruthy();
   expect(attachments[1].channels).toBeUndefined();

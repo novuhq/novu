@@ -62,10 +62,6 @@ if (process.env.NODE_ENV === 'test') {
   controllers: [],
   providers,
 })
-export class AppModule implements OnModuleInit {
+export class AppModule {
   constructor(private queueService: QueueService) {}
-
-  async onModuleInit() {
-    //
-  }
 }

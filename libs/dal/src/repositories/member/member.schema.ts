@@ -35,6 +35,7 @@ const memberSchema = new Schema(
 );
 
 interface IMemberDocument extends MemberEntity, Document {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _id: any;
 }
 

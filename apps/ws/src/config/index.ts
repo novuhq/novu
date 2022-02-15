@@ -5,6 +5,7 @@ import { str, port } from 'envalid';
 dotenv.config();
 
 let path;
+
 switch (process.env.NODE_ENV) {
   case 'prod':
     path = `${__dirname}/../.env.production`;
@@ -26,6 +27,7 @@ switch (process.env.NODE_ENV) {
 }
 
 const { error } = dotenv.config({ path });
+
 if (error && !process.env.LAMBDA_TASK_ROOT) throw error;
 
 envalid.cleanEnv(process.env, {

@@ -25,6 +25,7 @@ export class CreateOrganization {
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
     const organization = new OrganizationEntity();
+
     organization.logo = command.logo;
     organization.name = command.name;
 

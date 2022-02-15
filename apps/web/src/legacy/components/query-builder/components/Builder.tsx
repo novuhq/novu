@@ -82,6 +82,7 @@ export const Builder: React.FC<BuilderProps> = ({
   onChange,
 }) => {
   let normalizedData: any;
+
   originalData = assignIds(originalData);
 
   if (originalData.length === 0) {
