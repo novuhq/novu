@@ -62,5 +62,20 @@ module.exports = {
         patterns: ['@notifire/shared/*', '@notifire/dal/*', '!import2/good'],
       },
     ],
+    '@typescript-eslint/naming-convention': [
+      'error',
+      { selector: 'class', format: ['PascalCase'] },
+      { selector: 'variableLike', format: ['camelCase', 'UPPER_CASE'], leadingUnderscore: 'allow' },
+      {
+        selector: 'interface',
+        format: ['PascalCase'],
+        prefix: ['I'],
+      },
+      {
+        selector: ['function'],
+        format: ['camelCase'],
+        leadingUnderscore: 'allow',
+      },
+    ],
   },
 };

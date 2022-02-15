@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 import { isObject, isArray } from 'lodash';
 import { classToPlain } from 'class-transformer';
 
+// eslint-disable-next-line
 export interface Response<T> {
   data: T;
 }
