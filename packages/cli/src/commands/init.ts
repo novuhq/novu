@@ -1,21 +1,29 @@
 import * as open from 'open';
 import * as Configstore from 'configstore';
+import axios from 'axios';
+import { IOrganizationDTO } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
-import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTH, API_OAUTH_URL } from '../constants';
+import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTH, API_CREATE_ORGANIZATION_URL, API_OAUTH_URL } from '../constants';
 
 export async function initCommand() {
-  const config = new Configstore('notu-cli');
   try {
     const answers = await prompt(promptIntroQuestions);
 
     const userJwt = await gitHubOAuth();
 
+    const config = new Configstore('notu-cli');
     config.set('token', userJwt);
+
+    const organizationId = getOrganizationId(userJwt);
+
+    if (!organizationId) {
+      await createOrganization(config, answers.applicationName);
+    }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error(error);
+    console.error(error.response.data);
   }
 }
 
@@ -30,7 +38,7 @@ async function gitHubOAuth(): Promise<string> {
     return await serverResponse(httpServer);
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log(error);
+    console.error(error);
     return null;
   } finally {
     httpServer.close();
@@ -46,4 +54,25 @@ function serverResponse(server: HttpServer): Promise<string> {
       }
     }, 300);
   });
+}
+
+async function createOrganization(config: Configstore, organizationName: string): Promise<IOrganizationDTO> {
+  return (
+    await axios.post(
+      API_CREATE_ORGANIZATION_URL,
+      { name: organizationName },
+      {
+        headers: {
+          authorization: `Bearer ${config.get('token')}`,
+          host: `${SERVER_HOST}:${SERVER_PORT}`,
+        },
+      }
+    )
+  ).data.data;
+}
+
+function getOrganizationId(userJwt: string): string {
+  const tokens = userJwt.split('.');
+  const jsonToken = JSON.parse(Buffer.from(tokens[1], 'base64').toString());
+  return jsonToken.organizationId;
 }
