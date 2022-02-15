@@ -1,4 +1,4 @@
-import { Providers } from '@notifire/shared';
+import { providers } from '@notifire/shared';
 import { ListQuestionOptions } from 'inquirer';
 
 export const promptIntroArray: ListQuestionOptions[] = [
@@ -11,6 +11,6 @@ export const promptIntroArray: ListQuestionOptions[] = [
     type: 'checkbox',
     name: 'providers',
     message: 'What delivery providers you are using? (Optional)',
-    choices: Providers.map((provider) => `${provider.displayName} (${provider.type})`),
+    choices: providers.map((provider) => `${provider.displayName} (${provider.type})`),
   },
 ];
