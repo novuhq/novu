@@ -1,7 +1,7 @@
 import * as open from 'open';
 import * as Configstore from 'configstore';
 import axios from 'axios';
-import { IOrganizationDTO } from '@notifire/shared';
+import { IApplication, IOrganizationDTO } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -11,6 +11,7 @@ import {
   REDIRECT_ROUTH,
   API_CREATE_ORGANIZATION_URL,
   API_OAUTH_URL,
+  API_CREATE_APPLICATION_URL,
   API_SWITCH_ORGANIZATION_FORMAT_URL,
 } from '../constants';
 
@@ -32,6 +33,7 @@ export async function initCommand() {
       const newUserJwt = await switchOrganization(config, organizationId);
       config.set('token', newUserJwt);
     }
+    await createApplication(config, answers.applicationName);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error.response.data);
@@ -94,6 +96,19 @@ async function switchOrganization(config: Configstore, organizationId: string): 
       }
     )
   ).data.data;
+}
+
+async function createApplication(config: Configstore, applicationName: string): Promise<IApplication> {
+  return await axios.post(
+    API_CREATE_APPLICATION_URL,
+    { name: applicationName },
+    {
+      headers: {
+        authorization: `Bearer ${config.get('token')}`,
+        host: `${SERVER_HOST}:${SERVER_PORT}`,
+      },
+    }
+  );
 }
 
 function getOrganizationId(userJwt: string): string {
