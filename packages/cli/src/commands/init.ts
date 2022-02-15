@@ -1,14 +1,14 @@
 import * as open from 'open';
 import * as Configstore from 'configstore';
 import { prompt } from '../client';
-import { promptIntroArray } from './init.consts';
+import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
 import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTH, API_OAUTH_URL } from '../constants';
 
 export async function initCommand() {
   const config = new Configstore('notu-cli');
   try {
-    await prompt(promptIntroArray);
+    const answers = await prompt(promptIntroQuestions);
 
     const userJwt = await gitHubOAuth();
 
@@ -20,7 +20,7 @@ export async function initCommand() {
 }
 
 async function gitHubOAuth(): Promise<string> {
-  const httpServer: HttpServer = new HttpServer();
+  const httpServer = new HttpServer();
   const redirectUrl = `http://${SERVER_HOST}:${SERVER_PORT}${REDIRECT_ROUTH}`;
   try {
     await httpServer.listen();
