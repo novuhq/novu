@@ -1,19 +1,12 @@
 import * as open from 'open';
 import * as Configstore from 'configstore';
-import axios from 'axios';
-import { IApplication, IOrganizationDTO } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
-import {
-  SERVER_PORT,
-  SERVER_HOST,
-  REDIRECT_ROUTH,
-  API_CREATE_ORGANIZATION_URL,
-  API_OAUTH_URL,
-  API_CREATE_APPLICATION_URL,
-  API_SWITCH_ORGANIZATION_FORMAT_URL,
-} from '../constants';
+import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTH, API_OAUTH_URL } from '../constants';
+import { storeHeader } from '../api/api.service';
+import { createOrganization, switchOrganization } from '../api/organization';
+import { createApplication } from '../api/application';
 
 export async function initCommand() {
   try {
@@ -22,18 +15,18 @@ export async function initCommand() {
     const userJwt = await gitHubOAuth();
 
     const config = new Configstore('notu-cli');
-    config.set('token', userJwt);
+    storeToken(config, userJwt);
 
     let organizationId = getOrganizationId(userJwt);
 
     if (!organizationId) {
-      const createOrganizationResponse = await createOrganization(config, answers.applicationName);
+      const createOrganizationResponse = await createOrganization(answers.applicationName);
       organizationId = createOrganizationResponse._id;
 
-      const newUserJwt = await switchOrganization(config, organizationId);
-      config.set('token', newUserJwt);
+      const newUserJwt = await switchOrganization(organizationId);
+      storeToken(config, newUserJwt);
     }
-    await createApplication(config, answers.applicationName);
+    await createApplication(answers.applicationName);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error.response.data);
@@ -69,50 +62,16 @@ function serverResponse(server: HttpServer): Promise<string> {
   });
 }
 
-async function createOrganization(config: Configstore, organizationName: string): Promise<IOrganizationDTO> {
-  return (
-    await axios.post(
-      API_CREATE_ORGANIZATION_URL,
-      { name: organizationName },
-      {
-        headers: {
-          authorization: `Bearer ${config.get('token')}`,
-          host: `${SERVER_HOST}:${SERVER_PORT}`,
-        },
-      }
-    )
-  ).data.data;
-}
-
-async function switchOrganization(config: Configstore, organizationId: string): Promise<string> {
-  return (
-    await axios.post(
-      API_SWITCH_ORGANIZATION_FORMAT_URL.replace('{organizationId}', organizationId),
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${config.get('token')}`,
-        },
-      }
-    )
-  ).data.data;
-}
-
-async function createApplication(config: Configstore, applicationName: string): Promise<IApplication> {
-  return await axios.post(
-    API_CREATE_APPLICATION_URL,
-    { name: applicationName },
-    {
-      headers: {
-        authorization: `Bearer ${config.get('token')}`,
-        host: `${SERVER_HOST}:${SERVER_PORT}`,
-      },
-    }
-  );
-}
-
 function getOrganizationId(userJwt: string): string {
   const tokens = userJwt.split('.');
   const jsonToken = JSON.parse(Buffer.from(tokens[1], 'base64').toString());
   return jsonToken.organizationId;
+}
+
+/*
+ * Stores token in config and axios default headers
+ */
+function storeToken(config: Configstore, userJwt: string) {
+  config.set('token', userJwt);
+  storeHeader('authorization', `Bearer ${config.get('token')}`);
 }
