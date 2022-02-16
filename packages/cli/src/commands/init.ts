@@ -1,5 +1,6 @@
 import * as open from 'open';
 import * as Configstore from 'configstore';
+import jwt_decode from 'jwt-decode';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -17,11 +18,9 @@ export async function initCommand() {
     const config = new Configstore('notu-cli');
     storeToken(config, userJwt);
 
-    let organizationId = getOrganizationId(userJwt);
-
-    if (!organizationId) {
+    if (!isOrganizationIdExist(userJwt)) {
       const createOrganizationResponse = await createOrganization(answers.applicationName);
-      organizationId = createOrganizationResponse._id;
+      const organizationId = createOrganizationResponse._id;
 
       const newUserJwt = await switchOrganization(organizationId);
       storeToken(config, newUserJwt);
@@ -62,10 +61,9 @@ function serverResponse(server: HttpServer): Promise<string> {
   });
 }
 
-function getOrganizationId(userJwt: string): string {
-  const tokens = userJwt.split('.');
-  const jsonToken = JSON.parse(Buffer.from(tokens[1], 'base64').toString());
-  return jsonToken.organizationId;
+function isOrganizationIdExist(userJwt: string): boolean {
+  const decoded = jwt_decode(userJwt) as any;
+  return decoded.organizationId;
 }
 
 /*
