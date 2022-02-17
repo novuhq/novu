@@ -4,19 +4,19 @@ import jwt_decode from 'jwt-decode';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
-import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTH, API_OAUTH_URL } from '../constants';
+import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL } from '../constants';
 import { storeHeader } from '../api/api.service';
 import { createOrganization, switchOrganization } from '../api/organization';
 import { createApplication } from '../api/application';
 
 export async function initCommand() {
-  const config = new Configstore('notu-cli');
   try {
     const answers = await prompt(promptIntroQuestions);
 
     const userJwt = await gitHubOAuth();
 
     const config = new Configstore('notu-cli');
+
     storeToken(config, userJwt);
 
     if (!isOrganizationIdExist(userJwt)) {
@@ -24,6 +24,7 @@ export async function initCommand() {
       const organizationId = createOrganizationResponse._id;
 
       const newUserJwt = await switchOrganization(organizationId);
+
       storeToken(config, newUserJwt);
     }
     await createApplication(answers.applicationName);
@@ -35,7 +36,8 @@ export async function initCommand() {
 
 async function gitHubOAuth(): Promise<string> {
   const httpServer = new HttpServer();
-  const redirectUrl = `http://${SERVER_HOST}:${SERVER_PORT}${REDIRECT_ROUTH}`;
+  const redirectUrl = `http://${SERVER_HOST}:${SERVER_PORT}${REDIRECT_ROUTE}`;
+
   try {
     await httpServer.listen();
 
@@ -45,6 +47,7 @@ async function gitHubOAuth(): Promise<string> {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
+
     return null;
   } finally {
     httpServer.close();
@@ -64,6 +67,7 @@ function serverResponse(server: HttpServer): Promise<string> {
 
 function isOrganizationIdExist(userJwt: string): boolean {
   const decoded = jwt_decode(userJwt) as any;
+
   return decoded.organizationId;
 }
 
