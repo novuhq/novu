@@ -78,6 +78,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
       .setVersion('1.0')
       .build();
     const document = SwaggerModule.createDocument(app, options);
+
     SwaggerModule.setup('api', app, document);
   }
 
@@ -88,5 +89,6 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   }
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} port ${process.env.PORT}`);
+
   return app;
 }

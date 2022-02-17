@@ -9,6 +9,8 @@
     "build:watch": "node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
+    "lint": "eslint src",
+    "lint:fix": "pnpm lint -- --fix",
     "test": "",
     "test:watch": ""
   },

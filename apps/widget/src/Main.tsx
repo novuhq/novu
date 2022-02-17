@@ -52,6 +52,7 @@ export function Main() {
     sendNotificationClick(notification);
 
     const hasCta = notification.cta?.type === ChannelCTATypeEnum.REDIRECT && notification.cta?.data?.url;
+
     postUsageLog('Notification Click', {
       notificationId: notification._id,
       hasCta,

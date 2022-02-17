@@ -19,6 +19,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
 
     expect(body.data.success).to.equal(true);
     const found = await userRepository.findById(session.user._id);
+
     expect(found.resetToken).to.be.ok;
   });
 
@@ -34,6 +35,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
       password: 'ASd3ASD$Fdfdf',
       token: foundUser.resetToken,
     });
+
     expect(resetChange.data.token).to.be.ok;
 
     /**
@@ -56,6 +58,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
     expect(loginBody.data.token).to.be.ok;
 
     const foundUserAfterChange = await userRepository.findById(session.user._id);
+
     expect(foundUserAfterChange.resetToken).to.not.be.ok;
     expect(foundUserAfterChange.resetTokenDate).to.not.be.ok;
   });
@@ -83,6 +86,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
       password: 'ASd3ASD$Fdfdf',
       token: foundUser.resetToken,
     });
+
     expect(resetChange.message).to.contain('Token has expired');
   });
 });

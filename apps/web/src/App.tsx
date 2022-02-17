@@ -37,6 +37,7 @@ if (process.env.REACT_APP_SENTRY_DSN) {
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
+
   return response.data?.data;
 };
 
@@ -49,6 +50,7 @@ const queryClient = new QueryClient({
 });
 
 const tokenStoredToken: string = getToken();
+
 applyToken(tokenStoredToken);
 
 function App() {

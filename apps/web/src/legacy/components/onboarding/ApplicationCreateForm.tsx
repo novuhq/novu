@@ -27,6 +27,7 @@ export function ApplicationCreateForm({}: Props) {
   useEffect(() => {
     if (token) {
       const userData = decode<IJwtPayload>(token);
+
       if (userData.applicationId) {
         history.push('/');
       }
@@ -41,6 +42,7 @@ export function ApplicationCreateForm({}: Props) {
 
     const response = (await mutateAsync(itemData)) as any;
     const tokenResponse = await api.post(`/v1/auth/applications/${response.data._id}/switch`, data);
+
     setToken(tokenResponse.data.token);
     setLoading(false);
     history.push('/');

@@ -33,6 +33,7 @@ export class CreateNotificationTemplate {
     };
 
     const templateMessages = [];
+
     for (const message of command.messages) {
       const template = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({

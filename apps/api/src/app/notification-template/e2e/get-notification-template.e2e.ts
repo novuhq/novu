@@ -4,6 +4,7 @@ import { INotificationTemplate } from '@notifire/shared';
 
 describe('Get notification template by id - /notification-templates/:templateId (GET)', async () => {
   let session: UserSession;
+
   before(async () => {
     session = new UserSession();
     await session.initialize();

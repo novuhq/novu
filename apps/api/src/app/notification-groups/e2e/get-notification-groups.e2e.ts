@@ -3,6 +3,7 @@ import { UserSession } from '@notifire/testing';
 
 describe('Get Notification Groups - /notification-groups (GET)', async () => {
   let session: UserSession;
+
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -17,17 +18,21 @@ describe('Get Notification Groups - /notification-groups (GET)', async () => {
     });
 
     const { body } = await session.testAgent.get(`/v1/notification-groups`);
+
     expect(body.data.length).to.equal(3);
     const group = body.data.find((i) => i.name === 'Test name');
+
     expect(group.name).to.equal(`Test name`);
     expect(group._applicationId).to.equal(session.application._id);
   });
 
   it('should create a default group when fetching', async function () {
     const { body } = await session.testAgent.get(`/v1/notification-groups`);
+
     expect(body.data.length).to.equal(1);
 
     const group = body.data[0];
+
     expect(group.name).to.equal(`General`);
   });
 });

@@ -12,11 +12,13 @@ export class WSGateway implements OnGatewayConnection {
 
   async handleConnection(connection: Socket) {
     const { token } = connection.handshake.query;
+
     if (!token || token === 'null') {
       return this.disconnect(connection);
     }
 
     let subscriber: ISubscriberJwt;
+
     try {
       subscriber = await this.jwtService.verify(token as string);
       if (subscriber.aud !== 'widget_user') {
@@ -29,6 +31,7 @@ export class WSGateway implements OnGatewayConnection {
     return await connection.join(subscriber._id);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async sendMessage(userId: string, event: string, data: any) {
     this.server.to(userId).emit(event, data);
   }

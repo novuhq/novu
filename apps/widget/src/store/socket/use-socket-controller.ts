@@ -5,6 +5,7 @@ import { AuthContext, IAuthContext } from '../auth.context';
 import { WS_URL } from '../../api/shared';
 
 let socket;
+
 export function useSocketController() {
   const { token } = useContext<IAuthContext>(AuthContext);
   const [socketInstance, setSocketInstance] = useState<ISocket | null>(null);

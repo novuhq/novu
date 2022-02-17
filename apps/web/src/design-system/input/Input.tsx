@@ -16,5 +16,6 @@ interface IInputProps {
  */
 export function Input({ value, ...props }: IInputProps) {
   const defaultDesign = { radius: 'md', size: 'md', styles: inputStyles } as TextInputProps;
+
   return <MantineTextInput {...defaultDesign} defaultValue={value} {...props} />;
 }

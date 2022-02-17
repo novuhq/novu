@@ -14,6 +14,7 @@ interface CheckboxProps {
  */
 export function Checkbox({ label = 'Default Checkbox', checked, disabled = false, ...props }: CheckboxProps) {
   const { classes } = useStyles();
+
   return (
     <MantineCheckbox classNames={classes} label={label} disabled={disabled} size="sm" checked={checked} {...props} />
   );

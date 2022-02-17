@@ -80,12 +80,15 @@ export class TriggerEngine {
 
     if (provider.channelType === ChannelTypeEnum.EMAIL) {
       const emailHandler = new EmailHandler(message, provider, theme);
+
       await emailHandler.send(data);
     } else if (provider.channelType === ChannelTypeEnum.SMS) {
       const smsHandler = new SmsHandler(message, provider);
+
       await smsHandler.send(data);
     } else if (provider.channelType === ChannelTypeEnum.DIRECT) {
       const directHandler = new DirectHandler(message, provider);
+
       await directHandler.send(data);
     }
 
@@ -101,6 +104,7 @@ export class TriggerEngine {
     const variables = this.extractMessageVariables(message, data);
 
     const missingVariables: string[] = [];
+
     for (const variable of variables) {
       if (!_get(data, variable)) {
         missingVariables.push(variable);
@@ -130,6 +134,7 @@ export class TriggerEngine {
     }
 
     const deduplicatedResults = [...new Set(mergedResults)];
+
     return deduplicatedResults;
   }
 

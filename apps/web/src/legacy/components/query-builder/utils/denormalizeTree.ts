@@ -36,5 +36,6 @@ export const denormalizeTree = (data: any) => {
   };
 
   run(denormalizedData, clonedData);
+
   return denormalizedData;
 };

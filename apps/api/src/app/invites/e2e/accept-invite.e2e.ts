@@ -30,6 +30,7 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
 
   describe('Valid invite accept flow', async () => {
     let response;
+
     before(async () => {
       await setup();
 
@@ -61,6 +62,7 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
       const organization = await organizationRepository.findById(session.organization._id);
       const members = await memberRepository.getOrganizationMembers(session.organization._id);
       const invitee = members.find((i) => !i._userId);
+
       expect(invitee.memberStatus).to.eq(MemberStatusEnum.INVITED);
 
       await invitedUserSession.testAgent.post(`/v1/invites/${invitee.invite.token}/accept`).expect(201);

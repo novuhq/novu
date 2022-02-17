@@ -62,11 +62,13 @@ describe('User registration - /auth/register (POST)', async () => {
     // Should generate organization
     expect(jwtContent.organizationId).to.be.ok;
     const organization = await organizationRepository.findById(jwtContent.organizationId);
+
     expect(organization.name).to.equal('Sample org');
 
     // Should generate application and api keys
     expect(jwtContent.applicationId).to.be.ok;
     const application = await applicationRepository.findById(jwtContent.applicationId);
+
     expect(application.apiKeys.length).to.equal(1);
     expect(application.apiKeys[0].key).to.ok;
 

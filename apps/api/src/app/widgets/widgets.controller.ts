@@ -61,6 +61,7 @@ export class WidgetsController {
       subscriberId: subscriberSession._id,
       applicationId: subscriberSession._applicationId,
     });
+
     return await this.genUnseenCountUsecase.execute(command);
   }
 

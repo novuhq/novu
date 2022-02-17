@@ -18,6 +18,7 @@ test('should get a theme by id', async () => {
   });
 
   const theme = await store.getThemeById('test1');
+
   expect(theme).toBeTruthy();
   expect(theme?.branding.logo).toEqual('https://example.com/logo.png');
 });

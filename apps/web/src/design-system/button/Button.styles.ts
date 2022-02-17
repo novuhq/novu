@@ -19,6 +19,7 @@ const getOutlineStyles = (theme, disabled) => {
   const dark = theme.colorScheme === 'dark';
   const backgroundColor = getGradient(dark ? theme.black : theme.white);
   const disabledBorderColor = getGradient(dark ? theme.colors.dark[4] : theme.colors.gray[0]);
+
   return {
     border: '1px solid transparent',
     backgroundImage: `${backgroundColor},${!disabled ? theme.colors.gradient[8] : disabledBorderColor}`,
@@ -31,6 +32,7 @@ const getOutlineStyles = (theme, disabled) => {
 
 export default createStyles((theme: MantineTheme, disabled: boolean, getRef) => {
   const loading = getRef('loading');
+
   return {
     label: disabled ? {} : getLabelStyles(theme),
     filled: disabled ? getFilledDisabledStyles(theme) : getFilledStyles(theme),
