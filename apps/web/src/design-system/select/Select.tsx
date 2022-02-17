@@ -14,11 +14,43 @@ import { inputStyles } from '../config/inputs.styles';
 
 interface ISelectProps {
   data: (string | { value: string; label?: string })[];
+  onChange?: (value: string[] | string | null) => void;
   label?: React.ReactNode;
   placeholder?: string;
   description?: string;
   searchable?: boolean;
   type?: 'multiselect' | 'select';
+}
+
+/**
+ * Select component
+ *
+ */
+export function Select({ data, type = 'select', searchable = false, onChange, ...props }: ISelectProps) {
+  const { classes } = useStyles();
+  const searchableSelectProps = searchable ? { searchable, nothingFound: 'Nothing Found', allowDeselect: true } : {};
+  const defaultDesign = {
+    radius: 'md',
+    size: 'md',
+    rightSection: <ChevronIcon />,
+    rightSectionWidth: 60,
+    styles: inputStyles,
+    classNames: classes,
+  } as InputBaseProps;
+  const multiselect = type === 'multiselect';
+
+  return multiselect ? (
+    <MantineMultiSelect
+      onChange={onChange}
+      {...defaultDesign}
+      {...searchableSelectProps}
+      data={data}
+      valueComponent={Value}
+      {...props}
+    />
+  ) : (
+    <MantineSelect {...defaultDesign} {...searchableSelectProps} onChange={onChange} data={data} {...props} />
+  );
 }
 
 function Value({ label, onRemove }: MultiSelectValueProps) {
@@ -47,29 +79,5 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
       </div>
       <CloseButton style={{ color }} onMouseDown={onRemove} variant="transparent" size={30} iconSize={15} />
     </Box>
-  );
-}
-
-/**
- * Select component
- *
- */
-export function Select({ data, type = 'select', searchable = false, ...props }: ISelectProps) {
-  const { classes } = useStyles();
-  const searchableSelectProps = searchable ? { searchable, nothingFound: 'Nothing Found', allowDeselect: true } : {};
-  const defaultDesign = {
-    radius: 'md',
-    size: 'md',
-    rightSection: <ChevronIcon />,
-    rightSectionWidth: 60,
-    styles: inputStyles,
-    classNames: classes,
-  } as InputBaseProps;
-  const multiselect = type === 'multiselect';
-
-  return multiselect ? (
-    <MantineMultiSelect {...defaultDesign} {...searchableSelectProps} data={data} valueComponent={Value} {...props} />
-  ) : (
-    <MantineSelect {...defaultDesign} {...searchableSelectProps} data={data} {...props} />
   );
 }
