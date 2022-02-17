@@ -864,6 +864,7 @@ importers:
       '@notifire/shared': ^0.3.5
       '@types/inquirer': ^8.2.0
       axios: ^0.25.0
+      configstore: ^5.0.0
       inquirer: ^8.2.0
       nodemon: ^2.0.15
       open: ^8.4.0
@@ -872,6 +873,7 @@ importers:
     dependencies:
       '@notifire/shared': link:../../libs/shared
       axios: 0.25.0
+      configstore: 5.0.1
       inquirer: 8.2.0
       open: 8.4.0
       ts-node: 10.5.0_f6d7dbfa47c058bf494b37a3e2e17d5a

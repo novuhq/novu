@@ -1,14 +1,18 @@
 import * as open from 'open';
+import * as Configstore from 'configstore';
 import { prompt } from '../client';
 import { promptIntroArray } from './init.consts';
 import { HttpServer } from '../server';
 import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTH, API_OAUTH_URL } from '../constants';
 
 export async function initCommand() {
+  const config = new Configstore('notu-cli');
   try {
     await prompt(promptIntroArray);
 
-    await gitHubOAuth();
+    const userJwt = await gitHubOAuth();
+
+    config.set('token', userJwt);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
