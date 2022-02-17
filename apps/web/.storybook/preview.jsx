@@ -2,10 +2,14 @@ import React from 'react';
 import { ColorSchemeProvider } from '@mantine/core';
 import { ThemeProvider } from '../src/design-system/ThemeProvider';
 import { useDarkMode } from 'storybook-dark-mode';
+import { DocsContainer } from './Doc.container';
 
 export const parameters = {
   layout: 'fullscreen',
   viewMode: 'docs',
+  docs: {
+    container: DocsContainer,
+  },
   actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
     matchers: {
