@@ -866,21 +866,27 @@ importers:
   packages/cli:
     specifiers:
       '@notifire/shared': ^0.3.5
+      '@types/configstore': ^5.0.1
       '@types/inquirer': ^8.2.0
       axios: ^0.25.0
+      configstore: ^5.0.0
       inquirer: ^8.2.0
+      jwt-decode: ^3.1.2
       nodemon: ^2.0.15
       open: ^8.4.0
       ts-node: ^10.5.0
       typescript: ^4.5.5
     dependencies:
       '@notifire/shared': link:../../libs/shared
-      '@types/inquirer': 8.2.0
       axios: 0.25.0
+      configstore: 5.0.1
       inquirer: 8.2.0
+      jwt-decode: 3.1.2
       open: 8.4.0
       ts-node: 10.5.0_f6d7dbfa47c058bf494b37a3e2e17d5a
     devDependencies:
+      '@types/configstore': 5.0.1
+      '@types/inquirer': 8.2.0
       nodemon: 2.0.15
       typescript: 4.5.5
 
@@ -12927,6 +12933,10 @@ packages:
     resolution: {integrity: sha512-SRXjM+tfsSlA9VuG8hGO2nft2p8zjXCK1VcC6N4NXbBbYbSia9kzCChYQajIjzIqOOOuh5Ock6MmV2oux4jDZQ==}
     dev: false
 
+  /@types/configstore/5.0.1:
+    resolution: {integrity: sha512-c/QCznvk7bLKGhHETj29rqKufui3jaAxjBhK4R2zUrMG5UG0qTwfWYxBoUbH8JCyDjdCWMIxPJ7/Fdz1UcAnWg==}
+    dev: true
+
   /@types/connect-history-api-fallback/1.3.5:
     resolution: {integrity: sha512-h8QJa8xSb1WD4fpKBDcATDNGXghFj6/3GRWG6dhmRcu0RX1Ubasur2Uvx5aeEwlf0MwblEC2bMzzMQntxnw/Cw==}
     dependencies:
@@ -13110,7 +13120,7 @@ packages:
     dependencies:
       '@types/through': 0.0.30
       rxjs: 7.4.0
-    dev: false
+    dev: true
 
   /@types/ioredis/4.28.5:
     resolution: {integrity: sha512-bp5mdpzscWZMEE/jLvvzze5TZFYGhynB1am69l/a0XPqZRXWpbswY6lb5buEht57jOnw5pPG5zL9pFUWw1nggw==}
@@ -13560,7 +13570,7 @@ packages:
     resolution: {integrity: sha512-FvnCJljyxhPM3gkRgWmxmDZyAQSiBQQWLI0A0VFL0K7W1oRUrPJSqNO0NvTnLkBcotdlp3lKvaT0JrnyRDkzOg==}
     dependencies:
       '@types/node': 17.0.5
-    dev: false
+    dev: true
 
   /@types/tough-cookie/4.0.1:
     resolution: {integrity: sha512-Y0K95ThC3esLEYD6ZuqNek29lNX2EM1qxV8y2FTLUB0ff5wWrk7az+mLrnNFUnaXcgKye22+sFBRXOgpPILZNg==}
