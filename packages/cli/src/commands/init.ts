@@ -10,6 +10,7 @@ import { createOrganization, switchOrganization } from '../api/organization';
 import { createApplication } from '../api/application';
 
 export async function initCommand() {
+  const config = new Configstore('notu-cli');
   try {
     const answers = await prompt(promptIntroQuestions);
 
