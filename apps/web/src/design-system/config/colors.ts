@@ -2,6 +2,7 @@ export const colors = {
   BGLight: '#EDF0F2',
   BGDark: '#13131A',
   B98: '#F5F8FA',
+  B85: '#D5D5D9',
   B80: '#BEBECC',
   B70: '#A1A1B2',
   B60: '#828299',
