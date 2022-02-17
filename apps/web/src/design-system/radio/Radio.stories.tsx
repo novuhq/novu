@@ -1,7 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Radio, RadioProps } from './Radio';
-import { Divider } from '@mantine/core';
 
 export default {
   title: 'Components/Radio',
