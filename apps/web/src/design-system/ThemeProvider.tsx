@@ -18,7 +18,7 @@ export function ThemeProvider({ children, darkMode = false }: { children: JSX.El
         styles={(theme) => ({
           body: {
             ...theme.fn.fontStyles(),
-            backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[7] : theme.colors.gray[0],
+            backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
             color: theme.colorScheme === 'dark' ? theme.colors.dark[0] : theme.black,
           },
         })}
