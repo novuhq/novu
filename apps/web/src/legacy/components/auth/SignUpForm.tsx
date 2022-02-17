@@ -44,14 +44,17 @@ export function SignUpForm({ token, email }: Props) {
       return message.error('Please write your full name including last name');
     }
     const response = await mutateAsync(itemData);
+
     setToken((response as any).token);
 
     if (token) {
       const responseInvite = await acceptInvite(token);
+
       setToken(responseInvite);
     }
 
     router.push('/templates');
+
     return true;
   };
 

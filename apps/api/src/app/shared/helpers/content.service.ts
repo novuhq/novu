@@ -36,6 +36,7 @@ export class ContentService {
 
     for (const text of this.messagesTextIterator(messages)) {
       const extractedVariables = this.extractVariables(text);
+
       variables.push(...extractedVariables);
     }
 

@@ -8,6 +8,7 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
+
   before(async () => {
     session = new UserSession();
     await session.initialize();
@@ -40,6 +41,7 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
       ChannelTypeEnum.IN_APP
     );
     const messageId = messages[0]._id;
+
     expect(messages[0].seen).to.equal(false);
     await axios.post(
       `http://localhost:${process.env.PORT}/v1/widgets/messages/${messageId}/seen`,
@@ -52,6 +54,7 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
     );
 
     const modifiedMessage = await messageRepository.findById(messageId);
+
     expect(modifiedMessage.seen).to.equal(true);
     expect(modifiedMessage.lastSeenDate).to.be.ok;
   });

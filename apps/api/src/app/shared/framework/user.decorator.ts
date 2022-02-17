@@ -1,6 +1,7 @@
 import { createParamDecorator, UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const UserSession = createParamDecorator((data, ctx) => {
   let req;
   if (ctx.getType() === 'graphql') {
@@ -18,6 +19,7 @@ export const UserSession = createParamDecorator((data, ctx) => {
       if (!tokenParts[1]) throw new UnauthorizedException('bad_token');
 
       const user = jwt.decode(tokenParts[1]);
+
       return user;
     }
   }
@@ -25,6 +27,7 @@ export const UserSession = createParamDecorator((data, ctx) => {
   return null;
 });
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const SubscriberSession = createParamDecorator((data, ctx) => {
   let req;
   if (ctx.getType() === 'graphql') {
@@ -42,6 +45,7 @@ export const SubscriberSession = createParamDecorator((data, ctx) => {
       if (!tokenParts[1]) throw new UnauthorizedException('bad_token');
 
       const user = jwt.decode(tokenParts[1]);
+
       return user;
     }
   }

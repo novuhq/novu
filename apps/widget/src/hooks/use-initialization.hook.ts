@@ -68,6 +68,7 @@ export function useInitialization() {
     }
 
     window.addEventListener('message', handler);
+
     return () => window.removeEventListener('message', handler);
   }, []); // empty array => run only once
 

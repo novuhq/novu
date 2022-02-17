@@ -10,6 +10,7 @@ test('should register a template', async () => {
   });
 
   const templates = await store.getTemplates();
+
   expect(templates.length).toEqual(1);
   expect(templates[0].id).toEqual('test');
 });
@@ -28,6 +29,7 @@ test('should get a template by id', async () => {
   });
 
   const template = await store.getTemplateById('test');
+
   expect(template).toBeTruthy();
   expect(template?.id).toEqual('test');
 });
@@ -61,6 +63,7 @@ describe('active messages', () => {
       $user_id: '1234',
       companyType: 'pro',
     });
+
     expect(messages.length).toEqual(2);
   });
 
@@ -97,6 +100,7 @@ describe('active messages', () => {
       $user_id: '1234',
       companyType: 'pro',
     });
+
     expect(messages.length).toEqual(3);
 
     expect(getMessageByTemplate(messages, 'test1')).toBeTruthy();

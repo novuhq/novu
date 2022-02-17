@@ -51,6 +51,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
+
     await new Promise((resolve) => setTimeout(resolve, 100));
     const logs = await logRepository.find({
       _applicationId: session.application._id,
@@ -79,6 +80,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     const { data: body } = response;
+
     expect(body.data).to.be.ok;
     expect(body.data.status).to.equal('processed');
     expect(body.data.acknowledged).to.equal(true);
@@ -138,6 +140,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       subscriber._id,
       ChannelTypeEnum.EMAIL
     );
+
     expect(subscriber.email).to.not.equal('new-test-email@gmail.com');
     expect(messages[0].email).to.equal('new-test-email@gmail.com');
   });
@@ -160,9 +163,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
     const notifications = await notificationRepository.findBySubscriberId(session.application._id, subscriber._id);
+
     expect(notifications.length).to.equal(1);
 
     const notification = notifications[0];
+
     expect(notification._organizationId).to.equal(session.organization._id);
     expect(notification._templateId).to.equal(template._id);
 
@@ -186,6 +191,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       subscriber._id,
       ChannelTypeEnum.EMAIL
     );
+
     expect(emails.length).to.equal(1);
     const email = emails[0];
 
@@ -367,6 +373,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       _templateId: template._id,
       _subscriberId: subscriber._id,
     });
+
     expect(message.status).to.equal('error');
     expect(message.errorText).to.equal('Error from twillio');
   });

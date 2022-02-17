@@ -20,6 +20,7 @@ describe('Switch Application - /auth/applications/:id/switch (POST)', async () =
 
     it('should switch to second application', async () => {
       const content = jwt.decode(session.token.split(' ')[1]) as IJwtPayload;
+
       expect(content.applicationId).to.equal(firstApplication._id);
 
       const { body } = await session.testAgent
@@ -27,6 +28,7 @@ describe('Switch Application - /auth/applications/:id/switch (POST)', async () =
         .expect(200);
 
       const newJwt = jwt.decode(body.data.token) as IJwtPayload;
+
       expect(newJwt._id).to.equal(session.user._id);
       expect(newJwt.organizationId).to.equal(session.organization._id);
       expect(newJwt.applicationId).to.equal(secondApplication._id);

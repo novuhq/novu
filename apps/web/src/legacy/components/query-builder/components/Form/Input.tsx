@@ -22,5 +22,6 @@ export const Input: React.FC<InputProps> = ({ onChange, value, type }: InputProp
   if (type === 'date') {
     return <DatePicker value={value ? moment(value, 'YYYY-MM-DD') : undefined} onChange={handleChangeDate} />;
   }
+
   return <InputBase style={{ width: 160 }} onChange={handleChange} value={value} type={type} />;
 };

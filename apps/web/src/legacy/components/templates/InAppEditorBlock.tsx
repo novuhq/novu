@@ -21,6 +21,7 @@ export function InAppEditorBlock({
 
   useEffect(() => {
     let showPlaceHolder = !value;
+
     if (value === '<br>') showPlaceHolder = true;
 
     setVisiblePlaceholder(showPlaceHolder);
@@ -36,6 +37,7 @@ export function InAppEditorBlock({
     onChange(data);
 
     let showPlaceHolder = !data;
+
     if (data === '<br>') showPlaceHolder = true;
 
     setVisiblePlaceholder(showPlaceHolder);

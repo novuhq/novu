@@ -26,6 +26,4 @@ if (process.env.SENTRY_DSN) {
   controllers: [AppController],
   providers,
 })
-export class AppModule implements OnModuleInit {
-  async onModuleInit() {}
-}
+export class AppModule {}

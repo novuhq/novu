@@ -34,6 +34,7 @@ notifire.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
         }
     }'
   `;
+
   return (
     <>
       <Tabs defaultActiveKey="1">

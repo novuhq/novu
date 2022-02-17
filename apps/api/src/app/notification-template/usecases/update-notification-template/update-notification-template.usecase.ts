@@ -43,6 +43,7 @@ export class UpdateNotificationTemplate {
       const { messages } = command;
 
       const variables = contentService.extractMessageVariables(command.messages);
+
       updatePayload['triggers.0.variables'] = variables.map((i) => {
         return {
           name: i,
@@ -50,6 +51,7 @@ export class UpdateNotificationTemplate {
       });
 
       const templateMessages: NotificationMessagesEntity[] = [];
+
       for (const message of messages) {
         if (message._id) {
           const template = await this.updateMessageTemplate.execute(

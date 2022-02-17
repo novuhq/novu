@@ -7,17 +7,19 @@ interface IButtonProps extends JSX.ElementChildrenAttribute {
   size?: 'md' | 'lg';
   variant?: 'outline' | 'filled';
   disabled?: boolean;
+  onClick?: () => void;
 }
 
 /**
  * Button component
  *
  */
-export function Button({ loading, children, size = 'md', disabled = false, ...props }: IButtonProps) {
+export function Button({ loading, children, size = 'md', disabled = false, onClick, ...props }: IButtonProps) {
   const { classes } = useStyles(disabled);
   const defaultDesign = { radius: 'md', classNames: classes } as SharedButtonProps;
+
   return (
-    <MantineButton {...defaultDesign} disabled={disabled} size={size} loading={loading} {...props}>
+    <MantineButton {...defaultDesign} onClick={onClick} disabled={disabled} size={size} loading={loading} {...props}>
       {children}
     </MantineButton>
   );

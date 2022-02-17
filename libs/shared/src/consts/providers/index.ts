@@ -1,7 +1,7 @@
 import { ProviderEnum } from './provider.enum';
 import { IProvider } from './provider.interface';
 
-export const Providers: IProvider[] = [
+export const providers: IProvider[] = [
   {
     id: 'mailjs',
     displayName: 'Mail.js',

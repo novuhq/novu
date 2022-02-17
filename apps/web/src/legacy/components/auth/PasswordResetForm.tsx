@@ -36,6 +36,7 @@ export function PasswordResetForm({ token }: Props) {
 
     try {
       const response = await mutateAsync(itemData);
+
       setToken(response.token);
       message.success('Password was changed successfully');
       history.push('/templates');

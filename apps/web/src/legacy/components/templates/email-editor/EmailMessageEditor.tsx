@@ -67,6 +67,7 @@ export function EmailMessageEditor({
 
   function onBlockAdd(type: 'button' | 'text') {
     const modifiedBlocks = [...blocks];
+
     if (type === 'button') {
       modifiedBlocks.push({
         type: 'button',
@@ -86,6 +87,7 @@ export function EmailMessageEditor({
 
   function removeBlock(index: number) {
     const modified = [...blocks];
+
     modified.splice(index, 1);
     setBlocks(modified);
   }

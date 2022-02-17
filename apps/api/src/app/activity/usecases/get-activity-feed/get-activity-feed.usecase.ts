@@ -24,6 +24,7 @@ export class GetActivityFeed {
     let subscriberId: string;
     if (command.search) {
       const foundSubscriber = await this.subscribersRepository.searchSubscriber(command.applicationId, command.search);
+
       subscriberId = foundSubscriber?._id;
 
       if (!subscriberId) {

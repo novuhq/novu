@@ -53,5 +53,5 @@ export class MessageEntity {
   errorText: string;
 
   @Exclude()
-  providerResponse: any;
+  providerResponse: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

@@ -17,6 +17,7 @@ export class TemplateStore {
 
   async getActiveMessages(template: ITemplate, data: ITriggerPayload) {
     const messages = [];
+
     for (const message of template.messages) {
       let active = true;
       if (message.active != null) {

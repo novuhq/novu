@@ -1,4 +1,4 @@
-import { initCommand } from './commands/init';
+import { initCommand } from './commands';
 
 (async () => {
   await initCommand();

@@ -48,6 +48,7 @@ export function WidgetSettingsPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+
     if (params.get('screen') && params.get('screen') === 'sms') {
       setSelectedTab('sms');
     }
