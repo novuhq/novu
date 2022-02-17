@@ -67,7 +67,10 @@ export class AuthController {
       return response.redirect(`${process.env.CLIENT_SUCCESS_AUTH_REDIRECT}?error=AuthenticationError`);
     }
 
-    let url = `${process.env.CLIENT_SUCCESS_AUTH_REDIRECT}?token=${request.user.token}`;
+    let url = JSON.parse(request.query.state).redirectUrl || process.env.CLIENT_SUCCESS_AUTH_REDIRECT;
+
+    url += `?token=${request.user.token}`;
+
     if (request.user.newUser) {
       url += '&newUser=true';
     }
