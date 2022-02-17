@@ -862,10 +862,12 @@ importers:
   packages/cli:
     specifiers:
       '@notifire/shared': ^0.3.5
+      '@types/configstore': ^5.0.1
       '@types/inquirer': ^8.2.0
       axios: ^0.25.0
       configstore: ^5.0.0
       inquirer: ^8.2.0
+      jwt-decode: ^3.1.2
       nodemon: ^2.0.15
       open: ^8.4.0
       ts-node: ^10.5.0
@@ -875,9 +877,11 @@ importers:
       axios: 0.25.0
       configstore: 5.0.1
       inquirer: 8.2.0
+      jwt-decode: 3.1.2
       open: 8.4.0
       ts-node: 10.5.0_f6d7dbfa47c058bf494b37a3e2e17d5a
     devDependencies:
+      '@types/configstore': 5.0.1
       '@types/inquirer': 8.2.0
       nodemon: 2.0.15
       typescript: 4.5.5
@@ -12924,6 +12928,10 @@ packages:
   /@types/component-emitter/1.2.11:
     resolution: {integrity: sha512-SRXjM+tfsSlA9VuG8hGO2nft2p8zjXCK1VcC6N4NXbBbYbSia9kzCChYQajIjzIqOOOuh5Ock6MmV2oux4jDZQ==}
     dev: false
+
+  /@types/configstore/5.0.1:
+    resolution: {integrity: sha512-c/QCznvk7bLKGhHETj29rqKufui3jaAxjBhK4R2zUrMG5UG0qTwfWYxBoUbH8JCyDjdCWMIxPJ7/Fdz1UcAnWg==}
+    dev: true
 
   /@types/connect-history-api-fallback/1.3.5:
     resolution: {integrity: sha512-h8QJa8xSb1WD4fpKBDcATDNGXghFj6/3GRWG6dhmRcu0RX1Ubasur2Uvx5aeEwlf0MwblEC2bMzzMQntxnw/Cw==}

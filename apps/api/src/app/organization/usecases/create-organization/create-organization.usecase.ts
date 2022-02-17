@@ -40,7 +40,11 @@ export class CreateOrganization {
       })
     );
 
-    await this.sendWelcomeEmail(user, organization);
+    /*
+     * Comment because the design of the process needs to be rethought
+     *
+     * await this.sendWelcomeEmail(user, organization);
+     */
 
     const organizationAfterChanges = await this.getOrganizationUsecase.execute(
       GetOrganizationCommand.create({
