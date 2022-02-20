@@ -7,6 +7,7 @@ export default createStyles((theme: MantineTheme) => {
     rightSection: {
       color: `${dark ? theme.white : theme.colors.gray[8]} !important`,
       pointerEvents: 'none',
+      marginRight: '2.5px',
     },
     dropdown: {
       backgroundColor: dark ? theme.colors.dark[4] : theme.white,

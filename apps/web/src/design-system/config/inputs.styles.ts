@@ -8,6 +8,9 @@ export const inputStyles = (theme: MantineTheme) => {
   const secondaryColor = dark ? theme.colors.dark[3] : theme.colors.gray[6];
 
   return {
+    rightSection: {
+      color: `${theme.colors.gray[7]} !important`,
+    },
     input: {
       height: '50px',
       lineHeight: '50px',
