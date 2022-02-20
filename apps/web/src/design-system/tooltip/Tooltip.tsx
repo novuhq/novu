@@ -10,7 +10,7 @@ interface ITooltipProps extends JSX.ElementChildrenAttribute {
  * Tooltip component
  *
  */
-export function Tooltip({ children, ...props }: ITooltipProps) {
+export function Tooltip({ children, label, ...props }: ITooltipProps) {
   const { classes } = useStyles();
   const defaultDesign = {
     withArrow: true,
@@ -20,7 +20,7 @@ export function Tooltip({ children, ...props }: ITooltipProps) {
   } as TooltipProps;
 
   return (
-    <MantineTooltip classNames={classes} {...defaultDesign} {...props}>
+    <MantineTooltip classNames={classes} {...defaultDesign} label={label} {...props}>
       {children}
     </MantineTooltip>
   );
