@@ -262,6 +262,7 @@ importers:
       '@storybook/addon-essentials': ^6.4.14
       '@storybook/addon-links': ^6.4.14
       '@storybook/node-logger': ^6.4.14
+      '@storybook/preset-create-react-app': ^4.0.0
       '@storybook/react': ^6.4.14
       '@storybook/theming': ^6.4.19
       '@testing-library/jest-dom': ^5.11.4
@@ -388,6 +389,7 @@ importers:
       '@storybook/addon-essentials': 6.4.14_f8f9c4d47bc439fee0ea72efe6a6c5b3
       '@storybook/addon-links': 6.4.14_react-dom@17.0.2+react@17.0.2
       '@storybook/node-logger': 6.4.14
+      '@storybook/preset-create-react-app': 4.0.0_07213f66e59b80b9557167ef5f03df4e
       '@storybook/react': 6.4.14_8ad52fb0879b111fbc385791d11df5b0
       '@types/styled-components': 5.1.19
       babel-plugin-styled-components: 1.13.3_styled-components@5.3.3
@@ -10352,6 +10354,44 @@ packages:
       webpack: 4.46.0
     dev: true
 
+  /@pmmmwh/react-refresh-webpack-plugin/0.5.4_webpack@4.46.0:
+    resolution: {integrity: sha512-zZbZeHQDnoTlt2AF+diQT0wsSXpvWiaIOZwBRdltNFhG1+I3ozyaw7U/nBiUwyJ0D+zwdXp0E3bWOl38Ag2BMw==}
+    engines: {node: '>= 10.13'}
+    peerDependencies:
+      '@types/webpack': 4.x || 5.x
+      react-refresh: '>=0.10.0 <1.0.0'
+      sockjs-client: ^1.4.0
+      type-fest: '>=0.17.0 <3.0.0'
+      webpack: '>=4.43.0 <6.0.0'
+      webpack-dev-server: 3.x || 4.x
+      webpack-hot-middleware: 2.x
+      webpack-plugin-serve: 0.x || 1.x
+    peerDependenciesMeta:
+      '@types/webpack':
+        optional: true
+      sockjs-client:
+        optional: true
+      type-fest:
+        optional: true
+      webpack-dev-server:
+        optional: true
+      webpack-hot-middleware:
+        optional: true
+      webpack-plugin-serve:
+        optional: true
+    dependencies:
+      ansi-html-community: 0.0.8
+      common-path-prefix: 3.0.0
+      core-js-pure: 3.20.1
+      error-stack-parser: 2.0.6
+      find-up: 5.0.0
+      html-entities: 2.3.2
+      loader-utils: 2.0.2
+      schema-utils: 3.1.1
+      source-map: 0.7.3
+      webpack: 4.46.0
+    dev: true
+
   /@polka/url/1.0.0-next.21:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
     dev: false
@@ -10562,7 +10602,7 @@ packages:
     dependencies:
       '@types/estree': 0.0.39
       estree-walker: 1.0.1
-      picomatch: 2.3.0
+      picomatch: 2.3.1
       rollup: 1.32.1
     dev: false
 
@@ -12763,6 +12803,36 @@ packages:
       - webpack-plugin-serve
     dev: false
 
+  /@storybook/preset-create-react-app/4.0.0_07213f66e59b80b9557167ef5f03df4e:
+    resolution: {integrity: sha512-yGitcvckL/elb1B6P9k7p1MXDnOg+AiDGWGjsJjBfkx8y4rVatnDo+9s2IOjpd1tipc8TeUYA1xaGf/I66mg6w==}
+    peerDependencies:
+      '@babel/core': '*'
+      '@storybook/node-logger': '*'
+      '@storybook/react': '>=5.2'
+      react-scripts: '>=3.0.0'
+    dependencies:
+      '@pmmmwh/react-refresh-webpack-plugin': 0.5.4_webpack@4.46.0
+      '@storybook/node-logger': 6.4.14
+      '@storybook/react': 6.4.14_8ad52fb0879b111fbc385791d11df5b0
+      '@storybook/react-docgen-typescript-plugin': 1.0.2-canary.6.9d540b91e815f8fc2f8829189deb00553559ff63.0_typescript@4.5.4+webpack@4.46.0
+      '@types/babel__core': 7.1.17
+      babel-plugin-react-docgen: 4.2.1
+      pnp-webpack-plugin: 1.7.0_typescript@4.5.4
+      react-scripts: 4.0.3_be98eca4f71dca093b18909dfd6e01d2
+      semver: 7.3.5
+    transitivePeerDependencies:
+      - '@types/webpack'
+      - react-refresh
+      - sockjs-client
+      - supports-color
+      - type-fest
+      - typescript
+      - webpack
+      - webpack-dev-server
+      - webpack-hot-middleware
+      - webpack-plugin-serve
+    dev: true
+
   /@storybook/preview-web/6.4.14_react-dom@17.0.2+react@17.0.2:
     resolution: {integrity: sha512-3E++OYz+OCyJBIchkNCJRtxEU7XNDBdIvKRTCx48X+Uv5qoLeCpXiXOSK/42LlraWZkfBs56yHv9VSqJoQ8VwA==}
     peerDependencies:
@@ -12817,6 +12887,25 @@ packages:
 
   /@storybook/react-docgen-typescript-plugin/1.0.2-canary.253f8c1.0_typescript@4.5.4+webpack@4.46.0:
     resolution: {integrity: sha512-mmoRG/rNzAiTbh+vGP8d57dfcR2aP+5/Ll03KKFyfy5FqWFm/Gh7u27ikx1I3LmVMI8n6jh5SdWMkMKon7/tDw==}
+    peerDependencies:
+      typescript: '>= 3.x'
+      webpack: '>= 4'
+    dependencies:
+      debug: 4.3.3
+      endent: 2.1.0
+      find-cache-dir: 3.3.2
+      flat-cache: 3.0.4
+      micromatch: 4.0.4
+      react-docgen-typescript: 2.2.2_typescript@4.5.4
+      tslib: 2.3.1
+      typescript: 4.5.4
+      webpack: 4.46.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@storybook/react-docgen-typescript-plugin/1.0.2-canary.6.9d540b91e815f8fc2f8829189deb00553559ff63.0_typescript@4.5.4+webpack@4.46.0:
+    resolution: {integrity: sha512-eVg3BxlOm2P+chijHBTByr90IZVUtgRW56qEOLX7xlww2NBuKrcavBlcmn+HH7GIUktquWkMPtvy6e0W0NgA5w==}
     peerDependencies:
       typescript: '>= 3.x'
       webpack: '>= 4'
@@ -31114,6 +31203,15 @@ packages:
       ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
+
+  /pnp-webpack-plugin/1.7.0_typescript@4.5.4:
+    resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
+    engines: {node: '>=6'}
+    dependencies:
+      ts-pnp: 1.2.0_typescript@4.5.4
+    transitivePeerDependencies:
+      - typescript
+    dev: true
 
   /pnpm/6.25.0:
     resolution: {integrity: sha512-Hlck6S8j7obFkkfQCnDJXIEBRNK4wIanMzDfpRE5TNbLsJnxbWXGbMV5ZhDf8Q8xy6RkBWdoKAmliL0nLmzxHQ==}

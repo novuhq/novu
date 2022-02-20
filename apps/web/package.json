@@ -75,6 +75,7 @@
     "@storybook/addon-essentials": "^6.4.14",
     "@storybook/addon-links": "^6.4.14",
     "@storybook/node-logger": "^6.4.14",
+    "@storybook/preset-create-react-app": "^4.0.0",
     "@storybook/react": "^6.4.14",
     "@types/react": "^17.0.0",
     "@types/styled-components": "^5.1.7",
