@@ -3,7 +3,6 @@ import {
   Box,
   Select as MantineSelect,
   MultiSelect as MantineMultiSelect,
-  ChevronIcon,
   CloseButton,
   InputBaseProps,
   MultiSelectValueProps,
@@ -11,6 +10,7 @@ import {
 } from '@mantine/core';
 import useStyles from './Select.styles';
 import { inputStyles } from '../config/inputs.styles';
+import { ArrowDown, Search } from '../icons';
 
 interface ISelectProps {
   data: (string | { value: string; label?: string })[];
@@ -28,12 +28,20 @@ interface ISelectProps {
  */
 export function Select({ data, type = 'select', searchable = false, onChange, ...props }: ISelectProps) {
   const { classes } = useStyles();
-  const searchableSelectProps = searchable ? { searchable, nothingFound: 'Nothing Found', allowDeselect: true } : {};
+  const searchableSelectProps = searchable
+    ? {
+        searchable,
+        nothingFound: 'Nothing Found',
+        allowDeselect: true,
+        rightSectionWidth: 50,
+        rightSection: <Search />,
+      }
+    : {};
   const defaultDesign = {
     radius: 'md',
     size: 'md',
-    rightSection: <ChevronIcon />,
-    rightSectionWidth: 60,
+    rightSection: <ArrowDown />,
+    rightSectionWidth: 50,
     styles: inputStyles,
     classNames: classes,
   } as InputBaseProps;
