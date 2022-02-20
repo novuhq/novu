@@ -29,7 +29,7 @@ export default createStyles((theme: MantineTheme) => {
       boxSizing: 'border-box',
       color: theme.colors.gray[7],
       background: 'transparent',
-      borderRadius: '7px 7px 7px 7px',
+      borderRadius: '7px',
 
       '&:hover': {
         backgroundColor: dark ? theme.colors.dark[7] : theme.white,
