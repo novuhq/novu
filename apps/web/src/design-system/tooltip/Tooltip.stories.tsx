@@ -8,12 +8,9 @@ export default {
   argTypes: {},
 } as ComponentMeta<typeof Tooltip>;
 
-const Template: ComponentStory<typeof Tooltip> = ({ ...args }) => <Tooltip {...args}>Tooltip Example</Tooltip>;
-
-export const Default = Template.bind({});
-Default.args = {};
+const Template: ComponentStory<typeof Tooltip> = ({ ...args }) => <Tooltip {...args}>Hover Here</Tooltip>;
 
 export const Label = Template.bind({});
 Label.args = {
-  label: 'Label',
+  label: 'This is a tooltip!',
 };

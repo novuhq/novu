@@ -7,12 +7,18 @@ interface ITooltipProps extends JSX.ElementChildrenAttribute {
 }
 
 /**
- * Input component
+ * Tooltip component
  *
  */
 export function Tooltip({ children, ...props }: ITooltipProps) {
   const { classes } = useStyles();
-  const defaultDesign = {} as TooltipProps;
+  const defaultDesign = {
+    withArrow: true,
+    arrowSize: 3.5,
+    radius: 'md',
+    wrapLines: true,
+  } as TooltipProps;
+
   return (
     <MantineTooltip classNames={classes} {...defaultDesign} {...props}>
       {children}
