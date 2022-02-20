@@ -21,3 +21,10 @@ export const States = () => (
     <Checkbox label="Checked checkbox" checked />
   </Group>
 );
+
+export const Disabled = () => (
+  <Group style={{ display: 'flex', flexDirection: 'column', alignItems: 'unset' }}>
+    <Checkbox label="Checked checkbox" checked disabled />
+    <Checkbox label="Checked checkbox" disabled />
+  </Group>
+);
