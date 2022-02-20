@@ -9,14 +9,23 @@ interface IInputProps {
   value?: string;
   description?: string;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+  rightSection?: React.ReactNode;
 }
 
 /**
  * Input component
  *
  */
-export function Input({ value, onChange, ...props }: IInputProps) {
+export function Input({ value, rightSection, onChange, ...props }: IInputProps) {
   const defaultDesign = { radius: 'md', size: 'md', styles: inputStyles } as TextInputProps;
 
-  return <MantineTextInput {...defaultDesign} onChange={onChange} defaultValue={value} {...props} />;
+  return (
+    <MantineTextInput
+      {...(rightSection ? { rightSection, rightSectionWidth: 50 } : {})}
+      {...defaultDesign}
+      onChange={onChange}
+      defaultValue={value}
+      {...props}
+    />
+  );
 }

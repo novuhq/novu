@@ -9,6 +9,11 @@ export default {
     label: {
       control: false,
     },
+    onChange: {
+      table: {
+        disable: true,
+      },
+    },
   },
 } as ComponentMeta<typeof Switch>;
 
