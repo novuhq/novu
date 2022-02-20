@@ -3,7 +3,7 @@ import { Tabs, Tab } from '@mantine/core';
 import useStyles from './NavMenu.styles';
 
 interface INavMenuProps {
-  menuItems: { icon: ReactNode; label?: string }[];
+  menuItems: { icon: ReactNode; label: string }[];
 }
 
 export function NavMenu({ menuItems, ...props }: INavMenuProps) {
