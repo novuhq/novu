@@ -270,6 +270,7 @@ export function useTemplateController(templateId: string) {
 
     if (!messagesData?.length) {
       message.warn('Please select at-least one channel');
+
       return;
     }
 
@@ -293,6 +294,7 @@ export function useTemplateController(templateId: string) {
         router.push('/templates');
       } else {
         const response = await createNotification(payload);
+
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
         message.success('Template saved successfully');
@@ -309,10 +311,12 @@ export function useTemplateController(templateId: string) {
         [channel]: active,
       }),
     };
+
     setActiveChannels(modifiedActiveChannel);
 
     if (selectedMessageType === channel && !active) {
       let hasActive = false;
+
       for (const key in modifiedActiveChannel) {
         if (!modifiedActiveChannel.hasOwnProperty(key)) continue;
 

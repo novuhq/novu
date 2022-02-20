@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button as MantineButton } from '@mantine/core';
+import { Button as MantineButton, SharedButtonProps } from '@mantine/core';
 import useStyles from './Button.styles';
 
 interface IButtonProps extends JSX.ElementChildrenAttribute {
@@ -7,16 +7,19 @@ interface IButtonProps extends JSX.ElementChildrenAttribute {
   size?: 'md' | 'lg';
   variant?: 'outline' | 'filled';
   disabled?: boolean;
+  onClick?: () => void;
 }
 
 /**
  * Button component
  *
  */
-export function Button({ loading, children, size = 'md', disabled = false, ...props }: IButtonProps) {
+export function Button({ loading, children, size = 'md', disabled = false, onClick, ...props }: IButtonProps) {
   const { classes } = useStyles(disabled);
+  const defaultDesign = { radius: 'md', classNames: classes } as SharedButtonProps;
+
   return (
-    <MantineButton classNames={classes} disabled={disabled} radius="md" size={size} loading={loading} {...props}>
+    <MantineButton {...defaultDesign} onClick={onClick} disabled={disabled} size={size} loading={loading} {...props}>
       {children}
     </MantineButton>
   );

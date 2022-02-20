@@ -50,6 +50,7 @@ const applicationSchema = new Schema(
 );
 
 interface IApplicationDocument extends ApplicationEntity, Document {
+  // eslint-disable-next-line
   _id: any;
 }
 

@@ -23,6 +23,7 @@ export class NotificationTemplateService {
       _applicationId: this.applicationId,
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const messages: any[] = override?.messages ?? [
       {
         type: ChannelTypeEnum.IN_APP,
@@ -52,6 +53,7 @@ export class NotificationTemplateService {
     ];
 
     const templateMessages: NotificationMessagesEntity[] = [];
+
     for (const message of messages) {
       const saved = await this.messageTemplateRepository.create({
         type: message.type,

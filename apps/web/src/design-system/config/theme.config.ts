@@ -7,6 +7,7 @@ export const mantineConfig: MantineThemeOverride = {
   fontSizes: { xs: 10, sm: 12, md: 14, lg: 16, xl: 18 },
   primaryColor: 'gradient',
   radius: { md: 7, xl: 30 },
+  lineHeight: '17px',
   shadows: {
     sm: shadows.light,
     md: shadows.medium,

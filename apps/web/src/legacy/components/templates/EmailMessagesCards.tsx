@@ -33,6 +33,7 @@ export function EmailMessagesCards({
 
   const showCollapse = emailMessagesFields.length !== 1;
   const collapseProps: { expandIcon?: () => null; ghost?: boolean } = {};
+
   if (!showCollapse) {
     collapseProps.expandIcon = () => null;
     collapseProps.ghost = true;

@@ -24,6 +24,7 @@ export const Group: React.FC<GroupProps> = ({ value, isNegated, children, id, is
 
     if (data[parentIndex].children && data[parentIndex].children.length > 0) {
       const lastChildren = clonedData[parentIndex].children.slice(-1)[0];
+
       insertAfter = clonedData.findIndex((item: any) => item.id === lastChildren);
     }
 
@@ -71,6 +72,7 @@ export const Group: React.FC<GroupProps> = ({ value, isNegated, children, id, is
 
   const handleChangeGroupType = (nextValue: BuilderGroupValues) => {
     const { clonedData, parentIndex } = findIndex();
+
     clonedData[parentIndex].value = nextValue;
 
     setData(clonedData);
@@ -81,6 +83,7 @@ export const Group: React.FC<GroupProps> = ({ value, isNegated, children, id, is
 
   const handleToggleNegateGroup = (nextValue: boolean) => {
     const { clonedData, parentIndex } = findIndex();
+
     clonedData[parentIndex].isNegated = nextValue;
 
     setData(clonedData);

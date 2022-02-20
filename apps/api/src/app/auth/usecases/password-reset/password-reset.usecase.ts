@@ -21,6 +21,7 @@ export class PasswordReset {
     }
 
     const passwordHash = await bcrypt.hash(command.password, 10);
+
     await this.userRepository.update(
       {
         _id: user._id,

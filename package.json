@@ -9,7 +9,7 @@
     "nx": "nx",
     "generate:provider": "npx hygen provider new",
     "start": "cross-env TZ=UTC mono-run start:dev --stream 500",
-    "lint": "nx lint",
+    "lint": "nx run-many --target=lint --all",
     "test": "cross-env CI=true mono-run test:watch --stream --parallel",
     "bootstrap": "pnpm setup:dev",
     "copy:files": "cpx README.md packages/core",

@@ -137,6 +137,7 @@ export class UserSession {
 
   async addApplication() {
     const applicationService = new ApplicationService();
+
     this.application = await applicationService.createApplication(this.organization._id);
 
     return this.application;
@@ -175,6 +176,7 @@ export class UserSession {
 
   async addOrganization() {
     const organizationService = new OrganizationService();
+
     this.organization = await organizationService.createOrganization();
     await organizationService.addMember(this.organization._id, this.user._id);
 

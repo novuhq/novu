@@ -1,14 +1,5 @@
-const inquirer = require('inquirer');
+import { initCommand } from './commands';
 
-inquirer
-  .prompt([
-    {
-      name: 'helloWorldName',
-      message: 'What is your name?',
-    },
-  ])
-  // eslint-disable-next-line promise/always-return
-  .then((answers) => {
-    // eslint-disable-next-line no-console
-    console.info('Hello ', answers.helloWorldName);
-  });
+(async () => {
+  await initCommand();
+})();

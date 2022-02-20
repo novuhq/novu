@@ -120,6 +120,7 @@ Notifire provides a single API to manage providers across multiple channels with
 - [x] [SNS](https://github.com/notifirehq/notifire/tree/master/providers/sns)
 - [x] [Nexmo - Vonage](https://github.com/notifirehq/notifire/tree/master/providers/nexmo)
 - [x] [Sms77](https://github.com/notifirehq/notifire/tree/master/providers/sms77)
+- [x] [Telnyx](https://github.com/notifirehq/notifire/tree/master/providers/telnyx)
 - [ ] Bandwidth
 - [ ] RingCentral
 

@@ -23,6 +23,7 @@ export function ContentRow({
 
   const [drawerVisible, setDrawerVisible] = useState<boolean>();
   const parentRef = useRef<HTMLDivElement>(null);
+
   function onHover() {
     if (!parentRef.current) return;
 

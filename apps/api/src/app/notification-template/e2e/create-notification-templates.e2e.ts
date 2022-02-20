@@ -6,6 +6,7 @@ import { CreateNotificationTemplateDto } from '../dto/create-notification-templa
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
+
   before(async () => {
     session = new UserSession();
     await session.initialize();
@@ -47,11 +48,13 @@ describe('Create Notification template - /notification-templates (POST)', async 
     };
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
     expect(body.data).to.be.ok;
     const template: INotificationTemplate = body.data;
 
     expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
     const message = template.messages[0];
+
     expect(message.template.name).to.equal(`${testTemplate.messages[0].name}`);
     expect(message.template.subject).to.equal(`${testTemplate.messages[0].subject}`);
     expect(message.filters[0].type).to.equal(testTemplate.messages[0].filters[0].type);
@@ -93,6 +96,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(body.data).to.be.ok;
 
     const template: INotificationTemplate = body.data;
+
     expect(template._id).to.be.ok;
     expect(template.description).to.equal(testTemplate.description);
     expect(template.name).to.equal(testTemplate.name);
@@ -130,6 +134,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(body.data).to.be.ok;
 
     const template: INotificationTemplate = body.data;
+
     expect(template.triggers.length).to.equal(1);
     expect(template.triggers[0].identifier).to.include('test');
     expect(template.triggers[0].type).to.equal(TriggerTypeEnum.EVENT);

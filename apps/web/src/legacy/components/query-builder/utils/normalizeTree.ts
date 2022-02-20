@@ -16,6 +16,7 @@ export const normalizeTree = (data: any[]) => {
         }
 
         const tmpItem = clone(item);
+
         delete tmpItem.children;
 
         normalizedData.push(tmpItem);
@@ -35,5 +36,6 @@ export const normalizeTree = (data: any[]) => {
   };
 
   run(clonedData);
+
   return normalizedData;
 };

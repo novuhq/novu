@@ -32,6 +32,7 @@ describe('User login - /auth/login (POST)', async () => {
     });
 
     const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
+
     expect(jwtContent.firstName).to.equal('test');
     expect(jwtContent.lastName).to.equal('user');
     expect(jwtContent.email).to.equal('testytest22@gmail.com');

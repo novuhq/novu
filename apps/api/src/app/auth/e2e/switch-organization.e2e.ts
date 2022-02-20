@@ -32,12 +32,14 @@ describe('Switch Organization - /auth/organizations/:id/switch (POST)', async ()
 
     it('should switch the user current organization', async () => {
       const content = jwt.decode(session.token.split(' ')[1]) as IJwtPayload;
+
       expect(content._id).to.equal(session.user._id);
       const organization = await session.addOrganization();
 
       const { body } = await session.testAgent.post(`/v1/auth/organizations/${organization._id}/switch`).expect(200);
 
       const newJwt = jwt.decode(body.data) as IJwtPayload;
+
       expect(newJwt._id).to.equal(session.user._id);
       expect(newJwt.organizationId).to.equal(organization._id);
       expect(newJwt.roles.length).to.equal(1);
@@ -58,6 +60,7 @@ describe('Switch Organization - /auth/organizations/:id/switch (POST)', async ()
 
     it('should switch to second organization', async () => {
       const content = jwt.decode(session.token.split(' ')[1]) as IJwtPayload;
+
       expect(content.organizationId).to.equal(firstOrganization._id);
 
       const { body } = await session.testAgent
@@ -65,6 +68,7 @@ describe('Switch Organization - /auth/organizations/:id/switch (POST)', async ()
         .expect(200);
 
       const newJwt = jwt.decode(body.data) as IJwtPayload;
+
       expect(newJwt._id).to.equal(session.user._id);
       expect(newJwt.organizationId).to.equal(secondOrganization._id);
     });

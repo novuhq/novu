@@ -25,6 +25,7 @@ export class CreateOrganization {
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
     const organization = new OrganizationEntity();
+
     organization.logo = command.logo;
     organization.name = command.name;
 
@@ -40,7 +41,11 @@ export class CreateOrganization {
       })
     );
 
-    await this.sendWelcomeEmail(user, organization);
+    /*
+     * Comment because the design of the process needs to be rethought
+     *
+     * await this.sendWelcomeEmail(user, organization);
+     */
 
     const organizationAfterChanges = await this.getOrganizationUsecase.execute(
       GetOrganizationCommand.create({

@@ -29,6 +29,7 @@ export function LoginForm({}: Props) {
 
     try {
       const response = await mutateAsync(itemData);
+
       setToken((response as any).token);
       router.push('/templates');
     } catch (e: any) {

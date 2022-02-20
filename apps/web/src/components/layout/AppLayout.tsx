@@ -8,6 +8,7 @@ import { ThemeProvider } from '../../design-system/ThemeProvider';
 
 export function AppLayout({ children }: { children: any }) {
   const location = useLocation();
+
   useNotifire();
 
   /**
