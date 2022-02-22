@@ -1,13 +1,16 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
+import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
-import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL } from '../constants';
+import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL, CLIENT_LOGIN_URL } from '../constants';
 import { storeHeader } from '../api/api.service';
 import { createOrganization, switchOrganization } from '../api/organization';
 import { createApplication, getApplicationMe, switchApplication } from '../api/application';
 import { ConfigService } from '../services';
+import { getNotificationGroup } from '../api/notification-groups';
+import { createNotificationTemplates } from '../api/notification-templates';
 
 export async function initCommand() {
   const httpServer = new HttpServer();
@@ -23,6 +26,8 @@ export async function initCommand() {
     await createOrganizationHandler(config, answers);
 
     await createApplicationHandler(config, answers);
+
+    await raiseDemoDashboard();
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
@@ -69,6 +74,41 @@ async function createApplicationHandler(config: ConfigService, answers: Answers)
   storeToken(config, newUserJwt);
 
   return createApplicationResponse.identifier;
+}
+
+async function raiseDemoDashboard() {
+  const notificationGroupResponse = await getNotificationGroup();
+
+  const template = buildTemplate(notificationGroupResponse.notificationGroupResponse[0]._id);
+
+  await createNotificationTemplates(template);
+}
+
+function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
+  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}`;
+
+  const messages = [
+    {
+      type: ChannelTypeEnum.IN_APP,
+      content: 'Test content for <b>{{firstName}}</b>',
+      cta: {
+        type: ChannelCTATypeEnum.REDIRECT,
+        data: {
+          url: redirectUrl,
+        },
+      },
+    },
+  ];
+
+  return {
+    notificationGroupId,
+    name: 'test notification name',
+    active: true,
+    draft: false,
+    messages,
+    tags: null,
+    description: null,
+  };
 }
 
 /*
