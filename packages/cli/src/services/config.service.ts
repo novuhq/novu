@@ -1,9 +1,9 @@
 import * as Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
-import { IJwt } from '../interfaces';
+import { IJwtPayload } from '@notifire/shared';
 
 export class ConfigService {
-  _config: Configstore;
+  private _config: Configstore;
   constructor() {
     this._config = new Configstore('notu-cli');
   }
@@ -17,7 +17,7 @@ export class ConfigService {
     return !!this.getDecodedToken().organizationId;
   }
 
-  getDecodedToken(): IJwt {
+  getDecodedToken(): IJwtPayload {
     return jwt_decode(this._config.get('token'));
   }
 }

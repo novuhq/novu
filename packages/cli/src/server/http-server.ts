@@ -53,27 +53,31 @@ export class HttpServer {
         if (error) {
           if (error.code === 'ENOENT') {
             res.end('404', 'utf-8');
-          } else {
-            res.end('500');
+
+            return resolve();
           }
-        } else {
-          const payLoad = JSON.parse(this.config.getValue('triggerPayload'));
+          res.end('500');
 
-          if (!payLoad) {
-            res.end('500');
-          }
-
-          payLoad.forEach((param) => {
-            // eslint-disable-next-line no-param-reassign
-            content = content.replace(`REPLACE_WITH_${param.key}`, param.value);
-          });
-
-          res.writeHead(200);
-          res.end(content, 'utf-8');
+          return resolve();
         }
-      });
+        const payLoad = JSON.parse(this.config.getValue('triggerPayload'));
 
-      resolve();
+        if (!payLoad) {
+          res.end('500');
+
+          return resolve();
+        }
+
+        payLoad.forEach((param) => {
+          // eslint-disable-next-line no-param-reassign
+          content = content.replace(`REPLACE_WITH_${param.key}`, param.value);
+        });
+
+        res.writeHead(200);
+        res.end(content, 'utf-8');
+
+        return resolve();
+      });
     });
   }
 }
