@@ -1,6 +1,4 @@
 import * as open from 'open';
-import * as Configstore from 'configstore';
-import jwt_decode from 'jwt-decode';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -8,6 +6,7 @@ import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL } from '../cons
 import { storeHeader } from '../api/api.service';
 import { createOrganization, switchOrganization } from '../api/organization';
 import { createApplication } from '../api/application';
+import { ConfigService } from '../services';
 
 export async function initCommand() {
   try {
@@ -15,11 +14,11 @@ export async function initCommand() {
 
     const userJwt = await gitHubOAuth();
 
-    const config = new Configstore('notu-cli');
+    const config = new ConfigService();
 
     storeToken(config, userJwt);
 
-    if (!isOrganizationIdExist(userJwt)) {
+    if (!config.isOrganizationIdExist()) {
       const createOrganizationResponse = await createOrganization(answers.applicationName);
       const organizationId = createOrganizationResponse._id;
 
@@ -65,16 +64,10 @@ function serverResponse(server: HttpServer): Promise<string> {
   });
 }
 
-function isOrganizationIdExist(userJwt: string): boolean {
-  const decoded = jwt_decode(userJwt) as any;
-
-  return decoded.organizationId;
-}
-
 /*
  * Stores token in config and axios default headers
  */
-function storeToken(config: Configstore, userJwt: string) {
-  config.set('token', userJwt);
-  storeHeader('authorization', `Bearer ${config.get('token')}`);
+function storeToken(config: ConfigService, userJwt: string) {
+  config.setValue('token', userJwt);
+  storeHeader('authorization', `Bearer ${config.getValue('token')}`);
 }
