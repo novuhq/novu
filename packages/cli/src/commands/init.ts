@@ -1,53 +1,68 @@
 import * as open from 'open';
+import { Answers } from 'inquirer';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
 import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL } from '../constants';
 import { storeHeader } from '../api/api.service';
 import { createOrganization, switchOrganization } from '../api/organization';
-import { createApplication } from '../api/application';
+import { createApplication, getApplicationMe } from '../api/application';
 import { ConfigService } from '../services';
 
 export async function initCommand() {
+  const httpServer = new HttpServer();
+
+  await httpServer.listen();
+  const config = new ConfigService();
+
   try {
     const answers = await prompt(promptIntroQuestions);
 
-    const userJwt = await gitHubOAuth();
+    await gitHubOAuth(httpServer, config);
 
-    const config = new ConfigService();
+    await createOrganizationHandler(config, answers);
 
-    storeToken(config, userJwt);
-
-    if (!config.isOrganizationIdExist()) {
-      const createOrganizationResponse = await createOrganization(answers.applicationName);
-      const organizationId = createOrganizationResponse._id;
-
-      const newUserJwt = await switchOrganization(organizationId);
-
-      storeToken(config, newUserJwt);
-    }
-    await createApplication(answers.applicationName);
+    await createApplicationHandler(config, answers);
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error(error.response.data);
-  }
-}
-
-async function gitHubOAuth(): Promise<string> {
-  const httpServer = new HttpServer();
-  const redirectUrl = `http://${SERVER_HOST}:${SERVER_PORT}${REDIRECT_ROUTE}`;
-
-  try {
-    await httpServer.listen();
-
-    await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}`);
-
-    return await httpServer.redirectResponse();
-  } catch (error) {
-    throw new Error('Could not generate jwt via github oath');
+    console.error(error);
   } finally {
     httpServer.close();
   }
+}
+
+async function gitHubOAuth(httpServer: HttpServer, config: ConfigService): Promise<void> {
+  const redirectUrl = `http://${SERVER_HOST}:${SERVER_PORT}${REDIRECT_ROUTE}`;
+
+  try {
+    await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}`);
+
+    const userJwt = await httpServer.redirectResponse();
+
+    storeToken(config, userJwt);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  }
+}
+
+async function createOrganizationHandler(config: ConfigService, answers: Answers) {
+  if (config.isOrganizationIdExist()) return;
+
+  const createOrganizationResponse = await createOrganization(answers.applicationName);
+
+  const newUserJwt = await switchOrganization(createOrganizationResponse._id);
+
+  storeToken(config, newUserJwt);
+}
+
+async function createApplicationHandler(config: ConfigService, answers: Answers): Promise<string> {
+  if (config.isApplicationIdExist()) {
+    return (await getApplicationMe()).identifier;
+  }
+  const createApplicationResponse = await createApplication(answers.applicationName);
+
+  return createApplicationResponse.identifier;
 }
 
 /*
