@@ -12,3 +12,4 @@ export const API_CREATE_ORGANIZATION_URL = `${apiAddress}/v1/organizations`;
 export const API_SWITCH_ORGANIZATION_FORMAT_URL = `${apiAddress}/v1/auth/organizations/{organizationId}/switch`;
 export const API_CREATE_APPLICATION_URL = `${apiAddress}/v1/applications`;
 export const API_APPLICATION_ME_URL = `${apiAddress}/v1/applications/me`;
+export const API_SWITCH_APPLICATION_FORMAT_URL = `${apiAddress}/v1/auth/applications/{applicationId}/switch`;

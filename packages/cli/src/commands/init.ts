@@ -6,7 +6,7 @@ import { HttpServer } from '../server';
 import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL } from '../constants';
 import { storeHeader } from '../api/api.service';
 import { createOrganization, switchOrganization } from '../api/organization';
-import { createApplication, getApplicationMe } from '../api/application';
+import { createApplication, getApplicationMe, switchApplication } from '../api/application';
 import { ConfigService } from '../services';
 
 export async function initCommand() {
@@ -61,6 +61,12 @@ async function createApplicationHandler(config: ConfigService, answers: Answers)
     return (await getApplicationMe()).identifier;
   }
   const createApplicationResponse = await createApplication(answers.applicationName);
+
+  config.setValue('apiKey', createApplicationResponse.apiKeys[0].key);
+
+  const newUserJwt = await switchApplication(createApplicationResponse._id);
+
+  storeToken(config, newUserJwt);
 
   return createApplicationResponse.identifier;
 }
