@@ -7,14 +7,21 @@ export class ConfigService {
   constructor() {
     this._config = new Configstore('notu-cli');
   }
+
   setValue(key: string, value: string) {
     this._config.set(key, value);
   }
+
   getValue(key: string) {
     return this._config.get(key);
   }
+
   isOrganizationIdExist(): boolean {
     return !!this.getDecodedToken().organizationId;
+  }
+
+  isApplicationIdExist(): boolean {
+    return !!this.getDecodedToken().applicationId;
   }
 
   getDecodedToken(): IJwtPayload {
