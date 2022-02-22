@@ -84,7 +84,7 @@ async function createApplicationHandler(config: ConfigService, answers: Answers)
 async function raiseDemoDashboard() {
   const notificationGroupResponse = await getNotificationGroup();
 
-  const template = buildTemplate(notificationGroupResponse.notificationGroupResponse[0]._id);
+  const template = buildTemplate(notificationGroupResponse[0]._id);
 
   await createNotificationTemplates(template);
 }

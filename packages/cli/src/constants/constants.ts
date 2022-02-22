@@ -17,4 +17,4 @@ export const API_NOTIFICATION_GROUP_URL = `${apiAddress}/v1/notification-groups`
 export const API_NOTIFICATION_TEMPLATES_URL = `${apiAddress}/v1/notification-templates`;
 
 // Client
-export const CLIENT_LOGIN_URL = 'http://localhost:4200/v1/auth/login';
+export const CLIENT_LOGIN_URL = 'http://localhost:4200/login';
