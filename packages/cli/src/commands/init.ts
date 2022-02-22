@@ -5,12 +5,17 @@ import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
 import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL, CLIENT_LOGIN_URL } from '../constants';
-import { storeHeader } from '../api/api.service';
-import { createOrganization, switchOrganization } from '../api/organization';
-import { createApplication, getApplicationMe, switchApplication } from '../api/application';
+import {
+  storeHeader,
+  createOrganization,
+  switchOrganization,
+  createApplication,
+  getApplicationMe,
+  switchApplication,
+  getNotificationGroup,
+  createNotificationTemplates,
+} from '../api';
 import { ConfigService } from '../services';
-import { getNotificationGroup } from '../api/notification-groups';
-import { createNotificationTemplates } from '../api/notification-templates';
 
 export async function initCommand() {
   const httpServer = new HttpServer();
@@ -102,7 +107,7 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
 
   return {
     notificationGroupId,
-    name: 'test notification name',
+    name: 'demo notification name',
     active: true,
     draft: false,
     messages,
