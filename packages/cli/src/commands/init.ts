@@ -41,6 +41,8 @@ export async function initCommand() {
     const applicationIdentifier = await createApplicationHandler(config, answers);
 
     await raiseDemoDashboard(httpServer, config, applicationIdentifier);
+
+    await exitHandler();
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
@@ -164,3 +166,19 @@ function storeToken(config: ConfigService, userJwt: string) {
   config.setValue('token', userJwt);
   storeHeader('authorization', `Bearer ${config.getValue('token')}`);
 }
+
+async function exitHandler(): Promise<void> {
+  // eslint-disable-next-line no-console
+  console.log('Program still running, press any key to exit');
+  await keyPress();
+  // eslint-disable-next-line no-console
+  console.log('See you in the admin panel :)');
+}
+
+const keyPress = async (): Promise<void> => {
+  return new Promise((resolve) =>
+    process.stdin.once('data', () => {
+      resolve();
+    })
+  );
+};
