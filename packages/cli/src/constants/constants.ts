@@ -15,6 +15,7 @@ export const API_APPLICATION_ME_URL = `${apiAddress}/v1/applications/me`;
 export const API_SWITCH_APPLICATION_FORMAT_URL = `${apiAddress}/v1/auth/applications/{applicationId}/switch`;
 export const API_NOTIFICATION_GROUP_URL = `${apiAddress}/v1/notification-groups`;
 export const API_NOTIFICATION_TEMPLATES_URL = `${apiAddress}/v1/notification-templates`;
+export const API_TRIGGER_URL = `${apiAddress}/v1/events/trigger`;
 
 // Client
 export const CLIENT_LOGIN_URL = 'http://localhost:4200/login';
