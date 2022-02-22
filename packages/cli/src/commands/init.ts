@@ -42,26 +42,12 @@ async function gitHubOAuth(): Promise<string> {
 
     await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}`);
 
-    return await serverResponse(httpServer);
+    return await httpServer.redirectResponse();
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-
-    return null;
+    throw new Error('Could not generate jwt via github oath');
   } finally {
     httpServer.close();
   }
-}
-
-function serverResponse(server: HttpServer): Promise<string> {
-  return new Promise((resolve) => {
-    const interval = setInterval(() => {
-      if (server.token) {
-        clearInterval(interval);
-        resolve(server.token);
-      }
-    }, 300);
-  });
 }
 
 /*
