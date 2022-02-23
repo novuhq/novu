@@ -18,7 +18,7 @@ The ultimate library for managing multi-channel notifications with a single API.
 
   <p align="center">
     <br />
-    <a href="https://docs.notifire.co"><strong>Explore the docs »</strong></a>
+    <a href="https://docs.notifire.co" rel="dofollow"><strong>Explore the docs »</strong></a>
     <br />
   <br/>
     <a href="https://github.com/notifirehq/notifire/issues">Report Bug</a>
