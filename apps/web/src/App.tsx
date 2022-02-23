@@ -11,7 +11,7 @@ import SignUpPage from './legacy/pages/auth/signup';
 import HomePage from './legacy/pages/HomePage';
 import ApplicationOnBoarding from './legacy/pages/onboarding/application';
 import TemplateEditorPage from './legacy/pages/templates/editor/TemplateEditorPage';
-import NotificationList from './legacy/pages/templates/TemplatesListPage';
+import NotificationList from './pages/templates/TemplatesListPage';
 import { WidgetSettingsPage } from './legacy/pages/settings/WidgetSettingsPage';
 import { OrganizationSettingsPage } from './legacy/pages/organization-settings/OrganizationSettingsPage';
 import InvitationScreen from './legacy/pages/auth/InvitationScreen';
