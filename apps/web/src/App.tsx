@@ -120,7 +120,7 @@ function PrivateRoute({ children, ...rest }: any) {
     <Route
       {...rest}
       render={({ location }) => {
-        return getToken() ? (
+        return getToken(location.pathname) ? (
           children
         ) : (
           <Redirect
