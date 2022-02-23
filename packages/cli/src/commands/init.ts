@@ -11,7 +11,7 @@ import {
   API_OAUTH_URL,
   WIDGET_DEMO_ROUTH,
   API_TRIGGER_URL,
-  CLIENT_LOGIN_URL,
+  CLIENT_URL,
 } from '../constants';
 import {
   storeHeader,
@@ -108,7 +108,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 }
 
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
-  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}`;
+  const redirectUrl = `${CLIENT_URL}token={{token}}`;
 
   const messages = [
     {
