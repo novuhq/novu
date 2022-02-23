@@ -1,12 +1,12 @@
 import {
   ArrayNotEmpty,
   IsArray,
+  IsBoolean,
   IsDefined,
   IsEnum,
   IsMongoId,
   IsOptional,
   IsString,
-  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import {
@@ -46,6 +46,12 @@ export class CreateNotificationTemplateCommand extends ApplicationWithUserComman
   @ValidateNested()
   @ArrayNotEmpty()
   messages: NotificationChannelDto[];
+
+  @IsBoolean()
+  active: boolean;
+
+  @IsBoolean()
+  draft: boolean;
 }
 
 export class ChannelCTADto {

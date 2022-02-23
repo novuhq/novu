@@ -9,7 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload, IUpdateNotificationTemplate, MemberRoleEnum } from '@notifire/shared';
+import { IJwtPayload, MemberRoleEnum } from '@notifire/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { Roles } from '../auth/framework/roles.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
@@ -98,6 +98,8 @@ export class NotificationTemplateController {
         description: body.description,
         messages: body.messages,
         notificationGroupId: body.notificationGroupId,
+        active: body.active ?? false,
+        draft: body.draft ?? true,
       })
     );
   }

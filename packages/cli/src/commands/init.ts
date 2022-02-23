@@ -1,12 +1,20 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
+import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
-import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL } from '../constants';
-import { storeHeader } from '../api/api.service';
-import { createOrganization, switchOrganization } from '../api/organization';
-import { createApplication, getApplicationMe, switchApplication } from '../api/application';
+import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL, CLIENT_LOGIN_URL } from '../constants';
+import {
+  storeHeader,
+  createOrganization,
+  switchOrganization,
+  createApplication,
+  getApplicationMe,
+  switchApplication,
+  getNotificationGroup,
+  createNotificationTemplates,
+} from '../api';
 import { ConfigService } from '../services';
 
 export async function initCommand() {
@@ -23,6 +31,8 @@ export async function initCommand() {
     await createOrganizationHandler(config, answers);
 
     await createApplicationHandler(config, answers);
+
+    await raiseDemoDashboard();
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
@@ -69,6 +79,42 @@ async function createApplicationHandler(config: ConfigService, answers: Answers)
   storeToken(config, newUserJwt);
 
   return createApplicationResponse.identifier;
+}
+
+async function raiseDemoDashboard() {
+  const notificationGroupResponse = await getNotificationGroup();
+
+  const template = buildTemplate(notificationGroupResponse.notificationGroupResponse[0]._id);
+
+  await createNotificationTemplates(template);
+}
+
+function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
+  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}`;
+
+  const messages = [
+    {
+      type: ChannelTypeEnum.IN_APP,
+      content:
+        'Welcome <b>{{firstName}}</b>! This is your first notification, click on it to visit your live dashboard',
+      cta: {
+        type: ChannelCTATypeEnum.REDIRECT,
+        data: {
+          url: redirectUrl,
+        },
+      },
+    },
+  ];
+
+  return {
+    notificationGroupId,
+    name: 'On-boarding notification',
+    active: true,
+    draft: false,
+    messages,
+    tags: null,
+    description: null,
+  };
 }
 
 /*

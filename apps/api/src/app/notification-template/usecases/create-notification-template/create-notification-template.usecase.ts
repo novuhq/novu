@@ -60,6 +60,8 @@ export class CreateNotificationTemplate {
       _creatorId: command.userId,
       _applicationId: command.applicationId,
       name: command.name,
+      active: command.active,
+      draft: command.draft,
       tags: command.tags,
       description: command.description,
       messages: templateMessages,
