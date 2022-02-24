@@ -1,10 +1,12 @@
-import { Text as MantineText, SharedTextProps, MantineColor } from '@mantine/core';
+import { Text as MantineText, SharedTextProps, MantineColor, useMantineTheme } from '@mantine/core';
+import { colors } from '../../config';
 
 interface ITextProps extends JSX.ElementChildrenAttribute {
   size?: 'md' | 'lg';
   align?: 'left' | 'center' | 'right' | 'justify';
   weight?: 'bold' | 'normal';
   color?: MantineColor;
+  rows?: number;
 }
 
 /**
@@ -12,10 +14,16 @@ interface ITextProps extends JSX.ElementChildrenAttribute {
  *
  */
 export function Text({ children, ...props }: ITextProps) {
+  const { colorScheme } = useMantineTheme();
   const defaultDesign = { size: 'md', weight: 'normal' } as SharedTextProps;
 
+  let textColor = props.color;
+  if (!textColor) {
+    textColor = colorScheme === 'dark' ? colors.white : colors.B40;
+  }
+
   return (
-    <MantineText {...defaultDesign} {...props}>
+    <MantineText lineClamp={props.rows} {...defaultDesign} {...props} color={textColor}>
       {children}
     </MantineText>
   );
