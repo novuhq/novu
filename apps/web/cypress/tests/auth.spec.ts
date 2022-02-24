@@ -1,4 +1,4 @@
-describe.skip('User Sign-up and Login', function () {
+describe('User Sign-up and Login', function () {
   describe('Sign up', function () {
     beforeEach(function () {
       cy.task('clearDatabase');
@@ -41,6 +41,14 @@ describe.skip('User Sign-up and Login', function () {
       cy.task('clearDatabase');
       cy.seed();
     });
+
+    it('should redirect to the dashboard page when a token exists in query', function () {
+      cy.initializeSession({ disableLocalStorage: true }).then((session) => {
+        cy.visit('/auth/login?token=' + session.token);
+        cy.location('pathname').should('equal', '/');
+      });
+    });
+
     it('should be redirect login with no auth', function () {
       cy.visit('/');
       cy.location('pathname').should('equal', '/auth/login');
