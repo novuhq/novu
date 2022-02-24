@@ -18,4 +18,4 @@ export const API_NOTIFICATION_TEMPLATES_URL = `${apiAddress}/v1/notification-tem
 export const API_TRIGGER_URL = `${apiAddress}/v1/events/trigger`;
 
 // Client
-export const CLIENT_URL = 'http://localhost:4200/';
+export const CLIENT_LOGIN_URL = 'http://localhost:4200/auth/login';
