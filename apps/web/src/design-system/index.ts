@@ -11,3 +11,4 @@ export { Title } from './typography/title/Title';
 export { Text } from './typography/text/Text';
 export { Container } from './container/Container';
 export { Dropdown } from './dropdown/Dropdown';
+export { NavMenu } from './navigation/NavMenu';

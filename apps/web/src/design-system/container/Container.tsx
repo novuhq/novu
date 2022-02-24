@@ -10,6 +10,7 @@ export function Container({ children, ...props }: ContainerProps) {
   return (
     <MantineContainer
       sx={(theme) => ({
+        padding: '0px',
         borderRadius: '7px',
         boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
         height: '90%',

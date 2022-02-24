@@ -1,7 +1,6 @@
 import React from 'react';
 import moment from 'moment';
-import { Badge, ActionIcon } from '@mantine/core';
-import { useColorScheme } from '@mantine/hooks';
+import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
 import { Link } from 'react-router-dom';
 import { useTemplates } from '../../api/hooks/use-templates';
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -11,7 +10,7 @@ import { Edit, PlusCircle } from '../../design-system/icons';
 
 function NotificationList() {
   const { templates, loading: isLoading } = useTemplates();
-  const colorScheme = useColorScheme();
+  const theme = useMantineTheme();
 
   const columns = [
     { accessor: 'name', Header: 'Name' },
@@ -52,7 +51,7 @@ function NotificationList() {
           component={Link}
           to={`/templates/edit/${_id}`}
           data-test-id="template-edit-link">
-          <Edit color={colorScheme === 'dark' ? colors.B40 : colors.B80} />
+          <Edit color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
         </ActionIcon>
       ),
     },

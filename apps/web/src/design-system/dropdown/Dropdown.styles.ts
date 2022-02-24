@@ -9,11 +9,11 @@ export default createStyles((theme: MantineTheme) => {
       width: '7px',
       height: '7px',
       right: '17px!important',
-      backgroundColor: dark ? colors.B20 : colors.B98,
+      backgroundColor: dark ? colors.B20 : colors.white,
       border: 'none',
     },
     body: {
-      backgroundColor: dark ? colors.B20 : colors.B98,
+      backgroundColor: dark ? colors.B20 : colors.white,
       color: dark ? theme.white : colors.B40,
       border: 'none',
     },
@@ -24,7 +24,7 @@ export default createStyles((theme: MantineTheme) => {
       fontSize: '14px',
     },
     itemHovered: {
-      backgroundColor: dark ? colors.B30 : colors.B85,
+      backgroundColor: dark ? colors.B30 : colors.B98,
     },
   };
 });
