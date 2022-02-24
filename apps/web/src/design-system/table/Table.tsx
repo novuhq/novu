@@ -1,26 +1,30 @@
 import React from 'react';
-import { TableProps, Table as MantineTable } from '@mantine/core';
+import { TableProps, Table as MantineTable, LoadingOverlay } from '@mantine/core';
 import { useTable, Column, ColumnWithStrictAccessor } from 'react-table';
 import useStyles from './Table.styles';
+import { colors } from '../config';
 
 export type Data = Record<string, any>;
 
 export interface ITableProps extends JSX.ElementChildrenAttribute {
   columns?: ColumnWithStrictAccessor<Data>[];
   data?: Data[];
+  loading?: boolean;
 }
 
 /**
  * Table component
  *
  */
-export function Table({ columns: userColumns, data: userData, children, ...props }: ITableProps) {
+export function Table({ columns: userColumns, data: userData, loading = false, children, ...props }: ITableProps) {
   const columns = React.useMemo(
     () =>
       userColumns?.map((col) => {
         const column = {
           Header: col.Header,
           accessor: col.accessor,
+          width: col.width,
+          maxWidth: col.maxWidth,
         };
         if (col?.Cell) {
           return {
@@ -36,40 +40,60 @@ export function Table({ columns: userColumns, data: userData, children, ...props
 
         return column;
       }) as Column<Data>[],
-    []
+    [userColumns]
   );
 
-  const data = React.useMemo(() => userData?.map((row) => ({ ...row })) as Data[], []);
+  const data = React.useMemo(() => (userData || [])?.map((row) => ({ ...row })) as Data[], [userData]);
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
 
-  const { classes } = useStyles();
+  const { classes, theme } = useStyles();
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
 
   return (
-    <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
-      <thead>
-        {headerGroups.map((headerGroup) => (
-          <tr {...headerGroup.getHeaderGroupProps()}>
-            {headerGroup.headers.map((column) => (
-              <th {...column.getHeaderProps()}>{column.render('Header')}</th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody {...getTableBodyProps()}>
-        {rows.map((row) => {
-          prepareRow(row);
+    <div style={{ position: 'relative', minHeight: 500 }}>
+      <LoadingOverlay
+        visible={loading}
+        overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
+        loaderProps={{
+          color: colors.error,
+        }}
+      />
 
-          return (
-            <tr {...row.getRowProps()}>
-              {row.cells.map((cell) => {
-                return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>;
-              })}
+      <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
+        <thead>
+          {headerGroups.map((headerGroup) => (
+            <tr {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map((column) => (
+                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+              ))}
             </tr>
-          );
-        })}
-      </tbody>
-    </MantineTable>
+          ))}
+        </thead>
+        <tbody {...getTableBodyProps()}>
+          {rows.map((row) => {
+            prepareRow(row);
+
+            return (
+              <tr {...row.getRowProps()} className={classes.tableRow}>
+                {row.cells.map((cell) => {
+                  return (
+                    <td
+                      {...cell.getCellProps({
+                        style: {
+                          maxWidth: cell.column.maxWidth,
+                          width: cell.column.width,
+                        },
+                      })}>
+                      {cell.render('Cell')}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </MantineTable>
+    </div>
   );
 }
