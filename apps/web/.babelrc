@@ -9,10 +9,15 @@
     ],
     "@babel/preset-env"
   ],
-  "plugins": ["babel-plugin-styled-components", "@babel/plugin-proposal-optional-chaining",[
-    "@babel/plugin-transform-runtime",
-    {
-      "regenerator": true
-    }
-  ]]
+  "plugins": [
+    "@emotion",
+    "babel-plugin-styled-components",
+    "@babel/plugin-proposal-optional-chaining",
+    [
+      "@babel/plugin-transform-runtime",
+      {
+        "regenerator": true
+      }
+    ]
+  ]
 }

@@ -1,4 +1,4 @@
-describe.skip('Side Menu', function () {
+describe('Side Menu', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
     cy.visit('/');
