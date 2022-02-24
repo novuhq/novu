@@ -17,10 +17,7 @@ export function applyToken(token: string | null) {
   }
 }
 
-export function getToken(location?: string): string {
-  const token = location ? new URLSearchParams(location.substring(1)).get('token') : null;
-  if (token) applyToken(token);
-
+export function getToken(): string {
   return localStorage.getItem('auth_token') as string;
 }
 
