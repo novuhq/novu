@@ -113,7 +113,8 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
   const messages = [
     {
       type: ChannelTypeEnum.IN_APP,
-      content: 'Test content for <b>{{firstName}}</b>',
+      content:
+        'Welcome <b>{{firstName}}</b>! This is your first notification, click on it to visit your live dashboard',
       cta: {
         type: ChannelCTATypeEnum.REDIRECT,
         data: {
@@ -125,7 +126,7 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
 
   return {
     notificationGroupId,
-    name: 'demo notification name',
+    name: 'On-boarding notification',
     active: true,
     draft: false,
     messages,
