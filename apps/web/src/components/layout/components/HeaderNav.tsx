@@ -39,7 +39,7 @@ export function HeaderNav({}: Props) {
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
-      <Group spacing={10}>
+      <Group spacing={15}>
         <Avatar
           sx={(theme) => ({
             boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
@@ -49,12 +49,10 @@ export function HeaderNav({}: Props) {
           src={user?.profilePicture || '/static/images/avatar.png'}
         />
         <div style={{ flex: 1 }}>
-          <Text data-test-id="header-dropdown-username">
-            {' '}
+          <Text data-test-id="header-dropdown-username" rows={1}>
             {capitalize(user?.firstName as string)} {capitalize(user?.lastName as string)}
           </Text>
-          <Text size="md" color={colors.B60} data-test-id="header-dropdown-organization-name">
-            {' '}
+          <Text size="md" color={colors.B70} rows={1} data-test-id="header-dropdown-organization-name">
             {capitalize(organization?.name as string)}
           </Text>
         </div>

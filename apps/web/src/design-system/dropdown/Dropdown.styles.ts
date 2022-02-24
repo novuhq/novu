@@ -8,11 +8,11 @@ export default createStyles((theme: MantineTheme) => {
     arrow: {
       width: '7px',
       height: '7px',
-      right: '17px!important',
       backgroundColor: dark ? colors.B20 : colors.white,
       border: 'none',
     },
     body: {
+      minWidth: 220,
       backgroundColor: dark ? colors.B20 : colors.white,
       color: dark ? theme.white : colors.B40,
       border: 'none',
