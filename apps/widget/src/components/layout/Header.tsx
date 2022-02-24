@@ -31,7 +31,7 @@ export function Header() {
         count: unseenCount,
       });
     }
-  }, [unseenCount]);
+  }, [unseenCount, (window as any).parentIFrame]);
 
   useEffect(() => {
     if (data) {

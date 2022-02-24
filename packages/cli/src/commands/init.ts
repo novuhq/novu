@@ -4,7 +4,15 @@ import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto } f
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
-import { SERVER_PORT, SERVER_HOST, REDIRECT_ROUTE, API_OAUTH_URL, CLIENT_LOGIN_URL } from '../constants';
+import {
+  SERVER_PORT,
+  SERVER_HOST,
+  REDIRECT_ROUTE,
+  API_OAUTH_URL,
+  WIDGET_DEMO_ROUTH,
+  API_TRIGGER_URL,
+  CLIENT_LOGIN_URL,
+} from '../constants';
 import {
   storeHeader,
   createOrganization,
@@ -30,9 +38,11 @@ export async function initCommand() {
 
     await createOrganizationHandler(config, answers);
 
-    await createApplicationHandler(config, answers);
+    const applicationIdentifier = await createApplicationHandler(config, answers);
 
-    await raiseDemoDashboard();
+    await raiseDemoDashboard(httpServer, config, applicationIdentifier);
+
+    await exitHandler();
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
@@ -81,12 +91,20 @@ async function createApplicationHandler(config: ConfigService, answers: Answers)
   return createApplicationResponse.identifier;
 }
 
-async function raiseDemoDashboard() {
+async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService, applicationIdentifier: string) {
   const notificationGroupResponse = await getNotificationGroup();
 
-  const template = buildTemplate(notificationGroupResponse.notificationGroupResponse[0]._id);
+  const template = buildTemplate(notificationGroupResponse[0]._id);
 
-  await createNotificationTemplates(template);
+  const createNotificationTemplatesResponse = await createNotificationTemplates(template);
+
+  const decodedToken = config.getDecodedToken();
+
+  const demoDashboardUrl = buildDemoDashboardUrl(applicationIdentifier, decodedToken);
+
+  storeTriggerPayload(config, createNotificationTemplatesResponse, decodedToken);
+
+  await open(demoDashboardUrl.join(''));
 }
 
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
@@ -117,6 +135,31 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
   };
 }
 
+function buildDemoDashboardUrl(applicationIdentifier: string, decodedToken) {
+  return [
+    `http://${SERVER_HOST}:${SERVER_PORT}${WIDGET_DEMO_ROUTH}?`,
+    `applicationId=${applicationIdentifier}&`,
+    `userId=${decodedToken._id}&`,
+    `email=${decodedToken.email}&`,
+    `firstName=${decodedToken.firstName}&`,
+    `lastName=${decodedToken.lastName}`,
+  ];
+}
+
+function storeTriggerPayload(config: ConfigService, createNotificationTemplatesResponse, decodedToken) {
+  const tmpPayload: { key: string; value: string }[] = [
+    { key: 'url', value: API_TRIGGER_URL },
+    { key: 'apiKey', value: config.getValue('apiKey') },
+    { key: 'name', value: createNotificationTemplatesResponse.triggers[0].identifier },
+    { key: '$user_id', value: decodedToken._id },
+    { key: 'firstName', value: decodedToken.firstName },
+    { key: '$email', value: decodedToken.email },
+    { key: 'token', value: config.getValue('token') },
+  ];
+
+  config.setValue('triggerPayload', JSON.stringify(tmpPayload));
+}
+
 /*
  * Stores token in config and axios default headers
  */
@@ -124,3 +167,19 @@ function storeToken(config: ConfigService, userJwt: string) {
   config.setValue('token', userJwt);
   storeHeader('authorization', `Bearer ${config.getValue('token')}`);
 }
+
+async function exitHandler(): Promise<void> {
+  // eslint-disable-next-line no-console
+  console.log('Program still running, press any key to exit');
+  await keyPress();
+  // eslint-disable-next-line no-console
+  console.log('See you in the admin panel :)');
+}
+
+const keyPress = async (): Promise<void> => {
+  return new Promise((resolve) =>
+    process.stdin.once('data', () => {
+      resolve();
+    })
+  );
+};
