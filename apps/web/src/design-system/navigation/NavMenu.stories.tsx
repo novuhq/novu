@@ -1,5 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { MemoryRouter } from 'react-router-dom';
 import { NavMenu } from './NavMenu';
 import { Activity, Bolt, Settings, Team } from '../icons';
 
@@ -9,15 +10,22 @@ export default {
   argTypes: {},
 } as ComponentMeta<typeof NavMenu>;
 
-const iconSettings = { width: '20px', height: '20px' };
 const menuItems = [
-  { icon: <Bolt {...iconSettings} />, label: 'Notifications' },
-  { icon: <Activity {...iconSettings} />, label: 'Activity Feed' },
-  { icon: <Team {...iconSettings} />, label: 'Team Members' },
-  { icon: <Settings {...iconSettings} />, label: 'Settings' },
+  { icon: <Bolt />, link: '/0', label: 'Notifications' },
+  { icon: <Activity />, link: '/1', label: 'Activity Feed' },
+  { icon: <Settings />, link: '/2', label: 'Settings' },
+  {
+    icon: <Team />,
+    link: '/3',
+    label: 'Team Members',
+  },
 ];
 
-const Template: ComponentStory<typeof NavMenu> = ({ ...args }) => <NavMenu {...args} menuItems={menuItems} />;
+const Template: ComponentStory<typeof NavMenu> = ({ ...args }) => (
+  <MemoryRouter initialEntries={['/0']}>
+    <NavMenu {...args} menuItems={menuItems} />{' '}
+  </MemoryRouter>
+);
 
 export const Default = Template.bind({});
 Default.args = {};

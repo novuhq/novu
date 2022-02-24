@@ -28,7 +28,7 @@ export const mantineConfig: MantineThemeOverride = {
       colors.B30,
     ],
     dark: [
-      '#FFFFFF',
+      colors.white,
       colors.BGLight,
       colors.B80,
       colors.B40,
