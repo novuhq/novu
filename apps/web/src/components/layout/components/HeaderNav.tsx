@@ -40,7 +40,14 @@ export function HeaderNav({}: Props) {
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
       <Group spacing={10}>
-        <Avatar radius="xl" size={45} src={user?.profilePicture || '/static/images/avatar.png'} />
+        <Avatar
+          sx={(theme) => ({
+            boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
+          })}
+          radius="xl"
+          size={45}
+          src={user?.profilePicture || '/static/images/avatar.png'}
+        />
         <div style={{ flex: 1 }}>
           <Text data-test-id="header-dropdown-username">
             {' '}
