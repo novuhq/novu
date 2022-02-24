@@ -13,11 +13,16 @@ export class HttpServer {
     return new Promise((resolve) => {
       this.server = http.createServer();
       this.server.on('request', async (req, res) => {
-        if (req.url.startsWith(REDIRECT_ROUTE)) {
-          this.handleRedirectRequest(req);
-        }
-        if (req.url.startsWith(WIDGET_DEMO_ROUTH)) {
-          await this.handleWidgetDemo(res);
+        try {
+          if (req.url.startsWith(REDIRECT_ROUTE)) {
+            this.handleRedirectRequest(req);
+          }
+          if (req.url.startsWith(WIDGET_DEMO_ROUTH)) {
+            await this.handleWidgetDemo(res);
+          }
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e);
         }
       });
 
@@ -46,7 +51,7 @@ export class HttpServer {
   }
 
   private async handleWidgetDemo(res: http.ServerResponse): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const dashboardPath = path.resolve(__dirname, '../constants/dashboard/index.html');
 
       fs.readFile(dashboardPath, 'utf8', (error, content) => {
@@ -54,18 +59,18 @@ export class HttpServer {
           if (error.code === 'ENOENT') {
             res.end('404', 'utf-8');
 
-            return resolve();
+            return reject(new Error('ENOENT'));
           }
           res.end('500');
 
-          return resolve();
+          return reject(new Error(error.message));
         }
         const payLoad = JSON.parse(this.config.getValue('triggerPayload'));
 
         if (!payLoad) {
           res.end('500');
 
-          return resolve();
+          return reject(new Error('Missing payload (500)'));
         }
 
         payLoad.forEach((param) => {

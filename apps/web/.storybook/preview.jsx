@@ -1,5 +1,4 @@
 import React from 'react';
-import { ColorSchemeProvider } from '@mantine/core';
 import { ThemeProvider } from '../src/design-system/ThemeProvider';
 import { useDarkMode } from 'storybook-dark-mode';
 import { DocsContainer } from './Doc.container';
@@ -21,11 +20,9 @@ export const parameters = {
 
 function ThemeWrapper(props) {
   return (
-    <ColorSchemeProvider colorScheme="light" toggleColorScheme={() => {}}>
-      <div style={{ margin: '3em' }}>
-        <ThemeProvider darkMode={useDarkMode()}>{props.children}</ThemeProvider>
-      </div>
-    </ColorSchemeProvider>
+    <div style={{ margin: '3em' }}>
+      <ThemeProvider colorSchemeOverride={useDarkMode() ? 'dark' : 'light'}>{props.children}</ThemeProvider>
+    </div>
   );
 }
 

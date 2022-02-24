@@ -1,10 +1,13 @@
-import { AppShell, Header, Navbar } from '@mantine/core';
-import * as Sentry from '@sentry/react';
 import React from 'react';
+import { AppShell } from '@mantine/core';
+import * as Sentry from '@sentry/react';
 import { useLocation } from 'react-router-dom';
 import { useNotifire } from '../../hooks/use-notifire';
 import { LegacyAppLayout } from '../../legacy/components/layout/app-layout/LegacyAppLayout';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
+import { HeaderNav } from './components/HeaderNav';
+import { SideNav } from './components/SideNav';
+import { colors } from '../../design-system';
 
 export function AppLayout({ children }: { children: any }) {
   const location = useLocation();
@@ -15,26 +18,18 @@ export function AppLayout({ children }: { children: any }) {
    * TODO: Remove once migrated to the new styling.
    * Add each new page when migrating
    */
-  if (!['/'].includes(location.pathname)) {
+  if (!['/', '/templates'].includes(location.pathname)) {
     return <LegacyAppLayout>{children}</LegacyAppLayout>;
   }
 
   return (
     <ThemeProvider>
       <AppShell
-        padding="md"
-        navbar={
-          <Navbar width={{ base: 300 }} padding="xs">
-            <Navbar.Section grow>Menu Contents</Navbar.Section>
-          </Navbar>
-        }
-        header={
-          <Header height={60} padding="xs">
-            {/* Header content */}
-          </Header>
-        }
+        padding="lg"
+        navbar={<SideNav />}
+        header={<HeaderNav />}
         styles={(theme) => ({
-          main: { backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0] },
+          main: { backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight },
         })}>
         <Sentry.ErrorBoundary
           fallback={({ error, resetError, eventId }) => (

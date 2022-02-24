@@ -247,6 +247,7 @@ importers:
       '@cypress/webpack-dev-server': ^1.1.2
       '@editorjs/editorjs': ^2.19.3
       '@editorjs/paragraph': ^2.8.0
+      '@emotion/babel-plugin': ^11.7.2
       '@emotion/react': ^11.7.1
       '@emotion/styled': ^11.6.0
       '@jackwilsdon/craco-use-babelrc': ^1.0.0
@@ -327,6 +328,7 @@ importers:
       '@cypress/webpack-dev-server': 1.8.0_webpack@4.46.0
       '@editorjs/editorjs': 2.22.2
       '@editorjs/paragraph': 2.8.0
+      '@emotion/babel-plugin': 11.7.2
       '@emotion/react': 11.7.1_b08e3c15324cbe90a6ff8fcd416c932c
       '@emotion/styled': 11.6.0_0044a6ec6dcf5de7705bffaaff7afd26
       '@jackwilsdon/craco-use-babelrc': 1.0.0_react-scripts@4.0.3
@@ -19810,7 +19812,7 @@ packages:
   /cypress-intellij-reporter/0.0.6:
     resolution: {integrity: sha512-KDxeWKKAAGekhg1xmGToSsHDWgogM1hUYakAL4yjKQr9gSI2iyRxcrKlq1/jG4omCbUEY+AZGiiwyKOscY9+Gg==}
     dependencies:
-      mocha: 9.2.0
+      mocha: 9.2.1
     dev: true
 
   /cypress-localstorage-commands/1.6.1_cypress@7.7.0:
@@ -29049,8 +29051,8 @@ packages:
       yargs-unparser: 2.0.0
     dev: true
 
-  /mocha/9.2.0:
-    resolution: {integrity: sha512-kNn7E8g2SzVcq0a77dkphPsDSN7P+iYkqE0ZsGCYWRsoiKjOt+NvXfaagik8vuDa6W5Zw3qxe8Jfpt5qKf+6/Q==}
+  /mocha/9.2.1:
+    resolution: {integrity: sha512-T7uscqjJVS46Pq1XDXyo9Uvey9gd3huT/DD9cYBb4K2Xc/vbKRPUWK067bxDQRK0yIz6Jxk73IrnimvASzBNAQ==}
     engines: {node: '>= 12.0.0'}
     hasBin: true
     dependencies:
