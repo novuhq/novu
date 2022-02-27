@@ -1,6 +1,13 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
-import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
+import {
+  ChannelCTATypeEnum,
+  ChannelTypeEnum,
+  IApplication,
+  ICreateNotificationTemplateDto,
+  IJwtPayload,
+  providers,
+} from '@notifire/shared';
 import { prompt } from '../client';
 import { environmentQuestions, existingSessionQuestions, introQuestions, registerMethodQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -23,10 +30,12 @@ import {
   switchApplication,
   getNotificationGroup,
   createNotificationTemplates,
+  getApplicationApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
 
 export async function initCommand() {
+
   try {
     const envAnswer = await prompt(environmentQuestions);
 
@@ -37,19 +46,21 @@ export async function initCommand() {
     }
     const config = new ConfigService();
 
+  if (process.env.NODE_ENV === 'dev') {
     await config.clearStore();
+  }
 
-    const existingApplication = await checkExistingApplication(config);
-    if (existingApplication) {
-      const { result } = await prompt(existingSessionQuestions(existingApplication));
+  const existingApplication = await checkExistingApplication(config);
+  if (existingApplication) {
+    const result = await handleExistingSession(config, existingApplication);
 
-      if (result !== 'new') {
-        await handleExistingSession(result, config);
+    if (result !== 'new') {
+      await handleExistingSession(result, config);
 
-        return;
-      }
-      config.clearStore();
+      return;
     }
+    config.clearStore();
+  }
 
     await handleOnboardingFlow(config);
   } catch (e) {
@@ -112,14 +123,18 @@ async function createOrganizationHandler(config: ConfigService, answers: Answers
 
 async function createApplicationHandler(config: ConfigService, answers: Answers): Promise<string> {
   if (config.isApplicationIdExist()) {
-    return (await getApplicationMe()).identifier;
+    const existingApplication = await getApplicationMe();
+    const keys = await getApplicationApiKeys();
+
+    config.setValue('apiKey', keys[0]?.key);
+
+    return existingApplication.identifier;
   }
+
   const createApplicationResponse = await createApplication(answers.applicationName);
-
-  config.setValue('apiKey', createApplicationResponse.apiKeys[0].key);
-
   const newUserJwt = await switchApplication(createApplicationResponse._id);
 
+  config.setValue('apiKey', createApplicationResponse.apiKeys[0].key);
   storeToken(config, newUserJwt);
 
   return createApplicationResponse.identifier;
@@ -132,7 +147,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
   const createNotificationTemplatesResponse = await createNotificationTemplates(template);
 
   const decodedToken = config.getDecodedToken();
-  const demoDashboardUrl = await buildDemoDashboardUrl(applicationIdentifier, decodedToken);
+  const demoDashboardUrl = await buildDemoDashboardUrl(applicationIdentifier, decodedToken, config);
 
   storeTriggerPayload(config, createNotificationTemplatesResponse, decodedToken);
 
@@ -167,18 +182,22 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
   };
 }
 
-async function buildDemoDashboardUrl(applicationIdentifier: string, decodedToken) {
+async function buildDemoDashboardUrl(applicationIdentifier: string, decodedToken: IJwtPayload, config: ConfigService) {
+  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+
   return [
     `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTH}?`,
     `applicationId=${applicationIdentifier}&`,
     `userId=${decodedToken._id}&`,
-    `email=${decodedToken.email}&`,
+    `apiKey=${config.getValue('apiKey')}&`,
     `$first_name=${decodedToken.firstName}&`,
     `$last_name=${decodedToken.lastName}`,
   ];
 }
 
 function storeTriggerPayload(config: ConfigService, createNotificationTemplatesResponse, decodedToken) {
+  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+
   const tmpPayload: { key: string; value: string }[] = [
     { key: 'url', value: API_TRIGGER_URL },
     { key: 'apiKey', value: config.getValue('apiKey') },
@@ -188,6 +207,7 @@ function storeTriggerPayload(config: ConfigService, createNotificationTemplatesR
     { key: '$last_name', value: decodedToken.lastName },
     { key: '$email', value: decodedToken.email },
     { key: 'token', value: config.getToken() },
+    { key: 'dashboardURL', value: dashboardURL },
   ];
 
   config.setValue('triggerPayload', JSON.stringify(tmpPayload));
@@ -219,6 +239,7 @@ const keyPress = async (): Promise<void> => {
 
 async function checkExistingApplication(config: ConfigService): Promise<IApplication | null> {
   const isSessionExists = !!config.getDecodedToken();
+
   if (isSessionExists && process.env.NODE_ENV !== 'dev') {
     storeToken(config, config.getToken());
 
