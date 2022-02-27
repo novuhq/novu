@@ -4,7 +4,10 @@
   "description": "On-Boarding Cli",
   "main": "index.js",
   "scripts": {
+    "build:post": "mkdir dist/constants/dashboard && cp src/constants/dashboard/index.html dist/constants/dashboard/index.html",
+    "build:pre": "rm -rf dist ",
     "build": "tsc -p tsconfig.build.json",
+    "build:prod": "pnpm build:pre && pnpm build && pnpm build:post",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
