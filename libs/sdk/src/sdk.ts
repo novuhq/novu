@@ -294,6 +294,11 @@ export default ((window: any) => {
   if (initCall) {
     // eslint-disable-next-line prefer-spread
     notifireApi[initCall[0]].apply(notifireApi, initCall[1]);
+
+    const onCall = window.notifire._c.find((call: string[]) => call[0] === 'on');
+    if (onCall) {
+      notifireApi[onCall[0]].apply(notifireApi, onCall[1]);
+    }
   } else {
     // eslint-disable-next-line no-param-reassign
     (window as any).notifire.init = notifire.init;

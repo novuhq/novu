@@ -1,7 +1,16 @@
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import { SERVER_HOST, REDIRECT_ROUTE, WIDGET_DEMO_ROUTH, setAvailablePort, getServerPort } from '../constants';
+import axios from 'axios';
+import {
+  SERVER_HOST,
+  REDIRECT_ROUTE,
+  WIDGET_DEMO_ROUTH,
+  setAvailablePort,
+  getServerPort,
+  TRIGGER_ROUTE,
+  API_TRIGGER_URL,
+} from '../constants';
 import { ConfigService } from '../services';
 
 export class HttpServer {
@@ -15,6 +24,9 @@ export class HttpServer {
     this.server = http.createServer();
     this.server.on('request', async (req, res) => {
       try {
+        if (req.url.startsWith(TRIGGER_ROUTE)) {
+          this.handleTriggerRoute(req, res);
+        }
         if (req.url.startsWith(REDIRECT_ROUTE)) {
           this.handleRedirectRequest(req);
         }
@@ -49,6 +61,35 @@ export class HttpServer {
     this.token = new URLSearchParams(req.url.slice(REDIRECT_ROUTE.length)).get('token');
   }
 
+  private async handleTriggerRoute(req: http.IncomingMessage, res: http.ServerResponse) {
+    await axios.post(
+      API_TRIGGER_URL,
+      {
+        name: this.getPayloadValue('name'),
+        payload: {
+          $user_id: this.getPayloadValue('$user_id'),
+          $first_name: this.getPayloadValue('$first_name'),
+          $last_name: this.getPayloadValue('$last_name'),
+          token: this.getPayloadValue('token'),
+        },
+      },
+      {
+        headers: {
+          Authorization: `ApiKey ${this.getPayloadValue('apiKey')}`,
+        },
+      }
+    );
+
+    res.statusCode = 201;
+    res.end('Success');
+  }
+
+  private getPayloadValue(key: string) {
+    const payload = this.config.getValue('triggerPayload');
+    const parsedPayload = JSON.parse(payload);
+
+    return parsedPayload.find((item) => item.key === key).value;
+  }
   private async handleWidgetDemo(res: http.ServerResponse): Promise<void> {
     return new Promise((resolve, reject) => {
       const dashboardPath = path.resolve(__dirname, '../constants/dashboard/index.html');
