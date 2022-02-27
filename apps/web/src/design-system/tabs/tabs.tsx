@@ -1,7 +1,7 @@
 import { Tabs } from '@mantine/core';
 import { ReactNode, useState } from 'react';
 
-import useStyles from './Tabs.styles';
+import useStyles from './tabs.styles';
 
 interface IMenuButtonProp {
   label: string;

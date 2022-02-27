@@ -1,6 +1,6 @@
 import { createStyles, MantineTheme } from '@mantine/core';
 
-export default createStyles((theme: MantineTheme, withIcon: any, getRef) => {
+export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => {
   const dark = theme.colorScheme === 'dark';
 
   const tabLabel = getRef('tabLabel');
@@ -8,7 +8,7 @@ export default createStyles((theme: MantineTheme, withIcon: any, getRef) => {
 
   return {
     tabControl: {
-      marginBottom: withIcon && '30px',
+      marginBottom: withIcon ? '30px' : '0',
     },
 
     tabActive: {

@@ -1,6 +1,6 @@
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
-import { Tab } from './Tabs';
+import { Tab } from './tabs';
 
 export default {
   title: 'Menus/TabMenu',
