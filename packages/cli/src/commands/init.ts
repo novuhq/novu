@@ -1,6 +1,12 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
-import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto } from '@notifire/shared';
+import {
+  ChannelCTATypeEnum,
+  ChannelTypeEnum,
+  IApplication,
+  ICreateNotificationTemplateDto,
+  providers,
+} from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -26,10 +32,16 @@ import {
 import { ConfigService } from '../services';
 
 export async function initCommand() {
+  const config = new ConfigService();
+
+  const shouldContinue = await handleExistingSession(config);
+  if (!shouldContinue) {
+    return;
+  }
+
   const httpServer = new HttpServer();
 
   await httpServer.listen();
-  const config = new ConfigService();
 
   try {
     const answers = await prompt(promptIntroQuestions);
@@ -99,7 +111,6 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
   const createNotificationTemplatesResponse = await createNotificationTemplates(template);
 
   const decodedToken = config.getDecodedToken();
-
   const demoDashboardUrl = buildDemoDashboardUrl(applicationIdentifier, decodedToken);
 
   storeTriggerPayload(config, createNotificationTemplatesResponse, decodedToken);
@@ -154,7 +165,7 @@ function storeTriggerPayload(config: ConfigService, createNotificationTemplatesR
     { key: '$user_id', value: decodedToken._id },
     { key: 'firstName', value: decodedToken.firstName },
     { key: '$email', value: decodedToken.email },
-    { key: 'token', value: config.getValue('token') },
+    { key: 'token', value: config.getToken() },
   ];
 
   config.setValue('triggerPayload', JSON.stringify(tmpPayload));
@@ -165,7 +176,7 @@ function storeTriggerPayload(config: ConfigService, createNotificationTemplatesR
  */
 function storeToken(config: ConfigService, userJwt: string) {
   config.setValue('token', userJwt);
-  storeHeader('authorization', `Bearer ${config.getValue('token')}`);
+  storeHeader('authorization', `Bearer ${config.getToken()}`);
 }
 
 async function exitHandler(): Promise<void> {
@@ -183,3 +194,59 @@ const keyPress = async (): Promise<void> => {
     })
   );
 };
+
+async function handleExistingSession(config: ConfigService) {
+  const isSessionExists = !!config.getDecodedToken();
+  if (isSessionExists && process.env.NODE_ENV !== 'dev') {
+    storeToken(config, config.getToken());
+
+    let existingApplication: IApplication;
+
+    try {
+      existingApplication = await getApplicationMe();
+      if (!existingApplication) {
+        return true;
+      }
+    } catch (e) {
+      config.clearStore();
+
+      return true;
+    }
+
+    const { result } = await prompt([
+      {
+        type: 'list',
+        name: 'result',
+        message: `Looks like you already have a created an account for ${existingApplication.name}`,
+        choices: [
+          {
+            name: `Visit ${existingApplication.name} Dashboard`,
+            value: 'visitDashboard',
+          },
+          {
+            name: 'Create New Account',
+            value: 'newAccount',
+          },
+          {
+            name: 'Cancel',
+            value: 'exit',
+          },
+        ],
+      },
+    ]);
+
+    if (result === 'new') {
+      config.clearStore();
+
+      return true;
+    } else if (result === 'visitDashboard') {
+      const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+
+      open(dashboardURL);
+    }
+
+    return false;
+  }
+
+  return true;
+}
