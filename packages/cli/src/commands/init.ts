@@ -3,8 +3,7 @@ import { Answers } from 'inquirer';
 import * as gradient from 'gradient-string';
 import * as chalk from 'chalk';
 import * as ora from 'ora';
-import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
-
+import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto, IJwtPayload } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -30,7 +29,7 @@ import {
 } from '../api';
 import { ConfigService } from '../services';
 
-const turboGradient = gradient('#0099F7', '#F11712');
+const textGradient = gradient('#0099F7', '#F11712');
 const logoGradient = gradient('#DD2476', '#FF512F');
 
 export async function initCommand() {

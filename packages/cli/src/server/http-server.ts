@@ -34,7 +34,7 @@ export class HttpServer {
   public getAddress() {
     const response = this.server.address() as AddressInfo;
 
-    return `http://localhost:${response.port}`;
+    return `http://${SERVER_HOST}:${response.port}`;
   }
 
   public redirectResponse(): Promise<string> {
