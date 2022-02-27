@@ -1,14 +1,8 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
-import {
-  ChannelCTATypeEnum,
-  ChannelTypeEnum,
-  IApplication,
-  ICreateNotificationTemplateDto,
-  providers,
-} from '@notifire/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
-import { promptIntroQuestions } from './init.consts';
+import { existingSessionQuestions, introQuestions } from './init.consts';
 import { HttpServer } from '../server';
 import {
   SERVER_HOST,
@@ -36,21 +30,14 @@ export async function initCommand() {
 
   const existingApplication = await checkExistingApplication(config);
   if (existingApplication) {
-    const result = await handleExistingSession(config, existingApplication);
+    const { result } = await prompt(existingSessionQuestions(existingApplication));
 
-    if (result === 'new') {
-      config.clearStore();
-    } else if (result === 'visitDashboard') {
-      const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
-
-      await open(dashboardURL);
-
-      return;
-    } else if (result === 'exit') {
-      process.exit();
+    if (result !== 'new') {
+      await handleExistingSession(result, config);
 
       return;
     }
+    config.clearStore();
   }
 
   await handleOnboardingFlow(config);
@@ -62,7 +49,7 @@ async function handleOnboardingFlow(config: ConfigService) {
   await httpServer.listen();
 
   try {
-    const answers = await prompt(promptIntroQuestions);
+    const answers = await prompt(introQuestions);
 
     await gitHubOAuth(httpServer, config);
     await createOrganizationHandler(config, answers);
@@ -235,28 +222,12 @@ async function checkExistingApplication(config: ConfigService): Promise<IApplica
   return null;
 }
 
-async function handleExistingSession(config: ConfigService, existingApplication: IApplication) {
-  const { result } = await prompt([
-    {
-      type: 'list',
-      name: 'result',
-      message: `Looks like you already have a created an account for ${existingApplication.name}`,
-      choices: [
-        {
-          name: `Visit ${existingApplication.name} Dashboard`,
-          value: 'visitDashboard',
-        },
-        {
-          name: 'Create New Account',
-          value: 'new',
-        },
-        {
-          name: 'Cancel',
-          value: 'exit',
-        },
-      ],
-    },
-  ]);
+async function handleExistingSession(result: string, config: ConfigService) {
+  if (result === 'visitDashboard') {
+    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
-  return result;
+    await open(dashboardURL);
+  } else if (result === 'exit') {
+    process.exit();
+  }
 }
