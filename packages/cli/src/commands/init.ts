@@ -95,11 +95,9 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
   const notificationGroupResponse = await getNotificationGroup();
 
   const template = buildTemplate(notificationGroupResponse[0]._id);
-
   const createNotificationTemplatesResponse = await createNotificationTemplates(template);
 
   const decodedToken = config.getDecodedToken();
-
   const demoDashboardUrl = await buildDemoDashboardUrl(applicationIdentifier, decodedToken);
 
   storeTriggerPayload(config, createNotificationTemplatesResponse, decodedToken);
@@ -114,7 +112,7 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
     {
       type: ChannelTypeEnum.IN_APP,
       content:
-        'Welcome <b>{{firstName}}</b>! This is your first notification, click on it to visit your live dashboard',
+        'Welcome <b>{{$first_name}}</b>! This is your first notification, click on it to visit your live dashboard',
       cta: {
         type: ChannelCTATypeEnum.REDIRECT,
         data: {
@@ -141,8 +139,8 @@ async function buildDemoDashboardUrl(applicationIdentifier: string, decodedToken
     `applicationId=${applicationIdentifier}&`,
     `userId=${decodedToken._id}&`,
     `email=${decodedToken.email}&`,
-    `firstName=${decodedToken.firstName}&`,
-    `lastName=${decodedToken.lastName}`,
+    `$first_name=${decodedToken.firstName}&`,
+    `$last_name=${decodedToken.lastName}`,
   ];
 }
 
@@ -152,7 +150,8 @@ function storeTriggerPayload(config: ConfigService, createNotificationTemplatesR
     { key: 'apiKey', value: config.getValue('apiKey') },
     { key: 'name', value: createNotificationTemplatesResponse.triggers[0].identifier },
     { key: '$user_id', value: decodedToken._id },
-    { key: 'firstName', value: decodedToken.firstName },
+    { key: '$first_name', value: decodedToken.firstName },
+    { key: '$last_name', value: decodedToken.lastName },
     { key: '$email', value: decodedToken.email },
     { key: 'token', value: config.getValue('token') },
   ];
