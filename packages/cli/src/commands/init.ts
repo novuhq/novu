@@ -3,8 +3,7 @@ import { Answers } from 'inquirer';
 import * as gradient from 'gradient-string';
 import * as chalk from 'chalk';
 import * as ora from 'ora';
-import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
-
+import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto, IJwtPayload } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -26,14 +25,18 @@ import {
   switchApplication,
   getNotificationGroup,
   createNotificationTemplates,
+  getApplicationApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
 
-const turboGradient = gradient('#0099F7', '#F11712');
+const textGradient = gradient('#0099F7', '#F11712');
 const logoGradient = gradient('#DD2476', '#FF512F');
 
 export async function initCommand() {
   const config = new ConfigService();
+  if (process.env.NODE_ENV === 'dev') {
+    await config.clearStore();
+  }
 
   const logo = `
                         @@@@@@@@@@@@@        
@@ -150,14 +153,18 @@ async function createOrganizationHandler(config: ConfigService, answers: Answers
 
 async function createApplicationHandler(config: ConfigService, answers: Answers): Promise<string> {
   if (config.isApplicationIdExist()) {
-    return (await getApplicationMe()).identifier;
+    const existingApplication = await getApplicationMe();
+    const keys = await getApplicationApiKeys();
+
+    config.setValue('apiKey', keys[0]?.key);
+
+    return existingApplication.identifier;
   }
+
   const createApplicationResponse = await createApplication(answers.applicationName);
-
-  config.setValue('apiKey', createApplicationResponse.apiKeys[0].key);
-
   const newUserJwt = await switchApplication(createApplicationResponse._id);
 
+  config.setValue('apiKey', createApplicationResponse.apiKeys[0].key);
   storeToken(config, newUserJwt);
 
   return createApplicationResponse.identifier;
@@ -210,6 +217,8 @@ async function getDemoDashboardUrl() {
 }
 
 function storeTriggerPayload(config: ConfigService, createNotificationTemplatesResponse, decodedToken) {
+  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+
   const tmpPayload: { key: string; value: string }[] = [
     { key: 'url', value: API_TRIGGER_URL },
     { key: 'apiKey', value: config.getValue('apiKey') },
@@ -220,6 +229,7 @@ function storeTriggerPayload(config: ConfigService, createNotificationTemplatesR
     { key: '$email', value: decodedToken.email },
     { key: 'applicationId', value: decodedToken.applicationId },
     { key: 'token', value: config.getToken() },
+    { key: 'dashboardURL', value: dashboardURL },
   ];
 
   config.setValue('triggerPayload', JSON.stringify(tmpPayload));
@@ -247,6 +257,7 @@ const keyPress = async (): Promise<void> => {
 
 async function checkExistingApplication(config: ConfigService): Promise<IApplication | null> {
   const isSessionExists = !!config.getDecodedToken();
+
   if (isSessionExists && process.env.NODE_ENV !== 'dev') {
     storeToken(config, config.getToken());
 

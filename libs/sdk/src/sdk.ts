@@ -203,6 +203,10 @@ class Notifire {
                     updateInnerTextCount(sel, message.count);
                   }
                 }
+
+                if (this.listeners.on_notification_count_change) {
+                  this.listeners.on_notification_count_change(message.count);
+                }
               } else if (message.type === 'url_change') {
                 window.location.href = message.url;
               } else if (message.type === 'notification_click') {

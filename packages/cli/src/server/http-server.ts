@@ -99,7 +99,9 @@ function buildReplaceReg(param) {
   let strToReplace = '';
 
   strToReplace += 'REPLACE_WITH_';
-  if (param.key.includes('$')) strToReplace += `\\`;
+  if (param.key.includes('$')) {
+    strToReplace += `\\`;
+  }
   strToReplace += param.key;
 
   return new RegExp(strToReplace, 'g');
