@@ -15,13 +15,18 @@ Cypress.Commands.add('seed', () => {
   return cy.request('POST', `${Cypress.env('apiUrl')}/v1/testing/seed`, {});
 });
 
-Cypress.Commands.add('initializeSession', (settings = {}) => {
-  return cy.task('getSession', settings).then((response: any) => {
-    window.localStorage.setItem('auth_token', response.token);
+Cypress.Commands.add(
+  'initializeSession',
+  (settings: { disableLocalStorage?: boolean } = { disableLocalStorage: false }) => {
+    return cy.task('getSession', settings).then((response: any) => {
+      if (!settings.disableLocalStorage) {
+        window.localStorage.setItem('auth_token', response.token);
+      }
 
-    return response;
-  });
-});
+      return response;
+    });
+  }
+);
 
 Cypress.Commands.add('logout', (settings = {}) => {
   return window.localStorage.removeItem('auth_token');
