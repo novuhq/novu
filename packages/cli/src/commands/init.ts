@@ -34,11 +34,29 @@ import { ConfigService } from '../services';
 export async function initCommand() {
   const config = new ConfigService();
 
-  const shouldContinue = await handleExistingSession(config);
-  if (!shouldContinue) {
-    return;
+  const existingApplication = await checkExistingApplication(config);
+  if (existingApplication) {
+    const result = await handleExistingSession(config, existingApplication);
+
+    if (result === 'new') {
+      config.clearStore();
+    } else if (result === 'visitDashboard') {
+      const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+
+      await open(dashboardURL);
+
+      return;
+    } else if (result === 'exit') {
+      process.exit();
+
+      return;
+    }
   }
 
+  await handleOnboardingFlow(config);
+}
+
+async function handleOnboardingFlow(config: ConfigService) {
   const httpServer = new HttpServer();
 
   await httpServer.listen();
@@ -47,13 +65,11 @@ export async function initCommand() {
     const answers = await prompt(promptIntroQuestions);
 
     await gitHubOAuth(httpServer, config);
-
     await createOrganizationHandler(config, answers);
 
     const applicationIdentifier = await createApplicationHandler(config, answers);
 
     await raiseDemoDashboard(httpServer, config, applicationIdentifier);
-
     await exitHandler();
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -195,7 +211,7 @@ const keyPress = async (): Promise<void> => {
   );
 };
 
-async function handleExistingSession(config: ConfigService) {
+async function checkExistingApplication(config: ConfigService): Promise<IApplication | null> {
   const isSessionExists = !!config.getDecodedToken();
   if (isSessionExists && process.env.NODE_ENV !== 'dev') {
     storeToken(config, config.getToken());
@@ -205,48 +221,42 @@ async function handleExistingSession(config: ConfigService) {
     try {
       existingApplication = await getApplicationMe();
       if (!existingApplication) {
-        return true;
+        return null;
       }
     } catch (e) {
       config.clearStore();
 
-      return true;
+      return null;
     }
 
-    const { result } = await prompt([
-      {
-        type: 'list',
-        name: 'result',
-        message: `Looks like you already have a created an account for ${existingApplication.name}`,
-        choices: [
-          {
-            name: `Visit ${existingApplication.name} Dashboard`,
-            value: 'visitDashboard',
-          },
-          {
-            name: 'Create New Account',
-            value: 'newAccount',
-          },
-          {
-            name: 'Cancel',
-            value: 'exit',
-          },
-        ],
-      },
-    ]);
-
-    if (result === 'new') {
-      config.clearStore();
-
-      return true;
-    } else if (result === 'visitDashboard') {
-      const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
-
-      open(dashboardURL);
-    }
-
-    return false;
+    return existingApplication;
   }
 
-  return true;
+  return null;
+}
+
+async function handleExistingSession(config: ConfigService, existingApplication: IApplication) {
+  const { result } = await prompt([
+    {
+      type: 'list',
+      name: 'result',
+      message: `Looks like you already have a created an account for ${existingApplication.name}`,
+      choices: [
+        {
+          name: `Visit ${existingApplication.name} Dashboard`,
+          value: 'visitDashboard',
+        },
+        {
+          name: 'Create New Account',
+          value: 'new',
+        },
+        {
+          name: 'Cancel',
+          value: 'exit',
+        },
+      ],
+    },
+  ]);
+
+  return result;
 }
