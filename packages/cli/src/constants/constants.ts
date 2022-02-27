@@ -1,6 +1,7 @@
+import * as getPort from 'get-port';
+
 // CLI Server
 export const SERVER_HOST = 'localhost';
-export const SERVER_PORT = 4600;
 export const REDIRECT_ROUTE = '/cli/callback';
 export const WIDGET_DEMO_ROUTH = '/widget-demo';
 
@@ -19,3 +20,17 @@ export const API_TRIGGER_URL = `${apiAddress}/v1/events/trigger`;
 
 // Client
 export const CLIENT_LOGIN_URL = 'http://localhost:4200/auth/login';
+
+let SERVER_PORT;
+
+export async function setAvailablePort() {
+  SERVER_PORT = await (getPort as never as () => Promise<number>)();
+}
+
+export async function getServerPort() {
+  if (!SERVER_PORT) {
+    throw new Error('setAvailablePort must be called a single time to generate available port');
+  }
+
+  return SERVER_PORT;
+}
