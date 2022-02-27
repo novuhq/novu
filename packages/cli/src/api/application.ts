@@ -1,3 +1,4 @@
+import { IApplication } from '@notifire/shared';
 import { API_APPLICATION_ME_URL, API_CREATE_APPLICATION_URL, API_SWITCH_APPLICATION_FORMAT_URL } from '../constants';
 import { get, post } from './api.service';
 
@@ -5,7 +6,7 @@ export function createApplication(applicationName: string) {
   return post(API_CREATE_APPLICATION_URL, { name: applicationName });
 }
 
-export function getApplicationMe() {
+export function getApplicationMe(): Promise<IApplication> {
   return get(API_APPLICATION_ME_URL);
 }
 
