@@ -16,8 +16,8 @@ export class ConfigService {
     return this._config.get(key);
   }
 
-  clearStore() {
-    this._config.clear();
+  async clearStore() {
+    return this._config.clear();
   }
 
   isOrganizationIdExist(): boolean {
@@ -33,6 +33,10 @@ export class ConfigService {
   }
 
   getDecodedToken(): IJwtPayload {
+    if (!this.getToken()) {
+      return null;
+    }
+
     return jwt_decode(this.getToken());
   }
 }
