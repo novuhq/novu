@@ -11,13 +11,6 @@ import { SHOW_WIDGET } from './shared/eventTypes';
 const WEASL_WRAPPER_ID = 'notifire-container';
 const IFRAME_ID = 'notifire-iframe-element';
 
-function updateInnerTextCount(element: HTMLElement, count: number) {
-  element.innerText = count > 99 ? '99+' : count.toString();
-  if (count > 99) {
-    (element as any).style += 'font-size: 8px;';
-  }
-}
-
 class Notifire {
   public clientId: string | unknown;
 
@@ -306,4 +299,9 @@ export default ((window: any) => {
   }
 })(window);
 
-//
+function updateInnerTextCount(element: HTMLElement, count: number) {
+  element.innerText = count > 99 ? '99+' : count.toString();
+  if (count > 99) {
+    (element as any).style += 'font-size: 8px;';
+  }
+}

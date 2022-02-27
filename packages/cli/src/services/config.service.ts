@@ -16,6 +16,10 @@ export class ConfigService {
     return this._config.get(key);
   }
 
+  clearStore() {
+    this._config.clear();
+  }
+
   isOrganizationIdExist(): boolean {
     return !!this.getDecodedToken().organizationId;
   }
@@ -24,7 +28,11 @@ export class ConfigService {
     return !!this.getDecodedToken().applicationId;
   }
 
+  getToken(): string {
+    return this._config.get('token');
+  }
+
   getDecodedToken(): IJwtPayload {
-    return jwt_decode(this._config.get('token'));
+    return jwt_decode(this.getToken());
   }
 }

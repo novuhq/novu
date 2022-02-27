@@ -13,6 +13,16 @@
     .not-visible {
       display: none;
     }
+
+    .token.attr-value, .token.class, .token.string, .token.property {
+      color: rgb(125 211 252/1);
+    }
+
+    #unseen-badge {
+      position: absolute;
+      left: 19px !important;
+      top: 3px !important;
+    }
   </style>
 </head>
 
@@ -35,6 +45,7 @@
               <!-- Heroicon name: bell -->
               <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> </svg>
+              <span id="unseen-badge"></span>
             </button>
             <!-- Profile dropdown -->
             <div class="ml-3 relative">
@@ -147,6 +158,7 @@
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">$user_id</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_$user_id",
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "$first_name": "REPLACE_WITH_$first_name",
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "$last_name": "REPLACE_WITH_$last_name",
+                  </span><span class="token" style="color: rgb(189, 224, 82);">            "$on_boarding_trigger": "true",
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "*********"
                   </span><span class="token" style="color: rgb(189, 224, 82);">        }
                   </span><span class="token" style="color: rgb(189, 224, 82);">    }'</span><span>
@@ -206,6 +218,7 @@
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">$user_id</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_$user_id",
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "$first_name": "REPLACE_WITH_$first_name",
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "$last_name": "REPLACE_WITH_$last_name",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$on_boarding_trigger": "true",
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "REPLACE_WITH_token"
                     </span><span class="token" style="color: rgb(189, 224, 82);">        }
                     </span><span class="token" style="color: rgb(189, 224, 82);">    }'</span><span>
@@ -249,7 +262,7 @@ function copyToClipboard(id) {
 
   const urlParams = new URLSearchParams(window.location.search);
 
-  notifire.init(urlParams.get('applicationId'), '#notification-bell', {
+  notifire.init(urlParams.get('applicationId'), { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
     $user_id: urlParams.get('userId'),
     $first_name: urlParams.get('$first_name'),
     $last_name: urlParams.get('$last_name'),
