@@ -19,6 +19,7 @@ export class InitializeSessionCommand {
   lastName?: string;
 
   @IsEmail()
+  @IsOptional()
   email?: string;
 
   @IsString()

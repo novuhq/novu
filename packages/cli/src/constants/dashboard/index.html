@@ -156,9 +156,9 @@
                   </span><span class="token" style="color: rgb(189, 224, 82);">        "name": "REPLACE_WITH_name",
                   </span><span class="token" style="color: rgb(189, 224, 82);">        "payload": {
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">$user_id</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_$user_id",
+                  </span><span class="token" style="color: rgb(189, 224, 82);">            "$first_name": "REPLACE_WITH_$first_name",
+                  </span><span class="token" style="color: rgb(189, 224, 82);">            "$last_name": "REPLACE_WITH_$last_name",
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "$on_boarding_trigger": "true",
-                  </span><span class="token" style="color: rgb(189, 224, 82);">            "firstName": "REPLACE_WITH_firstName",
-                  </span><span class="token" style="color: rgb(189, 224, 82);">            "$email": "REPLACE_WITH_$email",
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "*********"
                   </span><span class="token" style="color: rgb(189, 224, 82);">        }
                   </span><span class="token" style="color: rgb(189, 224, 82);">    }'</span><span>
@@ -216,8 +216,9 @@
                     </span><span class="token" style="color: rgb(189, 224, 82);">        "name": "REPLACE_WITH_name",
                     </span><span class="token" style="color: rgb(189, 224, 82);">        "payload": {
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">$user_id</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_$user_id",
-                    </span><span class="token" style="color: rgb(189, 224, 82);">            "firstName": "REPLACE_WITH_firstName",
-                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$email": "REPLACE_WITH_$email",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$first_name": "REPLACE_WITH_$first_name",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$last_name": "REPLACE_WITH_$last_name",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$on_boarding_trigger": "true",
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "REPLACE_WITH_token"
                     </span><span class="token" style="color: rgb(189, 224, 82);">        }
                     </span><span class="token" style="color: rgb(189, 224, 82);">    }'</span><span>
@@ -263,9 +264,8 @@ function copyToClipboard(id) {
 
   notifire.init(urlParams.get('applicationId'), { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
     $user_id: urlParams.get('userId'),
-    $email: urlParams.get('email'),
-    $first_name: urlParams.get('firstName'),
-    $last_name: urlParams.get('lastName'),
+    $first_name: urlParams.get('$first_name'),
+    $last_name: urlParams.get('$last_name'),
   });
 </script>
 </body>
