@@ -6,7 +6,6 @@ import {
   IApplication,
   ICreateNotificationTemplateDto,
   IJwtPayload,
-  providers,
 } from '@notifire/shared';
 import { prompt } from '../client';
 import { environmentQuestions, existingSessionQuestions, introQuestions, registerMethodQuestions } from './init.consts';
@@ -35,7 +34,6 @@ import {
 import { ConfigService } from '../services';
 
 export async function initCommand() {
-
   try {
     const envAnswer = await prompt(environmentQuestions);
 
@@ -46,21 +44,22 @@ export async function initCommand() {
     }
     const config = new ConfigService();
 
-  if (process.env.NODE_ENV === 'dev') {
-    await config.clearStore();
-  }
-
-  const existingApplication = await checkExistingApplication(config);
-  if (existingApplication) {
-    const result = await handleExistingSession(config, existingApplication);
-
-    if (result !== 'new') {
-      await handleExistingSession(result, config);
-
-      return;
+    if (process.env.NODE_ENV === 'dev') {
+      await config.clearStore();
     }
-    config.clearStore();
-  }
+
+    const existingApplication = await checkExistingApplication(config);
+
+    if (existingApplication) {
+      const { result } = await prompt(existingSessionQuestions(existingApplication));
+
+      if (result !== 'new') {
+        await handleExistingSession(result, config);
+
+        return;
+      }
+      await config.clearStore();
+    }
 
     await handleOnboardingFlow(config);
   } catch (e) {
@@ -183,8 +182,6 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
 }
 
 async function buildDemoDashboardUrl(applicationIdentifier: string, decodedToken: IJwtPayload, config: ConfigService) {
-  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
-
   return [
     `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTH}?`,
     `applicationId=${applicationIdentifier}&`,
