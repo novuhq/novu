@@ -2,7 +2,7 @@ import * as open from 'open';
 import { Answers } from 'inquirer';
 import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
-import { existingSessionQuestions, introQuestions } from './init.consts';
+import { environmentQuestions, existingSessionQuestions, introQuestions, registerMethodQuestions } from './init.consts';
 import { HttpServer } from '../server';
 import {
   SERVER_HOST,
@@ -12,6 +12,7 @@ import {
   API_TRIGGER_URL,
   CLIENT_LOGIN_URL,
   getServerPort,
+  GITHUB_DOCKER_URL,
 } from '../constants';
 import {
   storeHeader,
@@ -26,21 +27,35 @@ import {
 import { ConfigService } from '../services';
 
 export async function initCommand() {
-  const config = new ConfigService();
+  try {
+    const envAnswer = await prompt(environmentQuestions);
 
-  const existingApplication = await checkExistingApplication(config);
-  if (existingApplication) {
-    const { result } = await prompt(existingSessionQuestions(existingApplication));
-
-    if (result !== 'new') {
-      await handleExistingSession(result, config);
+    if (envAnswer.env === 'self-hosted-docker') {
+      await open(GITHUB_DOCKER_URL);
 
       return;
     }
-    config.clearStore();
-  }
+    const config = new ConfigService();
 
-  await handleOnboardingFlow(config);
+    await config.clearStore();
+
+    const existingApplication = await checkExistingApplication(config);
+    if (existingApplication) {
+      const { result } = await prompt(existingSessionQuestions(existingApplication));
+
+      if (result !== 'new') {
+        await handleExistingSession(result, config);
+
+        return;
+      }
+      config.clearStore();
+    }
+
+    await handleOnboardingFlow(config);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+  }
 }
 
 async function handleOnboardingFlow(config: ConfigService) {
@@ -51,7 +66,11 @@ async function handleOnboardingFlow(config: ConfigService) {
   try {
     const answers = await prompt(introQuestions);
 
-    await gitHubOAuth(httpServer, config);
+    const regMethod = await prompt(registerMethodQuestions);
+
+    if (regMethod.value === 'github') {
+      await gitHubOAuth(httpServer, config);
+    }
     await createOrganizationHandler(config, answers);
 
     const applicationIdentifier = await createApplicationHandler(config, answers);

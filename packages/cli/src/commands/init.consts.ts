@@ -38,3 +38,40 @@ export const existingSessionQuestions = (existingApplication): ListQuestionOptio
     },
   ];
 };
+
+export const environmentQuestions: ListQuestionOptions[] = [
+  {
+    type: 'list',
+    name: 'env',
+    message: `Now lets setup your environment. How would you like to proceed?`,
+    choices: [
+      {
+        name: `Create a free hosted cloud account (Recommended)`,
+        value: 'cloud',
+      },
+      {
+        name: 'Run locally using docker',
+        value: 'self-hosted-docker',
+      },
+    ],
+  },
+];
+
+export const registerMethodQuestions: ListQuestionOptions[] = [
+  {
+    type: 'list',
+    name: 'value',
+    message: `How do you want to register`,
+    choices: [
+      {
+        name: `Using GitHub`,
+        value: 'github',
+      },
+      {
+        name: 'Email & Password',
+        value: 'in-cli',
+        disabled: '(Coming soon)',
+      },
+    ],
+  },
+];
