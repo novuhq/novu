@@ -127,19 +127,19 @@
               <button type="button" class="ant-tabs-nav-more" tabindex="-1" aria-hidden="true" aria-haspopup="listbox" aria-controls="rc-tabs-1-more-popup" id="rc-tabs-1-more" aria-expanded="false" style="visibility: hidden; order: 1;"><span role="img" aria-label="ellipsis" class="anticon anticon-ellipsis"><svg viewBox="64 64 896 896" focusable="false" data-icon="ellipsis" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z"></path></svg></span></button>
             </div>
           </div>
-          <div class="ant-tabs-content-holder" >
+          <div class="ant-tabs-content-holder">
             <div class="ant-tabs-content ant-tabs-content-top">
 
               <div role="tabpanel" tabindex="0" aria-hidden="false" class="ant-tabs-tabpane ant-tabs-tabpane-active" id="rc-tabs-1-panel-2" aria-labelledby="rc-tabs-1-tab-2" style="">
 
-                <div id="curl-user-snippet" style="-webkit-touch-callout: none;
+                <div style="-webkit-touch-callout: none;
                                                       -webkit-user-select: none;
                                                        -khtml-user-select: none;
                                                          -moz-user-select: none;
                                                           -ms-user-select: none;
                                                               user-select: none; ">
-                <pre  data-test-id="trigger-curl-snippet" style="color: white; background: rgb(77, 64, 51); text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none; padding: 1em; margin: 0.5em 0px; overflow: auto; border: 0.3em solid rgb(122, 102, 82); border-radius: 0.5em; box-shadow: black 1px 1px 0.5em inset;"><code class="language-shell" style="color: white; background: none; text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none;"><span class="token function">curl</span><span> --location --request POST </span><span class="token" style="color: rgb(189, 224, 82);">'REPLACE_WITH_url'</span><span> </span><span class="token">\</span><span>
-                  </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Authorization: ApiKey REPLACE_WITH_apiKey'</span><span> </span><span class="token">\</span><span>
+                <pre data-test-id="trigger-curl-snippet" style="color: white; background: rgb(77, 64, 51); text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none; padding: 1em; margin: 0.5em 0px; overflow: auto; border: 0.3em solid rgb(122, 102, 82); border-radius: 0.5em; box-shadow: black 1px 1px 0.5em inset;"><code class="language-shell" style="color: white; background: none; text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none;"><span class="token function">curl</span><span> --location --request POST </span><span class="token" style="color: rgb(189, 224, 82);">'REPLACE_WITH_url'</span><span> </span><span class="token">\</span><span>
+                  </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Authorization: ApiKey *********'</span><span> </span><span class="token">\</span><span>
                   </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Content-Type: application/json'</span><span> </span><span class="token">\</span><span>
                   </span><span>     --data-raw </span><span class="token" style="color: rgb(189, 224, 82);">'{
                   </span><span class="token" style="color: rgb(189, 224, 82);">        "name": "REPLACE_WITH_name",
@@ -147,7 +147,7 @@
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">$user_id</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_$user_id",
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "firstName": "REPLACE_WITH_firstName",
                   </span><span class="token" style="color: rgb(189, 224, 82);">            "$email": "REPLACE_WITH_$email",
-                  </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "REPLACE_WITH_token"
+                  </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "*********"
                   </span><span class="token" style="color: rgb(189, 224, 82);">        }
                   </span><span class="token" style="color: rgb(189, 224, 82);">    }'</span><span>
                   </span>
@@ -188,20 +188,45 @@
 </code></pre>
 </div>
 
+
+
+  <div id="curl-user-snippet" style="-webkit-touch-callout: none;
+                                                        -webkit-user-select: none;
+                                                         -khtml-user-select: none;
+                                                           -moz-user-select: none;
+                                                            -ms-user-select: none;
+                                                                user-select: none;
+  visibility: hidden">
+                  <pre data-test-id="trigger-curl-snippet" style="color: white; background: rgb(77, 64, 51); text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none; padding: 1em; margin: 0.5em 0px; overflow: auto; border: 0.3em solid rgb(122, 102, 82); border-radius: 0.5em; box-shadow: black 1px 1px 0.5em inset;"><code class="language-shell" style="color: white; background: none; text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none;"><span class="token function">curl</span><span> --location --request POST </span><span class="token" style="color: rgb(189, 224, 82);">'REPLACE_WITH_url'</span><span> </span><span class="token">\</span><span>
+                    </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Authorization: ApiKey REPLACE_WITH_apiKey'</span><span> </span><span class="token">\</span><span>
+                    </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Content-Type: application/json'</span><span> </span><span class="token">\</span><span>
+                    </span><span>     --data-raw </span><span class="token" style="color: rgb(189, 224, 82);">'{
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        "name": "REPLACE_WITH_name",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        "payload": {
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">$user_id</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_$user_id",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "firstName": "REPLACE_WITH_firstName",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$email": "REPLACE_WITH_$email",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "REPLACE_WITH_token"
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        }
+                    </span><span class="token" style="color: rgb(189, 224, 82);">    }'</span><span>
+                    </span>
+                  </code>
+                  </pre>
+  </div>
 </div>
 <script>
 
 function copyToClipboard(id) {
   const r = document.createRange();
   let element = document.getElementById(id)
-  element.style.cssText = "-webkit-touch-callout: auto; -webkit-user-select: auto; -khtml-user-select: auto; -moz-user-select: auto; -ms-user-select: auto; user-select: auto;";
+  element.style.cssText = "-webkit-touch-callout: auto; -webkit-user-select: auto; -khtml-user-select: auto; -moz-user-select: auto; -ms-user-select: auto; user-select: auto; visibility: none";
   r.selectNode(document.getElementById(id));
   window.getSelection().removeAllRanges();
   window.getSelection().addRange(r);
   document.execCommand('copy');
   document.getElementById("custom-copy-tooltip").style.display = "inline";
   window.getSelection().removeAllRanges();
-  element.style.cssText = "-webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;";
+  element.style.cssText = "-webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; visibility: hidden";
 
   setTimeout( function() {
     document.getElementById("custom-copy-tooltip").style.display = "none";
