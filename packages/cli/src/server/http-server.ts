@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import { SERVER_HOST, SERVER_PORT, REDIRECT_ROUTE, WIDGET_DEMO_ROUTH } from '../constants';
+import { SERVER_HOST, REDIRECT_ROUTE, WIDGET_DEMO_ROUTH, setAvailablePort, getServerPort } from '../constants';
 import { ConfigService } from '../services';
 
 export class HttpServer {
@@ -9,26 +9,25 @@ export class HttpServer {
   public token: string;
   private config: ConfigService = new ConfigService();
 
-  public listen(): Promise<void> {
-    return new Promise((resolve) => {
-      this.server = http.createServer();
-      this.server.on('request', async (req, res) => {
-        try {
-          if (req.url.startsWith(REDIRECT_ROUTE)) {
-            this.handleRedirectRequest(req);
-          }
-          if (req.url.startsWith(WIDGET_DEMO_ROUTH)) {
-            await this.handleWidgetDemo(res);
-          }
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.error(e);
-        }
-      });
+  public async listen(): Promise<void> {
+    await setAvailablePort();
 
-      this.server.listen(SERVER_PORT, SERVER_HOST);
-      resolve();
+    this.server = http.createServer();
+    this.server.on('request', async (req, res) => {
+      try {
+        if (req.url.startsWith(REDIRECT_ROUTE)) {
+          this.handleRedirectRequest(req);
+        }
+        if (req.url.startsWith(WIDGET_DEMO_ROUTH)) {
+          await this.handleWidgetDemo(res);
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      }
     });
+
+    this.server.listen(await getServerPort(), SERVER_HOST);
   }
 
   public redirectResponse(): Promise<string> {
@@ -74,8 +73,10 @@ export class HttpServer {
         }
 
         payLoad.forEach((param) => {
+          const regToReplace = buildReplaceReg(param);
+
           // eslint-disable-next-line no-param-reassign
-          content = content.replace(`REPLACE_WITH_${param.key}`, param.value);
+          content = content.replace(regToReplace, param.value);
         });
 
         res.writeHead(200);
@@ -85,4 +86,14 @@ export class HttpServer {
       });
     });
   }
+}
+
+function buildReplaceReg(param) {
+  let strToReplace = '';
+
+  strToReplace += 'REPLACE_WITH_';
+  if (param.key.includes('$')) strToReplace += `\\`;
+  strToReplace += param.key;
+
+  return new RegExp(strToReplace, 'g');
 }
