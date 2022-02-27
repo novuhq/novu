@@ -876,6 +876,7 @@ importers:
       '@types/inquirer': ^8.2.0
       axios: ^0.25.0
       configstore: ^5.0.0
+      get-port: ^5.1.1
       inquirer: ^8.2.0
       jwt-decode: ^3.1.2
       nodemon: ^2.0.15
@@ -886,6 +887,7 @@ importers:
       '@notifire/shared': link:../../libs/shared
       axios: 0.25.0
       configstore: 5.0.1
+      get-port: 5.1.1
       inquirer: 8.2.0
       jwt-decode: 3.1.2
       open: 8.4.0
@@ -10604,7 +10606,7 @@ packages:
     dependencies:
       '@types/estree': 0.0.39
       estree-walker: 1.0.1
-      picomatch: 2.3.1
+      picomatch: 2.3.0
       rollup: 1.32.1
     dev: false
 

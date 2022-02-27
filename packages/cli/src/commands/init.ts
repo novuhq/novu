@@ -5,13 +5,13 @@ import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
 import {
-  SERVER_PORT,
   SERVER_HOST,
   REDIRECT_ROUTE,
   API_OAUTH_URL,
   WIDGET_DEMO_ROUTH,
   API_TRIGGER_URL,
   CLIENT_LOGIN_URL,
+  getServerPort,
 } from '../constants';
 import {
   storeHeader,
@@ -52,7 +52,7 @@ export async function initCommand() {
 }
 
 async function gitHubOAuth(httpServer: HttpServer, config: ConfigService): Promise<void> {
-  const redirectUrl = `http://${SERVER_HOST}:${SERVER_PORT}${REDIRECT_ROUTE}`;
+  const redirectUrl = `http://${SERVER_HOST}:${await getServerPort()}${REDIRECT_ROUTE}`;
 
   try {
     await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}`);
@@ -100,7 +100,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 
   const decodedToken = config.getDecodedToken();
 
-  const demoDashboardUrl = buildDemoDashboardUrl(applicationIdentifier, decodedToken);
+  const demoDashboardUrl = await buildDemoDashboardUrl(applicationIdentifier, decodedToken);
 
   storeTriggerPayload(config, createNotificationTemplatesResponse, decodedToken);
 
@@ -135,9 +135,9 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
   };
 }
 
-function buildDemoDashboardUrl(applicationIdentifier: string, decodedToken) {
+async function buildDemoDashboardUrl(applicationIdentifier: string, decodedToken) {
   return [
-    `http://${SERVER_HOST}:${SERVER_PORT}${WIDGET_DEMO_ROUTH}?`,
+    `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTH}?`,
     `applicationId=${applicationIdentifier}&`,
     `userId=${decodedToken._id}&`,
     `email=${decodedToken.email}&`,
