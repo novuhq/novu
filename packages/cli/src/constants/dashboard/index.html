@@ -157,7 +157,7 @@
             </div>
             </div>
           </div>
-          <a class="butt butt-blue" href="#" onclick="CopyToClipboard('curl-user-snippet');return false;"  style="background-color: white; color: black;padding: 5px;text-decoration: none; border: 1px solid black;" onMouseOver="this.style.background='gray'"onMouseOut="this.style.background='white'" >Copy Code to Clipboard</a>
+          <a class="butt butt-blue" href="#" onclick="copyToClipboard('curl-user-snippet');return false;"  style="background-color: white; color: black;padding: 5px;text-decoration: none; border: 1px solid black;" onMouseOver="this.style.background='gray'"onMouseOut="this.style.background='white'" >Copy Code to Clipboard</a>
           <span id="custom-copy-tooltip" style="display: none;
                                                 margin-left: 40px;
                                                 padding: 5px 12px;
@@ -191,8 +191,7 @@
 </div>
 <script>
 
-function CopyToClipboard(id)
-{
+function copyToClipboard(id) {
   const r = document.createRange();
   let element = document.getElementById(id)
   element.style.cssText = "-webkit-touch-callout: auto; -webkit-user-select: auto; -khtml-user-select: auto; -moz-user-select: auto; -ms-user-select: auto; user-select: auto;";
@@ -207,7 +206,6 @@ function CopyToClipboard(id)
   setTimeout( function() {
     document.getElementById("custom-copy-tooltip").style.display = "none";
   }, 1000);
-
 }
 
 (function(n, o, t, i, f) {
