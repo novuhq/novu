@@ -74,8 +74,10 @@ export class HttpServer {
         }
 
         payLoad.forEach((param) => {
+          const regToReplace = buildReplaceReg(param);
+
           // eslint-disable-next-line no-param-reassign
-          content = content.replace(`REPLACE_WITH_${param.key}`, param.value);
+          content = content.replace(regToReplace, param.value);
         });
 
         res.writeHead(200);
@@ -85,4 +87,14 @@ export class HttpServer {
       });
     });
   }
+}
+
+function buildReplaceReg(param) {
+  let strToReplace = '';
+
+  strToReplace += 'REPLACE_WITH_';
+  if (param.key.includes('$')) strToReplace += `\\`;
+  strToReplace += param.key;
+
+  return new RegExp(strToReplace, 'g');
 }
