@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { SERVER_HOST, REDIRECT_ROUTE, WIDGET_DEMO_ROUTH, setAvailablePort, getServerPort } from '../constants';
 import { ConfigService } from '../services';
+import { AddressInfo } from 'net';
 
 export class HttpServer {
   private server: http.Server;
@@ -28,6 +29,12 @@ export class HttpServer {
     });
 
     this.server.listen(await getServerPort(), SERVER_HOST);
+  }
+
+  public getAddress() {
+    const response = this.server.address() as AddressInfo;
+
+    return `http://localhost:${response.port}`;
   }
 
   public redirectResponse(): Promise<string> {
