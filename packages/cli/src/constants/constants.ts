@@ -3,8 +3,8 @@ import * as getPort from 'get-port';
 // CLI Server
 export const SERVER_HOST = 'localhost';
 export const REDIRECT_ROUTE = '/cli/callback';
+export const WIDGET_DEMO_ROUTH = '/demo';
 export const TRIGGER_ROUTE = '/trigger';
-export const WIDGET_DEMO_ROUTH = '/widget-demo';
 
 // API
 const apiAddress = 'http://localhost:3000';

@@ -12,6 +12,7 @@ import {
   API_TRIGGER_URL,
 } from '../constants';
 import { ConfigService } from '../services';
+import { AddressInfo } from 'net';
 
 export class HttpServer {
   private server: http.Server;
@@ -40,6 +41,12 @@ export class HttpServer {
     });
 
     this.server.listen(await getServerPort(), SERVER_HOST);
+  }
+
+  public getAddress() {
+    const response = this.server.address() as AddressInfo;
+
+    return `http://${SERVER_HOST}:${response.port}`;
   }
 
   public redirectResponse(): Promise<string> {
