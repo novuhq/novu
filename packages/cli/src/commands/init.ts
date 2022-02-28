@@ -111,20 +111,21 @@ async function handleOnboardingFlow(config: ConfigService) {
 
   try {
     const answers = await prompt(introQuestions);
-    const spinner = ora('Waiting for a brave unicorn to login').start();
 
     const regMethod = await prompt(registerMethodQuestions);
 
-    try {
-      if (regMethod.value === 'github') {
-        await gitHubOAuth(httpServer, config);
-      }
-    } catch (e) {
-      spinner.fail('Something un-expected happened :(');
-      process.exit();
-    }
+    if (regMethod.value === 'github') {
+      const spinner = ora('Waiting for a brave unicorn to login').start();
 
-    spinner.stop();
+      try {
+        await gitHubOAuth(httpServer, config);
+      } catch (e) {
+        spinner.fail('Something un-expected happened :(');
+        process.exit();
+      }
+
+      spinner.stop();
+    }
 
     const setUpSpinner = ora('Setting up your new account').start();
     let applicationIdentifier: string;
@@ -133,7 +134,7 @@ async function handleOnboardingFlow(config: ConfigService) {
       await createOrganizationHandler(config, answers);
       applicationIdentifier = await createApplicationHandler(config, answers);
     } catch (e) {
-      setUpSpinner.fail('Something un-expected happend :(');
+      setUpSpinner.fail('Something un-expected happened :(');
       process.exit();
     }
 
