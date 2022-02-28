@@ -294,6 +294,11 @@ export default ((window: any) => {
   if (initCall) {
     // eslint-disable-next-line prefer-spread
     notifireApi[initCall[0]].apply(notifireApi, initCall[1]);
+
+    const onCall = window.notifire._c.find((call: string[]) => call[0] === 'on');
+    if (onCall) {
+      notifireApi[onCall[0]].apply(notifireApi, onCall[1]);
+    }
   } else {
     // eslint-disable-next-line no-param-reassign
     (window as any).notifire.init = notifire.init;
@@ -306,6 +311,6 @@ export default ((window: any) => {
 function updateInnerTextCount(element: HTMLElement, count: number) {
   element.innerText = count > 99 ? '99+' : count.toString();
   if (count > 99) {
-    (element as any).style += 'font-size: 8px;';
+    (element as any).style.fontSize = '8px';
   }
 }
