@@ -43,13 +43,6 @@ export async function initCommand() {
   try {
     await showWelcomeScreen();
 
-    const envAnswer = await prompt(environmentQuestions);
-    if (envAnswer.env === 'self-hosted-docker') {
-      await open(GITHUB_DOCKER_URL);
-
-      return;
-    }
-
     const config = new ConfigService();
     if (process.env.NODE_ENV === 'dev') {
       await config.clearStore();
@@ -111,6 +104,13 @@ async function handleOnboardingFlow(config: ConfigService) {
 
   try {
     const answers = await prompt(introQuestions);
+
+    const envAnswer = await prompt(environmentQuestions);
+    if (envAnswer.env === 'self-hosted-docker') {
+      await open(GITHUB_DOCKER_URL);
+
+      return;
+    }
 
     const regMethod = await prompt(registerMethodQuestions);
 
