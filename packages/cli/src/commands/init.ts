@@ -3,7 +3,13 @@ import { Answers } from 'inquirer';
 import * as gradient from 'gradient-string';
 import * as chalk from 'chalk';
 import * as ora from 'ora';
-import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto, IJwtPayload } from '@notifire/shared';
+import {
+  ChannelCTATypeEnum,
+  ChannelTypeEnum,
+  IApplication,
+  ICreateNotificationTemplateDto,
+  IJwtPayload,
+} from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -58,7 +64,7 @@ export async function initCommand() {
 
   console.log(chalk.bold(items.join('\n')));
   console.log(chalk.bold(`                      Welcome to NOTU`));
-  console.log(chalk.bold(turboGradient(`         The open-source notification infrastructure\n`)));
+  console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
   console.log(chalk.bold(`Now let's setup your account and send a first notification`));
 
   const existingApplication = await checkExistingApplication(config);
