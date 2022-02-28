@@ -874,6 +874,7 @@ importers:
       '@notifire/shared': ^0.3.5
       '@types/configstore': ^5.0.1
       '@types/inquirer': ^8.2.0
+      '@types/ora': ^3.2.0
       axios: ^0.25.0
       chalk: 4.1.2
       configstore: ^5.0.0
@@ -888,6 +889,7 @@ importers:
       typescript: ^4.5.5
     dependencies:
       '@notifire/shared': link:../../libs/shared
+      '@types/ora': 3.2.0
       axios: 0.25.0
       chalk: 4.1.2
       configstore: 5.0.1
@@ -14105,6 +14107,13 @@ packages:
     dependencies:
       '@types/node': 17.0.5
     dev: true
+
+  /@types/ora/3.2.0:
+    resolution: {integrity: sha512-jll99xUKpiFbIFZSQcxm4numfsLaOWBzWNaRk3PvTSE7BPqTzzOCFmS0mQ7m8qkTfmYhuYbehTGsxkvRLPC++w==}
+    deprecated: This is a stub types definition. ora provides its own type definitions, so you do not need this installed.
+    dependencies:
+      ora: 5.4.1
+    dev: false
 
   /@types/overlayscrollbars/1.12.1:
     resolution: {integrity: sha512-V25YHbSoKQN35UasHf0EKD9U2vcmexRSp78qa8UglxFH8H3D+adEa9zGZwrqpH4TdvqeMrgMqVqsLB4woAryrQ==}

@@ -23,6 +23,9 @@ export const API_TRIGGER_URL = `${apiAddress}/v1/events/trigger`;
 // Client
 export const CLIENT_LOGIN_URL = 'http://localhost:4200/auth/login';
 
+// github
+export const GITHUB_DOCKER_URL = 'https://github.com/notifirehq/notifire/tree/main/docker';
+
 let SERVER_PORT;
 
 export async function setAvailablePort() {
