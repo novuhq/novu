@@ -3,13 +3,7 @@ import { Answers } from 'inquirer';
 import * as gradient from 'gradient-string';
 import * as chalk from 'chalk';
 import * as ora from 'ora';
-import {
-  ChannelCTATypeEnum,
-  ChannelTypeEnum,
-  IApplication,
-  ICreateNotificationTemplateDto,
-  IJwtPayload,
-} from '@notifire/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
 import { environmentQuestions, existingSessionQuestions, introQuestions, registerMethodQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -195,7 +189,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
   const decodedToken = config.getDecodedToken();
   const demoDashboardUrl = await getDemoDashboardUrl();
 
-  storeTriggerPayload(config, createNotificationTemplatesResponse, decodedToken);
+  storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, applicationIdentifier);
 
   await open(demoDashboardUrl);
 }
@@ -232,7 +226,12 @@ async function getDemoDashboardUrl() {
   return `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTH}`;
 }
 
-function storeTriggerPayload(config: ConfigService, createNotificationTemplatesResponse, decodedToken) {
+function storeDashboardData(
+  config: ConfigService,
+  createNotificationTemplatesResponse,
+  decodedToken,
+  applicationIdentifier: string
+) {
   const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
   const tmpPayload: { key: string; value: string }[] = [
@@ -243,7 +242,7 @@ function storeTriggerPayload(config: ConfigService, createNotificationTemplatesR
     { key: '$first_name', value: decodedToken.firstName },
     { key: '$last_name', value: decodedToken.lastName },
     { key: '$email', value: decodedToken.email },
-    { key: 'applicationId', value: decodedToken.applicationId },
+    { key: 'applicationId', value: applicationIdentifier },
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },
   ];
