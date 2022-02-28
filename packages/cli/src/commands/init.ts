@@ -5,7 +5,7 @@ import * as chalk from 'chalk';
 import * as ora from 'ora';
 import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
-import { promptIntroQuestions } from './init.consts';
+import { environmentQuestions, existingSessionQuestions, introQuestions, registerMethodQuestions } from './init.consts';
 import { HttpServer } from '../server';
 import {
   SERVER_HOST,
@@ -15,6 +15,7 @@ import {
   API_TRIGGER_URL,
   CLIENT_LOGIN_URL,
   getServerPort,
+  GITHUB_DOCKER_URL,
 } from '../constants';
 import {
   storeHeader,
@@ -33,11 +34,35 @@ const textGradient = gradient('#0099F7', '#ff3432');
 const logoGradient = gradient('#DD2476', '#FF512F');
 
 export async function initCommand() {
-  const config = new ConfigService();
-  if (process.env.NODE_ENV === 'dev') {
-    await config.clearStore();
-  }
+  try {
+    await showWelcomeScreen();
 
+    const config = new ConfigService();
+    if (process.env.NODE_ENV === 'dev') {
+      await config.clearStore();
+    }
+
+    const existingApplication = await checkExistingApplication(config);
+    if (existingApplication) {
+      const { result } = await prompt(existingSessionQuestions(existingApplication));
+
+      if (result !== 'create-new-acc') {
+        await handleExistingSession(result, config);
+
+        return;
+      }
+
+      await config.clearStore();
+    }
+
+    await handleOnboardingFlow(config);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+  }
+}
+
+export async function showWelcomeScreen() {
   const logo = `
                         @@@@@@@@@@@@@        
                 @@@       @@@@@@@@@@@        
@@ -56,64 +81,46 @@ export async function initCommand() {
 
   const items = logo.split('\n').map((row) => logoGradient(row));
 
+  /* eslint-disable no-console */
   console.log(chalk.bold(items.join('\n')));
   console.log(chalk.bold(`                      Welcome to NOTU`));
   console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
   console.log(chalk.bold(`Now let's setup your account and send a first notification`));
-
-  const existingApplication = await checkExistingApplication(config);
-  if (existingApplication) {
-    const result = await handleExistingSession(config, existingApplication);
-
-    if (result === 'new') {
-      await config.clearStore();
-    } else if (result === 'visitDashboard') {
-      const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
-
-      await open(dashboardURL);
-
-      return;
-    } else if (result === 'exit') {
-      process.exit();
-
-      return;
-    }
-  }
-
-  await handleOnboardingFlow(config);
+  /* eslint-enable  no-console */
 }
 
 async function handleOnboardingFlow(config: ConfigService) {
   const httpServer = new HttpServer();
 
   await httpServer.listen();
+  let spinner: ora.Ora = null;
 
   try {
-    const answers = await prompt(promptIntroQuestions);
-    const spinner = ora('Waiting for a brave unicorn to login').start();
+    const answers = await prompt(introQuestions);
 
-    try {
+    const envAnswer = await prompt(environmentQuestions);
+    if (envAnswer.env === 'self-hosted-docker') {
+      await open(GITHUB_DOCKER_URL);
+
+      return;
+    }
+
+    const regMethod = await prompt(registerMethodQuestions);
+
+    if (regMethod.value === 'github') {
+      spinner = ora('Waiting for a brave unicorn to login').start();
       await gitHubOAuth(httpServer, config);
-    } catch (e) {
-      spinner.fail('Something un-expected happend :(');
-      process.exit();
+      spinner.stop();
     }
-    spinner.stop();
 
-    const setUpSpinner = ora('Setting up your new account').start();
-    let applicationIdentifier: string;
+    spinner = ora('Setting up your new account').start();
 
-    try {
-      await createOrganizationHandler(config, answers);
-      applicationIdentifier = await createApplicationHandler(config, answers);
-    } catch (e) {
-      setUpSpinner.fail('Something un-expected happend :(');
-      process.exit();
-    }
+    await createOrganizationHandler(config, answers);
+    const applicationIdentifier = await createApplicationHandler(config, answers);
 
     const address = httpServer.getAddress();
 
-    setUpSpinner.succeed(`Created your account successfully. 
+    spinner.succeed(`Created your account successfully. 
   Visit: ${address}/demo to continue`);
 
     await raiseDemoDashboard(httpServer, config, applicationIdentifier);
@@ -122,7 +129,10 @@ async function handleOnboardingFlow(config: ConfigService) {
     // eslint-disable-next-line no-console
     console.error(error);
   } finally {
+    spinner?.fail('Something un-expected happened :(');
+    spinner?.stop();
     httpServer.close();
+    process.exit();
   }
 }
 
@@ -285,28 +295,12 @@ async function checkExistingApplication(config: ConfigService): Promise<IApplica
   return null;
 }
 
-async function handleExistingSession(config: ConfigService, existingApplication: IApplication) {
-  const { result } = await prompt([
-    {
-      type: 'list',
-      name: 'result',
-      message: `Looks like you already have a created an account for ${existingApplication.name}`,
-      choices: [
-        {
-          name: `Visit ${existingApplication.name} Dashboard`,
-          value: 'visitDashboard',
-        },
-        {
-          name: 'Create New Account',
-          value: 'new',
-        },
-        {
-          name: 'Cancel',
-          value: 'exit',
-        },
-      ],
-    },
-  ]);
+async function handleExistingSession(result: string, config: ConfigService) {
+  if (result === 'visitDashboard') {
+    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
-  return result;
+    await open(dashboardURL);
+  } else if (result === 'exit') {
+    process.exit();
+  }
 }
