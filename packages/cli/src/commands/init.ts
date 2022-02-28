@@ -35,7 +35,7 @@ import {
 } from '../api';
 import { ConfigService } from '../services';
 
-const textGradient = gradient('#0099F7', '#F11712');
+const textGradient = gradient('#0099F7', '#ff3432');
 const logoGradient = gradient('#DD2476', '#FF512F');
 
 export async function initCommand() {
@@ -275,7 +275,7 @@ async function checkExistingApplication(config: ConfigService): Promise<IApplica
         return null;
       }
     } catch (e) {
-      config.clearStore();
+      await config.clearStore();
 
       return null;
     }
