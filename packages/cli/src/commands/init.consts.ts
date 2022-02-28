@@ -28,10 +28,6 @@ export const existingSessionQuestions = (existingApplication): ListQuestionOptio
           value: 'visitDashboard',
         },
         {
-          name: 'Create New Account',
-          value: 'create-new-acc',
-        },
-        {
           name: 'Cancel',
           value: 'exit',
         },

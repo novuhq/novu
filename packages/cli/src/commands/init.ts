@@ -52,13 +52,15 @@ export async function initCommand() {
     if (existingApplication) {
       const { result } = await prompt(existingSessionQuestions(existingApplication));
 
-      if (result !== 'create-new-acc') {
+      if (result === 'visitDashboard') {
         await handleExistingSession(result, config);
 
         return;
       }
 
-      await config.clearStore();
+      process.exit();
+
+      return;
     }
 
     await handleOnboardingFlow(config);
