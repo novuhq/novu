@@ -52,7 +52,7 @@ export async function initCommand() {
     if (existingApplication) {
       const { result } = await prompt(existingSessionQuestions(existingApplication));
 
-      if (result !== 'new') {
+      if (result !== 'create-new-acc') {
         await handleExistingSession(result, config);
 
         return;
@@ -87,14 +87,12 @@ export async function showWelcomeScreen() {
 
   const items = logo.split('\n').map((row) => logoGradient(row));
 
-  // eslint-disable-next-line no-console
+  /* eslint-disable no-console */
   console.log(chalk.bold(items.join('\n')));
-  // eslint-disable-next-line no-console
   console.log(chalk.bold(`                      Welcome to NOTU`));
-  // eslint-disable-next-line no-console
   console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
-  // eslint-disable-next-line no-console
   console.log(chalk.bold(`Now let's setup your account and send a first notification`));
+  /* eslint-enable  no-console */
 }
 
 async function handleOnboardingFlow(config: ConfigService) {

@@ -29,7 +29,7 @@ export const existingSessionQuestions = (existingApplication): ListQuestionOptio
         },
         {
           name: 'Create New Account',
-          value: 'new',
+          value: 'create-new-acc',
         },
         {
           name: 'Cancel',
