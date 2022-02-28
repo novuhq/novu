@@ -1,12 +1,9 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
-import {
-  ChannelCTATypeEnum,
-  ChannelTypeEnum,
-  IApplication,
-  ICreateNotificationTemplateDto,
-  IJwtPayload,
-} from '@notifire/shared';
+import * as gradient from 'gradient-string';
+import * as chalk from 'chalk';
+import * as ora from 'ora';
+import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto, IJwtPayload } from '@notifire/shared';
 import { prompt } from '../client';
 import { environmentQuestions, existingSessionQuestions, introQuestions, registerMethodQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -33,6 +30,9 @@ import {
 } from '../api';
 import { ConfigService } from '../services';
 
+const textGradient = gradient('#0099F7', '#F11712');
+const logoGradient = gradient('#DD2476', '#FF512F');
+
 export async function initCommand() {
   try {
     const envAnswer = await prompt(environmentQuestions);
@@ -48,6 +48,37 @@ export async function initCommand() {
       await config.clearStore();
     }
 
+  const logo = `
+                        @@@@@@@@@@@@@        
+                @@@       @@@@@@@@@@@        
+              @@@@@@@@      (@@@@@@@@        
+            @@@@@@@@@@@@       @@@@@@     @@ 
+           @@@@@@@@@@@@@@@@      @@@@     @@@
+           @@@@@@@@&@@@@@@@@@       @     @@@
+          @@@@@         @@@@@@@@         @@@@
+           @@@     @       @@@@@@@@@@@@@@@@@@
+           @@@    .@@@@      @@@@@@@@@@@@@@@@
+            @@    .@@@@@@       @@@@@@@@@@@@ 
+                  .@@@@@@@@,      @@@@@@@@   
+                  .@@@@@@@@@@@       @@@     
+                   @@@@@@@@@@@@@                  
+                          `;
+
+  const items = logo.split('\n').map((row) => logoGradient(row));
+
+  console.log(chalk.bold(items.join('\n')));
+  console.log(chalk.bold(`                      Welcome to NOTU`));
+  console.log(chalk.bold(turboGradient(`         The open-source notification infrastructure\n`)));
+  console.log(chalk.bold(`Now let's setup your account and send a first notification`));
+
+  const existingApplication = await checkExistingApplication(config);
+  if (existingApplication) {
+    const { result } = await handleExistingSession(config, existingApplication);
+
+    if (result === 'new') {
+      config.clearStore();
+    } else if (result === 'visitDashboard') {
+      const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
     const existingApplication = await checkExistingApplication(config);
 
     if (existingApplication) {
@@ -75,15 +106,36 @@ async function handleOnboardingFlow(config: ConfigService) {
 
   try {
     const answers = await prompt(introQuestions);
+    const spinner = ora('Waiting for a brave unicorn to login').start();
 
     const regMethod = await prompt(registerMethodQuestions);
 
-    if (regMethod.value === 'github') {
-      await gitHubOAuth(httpServer, config);
+    try {
+      if (regMethod.value === 'github') {
+        await gitHubOAuth(httpServer, config);
+      }
+    } catch (e) {
+      spinner.fail('Something un-expected happend :(');
+      process.exit();
     }
-    await createOrganizationHandler(config, answers);
 
-    const applicationIdentifier = await createApplicationHandler(config, answers);
+    spinner.stop();
+
+    const setUpSpinner = ora('Setting up your new account').start();
+    let applicationIdentifier: string;
+
+    try {
+      await createOrganizationHandler(config, answers);
+      applicationIdentifier = await createApplicationHandler(config, answers);
+    } catch (e) {
+      setUpSpinner.fail('Something un-expected happend :(');
+      process.exit();
+    }
+
+    const address = httpServer.getAddress();
+
+    setUpSpinner.succeed(`Created your account successfully. 
+  Visit: ${address}/demo to continue`);
 
     await raiseDemoDashboard(httpServer, config, applicationIdentifier);
     await exitHandler();
@@ -146,11 +198,11 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
   const createNotificationTemplatesResponse = await createNotificationTemplates(template);
 
   const decodedToken = config.getDecodedToken();
-  const demoDashboardUrl = await buildDemoDashboardUrl(applicationIdentifier, decodedToken, config);
+  const demoDashboardUrl = await getDemoDashboardUrl();
 
   storeTriggerPayload(config, createNotificationTemplatesResponse, decodedToken);
 
-  await open(demoDashboardUrl.join(''));
+  await open(demoDashboardUrl);
 }
 
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
@@ -181,15 +233,8 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
   };
 }
 
-async function buildDemoDashboardUrl(applicationIdentifier: string, decodedToken: IJwtPayload, config: ConfigService) {
-  return [
-    `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTH}?`,
-    `applicationId=${applicationIdentifier}&`,
-    `userId=${decodedToken._id}&`,
-    `apiKey=${config.getValue('apiKey')}&`,
-    `$first_name=${decodedToken.firstName}&`,
-    `$last_name=${decodedToken.lastName}`,
-  ];
+async function getDemoDashboardUrl() {
+  return `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTH}`;
 }
 
 function storeTriggerPayload(config: ConfigService, createNotificationTemplatesResponse, decodedToken) {
@@ -203,6 +248,7 @@ function storeTriggerPayload(config: ConfigService, createNotificationTemplatesR
     { key: '$first_name', value: decodedToken.firstName },
     { key: '$last_name', value: decodedToken.lastName },
     { key: '$email', value: decodedToken.email },
+    { key: 'applicationId', value: decodedToken.applicationId },
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },
   ];
@@ -219,11 +265,7 @@ function storeToken(config: ConfigService, userJwt: string) {
 }
 
 async function exitHandler(): Promise<void> {
-  // eslint-disable-next-line no-console
-  console.log('Program still running, press any key to exit');
   await keyPress();
-  // eslint-disable-next-line no-console
-  console.log('See you in the admin panel :)');
 }
 
 const keyPress = async (): Promise<void> => {

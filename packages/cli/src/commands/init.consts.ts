@@ -1,5 +1,6 @@
 import { providers } from '@notifire/shared';
 import { ListQuestionOptions } from 'inquirer';
+import * as chalk from 'chalk';
 
 export const introQuestions: ListQuestionOptions[] = [
   {
@@ -11,7 +12,7 @@ export const introQuestions: ListQuestionOptions[] = [
     type: 'checkbox',
     name: 'providers',
     message: 'What delivery providers you are using? (Optional)',
-    choices: providers.map((provider) => `${provider.displayName} (${provider.type})`),
+    choices: providers.map((provider) => `${provider.displayName} ${chalk.dim(`(${provider.type})`)}`),
   },
 ];
 
