@@ -3,7 +3,13 @@ import { Answers } from 'inquirer';
 import * as gradient from 'gradient-string';
 import * as chalk from 'chalk';
 import * as ora from 'ora';
-import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto, IJwtPayload } from '@notifire/shared';
+import {
+  ChannelCTATypeEnum,
+  ChannelTypeEnum,
+  IApplication,
+  ICreateNotificationTemplateDto,
+  IJwtPayload,
+} from '@notifire/shared';
 import { prompt } from '../client';
 import { environmentQuestions, existingSessionQuestions, introQuestions, registerMethodQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -42,13 +48,13 @@ export async function initCommand() {
 
       return;
     }
-    const config = new ConfigService();
 
+    const config = new ConfigService();
     if (process.env.NODE_ENV === 'dev') {
       await config.clearStore();
     }
 
-  const logo = `
+    const logo = `
                         @@@@@@@@@@@@@        
                 @@@       @@@@@@@@@@@        
               @@@@@@@@      (@@@@@@@@        
@@ -64,23 +70,18 @@ export async function initCommand() {
                    @@@@@@@@@@@@@                  
                           `;
 
-  const items = logo.split('\n').map((row) => logoGradient(row));
+    const items = logo.split('\n').map((row) => logoGradient(row));
 
-  console.log(chalk.bold(items.join('\n')));
-  console.log(chalk.bold(`                      Welcome to NOTU`));
-  console.log(chalk.bold(turboGradient(`         The open-source notification infrastructure\n`)));
-  console.log(chalk.bold(`Now let's setup your account and send a first notification`));
+    // eslint-disable-next-line no-console
+    console.log(chalk.bold(items.join('\n')));
+    // eslint-disable-next-line no-console
+    console.log(chalk.bold(`                      Welcome to NOTU`));
+    // eslint-disable-next-line no-console
+    console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
+    // eslint-disable-next-line no-console
+    console.log(chalk.bold(`Now let's setup your account and send a first notification`));
 
-  const existingApplication = await checkExistingApplication(config);
-  if (existingApplication) {
-    const { result } = await handleExistingSession(config, existingApplication);
-
-    if (result === 'new') {
-      config.clearStore();
-    } else if (result === 'visitDashboard') {
-      const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
     const existingApplication = await checkExistingApplication(config);
-
     if (existingApplication) {
       const { result } = await prompt(existingSessionQuestions(existingApplication));
 
@@ -89,6 +90,7 @@ export async function initCommand() {
 
         return;
       }
+
       await config.clearStore();
     }
 
@@ -115,7 +117,7 @@ async function handleOnboardingFlow(config: ConfigService) {
         await gitHubOAuth(httpServer, config);
       }
     } catch (e) {
-      spinner.fail('Something un-expected happend :(');
+      spinner.fail('Something un-expected happened :(');
       process.exit();
     }
 
