@@ -71,7 +71,7 @@ export const registerMethodQuestions: ListQuestionOptions[] = [
       {
         name: 'Email & Password',
         value: 'in-cli',
-        disabled: '(Coming soon)',
+        disabled: 'Coming soon',
       },
     ],
   },
