@@ -36,7 +36,7 @@ import {
 } from '../api';
 import { ConfigService } from '../services';
 
-const textGradient = gradient('#0099F7', '#F11712');
+const textGradient = gradient('#0099F7', '#ff3432');
 const logoGradient = gradient('#DD2476', '#FF512F');
 
 export async function initCommand() {
@@ -91,10 +91,32 @@ export async function showWelcomeScreen() {
   console.log(chalk.bold(items.join('\n')));
   // eslint-disable-next-line no-console
   console.log(chalk.bold(`                      Welcome to NOTU`));
+  console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
   // eslint-disable-next-line no-console
   console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
   // eslint-disable-next-line no-console
   console.log(chalk.bold(`Now let's setup your account and send a first notification`));
+
+  const existingApplication = await checkExistingApplication(config);
+  if (existingApplication) {
+    const result = await handleExistingSession(config, existingApplication);
+
+    if (result === 'new') {
+      config.clearStore();
+    } else if (result === 'visitDashboard') {
+      const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+
+      await open(dashboardURL);
+
+      return;
+    } else if (result === 'exit') {
+      process.exit();
+
+      return;
+    }
+  }
+
+  await handleOnboardingFlow(config);
 }
 
 async function handleOnboardingFlow(config: ConfigService) {
@@ -287,7 +309,7 @@ async function checkExistingApplication(config: ConfigService): Promise<IApplica
         return null;
       }
     } catch (e) {
-      config.clearStore();
+      await config.clearStore();
 
       return null;
     }

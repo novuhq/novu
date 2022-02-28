@@ -4,6 +4,7 @@ import * as getPort from 'get-port';
 export const SERVER_HOST = 'localhost';
 export const REDIRECT_ROUTE = '/cli/callback';
 export const WIDGET_DEMO_ROUTH = '/demo';
+export const TRIGGER_ROUTE = '/trigger';
 
 // API
 const apiAddress = 'http://localhost:3000';
