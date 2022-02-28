@@ -306,6 +306,6 @@ export default ((window: any) => {
 function updateInnerTextCount(element: HTMLElement, count: number) {
   element.innerText = count > 99 ? '99+' : count.toString();
   if (count > 99) {
-    (element as any).style += 'font-size: 8px;';
+    (element as any).style.fontSize = '8px';
   }
 }
