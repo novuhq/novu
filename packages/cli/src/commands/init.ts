@@ -3,7 +3,7 @@ import { Answers } from 'inquirer';
 import * as gradient from 'gradient-string';
 import * as chalk from 'chalk';
 import * as ora from 'ora';
-import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto, IJwtPayload } from '@notifire/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
 import { promptIntroQuestions } from './init.consts';
 import { HttpServer } from '../server';
@@ -58,7 +58,7 @@ export async function initCommand() {
 
   console.log(chalk.bold(items.join('\n')));
   console.log(chalk.bold(`                      Welcome to NOTU`));
-  console.log(chalk.bold(turboGradient(`         The open-source notification infrastructure\n`)));
+  console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
   console.log(chalk.bold(`Now let's setup your account and send a first notification`));
 
   const existingApplication = await checkExistingApplication(config);
@@ -66,7 +66,7 @@ export async function initCommand() {
     const result = await handleExistingSession(config, existingApplication);
 
     if (result === 'new') {
-      config.clearStore();
+      await config.clearStore();
     } else if (result === 'visitDashboard') {
       const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
@@ -179,7 +179,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
   const decodedToken = config.getDecodedToken();
   const demoDashboardUrl = await getDemoDashboardUrl();
 
-  storeTriggerPayload(config, createNotificationTemplatesResponse, decodedToken);
+  storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, applicationIdentifier);
 
   await open(demoDashboardUrl);
 }
@@ -216,7 +216,12 @@ async function getDemoDashboardUrl() {
   return `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTH}`;
 }
 
-function storeTriggerPayload(config: ConfigService, createNotificationTemplatesResponse, decodedToken) {
+function storeDashboardData(
+  config: ConfigService,
+  createNotificationTemplatesResponse,
+  decodedToken,
+  applicationIdentifier: string
+) {
   const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
   const tmpPayload: { key: string; value: string }[] = [
@@ -227,7 +232,7 @@ function storeTriggerPayload(config: ConfigService, createNotificationTemplatesR
     { key: '$first_name', value: decodedToken.firstName },
     { key: '$last_name', value: decodedToken.lastName },
     { key: '$email', value: decodedToken.email },
-    { key: 'applicationId', value: decodedToken.applicationId },
+    { key: 'applicationId', value: applicationIdentifier },
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },
   ];
@@ -269,7 +274,7 @@ async function checkExistingApplication(config: ConfigService): Promise<IApplica
         return null;
       }
     } catch (e) {
-      config.clearStore();
+      await config.clearStore();
 
       return null;
     }
