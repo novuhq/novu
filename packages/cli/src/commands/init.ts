@@ -101,6 +101,7 @@ async function handleOnboardingFlow(config: ConfigService) {
   const httpServer = new HttpServer();
 
   await httpServer.listen();
+  let spinner: ora.Ora = null;
 
   try {
     const answers = await prompt(introQuestions);
@@ -115,32 +116,19 @@ async function handleOnboardingFlow(config: ConfigService) {
     const regMethod = await prompt(registerMethodQuestions);
 
     if (regMethod.value === 'github') {
-      const spinner = ora('Waiting for a brave unicorn to login').start();
-
-      try {
-        await gitHubOAuth(httpServer, config);
-      } catch (e) {
-        spinner.fail('Something un-expected happened :(');
-        process.exit();
-      }
-
+      spinner = ora('Waiting for a brave unicorn to login').start();
+      await gitHubOAuth(httpServer, config);
       spinner.stop();
     }
 
-    const setUpSpinner = ora('Setting up your new account').start();
-    let applicationIdentifier: string;
+    spinner = ora('Setting up your new account').start();
 
-    try {
-      await createOrganizationHandler(config, answers);
-      applicationIdentifier = await createApplicationHandler(config, answers);
-    } catch (e) {
-      setUpSpinner.fail('Something un-expected happened :(');
-      process.exit();
-    }
+    await createOrganizationHandler(config, answers);
+    const applicationIdentifier = await createApplicationHandler(config, answers);
 
     const address = httpServer.getAddress();
 
-    setUpSpinner.succeed(`Created your account successfully. 
+    spinner.succeed(`Created your account successfully. 
   Visit: ${address}/demo to continue`);
 
     await raiseDemoDashboard(httpServer, config, applicationIdentifier);
@@ -149,7 +137,10 @@ async function handleOnboardingFlow(config: ConfigService) {
     // eslint-disable-next-line no-console
     console.error(error);
   } finally {
+    spinner?.fail('Something un-expected happened :(');
+    spinner?.stop();
     httpServer.close();
+    process.exit();
   }
 }
 
