@@ -1,4 +1,4 @@
-import { ProviderEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@notifire/shared';
 
 interface ICredentials {
   apiKey: string;
@@ -14,7 +14,9 @@ export class IntegrationEntity {
 
   providerId: string;
 
-  channel: ProviderEnum;
+  channel: ChannelTypeEnum;
 
-  credentials: ICredentials[];
+  credentials: ICredentials;
+
+  active: boolean;
 }

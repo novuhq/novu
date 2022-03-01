@@ -21,6 +21,7 @@ const integrationSchema = new Schema(
       apiKey: Schema.Types.String,
       secretKey: Schema.Types.String,
     },
+    active: Schema.Types.Boolean,
   },
   schemaOptions
 );
@@ -32,4 +33,4 @@ interface IIntegrationDocument extends IntegrationEntity, Document {
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Integration =
-  mongoose.models.Integration || mongoose.model<IIntegrationDocument>('Application', integrationSchema);
+  mongoose.models.Integration || mongoose.model<IIntegrationDocument>('Integration', integrationSchema);
