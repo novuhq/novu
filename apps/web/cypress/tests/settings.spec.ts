@@ -1,28 +1,27 @@
-describe.skip('Settings Screen', function () {
+describe('Settings Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
     cy.visit('/settings/widget');
     cy.intercept('*/channels/email/settings').as('updateEmailSettings');
     cy.intercept('*/channels/sms/settings').as('updateSmsSettings');
     cy.intercept('*/applications/branding').as('updateBrandingSettings');
-
   });
 
   it('should update the twilio credentials', function () {
-    cy.get('.ant-tabs-tab-btn').contains('SMS').click();
+    cy.get('.mantine-Tabs-tabsList').contains('SMS').click();
     cy.getByTestId('account-sid').clear().type('12345');
     cy.getByTestId('auth-token').clear().type('56789');
     cy.getByTestId('phone-number').clear().type('+1111111');
     cy.getByTestId('submit-update-settings').click();
     cy.wait('@updateSmsSettings');
     cy.reload();
-    cy.get('.ant-tabs-tab-btn').contains('SMS').click();
+    cy.get('.mantine-Tabs-tabsList').contains('SMS').click();
     cy.getByTestId('auth-token').should('have.value', '56789');
     cy.getByTestId('account-sid').should('have.value', '12345');
   });
 
   it('should display the embed code successfully', function () {
-    cy.get('.ant-tabs-tab-btn').contains('In App Center').click();
+    cy.get('.mantine-Tabs-tabsList').contains('In App Center').click();
 
     cy.getByTestId('embed-code-snippet').then(function (a) {
       expect(a).to.contain(this.session.application.identifier);
@@ -31,24 +30,24 @@ describe.skip('Settings Screen', function () {
   });
 
   it('should display the api key of the app', function () {
-    cy.get('.ant-tabs-tab-btn').contains('Api Keys').click();
-    cy.getByTestId('api-key-container').contains(this.session.application.apiKeys[0].key);
+    cy.get('.mantine-Tabs-tabsList').contains('Api Keys').click();
+    cy.getByTestId('api-key-container').should('have.value', this.session.application.apiKeys[0].key);
   });
 
   it('should update the email channel senderEmail', function () {
-    cy.get('.ant-tabs-tab-btn').contains('Email settings').click();
+    cy.get('.mantine-Tabs-tabsList').contains('Email Settings').click();
     cy.getByTestId('sender-email').type('new-testing@email.com');
     cy.getByTestId('sender-name').type('Test Sender Name');
     cy.getByTestId('submit-update-settings').click();
     cy.wait('@updateEmailSettings');
     cy.reload();
 
-    cy.get('.ant-tabs-tab-btn').contains('Email settings').click();
+    cy.get('.mantine-Tabs-tabsList').contains('Email Settings').click();
     cy.getByTestId('sender-email').should('have.value', 'new-testing@email.com');
     cy.getByTestId('sender-name').should('have.value', 'Test Sender Name');
   });
 
-  it('should update logo', function () {
+  it.skip('should update logo', function () {
     cy.fixture('test-logo.png').then((fileContent) => {
       cy.getByTestId('upload-image-button').attachFile({
         fileContent: b64toBlob(fileContent),
