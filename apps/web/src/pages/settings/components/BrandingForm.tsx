@@ -160,7 +160,7 @@ export function BrandingForm({
     <>
       <LoadingOverlay visible={isLoading} />
       <form onSubmit={handleSubmit(saveBrandsForm)}>
-        <Group mt={0} align="flex-start">
+        <Group grow spacing={50} mt={0} align="flex-start">
           <Container ml={0} padding={0} sx={{ paddingTop: '41px' }}>
             <Title size={2}>In-App Widget Customizations</Title>
             <Space h={40} />
@@ -258,7 +258,7 @@ export function BrandingForm({
                   description="Will be used to style emails and inbox experience"
                   styles={inputStyles}
                   disallowInput
-                  data-test-id="color-picker-value"
+                  data-test-id="color-picker"
                   {...field}
                 />
               )}
@@ -267,7 +267,7 @@ export function BrandingForm({
             />
           </Container>
         </Group>
-        <Button submit mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
+        <Button submit mb={20} mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
           Update
         </Button>
       </form>

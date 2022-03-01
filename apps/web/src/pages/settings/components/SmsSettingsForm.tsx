@@ -37,7 +37,7 @@ export function SmsSettingsForm({ application, refetch }: { application: IApplic
   });
 
   return (
-    <Container ml={0} padding={0} sx={{ paddingTop: '41px' }}>
+    <Container mb={20} ml={0} padding={0} sx={{ paddingTop: '41px' }}>
       <Title size={2}>Twillio Integration Details</Title>
       <Space h={35} />
       <form onSubmit={handleSubmit(onSmsSettingsSubmit)}>

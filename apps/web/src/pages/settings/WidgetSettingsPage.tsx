@@ -51,7 +51,7 @@ export function WidgetSettingsPage() {
     {
       label: 'In App Center',
       content: (
-        <Container ml={0} padding={0} sx={{ paddingTop: '41px' }}>
+        <Container mb={20} ml={0} padding={0} sx={{ paddingTop: '41px' }}>
           <Title size={2}>In-App Widget Embed Code</Title>
           <Space h={35} />
           <Text weight="bold">Copy this snippet to your code before the closing body tag.</Text>
@@ -86,7 +86,7 @@ export function WidgetSettingsPage() {
     {
       label: 'Api Keys',
       content: (
-        <Container ml={0} padding={0} sx={{ paddingTop: '41px' }}>
+        <Container ml={0} mb={20} padding={0} sx={{ paddingTop: '41px' }}>
           <Title size={2}>Api Keys</Title>
           <Space h={35} />
           <Input
