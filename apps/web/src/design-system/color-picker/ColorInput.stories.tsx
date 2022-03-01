@@ -1,10 +1,10 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { ColorPicker } from './ColorPicker';
+import { ColorInput } from './ColorInput';
 
 export default {
-  title: 'Inputs/ColorPicker',
-  component: ColorPicker,
+  title: 'Inputs/ColorInput',
+  component: ColorInput,
   argTypes: {
     value: {
       table: {
@@ -17,12 +17,12 @@ export default {
       },
     },
   },
-} as ComponentMeta<typeof ColorPicker>;
+} as ComponentMeta<typeof ColorInput>;
 
-const Template: ComponentStory<typeof ColorPicker> = ({ ...args }) => <ColorPicker {...args} />;
+const Template: ComponentStory<typeof ColorInput> = ({ ...args }) => <ColorInput {...args} />;
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {
-  label: 'Notification Name',
-  placeholder: 'Notification name goes here...',
+  label: 'Font Color',
+  placeholder: 'Pick font color',
 };
