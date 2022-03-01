@@ -20,6 +20,7 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
     },
 
     tabActive: {
+      width: 'auto',
       [`& .${tabLabel}`]: {
         color: dark ? colors.white : colors.B40,
 
