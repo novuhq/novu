@@ -7,17 +7,36 @@ export class ConfigService {
   constructor() {
     this._config = new Configstore('notu-cli');
   }
+
   setValue(key: string, value: string) {
     this._config.set(key, value);
   }
+
   getValue(key: string) {
     return this._config.get(key);
   }
+
+  async clearStore() {
+    return this._config.clear();
+  }
+
   isOrganizationIdExist(): boolean {
     return !!this.getDecodedToken().organizationId;
   }
 
+  isApplicationIdExist(): boolean {
+    return !!this.getDecodedToken().applicationId;
+  }
+
+  getToken(): string {
+    return this._config.get('token');
+  }
+
   getDecodedToken(): IJwtPayload {
-    return jwt_decode(this._config.get('token'));
+    if (!this.getToken()) {
+      return null;
+    }
+
+    return jwt_decode(this.getToken());
   }
 }

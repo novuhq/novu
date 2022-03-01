@@ -1,4 +1,13 @@
-import { IsArray, IsDefined, IsEnum, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDefined,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 import {
   BuilderFieldOperator,
   BuilderFieldType,
@@ -86,4 +95,12 @@ export class CreateNotificationTemplateDto implements ICreateNotificationTemplat
   @IsArray()
   @ValidateNested()
   messages: NotificationChannelDto[];
+
+  @IsBoolean()
+  @IsOptional()
+  active?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  draft?: boolean;
 }

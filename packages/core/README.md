@@ -100,21 +100,21 @@ await notifire.trigger('<REPLACE_WITH_EVENT_NAME>', {
 Notifire provides a single API to manage providers across multiple channels with a single to use interface.
 
 #### 💌 Email
-- [x] [Sendgrid](https://github.com/notifirehq/notifire/tree/master/providers/sendgrid)
-- [x] [Mailgun](https://github.com/notifirehq/notifire/tree/master/providers/mailgun)
-- [x] [SES](https://github.com/notifirehq/notifire/tree/master/providers/ses)
-- [x] [Postmark](https://github.com/notifirehq/notifire/tree/master/providers/postmark)
-- [x] [NodeMailer](https://github.com/notifirehq/notifire/tree/master/providers/nodemailer)
-- [x] [Mailjet](https://github.com/notifirehq/notifire/tree/master/providers/mailjet)
-- [x] [Mandrill](https://github.com/notifirehq/notifire/tree/master/providers/mandrill)
+- [x] [Sendgrid](https://github.com/notifirehq/notifire/tree/main/providers/sendgrid)
+- [x] [Mailgun](https://github.com/notifirehq/notifire/tree/main/providers/mailgun)
+- [x] [SES](https://github.com/notifirehq/notifire/tree/main/providers/ses)
+- [x] [Postmark](https://github.com/notifirehq/notifire/tree/main/providers/postmark)
+- [x] [NodeMailer](https://github.com/notifirehq/notifire/tree/main/providers/nodemailer)
+- [x] [Mailjet](https://github.com/notifirehq/notifire/tree/main/providers/mailjet)
+- [x] [Mandrill](https://github.com/notifirehq/notifire/tree/main/providers/mandrill)
 - [ ] SendinBlue
 - [ ] SparkPost
 
 #### 📞 SMS
-- [x] [Twilio](https://github.com/notifirehq/notifire/tree/master/providers/twilio)
-- [x] [Plivo](https://github.com/notifirehq/notifire/tree/master/providers/plivo)
-- [x] [SNS](https://github.com/notifirehq/notifire/tree/master/providers/sns)
-- [x] Nexmo (Vonage)(https://github.com/notifirehq/notifire/tree/master/providers/nexmo)
+- [x] [Twilio](https://github.com/notifirehq/notifire/tree/main/providers/twilio)
+- [x] [Plivo](https://github.com/notifirehq/notifire/tree/main/providers/plivo)
+- [x] [SNS](https://github.com/notifirehq/notifire/tree/main/providers/sns)
+- [x] [Nexmo (Vonage)](https://github.com/notifirehq/notifire/tree/main/providers/nexmo)
 - [ ] Bandwidth
 - [ ] RingCentral
 
