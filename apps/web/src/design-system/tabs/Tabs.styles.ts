@@ -15,6 +15,8 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
 
     tabControl: {
       marginBottom: withIcon ? '30px' : '0',
+      padding: '0px',
+      height: '30px',
     },
 
     tabActive: {
@@ -59,7 +61,7 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
       ref: tabLabel,
 
       fontSize: '14px',
-      fontWeight: '800',
+      fontWeight: '700',
       color: colors.B60,
       textAlign: 'left',
     },
