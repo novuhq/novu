@@ -10,12 +10,15 @@ export class SessionInitializeBodyDto {
   applicationIdentifier: string;
 
   @IsString()
+  @IsOptional()
   $first_name: string;
 
   @IsString()
+  @IsOptional()
   $last_name: string;
 
   @IsEmail()
+  @IsOptional()
   $email: string;
 
   @IsString()

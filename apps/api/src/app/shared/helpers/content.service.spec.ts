@@ -21,12 +21,12 @@ describe('ContentService', function () {
     it('should replace multiple variables', function () {
       const variables = {
         firstName: 'Name',
-        lastName: 'Last Name',
+        $last_name: 'Last Name',
       };
 
       const contentService = new ContentService();
       const modified = contentService.replaceVariables(
-        '{{firstName}} is the first {{lastName}} of {{firstName}}',
+        '{{firstName}} is the first {{$last_name}} of {{firstName}}',
         variables
       );
       expect(modified).to.equal('Name is the first Last Name of Name');

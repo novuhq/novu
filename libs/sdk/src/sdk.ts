@@ -169,18 +169,6 @@ class Notifire {
     if (!document.getElementById(IFRAME_ID)) {
       const iframe = document.createElement('iframe');
       iframe.onload = () => {
-        this.iframe?.contentWindow?.postMessage(
-          {
-            type: EventTypes.INIT_IFRAME,
-            value: {
-              clientId: this.clientId,
-              topHost: window.location.host,
-              data: options,
-            },
-          },
-          '*'
-        );
-
         (iFrameResize as any).iframeResize(
           {
             log: false,
@@ -189,7 +177,7 @@ class Notifire {
               if (message.type === 'unseen_count_changed') {
                 if (this.selector) {
                   const parentSel = document.querySelector(`${this.selector}`);
-                  const sel = document.querySelector(`${this.selector} .ntf-counter`);
+                  const sel = document.querySelector(`${this.selector} .ntf-counter`) as HTMLElement;
                   if (!sel) {
                     if (message.count) {
                       let span = document.createElement('span') as HTMLElement;
@@ -202,11 +190,7 @@ class Notifire {
                         'top: 0; left: 10px; text-align: center; width: 13px; height: 13px; font-size: 9px; line-height: 14px; border-radius: 100%; color: white; background: red; overflow: hidden; z-index: 1000; display: inline-block; ' +
                         (span as any).style;
 
-                      span.innerText = message.count > 99 ? '99+' : message.count;
-
-                      if (message.count > 99) {
-                        (span as any).style += 'font-size: 8px;';
-                      }
+                      updateInnerTextCount(span, message.count);
 
                       if (parentSel) {
                         (parentSel as any).style.position = 'relative';
@@ -215,7 +199,13 @@ class Notifire {
                     }
                   } else if (!message.count) {
                     sel.remove();
+                  } else if (sel) {
+                    updateInnerTextCount(sel, message.count);
                   }
+                }
+
+                if (this.listeners.on_notification_count_change) {
+                  this.listeners.on_notification_count_change(message.count);
                 }
               } else if (message.type === 'url_change') {
                 window.location.href = message.url;
@@ -231,6 +221,18 @@ class Notifire {
             sizeWidth: true,
           },
           `#${IFRAME_ID}`
+        );
+
+        this.iframe?.contentWindow?.postMessage(
+          {
+            type: EventTypes.INIT_IFRAME,
+            value: {
+              clientId: this.clientId,
+              topHost: window.location.host,
+              data: options,
+            },
+          },
+          '*'
         );
       };
 
@@ -267,7 +269,9 @@ class Notifire {
       wrapper.className = 'wrapper-notifire-widget';
       wrapper.style.display = 'none';
       wrapper.id = WEASL_WRAPPER_ID;
-      (wrapper as any).style = `z-index: ${Number.MAX_SAFE_INTEGER}; width: 0; height: 0; position: relative; display: none;`;
+      (
+        wrapper as any
+      ).style = `z-index: ${Number.MAX_SAFE_INTEGER}; width: 0; height: 0; position: relative; display: none;`;
       wrapper.appendChild(this.iframe);
       document.body.appendChild(wrapper);
     }
@@ -290,6 +294,11 @@ export default ((window: any) => {
   if (initCall) {
     // eslint-disable-next-line prefer-spread
     notifireApi[initCall[0]].apply(notifireApi, initCall[1]);
+
+    const onCall = window.notifire._c.find((call: string[]) => call[0] === 'on');
+    if (onCall) {
+      notifireApi[onCall[0]].apply(notifireApi, onCall[1]);
+    }
   } else {
     // eslint-disable-next-line no-param-reassign
     (window as any).notifire.init = notifire.init;
@@ -299,4 +308,9 @@ export default ((window: any) => {
   }
 })(window);
 
-//
+function updateInnerTextCount(element: HTMLElement, count: number) {
+  element.innerText = count > 99 ? '99+' : count.toString();
+  if (count > 99) {
+    (element as any).style.fontSize = '8px';
+  }
+}

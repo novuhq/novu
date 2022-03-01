@@ -227,6 +227,10 @@ export class TriggerEvent {
       inAppChannel: !!inAppChannelMessages?.length,
     });
 
+    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
+      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
+    }
+
     return {
       acknowledged: true,
       status: 'processed',

@@ -247,6 +247,7 @@ importers:
       '@cypress/webpack-dev-server': ^1.1.2
       '@editorjs/editorjs': ^2.19.3
       '@editorjs/paragraph': ^2.8.0
+      '@emotion/babel-plugin': ^11.7.2
       '@emotion/react': ^11.7.1
       '@emotion/styled': ^11.6.0
       '@jackwilsdon/craco-use-babelrc': ^1.0.0
@@ -327,6 +328,7 @@ importers:
       '@cypress/webpack-dev-server': 1.8.0_webpack@4.46.0
       '@editorjs/editorjs': 2.22.2
       '@editorjs/paragraph': 2.8.0
+      '@emotion/babel-plugin': 11.7.2
       '@emotion/react': 11.7.1_b08e3c15324cbe90a6ff8fcd416c932c
       '@emotion/styled': 11.6.0_0044a6ec6dcf5de7705bffaaff7afd26
       '@jackwilsdon/craco-use-babelrc': 1.0.0_react-scripts@4.0.3
@@ -872,21 +874,31 @@ importers:
       '@notifire/shared': ^0.3.5
       '@types/configstore': ^5.0.1
       '@types/inquirer': ^8.2.0
+      '@types/ora': ^3.2.0
       axios: ^0.25.0
+      chalk: 4.1.2
       configstore: ^5.0.0
+      get-port: ^5.1.1
+      gradient-string: ^2.0.0
       inquirer: ^8.2.0
       jwt-decode: ^3.1.2
       nodemon: ^2.0.15
       open: ^8.4.0
+      ora: ^5.4.1
       ts-node: ^10.5.0
       typescript: ^4.5.5
     dependencies:
       '@notifire/shared': link:../../libs/shared
+      '@types/ora': 3.2.0
       axios: 0.25.0
+      chalk: 4.1.2
       configstore: 5.0.1
+      get-port: 5.1.1
+      gradient-string: 2.0.0
       inquirer: 8.2.0
       jwt-decode: 3.1.2
       open: 8.4.0
+      ora: 5.4.1
       ts-node: 10.5.0_f6d7dbfa47c058bf494b37a3e2e17d5a
     devDependencies:
       '@types/configstore': 5.0.1
@@ -10602,7 +10614,7 @@ packages:
     dependencies:
       '@types/estree': 0.0.39
       estree-walker: 1.0.1
-      picomatch: 2.3.1
+      picomatch: 2.3.0
       rollup: 1.32.1
     dev: false
 
@@ -14096,6 +14108,13 @@ packages:
       '@types/node': 17.0.5
     dev: true
 
+  /@types/ora/3.2.0:
+    resolution: {integrity: sha512-jll99xUKpiFbIFZSQcxm4numfsLaOWBzWNaRk3PvTSE7BPqTzzOCFmS0mQ7m8qkTfmYhuYbehTGsxkvRLPC++w==}
+    deprecated: This is a stub types definition. ora provides its own type definitions, so you do not need this installed.
+    dependencies:
+      ora: 5.4.1
+    dev: false
+
   /@types/overlayscrollbars/1.12.1:
     resolution: {integrity: sha512-V25YHbSoKQN35UasHf0EKD9U2vcmexRSp78qa8UglxFH8H3D+adEa9zGZwrqpH4TdvqeMrgMqVqsLB4woAryrQ==}
 
@@ -14365,6 +14384,10 @@ packages:
     dependencies:
       '@types/node': 17.0.5
     dev: true
+
+  /@types/tinycolor2/1.4.3:
+    resolution: {integrity: sha512-Kf1w9NE5HEgGxCRyIcRXR/ZYtDv0V8FVPtYHwLxl0O+maGX0erE77pQlD0gpP+/KByMZ87mOA79SjifhSB3PjQ==}
+    dev: false
 
   /@types/tough-cookie/4.0.1:
     resolution: {integrity: sha512-Y0K95ThC3esLEYD6ZuqNek29lNX2EM1qxV8y2FTLUB0ff5wWrk7az+mLrnNFUnaXcgKye22+sFBRXOgpPILZNg==}
@@ -19810,7 +19833,7 @@ packages:
   /cypress-intellij-reporter/0.0.6:
     resolution: {integrity: sha512-KDxeWKKAAGekhg1xmGToSsHDWgogM1hUYakAL4yjKQr9gSI2iyRxcrKlq1/jG4omCbUEY+AZGiiwyKOscY9+Gg==}
     dependencies:
-      mocha: 9.2.0
+      mocha: 9.2.1
     dev: true
 
   /cypress-localstorage-commands/1.6.1_cypress@7.7.0:
@@ -23588,6 +23611,14 @@ packages:
 
   /graceful-fs/4.2.8:
     resolution: {integrity: sha512-qkIilPUYcNhJpd33n0GBXTB1MMPp14TxEsEs0pTrsSVucApsYzW5V+Q8Qxhik6KU3evy+qkAAowTByymK0avdg==}
+
+  /gradient-string/2.0.0:
+    resolution: {integrity: sha512-xa+FXy1bOfJWqA4xKlKTfVXxuOwNRwvsO7Tj8oi/6Rodfgo4ENKApVOU95KxTKb7eML9E9eA2Uqq3C9LtVPM5w==}
+    engines: {node: '>=10'}
+    dependencies:
+      chalk: 4.1.2
+      tinygradient: 1.1.5
+    dev: false
 
   /graphql-extensions/0.15.0:
     resolution: {integrity: sha512-bVddVO8YFJPwuACn+3pgmrEg6I8iBuYLuwvxiE+lcQQ7POotVZxm2rgGw0PvVYmWWf3DT7nTVDZ5ROh/ALp8mA==}
@@ -29049,8 +29080,8 @@ packages:
       yargs-unparser: 2.0.0
     dev: true
 
-  /mocha/9.2.0:
-    resolution: {integrity: sha512-kNn7E8g2SzVcq0a77dkphPsDSN7P+iYkqE0ZsGCYWRsoiKjOt+NvXfaagik8vuDa6W5Zw3qxe8Jfpt5qKf+6/Q==}
+  /mocha/9.2.1:
+    resolution: {integrity: sha512-T7uscqjJVS46Pq1XDXyo9Uvey9gd3huT/DD9cYBb4K2Xc/vbKRPUWK067bxDQRK0yIz6Jxk73IrnimvASzBNAQ==}
     engines: {node: '>= 12.0.0'}
     hasBin: true
     dependencies:
@@ -37439,6 +37470,13 @@ packages:
 
   /tinycolor2/1.4.2:
     resolution: {integrity: sha512-vJhccZPs965sV/L2sU4oRQVAos0pQXwsvTLkWYdqJ+a8Q5kPFzJTuOFwy7UniPli44NKQGAglksjvOcpo95aZA==}
+
+  /tinygradient/1.1.5:
+    resolution: {integrity: sha512-8nIfc2vgQ4TeLnk2lFj4tRLvvJwEfQuabdsmvDdQPT0xlk9TaNtpGd6nNRxXoK6vQhN6RSzj+Cnp5tTQmpxmbw==}
+    dependencies:
+      '@types/tinycolor2': 1.4.3
+      tinycolor2: 1.4.2
+    dev: false
 
   /title-case/2.1.1:
     resolution: {integrity: sha1-PhJyFtpY0rxb7PE3q5Ha46fNj6o=}

@@ -75,7 +75,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 1. Make your changes in a new git branch:
 
    ```shell
-   git checkout -b my-new-branch master
+   git checkout -b my-new-branch main
    ```
 
 1. Write your code, **including test cases**.

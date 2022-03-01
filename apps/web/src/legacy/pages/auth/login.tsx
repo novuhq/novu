@@ -1,9 +1,27 @@
 import { Row, Col } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
+import { useContext, useEffect } from 'react';
 import { LoginForm } from '../../components/auth/LoginForm';
 import { AuthLayout } from '../../components/layout/LoginLayout';
+import { AuthContext } from '../../../store/authContext';
 
 export default function LoginPage() {
+  const { setToken, token } = useContext(AuthContext);
+  const router = useHistory();
+  const queryToken = new URLSearchParams(router.location.search.substring(1)).get('token');
+
+  useEffect(() => {
+    if (queryToken) {
+      setToken(queryToken);
+    }
+  }, [queryToken]);
+
+  useEffect(() => {
+    if (token) {
+      router.push('/');
+    }
+  }, [token]);
+
   return (
     <AuthLayout>
       <div className="h-100 bg-white">

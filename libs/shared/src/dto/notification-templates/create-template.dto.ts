@@ -10,4 +10,8 @@ export interface ICreateNotificationTemplateDto {
   messages: NotificationMessageDto[];
 
   notificationGroupId: string;
+
+  active?: boolean;
+
+  draft?: boolean;
 }

@@ -7,7 +7,7 @@ export class ContentService {
 
     for (const key in variables) {
       if (!variables.hasOwnProperty(key)) continue;
-      modifiedContent = modifiedContent.replace(new RegExp(`{{${key}}}`, 'g'), variables[key]);
+      modifiedContent = modifiedContent.replace(new RegExp(`{{${this.escapeForRegExp(key)}}}`, 'g'), variables[key]);
     }
 
     return modifiedContent;
@@ -74,5 +74,9 @@ export class ContentService {
         yield message.content;
       }
     }
+  }
+
+  private escapeForRegExp(content: string) {
+    return content.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
   }
 }
