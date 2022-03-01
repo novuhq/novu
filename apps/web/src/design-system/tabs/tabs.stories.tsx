@@ -14,7 +14,7 @@ const Template: ComponentStory<typeof Tab> = ({ ...args }) => <Tab {...args} />;
 
 export const Default = Template.bind({});
 Default.args = {
-  MenuTab: [
+  menuTabs: [
     {
       label: 'Branding',
       content: 'Branding',
@@ -51,7 +51,7 @@ VerticalTabMenu.args = {
 
 export const HorizontalTabMenuWithIcon = Template.bind({});
 HorizontalTabMenuWithIcon.args = {
-  MenuTab: [
+  menuTabs: [
     {
       label: 'Branding',
       content: 'Branding',

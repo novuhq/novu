@@ -10,33 +10,25 @@ interface IMenuButtonProp {
 }
 
 interface ITabsProp extends JSX.ElementChildrenAttribute {
-  MenuTab: IMenuButtonProp[];
+  menuTabs: IMenuButtonProp[];
   orientation?: 'horizontal' | 'vertical';
   position?: 'right' | 'center' | 'left' | 'apart';
   withIcon?: boolean;
 }
 
-export function Tab({ MenuTab, orientation = 'horizontal', withIcon = false, position = 'left' }: ITabsProp) {
+export function Tab({ menuTabs, orientation = 'horizontal', withIcon = false, position = 'left' }: ITabsProp) {
   const { classes } = useStyles(withIcon);
 
-  const [activeTab, setActiveTab] = useState(1);
-
   return (
-    <Tabs
-      orientation={orientation}
-      position={position}
-      variant="unstyled"
-      classNames={classes}
-      active={activeTab}
-      onTabChange={setActiveTab}>
-      {MenuTab.map((menu, i) =>
+    <Tabs orientation={orientation} position={position} variant="unstyled" classNames={classes}>
+      {menuTabs.map((menuTab, i) =>
         withIcon ? (
-          <Tabs.Tab label={menu.label} icon={menu.icon} key={i}>
-            {menu.content}
+          <Tabs.Tab label={menuTab.label} icon={menuTab.icon} key={i}>
+            {menuTab.content}
           </Tabs.Tab>
         ) : (
-          <Tabs.Tab label={menu.label} key={i}>
-            {menu.content}
+          <Tabs.Tab label={menuTab.label} key={i}>
+            {menuTab.content}
           </Tabs.Tab>
         )
       )}

@@ -1,5 +1,7 @@
 import { createStyles, MantineTheme } from '@mantine/core';
 
+import { colors } from '../config';
+
 export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => {
   const dark = theme.colorScheme === 'dark';
 
@@ -7,13 +9,17 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
   const tabIcon = getRef('tabIcon');
 
   return {
+    tabsList: {
+      gap: '30px',
+    },
+
     tabControl: {
       marginBottom: withIcon ? '30px' : '0',
     },
 
     tabActive: {
       [`& .${tabLabel}`]: {
-        color: dark ? '#FFFFFF' : theme.colors.gray[7],
+        color: dark ? colors.white : colors.B40,
 
         '&::after': {
           content: '""',
@@ -40,11 +46,11 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
 
       '&:hover': {
         [`& .${tabIcon}`]: {
-          color: dark ? '#FFFFFF' : theme.colors.gray[7],
+          color: dark ? colors.white : colors.B40,
         },
 
         [`& .${tabLabel}`]: {
-          color: dark ? '#FFFFFF' : theme.colors.gray[7],
+          color: dark ? colors.white : colors.B40,
         },
       },
     },
@@ -54,7 +60,7 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
 
       fontSize: '14px',
       fontWeight: '800',
-      color: theme.colors.gray[5],
+      color: colors.B60,
       textAlign: 'left',
     },
 
@@ -63,9 +69,9 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
 
       display: 'block',
       fontSize: '26px',
-      fontWeight: '800',
+      fontWeight: '700',
       marginBottom: '5px',
-      color: theme.colors.gray[5],
+      color: colors.B60,
       textAlign: 'left',
     },
   };
