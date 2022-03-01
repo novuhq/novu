@@ -12,6 +12,5 @@ export { Text } from './typography/text/Text';
 export { Container } from './container/Container';
 export { Dropdown } from './dropdown/Dropdown';
 export { NavMenu } from './navigation/NavMenu';
-export { Menu } from './menu/Menu';
 export { Tabs } from './tabs/Tabs';
 export { Tooltip } from './tooltip/Tooltip';
