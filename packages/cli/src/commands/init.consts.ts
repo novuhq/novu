@@ -43,11 +43,11 @@ export const environmentQuestions: ListQuestionOptions[] = [
     message: `Now lets setup your environment. How would you like to proceed?`,
     choices: [
       {
-        name: `Create a free hosted cloud account (Recommended)`,
+        name: `Create a free cloud account ${chalk.bold.green(`(Recommended)`)}`,
         value: 'cloud',
       },
       {
-        name: 'Run locally using docker',
+        name: 'Run manually using docker',
         value: 'self-hosted-docker',
       },
     ],
@@ -58,14 +58,14 @@ export const registerMethodQuestions: ListQuestionOptions[] = [
   {
     type: 'list',
     name: 'value',
-    message: `How do you want to register`,
+    message: `Create your account with:`,
     choices: [
       {
-        name: `Using GitHub`,
+        name: `Sign-in with GitHub`,
         value: 'github',
       },
       {
-        name: 'Email & Password',
+        name: 'With Email & Password',
         value: 'in-cli',
         disabled: 'Coming soon',
       },

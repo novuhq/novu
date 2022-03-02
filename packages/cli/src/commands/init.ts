@@ -85,9 +85,9 @@ export async function showWelcomeScreen() {
 
   /* eslint-disable no-console */
   console.log(chalk.bold(items.join('\n')));
-  console.log(chalk.bold(`                      Welcome to NOTU`));
+  console.log(chalk.bold(`                      Welcome to NOVU!`));
   console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
-  console.log(chalk.bold(`Now let's setup your account and send a first notification`));
+  console.log(chalk.bold(`Now let's setup your account and send your first notification`));
   /* eslint-enable  no-console */
 }
 
