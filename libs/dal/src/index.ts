@@ -11,3 +11,4 @@ export * from './repositories/message-template';
 export * from './repositories/notification-group';
 export * from './repositories/member';
 export * from './repositories/log';
+export * from './repositories/integration';

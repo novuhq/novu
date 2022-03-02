@@ -1,80 +1,80 @@
-import { ProviderEnum } from './provider.enum';
 import { IProvider } from './provider.interface';
+import { ChannelTypeEnum } from '../../entities/message-template';
 
 export const providers: IProvider[] = [
   {
     id: 'mailjs',
     displayName: 'Mail.js',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'mailgun',
     displayName: 'Mailgun',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'mailjet',
     displayName: 'Mailjet',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'mandrill',
     displayName: 'Mandrill',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'nexmo',
     displayName: 'Nexmo',
-    type: ProviderEnum.SMS,
+    channel: ChannelTypeEnum.SMS,
   },
   {
     id: 'nodemailer',
     displayName: 'Nodemailer',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'plivo',
     displayName: 'Plivo',
-    type: ProviderEnum.SMS,
+    channel: ChannelTypeEnum.SMS,
   },
   {
     id: 'postmark',
     displayName: 'Postmark',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'sendgrid',
     displayName: 'SendGrid',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'sendinblue',
     displayName: 'Sendinblue',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'ses',
     displayName: 'SES',
-    type: ProviderEnum.MAIL,
+    channel: ChannelTypeEnum.EMAIL,
   },
   {
     id: 'sms77',
     displayName: 'sms77',
-    type: ProviderEnum.SMS,
+    channel: ChannelTypeEnum.SMS,
   },
   {
     id: 'sns',
     displayName: 'SNS',
-    type: ProviderEnum.SMS,
+    channel: ChannelTypeEnum.SMS,
   },
   {
     id: 'telnyx',
     displayName: 'Telnyx',
-    type: ProviderEnum.SMS,
+    channel: ChannelTypeEnum.SMS,
   },
   {
     id: 'twilio',
     displayName: 'Twilio',
-    type: ProviderEnum.SMS,
+    channel: ChannelTypeEnum.SMS,
   },
 ];

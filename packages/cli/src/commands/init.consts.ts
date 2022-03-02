@@ -12,7 +12,7 @@ export const introQuestions: ListQuestionOptions[] = [
     type: 'checkbox',
     name: 'providers',
     message: 'What delivery providers you are using? (Optional)',
-    choices: providers.map((provider) => `${provider.displayName} ${chalk.dim(`(${provider.type})`)}`),
+    choices: providers.map((provider) => `${provider.displayName} ${chalk.dim(`(${provider.channel})`)}`),
   },
 ];
 

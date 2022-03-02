@@ -1,7 +1,7 @@
-import { ProviderEnum } from './provider.enum';
+import { ChannelTypeEnum } from '../../entities/message-template';
 
 export interface IProvider {
   id: string;
   displayName: string;
-  type: ProviderEnum;
+  channel: ChannelTypeEnum;
 }
