@@ -223,7 +223,7 @@ export const dropzoneChildren = (status: DropzoneStatus, image) => (
     {!image ? (
       <Upload style={{ width: 80, height: 80, color: colors.B60 }} />
     ) : (
-      <img src={image} style={{ width: '100%', height: 80 }} alt="avatar" />
+      <img data-test-id="logo-image-wrapper" src={image} style={{ width: '100%', height: 80 }} alt="avatar" />
     )}
   </Group>
 );

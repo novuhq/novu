@@ -47,25 +47,23 @@ describe('Settings Screen', function () {
     cy.getByTestId('sender-name').should('have.value', 'Test Sender Name');
   });
 
-  it.skip('should update logo', function () {
+  it('should update logo', function () {
     cy.fixture('test-logo.png').then((fileContent) => {
-      cy.getByTestId('upload-image-button').attachFile({
-        fileContent: b64toBlob(fileContent),
-        fileName: 'test-logo.png',
-        mimeType: 'image/png',
-      });
+      cy.getByTestId('upload-image-button')
+        .find('input')
+        .attachFile({
+          fileContent: b64toBlob(fileContent),
+          fileName: 'test-logo.png',
+          mimeType: 'image/png',
+        });
     });
+    cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 
-    cy.get('.ant-upload-picture-card-wrapper img').should('have.attr', 'src').should('include', '.png');
-    cy.get('.ant-upload-picture-card-wrapper img')
-      .should('have.attr', 'src')
-      .should('include', this.session.organization._id);
+    cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', this.session.organization._id);
     cy.getByTestId('submit-branding-settings').click();
 
-    cy.get('.ant-upload-picture-card-wrapper img').should('have.attr', 'src').should('include', '.png');
-    cy.get('.ant-upload-picture-card-wrapper img')
-      .should('have.attr', 'src')
-      .should('include', this.session.organization._id);
+    cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
+    cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', this.session.organization._id);
   });
 
   /**
@@ -73,9 +71,9 @@ describe('Settings Screen', function () {
    */
   it.skip('should change look and feel settings', function () {
     cy.getByTestId('color-picker').click({ force: true });
-    cy.get('.block-picker:visible  div[title="#ba68c8"]').click({ force: true });
+    cy.get('button[aria-label="#BA68C8"]').click({ force: true });
     cy.getByTestId('color-picker').click({ force: true });
-    cy.getByTestId('color-picker-value').should('have.value', '#ba68c8');
+    cy.getByTestId('div[aria-value-text="#BA68C8"]').should('have.value', '#ba68c8');
 
     cy.getByTestId('font-color-picker').click({ force: true });
     cy.get('body').click();
