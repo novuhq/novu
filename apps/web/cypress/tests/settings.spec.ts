@@ -66,36 +66,38 @@ describe('Settings Screen', function () {
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', this.session.organization._id);
   });
 
-  /**
-   * TODO: Fix the test for content-background-color assertion
-   */
-  it.skip('should change look and feel settings', function () {
+  it('should change look and feel settings', function () {
     cy.getByTestId('color-picker').click({ force: true });
     cy.get('button[aria-label="#BA68C8"]').click({ force: true });
+    cy.getByTestId('color-picker').should('have.value', '#b967c7');
     cy.getByTestId('color-picker').click({ force: true });
-    cy.getByTestId('div[aria-value-text="#BA68C8"]').should('have.value', '#ba68c8');
-
-    cy.getByTestId('font-color-picker').click({ force: true });
+    cy.get('div[aria-valuetext="rgba(185, 103, 199, 1)"]');
     cy.get('body').click();
-    cy.get('.block-picker:visible div[title="#37D67A"]').click({ force: true });
+
     cy.getByTestId('font-color-picker').click({ force: true });
-    cy.getByTestId('font-color-picker-value').should('have.value', '#37d67a');
+    cy.get('button[aria-label="#37D67A"]').click({ force: true });
+    cy.getByTestId('font-color-picker').click({ force: true });
+    cy.get('div[aria-valuetext="rgba(56, 214, 122, 1)"]');
+    cy.get('body').click();
 
     cy.getByTestId('content-background-picker').click({ force: true });
-    cy.get('.block-picker:visible  div[title="#2CCCE4"]').click({ force: true });
+    cy.get('button[aria-label="#2CCCE4"]').click({ force: true });
     cy.getByTestId('content-background-picker').click({ force: true });
-    cy.getByTestId('content-background-picker-value').should('have.value', '#2ccce4');
+    cy.get('div[aria-valuetext="rgba(43, 202, 227, 1)"]');
+    cy.get('body').click();
 
-    cy.getByTestId('font-family-selector').type('Nunito{enter}');
+    cy.getByTestId('font-family-selector').click({ force: true });
+    cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Lato').click();
+    cy.getByTestId('font-family-selector').should('have.value', 'Lato');
 
     cy.getByTestId('submit-branding-settings').click({ force: true });
     cy.wait('@updateBrandingSettings');
 
     cy.reload();
-    cy.getByTestId('color-picker-value').should('have.value', '#ba68c8');
-    cy.getByTestId('font-color-picker-value').should('have.value', '#37d67a');
-    cy.getByTestId('content-background-picker-value').should('have.value', '#2ccce4');
-    cy.getByTestId('font-family-selector').contains('Nunito');
+    cy.getByTestId('color-picker').should('have.value', '#b967c7');
+    cy.getByTestId('font-color-picker').should('have.value', '#0eb554');
+    cy.getByTestId('content-background-picker').should('have.value', '#2bcae3');
+    cy.getByTestId('font-family-selector').should('have.value', 'Lato');
   });
 });
 

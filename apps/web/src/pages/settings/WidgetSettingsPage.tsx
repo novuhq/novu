@@ -27,7 +27,10 @@ export function WidgetSettingsPage() {
   }, [location]);
 
   const menuTabs = [
-    { label: 'Branding', content: <BrandingForm application={application} /> },
+    {
+      label: 'Branding',
+      content: <BrandingForm isLoading={isLoadingApplication} application={application} />,
+    },
     {
       label: 'In App Center',
       content: <InAppCenterCard application={application} />,
