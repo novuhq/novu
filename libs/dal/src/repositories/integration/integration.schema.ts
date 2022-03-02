@@ -20,7 +20,10 @@ const integrationSchema = new Schema(
       apiKey: Schema.Types.String,
       secretKey: Schema.Types.String,
     },
-    active: Schema.Types.Boolean,
+    active: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
   },
   schemaOptions
 );
