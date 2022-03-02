@@ -4,7 +4,7 @@ import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
-export class CreateApplication {
+export class CreateIntegration {
   constructor(private integrationRepository: IntegrationRepository) {}
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {

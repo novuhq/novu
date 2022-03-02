@@ -3,7 +3,7 @@ import { IJwtPayload } from '@notifire/shared';
 import { IntegrationEntity } from '@notifire/dal';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
-import { CreateApplication } from './usecases/create-integration/create-integration.usecase';
+import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationBodyDto } from './dto/create-integration.dto';
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
 
@@ -11,14 +11,14 @@ import { CreateIntegrationCommand } from './usecases/create-integration/create-i
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 export class IntegrationsController {
-  constructor(private createApplicationUsecase: CreateApplication) {}
+  constructor(private createIntegrationUsecase: CreateIntegration) {}
 
   @Post('/')
-  async createApplication(
+  async createIntegration(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateIntegrationBodyDto
   ): Promise<IntegrationEntity> {
-    return await this.createApplicationUsecase.execute(
+    return await this.createIntegrationUsecase.execute(
       CreateIntegrationCommand.create({
         applicationId: user.applicationId,
         organizationId: user.organizationId,
