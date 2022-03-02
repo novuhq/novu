@@ -14,3 +14,4 @@ export { Dropdown } from './dropdown/Dropdown';
 export { NavMenu } from './navigation/NavMenu';
 export { Tabs } from './tabs/Tabs';
 export { Tooltip } from './tooltip/Tooltip';
+export { ColorInput } from './color-input/ColorInput';

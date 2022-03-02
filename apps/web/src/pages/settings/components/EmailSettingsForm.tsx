@@ -3,9 +3,9 @@ import { useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
 import { IApplication } from '@notifire/shared';
 import { message } from 'antd';
-import { Container, Space } from '@mantine/core';
-import { Title, Input, Button } from '../../../design-system';
+import { Input, Button } from '../../../design-system';
 import { updateEmailSettings } from '../../../api/application';
+import Card from '../../../components/layout/components/Card';
 
 export function EmailSettingsForm({ application, refetch }: { application: IApplication | undefined; refetch: any }) {
   const { isLoading: isLoadingEmailSettings, mutateAsync: changeEmailSettings } = useMutation<
@@ -36,9 +36,7 @@ export function EmailSettingsForm({ application, refetch }: { application: IAppl
   });
 
   return (
-    <Container mb={20} ml={0} padding={0} sx={{ paddingTop: '41px' }}>
-      <Title size={2}>Sender Identity</Title>
-      <Space h={35} />
+    <Card title="Sender Identity">
       <form onSubmit={handleSubmit(onEmailSettingsSubmit)}>
         <Input
           label="Sender Email"
@@ -63,6 +61,6 @@ export function EmailSettingsForm({ application, refetch }: { application: IAppl
           Update
         </Button>
       </form>
-    </Container>
+    </Card>
   );
 }

@@ -3,9 +3,9 @@ import { useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
 import { IApplication } from '@notifire/shared';
 import { message } from 'antd';
-import { Container, Space } from '@mantine/core';
 import { updateSmsSettings } from '../../../api/application';
-import { Title, Input, Button } from '../../../design-system';
+import { Input, Button } from '../../../design-system';
+import Card from '../../../components/layout/components/Card';
 
 export function SmsSettingsForm({ application, refetch }: { application: IApplication | undefined; refetch: any }) {
   const { isLoading: isLoadingSmsSettings, mutateAsync: updateSmsSettingsMutation } = useMutation<
@@ -37,9 +37,7 @@ export function SmsSettingsForm({ application, refetch }: { application: IApplic
   });
 
   return (
-    <Container mb={20} ml={0} padding={0} sx={{ paddingTop: '41px' }}>
-      <Title size={2}>Twillio Integration Details</Title>
-      <Space h={35} />
+    <Card title="Twillio Integration Details">
       <form onSubmit={handleSubmit(onSmsSettingsSubmit)}>
         <Input
           label="Account SID"
@@ -68,6 +66,6 @@ export function SmsSettingsForm({ application, refetch }: { application: IApplic
           Update
         </Button>
       </form>
-    </Container>
+    </Card>
   );
 }

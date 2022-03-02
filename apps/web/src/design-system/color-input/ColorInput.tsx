@@ -31,13 +31,6 @@ export function ColorInput({ value, onChange, ...props }: IColorInputProps) {
   const defaultDesign = { radius: 'md', size: 'md', disallowInput: true, styles: inputStyles } as ColorInputProps;
 
   return (
-    <MantineColorInput
-      sx={{ maxWidth: '50%' }}
-      swatches={defaultSwatchColors}
-      {...defaultDesign}
-      onChange={onChange}
-      value={value}
-      {...props}
-    />
+    <MantineColorInput swatches={defaultSwatchColors} {...defaultDesign} onChange={onChange} value={value} {...props} />
   );
 }
