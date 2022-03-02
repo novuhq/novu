@@ -362,7 +362,9 @@ function triggerNotification() {
 
   $('#trigger-button').prop('disabled', true);
   axios.post('/trigger', {}).then(() => {
-    toastr.success( 'Check the notification bell to continue', 'Triggered Successfully');
+    toastr.success( 'Check the notification bell to continue', 'Triggered Successfully', {
+      positionClass: 'toast-bottom-right'
+    });
     $('#trigger-button').prop('disabled', false);
     pulsateBell();
   });
@@ -413,7 +415,7 @@ function pulsateBell() {
 
   setTimeout(() => {
     activeListener = true;
-  }, 1000);
+  }, 2000);
 </script>
 </body>
 

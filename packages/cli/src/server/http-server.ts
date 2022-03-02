@@ -2,6 +2,9 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
+import * as open from 'open';
+import { AddressInfo } from 'net';
+
 import {
   SERVER_HOST,
   REDIRECT_ROUTE,
@@ -12,12 +15,12 @@ import {
   API_TRIGGER_URL,
 } from '../constants';
 import { ConfigService } from '../services';
-import { AddressInfo } from 'net';
 
 export class HttpServer {
   private server: http.Server;
   public token: string;
   private config: ConfigService = new ConfigService();
+  private authResponseHandle: http.ServerResponse;
 
   public async listen(): Promise<void> {
     await setAvailablePort();
@@ -29,7 +32,7 @@ export class HttpServer {
           this.handleTriggerRoute(req, res);
         }
         if (req.url.startsWith(REDIRECT_ROUTE)) {
-          this.handleRedirectRequest(req);
+          this.handleRedirectRequest(req, res);
         }
         if (req.url.startsWith(WIDGET_DEMO_ROUTH)) {
           await this.handleWidgetDemo(res);
@@ -64,8 +67,22 @@ export class HttpServer {
     this.server.close();
   }
 
-  private handleRedirectRequest(req: http.IncomingMessage) {
+  public redirectSuccessDashboard(url: string) {
+    if (this.authResponseHandle) {
+      this.authResponseHandle
+        .writeHead(301, {
+          Location: url,
+        })
+        .end();
+      this.authResponseHandle = null;
+    } else {
+      open(url);
+    }
+  }
+
+  private handleRedirectRequest(req: http.IncomingMessage, res: http.ServerResponse) {
     this.token = new URLSearchParams(req.url.slice(REDIRECT_ROUTE.length)).get('token');
+    this.authResponseHandle = res;
   }
 
   private async handleTriggerRoute(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -97,6 +114,7 @@ export class HttpServer {
 
     return parsedPayload.find((item) => item.key === key).value;
   }
+
   private async handleWidgetDemo(res: http.ServerResponse): Promise<void> {
     return new Promise((resolve, reject) => {
       const dashboardPath = path.resolve(__dirname, '../constants/dashboard/index.html');
