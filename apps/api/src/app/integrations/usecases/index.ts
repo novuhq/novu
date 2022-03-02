@@ -1,3 +1,3 @@
-import { CreateApplication } from './create-integration/create-integration.usecase';
+import { CreateIntegration } from './create-integration/create-integration.usecase';
 
-export const USE_CASES = [CreateApplication];
+export const USE_CASES = [CreateIntegration];
