@@ -79,7 +79,7 @@ describe('Create Integration - /integration (POST)', function () {
 
     const secondInsertResponse = await insertIntegrationTwice(session, payload, false);
 
-    expect(secondInsertResponse.body.body.message).to.contain('Duplicate key');
+    expect(secondInsertResponse.body.message).to.contain('Duplicate key');
   });
 
   it('should fail due missing param', async function () {
