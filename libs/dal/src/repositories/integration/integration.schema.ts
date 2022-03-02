@@ -13,7 +13,6 @@ const integrationSchema = new Schema(
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     providerId: Schema.Types.String,
     channel: Schema.Types.String,

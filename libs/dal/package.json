@@ -21,6 +21,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.14.0",
     "@aws-sdk/s3-request-presigner": "^3.14.0",
+    "@nestjs/common": "^8.4.0",
     "@notifire/shared": "^0.3.5",
     "@octokit/graphql": "^4.3.1",
     "@sendgrid/mail": "^7.4.2",
