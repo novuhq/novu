@@ -130,8 +130,8 @@ async function handleOnboardingFlow(config: ConfigService) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(error);
-  } finally {
     spinner?.fail('Something un-expected happened :(');
+  } finally {
     spinner?.stop();
     httpServer.close();
     process.exit();
@@ -193,7 +193,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 
   storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, applicationIdentifier);
 
-  await open(demoDashboardUrl);
+  httpServer.redirectSuccessDashboard(demoDashboardUrl);
 }
 
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
