@@ -18,7 +18,7 @@ export function AppLayout({ children }: { children: any }) {
    * TODO: Remove once migrated to the new styling.
    * Add each new page when migrating
    */
-  if (!['/', '/templates'].includes(location.pathname)) {
+  if (!['/', '/templates', '/settings/widget', '/templates/create'].includes(location.pathname)) {
     return <LegacyAppLayout>{children}</LegacyAppLayout>;
   }
 

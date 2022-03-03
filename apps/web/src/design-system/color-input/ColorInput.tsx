@@ -27,17 +27,19 @@ interface IColorInputProps extends MantineMargins {
  * ColorPicker component
  *
  */
-export function ColorInput({ value, onChange, ...props }: IColorInputProps) {
-  const defaultDesign = { radius: 'md', size: 'md', disallowInput: true, styles: inputStyles } as ColorInputProps;
+export const ColorInput = React.forwardRef<HTMLInputElement, IColorInputProps>(
+  ({ value, onChange, ...props }: IColorInputProps, ref) => {
+    const defaultDesign = { radius: 'md', size: 'md', disallowInput: true, styles: inputStyles } as ColorInputProps;
 
-  return (
-    <MantineColorInput
-      sx={{ maxWidth: '50%' }}
-      swatches={defaultSwatchColors}
-      {...defaultDesign}
-      onChange={onChange}
-      value={value}
-      {...props}
-    />
-  );
-}
+    return (
+      <MantineColorInput
+        ref={ref}
+        swatches={defaultSwatchColors}
+        {...defaultDesign}
+        onChange={onChange}
+        value={value}
+        {...props}
+      />
+    );
+  }
+);

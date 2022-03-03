@@ -11,7 +11,10 @@ interface ITitleProps extends JSX.ElementChildrenAttribute {
 export function Title({ size = 1, children }: ITitleProps) {
   return (
     <MantineTitle
-      sx={(theme) => ({ fontWeight: '800', color: theme.colorScheme === 'dark' ? colors.white : colors.B40 })}
+      sx={(theme) => ({
+        fontWeight: size === 1 ? '800' : '700',
+        color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+      })}
       order={size}>
       {children}
     </MantineTitle>
