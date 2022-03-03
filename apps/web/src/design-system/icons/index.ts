@@ -21,3 +21,11 @@ export { Edit } from './actions/Edit';
 export { Upload } from './actions/Upload';
 
 export { ArrowDown } from './arrows/ArrowDown';
+
+export { BellGradient } from './gradient/BellGradient';
+export { MailGradient } from './gradient/MailGradient';
+export { MobileGradient } from './gradient/MobileGradient';
+export { PlusGradient } from './gradient/PlusGradient';
+export { GlobeGradient } from './gradient/GlobeGradient';
+export { CompassGradient } from './gradient/CompassGradient';
+export { SmsGradient } from './gradient/SmsGradient';
