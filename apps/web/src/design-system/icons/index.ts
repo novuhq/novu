@@ -30,3 +30,4 @@ export { PlusGradient } from './gradient/PlusGradient';
 export { GlobeGradient } from './gradient/GlobeGradient';
 export { CompassGradient } from './gradient/CompassGradient';
 export { SmsGradient } from './gradient/SmsGradient';
+export { TapeGradient } from './gradient/TapeGradient';
