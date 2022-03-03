@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from 'react-query';
 
 export function applyToken(token: string | null) {
@@ -19,7 +19,7 @@ export function getToken(): string {
 
 export function useAuthController() {
   const queryClient = useQueryClient();
-  const router = useHistory();
+  const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(getToken());
   const [user, setUser] = useState<{ _id: string; firstName: string; lastName: string } | null>(null);
 
@@ -38,7 +38,7 @@ export function useAuthController() {
   const logout = () => {
     setToken(null);
     queryClient.clear();
-    router.push('/auth/login');
+    navigate('/auth/login');
   };
 
   return {
