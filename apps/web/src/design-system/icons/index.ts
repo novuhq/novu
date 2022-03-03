@@ -12,6 +12,7 @@ export { Lock } from './general/Lock';
 export { Bell } from './general/Bell';
 export { Mail } from './general/Mail';
 export { Trash } from './general/Trash';
+export { Check } from './general/Check';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';

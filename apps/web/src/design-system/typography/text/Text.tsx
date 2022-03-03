@@ -1,7 +1,7 @@
-import { Text as MantineText, SharedTextProps, MantineColor, useMantineTheme } from '@mantine/core';
+import { Text as MantineText, SharedTextProps, MantineColor, useMantineTheme, MantineMargins } from '@mantine/core';
 import { colors } from '../../config';
 
-interface ITextProps extends JSX.ElementChildrenAttribute {
+interface ITextProps extends JSX.ElementChildrenAttribute, MantineMargins {
   size?: 'md' | 'lg';
   align?: 'left' | 'center' | 'right' | 'justify';
   weight?: 'bold' | 'normal';
