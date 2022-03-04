@@ -881,6 +881,7 @@ importers:
       '@types/ora': ^3.2.0
       axios: ^0.25.0
       chalk: 4.1.2
+      commander: ^9.0.0
       configstore: ^5.0.0
       get-port: ^5.1.1
       gradient-string: ^2.0.0
@@ -896,6 +897,7 @@ importers:
       '@types/ora': 3.2.0
       axios: 0.25.0
       chalk: 4.1.2
+      commander: 9.0.0
       configstore: 5.0.1
       get-port: 5.1.1
       gradient-string: 2.0.0
@@ -18382,6 +18384,11 @@ packages:
   /commander/8.3.0:
     resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
     engines: {node: '>= 12'}
+    dev: false
+
+  /commander/9.0.0:
+    resolution: {integrity: sha512-JJfP2saEKbQqvW+FI93OYUB4ByV5cizMpFMiiJI8xDbBvQvSkIk0VvQdn1CZ8mqAO8Loq2h0gYTYtDFUZUeERw==}
+    engines: {node: ^12.20.0 || >=14}
     dev: false
 
   /comment-json/4.1.1:
