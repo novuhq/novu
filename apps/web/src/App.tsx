@@ -66,15 +66,71 @@ function App() {
               <Route path="/auth/reset/request" element={<PasswordResetPage />} />
               <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
               <Route path="/auth/invitation/:token" element={<InvitationScreen />} />
-              <PrivateRoute path="/onboarding/application/*" element={<ApplicationOnBoarding />} />
               <Route element={<AppLayout />}>
-                <PrivateRoute path="/*" element={<HomePage />} />
-                <PrivateRoute path="/templates/create/*" element={<TemplateEditorPage />} />
-                <PrivateRoute path="/templates/edit/:templateId/*" element={<TemplateEditorPage />} />
-                <PrivateRoute path="/templates/*" element={<NotificationList />} />
-                <PrivateRoute path="/activities/*" element={<ActivitiesPage />} />
-                <PrivateRoute path="/settings/widget/*" element={<WidgetSettingsPage />} />
-                <PrivateRoute path="/settings/organization/*" element={<OrganizationSettingsPage />} />
+                <Route
+                  path="/*"
+                  element={
+                    <RequiredAuth>
+                      <HomePage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/onboarding/application/*"
+                  element={
+                    <RequiredAuth>
+                      <ApplicationOnBoarding />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/templates/create/*"
+                  element={
+                    <RequiredAuth>
+                      <TemplateEditorPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/templates/edit/:templateId/*"
+                  element={
+                    <RequiredAuth>
+                      <TemplateEditorPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/templates/*"
+                  element={
+                    <RequiredAuth>
+                      <NotificationList />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/activities/*"
+                  element={
+                    <RequiredAuth>
+                      <ActivitiesPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/settings/widget/*"
+                  element={
+                    <RequiredAuth>
+                      <WidgetSettingsPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/settings/organization/*"
+                  element={
+                    <RequiredAuth>
+                      <OrganizationSettingsPage />
+                    </RequiredAuth>
+                  }
+                />
               </Route>
             </Routes>
           </ThemeHandlerComponent>
@@ -84,13 +140,8 @@ function App() {
   );
 }
 
-function PrivateRoute({ element, ...rest }) {
-  return (
-    <Route
-      {...rest}
-      element={() => (getToken() ? element : <Navigate to="/auth/login" replace state={{ from: location }} />)}
-    />
-  );
+function RequiredAuth({ children }: any) {
+  return getToken() ? children : <Navigate to="/auth/login" replace />;
 }
 
 function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {

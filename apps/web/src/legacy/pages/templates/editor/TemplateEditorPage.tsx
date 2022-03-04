@@ -56,13 +56,8 @@ function TemplateEditorPageLegacy() {
   const navigate = useNavigate();
   const [groups, setGroups] = useState<{ name: string; _id: string }[]>([]);
   const [categoryText, setCategoryText] = useState<string>();
-  const { templateId } = useParams<{ templateId: string }>();
+  const { templateId = '' } = useParams<{ templateId: string }>();
   const { application, loading: isLoadingApplication } = useApplication();
-
-  // T R I C K Y    W A Y    T O    F O R C E    A S     S T R I N G
-  const strTemplatedId = useMemo(() => {
-    return templateId ? templateId : "";
-  }, [templateId]);
 
   const {
     selectedMessageType,
@@ -88,10 +83,10 @@ function TemplateEditorPageLegacy() {
     smsFields,
     methods,
     removeEmailMessage,
-  } = useTemplateController(strTemplatedId);
+  } = useTemplateController(templateId);
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
-    strTemplatedId,
+    templateId,
     template
   );
 
