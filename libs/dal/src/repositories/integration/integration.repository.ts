@@ -9,6 +9,18 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
     super(Integration, IntegrationEntity);
   }
 
+  async find(
+    query: FilterQuery<IntegrationEntity & Document>,
+    select = '',
+    options: { limit?: number; sort?: any; skip?: number } = {}
+  ): Promise<IntegrationEntity[]> {
+    return super.find(this.normalizeQuery(query), select, options);
+  }
+
+  async findOne(query: FilterQuery<IntegrationEntity & Document>, select?: keyof IntegrationEntity | string) {
+    return super.findOne(this.normalizeQuery(query), select);
+  }
+
   async findByApplicationId(applicationId: string): Promise<IntegrationEntity[]> {
     return await this.find({
       _applicationId: applicationId,
@@ -66,5 +78,13 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
       deactivatedIntegration.active = false;
       await super.update({ _id: deactivatedIntegration._id }, deactivatedIntegration);
     }
+  }
+
+  normalizeQuery(query: FilterQuery<IntegrationEntity & Document>): FilterQuery<IntegrationEntity & Document> {
+    const normalizedQuery = query;
+
+    normalizedQuery.removed = !!normalizedQuery.removed;
+
+    return normalizedQuery;
   }
 }
