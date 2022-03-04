@@ -24,6 +24,10 @@ const integrationSchema = new Schema(
       type: Schema.Types.Boolean,
       default: false,
     },
+    removed: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
   },
   schemaOptions
 );
