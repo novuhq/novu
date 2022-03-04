@@ -44,6 +44,13 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
     return await super.update({ _id: query._id }, updateBody);
   }
 
+  async delete(query: FilterQuery<IntegrationEntity & Document>) {
+    const integration = await this.findOne({ _id: query._id });
+    if (!integration) throw new Error(`Could not find integration with id ${query._id}`);
+    integration.removed = true;
+    await super.update({ _id: integration._id }, integration);
+  }
+
   async deactivatedOtherActiveChannels(query: FilterQuery<IntegrationEntity & Document>): Promise<void> {
     const otherExistedIntegration = (
       await this.find({
