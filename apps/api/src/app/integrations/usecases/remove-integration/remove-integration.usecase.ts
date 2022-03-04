@@ -1,0 +1,19 @@
+import { Injectable, Scope } from '@nestjs/common';
+import { IntegrationRepository } from '@notifire/dal';
+import { RemoveIntegrationCommand } from './remove-integration.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+
+@Injectable({
+  scope: Scope.REQUEST,
+})
+export class RemoveIntegration {
+  constructor(private integrationRepository: IntegrationRepository) {}
+
+  async execute(command: RemoveIntegrationCommand) {
+    try {
+      await this.integrationRepository.delete({ _id: command.integrationId });
+    } catch (e) {
+      throw new ApiException(e.message);
+    }
+  }
+}

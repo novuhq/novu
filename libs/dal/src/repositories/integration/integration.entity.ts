@@ -19,4 +19,6 @@ export class IntegrationEntity {
   credentials: ICredentials;
 
   active: boolean;
+
+  removed: boolean;
 }
