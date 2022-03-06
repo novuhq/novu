@@ -1,7 +1,7 @@
 import { BaseRepository } from '../base-repository';
 import { IntegrationEntity } from './integration.entity';
 import { Integration } from './integration.schema';
-import { DalException } from '../../shared/exceptions/dal.exeption';
+import { DalException } from '../../shared';
 
 export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   constructor() {
@@ -20,16 +20,10 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
       providerId: data.providerId,
       channel: data.channel,
     });
-    if (!existingIntegration) {
-      return await super.create(data);
+    if (existingIntegration) {
+      throw new DalException('Duplicate key - One application may not have two providers of the same channel type');
     }
 
-    const test = new DalException(
-      '3333 Duplicate key - One application may not have two providers of the same channel type'
-    );
-
-    console.log(test instanceof DalException);
-
-    throw test;
+    return await super.create(data);
   }
 }

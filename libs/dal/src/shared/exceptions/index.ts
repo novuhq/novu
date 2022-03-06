@@ -1,1 +1,1 @@
-export * from './dal.exeption';
+export * from './dal.exception';
