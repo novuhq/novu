@@ -1,7 +1,7 @@
-import { HttpException, HttpStatusCode } from '@notifire/shared';
 import { BaseRepository } from '../base-repository';
 import { IntegrationEntity } from './integration.entity';
 import { Integration } from './integration.schema';
+import { DalException } from '../../shared/exceptions/dal.exeption';
 
 export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   constructor() {
@@ -24,9 +24,12 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
       return await super.create(data);
     }
 
-    throw new HttpException(
-      HttpStatusCode.UNPROCESSABLE_ENTITY,
-      'Duplicate key - One application may not have two providers of the same channel type'
+    const test = new DalException(
+      '3333 Duplicate key - One application may not have two providers of the same channel type'
     );
+
+    console.log(test instanceof DalException);
+
+    throw test;
   }
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@notifire/dal';
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { DalException } from '@notifire/dal/src';
 
 @Injectable()
 export class CreateIntegration {
@@ -20,9 +21,9 @@ export class CreateIntegration {
         active: command.active,
       });
     } catch (e) {
-      if (e.status === 422) {
-        throw new ApiException(e.message);
-      }
+      // eslint-disable-next-line no-console
+      console.log(e instanceof DalException);
+
       throw e;
     }
 
