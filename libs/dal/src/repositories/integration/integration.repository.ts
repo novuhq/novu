@@ -34,6 +34,10 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
       channel: data.channel,
     });
     if (test.length === 0) {
+      if (data.active === true) {
+        await this.deactivatedOtherActiveChannels(data);
+      }
+
       return await super.create(data);
     }
 
