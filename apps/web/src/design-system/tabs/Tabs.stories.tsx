@@ -1,16 +1,16 @@
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
-import { Tab } from './tabs';
+import { Tabs } from './Tabs';
 
 export default {
-  title: 'Menus/TabMenu',
+  title: 'Menus/TabsMenu',
 
-  component: Tab,
+  component: Tabs,
 
   argTypes: {},
-} as ComponentMeta<typeof Tab>;
+} as ComponentMeta<typeof Tabs>;
 
-const Template: ComponentStory<typeof Tab> = ({ ...args }) => <Tab {...args} />;
+const Template: ComponentStory<typeof Tabs> = ({ ...args }) => <Tabs {...args} />;
 
 export const Default = Template.bind({});
 Default.args = {

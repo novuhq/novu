@@ -1,7 +1,7 @@
-import { UnprocessableEntityException } from '@nestjs/common';
 import { BaseRepository } from '../base-repository';
 import { IntegrationEntity } from './integration.entity';
 import { Integration } from './integration.schema';
+import { DalException } from '../../shared';
 
 export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   constructor() {
@@ -15,17 +15,15 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   }
 
   async create(data: Partial<IntegrationEntity>): Promise<IntegrationEntity> {
-    const test = await this.find({
+    const existingIntegration = await this.findOne({
       _applicationId: data._applicationId,
       providerId: data.providerId,
       channel: data.channel,
     });
-    if (test.length === 0) {
-      return await super.create(data);
+    if (existingIntegration) {
+      throw new DalException('Duplicate key - One application may not have two providers of the same channel type');
     }
 
-    throw new UnprocessableEntityException(
-      'Duplicate key - One application may not have two providers of the same channel type'
-    );
+    return await super.create(data);
   }
 }
