@@ -73,8 +73,6 @@ export class IntegrationsController {
         applicationId: user.applicationId,
         organizationId: user.organizationId,
         integrationId,
-        providerId: body.providerId,
-        channel: body.channel,
         credentials: body.credentials,
         active: body.active,
       })

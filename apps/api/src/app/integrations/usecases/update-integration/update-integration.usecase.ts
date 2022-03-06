@@ -11,13 +11,6 @@ export class UpdateIntegration {
     if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
 
     const updatePayload: Partial<IntegrationEntity> = {};
-    if (command.providerId) {
-      updatePayload.providerId = command.providerId;
-    }
-
-    if (command.channel) {
-      updatePayload.channel = command.channel;
-    }
 
     if (command.active) {
       updatePayload.active = command.active;
@@ -36,8 +29,7 @@ export class UpdateIntegration {
         _id: command.integrationId,
         active: command.active,
         _applicationId: command.applicationId,
-        channel: command.channel,
-        providerId: command.providerId,
+        channel: existingIntegration.channel,
       },
       {
         $set: updatePayload,
