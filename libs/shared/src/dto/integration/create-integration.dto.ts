@@ -1,3 +1,8 @@
+import { ChannelTypeEnum } from '../../entities/message-template';
 import { IConstructIntegrationDto } from './construct-integration.interface';
 
-export type ICreateIntegrationBodyDto = IConstructIntegrationDto;
+export interface ICreateIntegrationBodyDto extends IConstructIntegrationDto {
+  providerId: string;
+
+  channel: ChannelTypeEnum;
+}

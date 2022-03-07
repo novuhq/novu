@@ -6,11 +6,5 @@ export class UpdateIntegrationBodyDto implements IUpdateIntegrationBodyDto {
   active: boolean;
 
   @IsDefined()
-  channel: ChannelTypeEnum;
-
-  @IsDefined()
   credentials: ICredentialsDto;
-
-  @IsDefined()
-  providerId: string;
 }

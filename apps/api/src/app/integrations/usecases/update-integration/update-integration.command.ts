@@ -11,12 +11,6 @@ export class UpdateIntegrationCommand extends ApplicationCommand {
   integrationId: string;
 
   @IsDefined()
-  providerId: string;
-
-  @IsDefined()
-  channel: ChannelTypeEnum;
-
-  @IsDefined()
   credentials: ICredentialsDto;
 
   @IsDefined()

@@ -11,13 +11,6 @@ export class UpdateIntegration {
     if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
 
     const updatePayload: Partial<IntegrationEntity> = {};
-    if (command.providerId) {
-      updatePayload.providerId = command.providerId;
-    }
-
-    if (command.channel) {
-      updatePayload.channel = command.channel;
-    }
 
     if (command.active) {
       updatePayload.active = command.active;
@@ -41,7 +34,7 @@ export class UpdateIntegration {
       }
     );
 
-    await this.deactivatedOtherActiveChannels(command);
+    await this.deactivatedOtherActiveChannels(command, existingIntegration.channel);
 
     return await this.integrationRepository.findOne({
       _id: command.integrationId,
@@ -49,11 +42,11 @@ export class UpdateIntegration {
     });
   }
 
-  async deactivatedOtherActiveChannels(command: UpdateIntegrationCommand): Promise<void> {
+  async deactivatedOtherActiveChannels(command: UpdateIntegrationCommand, channelType: string): Promise<void> {
     const otherExistedIntegration = await this.integrationRepository.find({
       _id: { $ne: command.integrationId },
       _applicationId: command.applicationId,
-      channel: command.channel,
+      channel: channelType,
       active: true,
     });
 
