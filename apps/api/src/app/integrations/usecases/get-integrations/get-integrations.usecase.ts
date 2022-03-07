@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@notifire/dal';
-import { GetIntegrationCommand } from './get-integration.command';
+import { GetIntegrationsCommand } from './get-integrations.command';
 
 @Injectable()
 export class GetIntegrations {
   constructor(private integrationRepository: IntegrationRepository) {}
 
-  async execute(command: GetIntegrationCommand): Promise<IntegrationEntity[]> {
+  async execute(command: GetIntegrationsCommand): Promise<IntegrationEntity[]> {
     return await this.integrationRepository.findByApplicationId(command.applicationId);
   }
 }
