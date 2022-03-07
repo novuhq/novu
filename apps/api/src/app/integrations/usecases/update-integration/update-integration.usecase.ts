@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@notifire/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
+import { DeactivateIntegration } from '../deactivate-integration/deactivate-integration.usecase';
 
 @Injectable()
 export class UpdateIntegration {
-  constructor(private integrationRepository: IntegrationRepository) {}
+  constructor(
+    private integrationRepository: IntegrationRepository,
+    private deactivateIntegration: DeactivateIntegration
+  ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
@@ -35,28 +39,17 @@ export class UpdateIntegration {
     );
 
     if (command.active) {
-      await this.deactivatedOtherActiveChannels(command, existingIntegration.channel);
+      await this.deactivateIntegration.execute({
+        applicationId: command.applicationId,
+        organizationId: command.organizationId,
+        integrationId: command.integrationId,
+        channel: existingIntegration.channel,
+      });
     }
 
     return await this.integrationRepository.findOne({
       _id: command.integrationId,
       _applicationId: command.applicationId,
     });
-  }
-
-  async deactivatedOtherActiveChannels(command: UpdateIntegrationCommand, channelType: string): Promise<void> {
-    const otherExistedIntegration = await this.integrationRepository.find({
-      _id: { $ne: command.integrationId },
-      _applicationId: command.applicationId,
-      channel: channelType,
-      active: true,
-    });
-
-    if (otherExistedIntegration.length) {
-      await this.integrationRepository.update(
-        { _id: { $in: otherExistedIntegration.map((i) => i._id) } },
-        { $set: { active: false } }
-      );
-    }
   }
 }

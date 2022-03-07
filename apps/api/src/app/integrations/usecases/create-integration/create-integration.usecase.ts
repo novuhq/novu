@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@notifire/dal';
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { DeactivateIntegration } from '../deactivate-integration/deactivate-integration.usecase';
 
 @Injectable()
 export class CreateIntegration {
-  constructor(private integrationRepository: IntegrationRepository) {}
+  constructor(
+    private integrationRepository: IntegrationRepository,
+    private deactivateIntegration: DeactivateIntegration
+  ) {}
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
     let response: IntegrationEntity;
@@ -21,7 +25,12 @@ export class CreateIntegration {
       });
 
       if (command.active) {
-        await this.deactivatedOtherActiveChannels(command, response._id);
+        await this.deactivateIntegration.execute({
+          applicationId: command.applicationId,
+          organizationId: command.organizationId,
+          integrationId: response._id,
+          channel: command.channel,
+        });
       }
     } catch (e) {
       if (e instanceof DalException) {
@@ -31,21 +40,5 @@ export class CreateIntegration {
     }
 
     return response;
-  }
-
-  async deactivatedOtherActiveChannels(command: CreateIntegrationCommand, integrationId): Promise<void> {
-    const otherExistedIntegration = await this.integrationRepository.find({
-      _id: { $ne: integrationId },
-      _applicationId: command.applicationId,
-      channel: command.channel,
-      active: true,
-    });
-
-    if (otherExistedIntegration.length) {
-      await this.integrationRepository.update(
-        { _id: { $in: otherExistedIntegration.map((i) => i._id) } },
-        { $set: { active: false } }
-      );
-    }
   }
 }
