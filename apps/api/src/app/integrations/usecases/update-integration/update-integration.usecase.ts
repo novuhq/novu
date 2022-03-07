@@ -34,7 +34,7 @@ export class UpdateIntegration {
       }
     );
 
-    await this.deactivatedOtherActiveChannels(command);
+    await this.deactivatedOtherActiveChannels(command, existingIntegration.channel);
 
     return await this.integrationRepository.findOne({
       _id: command.integrationId,
@@ -42,11 +42,11 @@ export class UpdateIntegration {
     });
   }
 
-  async deactivatedOtherActiveChannels(command: UpdateIntegrationCommand): Promise<void> {
+  async deactivatedOtherActiveChannels(command: UpdateIntegrationCommand, channelType: string): Promise<void> {
     const otherExistedIntegration = await this.integrationRepository.find({
       _id: { $ne: command.integrationId },
       _applicationId: command.applicationId,
-      channel: command.channel,
+      channel: channelType,
       active: true,
     });
 
