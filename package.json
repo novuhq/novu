@@ -84,14 +84,6 @@
     "ts-node": "^9.0.0",
     "typescript": "^4.4.3"
   },
-  "workspaces": {
-    "packages": [
-      "apps/*",
-      "libs/*",
-      "packages/*",
-      "providers/*"
-    ]
-  },
   "lint-staged": {
     "packages/**/*.{ts,json}": [
       "prettier --ignore-path ./.prettierignore --write"

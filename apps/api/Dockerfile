@@ -17,6 +17,7 @@ COPY tsconfig.base.json .
 
 COPY nx.json .
 COPY pnpm-workspace.yaml .
+COPY pnpm-lock.yaml .
 
 RUN pnpm i
 RUN pnpm build:api
