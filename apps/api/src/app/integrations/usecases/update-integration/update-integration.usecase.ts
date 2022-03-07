@@ -34,7 +34,9 @@ export class UpdateIntegration {
       }
     );
 
-    await this.deactivatedOtherActiveChannels(command, existingIntegration.channel);
+    if (command.active) {
+      await this.deactivatedOtherActiveChannels(command, existingIntegration.channel);
+    }
 
     return await this.integrationRepository.findOne({
       _id: command.integrationId,

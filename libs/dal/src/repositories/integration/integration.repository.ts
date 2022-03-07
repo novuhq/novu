@@ -42,7 +42,6 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   async delete(query: FilterQuery<IntegrationEntity & Document>) {
     const integration = await this.findOne({ _id: query._id });
     if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
-    integration.removed = true;
     await super.update(
       { _id: integration._id, _applicationId: integration._applicationId },
       { $set: { removed: true } }

@@ -20,11 +20,14 @@ export class CreateIntegration {
         active: command.active,
       });
 
-      await this.deactivatedOtherActiveChannels(command, response._id);
+      if (command.active) {
+        await this.deactivatedOtherActiveChannels(command, response._id);
+      }
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);
       }
+      throw e;
     }
 
     return response;

@@ -2,7 +2,7 @@ import { IntegrationEntity } from '@notifire/dal';
 import { UserSession } from '@notifire/testing';
 import { expect } from 'chai';
 
-describe('Get Integration - /integrations (GET)', function () {
+describe('Get Integrations - /integrations (GET)', function () {
   let session: UserSession;
 
   beforeEach(async () => {

@@ -16,6 +16,9 @@ export class RemoveIntegration {
       if (e instanceof DalException) {
         throw new ApiException(e.message);
       }
+      throw e;
     }
+
+    return command;
   }
 }
