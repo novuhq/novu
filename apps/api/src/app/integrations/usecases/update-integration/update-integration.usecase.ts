@@ -21,7 +21,6 @@ export class UpdateIntegration {
 
     if (command.active) {
       updatePayload.active = command.active;
-      await this.deactivatedOtherActiveChannels(command);
     }
 
     if (command.credentials) {
@@ -41,6 +40,8 @@ export class UpdateIntegration {
         $set: updatePayload,
       }
     );
+
+    await this.deactivatedOtherActiveChannels(command);
 
     return await this.integrationRepository.findOne({
       _id: command.integrationId,
