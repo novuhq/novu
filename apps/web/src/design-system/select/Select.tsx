@@ -14,6 +14,7 @@ import { ArrowDown, Search } from '../icons';
 
 interface ISelectProps {
   data: (string | { value: string; label?: string })[];
+  value?: string[] | string | null;
   onChange?: (value: string[] | string | null) => void;
   label?: React.ReactNode;
   placeholder?: string;
@@ -26,40 +27,52 @@ interface ISelectProps {
  * Select component
  *
  */
-export function Select({ data, type = 'select', searchable = false, onChange, ...props }: ISelectProps) {
-  const { classes } = useStyles();
-  const searchableSelectProps = searchable
-    ? {
-        searchable,
-        nothingFound: 'Nothing Found',
-        allowDeselect: true,
-        rightSectionWidth: 50,
-        rightSection: <Search />,
-      }
-    : {};
-  const defaultDesign = {
-    radius: 'md',
-    size: 'md',
-    rightSection: <ArrowDown />,
-    rightSectionWidth: 50,
-    styles: inputStyles,
-    classNames: classes,
-  } as InputBaseProps;
-  const multiselect = type === 'multiselect';
+export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
+  ({ data, type = 'select', value, searchable = false, onChange, ...props }: ISelectProps, ref) => {
+    const { classes } = useStyles();
+    const searchableSelectProps = searchable
+      ? {
+          searchable,
+          nothingFound: 'Nothing Found',
+          allowDeselect: true,
+          rightSectionWidth: 50,
+          rightSection: <Search />,
+        }
+      : {};
+    const defaultDesign = {
+      radius: 'md',
+      size: 'md',
+      rightSection: <ArrowDown />,
+      rightSectionWidth: 50,
+      styles: inputStyles,
+      classNames: classes,
+    } as InputBaseProps;
+    const multiselect = type === 'multiselect';
 
-  return multiselect ? (
-    <MantineMultiSelect
-      onChange={onChange}
-      {...defaultDesign}
-      {...searchableSelectProps}
-      data={data}
-      valueComponent={Value}
-      {...props}
-    />
-  ) : (
-    <MantineSelect {...defaultDesign} {...searchableSelectProps} onChange={onChange} data={data} {...props} />
-  );
-}
+    return multiselect ? (
+      <MantineMultiSelect
+        ref={ref}
+        onChange={onChange}
+        value={value as string[] | undefined}
+        {...defaultDesign}
+        {...searchableSelectProps}
+        data={data}
+        valueComponent={Value}
+        {...props}
+      />
+    ) : (
+      <MantineSelect
+        ref={ref}
+        value={value as string | undefined}
+        {...defaultDesign}
+        {...searchableSelectProps}
+        onChange={onChange}
+        data={data}
+        {...props}
+      />
+    );
+  }
+);
 
 function Value({ label, onRemove }: MultiSelectValueProps) {
   const theme = useMantineTheme();

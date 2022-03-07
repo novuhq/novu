@@ -16,7 +16,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationBodyDto } from './dto/create-integration.dto';
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
-import { GetIntegration } from './usecases/get-integration/get-integration.usecase';
+import { GetIntegrations } from './usecases/get-integration/get-integration.usecase';
 import { GetIntegrationCommand } from './usecases/get-integration/get-integration.command';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UpdateIntegrationBodyDto } from './dto/update-integration.dto';
@@ -28,14 +28,14 @@ import { UpdateIntegrationCommand } from './usecases/update-integration/update-i
 @UseGuards(JwtAuthGuard)
 export class IntegrationsController {
   constructor(
-    private getIntegrationUsecase: GetIntegration,
+    private getIntegrationsUsecase: GetIntegrations,
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration
   ) {}
 
   @Get('/')
   async getIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationEntity[]> {
-    return await this.getIntegrationUsecase.execute(
+    return await this.getIntegrationsUsecase.execute(
       GetIntegrationCommand.create({ applicationId: user.applicationId, organizationId: user.organizationId })
     );
   }
