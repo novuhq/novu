@@ -1,12 +1,7 @@
 import { IsDefined } from 'class-validator';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto, ICredentialsDto } from '@notifire/shared';
 
-export class CredentialsDto {
-  apiKey: string;
-
-  secretKey: string;
-}
-export class CreateIntegrationBodyDto {
+export class CreateIntegrationBodyDto implements ICreateIntegrationBodyDto {
   @IsDefined()
   providerId: string;
 
@@ -14,7 +9,7 @@ export class CreateIntegrationBodyDto {
   channel: ChannelTypeEnum;
 
   @IsDefined()
-  credentials: CredentialsDto;
+  credentials: ICredentialsDto;
 
   @IsDefined()
   active: boolean;
