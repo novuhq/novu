@@ -18,6 +18,9 @@
   },
   "author": "",
   "license": "ISC",
+  "bin": {
+    "novu": "./dist/index.js"
+  },
   "devDependencies": {
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
@@ -36,6 +39,7 @@
     "jwt-decode": "^3.1.2",
     "open": "^8.4.0",
     "ora": "^5.4.1",
-    "ts-node": "^10.5.0"
+    "ts-node": "^10.5.0",
+    "commander": "^9.0.0"
   }
 }
