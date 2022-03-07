@@ -2,7 +2,7 @@ import { IntegrationRepository } from '@notifire/dal';
 import { UserSession } from '@notifire/testing';
 import { expect } from 'chai';
 
-describe('Update Integration - /integrations (PUT)', function () {
+describe('Update Integration - /integrations/:integrationId (PUT)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 
