@@ -1,8 +1,8 @@
-import { UnprocessableEntityException } from '@nestjs/common';
 import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository } from '../base-repository';
 import { IntegrationEntity } from './integration.entity';
 import { Integration } from './integration.schema';
+import { DalException } from '../../shared';
 
 export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   constructor() {
@@ -28,66 +28,31 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   }
 
   async create(data: Partial<IntegrationEntity>): Promise<IntegrationEntity> {
-    const test = await this.find({
+    const existingIntegration = await this.findOne({
       _applicationId: data._applicationId,
       providerId: data.providerId,
       channel: data.channel,
     });
-    if (test.length === 0) {
-      if (data.active === true) {
-        await this.deactivatedOtherActiveChannels(data);
-      }
-
-      return await super.create(data);
+    if (existingIntegration) {
+      throw new DalException('Duplicate key - One application may not have two providers of the same channel type');
     }
 
-    throw new UnprocessableEntityException(
-      'Duplicate key - One application may not have two providers of the same channel type'
-    );
+    return await super.create(data);
   }
-
-  async update(
-    query: FilterQuery<IntegrationEntity & Document>,
-    updateBody: any
-  ): Promise<{
-    matched: number;
-    modified: number;
-  }> {
-    if (query.active === true) {
-      await this.deactivatedOtherActiveChannels(query);
-    }
-
-    return await super.update({ _id: query._id }, updateBody);
-  }
-
   async delete(query: FilterQuery<IntegrationEntity & Document>) {
     const integration = await this.findOne({ _id: query._id });
-    if (!integration) throw new Error(`Could not find integration with id ${query._id}`);
+    if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
     integration.removed = true;
-    await super.update({ _id: integration._id }, integration);
-  }
-
-  async deactivatedOtherActiveChannels(query: FilterQuery<IntegrationEntity & Document>): Promise<void> {
-    const otherExistedIntegration = (
-      await this.find({
-        _applicationId: query._applicationId,
-        channel: query.channel,
-        active: true,
-      })
-    ).filter((x) => x.providerId !== query.providerId);
-
-    for (const x of otherExistedIntegration) {
-      const deactivatedIntegration = x;
-
-      deactivatedIntegration.active = false;
-      await super.update({ _id: deactivatedIntegration._id }, deactivatedIntegration);
-    }
+    await super.update(
+      { _id: integration._id, _applicationId: integration._applicationId },
+      { $set: { removed: true } }
+    );
   }
 
   normalizeQuery(query: FilterQuery<IntegrationEntity & Document>): FilterQuery<IntegrationEntity & Document> {
     const normalizedQuery = query;
 
-    normalizedQuery.removed = !!normalizedQuery.removed;
+    normalizedQuery.removed = normalizedQuery.removed ?? false;
 
     return normalizedQuery;
   }

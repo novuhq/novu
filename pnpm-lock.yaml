@@ -252,7 +252,9 @@ importers:
       '@emotion/styled': ^11.6.0
       '@jackwilsdon/craco-use-babelrc': ^1.0.0
       '@mantine/core': ^3.6.3
+      '@mantine/dropzone': ^3.6.11
       '@mantine/hooks': ^3.6.3
+      '@mantine/prism': ^3.6.11
       '@notifire/dal': ^0.3.5
       '@notifire/shared': ^0.3.5
       '@notifire/testing': ^0.3.5
@@ -333,7 +335,9 @@ importers:
       '@emotion/styled': 11.6.0_0044a6ec6dcf5de7705bffaaff7afd26
       '@jackwilsdon/craco-use-babelrc': 1.0.0_react-scripts@4.0.3
       '@mantine/core': 3.6.3_767bf5af50762baea1b68a00bdb79916
+      '@mantine/dropzone': 3.6.11_e295e211a3bd8eee015f6cecbca913e7
       '@mantine/hooks': 3.6.3_react@17.0.2
+      '@mantine/prism': 3.6.11_e295e211a3bd8eee015f6cecbca913e7
       '@notifire/shared': link:../../libs/shared
       '@sentry/react': 6.16.1_react@17.0.2
       '@sentry/tracing': 6.16.1
@@ -635,7 +639,6 @@ importers:
     specifiers:
       '@aws-sdk/client-s3': ^3.14.0
       '@aws-sdk/s3-request-presigner': ^3.14.0
-      '@nestjs/common': ^8.4.0
       '@notifire/shared': ^0.3.5
       '@octokit/graphql': ^4.3.1
       '@sendgrid/mail': ^7.4.2
@@ -678,7 +681,6 @@ importers:
     dependencies:
       '@aws-sdk/client-s3': 3.45.0
       '@aws-sdk/s3-request-presigner': 3.45.0
-      '@nestjs/common': 8.4.0_54627e7a6d3bf65e69477b7533a76ad0
       '@notifire/shared': link:../shared
       '@octokit/graphql': 4.8.0
       '@sendgrid/mail': 7.6.0
@@ -9177,12 +9179,43 @@ packages:
       - '@types/react'
     dev: false
 
+  /@mantine/dropzone/3.6.11_e295e211a3bd8eee015f6cecbca913e7:
+    resolution: {integrity: sha512-12yBa5GXm3Ta47YCvWzfY92nUzpyyHRALKWN3ykXXa0PFnvcieGL9O62Xu9USRiyR7yIein6184US5FYYOJ+yg==}
+    peerDependencies:
+      '@mantine/core': 3.6.11
+      '@mantine/hooks': 3.6.11
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      '@mantine/core': 3.6.3_767bf5af50762baea1b68a00bdb79916
+      '@mantine/hooks': 3.6.3_react@17.0.2
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      react-dropzone: 11.7.1_react@17.0.2
+    dev: false
+
   /@mantine/hooks/3.6.3_react@17.0.2:
     resolution: {integrity: sha512-gxHXPEVUh/gD6VPDnmXnW14IisCk6pe7S2SzksB/3NdlJBCDvBY3j9ORT8hlZPxr+ylAltH6w8EI2SaUdh3T0w==}
     peerDependencies:
       react: '>=16.8.0'
     dependencies:
       react: 17.0.2
+    dev: false
+
+  /@mantine/prism/3.6.11_e295e211a3bd8eee015f6cecbca913e7:
+    resolution: {integrity: sha512-dukX8A8IAORoYkDRxeVD1JKKkG7Va+3CB4KJ3uLOP0pfzzpJ667WH8jDc5PAGl9auHmndQUUJDXRsj+YoE2Vew==}
+    peerDependencies:
+      '@mantine/core': 3.6.11
+      '@mantine/hooks': 3.6.11
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      '@mantine/core': 3.6.3_767bf5af50762baea1b68a00bdb79916
+      '@mantine/hooks': 3.6.3_react@17.0.2
+      clsx: 1.1.1
+      prism-react-renderer: 1.2.1_react@17.0.2
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
     dev: false
 
   /@mantine/styles/3.6.3_b3482aaf5744fc7c2aeb7941b0e0a78f:
@@ -9401,32 +9434,6 @@ packages:
     dependencies:
       axios: 0.24.0
       iterare: 1.2.1
-      tslib: 2.3.1
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /@nestjs/common/8.4.0_54627e7a6d3bf65e69477b7533a76ad0:
-    resolution: {integrity: sha512-uvm1Ccw0qRka/Gd5Mo5A2MQo9ItwewPes1fE2SBboennPojoiJ4A3iKirtlPuxsL+HQ4oD5eO02OsDyLYL2z6w==}
-    peerDependencies:
-      cache-manager: '*'
-      class-transformer: '*'
-      class-validator: '*'
-      reflect-metadata: ^0.1.12
-      rxjs: ^7.1.0
-    peerDependenciesMeta:
-      cache-manager:
-        optional: true
-      class-transformer:
-        optional: true
-      class-validator:
-        optional: true
-    dependencies:
-      axios: 0.26.0
-      class-transformer: 0.5.1
-      iterare: 1.2.1
-      reflect-metadata: 0.1.13
       tslib: 2.3.1
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -16284,6 +16291,11 @@ packages:
     engines: {node: '>= 4.5.0'}
     hasBin: true
 
+  /attr-accept/2.2.2:
+    resolution: {integrity: sha512-7prDjvt9HmqiZ0cl5CRjtS84sEyhsHP2coDkaZKRKVfCDo9s7iw7ChVmar78Gu9pC4SoR/28wFu/G5JJhTnqEg==}
+    engines: {node: '>=4'}
+    dev: false
+
   /author-regex/1.0.0:
     resolution: {integrity: sha1-0IiFvmubv5Q5/gh8dihyRfCoFFA=}
     engines: {node: '>=0.8'}
@@ -16409,14 +16421,6 @@ packages:
     resolution: {integrity: sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==}
     dependencies:
       follow-redirects: 1.14.7
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /axios/0.26.0:
-    resolution: {integrity: sha512-lKoGLMYtHvFrPVt3r+RBMp9nh34N0M8zEfCWqdWZx6phynIEhQqAdydpyBAAG211zlhX9Rgu08cOamy6XjE5Og==}
-    dependencies:
-      follow-redirects: 1.14.9
     transitivePeerDependencies:
       - debug
     dev: false
@@ -20692,7 +20696,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.16.5
       compute-scroll-into-view: 1.0.17
-      prop-types: 15.8.0
+      prop-types: 15.8.1
       react: 17.0.2
       react-is: 17.0.2
       tslib: 2.3.1
@@ -22371,6 +22375,13 @@ packages:
       webpack: 5.65.0
     dev: false
 
+  /file-selector/0.4.0:
+    resolution: {integrity: sha512-iACCiXeMYOvZqlF1kTiYINzgepRBymz1wwjiuup9u9nayhb6g4fSwiyJ/6adli+EPwrWtpgQAh2PoS7HukEGEg==}
+    engines: {node: '>= 10'}
+    dependencies:
+      tslib: 2.3.1
+    dev: false
+
   /file-system-cache/1.0.5:
     resolution: {integrity: sha1-hCWbNqK7uNPW6xAh0xMv/mTP/08=}
     dependencies:
@@ -22674,16 +22685,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-
-  /follow-redirects/1.14.9:
-    resolution: {integrity: sha512-MQDfihBQYMcyy5dhRDJUHcw7lb2Pv/TuE6xP1vyraLukNDHKbDxDNaOE3NbCAdKQApno+GPRyo1YAp89yCjK4w==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dev: false
 
   /follow-redirects/1.5.10:
     resolution: {integrity: sha512-0V5l4Cizzvqt5D44aTXbFZz+FtyXV1vrDN6qrelxtfYQKW0KO0W2T/hkE8xvGa/540LkZlkaUjO4ailYTFtHVQ==}
@@ -32623,6 +32624,13 @@ packages:
       object-assign: 4.1.1
       react-is: 16.13.1
 
+  /prop-types/15.8.1:
+    resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
+      react-is: 16.13.1
+
   /propagate/2.0.1:
     resolution: {integrity: sha512-vGrhOavPSTz4QVNuBNdcNXePNdNMaO1xj9yBeH1ScQPjk/rhg9sSlCXPhMkFuaNNW/syTvYqsnbIJxMBfRbbag==}
     engines: {node: '>= 8'}
@@ -33639,9 +33647,21 @@ packages:
       react-dom: '>= 16.3.0'
     dependencies:
       clsx: 1.1.1
-      prop-types: 15.8.0
+      prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+
+  /react-dropzone/11.7.1_react@17.0.2:
+    resolution: {integrity: sha512-zxCMwhfPy1olUEbw3FLNPLhAm/HnaYH5aELIEglRbqabizKAdHs0h+WuyOpmA+v1JXn0++fpQDdNfUagWt5hJQ==}
+    engines: {node: '>= 10.13'}
+    peerDependencies:
+      react: '>= 16.8'
+    dependencies:
+      attr-accept: 2.2.2
+      file-selector: 0.4.0
+      prop-types: 15.8.1
+      react: 17.0.2
+    dev: false
 
   /react-editor-js/1.10.0_672270b859afe6fefe24584afa0c37c6:
     resolution: {integrity: sha512-A4OZ88fkUdts1bOHy3CWpPiO37n2D9EG6gvVimD0zyiWJzR6EY7lM1MfLETWEU1NgEOdvj/0Qt0A9LcmRBKuGw==}
@@ -33684,7 +33704,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.16.5
       invariant: 2.2.4
-      prop-types: 15.8.0
+      prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-fast-compare: 3.2.0
