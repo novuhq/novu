@@ -23,7 +23,7 @@ export const useStyles = createStyles((theme) => {
       fontWeight: '700',
 
       '&:hover': {
-        backgroundColor: dark ? colors.B20 : colors.white,
+        backgroundColor: dark ? colors.B20 : colors.BGLight,
       },
     },
     linkIcon: {

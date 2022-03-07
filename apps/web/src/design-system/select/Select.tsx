@@ -7,19 +7,28 @@ import {
   InputBaseProps,
   MultiSelectValueProps,
   useMantineTheme,
+  MantineMargins,
+  LoadingOverlay,
 } from '@mantine/core';
 import useStyles from './Select.styles';
 import { inputStyles } from '../config/inputs.styles';
-import { ArrowDown, Search } from '../icons';
+import { ArrowDown } from '../icons';
+import { colors } from '../config';
 
-interface ISelectProps {
+interface ISelectProps extends MantineMargins {
   data: (string | { value: string; label?: string })[];
   value?: string[] | string | null;
   onChange?: (value: string[] | string | null) => void;
   label?: React.ReactNode;
+  error?: React.ReactNode;
   placeholder?: string;
   description?: string;
+  getCreateLabel?: (query: string) => React.ReactNode;
+  onCreate?: (query: string) => void;
+  onDropdownOpen?: () => void;
   searchable?: boolean;
+  creatable?: boolean;
+  loading?: boolean;
   type?: 'multiselect' | 'select';
 }
 
@@ -28,15 +37,25 @@ interface ISelectProps {
  *
  */
 export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
-  ({ data, type = 'select', value, searchable = false, onChange, ...props }: ISelectProps, ref) => {
-    const { classes } = useStyles();
+  (
+    {
+      data,
+      type = 'select',
+      value,
+      searchable = false,
+      creatable = false,
+      loading = false,
+      onChange,
+      ...props
+    }: ISelectProps,
+    ref
+  ) => {
+    const { classes, theme } = useStyles();
     const searchableSelectProps = searchable
       ? {
           searchable,
           nothingFound: 'Nothing Found',
-          allowDeselect: true,
-          rightSectionWidth: 50,
-          rightSection: <Search />,
+          clearable: true,
         }
       : {};
     const defaultDesign = {
@@ -49,27 +68,42 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
     } as InputBaseProps;
     const multiselect = type === 'multiselect';
 
-    return multiselect ? (
-      <MantineMultiSelect
-        ref={ref}
-        onChange={onChange}
-        value={value as string[] | undefined}
-        {...defaultDesign}
-        {...searchableSelectProps}
-        data={data}
-        valueComponent={Value}
-        {...props}
-      />
-    ) : (
-      <MantineSelect
-        ref={ref}
-        value={value as string | undefined}
-        {...defaultDesign}
-        {...searchableSelectProps}
-        onChange={onChange}
-        data={data}
-        {...props}
-      />
+    return (
+      <div style={{ position: 'relative', minHeight: 50 }}>
+        <LoadingOverlay
+          visible={loading}
+          overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
+          loaderProps={{
+            color: colors.error,
+          }}
+        />
+        {multiselect ? (
+          <MantineMultiSelect
+            ref={ref}
+            onChange={onChange}
+            autoComplete="nope"
+            value={value as string[] | undefined}
+            {...defaultDesign}
+            {...searchableSelectProps}
+            creatable
+            data={data}
+            valueComponent={Value}
+            {...props}
+          />
+        ) : (
+          <MantineSelect
+            ref={ref}
+            value={value as string | undefined}
+            autoComplete="nope"
+            {...defaultDesign}
+            {...searchableSelectProps}
+            creatable
+            onChange={onChange}
+            data={data}
+            {...props}
+          />
+        )}
+      </div>
     );
   }
 );

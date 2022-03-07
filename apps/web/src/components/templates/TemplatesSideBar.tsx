@@ -16,6 +16,7 @@ const templateButtons = [
 export function TemplatesSideBar() {
   const links = templateButtons.map((link) => <TemplateButton {...link} key={link.label} />);
   const theme = useMantineTheme();
+  const textColor = theme.colorScheme === 'dark' ? colors.B40 : colors.B70;
 
   return (
     <Navbar mb={20} padding={30} width={{ base: 450 }} sx={{ paddingTop: '0px' }}>
@@ -28,13 +29,13 @@ export function TemplatesSideBar() {
         />
       </Navbar.Section>
       <Navbar.Section mr={20}>
-        <Text mt={10} color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>
+        <Text mt={10} color={textColor}>
           Channels
         </Text>
         <div>{links}</div>
       </Navbar.Section>
       <Navbar.Section mr={20}>
-        <Text mt={10} color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>
+        <Text mt={10} color={textColor}>
           Implementation Code
         </Text>
         <TemplateButton
