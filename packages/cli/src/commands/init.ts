@@ -1,11 +1,15 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
-import * as gradient from 'gradient-string';
-import * as chalk from 'chalk';
 import * as ora from 'ora';
 import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
-import { environmentQuestions, existingSessionQuestions, introQuestions, registerMethodQuestions } from './init.consts';
+import {
+  environmentQuestions,
+  existingSessionQuestions,
+  introQuestions,
+  registerMethodQuestions,
+  showWelcomeScreen,
+} from './init.consts';
 import { HttpServer } from '../server';
 import {
   SERVER_HOST,
@@ -29,9 +33,6 @@ import {
   getApplicationApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
-
-const textGradient = gradient('#0099F7', '#ff3432');
-const logoGradient = gradient('#DD2476', '#FF512F');
 
 export async function initCommand() {
   try {
@@ -59,33 +60,6 @@ export async function initCommand() {
     // eslint-disable-next-line no-console
     console.error(e);
   }
-}
-
-export async function showWelcomeScreen() {
-  const logo = `
-                        @@@@@@@@@@@@@        
-                @@@       @@@@@@@@@@@        
-              @@@@@@@@       @@@@@@@@        
-            @@@@@@@@@@@@       @@@@@@     @@ 
-           @@@@@@@@@@@@@@@@      @@@@     @@@
-          @@@@@@@@@@@@@@@@@@@       @     @@@
-          @@@@@         @@@@@@@@         @@@@
-           @@@     @       @@@@@@@@@@@@@@@@@@
-           @@@     @@@@      @@@@@@@@@@@@@@@@
-            @@     @@@@@@       @@@@@@@@@@@@ 
-                   @@@@@@@@       @@@@@@@@   
-                   @@@@@@@@@@@       @@@     
-                   @@@@@@@@@@@@@                  
-                          `;
-
-  const items = logo.split('\n').map((row) => logoGradient(row));
-
-  /* eslint-disable no-console */
-  console.log(chalk.bold(items.join('\n')));
-  console.log(chalk.bold(`                      Welcome to NOVU!`));
-  console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
-  console.log(chalk.bold(`Now let's setup your account and send your first notification`));
-  /* eslint-enable  no-console */
 }
 
 async function handleOnboardingFlow(config: ConfigService) {
