@@ -37,30 +37,32 @@ export function EmailSettingsForm({ application, refetch }: { application: IAppl
 
   return (
     <Card title="Sender Identity">
-      <form onSubmit={handleSubmit(onEmailSettingsSubmit)}>
-        <Input
-          label="Sender Email"
-          required
-          error={errors.senderEmail?.message}
-          {...register('senderEmail', {
-            required: 'Please provide a valid email',
-            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email' },
-          })}
-          data-test-id="sender-email"
-        />
-        <Input
-          label="Sender Name"
-          mt={25}
-          required
-          error={errors.senderName?.message}
-          {...register('senderName', { required: 'Please enter a sender name' })}
-          data-test-id="sender-name"
-        />
+      <div style={{ maxWidth: '600px' }}>
+        <form onSubmit={handleSubmit(onEmailSettingsSubmit)}>
+          <Input
+            label="Sender Email"
+            required
+            error={errors.senderEmail?.message}
+            {...register('senderEmail', {
+              required: 'Please provide a valid email',
+              pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email' },
+            })}
+            data-test-id="sender-email"
+          />
+          <Input
+            label="Sender Name"
+            mt={25}
+            required
+            error={errors.senderName?.message}
+            {...register('senderName', { required: 'Please enter a sender name' })}
+            data-test-id="sender-name"
+          />
 
-        <Button mt={25} loading={isLoadingEmailSettings} submit data-test-id="submit-update-settings">
-          Update
-        </Button>
-      </form>
+          <Button mt={25} loading={isLoadingEmailSettings} submit data-test-id="submit-update-settings">
+            Update
+          </Button>
+        </form>
+      </div>
     </Card>
   );
 }

@@ -8,9 +8,6 @@ export const inputStyles = (theme: MantineTheme) => {
   const secondaryColor = dark ? theme.colors.dark[3] : theme.colors.gray[6];
 
   return {
-    root: {
-      maxWidth: '500px',
-    },
     rightSection: {
       color: `${theme.colors.gray[7]} !important`,
     },

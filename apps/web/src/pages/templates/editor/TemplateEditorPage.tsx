@@ -43,9 +43,9 @@ export default function TemplateEditorPage() {
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
           <PageHeader title="Create New Template" actions={<Button submit>Create</Button>} />
-          <Group align="flex-start" grow>
+          <Group mt={20} align="flex-start" grow>
             <TemplatesSideBar />
-            <Container mt={15} ml={25} mr={30} fluid padding={0}>
+            <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
               <NotificationSettingsForm errors={errors} editMode={editMode} />
               {trigger && (
                 <TemplateTriggerModal
