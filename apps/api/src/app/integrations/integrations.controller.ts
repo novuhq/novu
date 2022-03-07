@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -22,6 +23,8 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { UpdateIntegrationBodyDto } from './dto/update-integration.dto';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
+import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
+import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -30,7 +33,8 @@ export class IntegrationsController {
   constructor(
     private getIntegrationsUsecase: GetIntegrations,
     private createIntegrationUsecase: CreateIntegration,
-    private updateIntegrationUsecase: UpdateIntegration
+    private updateIntegrationUsecase: UpdateIntegration,
+    private removeIntegrationUsecase: RemoveIntegration
   ) {}
 
   @Get('/')
@@ -73,6 +77,17 @@ export class IntegrationsController {
         channel: body.channel,
         credentials: body.credentials,
         active: body.active,
+      })
+    );
+  }
+
+  @Delete('/:integrationId')
+  async removeIntegration(@UserSession() user: IJwtPayload, @Param('integrationId') integrationId: string) {
+    return await this.removeIntegrationUsecase.execute(
+      RemoveIntegrationCommand.create({
+        applicationId: user.applicationId,
+        organizationId: user.organizationId,
+        integrationId,
       })
     );
   }
