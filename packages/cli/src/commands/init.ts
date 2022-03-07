@@ -51,10 +51,7 @@ export async function initCommand() {
 
         return;
       }
-
       process.exit();
-
-      return;
     }
 
     await handleOnboardingFlow(config);
@@ -68,16 +65,16 @@ export async function showWelcomeScreen() {
   const logo = `
                         @@@@@@@@@@@@@        
                 @@@       @@@@@@@@@@@        
-              @@@@@@@@      (@@@@@@@@        
+              @@@@@@@@       @@@@@@@@        
             @@@@@@@@@@@@       @@@@@@     @@ 
            @@@@@@@@@@@@@@@@      @@@@     @@@
-           @@@@@@@@&@@@@@@@@@       @     @@@
+          @@@@@@@@@@@@@@@@@@@       @     @@@
           @@@@@         @@@@@@@@         @@@@
            @@@     @       @@@@@@@@@@@@@@@@@@
-           @@@    .@@@@      @@@@@@@@@@@@@@@@
-            @@    .@@@@@@       @@@@@@@@@@@@ 
-                  .@@@@@@@@,      @@@@@@@@   
-                  .@@@@@@@@@@@       @@@     
+           @@@     @@@@      @@@@@@@@@@@@@@@@
+            @@     @@@@@@       @@@@@@@@@@@@ 
+                   @@@@@@@@       @@@@@@@@   
+                   @@@@@@@@@@@       @@@     
                    @@@@@@@@@@@@@                  
                           `;
 
@@ -134,7 +131,6 @@ async function handleOnboardingFlow(config: ConfigService) {
   } finally {
     spinner?.stop();
     httpServer.close();
-    process.exit();
   }
 }
 
