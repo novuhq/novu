@@ -12,6 +12,7 @@ export { Lock } from './general/Lock';
 export { Bell } from './general/Bell';
 export { Mail } from './general/Mail';
 export { Trash } from './general/Trash';
+export { Check } from './general/Check';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
@@ -21,3 +22,12 @@ export { Edit } from './actions/Edit';
 export { Upload } from './actions/Upload';
 
 export { ArrowDown } from './arrows/ArrowDown';
+
+export { BellGradient } from './gradient/BellGradient';
+export { MailGradient } from './gradient/MailGradient';
+export { MobileGradient } from './gradient/MobileGradient';
+export { PlusGradient } from './gradient/PlusGradient';
+export { GlobeGradient } from './gradient/GlobeGradient';
+export { CompassGradient } from './gradient/CompassGradient';
+export { SmsGradient } from './gradient/SmsGradient';
+export { TapeGradient } from './gradient/TapeGradient';

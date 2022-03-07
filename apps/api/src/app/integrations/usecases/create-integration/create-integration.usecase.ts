@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@notifire/dal';
+import { IntegrationEntity, IntegrationRepository, DalException } from '@notifire/dal';
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
@@ -20,10 +20,9 @@ export class CreateIntegration {
         active: command.active,
       });
     } catch (e) {
-      if (e.status === 422) {
+      if (e instanceof DalException) {
         throw new ApiException(e.message);
       }
-      throw e;
     }
 
     return response;

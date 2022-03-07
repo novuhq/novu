@@ -21,6 +21,7 @@ export class UpdateIntegration {
 
     if (command.active) {
       updatePayload.active = command.active;
+      await this.deactivatedOtherActiveChannels(command);
     }
 
     if (command.credentials) {
@@ -34,16 +35,32 @@ export class UpdateIntegration {
     await this.integrationRepository.update(
       {
         _id: command.integrationId,
-        active: command.active,
         _applicationId: command.applicationId,
-        channel: command.channel,
-        providerId: command.providerId,
       },
       {
         $set: updatePayload,
       }
     );
 
-    return await this.integrationRepository.findById(command.integrationId);
+    return await this.integrationRepository.findOne({
+      _id: command.integrationId,
+      _applicationId: command.applicationId,
+    });
+  }
+
+  async deactivatedOtherActiveChannels(command: UpdateIntegrationCommand): Promise<void> {
+    const otherExistedIntegration = await this.integrationRepository.find({
+      _id: { $ne: command.integrationId },
+      _applicationId: command.applicationId,
+      channel: command.channel,
+      active: true,
+    });
+
+    if (otherExistedIntegration.length) {
+      await this.integrationRepository.update(
+        { _id: { $in: otherExistedIntegration.map((i) => i._id) } },
+        { $set: { active: false } }
+      );
+    }
   }
 }
