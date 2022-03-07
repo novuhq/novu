@@ -1,5 +1,5 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { IntegrationRepository } from '@notifire/dal';
+import { IntegrationRepository, DalException } from '@notifire/dal';
 import { RemoveIntegrationCommand } from './remove-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
@@ -13,7 +13,9 @@ export class RemoveIntegration {
     try {
       await this.integrationRepository.delete({ _id: command.integrationId });
     } catch (e) {
-      throw new ApiException(e.message);
+      if (e instanceof DalException) {
+        throw new ApiException(e.message);
+      }
     }
   }
 }

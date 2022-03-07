@@ -2,7 +2,7 @@ import { UserSession } from '@notifire/testing';
 import { expect } from 'chai';
 import { IntegrationRepository } from '@notifire/dal';
 
-describe('Get Integration - /integration (GET)', function () {
+describe('Delete Integration - /integration/:integrationId (DELETE)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 

@@ -17,8 +17,8 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationBodyDto } from './dto/create-integration.dto';
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
-import { GetIntegration } from './usecases/get-integration/get-integration.usecase';
-import { GetIntegrationCommand } from './usecases/get-integration/get-integration.command';
+import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
+import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UpdateIntegrationBodyDto } from './dto/update-integration.dto';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
@@ -31,7 +31,7 @@ import { RemoveIntegration } from './usecases/remove-integration/remove-integrat
 @UseGuards(JwtAuthGuard)
 export class IntegrationsController {
   constructor(
-    private getIntegrationUsecase: GetIntegration,
+    private getIntegrationsUsecase: GetIntegrations,
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration,
     private removeIntegrationUsecase: RemoveIntegration
@@ -39,8 +39,8 @@ export class IntegrationsController {
 
   @Get('/')
   async getIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationEntity[]> {
-    return await this.getIntegrationUsecase.execute(
-      GetIntegrationCommand.create({ applicationId: user.applicationId, organizationId: user.organizationId })
+    return await this.getIntegrationsUsecase.execute(
+      GetIntegrationsCommand.create({ applicationId: user.applicationId, organizationId: user.organizationId })
     );
   }
 
