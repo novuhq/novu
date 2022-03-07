@@ -19,6 +19,8 @@ export class CreateIntegration {
         credentials: command.credentials,
         active: command.active,
       });
+
+      await this.deactivatedOtherActiveChannels(command, response._id);
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);
@@ -26,5 +28,21 @@ export class CreateIntegration {
     }
 
     return response;
+  }
+
+  async deactivatedOtherActiveChannels(command: CreateIntegrationCommand, integrationId): Promise<void> {
+    const otherExistedIntegration = await this.integrationRepository.find({
+      _id: { $ne: integrationId },
+      _applicationId: command.applicationId,
+      channel: command.channel,
+      active: true,
+    });
+
+    if (otherExistedIntegration.length) {
+      await this.integrationRepository.update(
+        { _id: { $in: otherExistedIntegration.map((i) => i._id) } },
+        { $set: { active: false } }
+      );
+    }
   }
 }

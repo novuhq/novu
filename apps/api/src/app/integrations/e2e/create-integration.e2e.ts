@@ -93,6 +93,33 @@ describe('Create Integration - /integration (POST)', function () {
 
     expect(body).to.equal(undefined);
   });
+
+  it('should deactivated old providers', async function () {
+    const payload = {
+      providerId: 'sendgrid',
+      channel: 'EMAIL',
+      credentials: { apiKey: '123', secretKey: 'abc' },
+      active: true,
+    };
+
+    const firstIntegrationResponse = await session.testAgent.post('/v1/integrations').send(payload);
+
+    const secondPayload = payload;
+
+    secondPayload.providerId = 'mailgun';
+
+    await session.testAgent.post('/v1/integrations').send(payload);
+
+    const integrations = await integrationRepository.findByApplicationId(
+      firstIntegrationResponse.body.data._applicationId
+    );
+
+    const firstIntegration = integrations.find((i) => i.providerId.toString() === 'sendgrid');
+    const secondIntegration = integrations.find((i) => i.providerId.toString() === 'mailgun');
+
+    expect(firstIntegration.active).to.equal(false);
+    expect(secondIntegration.active).to.equal(true);
+  });
 });
 
 async function insertIntegrationTwice(
