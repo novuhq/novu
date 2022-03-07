@@ -1,6 +1,13 @@
 import { Navbar, useMantineTheme } from '@mantine/core';
 import { colors, TemplateButton, Text } from '../../design-system';
-import { BellGradient, MailGradient, MobileGradient, PlusGradient, TapeGradient } from '../../design-system/icons';
+import {
+  BellGradient,
+  MailGradient,
+  MobileGradient,
+  PlusGradient,
+  SmsGradient,
+  TapeGradient,
+} from '../../design-system/icons';
 
 const templateButtons = [
   {
@@ -10,12 +17,14 @@ const templateButtons = [
     action: true,
   },
   { label: 'Email Template', description: 'This subtitle will describe things', icon: <MailGradient />, action: true },
+  { label: 'SMS', description: 'This subtitle will describe things', icon: <SmsGradient />, action: true },
   { label: 'Add Channel', description: 'This subtitle will describe things', icon: <PlusGradient /> },
 ];
 
 export function TemplatesSideBar() {
   const links = templateButtons.map((link) => <TemplateButton {...link} key={link.label} />);
   const theme = useMantineTheme();
+  const textColor = theme.colorScheme === 'dark' ? colors.B40 : colors.B70;
 
   return (
     <Navbar mb={20} padding={30} width={{ base: 450 }} sx={{ paddingTop: '0px' }}>
@@ -28,13 +37,13 @@ export function TemplatesSideBar() {
         />
       </Navbar.Section>
       <Navbar.Section mr={20}>
-        <Text mt={10} color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>
+        <Text mt={10} mb={20} color={textColor}>
           Channels
         </Text>
         <div>{links}</div>
       </Navbar.Section>
       <Navbar.Section mr={20}>
-        <Text mt={10} color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>
+        <Text mt={10} mb={20} color={textColor}>
           Implementation Code
         </Text>
         <TemplateButton

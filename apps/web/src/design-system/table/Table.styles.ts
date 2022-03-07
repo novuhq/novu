@@ -15,10 +15,10 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
     root: {
       borderCollapse: 'collapse',
       borderSpacing: '0px 20px',
-      'tr td:first-child': {
+      'tr td:first-of-type': {
         paddingLeft: 30,
       },
-      'tr th:first-child': {
+      'tr th:first-of-type': {
         paddingLeft: 30,
       },
       'tr td:last-child': {

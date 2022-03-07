@@ -13,19 +13,21 @@ export const ApiKeysCard = () => {
 
   return (
     <Card title="Api Keys">
-      <Input
-        label="Use this api key to interact with the notifire api"
-        readOnly
-        rightSection={
-          <Tooltip label={clipboard.copied ? 'Copied!' : 'Copy Key'}>
-            <ActionIcon variant="transparent" onClick={() => clipboard.copy(apiKeys?.length ? apiKeys[0].key : '')}>
-              {clipboard.copied ? <Check /> : <Copy />}
-            </ActionIcon>
-          </Tooltip>
-        }
-        value={apiKeys?.length ? apiKeys[0].key : ''}
-        data-test-id="api-key-container"
-      />
+      <div style={{ maxWidth: '600px' }}>
+        <Input
+          label="Use this api key to interact with the notifire api"
+          readOnly
+          rightSection={
+            <Tooltip label={clipboard.copied ? 'Copied!' : 'Copy Key'}>
+              <ActionIcon variant="transparent" onClick={() => clipboard.copy(apiKeys?.length ? apiKeys[0].key : '')}>
+                {clipboard.copied ? <Check /> : <Copy />}
+              </ActionIcon>
+            </Tooltip>
+          }
+          value={apiKeys?.length ? apiKeys[0].key : ''}
+          data-test-id="api-key-container"
+        />
+      </div>
     </Card>
   );
 };
