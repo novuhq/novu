@@ -38,34 +38,36 @@ export function SmsSettingsForm({ application, refetch }: { application: IApplic
 
   return (
     <Card title="Twillio Integration Details">
-      <form onSubmit={handleSubmit(onSmsSettingsSubmit)}>
-        <Input
-          label="Account SID"
-          required
-          data-test-id="account-sid"
-          error={errors.accountSid?.message}
-          {...register('accountSid', { required: 'Please input a valid account sid' })}
-        />
-        <Input
-          mt={25}
-          required
-          error={errors.authToken?.message}
-          label="Auth Token"
-          data-test-id="auth-token"
-          {...register('authToken', { required: 'Please enter auth token' })}
-        />
-        <Input
-          mt={25}
-          required
-          error={errors.phoneNumber?.message}
-          label="Phone Number"
-          data-test-id="phone-number"
-          {...register('phoneNumber', { required: 'Please enter a phone number' })}
-        />
-        <Button mt={25} submit data-test-id="submit-update-settings" loading={isLoadingSmsSettings}>
-          Update
-        </Button>
-      </form>
+      <div style={{ maxWidth: '600px' }}>
+        <form onSubmit={handleSubmit(onSmsSettingsSubmit)}>
+          <Input
+            label="Account SID"
+            required
+            data-test-id="account-sid"
+            error={errors.accountSid?.message}
+            {...register('accountSid', { required: 'Please input a valid account sid' })}
+          />
+          <Input
+            mt={25}
+            required
+            error={errors.authToken?.message}
+            label="Auth Token"
+            data-test-id="auth-token"
+            {...register('authToken', { required: 'Please enter auth token' })}
+          />
+          <Input
+            mt={25}
+            required
+            error={errors.phoneNumber?.message}
+            label="Phone Number"
+            data-test-id="phone-number"
+            {...register('phoneNumber', { required: 'Please enter a phone number' })}
+          />
+          <Button mt={25} submit data-test-id="submit-update-settings" loading={isLoadingSmsSettings}>
+            Update
+          </Button>
+        </form>
+      </div>
     </Card>
   );
 }

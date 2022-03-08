@@ -13,7 +13,8 @@ export function Container({ children, ...props }: ContainerProps) {
         padding: '0px',
         borderRadius: '7px',
         boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
-        minHeight: '90%',
+        minHeight: '800px',
+        height: '100%',
         backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
       })}
       {...props}>

@@ -11,6 +11,7 @@ import SignUpPage from './legacy/pages/auth/signup';
 import HomePage from './legacy/pages/HomePage';
 import ApplicationOnBoarding from './legacy/pages/onboarding/application';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
+import TemplateEditorPageLegacy from './legacy/pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import { WidgetSettingsPage } from './pages/settings/WidgetSettingsPage';
 import { OrganizationSettingsPage } from './legacy/pages/organization-settings/OrganizationSettingsPage';
@@ -89,7 +90,7 @@ function App() {
                         <TemplateEditorPage />
                       </Route>
                       <Route exact path="/templates/edit/:templateId">
-                        <TemplateEditorPage />
+                        <TemplateEditorPageLegacy />
                       </Route>
                       <Route exact path="/templates">
                         <NotificationList />

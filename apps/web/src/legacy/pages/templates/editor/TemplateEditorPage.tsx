@@ -42,7 +42,7 @@ import { useApplication } from '../../../../api/hooks/use-application';
 import { getNotificationGroups } from '../../../../api/notifications';
 import { api } from '../../../../api/api.client';
 
-function TemplateEditorPage() {
+function TemplateEditorPageLegacy() {
   const {
     data: serverGroups,
     isLoading: loadingGroups,
@@ -510,4 +510,4 @@ const StyledAddMessageButton = styled(Button)`
   }
 `;
 
-export default TemplateEditorPage;
+export default TemplateEditorPageLegacy;

@@ -87,7 +87,6 @@ export function useTemplateController(templateId: string) {
     resolver: async (data) => {
       const errors: any = {};
       let values = data;
-
       if (!data.name) {
         errors.name = 'Required field';
       }
@@ -266,12 +265,6 @@ export function useTemplateController(templateId: string) {
           filters: item.filters,
         });
       }
-    }
-
-    if (!messagesData?.length) {
-      message.warn('Please select at-least one channel');
-
-      return;
     }
 
     const payload: ICreateNotificationTemplateDto = {

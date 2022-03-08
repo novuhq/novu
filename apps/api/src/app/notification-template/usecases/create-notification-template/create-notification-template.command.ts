@@ -44,7 +44,6 @@ export class CreateNotificationTemplateCommand extends ApplicationWithUserComman
   @IsDefined()
   @IsArray()
   @ValidateNested()
-  @ArrayNotEmpty()
   messages: NotificationChannelDto[];
 
   @IsBoolean()

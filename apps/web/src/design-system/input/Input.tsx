@@ -28,6 +28,7 @@ export const Input = React.forwardRef<HTMLInputElement, IInputProps>(
         {...(rightSection ? { rightSection, rightSectionWidth: 50 } : {})}
         {...defaultDesign}
         onChange={onChange}
+        autoComplete="off"
         readOnly={readOnly}
         value={value}
         {...props}
