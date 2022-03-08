@@ -1,12 +1,15 @@
 import { Document, FilterQuery } from 'mongoose';
+import { SoftDeleteModel } from 'mongoose-delete';
 import { BaseRepository } from '../base-repository';
 import { IntegrationEntity } from './integration.entity';
 import { Integration } from './integration.schema';
 import { DalException } from '../../shared';
 
 export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
+  private integration: SoftDeleteModel;
   constructor() {
     super(Integration, IntegrationEntity);
+    this.integration = Integration;
   }
 
   async find(
@@ -14,11 +17,7 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
     select = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
   ): Promise<IntegrationEntity[]> {
-    return super.find(this.normalizeQuery(query), select, options);
-  }
-
-  async findOne(query: FilterQuery<IntegrationEntity & Document>, select?: keyof IntegrationEntity | string) {
-    return super.findOne(this.normalizeQuery(query), select);
+    return super.find(query, select, options);
   }
 
   async findByApplicationId(applicationId: string): Promise<IntegrationEntity[]> {
@@ -42,17 +41,12 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   async delete(query: FilterQuery<IntegrationEntity & Document>) {
     const integration = await this.findOne({ _id: query._id });
     if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
-    await super.update(
-      { _id: integration._id, _applicationId: integration._applicationId },
-      { $set: { removed: true } }
-    );
+    await this.integration.delete({ _id: integration._id, _applicationId: integration._applicationId });
   }
 
-  normalizeQuery(query: FilterQuery<IntegrationEntity & Document>): FilterQuery<IntegrationEntity & Document> {
-    const normalizedQuery = query;
+  async findDeleted(query: FilterQuery<IntegrationEntity & Document>): Promise<IntegrationEntity> {
+    const res = await this.integration.findDeleted(query);
 
-    normalizedQuery.removed = normalizedQuery.removed ?? false;
-
-    return normalizedQuery;
+    return this.mapEntity(res);
   }
 }

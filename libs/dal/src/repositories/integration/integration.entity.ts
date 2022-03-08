@@ -20,5 +20,9 @@ export class IntegrationEntity {
 
   active: boolean;
 
-  removed: boolean;
+  deleted: boolean;
+
+  deletedAt: string;
+
+  deletedBy: string;
 }

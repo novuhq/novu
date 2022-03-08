@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
+import * as mongooseDelete from 'mongoose-delete';
 import { schemaOptions } from '../schema-default.options';
 import { IntegrationEntity } from './integration.entity';
 
@@ -24,13 +25,11 @@ const integrationSchema = new Schema(
       type: Schema.Types.Boolean,
       default: false,
     },
-    removed: {
-      type: Schema.Types.Boolean,
-      default: false,
-    },
   },
   schemaOptions
 );
+
+integrationSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 interface IIntegrationDocument extends IntegrationEntity, Document {
   // eslint-disable-next-line

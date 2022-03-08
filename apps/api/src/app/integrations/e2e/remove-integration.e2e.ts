@@ -28,9 +28,9 @@ describe('Delete Integration - /integration/:integrationId (DELETE)', function (
 
     expect(isDeleted).to.equal(true);
 
-    const deletedIntegration = await integrationRepository.findOne({ _id: integrationId, removed: true });
+    const deletedIntegration = (await integrationRepository.findDeleted({ _id: integrationId }))[0];
 
-    expect(deletedIntegration.removed).to.equal(true);
+    expect(deletedIntegration.deleted).to.equal(true);
   });
 
   it('fail remove none existing integration', async function () {
