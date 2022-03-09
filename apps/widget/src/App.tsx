@@ -100,11 +100,14 @@ function AppContent() {
             fontColor={theme.colors.fontColor}>
             <Router>
               <Routes>
-                <Route path="/:applicationId">
-                  <Layout>
-                    <Main />
-                  </Layout>
-                </Route>
+                <Route
+                  path="/:applicationId"
+                  element={
+                    <Layout>
+                      <Main />
+                    </Layout>
+                  }
+                />
               </Routes>
             </Router>
           </Wrap>
