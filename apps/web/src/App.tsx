@@ -76,7 +76,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/onboarding/application/*"
+                  path="/onboarding/application"
                   element={
                     <RequiredAuth>
                       <ApplicationOnBoarding />
@@ -84,7 +84,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/templates/create/*"
+                  path="/templates/create"
                   element={
                     <RequiredAuth>
                       <TemplateEditorPage />
@@ -92,7 +92,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/templates/edit/:templateId/*"
+                  path="/templates/edit/:templateId"
                   element={
                     <RequiredAuth>
                       <TemplateEditorPage />
@@ -100,7 +100,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/templates/*"
+                  path="/templates"
                   element={
                     <RequiredAuth>
                       <NotificationList />
@@ -108,7 +108,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/activities/*"
+                  path="/activities"
                   element={
                     <RequiredAuth>
                       <ActivitiesPage />
@@ -116,7 +116,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/settings/widget/*"
+                  path="/settings/widget"
                   element={
                     <RequiredAuth>
                       <WidgetSettingsPage />
@@ -124,7 +124,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/settings/organization/*"
+                  path="/settings/organization"
                   element={
                     <RequiredAuth>
                       <OrganizationSettingsPage />
