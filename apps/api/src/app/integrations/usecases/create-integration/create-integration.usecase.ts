@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@notifire/dal';
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { DeactivateIntegration } from '../deactivate-integration/deactivate-integration.usecase';
+import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 
 @Injectable()
 export class CreateIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
-    private deactivateIntegration: DeactivateIntegration
+    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
   ) {}
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
@@ -25,7 +25,7 @@ export class CreateIntegration {
       });
 
       if (command.active) {
-        await this.deactivateIntegration.execute({
+        await this.deactivateSimilarChannelIntegrations.execute({
           applicationId: command.applicationId,
           organizationId: command.organizationId,
           integrationId: response._id,

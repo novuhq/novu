@@ -1,14 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationRepository } from '@notifire/dal';
-import { DeactivateIntegrationCommand } from './deactivate-integration.command';
+import { DeactivateSimilarChannelIntegrationsCommand } from './deactivate-integration.command';
 
 @Injectable()
-export class DeactivateIntegration {
+export class DeactivateSimilarChannelIntegrations {
   constructor(private integrationRepository: IntegrationRepository) {}
-  /*
-   * Deactivates other relevant integration
-   */
-  async execute(command: DeactivateIntegrationCommand): Promise<void> {
+  async execute(command: DeactivateSimilarChannelIntegrationsCommand): Promise<void> {
     const otherExistedIntegration = await this.integrationRepository.find({
       _id: { $ne: command.integrationId },
       _applicationId: command.applicationId,

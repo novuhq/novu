@@ -1,13 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@notifire/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
-import { DeactivateIntegration } from '../deactivate-integration/deactivate-integration.usecase';
+import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 
 @Injectable()
 export class UpdateIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
-    private deactivateIntegration: DeactivateIntegration
+    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
@@ -39,7 +39,7 @@ export class UpdateIntegration {
     );
 
     if (command.active) {
-      await this.deactivateIntegration.execute({
+      await this.deactivateSimilarChannelIntegrations.execute({
         applicationId: command.applicationId,
         organizationId: command.organizationId,
         integrationId: command.integrationId,
