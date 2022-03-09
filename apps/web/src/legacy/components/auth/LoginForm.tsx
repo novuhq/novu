@@ -1,6 +1,6 @@
 import { Button, Form, Input, Divider, Alert } from 'antd';
 import Icon, { MailOutlined, LockOutlined } from '@ant-design/icons';
-import { useHistory, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useContext } from 'react';
 import { useMutation } from 'react-query';
 import * as Sentry from '@sentry/react';
@@ -10,7 +10,7 @@ import { api } from '../../../api/api.client';
 type Props = {};
 
 export function LoginForm({}: Props) {
-  const router = useHistory();
+  const navigate = useNavigate();
   const { setToken } = useContext(AuthContext);
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -31,7 +31,7 @@ export function LoginForm({}: Props) {
       const response = await mutateAsync(itemData);
 
       setToken((response as any).token);
-      router.push('/templates');
+      navigate('/templates');
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

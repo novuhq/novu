@@ -10,7 +10,7 @@ import { TemplateTriggerModal } from '../../../legacy/components/templates/Templ
 import { Button } from '../../../design-system';
 
 export default function TemplateEditorPage() {
-  const { templateId } = useParams<{ templateId: string }>();
+  const { templateId = '' } = useParams<{ templateId: string }>();
 
   const {
     selectedMessageType,

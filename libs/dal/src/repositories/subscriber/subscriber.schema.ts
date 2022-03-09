@@ -30,5 +30,6 @@ interface ISubscriberDocument extends SubscriberEntity, Document {
   _id: never;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Subscriber =
   mongoose.models.Subscriber || mongoose.model<ISubscriberDocument>('Subscriber', subscriberSchema);

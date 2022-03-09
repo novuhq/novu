@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IUserEntity } from '@notifire/shared';
 import axios from 'axios';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { getUser } from '../api/user';
@@ -23,7 +23,7 @@ export function getToken(): string {
 
 export function useAuthController() {
   const queryClient = useQueryClient();
-  const router = useHistory();
+  const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(getToken());
   const isLoggedIn = !!token;
   const { data: user, refetch: refetchUser } = useQuery<IUserEntity>('/v1/users/me', getUser, {
@@ -64,7 +64,7 @@ export function useAuthController() {
   const logout = () => {
     setToken(null);
     queryClient.clear();
-    router.push('/auth/login');
+    navigate('/auth/login');
   };
 
   return {

@@ -57,5 +57,6 @@ interface INotificationDocument extends NotificationEntity, Document {
   _id: never;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Notification =
   mongoose.models.Notification || mongoose.model<INotificationDocument>('Notification', notificationSchema);

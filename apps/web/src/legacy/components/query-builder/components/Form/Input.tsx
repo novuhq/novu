@@ -6,8 +6,6 @@ export interface InputProps {
   type: 'date' | 'number' | 'text';
   value: string;
   onChange: (value: string) => void;
-  className?: string;
-  disabled?: boolean;
 }
 
 export const Input: React.FC<InputProps> = ({ onChange, value, type }: InputProps) => {

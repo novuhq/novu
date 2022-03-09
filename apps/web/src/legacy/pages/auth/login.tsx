@@ -1,5 +1,5 @@
 import { Row, Col } from 'antd';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useContext, useEffect } from 'react';
 import { LoginForm } from '../../components/auth/LoginForm';
 import { AuthLayout } from '../../components/layout/LoginLayout';
@@ -7,8 +7,9 @@ import { AuthContext } from '../../../store/authContext';
 
 export default function LoginPage() {
   const { setToken, token } = useContext(AuthContext);
-  const router = useHistory();
-  const queryToken = new URLSearchParams(router.location.search.substring(1)).get('token');
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const queryToken = params.get('token');
 
   useEffect(() => {
     if (queryToken) {
@@ -18,7 +19,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      router.push('/');
+      navigate('/');
     }
   }, [token]);
 

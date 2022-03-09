@@ -7,9 +7,6 @@ const { Option } = Select;
 export interface SelectMultiProps extends Pick<SelectProps, 'onChange' | 'values'> {
   onDelete: (value: string) => void;
   selectedValue: string[];
-  emptyValue?: string;
-  disabled?: boolean;
-  className?: string;
 }
 
 export const SelectMulti: React.FC<SelectMultiProps> = ({

@@ -4,14 +4,14 @@ import { useContext, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@notifire/shared';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { api } from '../../../api/api.client';
 
 type Props = {};
 
 export function ApplicationCreateForm({}: Props) {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const { setToken, token } = useContext(AuthContext);
 
@@ -29,7 +29,7 @@ export function ApplicationCreateForm({}: Props) {
       const userData = decode<IJwtPayload>(token);
 
       if (userData.applicationId) {
-        history.push('/');
+        navigate('/');
       }
     }
   }, []);
@@ -45,7 +45,7 @@ export function ApplicationCreateForm({}: Props) {
 
     setToken(tokenResponse.data.token);
     setLoading(false);
-    history.push('/');
+    navigate('/');
   };
 
   return (

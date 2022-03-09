@@ -10,7 +10,7 @@ import {
   IEmailBlock,
 } from '@notifire/shared';
 import { useMutation, useQuery } from 'react-query';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { createTemplate, getTemplateById, updateTemplate } from '../../../../api/templates';
@@ -151,7 +151,7 @@ export function useTemplateController(templateId: string) {
     name: 'smsMessages',
   });
 
-  const router = useHistory();
+  const navigate = useNavigate();
   const [editMode, setEditMode] = useState<boolean>(!!templateId);
   const [isEmbedModalVisible, setIsEmbedModalVisible] = useState<boolean>(false);
   const [trigger, setTrigger] = useState<INotificationTrigger>();
@@ -284,7 +284,7 @@ export function useTemplateController(templateId: string) {
 
         refetch();
         message.success('Template updated successfully');
-        router.push('/templates');
+        navigate('/templates');
       } else {
         const response = await createNotification(payload);
 
@@ -344,7 +344,7 @@ export function useTemplateController(templateId: string) {
   }
 
   const onTriggerModalDismiss = () => {
-    router.push('/templates');
+    navigate('/templates');
   };
 
   function changeSelectedMessage(messageType: ChannelTypeEnum | null) {

@@ -15,5 +15,6 @@ interface IOrganizationDocument extends OrganizationEntity, Document {
   _id: never;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Organization =
   mongoose.models.Organization || mongoose.model<IOrganizationDocument>('Organization', organizationSchema);
