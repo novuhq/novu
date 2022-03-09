@@ -5,7 +5,6 @@
   "viewportWidth": 1200,
   "componentFolder": "src",
   "testFiles": "**/*.spec.*",
-  "firefoxGcInterval": null,
   "video": false,
   "retries": {
     "runMode": 2,
