@@ -19,4 +19,10 @@ export class IntegrationEntity {
   credentials: ICredentials;
 
   active: boolean;
+
+  deleted: boolean;
+
+  deletedAt: string;
+
+  deletedBy: string;
 }

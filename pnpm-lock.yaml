@@ -668,6 +668,7 @@ importers:
       JSONStream: ^1.3.5
       mixpanel: ^0.13.0
       mongoose: 5.11.18
+      mongoose-delete: ^0.5.4
       ng-intercom: ^8.0.2
       nodemon: ^2.0.3
       reflect-metadata: ^0.1.13
@@ -702,6 +703,7 @@ importers:
       JSONStream: 1.3.5
       mixpanel: 0.13.0
       mongoose: 5.11.18
+      mongoose-delete: 0.5.4_mongoose@5.11.18
       ng-intercom: 8.0.2
       reflect-metadata: 0.1.13
       superagent-defaults: 0.1.14
@@ -29242,6 +29244,14 @@ packages:
       mongodb-connection-string-url: 2.4.1
     optionalDependencies:
       saslprep: 1.0.3
+    dev: false
+
+  /mongoose-delete/0.5.4_mongoose@5.11.18:
+    resolution: {integrity: sha512-zKkcWFEwTneVG4Oiy+qJRJPFCiGlqOJToHeU3a3meJybWsHCnWxdHkGEkFWNY5cmYEv5av3WwByOhPlQ6I+FmQ==}
+    peerDependencies:
+      mongoose: 4.x || 5.x || 6.x
+    dependencies:
+      mongoose: 5.11.18
     dev: false
 
   /mongoose-legacy-pluralize/1.0.2_mongoose@5.11.18:
