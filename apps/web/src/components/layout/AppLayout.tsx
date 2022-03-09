@@ -19,7 +19,11 @@ export function AppLayout() {
    * Add each new page when migrating
    */
   if (!['/', '/templates', '/settings/widget', '/templates/create'].includes(location.pathname)) {
-    return <LegacyAppLayout><Outlet /></LegacyAppLayout>;
+    return (
+      <LegacyAppLayout>
+        <Outlet />
+      </LegacyAppLayout>
+    );
   }
 
   return (
