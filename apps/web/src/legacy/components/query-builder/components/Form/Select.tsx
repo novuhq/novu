@@ -4,10 +4,7 @@ import { Select as SelectBase } from 'antd';
 export interface SelectProps {
   values: Array<{ value: string; label: string }>;
   selectedValue?: string;
-  emptyValue?: string;
   onChange: (value: any) => void;
-  className?: string;
-  disabled?: boolean;
 }
 
 const { Option } = SelectBase;
