@@ -31,17 +31,20 @@ const getOutlineStyles = (theme, disabled) => {
   };
 };
 
-export default createStyles((theme: MantineTheme, disabled: boolean, getRef) => {
-  const loading = getRef('loading');
+export default createStyles(
+  (theme: MantineTheme, { disabled, inherit }: { disabled: boolean; inherit: boolean }, getRef) => {
+    const loading = getRef('loading');
 
-  return {
-    label: disabled ? {} : getLabelStyles(),
-    filled: disabled ? getFilledDisabledStyles(theme) : getFilledStyles(theme),
-    outline: getOutlineStyles(theme, disabled),
-    root: {
-      [`&:not(.${loading}):disabled`]: {
-        boxShadow: 'none',
+    return {
+      label: disabled ? {} : getLabelStyles(),
+      filled: disabled ? getFilledDisabledStyles(theme) : getFilledStyles(theme),
+      outline: getOutlineStyles(theme, disabled),
+      root: {
+        width: inherit ? '100%' : '',
+        [`&:not(.${loading}):disabled`]: {
+          boxShadow: 'none',
+        },
       },
-    },
-  };
-});
+    };
+  }
+);

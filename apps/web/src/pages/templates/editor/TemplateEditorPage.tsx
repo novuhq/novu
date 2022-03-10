@@ -6,7 +6,7 @@ import PageHeader from '../../../components/layout/components/PageHeader';
 import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar';
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
 import { useTemplateController } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
-import { TemplateTriggerModal } from '../../../legacy/components/templates/TemplateTriggerModal';
+import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { Button } from '../../../design-system';
 
 export default function TemplateEditorPage() {
