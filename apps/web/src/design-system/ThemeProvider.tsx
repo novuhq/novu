@@ -9,7 +9,7 @@ declare module '@mantine/core' {
 
 export function ThemeProvider({
   children,
-  colorSchemeOverride = 'light',
+  colorSchemeOverride = 'dark',
 }: {
   children: JSX.Element;
   colorSchemeOverride?: ColorScheme;

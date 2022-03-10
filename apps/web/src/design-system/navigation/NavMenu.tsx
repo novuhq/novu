@@ -16,8 +16,7 @@ export function NavMenu({ menuItems }: INavMenuProps) {
         <NavLink
           key={link}
           to={link}
-          className={classes.link}
-          activeClassName={classes.linkActive}
+          className={({ isActive }) => (isActive ? classes.linkActive : classes.link)}
           data-test-id={testId}>
           <Group spacing={10}>
             <div className={classes.linkIcon}>{icon}</div>

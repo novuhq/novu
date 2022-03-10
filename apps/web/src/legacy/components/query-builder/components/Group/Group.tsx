@@ -7,7 +7,6 @@ export interface GroupProps {
   controlsLeft?: React.ReactNode | React.ReactNodeArray;
   controlsRight?: React.ReactNode | React.ReactNodeArray;
   children: React.ReactNode | React.ReactNodeArray;
-  className?: string;
   isRoot?: boolean;
   show?: boolean;
 }

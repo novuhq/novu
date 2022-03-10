@@ -31,4 +31,5 @@ export interface IUserDocument extends UserEntity, Document {
   _id: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const User = mongoose.models.User || mongoose.model<IUserDocument>('User', userSchema);

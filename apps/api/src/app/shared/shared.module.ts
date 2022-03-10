@@ -12,6 +12,7 @@ import {
   MessageTemplateRepository,
   MemberRepository,
   LogRepository,
+  IntegrationRepository,
 } from '@notifire/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { MailService } from './services/mail/mail.service';
@@ -30,6 +31,7 @@ const DAL_MODELS = [
   NotificationGroupRepository,
   MemberRepository,
   LogRepository,
+  IntegrationRepository,
 ];
 
 const dalService = new DalService();

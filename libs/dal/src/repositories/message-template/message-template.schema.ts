@@ -47,5 +47,6 @@ interface IMessageTemplateDocument extends MessageTemplateEntity, Document {
   _id: never;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const MessageTemplate =
   mongoose.models.MessageTemplate || mongoose.model<IMessageTemplateDocument>('MessageTemplate', messageTemplateSchema);

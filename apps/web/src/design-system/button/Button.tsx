@@ -10,6 +10,7 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, MantineMargins {
   icon?: React.ReactNode;
   submit?: boolean;
   onClick?: () => void;
+  inherit?: boolean;
 }
 
 /**
@@ -23,10 +24,11 @@ export function Button({
   icon,
   size = 'md',
   disabled = false,
+  inherit = false,
   onClick,
   ...props
 }: IButtonProps) {
-  const { classes } = useStyles(disabled);
+  const { classes } = useStyles({ disabled, inherit });
   const defaultDesign = { radius: 'md', classNames: classes } as SharedButtonProps;
   const withIconProps = icon ? { leftIcon: icon } : {};
 
