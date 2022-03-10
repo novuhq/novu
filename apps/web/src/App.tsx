@@ -95,7 +95,7 @@ function App() {
                   path="/templates/edit/:templateId"
                   element={
                     <RequiredAuth>
-                      <TemplateEditorPage />
+                      <TemplateEditorPageLegacy />
                     </RequiredAuth>
                   }
                 />
