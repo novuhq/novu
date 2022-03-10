@@ -53,4 +53,5 @@ interface ILogDocument extends LogEntity, Document {
   _id: never;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Log = mongoose.models.Log || mongoose.model<ILogDocument>('Log', logSchema);

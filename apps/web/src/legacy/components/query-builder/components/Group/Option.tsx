@@ -5,9 +5,7 @@ export interface OptionProps {
   children: React.ReactNode | React.ReactNodeArray;
   value: any;
   onClick: (value: any) => void;
-  disabled: boolean;
   isSelected: boolean;
-  className?: string;
 }
 
 export const Option: React.FC<OptionProps> = ({ children, isSelected, onClick, value }: OptionProps) => {

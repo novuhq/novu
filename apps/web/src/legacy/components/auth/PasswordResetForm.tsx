@@ -1,6 +1,6 @@
 import { Button, Form, Input, Divider, Alert, message } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
-import { useHistory, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { useContext } from 'react';
@@ -14,7 +14,7 @@ type Props = {
 export function PasswordResetForm({ token }: Props) {
   const { setToken } = useContext(AuthContext);
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     { error: string; message: string; statusCode: number },
@@ -39,7 +39,7 @@ export function PasswordResetForm({ token }: Props) {
 
       setToken(response.token);
       message.success('Password was changed successfully');
-      history.push('/templates');
+      navigate('/templates');
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

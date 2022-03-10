@@ -3,7 +3,7 @@ import { Card, Form, Input, Button, Popconfirm, Radio } from 'antd';
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import { IEmailBlock } from '@notifire/shared';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { ButtonRowContent } from './ButtonRowContent';
 import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
@@ -17,7 +17,7 @@ export function EmailMessageEditor({
   value?: IEmailBlock[];
   branding: { color: string; logo: string } | undefined;
 }) {
-  const router = useHistory();
+  const navigate = useNavigate();
   const [blocks, setBlocks] = useState<IEmailBlock[]>(
     value?.length
       ? value
@@ -62,7 +62,7 @@ export function EmailMessageEditor({
   }
 
   function navigateToBrandSettings() {
-    router.push('/settings/widget');
+    navigate('/settings/widget');
   }
 
   function onBlockAdd(type: 'button' | 'text') {

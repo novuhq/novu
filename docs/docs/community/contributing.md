@@ -98,7 +98,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
    git push origin my-new-branch
    ```
 
-1. In GitHub, send a pull request to `notifire:master`.
+1. In GitHub, send a pull request to `notifire:main`.
 
 - If we suggest changes then:
 
@@ -107,7 +107,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
     - Rebase your branch and force push to your GitHub repository (this will update your Pull Request):
 
       ```shell
-      git rebase master -i
+      git rebase main -i
       git push -f
       ```
 
@@ -124,10 +124,10 @@ from the main (upstream) repository:
   git push origin --delete my-new-branch
   ```
 
-- Check out the master branch:
+- Check out the main branch:
 
   ```shell
-  git checkout master -f
+  git checkout main -f
   ```
 
 - Delete the local branch:
@@ -136,10 +136,10 @@ from the main (upstream) repository:
   git branch -D my-new-branch
   ```
 
-- Update your master with the latest upstream version:
+- Update your main with the latest upstream version:
 
   ```shell
-  git pull --ff upstream master
+  git pull --ff upstream main
   ```
 ## <a name="language"></a> Programming Languages for Contribution
 

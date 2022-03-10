@@ -12,3 +12,4 @@ export * from './repositories/notification-group';
 export * from './repositories/member';
 export * from './repositories/log';
 export * from './repositories/integration';
+export * from './shared/exceptions';

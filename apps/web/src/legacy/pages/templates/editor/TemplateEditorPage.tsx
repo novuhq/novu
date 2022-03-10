@@ -24,12 +24,10 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { Controller, FormProvider } from 'react-hook-form';
-import { useHistory } from 'react-router';
-
 import styled, { css } from 'styled-components';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ChannelTypeEnum } from '@notifire/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { TemplateInAppEditor } from '../../../components/templates/TemplateInAppEditor';
@@ -55,10 +53,10 @@ function TemplateEditorPageLegacy() {
       name: string;
     }
   >((data) => api.post(`/v1/notification-groups`, data));
-  const router = useHistory();
+  const navigate = useNavigate();
   const [groups, setGroups] = useState<{ name: string; _id: string }[]>([]);
   const [categoryText, setCategoryText] = useState<string>();
-  const { templateId } = useParams<{ templateId: string }>();
+  const { templateId = '' } = useParams<{ templateId: string }>();
   const { application, loading: isLoadingApplication } = useApplication();
 
   const {
@@ -102,7 +100,7 @@ function TemplateEditorPageLegacy() {
   }, [serverGroups]);
 
   function navigateToSmsSettings() {
-    router.push('/settings/widget?screen=sms');
+    navigate('/settings/widget?screen=sms');
   }
 
   async function addGroupItem() {

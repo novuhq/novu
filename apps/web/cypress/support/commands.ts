@@ -1,8 +1,6 @@
 // load the global Cypress types
 /// <reference types="cypress" />
 
-import 'cypress-file-upload';
-
 Cypress.Commands.add('getByTestId', (selector, ...args) => {
   return cy.get(`[data-test-id=${selector}]`, ...args);
 });
