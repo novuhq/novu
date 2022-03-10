@@ -9518,6 +9518,15 @@ packages:
       source-map: 0.6.1
     dev: true
 
+  /@jest/source-map/27.5.1:
+    resolution: {integrity: sha512-y9NIHUYF3PJRlHk98NdC/N1gl88BL08aQQgu4k4ZopQkCw9t9cV8mtl3TV8b/YCB8XaVTFrmUTAJvjsntDireg==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    dependencies:
+      callsites: 3.1.0
+      graceful-fs: 4.2.9
+      source-map: 0.6.1
+    dev: true
+
   /@jest/test-result/26.6.2:
     resolution: {integrity: sha512-5O7H5c/7YlojphYNrK02LlDIV2GNPYisKwHm2QTKjNZeEzezCbwYs9swJySv2UfPMyZ0VdsmMv7jIlD/IKYQpQ==}
     engines: {node: '>= 10.14.2'}
@@ -28867,6 +28876,14 @@ packages:
       graceful-fs: 4.2.9
     dev: true
 
+  /jest-serializer/27.5.1:
+    resolution: {integrity: sha512-jZCyo6iIxO1aqUxpuBlwTDMkzOAJS4a3eYz3YzgxxVQFwLeSA7Jfq5cbqCY+JLvTDrWirgusI/0KwxKMgrdf7w==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    dependencies:
+      '@types/node': 17.0.5
+      graceful-fs: 4.2.9
+    dev: true
+
   /jest-snapshot/26.6.2:
     resolution: {integrity: sha512-OLhxz05EzUtsAmOMzuupt1lHYXCNib0ECyuZ/PZOx9TrZcC8vL0x+DUG3TL+GLX3yHG45e6YGjIm0XwDc3q3og==}
     engines: {node: '>= 10.14.2'}
@@ -29009,6 +29026,18 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.4.2
+      '@types/node': 17.0.5
+      chalk: 4.1.2
+      ci-info: 3.3.0
+      graceful-fs: 4.2.9
+      picomatch: 2.3.1
+    dev: true
+
+  /jest-util/27.5.1:
+    resolution: {integrity: sha512-Kv2o/8jNvX1MQ0KGtw480E/w4fBCDOnH6+6DmeKi6LZUIlKA5kwY0YNdlzaWTiVgxqAqik11QyxDOKk543aKXw==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    dependencies:
+      '@jest/types': 27.5.1
       '@types/node': 17.0.5
       chalk: 4.1.2
       ci-info: 3.3.0
