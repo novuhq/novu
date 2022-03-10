@@ -4,49 +4,49 @@ importers:
 
   .:
     specifiers:
-      '@auto-it/jira': ^10.27.1
-      '@auto-it/npm': ^10.27.1
-      '@auto-it/released': ^10.27.1
+      '@auto-it/jira': ^10.32.6
+      '@auto-it/npm': ^10.32.6
+      '@auto-it/released': ^10.32.6
       '@commitlint/cli': 13.2.1
       '@commitlint/config-angular': ^13.2.0
       '@hewmen/serverless-plugin-typescript': ^1.1.17
-      '@nrwl/cli': ^13.4.3
-      '@nrwl/nx-cloud': ^13.0.2
-      '@nrwl/tao': ^13.4.3
-      '@nrwl/workspace': ^13.4.3
-      '@types/node': ^14.6.0
+      '@nrwl/cli': ^13.8.4
+      '@nrwl/nx-cloud': ^13.1.6
+      '@nrwl/tao': ^13.8.4
+      '@nrwl/workspace': ^13.8.4
+      '@types/node': 16.11.7
       '@typescript-eslint/eslint-plugin': 4.13.0
-      '@typescript-eslint/parser': ^4.13.0
-      auto: ^10.27.1
+      '@typescript-eslint/parser': ^4.33.0
+      auto: ^10.32.6
       commitizen: ^4.2.4
       cpx: ^1.5.0
       cross-env: ^7.0.3
-      cspell: ^4.1.0
+      cspell: ^4.2.8
       cypress-intellij-reporter: ^0.0.6
       cz-conventional-changelog: 3.3.0
-      eslint: ^7.22.0
-      eslint-config-airbnb-typescript: ^12.0.0
+      eslint: ^7.32.0
+      eslint-config-airbnb-typescript: ^12.3.1
       eslint-config-prettier: ^7.2.0
-      eslint-import-resolver-webpack: ^0.13.0
+      eslint-import-resolver-webpack: ^0.13.2
       eslint-plugin-eslint-comments: ^3.2.0
-      eslint-plugin-functional: ^3.0.2
-      eslint-plugin-import: ^2.22.1
-      eslint-plugin-jsx-a11y: ^6.4.1
-      eslint-plugin-prettier: ^3.3.1
-      eslint-plugin-promise: ^4.2.1
-      eslint-plugin-react: ^7.22.0
-      eslint-plugin-react-hooks: ^4.2.0
-      husky: ^4.2.5
+      eslint-plugin-functional: ^3.7.2
+      eslint-plugin-import: ^2.25.4
+      eslint-plugin-jsx-a11y: ^6.5.1
+      eslint-plugin-prettier: ^3.4.1
+      eslint-plugin-promise: ^4.3.1
+      eslint-plugin-react: ^7.29.2
+      eslint-plugin-react-hooks: ^4.3.0
+      husky: ^4.3.8
       hygen: 6.0.4
       jira-prepare-commit-msg: 1.5.2
-      lerna: ^3.20.2
-      lint-staged: ^10.2.2
-      monorepo-run: git+https://github.com/scopsy/monorepo-run.git
-      pnpm: ^6.25.0
-      prettier: ^2.0.5
+      lerna: ^3.22.1
+      lint-staged: ^10.5.4
+      monorepo-run: github:scopsy/monorepo-run
+      pnpm: ^6.32.2
+      prettier: ^2.5.1
       rimraf: ^3.0.2
-      ts-node: ^9.0.0
-      typescript: ^4.4.3
+      ts-node: ^9.1.1
+      typescript: ^4.6.2
     devDependencies:
       '@auto-it/jira': 10.34.1_typescript@4.6.2
       '@auto-it/npm': 10.34.1_typescript@4.6.2
@@ -58,7 +58,7 @@ importers:
       '@nrwl/nx-cloud': 13.1.6
       '@nrwl/tao': 13.8.5
       '@nrwl/workspace': 13.8.5_0bd754fe72596a3356a52276a5278d8a
-      '@types/node': 14.18.12
+      '@types/node': 16.11.7
       '@typescript-eslint/eslint-plugin': 4.13.0_65e88d2733f36d3624b406e590cf0b3b
       '@typescript-eslint/parser': 4.33.0_eslint@7.32.0+typescript@4.6.2
       auto: 10.34.1_typescript@4.6.2
@@ -901,7 +901,7 @@ importers:
       jwt-decode: 3.1.2
       open: 8.4.0
       ora: 5.4.1
-      ts-node: 10.5.0_31a32bd81d8bbfc3c2c321de918dd405
+      ts-node: 10.5.0_2615db9039ce432b4abf2fc39ef336ec
     devDependencies:
       '@types/configstore': 5.0.1
       '@types/inquirer': 8.2.0
@@ -15569,6 +15569,10 @@ packages:
 
   /@types/node/14.18.3:
     resolution: {integrity: sha512-GtTH2crF4MtOIrrAa+jgTV9JX/PfoUCYr6MiZw7O/dkZu5b6gm5dc1nAL0jwGo4ortSBBtGyeVaxdC8X6V+pLg==}
+
+  /@types/node/16.11.7:
+    resolution: {integrity: sha512-QB5D2sqfSjCmTuWcBWyJ+/44bcjO7VbjSbOE0ucoVbAsSNQc4Lt6QkgkVXkTDwkL4z/beecZNDvVX15D4P8Jbw==}
+    dev: true
 
   /@types/node/17.0.5:
     resolution: {integrity: sha512-w3mrvNXLeDYV1GKTZorGJQivK6XLCoGwpnyJFbJVK/aTBQUxOCaa/GlFAAN3OTDFcb7h5tiFG+YXCO2By+riZw==}
@@ -39963,7 +39967,7 @@ packages:
       typescript: 4.5.4
       yn: 3.1.1
 
-  /ts-node/10.5.0_31a32bd81d8bbfc3c2c321de918dd405:
+  /ts-node/10.5.0_2615db9039ce432b4abf2fc39ef336ec:
     resolution: {integrity: sha512-6kEJKwVxAJ35W4akuiysfKwKmjkbYxwQMTBaAxo9KKAx/Yd26mPUyhGz3ji+EsJoAgrLqVsYHNuuYwQe22lbtw==}
     hasBin: true
     peerDependencies:
@@ -39982,7 +39986,7 @@ packages:
       '@tsconfig/node12': 1.0.9
       '@tsconfig/node14': 1.0.1
       '@tsconfig/node16': 1.0.2
-      '@types/node': 14.18.12
+      '@types/node': 16.11.7
       acorn: 8.7.0
       acorn-walk: 8.2.0
       arg: 4.1.3
