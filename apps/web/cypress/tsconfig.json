@@ -3,7 +3,7 @@
   "include": ["./**/*.ts", "global.d.ts"],
   "exclude": [],
   "compilerOptions": {
-    "types": ["cypress", "cypress-file-upload"],
+    "types": ["cypress"],
     "lib": ["es2015", "dom"],
     "isolatedModules": false,
     "allowJs": true,
