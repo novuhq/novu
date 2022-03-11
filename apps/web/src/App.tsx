@@ -14,13 +14,13 @@ import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import TemplateEditorPageLegacy from './legacy/pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import { WidgetSettingsPage } from './pages/settings/WidgetSettingsPage';
-import { OrganizationSettingsPage } from './legacy/pages/organization-settings/OrganizationSettingsPage';
 import InvitationScreen from './legacy/pages/auth/InvitationScreen';
 import { api } from './api/api.client';
 import PasswordResetPage from './legacy/pages/auth/password-reset';
 import { ThemeContext } from './store/themeContext';
 import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
+import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
@@ -102,7 +102,7 @@ function App() {
                         <WidgetSettingsPage />
                       </Route>
                       <Route exact path="/settings/organization">
-                        <OrganizationSettingsPage />
+                        <MembersInvitePage />
                       </Route>
                     </AppLayout>
                   </Switch>
