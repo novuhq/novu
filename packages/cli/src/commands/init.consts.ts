@@ -1,6 +1,7 @@
 import { providers } from '@notifire/shared';
 import { ListQuestionOptions } from 'inquirer';
 import * as chalk from 'chalk';
+import * as gradient from 'gradient-string';
 
 export const introQuestions: ListQuestionOptions[] = [
   {
@@ -72,3 +73,32 @@ export const registerMethodQuestions: ListQuestionOptions[] = [
     ],
   },
 ];
+
+export function showWelcomeScreen() {
+  const textGradient = gradient('#0099F7', '#ff3432');
+  const logoGradient = gradient('#DD2476', '#FF512F');
+  const logo = `
+                        @@@@@@@@@@@@@        
+                @@@       @@@@@@@@@@@        
+              @@@@@@@@       @@@@@@@@        
+            @@@@@@@@@@@@       @@@@@@     @@ 
+           @@@@@@@@@@@@@@@@      @@@@     @@@
+          @@@@@@@@@@@@@@@@@@@       @     @@@
+          @@@@@         @@@@@@@@         @@@@
+           @@@     @       @@@@@@@@@@@@@@@@@@
+           @@@     @@@@      @@@@@@@@@@@@@@@@
+            @@     @@@@@@       @@@@@@@@@@@@ 
+                   @@@@@@@@       @@@@@@@@   
+                   @@@@@@@@@@@       @@@     
+                   @@@@@@@@@@@@@                  
+                          `;
+
+  const items = logo.split('\n').map((row) => logoGradient(row));
+
+  /* eslint-disable no-console */
+  console.log(chalk.bold(items.join('\n')));
+  console.log(chalk.bold(`                      Welcome to NOVU!`));
+  console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
+  console.log(chalk.bold(`Now let's setup your account and send your first notification`));
+  /* eslint-enable  no-console */
+}

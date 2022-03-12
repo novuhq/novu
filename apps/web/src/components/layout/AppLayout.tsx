@@ -1,7 +1,7 @@
 import React from 'react';
 import { AppShell } from '@mantine/core';
 import * as Sentry from '@sentry/react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 import { useNotifire } from '../../hooks/use-notifire';
 import { LegacyAppLayout } from '../../legacy/components/layout/app-layout/LegacyAppLayout';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
@@ -9,7 +9,7 @@ import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
 import { colors } from '../../design-system';
 
-export function AppLayout({ children }: { children: any }) {
+export function AppLayout() {
   const location = useLocation();
 
   useNotifire();
@@ -21,7 +21,11 @@ export function AppLayout({ children }: { children: any }) {
   if (
     !['/', '/templates', '/settings/widget', '/templates/create', '/settings/organization'].includes(location.pathname)
   ) {
-    return <LegacyAppLayout>{children}</LegacyAppLayout>;
+    return (
+      <LegacyAppLayout>
+        <Outlet />
+      </LegacyAppLayout>
+    );
   }
 
   return (
@@ -48,7 +52,7 @@ export function AppLayout({ children }: { children: any }) {
               </code>
             </>
           )}>
-          {children}
+          <Outlet />
         </Sentry.ErrorBoundary>
       </AppShell>
     </ThemeProvider>

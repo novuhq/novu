@@ -84,4 +84,5 @@ interface IMessageDocument extends MessageEntity, Document {
   _id: never;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Message = mongoose.models.Message || mongoose.model<IMessageDocument>('Message', messageSchema);

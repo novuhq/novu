@@ -54,5 +54,6 @@ interface IApplicationDocument extends ApplicationEntity, Document {
   _id: any;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Application =
   mongoose.models.Application || mongoose.model<IApplicationDocument>('Application', applicationSchema);
