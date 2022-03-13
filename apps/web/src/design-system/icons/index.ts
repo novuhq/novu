@@ -25,7 +25,7 @@ export { ArrowDown } from './arrows/ArrowDown';
 
 export { BellGradient } from './gradient/BellGradient';
 export { MailGradient } from './gradient/MailGradient';
-export { MobileGradient, MobileGradientDisabled } from './gradient/MobileGradient';
+export { MobileGradient } from './gradient/MobileGradient';
 export { PlusGradient } from './gradient/PlusGradient';
 export { GlobeGradient } from './gradient/GlobeGradient';
 export { CompassGradient } from './gradient/CompassGradient';

@@ -12,12 +12,6 @@ import { TemplateTriggerModal } from '../../../components/templates/TemplateTrig
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
 
-interface IUserChannel {
-  tabKey: string;
-  channelType: ChannelTypeEnum;
-  active: boolean;
-}
-
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const [activePage, setActivePage] = useState<string>('Settings');

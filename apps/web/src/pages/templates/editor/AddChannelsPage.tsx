@@ -31,10 +31,40 @@ export const AddChannelsPage = ({ handleAddChannel }: { handleAddChannel: (strin
               <Text weight="bold" size="lg">
                 {channel.label}
               </Text>
-            </Group>
+            </StyledCardContent>
           </Card>
         </Grid.Col>
       ))}
     </Grid>
+  );
+};
+
+const styledCard = (theme) => ({
+  backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+  borderRadius: '7px',
+  height: '200px',
+  '&:hover': {
+    backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+    boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
+  },
+});
+
+const StyledCardContent = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Group
+      align="center"
+      spacing={7}
+      direction="column"
+      styles={{
+        root: {
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          marginRight: '-50%',
+          transform: 'translate(-50%, -50%)',
+        },
+      }}>
+      {children}
+    </Group>
   );
 };

@@ -6,16 +6,18 @@ import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
 
 interface ITemplateButtonProps {
-  icon: React.ReactNode;
-  iconDisabled?: React.ReactNode;
+  Icon: React.FC<any>;
   description: string;
   label: string;
   active?: boolean;
   action?: boolean;
+  tabKey: string;
+  checked?: boolean;
+  switchButton?: (boolean) => void;
+  changeTab: (string) => void;
 }
 
 export function TemplateButton({
-  icon,
   description,
   active,
   changeTab,
@@ -24,17 +26,22 @@ export function TemplateButton({
   switchButton,
   checked = false,
   label,
-  iconDisabled,
+  Icon,
 }: ITemplateButtonProps) {
   const { cx, classes, theme } = useStyles();
   const disabled = action && !checked;
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
+  const disabledProp = disabled ? { disabled } : {};
 
   return (
-    <UnstyledButton className={cx(classes.button, { [classes.active]: active })}>
+    <UnstyledButton
+      onClick={() => !active && changeTab(tabKey)}
+      className={cx(classes.button, { [classes.active]: active })}>
       <Group position="apart">
         <Group spacing={15}>
-          <div className={classes.linkIcon}>{disabled ? iconDisabled : icon}</div>
+          <div className={classes.linkIcon}>
+            <Icon {...disabledProp} />
+          </div>
           <div>
             <Text {...disabledColor} weight="bold">
               {label}
@@ -44,7 +51,9 @@ export function TemplateButton({
             </Text>
           </div>
         </Group>
-        <div style={{ alignItems: 'end' }}>{action && <Switch />}</div>
+        <div style={{ alignItems: 'end' }}>
+          {action && <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />}
+        </div>
       </Group>
     </UnstyledButton>
   );
