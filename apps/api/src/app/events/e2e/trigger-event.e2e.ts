@@ -5,6 +5,7 @@ import {
   NotificationTemplateEntity,
   SubscriberEntity,
   SubscriberRepository,
+  IntegrationEntity,
 } from '@notifire/dal';
 import { UserSession, SubscribersService } from '@notifire/testing';
 
@@ -19,6 +20,7 @@ const axiosInstance = axios.create();
 describe('Trigger event - /v1/events/trigger (POST)', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
+  let integration: IntegrationEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const notificationRepository = new NotificationRepository();
@@ -30,6 +32,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
+    integration = await session.createIntegration();
     subscriberService = new SubscribersService(session.organization._id, session.application._id);
     subscriber = await subscriberService.createSubscriber();
   });
