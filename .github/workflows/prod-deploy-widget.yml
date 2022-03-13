@@ -1,27 +1,25 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Deploy DEV WEB
+name: Deploy PROD Widget
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - master
-    paths:
-      - 'apps/web/**'
-      - 'libs/shared/**'
+    tags:
+      - '**@notifire/widget**'
+      - '**@notifire/shared**'
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  test_web:
-    environment: Development
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
+  test_widget:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    environment: Production
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -53,37 +51,21 @@ jobs:
           version: 6.0.2
           run_install: true
 
-      - name: Start Local Stack
-        env:
-          DEFAULT_REGION: us-east-1
-          AWS_DEFAULT_REGION: us-east-1
-          AWS_ACCOUNT_ID: "000000000000"
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          AWS_EC2_METADATA_DISABLED: true
-        working-directory: environment/test
-        run: |
-          docker-compose up -d
-          sleep 5
-          max_retry=30
-          counter=0
-          until $command
-          do
-             sleep 1
-             [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
-             aws --endpoint-url=http://localhost:4566 s3 ls
-             echo "Trying again. Try #$counter"
-             ((counter++))
-          done
-          aws --endpoint-url=http://localhost:4566 s3 mb s3://notifire-test
-
       # Runs a single command using the runners shell
       - name: Build
-        run: CI='' pnpm build:web
+        run: CI='' pnpm build:widget
 
       # Runs a single command using the runners shell
       - name: Start Client
-        run: pnpm start:web &
+        run: pnpm start:widget:test &
+
+      # Runs a single command using the runners shell
+      - name: Start WS
+        run: npm run start:ws:test &
+
+      # Runs a single command using the runners shell
+      - name: Wait for WS
+        run: npx wait-on --timeout=30000 http://localhost:1340/v1/health-check
 
       - name: Cypress run
         uses: cypress-io/github-action@v2
@@ -91,42 +73,44 @@ jobs:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          record: false
-          working-directory: apps/web
+          working-directory: apps/widget
           start: pnpm start:api
-          wait-on: http://localhost:1336/v1/health-check
+          wait-on: http://localhost:3500/v1/health-check
           browser: chrome
-          headless: true
           install: false
+          headless: true
 
-      - name: Build
+      - name: Build PROD
         env:
-          REACT_APP_API_URL: https://dev.api.novu.co
-          REACT_APP_WIDGET_SDK_PATH: https://dev.sdk.novu.co/sdk.umd.min.js
-          REACT_APP_NOTIFIRE_APP_ID: uaahXGRverKF
-          REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
-          REACT_APP_ENVIRONMENT: dev
-        working-directory: apps/web
+          REACT_APP_API_URL: https://api.novu.co
+          REACT_APP_SENTRY_DSN: https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116
+          REACT_APP_WS_URL: https://ws.novu.co
+          REACT_APP_ENVIRONMENT: prod
+        working-directory: apps/widget
         run: npm run build
 
-      - name: Deploy WEB to DEV
-        uses: nwtgck/actions-netlify@v1.2
+      - name: Deploy WIDGET to PROD
+        uses: scopsy/actions-netlify@develop
         with:
-          publish-dir: apps/web/build
+          publish-dir: apps/widget/build
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: Dev deployment
+          deploy-message: prod
           production-deploy: true
-          alias: dev
-          github-deployment-environment: development
+          alias: prod
+          github-deployment-environment: Production
           github-deployment-description: Web Deployment
-          netlify-config-path: apps/web/netlify.toml
+          netlify-config-path: apps/widget/netlify.toml
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: 45396446-dc86-4ad6-81e4-86d3eb78d06f
+          NETLIFY_SITE_ID: 6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034
         timeout-minutes: 1
 
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
           name: cypress-screenshots
-          path: apps/web/cypress/screenshots
+          path: apps/widget/cypress/screenshots
+
+
+
+

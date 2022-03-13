@@ -22,7 +22,7 @@
     },
     {
       "name": "📦 @notifire/dal",
-      "path": "libs/core"
+      "path": "libs/dal"
     },
     {
       "name": "📦 @notifire/sdk",

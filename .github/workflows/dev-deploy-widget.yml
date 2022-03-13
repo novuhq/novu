@@ -5,6 +5,7 @@ name: Deploy DEV Widget
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -21,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     if: "!contains(github.event.head_commit.message, 'ci skip')"
-    environment: development
+    environment: Development
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:

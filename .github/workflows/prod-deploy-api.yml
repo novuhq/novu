@@ -1,18 +1,14 @@
-name: Deploy DEV API
+name: Deploy PROD API
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - master
-    paths:
-      - 'package.json'
-      - 'yarn.lock'
-      - 'apps/api/**'
-      - 'libs/dal/**'
-      - 'libs/shared/**'
+    tags:
+      - '**@notifire/api@**'
+      - '**@notifire/core@**'
+      - '**@notifire/shared@**'
+  workflow_dispatch:
 
 jobs:
   test_api:
@@ -84,13 +80,13 @@ jobs:
           cd apps/api && pnpm test:e2e
           pnpm test
 
-  deploy_dev_api:
+  deploy_prod_api:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     needs: test_api
     timeout-minutes: 80
-    environment: Development
+    environment: Production
     permissions:
       contents: read
       packages: write
@@ -124,8 +120,8 @@ jobs:
           docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/api/Dockerfile .
           docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1337/v1/health-check | grep 'ok'
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
+          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
           docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
@@ -133,7 +129,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: notifirehq/cloud-infra
-          token: ${{ secrets.GH_PACKAGES }}
+          token: ${{ secrets.GH_PACKAGES }} 
           path: cloud-infra
 
       - name: Configure AWS credentials
@@ -141,7 +137,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
+          aws-region: us-east-1
 
       - name: Terraform setup
         uses: hashicorp/setup-terraform@v1
@@ -155,7 +151,7 @@ jobs:
 
       - name: Terraform Change Workspace
         working-directory: cloud-infra/terraform
-        run: terraform workspace select dev
+        run: terraform workspace select prod
 
       - name: Terraform get output
         working-directory: cloud-infra/terraform
