@@ -6,6 +6,7 @@ on:
   push:
     tags:
       - '**@notifire/ws**'
+  workflow_dispatch:
 
 jobs:
   # This workflow contains a single job called "build"

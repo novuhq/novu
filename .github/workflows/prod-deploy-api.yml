@@ -8,6 +8,7 @@ on:
       - '**@notifire/api@**'
       - '**@notifire/core@**'
       - '**@notifire/shared@**'
+  workflow_dispatch:
 
 jobs:
   test_api:
