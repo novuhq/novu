@@ -3,7 +3,7 @@
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "folke.vscode-monorepo-workspace",
-    "vtrois.gitmoji-vscode",
+    "seatonjiang.gitmoji-vscode",
     "jondot.vscode-hygen"
   ]
 }
