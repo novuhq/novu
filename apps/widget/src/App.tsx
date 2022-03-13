@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import { IApplication, ISubscriberJwt } from '@notifire/shared';
@@ -99,13 +99,16 @@ function AppContent() {
             brandColor={theme.colors.main}
             fontColor={theme.colors.fontColor}>
             <Router>
-              <Switch>
-                <Route path="/:applicationId">
-                  <Layout>
-                    <Main />
-                  </Layout>
-                </Route>
-              </Switch>
+              <Routes>
+                <Route
+                  path="/:applicationId"
+                  element={
+                    <Layout>
+                      <Main />
+                    </Layout>
+                  }
+                />
+              </Routes>
             </Router>
           </Wrap>
         </WidgetShell>

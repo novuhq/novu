@@ -39,4 +39,5 @@ interface IMemberDocument extends MemberEntity, Document {
   _id: any;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const Member = mongoose.models.Member || mongoose.model<IMemberDocument>('Member', memberSchema);

@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { Route, Switch, Redirect, BrowserRouter } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, Outlet } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
@@ -60,55 +60,79 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthHandlerComponent>
           <ThemeHandlerComponent>
-            <Switch>
-              <Route path="/auth/signup">
-                <SignUpPage />
-              </Route>
-              <Route path="/auth/login">
-                <LoginPage />
-              </Route>
-              <Route path="/auth/reset/request">
-                <PasswordResetPage />
-              </Route>
-              <Route path="/auth/reset/:token">
-                <PasswordResetPage />
-              </Route>
-              <Route path="/auth/invitation/:token">
-                <InvitationScreen />
-              </Route>
-              <Route path="/">
-                <PrivateRoute>
-                  <Switch>
-                    <Route exact path="/onboarding/application">
+            <Routes>
+              <Route path="/auth/signup" element={<SignUpPage />} />
+              <Route path="/auth/login" element={<LoginPage />} />
+              <Route path="/auth/reset/request" element={<PasswordResetPage />} />
+              <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
+              <Route path="/auth/invitation/:token" element={<InvitationScreen />} />
+              <Route element={<AppLayout />}>
+                <Route
+                  path="/*"
+                  element={
+                    <RequiredAuth>
+                      <HomePage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/onboarding/application"
+                  element={
+                    <RequiredAuth>
                       <ApplicationOnBoarding />
-                    </Route>
-                    <AppLayout>
-                      <Route exact path="/">
-                        <HomePage />
-                      </Route>
-                      <Route exact path="/templates/create">
-                        <TemplateEditorPage />
-                      </Route>
-                      <Route exact path="/templates/edit/:templateId">
-                        <TemplateEditorPageLegacy />
-                      </Route>
-                      <Route exact path="/templates">
-                        <NotificationList />
-                      </Route>
-                      <Route exact path="/activities">
-                        <ActivitiesPage />
-                      </Route>
-                      <Route exact path="/settings/widget">
-                        <WidgetSettingsPage />
-                      </Route>
-                      <Route exact path="/settings/organization">
-                        <OrganizationSettingsPage />
-                      </Route>
-                    </AppLayout>
-                  </Switch>
-                </PrivateRoute>
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/templates/create"
+                  element={
+                    <RequiredAuth>
+                      <TemplateEditorPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/templates/edit/:templateId"
+                  element={
+                    <RequiredAuth>
+                      <TemplateEditorPageLegacy />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/templates"
+                  element={
+                    <RequiredAuth>
+                      <NotificationList />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/activities"
+                  element={
+                    <RequiredAuth>
+                      <ActivitiesPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/settings/widget"
+                  element={
+                    <RequiredAuth>
+                      <WidgetSettingsPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/settings/organization"
+                  element={
+                    <RequiredAuth>
+                      <OrganizationSettingsPage />
+                    </RequiredAuth>
+                  }
+                />
               </Route>
-            </Switch>
+            </Routes>
           </ThemeHandlerComponent>
         </AuthHandlerComponent>
       </QueryClientProvider>
@@ -116,24 +140,8 @@ function App() {
   );
 }
 
-function PrivateRoute({ children, ...rest }: any) {
-  return (
-    <Route
-      {...rest}
-      render={({ location }) => {
-        return getToken() ? (
-          children
-        ) : (
-          <Redirect
-            to={{
-              pathname: '/auth/login',
-              state: { from: location },
-            }}
-          />
-        );
-      }}
-    />
-  );
+function RequiredAuth({ children }: any) {
+  return getToken() ? children : <Navigate to="/auth/login" replace />;
 }
 
 function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {

@@ -1,4 +1,4 @@
-import { LoadingOverlay, Tabs as MantineTabs } from '@mantine/core';
+import { LoadingOverlay, MantineMargins, Tabs as MantineTabs } from '@mantine/core';
 import React, { ReactNode } from 'react';
 import useStyles from './Tabs.styles';
 import { colors } from '../config';
@@ -9,7 +9,7 @@ interface IMenuButtonProp {
   icon?: ReactNode | string;
 }
 
-interface ITabsProp {
+interface ITabsProp extends MantineMargins {
   menuTabs: IMenuButtonProp[];
   orientation?: 'horizontal' | 'vertical';
   active?: number;
@@ -31,7 +31,7 @@ export function Tabs({
   const { classes, theme } = useStyles(withIcon);
 
   return (
-    <div style={{ position: 'relative', minHeight: 500 }}>
+    <div style={{ position: 'relative', minHeight: 'inherit' }}>
       <LoadingOverlay
         visible={loading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}

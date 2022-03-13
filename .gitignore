@@ -95,3 +95,4 @@ fabric.properties
 
 .env
 docker/.env
+.vercel

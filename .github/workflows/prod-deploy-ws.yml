@@ -1,0 +1,112 @@
+name: Deploy PROD WS
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    tags:
+      - '**@notifire/ws**'
+  workflow_dispatch:
+
+jobs:
+  # This workflow contains a single job called "build"
+  deploy_ws:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: Production
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Setup kernel for react native, increase watchers
+        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.13.0'
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.2.0
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.3.0
+        with:
+          mongodb-version: 4.2.8
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Checkout cloud infra
+        uses: actions/checkout@master
+        with:
+          repository: notifirehq/cloud-infra
+          token: ${{ secrets.GH_PACKAGES }}
+          path: cloud-infra
+
+      - name: Terraform setup
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.14.4
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: cloud-infra/terraform
+        run: terraform init
+
+      - name: Terraform Change Workspace
+        working-directory: cloud-infra/terraform
+        run: terraform workspace select prod
+
+      - name: Terraform get output
+        working-directory: cloud-infra/terraform
+        id: terraform
+        run: |
+          echo "ws_ecs_container_name=$(terraform output -json ws_ecs_container_name | jq -r .)" >> $GITHUB_ENV
+          echo "ws_ecs_service=$(terraform output -json ws_ecs_service | jq -r .)" >> $GITHUB_ENV
+          echo "ws_ecs_cluster=$(terraform output -json ws_ecs_cluster | jq -r .)" >> $GITHUB_ENV
+          echo "ws_task_name=$(terraform output -json ws_task_name | jq -r .)" >> $GITHUB_ENV
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.ws_task_name }} \
+          --query taskDefinition > task-definition.json
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          REGISTERY_OWNER: notifirehq
+          DOCKER_NAME: notifire/ws
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/ws/Dockerfile .
+          docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1340/v1/health-check | grep 'ok'
+          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+
+      - name: Render Amazon ECS task definition
+        id: render-container
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.ws_ecs_container_name }}
+          image: ${{ steps.build-image.outputs.IMAGE }}
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-container.outputs.task-definition }}
+          service: ${{ env.ws_ecs_service }}
+          cluster: ${{ env.ws_ecs_cluster }}
+          wait-for-service-stability: true
+

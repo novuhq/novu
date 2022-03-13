@@ -22,7 +22,7 @@
     },
     {
       "name": "📦 @notifire/dal",
-      "path": "libs/core"
+      "path": "libs/dal"
     },
     {
       "name": "📦 @notifire/sdk",
@@ -75,7 +75,7 @@
   "extensions": {
     "recommendations": [
       "folke.vscode-monorepo-workspace",
-      "vtrois.gitmoji-vscode",
+      "seatonjiang.gitmoji-vscode",
       "jondot.vscode-hygen",
       "esbenp.prettier-vscode",
       "dbaeumer.vscode-eslint"

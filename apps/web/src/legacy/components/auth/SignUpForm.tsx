@@ -2,7 +2,7 @@ import { Alert, Button, Form, Input, message } from 'antd';
 import { LockOutlined, MailOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
 import { useContext } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { api } from '../../../api/api.client';
 
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function SignUpForm({ token, email }: Props) {
-  const router = useHistory();
+  const navigate = useNavigate();
   const { setToken } = useContext(AuthContext);
   const { isLoading: loadingAcceptInvite, mutateAsync: acceptInvite } = useMutation<
     string,
@@ -53,7 +53,7 @@ export function SignUpForm({ token, email }: Props) {
       setToken(responseInvite);
     }
 
-    router.push('/templates');
+    navigate('/templates');
 
     return true;
   };
