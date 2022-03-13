@@ -7,23 +7,39 @@ import { colors } from '../config';
 
 interface ITemplateButtonProps {
   icon: React.ReactNode;
+  iconDisabled?: React.ReactNode;
   description: string;
   label: string;
   active?: boolean;
   action?: boolean;
 }
 
-export function TemplateButton({ icon, description, active, action = false, label }: ITemplateButtonProps) {
-  const { cx, classes } = useStyles();
+export function TemplateButton({
+  icon,
+  description,
+  active,
+  changeTab,
+  tabKey,
+  action = false,
+  switchButton,
+  checked = false,
+  label,
+  iconDisabled,
+}: ITemplateButtonProps) {
+  const { cx, classes, theme } = useStyles();
+  const disabled = action && !checked;
+  const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
 
   return (
     <UnstyledButton className={cx(classes.button, { [classes.active]: active })}>
       <Group position="apart">
         <Group spacing={15}>
-          <div className={classes.linkIcon}>{icon}</div>
+          <div className={classes.linkIcon}>{disabled ? iconDisabled : icon}</div>
           <div>
-            <Text weight="bold">{label}</Text>
-            <Text mt={3} color={colors.B60}>
+            <Text {...disabledColor} weight="bold">
+              {label}
+            </Text>
+            <Text mt={3} color={colors.B60} {...disabledColor}>
               {description}
             </Text>
           </div>

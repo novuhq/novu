@@ -1,4 +1,5 @@
 import { Navbar, useMantineTheme } from '@mantine/core';
+import { ChannelTypeEnum } from '@notifire/shared';
 import { colors, TemplateButton, Text } from '../../design-system';
 import {
   BellGradient,
@@ -13,6 +14,7 @@ const templateButtons = [
   {
     label: 'In-App Content',
     description: 'This subtitle will describe things',
+    iconDisabled: <MobileGradientDisabled />,
     icon: <MobileGradient />,
     action: true,
   },
