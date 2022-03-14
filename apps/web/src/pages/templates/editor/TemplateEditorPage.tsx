@@ -18,8 +18,8 @@ export default function TemplateEditorPage() {
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
 
   const handleAddChannel = (tabKey) => {
-    const index = channelButtons.findIndex((item) => item === tabKey);
-    if (index === -1) {
+    const foundChannel = channelButtons.find((item) => item === tabKey);
+    if (foundChannel) {
       toggleChannel(ChannelTypeEnum[tabKey], true);
       setChannelButtons((prev) => [...prev, tabKey]);
     }
