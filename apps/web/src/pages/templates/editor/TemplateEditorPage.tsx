@@ -18,10 +18,12 @@ export default function TemplateEditorPage() {
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
 
   const handleAddChannel = (tabKey) => {
-    const index = channelButtons.findIndex((item) => item === tabKey);
-    if (index === -1) {
+    const foundChannel = channelButtons.find((item) => item === tabKey);
+    if (!foundChannel) {
       toggleChannel(ChannelTypeEnum[tabKey], true);
+
       setChannelButtons((prev) => [...prev, tabKey]);
+      setActivePage(tabKey);
     }
   };
 
@@ -77,7 +79,9 @@ export default function TemplateEditorPage() {
             />
             <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
               {activePage === 'Settings' && <NotificationSettingsForm errors={errors} editMode={editMode} />}
-              {activePage === 'Add' && <AddChannelsPage handleAddChannel={handleAddChannel} />}
+              {activePage === 'Add' && (
+                <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
+              )}
               {trigger && (
                 <TemplateTriggerModal
                   trigger={trigger}

@@ -20,12 +20,37 @@ const channels = [
   },
 ];
 
-export const AddChannelsPage = ({ handleAddChannel }: { handleAddChannel: (string) => void }) => {
+export const AddChannelsPage = ({
+  handleAddChannel,
+  channelButtons,
+}: {
+  channelButtons: string[];
+  handleAddChannel: (string) => void;
+}) => {
   return (
     <Grid gutter={30}>
       {channels.map((channel) => (
         <Grid.Col key={channel.label} span={4}>
-          <Card onClick={() => handleAddChannel(channel.tabKey)} sx={styledCard}>
+          <Card
+            onClick={() => handleAddChannel(channel.tabKey)}
+            sx={(theme) => {
+              const selected = channelButtons.includes(channel.tabKey);
+
+              return {
+                backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+                borderRadius: '7px',
+                height: '200px',
+                opacity: selected ? '0.5' : '1',
+                [`&:hover`]: {
+                  ...(!selected
+                    ? {
+                        backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+                        boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
+                      }
+                    : {}),
+                },
+              };
+            }}>
             <StyledCardContent>
               <div>{channel.icon}</div>
               <Text weight="bold" size="lg">
@@ -38,16 +63,6 @@ export const AddChannelsPage = ({ handleAddChannel }: { handleAddChannel: (strin
     </Grid>
   );
 };
-
-const styledCard = (theme) => ({
-  backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-  borderRadius: '7px',
-  height: '200px',
-  '&:hover': {
-    backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
-    boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
-  },
-});
 
 const StyledCardContent = ({ children }: { children: React.ReactNode }) => {
   return (
