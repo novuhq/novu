@@ -1,4 +1,5 @@
 import * as getPort from 'get-port';
+import exp from 'constants';
 
 // CLI Server
 export const SERVER_HOST = 'localhost';
@@ -7,7 +8,7 @@ export const WIDGET_DEMO_ROUTH = '/demo';
 export const TRIGGER_ROUTE = '/trigger';
 
 // API
-const apiAddress = 'http://localhost:3000';
+const apiAddress = process.env.NOVU_API_ADDRESS ?? 'https://api.novu.co';
 
 export const API_OAUTH_URL = `${apiAddress}/v1/auth/github`;
 export const API_CREATE_ORGANIZATION_URL = `${apiAddress}/v1/organizations`;
@@ -21,7 +22,7 @@ export const API_NOTIFICATION_TEMPLATES_URL = `${apiAddress}/v1/notification-tem
 export const API_TRIGGER_URL = `${apiAddress}/v1/events/trigger`;
 
 // Client
-export const CLIENT_LOGIN_URL = 'http://localhost:4200/auth/login';
+export const CLIENT_LOGIN_URL = process.env.NOVU_API_ADDRESS || 'https://web.novu.co/auth/login';
 
 // github
 export const GITHUB_DOCKER_URL = 'https://github.com/notifirehq/notifire/tree/main/docker';
