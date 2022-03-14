@@ -18,9 +18,11 @@ export default function TemplateEditorPage() {
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
 
   const handleAddChannel = (tabKey) => {
-    changeSelectedMessage(ChannelTypeEnum[tabKey]);
-
-    setChannelButtons((prev) => [...prev, tabKey]);
+    const index = channelButtons.findIndex((item) => item === tabKey);
+    if (index === -1) {
+      toggleChannel(ChannelTypeEnum[tabKey], true);
+      setChannelButtons((prev) => [...prev, tabKey]);
+    }
   };
 
   const {
@@ -53,7 +55,18 @@ export default function TemplateEditorPage() {
     <PageContainer>
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
-          <PageHeader title="Create New Template" actions={<Button submit>Create</Button>} />
+          <PageHeader
+            title="Create New Template"
+            actions={
+              <Button
+                data-test-id="submit-btn"
+                loading={isLoading || isUpdateLoading}
+                disabled={loadingEditTemplate || isLoading}
+                submit>
+                {editMode ? 'Update' : 'Create'}
+              </Button>
+            }
+          />
           <Group mt={20} align="flex-start" grow>
             <TemplatesSideBar
               activeTab={activePage}
