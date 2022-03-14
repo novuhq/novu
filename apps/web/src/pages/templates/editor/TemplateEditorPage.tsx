@@ -9,6 +9,7 @@ import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
 import { useTemplateController } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
+import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
 
@@ -76,12 +77,14 @@ export default function TemplateEditorPage() {
               changeTab={setActivePage}
               activeChannels={activeChannels}
               channelButtons={channelButtons}
+              showTriggerSection={!!template && !!trigger}
             />
             <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
               {activePage === 'Settings' && <NotificationSettingsForm errors={errors} editMode={editMode} />}
               {activePage === 'Add' && (
                 <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
               )}
+              {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
               {trigger && (
                 <TemplateTriggerModal
                   trigger={trigger}

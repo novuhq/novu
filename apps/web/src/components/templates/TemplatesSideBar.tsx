@@ -1,7 +1,14 @@
 import { Navbar, useMantineTheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@notifire/shared';
 import { colors, TemplateButton, Text } from '../../design-system';
-import { BellGradient, MailGradient, MobileGradient, PlusGradient, SmsGradient } from '../../design-system/icons';
+import {
+  BellGradient,
+  MailGradient,
+  MobileGradient,
+  PlusGradient,
+  SmsGradient,
+  TapeGradient,
+} from '../../design-system/icons';
 
 const templateButtons = [
   {
@@ -36,12 +43,14 @@ export function TemplatesSideBar({
   changeTab,
   toggleChannel,
   channelButtons,
+  showTriggerSection = false,
 }: {
   activeChannels: { [p: string]: boolean };
   activeTab: string;
   changeTab: (string) => void;
   toggleChannel: (channel: ChannelTypeEnum, active: boolean) => void;
   channelButtons: string[];
+  showTriggerSection: boolean;
 }) {
   const links = templateButtons.map(
     (link) =>
@@ -88,6 +97,23 @@ export function TemplatesSideBar({
           />
         </div>
       </Navbar.Section>
+      {showTriggerSection && (
+        <Navbar.Section mr={20}>
+          <Text mt={10} mb={20} color={textColor}>
+            Implementation Code
+          </Text>
+          <div>
+            <TemplateButton
+              tabKey="TriggerSnippet"
+              changeTab={changeTab}
+              Icon={TapeGradient}
+              active={activeTab === 'TriggerSnippet'}
+              description="This subtitle will describe things"
+              label="Trigger Snippet"
+            />
+          </div>
+        </Navbar.Section>
+      )}
     </Navbar>
   );
 }
