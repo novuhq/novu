@@ -6,12 +6,10 @@ export function InAppEditorBlock({
   contentPlaceholder,
   onChange,
   value,
-  disabled,
 }: {
   contentPlaceholder: string;
   value: string;
   onChange: (data: string) => void;
-  disabled: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!value);
