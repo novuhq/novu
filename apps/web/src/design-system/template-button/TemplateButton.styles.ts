@@ -29,6 +29,7 @@ export const useStyles = createStyles((theme) => {
     },
     linkIcon: {
       marginLeft: '5px',
+      color: dark ? colors.B40 : colors.B70,
       '& *': {
         display: 'block',
       },
