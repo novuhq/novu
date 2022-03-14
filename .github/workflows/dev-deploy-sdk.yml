@@ -7,6 +7,10 @@ name: Deploy DEV SDK
 on:
   workflow_dispatch:
   push:
+    branches:
+      - master
+    paths:
+      - 'libs/sdk/**'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
