@@ -1,6 +1,6 @@
 import { FormProvider } from 'react-hook-form';
 import { Container, Group } from '@mantine/core';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@notifire/shared';
 import { useParams } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
@@ -9,6 +9,7 @@ import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
 import { useTemplateController } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
+import { TemplateInAppEditor } from '../../../components/templates/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
@@ -21,8 +22,8 @@ export default function TemplateEditorPage() {
   const handleAddChannel = (tabKey) => {
     const foundChannel = channelButtons.find((item) => item === tabKey);
     if (!foundChannel) {
-      toggleChannel(ChannelTypeEnum[tabKey], true);
-
+      // toggleChannel(tabKey, true);
+      changeSelectedMessage(tabKey);
       setChannelButtons((prev) => [...prev, tabKey]);
       setActivePage(tabKey);
     }
@@ -54,6 +55,18 @@ export default function TemplateEditorPage() {
     removeEmailMessage,
   } = useTemplateController(templateId);
 
+  useEffect(() => {
+    if (template) {
+      for (const key in activeChannels) {
+        if (activeChannels[key]) {
+          toggleChannel(ChannelTypeEnum[key], true);
+
+          setChannelButtons((prev) => [...prev, key]);
+        }
+      }
+    }
+  }, [template]);
+
   return (
     <PageContainer>
       <FormProvider {...methods}>
@@ -84,6 +97,20 @@ export default function TemplateEditorPage() {
               {activePage === 'Add' && (
                 <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
               )}
+              {loadingEditTemplate
+                ? null
+                : activePage === 'in_app' &&
+                  inAppFields.map((message, index) => {
+                    return (
+                      <TemplateInAppEditor
+                        disabled={!activeChannels[ChannelTypeEnum.IN_APP]}
+                        key={index}
+                        errors={errors}
+                        control={control}
+                        index={index}
+                      />
+                    );
+                  })}
               {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
               {trigger && (
                 <TemplateTriggerModal
