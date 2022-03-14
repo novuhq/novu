@@ -38,13 +38,7 @@ export function TemplateInAppEditor({
           render={({ field }) => {
             const { ref, ...fieldRefs } = field;
 
-            return (
-              <InAppEditorBlock
-                {...fieldRefs}
-                disabled={disabled}
-                contentPlaceholder="Notification content goes here..."
-              />
-            );
+            return <InAppEditorBlock {...fieldRefs} contentPlaceholder="Notification content goes here..." />;
           }}
         />
       </Group>
