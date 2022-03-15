@@ -13,6 +13,7 @@ import { TemplateInAppEditor } from '../../../components/templates/TemplateInApp
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
+import { EmailMessagesCards } from '../../../legacy/components/templates/EmailMessagesCards';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -112,6 +113,13 @@ export default function TemplateEditorPage() {
                     );
                   })}
               {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
+              {activePage === 'email' && (
+                <EmailMessagesCards
+                  variables={trigger?.variables || []}
+                  onRemoveTab={removeEmailMessage}
+                  emailMessagesFields={emailMessagesFields}
+                />
+              )}
               {trigger && (
                 <TemplateTriggerModal
                   trigger={trigger}
