@@ -18,7 +18,7 @@ export function AppLayout() {
    * TODO: Remove once migrated to the new styling.
    * Add each new page when migrating
    */
-  if (!['/', '/templates', '/settings/widget', '/templates/create'].includes(location.pathname)) {
+  if (!['/', '/templates', '/settings/widget', '/integrations', '/templates/create'].includes(location.pathname)) {
     return (
       <LegacyAppLayout>
         <Outlet />

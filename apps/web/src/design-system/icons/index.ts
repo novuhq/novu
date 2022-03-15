@@ -13,6 +13,7 @@ export { Bell } from './general/Bell';
 export { Mail } from './general/Mail';
 export { Trash } from './general/Trash';
 export { Check } from './general/Check';
+export { Box } from './general/Box';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
