@@ -1,29 +1,137 @@
 {
   "version": "0.2.0",
   "configurations": [
-    // To debug, make sure a *.spec.ts file is active in the editor, then run a configuration
     {
-      "type": "node",
+      "name": "API",
       "request": "launch",
-      "name": "Debug Active Spec",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
-      "runtimeArgs": ["debug", "--break", "--serial", "${file}"],
-      "port": 9229,
-      "outputCapture": "std",
-      "skipFiles": ["<node_internals>/**/*.js"],
-      "preLaunchTask": "npm: build"
-      // "smartStep": true
+      "runtimeArgs": [
+        "run-script",
+        "start"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/api",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
     },
     {
-      // Use this one if you're already running `yarn watch`
-      "type": "node",
+      "name": "WEB",
       "request": "launch",
-      "name": "Debug Active Spec (no build)",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
-      "runtimeArgs": ["debug", "--break", "--serial", "${file}"],
-      "port": 9229,
-      "outputCapture": "std",
-      "skipFiles": ["<node_internals>/**/*.js"]
-      // "smartStep": true
-    }]
+      "runtimeArgs": [
+        "run-script",
+        "start:dev"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/web",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "WIDGET",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:dev"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/widget",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "WS",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/ws",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "DAL",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:dev"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/libs/dal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "TESTING LIB",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:dev"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/libs/testing",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "SDK",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:dev"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/libs/sdk",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "SHARED",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:dev"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/libs/shared",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "STORYBOOK",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "storybook"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/web",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "-- RUN FULL ENV - Local",
+      "configurations": ["API", "DAL", "SDK", "SHARED", "TESTING LIB", "WS", "WEB", "WIDGET"]
+    }
+  ]
 }
