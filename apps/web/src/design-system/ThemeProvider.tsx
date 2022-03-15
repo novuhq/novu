@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { MantineProvider, Global, MantineColor, ColorSchemeProvider, ColorScheme } from '@mantine/core';
+import { MantineProvider, Global } from '@mantine/core';
+import { useDarkMode } from 'storybook-dark-mode';
 import { mantineConfig } from './config/theme.config';
 import { colors } from './config';
 
@@ -7,38 +7,28 @@ declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';
 }
 
-export function ThemeProvider({
-  children,
-  colorSchemeOverride = 'dark',
-}: {
-  children: JSX.Element;
-  colorSchemeOverride?: ColorScheme;
-}) {
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(colorSchemeOverride);
-  const toggleColorScheme = (value?: ColorScheme) =>
-    setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'));
+export function ThemeProvider({ children }: { children: JSX.Element }) {
+  const dark = useDarkMode();
 
   return (
-    <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
-      <MantineProvider
-        withGlobalStyles
-        // withNormalizeCSS
-        theme={{
-          // Override any other properties from default theme
-          colorScheme,
-          ...mantineConfig,
-        }}>
-        <Global
-          styles={(theme) => ({
-            body: {
-              ...theme.fn.fontStyles(),
-              backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
-              color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-            },
-          })}
-        />
-        {children}
-      </MantineProvider>
-    </ColorSchemeProvider>
+    <MantineProvider
+      withGlobalStyles
+      // withNormalizeCSS
+      theme={{
+        // Override any other properties from default theme
+        colorScheme: dark ? 'dark' : 'light',
+        ...mantineConfig,
+      }}>
+      <Global
+        styles={(theme) => ({
+          body: {
+            ...theme.fn.fontStyles(),
+            backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
+            color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+          },
+        })}
+      />
+      {children}
+    </MantineProvider>
   );
 }

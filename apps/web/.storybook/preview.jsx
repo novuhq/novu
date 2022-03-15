@@ -1,6 +1,5 @@
 import React from 'react';
 import { ThemeProvider } from '../src/design-system/ThemeProvider';
-import { useDarkMode } from 'storybook-dark-mode';
 import { DocsContainer } from './Doc.container';
 
 export const parameters = {
@@ -21,7 +20,7 @@ export const parameters = {
 function ThemeWrapper(props) {
   return (
     <div style={{ margin: '3em' }}>
-      <ThemeProvider colorSchemeOverride={useDarkMode() ? 'dark' : 'light'}>{props.children}</ThemeProvider>
+      <ThemeProvider>{props.children}</ThemeProvider>
     </div>
   );
 }
