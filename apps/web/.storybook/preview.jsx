@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDarkMode } from 'storybook-dark-mode';
 import { ThemeProvider } from '../src/design-system/ThemeProvider';
 import { DocsContainer } from './Doc.container';
 
@@ -7,6 +8,9 @@ export const parameters = {
   viewMode: 'docs',
   docs: {
     container: DocsContainer,
+  },
+  darkMode: {
+    current: 'dark',
   },
   actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
@@ -20,7 +24,7 @@ export const parameters = {
 function ThemeWrapper(props) {
   return (
     <div style={{ margin: '3em' }}>
-      <ThemeProvider>{props.children}</ThemeProvider>
+      <ThemeProvider dark={useDarkMode()}>{props.children}</ThemeProvider>
     </div>
   );
 }
