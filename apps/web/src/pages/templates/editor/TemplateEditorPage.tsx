@@ -22,7 +22,6 @@ export default function TemplateEditorPage() {
   const handleAddChannel = (tabKey) => {
     const foundChannel = channelButtons.find((item) => item === tabKey);
     if (!foundChannel) {
-      // toggleChannel(tabKey, true);
       changeSelectedMessage(tabKey);
       setChannelButtons((prev) => [...prev, tabKey]);
       setActivePage(tabKey);
@@ -97,10 +96,8 @@ export default function TemplateEditorPage() {
               {activePage === 'Add' && (
                 <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
               )}
-              {loadingEditTemplate
-                ? null
-                : activePage === 'in_app' &&
-                  inAppFields.map((message, index) => {
+              {!loadingEditTemplate && activePage === 'in_app'
+                ? inAppFields.map((message, index) => {
                     return (
                       <TemplateInAppEditor
                         disabled={!activeChannels[ChannelTypeEnum.IN_APP]}
@@ -110,7 +107,8 @@ export default function TemplateEditorPage() {
                         index={index}
                       />
                     );
-                  })}
+                  })
+                : null}
               {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
               {trigger && (
                 <TemplateTriggerModal
