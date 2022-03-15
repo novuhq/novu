@@ -2,5 +2,5 @@ import { IntegrationEntity } from '@notifire/dal';
 import { ISmsHandler } from './sms.handler.interface';
 
 export interface ISmsFactory {
-  getHandler(integration: IntegrationEntity, from: string): ISmsHandler;
+  getHandler(integration: IntegrationEntity): ISmsHandler;
 }

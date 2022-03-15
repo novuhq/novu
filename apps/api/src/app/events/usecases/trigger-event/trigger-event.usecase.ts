@@ -290,11 +290,11 @@ export class TriggerEvent {
 
     if (command.payload.$phone && integration) {
       try {
-        const smsHandler = this.smsFactory.getHandler(integration, command.payload.$fromPhone);
+        const smsHandler = this.smsFactory.getHandler(integration);
 
         await smsHandler.send({
           to: command.payload.$phone,
-          from: command.payload.$fromPhone,
+          from: integration.credentials.from,
           content,
           attachments: null,
         });
@@ -349,14 +349,14 @@ export class TriggerEvent {
         'no_subscriber_phone',
         'Subscriber does not have active phone'
       );
-    } else if (!command.payload.$fromPhone) {
+    } else if (!integration.credentials.from) {
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
           applicationId: command.applicationId,
           organizationId: command.organizationId,
-          text: 'Subscriber does not have active origin phone',
+          text: 'Integration was not configured with a from phone number',
           userId: command.userId,
           subscriberId: subscriber._id,
           code: LogCodeEnum.MISSING_SMS_PROVIDER,
@@ -371,8 +371,8 @@ export class TriggerEvent {
         message._id,
         'warning',
         null,
-        'no_subscriber_origin_phone',
-        'Subscriber does not have active origin phone'
+        'no_integration_from_phone',
+        'Integration does not have from phone'
       );
     }
   }
@@ -558,28 +558,66 @@ export class TriggerEvent {
         );
       }
     } else {
-      await this.messageRepository.updateMessageStatus(
-        message._id,
-        'warning',
-        null,
-        'mail_unexpected_error',
-        'Subscriber does not have an email address or active integration'
-      );
+      const errorMessage = 'Subscriber does not have an';
+      const status = 'warning';
+      const errorId = 'mail_unexpected_error';
 
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          applicationId: command.applicationId,
-          organizationId: command.organizationId,
-          notificationId: notification._id,
-          text: 'Subscriber does not have an email address',
-          userId: command.userId,
-          subscriberId: subscriber._id,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_EMAIL,
-          templateId: template._id,
-        })
-      );
+      if (!email) {
+        const mailErrorMessage = `${errorMessage} email adress`;
+
+        await this.sendMailStatus(
+          message,
+          status,
+          errorId,
+          mailErrorMessage,
+          command,
+          notification,
+          subscriber,
+          template
+        );
+      }
+      if (!integration) {
+        const integrationError = `${errorMessage} active integration  was found`;
+
+        await this.sendMailStatus(
+          message,
+          status,
+          errorId,
+          integrationError,
+          command,
+          notification,
+          subscriber,
+          template
+        );
+      }
     }
+  }
+
+  private async sendMailStatus(
+    message,
+    status: 'error' | 'sent' | 'warning',
+    errorId: string,
+    errorMessage: string,
+    command: TriggerEventCommand,
+    notification,
+    subscriber,
+    template
+  ) {
+    await this.messageRepository.updateMessageStatus(message._id, status, null, errorId, errorMessage);
+
+    await this.createLogUsecase.execute(
+      CreateLogCommand.create({
+        transactionId: command.transactionId,
+        status: LogStatusEnum.ERROR,
+        applicationId: command.applicationId,
+        organizationId: command.organizationId,
+        notificationId: notification._id,
+        text: errorMessage,
+        userId: command.userId,
+        subscriberId: subscriber._id,
+        code: LogCodeEnum.SUBSCRIBER_MISSING_EMAIL,
+        templateId: template._id,
+      })
+    );
   }
 }

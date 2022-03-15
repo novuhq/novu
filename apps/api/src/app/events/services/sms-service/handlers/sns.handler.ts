@@ -8,7 +8,7 @@ export class SnsHandler extends BaseSmsHandler {
   constructor() {
     super('sns', ChannelTypeEnum.SMS);
   }
-  buildProvider(credentials: ICredentials, from: string) {
+  buildProvider(credentials: ICredentials) {
     const config: SNSConfig = {
       accessKeyId: credentials.apiKey,
       secretAccessKey: credentials.secretKey,

@@ -4,9 +4,8 @@ import { ChannelTypeEnum } from '@notifire/shared';
 export class IntegrationService {
   private integrationRepository = new IntegrationRepository();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async createIntegration(applicationId: string, organizationId: string) {
-    const payload = {
+    const mailPayload = {
       _applicationId: applicationId,
       _organizationId: organizationId,
       providerId: 'sendgrid',
@@ -15,6 +14,17 @@ export class IntegrationService {
       active: true,
     };
 
-    return await this.integrationRepository.create(payload);
+    await this.integrationRepository.create(mailPayload);
+
+    const smsPayload = {
+      _applicationId: applicationId,
+      _organizationId: organizationId,
+      providerId: 'twilio',
+      channel: ChannelTypeEnum.SMS,
+      credentials: { accountSid: 'AC123', token: '123', from: 'me' },
+      active: true,
+    };
+
+    await this.integrationRepository.create(smsPayload);
   }
 }

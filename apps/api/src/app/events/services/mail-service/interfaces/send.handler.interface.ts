@@ -1,4 +1,4 @@
-import { IEmailOptions } from '@notifire/core';
+import { IEmailOptions, ISendMessageSuccessResponse } from '@notifire/core';
 import { ICredentials } from '@notifire/dal';
 import { ChannelTypeEnum } from '@notifire/shared';
 
@@ -7,5 +7,5 @@ export interface IMailHandler {
 
   buildProvider(credentials: ICredentials, from: string);
 
-  send(mailData: IEmailOptions): Promise<void>;
+  send(mailData: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 }

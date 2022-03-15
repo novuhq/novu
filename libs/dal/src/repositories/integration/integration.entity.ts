@@ -13,6 +13,7 @@ export interface ICredentials {
   accountSid?: string;
   messageProfileId?: string;
   token?: string;
+  from?: string;
 }
 
 export class IntegrationEntity {

@@ -14,7 +14,7 @@ export class EmailJsHandler extends BaseHandler {
       host: credentials.host,
       port: Number(credentials.port),
       secure: credentials.secure,
-      user: null,
+      user: credentials.user,
       password: credentials.password,
     };
 

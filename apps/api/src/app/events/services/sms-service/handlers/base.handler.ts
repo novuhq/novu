@@ -4,22 +4,21 @@ import { ICredentials } from '@notifire/dal';
 import { ISmsHandler } from '../interfaces';
 
 export abstract class BaseSmsHandler implements ISmsHandler {
-  protected readonly providerId;
-  protected readonly channelType;
   protected provider: ISmsProvider;
 
-  protected constructor(providerId: string, channelType: string) {
-    this.providerId = providerId;
-    this.channelType = channelType;
-  }
+  protected constructor(private providerId: string, private channelType: string) {}
 
   canHandle(providerId: string, channelType: ChannelTypeEnum) {
     return providerId === this.providerId && channelType === this.channelType;
   }
 
   async send(options: ISmsOptions) {
-    await this.provider.sendMessage(options);
+    if (process.env.NODE_ENV === 'test') {
+      throw new Error('Currently 3rd-party packages test are not support on test env');
+    }
+
+    return await this.provider.sendMessage(options);
   }
 
-  abstract buildProvider(credentials: ICredentials, from: string);
+  abstract buildProvider(credentials: ICredentials);
 }
