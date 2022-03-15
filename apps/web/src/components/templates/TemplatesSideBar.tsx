@@ -12,7 +12,7 @@ import {
 
 const templateButtons = [
   {
-    tabKey: 'IN_APP',
+    tabKey: ChannelTypeEnum.IN_APP,
     label: 'In-App Content',
     description: 'This subtitle will describe things',
     Icon: MobileGradient,
@@ -20,7 +20,7 @@ const templateButtons = [
     channelType: ChannelTypeEnum.IN_APP,
   },
   {
-    tabKey: 'EMAIL',
+    tabKey: ChannelTypeEnum.EMAIL,
     label: 'Email Template',
     description: 'This subtitle will describe things',
     Icon: MailGradient,
@@ -28,7 +28,7 @@ const templateButtons = [
     action: true,
   },
   {
-    tabKey: 'SMS',
+    tabKey: ChannelTypeEnum.SMS,
     label: 'SMS',
     description: 'This subtitle will describe things',
     Icon: SmsGradient,
@@ -59,8 +59,8 @@ export function TemplatesSideBar({
           {...link}
           active={link.tabKey === activeTab}
           changeTab={changeTab}
-          switchButton={(checked) => toggleChannel(link.channelType, checked)}
-          checked={activeChannels[link.channelType]}
+          switchButton={(checked) => toggleChannel(link.tabKey, checked)}
+          checked={activeChannels[link.tabKey]}
           key={link.tabKey}
         />
       )

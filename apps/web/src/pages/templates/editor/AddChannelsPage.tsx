@@ -7,14 +7,19 @@ import { MailGradient, MobileGradient, SmsGradient } from '../../../design-syste
 const channels = [
   {
     label: 'Email',
-    tabKey: 'EMAIL',
+    tabKey: ChannelTypeEnum.EMAIL,
     icon: <MailGradient width="40px" height="40px" />,
     channelType: ChannelTypeEnum.EMAIL,
   },
-  { label: 'SMS', tabKey: 'SMS', icon: <SmsGradient width="40px" height="40px" />, channelType: ChannelTypeEnum.SMS },
+  {
+    label: 'SMS',
+    tabKey: ChannelTypeEnum.SMS,
+    icon: <SmsGradient width="40px" height="40px" />,
+    channelType: ChannelTypeEnum.SMS,
+  },
   {
     label: 'In-App',
-    tabKey: 'IN_APP',
+    tabKey: ChannelTypeEnum.IN_APP,
     icon: <MobileGradient width="40px" height="40px" />,
     channelType: ChannelTypeEnum.IN_APP,
   },
@@ -25,7 +30,7 @@ export const AddChannelsPage = ({
   channelButtons,
 }: {
   channelButtons: string[];
-  handleAddChannel: (string) => void;
+  handleAddChannel: (ChannelTypeEnum) => void;
 }) => {
   return (
     <Grid gutter={30}>
