@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { IApplication, IEmailBlock } from '@notifire/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Input, Tabs } from '../../design-system';
-import { EmailMessageEditor } from './email-editor/EmailMessageEditor';
-import { EmailCustomCodeEditor } from './email-editor/EmailCustomCodeEditor';
+import { Input, Tabs } from '../../../design-system';
+import { EmailMessageEditor } from './EmailMessageEditor';
+import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 
 export function EmailContentCard({
   index,

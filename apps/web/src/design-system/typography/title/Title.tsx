@@ -1,7 +1,7 @@
-import { Title as MantineTitle } from '@mantine/core';
+import { MantineMargins, Title as MantineTitle } from '@mantine/core';
 import { colors } from '../../config';
 
-interface ITitleProps extends JSX.ElementChildrenAttribute {
+interface ITitleProps extends JSX.ElementChildrenAttribute, MantineMargins {
   size?: 1 | 2;
 }
 /**

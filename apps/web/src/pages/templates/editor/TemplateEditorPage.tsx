@@ -9,11 +9,11 @@ import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
 import { useTemplateController } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
-import { TemplateInAppEditor } from '../../../components/templates/TemplateInAppEditor';
+import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
-import { EmailMessagesCards } from '../../../components/templates/EmailMessagesCards';
+import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
