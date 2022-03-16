@@ -1,80 +1,112 @@
-import { ISharedProvider } from './provider.interface';
+import {
+  IProviderConfig,
+  mailgunConfig,
+  mailjetConfig,
+  mailJsConfig,
+  mandrillConfig,
+  nexmoConfig,
+  nodemailerConfig,
+  plivoConfig,
+  postmarkConfig,
+  sendgridConfig,
+  sendinblueConfig,
+  sesConfig,
+  sms77Config,
+  snsConfig,
+  telnyxConfig,
+  twilioConfig,
+} from './provider.interface';
 import { ChannelTypeEnum } from '../../entities/message-template';
 
-export const providers: ISharedProvider[] = [
+export const providers: IProviderConfig[] = [
   {
     id: 'emailjs',
-    displayName: 'EMail.js',
+    displayName: 'Email.js',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: mailJsConfig,
   },
   {
     id: 'mailgun',
     displayName: 'Mailgun',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: mailgunConfig,
   },
   {
     id: 'mailjet',
     displayName: 'Mailjet',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: mailjetConfig,
   },
   {
     id: 'mandrill',
     displayName: 'Mandrill',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: mandrillConfig,
   },
   {
     id: 'nexmo',
     displayName: 'Nexmo',
     channel: ChannelTypeEnum.SMS,
+    credentials: nexmoConfig,
   },
   {
     id: 'nodemailer',
     displayName: 'Nodemailer',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: nodemailerConfig,
   },
   {
     id: 'plivo',
     displayName: 'Plivo',
     channel: ChannelTypeEnum.SMS,
+    credentials: plivoConfig,
   },
   {
     id: 'postmark',
     displayName: 'Postmark',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: postmarkConfig,
   },
   {
     id: 'sendgrid',
     displayName: 'SendGrid',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: sendgridConfig,
   },
   {
     id: 'sendinblue',
     displayName: 'Sendinblue',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: sendinblueConfig,
   },
   {
     id: 'ses',
     displayName: 'SES',
     channel: ChannelTypeEnum.EMAIL,
+    credentials: sesConfig,
   },
   {
     id: 'sms77',
     displayName: 'sms77',
     channel: ChannelTypeEnum.SMS,
+    credentials: sms77Config,
   },
   {
     id: 'sns',
     displayName: 'SNS',
     channel: ChannelTypeEnum.SMS,
+    credentials: snsConfig,
   },
   {
     id: 'telnyx',
     displayName: 'Telnyx',
     channel: ChannelTypeEnum.SMS,
+    credentials: telnyxConfig,
   },
   {
     id: 'twilio',
     displayName: 'Twilio',
     channel: ChannelTypeEnum.SMS,
+    credentials: twilioConfig,
   },
 ];

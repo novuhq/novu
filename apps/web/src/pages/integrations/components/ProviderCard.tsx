@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
-import { ISharedProvider } from '@notifire/shared';
+import { IProviderConfig } from '@notifire/shared';
 import { Button, colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
@@ -11,7 +11,7 @@ export function ProviderCard({
   connected,
   active,
 }: {
-  provider: ISharedProvider;
+  provider: IProviderConfig;
   connected: boolean;
   active: boolean;
 }) {
