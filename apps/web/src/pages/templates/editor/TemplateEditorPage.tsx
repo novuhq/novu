@@ -13,7 +13,7 @@ import { TemplateInAppEditor } from '../../../components/templates/TemplateInApp
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
-import { EmailMessagesCards } from '../../../legacy/components/templates/EmailMessagesCards';
+import { EmailMessagesCards } from '../../../components/templates/EmailMessagesCards';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
