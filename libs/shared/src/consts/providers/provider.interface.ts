@@ -8,6 +8,7 @@ export interface IProviderConfig {
     key: string;
     type: string;
   }[];
+  docReference: string;
   comingSoon?: boolean;
 }
 
