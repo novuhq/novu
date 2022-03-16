@@ -1,10 +1,11 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import styled from '@emotion/styled';
+import { IProviderConfig } from '@notifire/shared';
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { Check } from '../../../design-system/icons';
 
-export function ConnectIntegrationForm() {
+export function ConnectIntegrationForm({ provider }: { provider: IProviderConfig | null }) {
   const { handleSubmit, control } = useForm();
 
   return (
@@ -13,18 +14,15 @@ export function ConnectIntegrationForm() {
       <ColumnDiv>
         <InlineDiv>
           <span style={{ marginRight: 5 }}>Read our guide on where to get the credentials </span>
-          <a href="https://app.sendgrid.com/settings/api_keys">here</a>
+          <a href={provider?.docReference}>here</a>
         </InlineDiv>
-        <Controller
-          control={control}
-          name=" "
-          render={() => <Input label="Api Key" required data-test-id="api-key" />}
-        />{' '}
-        <Controller
-          control={control}
-          name=" "
-          render={() => <Input label="Secret Key" required data-test-id="secret-key" />}
-        />
+        {provider?.credentials.map((credential) => (
+          <Controller
+            control={control}
+            name=" "
+            render={() => <Input label={credential.key} required data-test-id={credential.key} />}
+          />
+        ))}
         <RowDiv>
           <ActiveWrapper>
             <Switch />

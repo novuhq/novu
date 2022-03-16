@@ -10,14 +10,16 @@ export function ProviderCard({
   provider,
   connected,
   active,
+  showModal,
 }: {
   provider: IProviderConfig;
   connected: boolean;
   active: boolean;
+  showModal: (visible: boolean, provider: IProviderConfig) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-  const logoSrc = `/static/images/providers/${isDark ? 'light' : 'light'}/${provider.id}.png`;
+  const logoSrc = `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.id}.png`;
   const isProviderConnected = connected && active;
 
   return (
@@ -34,7 +36,13 @@ export function ProviderCard({
         </CardHeader>
 
         <CardFooter>
-          {!isProviderConnected ? <Button fullWidth>Connect</Button> : <CardStatusBar active={active} />}
+          {!isProviderConnected ? (
+            <Button fullWidth onClick={() => showModal(true, provider)}>
+              Connect
+            </Button>
+          ) : (
+            <CardStatusBar active={active} />
+          )}
         </CardFooter>
       </Group>
     </StyledCard>
