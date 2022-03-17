@@ -10,9 +10,9 @@ import { MailService } from '@sendgrid/mail';
 export class SendgridEmailProvider implements IEmailProvider {
   id = 'sendgrid';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+  private sendgridMail: MailService;
 
   constructor(
-    private sendgridMail,
     private config: {
       apiKey: string;
       from: string;
