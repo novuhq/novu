@@ -1,4 +1,4 @@
-import * as faker from 'faker';
+import { faker } from '@faker-js/faker';
 import { ChannelCTATypeEnum, ChannelTypeEnum } from '@notifire/shared';
 import {
   MessageTemplateRepository,
