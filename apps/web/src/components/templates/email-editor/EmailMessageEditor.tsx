@@ -1,11 +1,10 @@
 import { IEmailBlock } from '@notifire/shared';
 import { useNavigate } from 'react-router-dom';
-import { Controller } from 'react-hook-form';
-import { useMantineTheme, Group, Container, Card } from '@mantine/core';
+import { useMantineTheme, Group, Container, Card, Modal, Space } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import React, { useEffect, useState } from 'react';
 import { Upload } from '../../../design-system/icons';
-import { colors, Text } from '../../../design-system';
+import { Button, colors, shadows, Text, Title } from '../../../design-system';
 import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
@@ -36,6 +35,7 @@ export function EmailMessageEditor({
 
   const [top, setTop] = useState<number>(0);
   const [controlBarVisible, setActionBarVisible] = useState<boolean>(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     if (onChange) {
@@ -104,45 +104,77 @@ export function EmailMessageEditor({
 
   return (
     <Card withBorder sx={styledCard}>
-      <Controller
-        render={({ field }) => (
-          <div onClick={navigateToBrandSettings}>
-            <Dropzone
-              styles={{
-                root: {
-                  borderRadius: '7px',
-                  padding: '10px',
-                  border: 'none',
-                  height: '80px',
-                  backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-                },
-              }}
-              multiple={false}
-              onDrop={(file) => {}}
-              {...field}
-              data-test-id="upload-image-button">
-              {(status) => (
-                <Group position="center" style={{ height: '100%' }}>
-                  {!branding?.logo ? (
-                    <Group style={{ height: '100%' }} spacing={5} position="center" direction="column">
-                      <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
-                      <Text color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>Upload Brand Logo</Text>
-                    </Group>
-                  ) : (
-                    <img
-                      data-test-id="brand-logo"
-                      src={branding?.logo}
-                      alt=""
-                      style={{ width: 'inherit', maxHeight: '80%' }}
-                    />
-                  )}
+      <div onClick={() => !branding?.logo && setConfirmModalVisible(true)}>
+        <Dropzone
+          styles={{
+            root: {
+              borderRadius: '7px',
+              padding: '10px',
+              border: 'none',
+              height: '80px',
+              backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+            },
+          }}
+          disabled
+          multiple={false}
+          onDrop={(file) => {}}
+          data-test-id="upload-image-button">
+          {(status) => (
+            <Group position="center" style={{ height: '100%' }}>
+              {!branding?.logo ? (
+                <Group style={{ height: '100%' }} spacing={5} position="center" direction="column">
+                  <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
+                  <Text color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>Upload Brand Logo</Text>
                 </Group>
+              ) : (
+                <img
+                  data-test-id="brand-logo"
+                  src={branding?.logo}
+                  alt=""
+                  style={{ width: 'inherit', maxHeight: '80%' }}
+                />
               )}
-            </Dropzone>
-          </div>
-        )}
-        name="image"
-      />
+            </Group>
+          )}
+        </Dropzone>
+      </div>
+      <Modal
+        onClose={() => setConfirmModalVisible(false)}
+        opened={confirmModalVisible}
+        overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
+        overlayOpacity={0.7}
+        styles={{
+          modal: {
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
+          },
+          body: {
+            paddingTop: '5px',
+          },
+          inner: {
+            paddingTop: '180px',
+          },
+        }}
+        title={<Title>Navigate to the settings page?</Title>}
+        sx={{ backdropFilter: 'blur(10px)' }}
+        shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
+        radius="md"
+        size="lg">
+        <div>
+          <Title size={2}>
+            Any unsaved changes will be deleted.
+            <Space w={10} />
+            Proceed anyway?
+          </Title>
+          <Group position="right">
+            <Button mt={30} onClick={() => setConfirmModalVisible(false)}>
+              No
+            </Button>
+            <Button mt={30} onClick={navigateToBrandSettings}>
+              Yes
+            </Button>
+          </Group>
+        </div>
+      </Modal>
 
       <Container
         mt={30}

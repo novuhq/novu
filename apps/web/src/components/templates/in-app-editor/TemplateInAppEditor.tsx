@@ -4,24 +4,9 @@ import { IForm } from '../../../legacy/pages/templates/editor/use-template-contr
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Input } from '../../../design-system';
 
-export function TemplateInAppEditor({
-  control,
-  index,
-  disabled,
-}: {
-  control: Control<IForm>;
-  index: number;
-  disabled: boolean;
-  errors: any;
-}) {
-  const {
-    formState: { errors },
-  } = useFormContext();
-
-  const disabledStyles = disabled ? { opacity: '0.3', cursor: 'not-allowed' } : {};
-
+export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   return (
-    <Container ml={0} sx={{ width: '70%', paddingLeft: '0px', ...disabledStyles }}>
+    <Container ml={0} sx={{ width: '70%', paddingLeft: '0px' }}>
       <Group grow direction="column">
         <Controller
           name={`inAppMessages.${index}.template.cta.data.url` as any}

@@ -91,6 +91,8 @@ export default function TemplateEditorPage() {
               activeChannels={activeChannels}
               channelButtons={channelButtons}
               showTriggerSection={!!template && !!trigger}
+              errors={errors}
+              alertErrors={methods.formState.isDirty && methods.formState.isSubmitted && Object.keys(errors).length > 0}
             />
             <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
               {activePage === 'Settings' && <NotificationSettingsForm errors={errors} editMode={editMode} />}
@@ -99,15 +101,7 @@ export default function TemplateEditorPage() {
               )}
               {!loadingEditTemplate && activePage === 'in_app'
                 ? inAppFields.map((message, index) => {
-                    return (
-                      <TemplateInAppEditor
-                        disabled={!activeChannels[ChannelTypeEnum.IN_APP]}
-                        key={index}
-                        errors={errors}
-                        control={control}
-                        index={index}
-                      />
-                    );
+                    return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
                   })
                 : null}
               {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
