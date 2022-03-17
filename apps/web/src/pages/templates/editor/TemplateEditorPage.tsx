@@ -13,6 +13,7 @@ import { TemplateInAppEditor } from '../../../components/templates/TemplateInApp
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
+import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -109,6 +110,10 @@ export default function TemplateEditorPage() {
                     );
                   })
                 : null}
+              {activePage === 'sms' &&
+                smsFields.map((message, index) => {
+                  return <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />;
+                })}
               {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
               {trigger && (
                 <TemplateTriggerModal
