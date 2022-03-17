@@ -2,7 +2,7 @@ import { UserSession } from '@notifire/testing';
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 
-describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
+describe.only('Initialize Session - /widgets/session/initialize (POST)', async () => {
   let session: UserSession;
 
   before(async () => {

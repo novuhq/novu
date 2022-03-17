@@ -19,6 +19,10 @@ export class InitializeSession {
   }> {
     const application = await this.applicationRepository.findApplicationByIdentifier(command.applicationIdentifier);
 
+    if (!application) {
+      throw new ApiException('Please provide a valid app identifier');
+    }
+
     const commandos = CreateSubscriberCommand.create({
       applicationId: application._id,
       organizationId: application._organizationId,
@@ -28,10 +32,6 @@ export class InitializeSession {
       email: command.email,
       phone: command.phone,
     });
-
-    if (!application) {
-      throw new ApiException('Please provide a valid app identifier');
-    }
 
     const subscriber = await this.createSubscriber.execute(commandos);
 
