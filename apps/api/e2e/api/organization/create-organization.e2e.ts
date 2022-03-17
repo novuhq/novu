@@ -37,6 +37,7 @@ describe('Create Organization - /organizations (POST)', async () => {
         name: 'Hello Org',
       };
       const { body } = await session.testAgent.post('/v1/organizations').send(demoOrganization).expect(201);
+
       expect(body.data.name).to.eq(demoOrganization.name);
     });
   });

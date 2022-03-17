@@ -14,6 +14,8 @@ import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippet
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
+import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
+
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -104,6 +106,10 @@ export default function TemplateEditorPage() {
                     return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
                   })
                 : null}
+              {activePage === 'sms' &&
+                smsFields.map((message, index) => {
+                  return <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />;
+                })}
               {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
               {activePage === 'email' && (
                 <EmailMessagesCards

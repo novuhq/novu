@@ -48,6 +48,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.12.2",
     "compression": "^1.7.4",
+    "cross-env": "^7.0.3",
     "dotenv": "^8.2.0",
     "envalid": "^6.0.1",
     "handlebars": "^4.7.7",
@@ -73,6 +74,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@faker-js/faker": "^6.0.0",
     "@nestjs/testing": "^7.4.2",
     "@types/bcrypt": "^3.0.0",
     "@types/chai": "^4.2.11",
@@ -84,7 +86,6 @@
     "@types/sinon": "^9.0.0",
     "@types/supertest": "^2.0.8",
     "chai": "^4.2.0",
-    "faker": "^5.5.3",
     "mocha": "^8.1.1",
     "nodemon": "^2.0.3",
     "sinon": "^9.0.2",
