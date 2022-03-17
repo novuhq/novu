@@ -26,7 +26,6 @@ export enum ChannelTypeEnum {
 }
 
 export interface ITriggerPayload {
-  $providerId?: string[];
   $email?: string;
   $phone?: string;
   $user_id: string;

@@ -20,12 +20,9 @@ export class TemplateStore {
 
     for (const message of template.messages) {
       if (
-        (!data.$providerId ||
-          data.$providerId.indexOf(message.providerId) > -1) &&
-        ((typeof message.active === 'boolean' && message.active) ||
-          typeof message.active === 'undefined' ||
-          (typeof message.active === 'function' &&
-            (await message.active(data))))
+        (typeof message.active === 'boolean' && message.active) ||
+        typeof message.active === 'undefined' ||
+        (typeof message.active === 'function' && (await message.active(data)))
       ) {
         messages.push(message);
       }

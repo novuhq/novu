@@ -51,10 +51,24 @@ export class Notifire extends EventEmitter {
   }
 
   async registerProvider(
+    provider: IEmailProvider | ISmsProvider | IDirectProvider
+  );
+
+  async registerProvider(
     providerId: string,
     provider: IEmailProvider | ISmsProvider | IDirectProvider
+  );
+
+  async registerProvider(
+    providerOrProviderId: any,
+    provider?: IEmailProvider | ISmsProvider | IDirectProvider
   ) {
-    await this.providerStore.addProvider(providerId, provider);
+    await this.providerStore.addProvider(
+      typeof providerOrProviderId === 'string'
+        ? providerOrProviderId
+        : provider?.id,
+      typeof providerOrProviderId === 'string' ? provider : providerOrProviderId
+    );
   }
 
   async getProviderByInternalId(providerId: string) {

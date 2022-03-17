@@ -23,16 +23,18 @@ export class ProviderStore {
   }
 
   async getProviderByInternalId(providerId: string) {
-    return this.getProviders().find((provider) => provider.id === providerId);
+    return (await this.getProviders()).find(
+      (provider) => provider.id === providerId
+    );
   }
 
   async getProviderByChannel(channel: ChannelTypeEnum) {
-    return this.getProviders().find(
+    return (await this.getProviders()).find(
       (provider) => provider.channelType === channel
     );
   }
 
-  getProviders() {
+  async getProviders() {
     return Object.values(this.providers);
   }
 }
