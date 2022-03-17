@@ -431,6 +431,7 @@ importers:
       craco-antd: ^1.19.0
       cypress: ^7.3.0
       cypress-intellij-reporter: ^0.0.6
+      eslint-plugin-cypress: ^2.12.1
       faker: ^5.4.0
       http-server: ^0.12.3
       iframe-resizer: ^4.3.1
@@ -468,6 +469,7 @@ importers:
       antd: 4.17.4_react-dom@17.0.2+react@17.0.2
       axios: 0.21.4
       babel-plugin-import: 1.13.3
+      eslint-plugin-cypress: 2.12.1_eslint@7.32.0
       iframe-resizer: 4.3.2
       jwt-decode: 3.1.2
       moment: 2.29.1
@@ -7228,10 +7230,10 @@ packages:
       '@commitlint/execute-rule': 16.2.1
       '@commitlint/resolve-extends': 16.2.1
       '@commitlint/types': 16.2.1
-      '@types/node': 16.11.7
+      '@types/node': 17.0.5
       chalk: 4.1.2
       cosmiconfig: 7.0.1
-      cosmiconfig-typescript-loader: 1.0.6_f84209de558f0eda77030e5403bfdd68
+      cosmiconfig-typescript-loader: 1.0.6_7863ac05a8831b3fd47f69d5af06889c
       lodash: 4.17.21
       resolve-from: 5.0.0
       typescript: 4.6.2
@@ -14862,7 +14864,7 @@ packages:
     dependencies:
       '@swc-node/core': 1.8.2
       '@swc-node/sourcemap-support': 0.1.11
-      chalk: 4.1.0
+      chalk: 4.1.2
       debug: 4.3.3
       pirates: 4.0.5
       tslib: 2.3.1
@@ -20646,16 +20648,16 @@ packages:
       - '@swc/core'
       - '@swc/wasm'
 
-  /cosmiconfig-typescript-loader/1.0.6_f84209de558f0eda77030e5403bfdd68:
+  /cosmiconfig-typescript-loader/1.0.6_7863ac05a8831b3fd47f69d5af06889c:
     resolution: {integrity: sha512-2nEotziYJWtNtoTjKbchj9QrdTT6DBxCvqjNKoDKARw+e2yZmTQCa07uRrykLIZuvSgp69YXLH89UHc0WhdMfQ==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
       '@types/node': '*'
       typescript: '>=3'
     dependencies:
-      '@types/node': 16.11.7
+      '@types/node': 17.0.5
       cosmiconfig: 7.0.1
-      ts-node: 10.7.0_f84209de558f0eda77030e5403bfdd68
+      ts-node: 10.7.0_7863ac05a8831b3fd47f69d5af06889c
       typescript: 4.6.2
     transitivePeerDependencies:
       - '@swc/core'
@@ -23016,7 +23018,6 @@ packages:
     dependencies:
       eslint: 7.32.0
       globals: 11.12.0
-    dev: true
 
   /eslint-plugin-eslint-comments/3.2.0_eslint@7.32.0:
     resolution: {integrity: sha512-0jkOl0hfojIHHmEHgmNdqv4fmh7300NdpA9FFpF7zaoLvB/QeXOGNLIo86oAveJFrfB1p05kC8hpEMHM8DwWVQ==}
@@ -25008,7 +25009,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.0.4
+      minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
     dev: true
@@ -28784,7 +28785,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 16.11.7
+      '@types/node': 17.0.5
       chalk: 4.1.2
       graceful-fs: 4.2.9
       is-ci: 3.0.1
@@ -40012,7 +40013,7 @@ packages:
       yn: 3.1.1
     dev: false
 
-  /ts-node/10.7.0_f84209de558f0eda77030e5403bfdd68:
+  /ts-node/10.7.0_7863ac05a8831b3fd47f69d5af06889c:
     resolution: {integrity: sha512-TbIGS4xgJoX2i3do417KSaep1uRAW/Lu+WAL2doDHC0D6ummjirVOXU5/7aiZotbQ5p1Zp9tP7U6cYhA0O7M8A==}
     hasBin: true
     peerDependencies:
@@ -40031,7 +40032,7 @@ packages:
       '@tsconfig/node12': 1.0.9
       '@tsconfig/node14': 1.0.1
       '@tsconfig/node16': 1.0.2
-      '@types/node': 16.11.7
+      '@types/node': 17.0.5
       acorn: 8.7.0
       acorn-walk: 8.2.0
       arg: 4.1.3
