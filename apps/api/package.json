@@ -73,6 +73,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@faker-js/faker": "^6.0.0",
     "@nestjs/testing": "^7.4.2",
     "@types/bcrypt": "^3.0.0",
     "@types/chai": "^4.2.11",
@@ -84,7 +85,6 @@
     "@types/sinon": "^9.0.0",
     "@types/supertest": "^2.0.8",
     "chai": "^4.2.0",
-    "faker": "^5.5.3",
     "mocha": "^8.1.1",
     "nodemon": "^2.0.3",
     "sinon": "^9.0.2",
