@@ -21,6 +21,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.14.0",
     "@aws-sdk/s3-request-presigner": "^3.14.0",
+    "@faker-js/faker": "^6.0.0",
     "@notifire/shared": "^0.3.5",
     "@octokit/graphql": "^4.3.1",
     "@sendgrid/mail": "^7.4.2",
@@ -35,7 +36,6 @@
     "class-transformer": "^0.5.1",
     "cross-fetch": "^3.0.4",
     "event-stream": "^4.0.1",
-    "faker": "^5.5.3",
     "fs-extra": "^9.0.0",
     "googleapis": "^60.0.1",
     "intercom-client": "^2.11.0",

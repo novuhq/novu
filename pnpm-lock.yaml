@@ -96,6 +96,7 @@ importers:
     specifiers:
       '@aws-sdk/client-s3': ^3.14.0
       '@aws-sdk/s3-request-presigner': ^3.14.0
+      '@faker-js/faker': ^6.0.0
       '@godaddy/terminus': ^4.3.1
       '@nestjs/common': ^7.6.12
       '@nestjs/core': ^7.6.12
@@ -136,7 +137,6 @@ importers:
       cross-env: ^7.0.3
       dotenv: ^8.2.0
       envalid: ^6.0.1
-      faker: ^5.5.3
       handlebars: ^4.7.7
       hat: ^0.0.3
       jsonwebtoken: ^8.5.1
@@ -216,6 +216,7 @@ importers:
       typescript: 4.5.4
       uuid: 8.3.2
     devDependencies:
+      '@faker-js/faker': 6.0.0
       '@nestjs/testing': 7.6.18_9cd0f963ae6f35bf288217e4f1c45cb4
       '@types/bcrypt': 3.0.1
       '@types/chai': 4.3.0
@@ -227,7 +228,6 @@ importers:
       '@types/sinon': 9.0.11
       '@types/supertest': 2.0.11
       chai: 4.3.4
-      faker: 5.5.3
       mocha: 8.4.0
       nodemon: 2.0.15
       sinon: 9.2.4
@@ -410,6 +410,7 @@ importers:
     specifiers:
       '@ant-design/icons': ^4.5.0
       '@craco/craco': ^6.1.1
+      '@faker-js/faker': ^6.0.0
       '@notifire/dal': ^0.3.5
       '@notifire/sdk': ^0.3.4
       '@notifire/shared': ^0.3.5
@@ -431,7 +432,6 @@ importers:
       craco-antd: ^1.19.0
       cypress: ^7.3.0
       cypress-intellij-reporter: ^0.0.6
-      faker: ^5.4.0
       http-server: ^0.12.3
       iframe-resizer: ^4.3.1
       jest: 27.0.6
@@ -487,6 +487,7 @@ importers:
       webfontloader: 1.6.28
     devDependencies:
       '@craco/craco': 6.4.3_a87eaca874c22f8a2bb5aa2d5d81d342
+      '@faker-js/faker': 6.0.0
       '@notifire/dal': link:../../libs/dal
       '@notifire/testing': link:../../libs/testing
       '@types/moment': 2.13.0
@@ -496,7 +497,6 @@ importers:
       craco-antd: 1.19.0_dfde1d0ed77ea674417340876cd31668
       cypress: 7.7.0
       cypress-intellij-reporter: 0.0.6
-      faker: 5.5.3
       http-server: 0.12.3
       jest: 27.0.6_ts-node@9.1.1
       less: 4.1.2
@@ -635,6 +635,7 @@ importers:
     specifiers:
       '@aws-sdk/client-s3': ^3.14.0
       '@aws-sdk/s3-request-presigner': ^3.14.0
+      '@faker-js/faker': ^6.0.0
       '@notifire/shared': ^0.3.5
       '@octokit/graphql': ^4.3.1
       '@sendgrid/mail': ^7.4.2
@@ -656,7 +657,6 @@ importers:
       cross-fetch: ^3.0.4
       eslint-plugin-prettier: ^3.4.0
       event-stream: ^4.0.1
-      faker: ^5.5.3
       fs-extra: ^9.0.0
       googleapis: ^60.0.1
       intercom-client: ^2.11.0
@@ -678,6 +678,7 @@ importers:
     dependencies:
       '@aws-sdk/client-s3': 3.45.0
       '@aws-sdk/s3-request-presigner': 3.45.0
+      '@faker-js/faker': 6.0.0
       '@notifire/shared': link:../shared
       '@octokit/graphql': 4.8.0
       '@sendgrid/mail': 7.6.0
@@ -691,7 +692,6 @@ importers:
       class-transformer: 0.5.1
       cross-fetch: 3.1.4
       event-stream: 4.0.1
-      faker: 5.5.3
       fs-extra: 9.1.0
       googleapis: 60.0.1
       intercom-client: 2.11.2
@@ -814,6 +814,7 @@ importers:
 
   libs/testing:
     specifiers:
+      '@faker-js/faker': ^6.0.0
       '@notifire/dal': ^0.3.5
       '@notifire/shared': ^0.3.5
       '@types/async': ^3.2.1
@@ -827,7 +828,6 @@ importers:
       cross-fetch: ^3.0.4
       eslint-plugin-prettier: ^3.4.0
       event-stream: ^4.0.1
-      faker: ^5.5.3
       fs-extra: ^9.0.0
       jsonfile: ^6.0.1
       JSONStream: ^1.3.5
@@ -842,6 +842,7 @@ importers:
       typescript: ^4.1.3
       uuid: ^8.3.0
     dependencies:
+      '@faker-js/faker': 6.0.0
       '@notifire/dal': link:../dal
       '@notifire/shared': link:../shared
       async: 3.2.2
@@ -849,7 +850,6 @@ importers:
       class-transformer: 0.5.1
       cross-fetch: 3.1.4
       event-stream: 4.0.1
-      faker: 5.5.3
       fs-extra: 9.1.0
       jsonfile: 6.1.0
       JSONStream: 1.3.5
@@ -7228,10 +7228,10 @@ packages:
       '@commitlint/execute-rule': 16.2.1
       '@commitlint/resolve-extends': 16.2.1
       '@commitlint/types': 16.2.1
-      '@types/node': 16.11.7
+      '@types/node': 17.0.5
       chalk: 4.1.2
       cosmiconfig: 7.0.1
-      cosmiconfig-typescript-loader: 1.0.6_f84209de558f0eda77030e5403bfdd68
+      cosmiconfig-typescript-loader: 1.0.6_7863ac05a8831b3fd47f69d5af06889c
       lodash: 4.17.21
       resolve-from: 5.0.0
       typescript: 4.6.2
@@ -8714,6 +8714,10 @@ packages:
       unique-filename: 1.1.1
       which: 1.3.1
     dev: true
+
+  /@faker-js/faker/6.0.0:
+    resolution: {integrity: sha512-10zLCKhp3YEmBuko71ivcMoIZcCLXgQVck6aNswX+AWwaek/L8S3yz9i8m3tHigRkcF6F2vI+qtdtyySHK+bGA==}
+    engines: {node: '>=14.0.0', npm: '>=7.0.0'}
 
   /@gar/promisify/1.1.2:
     resolution: {integrity: sha512-82cpyJyKRoQoRi+14ibCeGPu0CwypgtBAdBhq1WfvagpCZNKqwXbKwXllYSMG91DhmG4jt9gN8eP6lGOtozuaw==}
@@ -14862,7 +14866,7 @@ packages:
     dependencies:
       '@swc-node/core': 1.8.2
       '@swc-node/sourcemap-support': 0.1.11
-      chalk: 4.1.0
+      chalk: 4.1.2
       debug: 4.3.3
       pirates: 4.0.5
       tslib: 2.3.1
@@ -20646,16 +20650,16 @@ packages:
       - '@swc/core'
       - '@swc/wasm'
 
-  /cosmiconfig-typescript-loader/1.0.6_f84209de558f0eda77030e5403bfdd68:
+  /cosmiconfig-typescript-loader/1.0.6_7863ac05a8831b3fd47f69d5af06889c:
     resolution: {integrity: sha512-2nEotziYJWtNtoTjKbchj9QrdTT6DBxCvqjNKoDKARw+e2yZmTQCa07uRrykLIZuvSgp69YXLH89UHc0WhdMfQ==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
       '@types/node': '*'
       typescript: '>=3'
     dependencies:
-      '@types/node': 16.11.7
+      '@types/node': 17.0.5
       cosmiconfig: 7.0.1
-      ts-node: 10.7.0_f84209de558f0eda77030e5403bfdd68
+      ts-node: 10.7.0_7863ac05a8831b3fd47f69d5af06889c
       typescript: 4.6.2
     transitivePeerDependencies:
       - '@swc/core'
@@ -23747,9 +23751,6 @@ packages:
     engines: {node: '> 0.1.90'}
     dev: true
 
-  /faker/5.5.3:
-    resolution: {integrity: sha512-wLTv2a28wjUyWkbnX7u/ABZBkUkIF2fCd73V6P2oFqEGEktDfzWx4UxrSqtPRw0xPRAcjeAOIiJWqZm3pP4u3g==}
-
   /fast-deep-equal/3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
@@ -25008,7 +25009,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.0.4
+      minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
     dev: true
@@ -28784,7 +28785,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 16.11.7
+      '@types/node': 17.0.5
       chalk: 4.1.2
       graceful-fs: 4.2.9
       is-ci: 3.0.1
@@ -40012,7 +40013,7 @@ packages:
       yn: 3.1.1
     dev: false
 
-  /ts-node/10.7.0_f84209de558f0eda77030e5403bfdd68:
+  /ts-node/10.7.0_7863ac05a8831b3fd47f69d5af06889c:
     resolution: {integrity: sha512-TbIGS4xgJoX2i3do417KSaep1uRAW/Lu+WAL2doDHC0D6ummjirVOXU5/7aiZotbQ5p1Zp9tP7U6cYhA0O7M8A==}
     hasBin: true
     peerDependencies:
@@ -40031,7 +40032,7 @@ packages:
       '@tsconfig/node12': 1.0.9
       '@tsconfig/node14': 1.0.1
       '@tsconfig/node16': 1.0.2
-      '@types/node': 16.11.7
+      '@types/node': 17.0.5
       acorn: 8.7.0
       acorn-walk: 8.2.0
       arg: 4.1.3
@@ -42239,6 +42240,7 @@ packages:
   /yargs-parser/20.2.4:
     resolution: {integrity: sha512-WOkpgNhPTlE73h4VFAFsOnomJVaovO8VqLDzy5saChRBFQFBoMYirowyW+Q9HB4HFF4Z7VZTiG3iSzJJA29yRA==}
     engines: {node: '>=10'}
+    dev: true
 
   /yargs-parser/20.2.9:
     resolution: {integrity: sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==}
@@ -42332,7 +42334,7 @@ packages:
       require-directory: 2.1.1
       string-width: 4.2.3
       y18n: 5.0.8
-      yargs-parser: 20.2.4
+      yargs-parser: 20.2.9
 
   /yargs/17.3.1:
     resolution: {integrity: sha512-WUANQeVgjLbNsEmGk20f+nlHgOqzRFpiGWVaBrYGYIGANIIu3lWjoyi0fNlFmJkvfhCZ6BXINe7/W2O2bV4iaA==}

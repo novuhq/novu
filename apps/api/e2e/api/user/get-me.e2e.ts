@@ -13,6 +13,7 @@ describe('User get my profile', async () => {
     const { body } = await session.testAgent.get('/v1/users/me').expect(200);
 
     const me = body.data;
+
     expect(me._id).to.equal(session.user._id);
     expect(me.firstName).to.equal(session.user.firstName);
     expect(me.lastName).to.equal(session.user.lastName);

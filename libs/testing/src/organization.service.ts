@@ -1,5 +1,5 @@
 import { MemberRoleEnum, MemberStatusEnum } from '@notifire/shared';
-import * as faker from 'faker';
+import { faker } from '@faker-js/faker';
 import { MemberRepository, OrganizationRepository } from '@notifire/dal';
 
 export class OrganizationService {
