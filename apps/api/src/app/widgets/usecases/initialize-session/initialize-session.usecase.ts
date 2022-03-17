@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ApplicationRepository, SubscriberEntity } from '@notifire/dal';
 import { AuthService } from '../../../auth/services/auth.service';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { InitializeSessionCommand } from './initialize-session.command';
 
@@ -17,6 +18,10 @@ export class InitializeSession {
     profile: Partial<SubscriberEntity>;
   }> {
     const application = await this.applicationRepository.findApplicationByIdentifier(command.applicationIdentifier);
+
+    if (!application) {
+      throw new ApiException('Please provide a valid app identifier');
+    }
 
     const commandos = CreateSubscriberCommand.create({
       applicationId: application._id,
