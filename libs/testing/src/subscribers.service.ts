@@ -1,4 +1,4 @@
-import * as faker from 'faker';
+import { faker } from '@faker-js/faker';
 import { SubscriberRepository } from '@notifire/dal';
 
 export class SubscribersService {
@@ -13,7 +13,7 @@ export class SubscribersService {
       email: faker.internet.email(),
       _applicationId: this._applicationId,
       _organizationId: this._organizationId,
-      subscriberId: faker.random.uuid(),
+      subscriberId: faker.datatype.uuid(),
     });
   }
 }

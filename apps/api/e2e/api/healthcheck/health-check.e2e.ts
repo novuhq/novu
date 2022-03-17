@@ -13,6 +13,7 @@ describe('Health-check', () => {
       const {
         body: { data },
       } = await session.testAgent.get('/v1/health-check');
+
       expect(data.status).to.equal('ok');
     });
   });
