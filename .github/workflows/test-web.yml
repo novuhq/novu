@@ -103,3 +103,9 @@ jobs:
           browser: chrome
           headless: true
           install: false
+
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: apps/web/cypress/screenshots

@@ -1,7 +1,7 @@
 import React from 'react';
 import { AppShell } from '@mantine/core';
 import * as Sentry from '@sentry/react';
-import { useLocation, Outlet } from 'react-router-dom';
+import { useLocation, Outlet, useParams } from 'react-router-dom';
 import { useNotifire } from '../../hooks/use-notifire';
 import { LegacyAppLayout } from '../../legacy/components/layout/app-layout/LegacyAppLayout';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
@@ -11,6 +11,7 @@ import { colors } from '../../design-system';
 
 export function AppLayout() {
   const location = useLocation();
+  const { templateId = '' } = useParams<{ templateId: string }>();
 
   useNotifire();
 
@@ -19,7 +20,7 @@ export function AppLayout() {
    * Add each new page when migrating
    */
   if (
-    !['/', '/templates', '/settings/widget', '/templates/create', '/settings/organization'].includes(location.pathname)
+    !['/', '/templates', '/settings/widget', '/templates/create', '/settings/organization', `/templates/edit/${templateId}`].includes(location.pathname)
   ) {
     return (
       <LegacyAppLayout>

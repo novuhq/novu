@@ -23,6 +23,7 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-infinite-scroll-component": "^6.0.0",
+    "eslint-plugin-cypress": "^2.12.1",
     "react-infinite-scroller": "^1.2.4",
     "react-query": "^3.12.1",
     "react-refresh": "^0.11.0",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "@craco/craco": "^6.1.1",
+    "@faker-js/faker": "^6.0.0",
     "@notifire/dal": "^0.3.5",
     "@notifire/testing": "^0.3.5",
     "@types/moment": "^2.13.0",
@@ -45,7 +47,6 @@
     "craco-antd": "^1.19.0",
     "cypress": "^7.3.0",
     "cypress-intellij-reporter": "^0.0.6",
-    "faker": "^5.4.0",
     "http-server": "^0.12.3",
     "jest": "27.0.6",
     "less": "^4.1.0",

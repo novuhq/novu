@@ -1,0 +1,148 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deploy DEV WEB
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/web/**'
+      - 'libs/shared/**'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  test_web:
+    environment: Development
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Setup kernel for react native, increase watchers
+        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.13.0'
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.2.0
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.3.0
+        with:
+          mongodb-version: 4.2.8
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.0.2
+          run_install: true
+
+      - name: Start Local Stack
+        env:
+          DEFAULT_REGION: us-east-1
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCOUNT_ID: "000000000000"
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_EC2_METADATA_DISABLED: true
+        working-directory: environment/test
+        run: |
+          docker-compose up -d
+          sleep 5
+          max_retry=30
+          counter=0
+          until $command
+          do
+             sleep 1
+             [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
+             aws --endpoint-url=http://localhost:4566 s3 ls
+             echo "Trying again. Try #$counter"
+             ((counter++))
+          done
+          aws --endpoint-url=http://localhost:4566 s3 mb s3://notifire-test
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI='' pnpm build:web
+
+      # Runs a single command using the runners shell
+      - name: Start Client
+        run: pnpm start:web &
+
+      - name: Cypress run
+        uses: cypress-io/github-action@v2
+        env:
+          NODE_ENV: test
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          record: false
+          working-directory: apps/web
+          start: pnpm start:api
+          wait-on: http://localhost:1336/v1/health-check
+          browser: chrome
+          headless: true
+          install: false
+
+      - name: Build
+        env:
+          REACT_APP_API_URL: https://dev.api.novu.co
+          REACT_APP_WIDGET_SDK_PATH: https://dev.sdk.novu.co/sdk.umd.min.js
+          REACT_APP_NOTIFIRE_APP_ID: uaahXGRverKF
+          REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
+          REACT_APP_ENVIRONMENT: dev
+        working-directory: apps/web
+        run: npm run build
+
+      - name: Deploy WEB to DEV
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: apps/web/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: Dev deployment
+          production-deploy: true
+          alias: dev
+          github-deployment-environment: development
+          github-deployment-description: Web Deployment
+          netlify-config-path: apps/web/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 45396446-dc86-4ad6-81e4-86d3eb78d06f
+        timeout-minutes: 1
+
+      - name: Build, tag, and push image to ghcr.io
+        id: build-image
+        env:
+          REGISTERY_OWNER: notifirehq
+          DOCKER_NAME: notifire/web
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/web/Dockerfile .
+          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: apps/web/cypress/screenshots

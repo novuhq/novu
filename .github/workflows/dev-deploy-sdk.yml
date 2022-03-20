@@ -1,0 +1,79 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deploy DEV SDK
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'libs/sdk/**'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  deploy_sdk:
+    environment: Development
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Setup kernel for react native, increase watchers
+        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.13.0'
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.0.2
+          run_install: true
+
+      # Runs a single command using the runners shell
+      - name: Build
+        working-directory: libs/sdk
+        run: CI='' npm run build:dev
+
+      - name: Deploy SDK to DEV
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: libs/sdk/dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: dev
+          production-deploy: true
+          alias: dev
+          github-deployment-environment: development
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 22682666-3a8d-40be-af26-017bfadf5ae9
+        timeout-minutes: 1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          REGISTERY_OWNER: notifirehq
+          DOCKER_NAME: notifire/sdk
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f libs/sdk/Dockerfile .
+          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"

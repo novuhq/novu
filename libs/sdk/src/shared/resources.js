@@ -3,14 +3,14 @@ let ResourcesConstants;
 if (process.env.ENVIRONMENT === 'production') {
   ResourcesConstants = {
     API_URL: '',
-    IFRAME_URL: process.env.WIDGET_URL || 'https://widget.notifire.co',
-    WWW_URL: process.env.WIDGET_URL || 'https://widget.notifire.co',
-    SENTRY_DSN: 'https://8f674449bb7646468c3f434826aed6b2@sentry.io/1828539',
+    IFRAME_URL: process.env.WIDGET_URL || 'https://widget.novu.co',
+    WWW_URL: process.env.WIDGET_URL || 'https://widget.novu.co',
+    SENTRY_DSN: 'https://bcadda4b593d454797a1260e094f0c5d@o1161119.ingest.sentry.io/6252448',
   };
 } else if (process.env.ENVIRONMENT === 'dev') {
   ResourcesConstants = {
     API_URL: '',
-    IFRAME_URL: process.env.WIDGET_URL || 'https://dev.widget.notifire.co',
+    IFRAME_URL: process.env.WIDGET_URL || 'https://dev.widget.novu.co',
     WWW_URL: process.env.WIDGET_URL || 'http://localhost:3500',
     SENTRY_DSN: '',
   };

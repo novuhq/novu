@@ -34,12 +34,13 @@ export function TemplateTriggerModal({
       }}
       sx={{ backdropFilter: 'blur(10px)' }}
       title={<Title>Trigger implementation code</Title>}
+      data-test-id="success-trigger-modal"
       shadow={dark ? shadows.dark : shadows.medium}
       radius="md"
       size="xl">
-      <TriggerSnippetTabs trigger={trigger} data-test-id="success-trigger-modal" />
+      <TriggerSnippetTabs trigger={trigger} data-test-id="trigger-code-snippet" />
       <div style={{ alignItems: 'end' }}>
-        <Button mt={30} onClick={onDismiss} inherit>
+        <Button data-test-id="trigger-snippet-btn" mt={30} onClick={onDismiss} inherit>
           Got it
         </Button>
       </div>

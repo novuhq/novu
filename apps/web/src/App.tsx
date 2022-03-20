@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { Route, Routes, Navigate, BrowserRouter, Outlet } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
@@ -11,7 +11,6 @@ import SignUpPage from './legacy/pages/auth/signup';
 import HomePage from './legacy/pages/HomePage';
 import ApplicationOnBoarding from './legacy/pages/onboarding/application';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
-import TemplateEditorPageLegacy from './legacy/pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import { WidgetSettingsPage } from './pages/settings/WidgetSettingsPage';
 import InvitationScreen from './legacy/pages/auth/InvitationScreen';
@@ -95,7 +94,7 @@ function App() {
                   path="/templates/edit/:templateId"
                   element={
                     <RequiredAuth>
-                      <TemplateEditorPageLegacy />
+                      <TemplateEditorPage />
                     </RequiredAuth>
                   }
                 />

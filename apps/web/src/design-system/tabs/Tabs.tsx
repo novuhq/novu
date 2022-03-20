@@ -19,45 +19,51 @@ interface ITabsProp extends MantineMargins {
   loading?: boolean;
 }
 
-export function Tabs({
-  menuTabs,
-  active,
-  onTabChange,
-  orientation = 'horizontal',
-  withIcon = false,
-  position = 'left',
-  loading = false,
-}: ITabsProp) {
-  const { classes, theme } = useStyles(withIcon);
+export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
+  (
+    {
+      menuTabs,
+      active,
+      onTabChange,
+      orientation = 'horizontal',
+      withIcon = false,
+      position = 'left',
+      loading = false,
+    }: ITabsProp,
+    ref
+  ) => {
+    const { classes, theme } = useStyles(withIcon);
 
-  return (
-    <div style={{ position: 'relative', minHeight: 'inherit' }}>
-      <LoadingOverlay
-        visible={loading}
-        overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
-        loaderProps={{
-          color: colors.error,
-        }}
-      />
-      <MantineTabs
-        orientation={orientation}
-        active={active}
-        onTabChange={onTabChange}
-        position={position}
-        variant="unstyled"
-        classNames={classes}>
-        {menuTabs.map((menuTab, i) =>
-          withIcon ? (
-            <MantineTabs.Tab label={menuTab.label} icon={menuTab.icon} key={i}>
-              {menuTab.content}
-            </MantineTabs.Tab>
-          ) : (
-            <MantineTabs.Tab label={menuTab.label} key={i}>
-              {menuTab.content}
-            </MantineTabs.Tab>
-          )
-        )}
-      </MantineTabs>
-    </div>
-  );
-}
+    return (
+      <div style={{ position: 'relative', minHeight: 'inherit' }}>
+        <LoadingOverlay
+          visible={loading}
+          overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
+          loaderProps={{
+            color: colors.error,
+          }}
+        />
+        <MantineTabs
+          orientation={orientation}
+          ref={ref}
+          active={active}
+          onTabChange={onTabChange}
+          position={position}
+          variant="unstyled"
+          classNames={classes}>
+          {menuTabs.map((menuTab, i) =>
+            withIcon ? (
+              <MantineTabs.Tab label={menuTab.label} icon={menuTab.icon} key={i}>
+                {menuTab.content}
+              </MantineTabs.Tab>
+            ) : (
+              <MantineTabs.Tab label={menuTab.label} key={i}>
+                {menuTab.content}
+              </MantineTabs.Tab>
+            )
+          )}
+        </MantineTabs>
+      </div>
+    );
+  }
+);

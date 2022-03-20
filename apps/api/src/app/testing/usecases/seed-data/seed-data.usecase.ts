@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as faker from 'faker';
+import { faker } from '@faker-js/faker';
 import { SeedDataCommand } from './seed-data.command';
 import { AuthService } from '../../../auth/services/auth.service';
 import { UserRegister } from '../../../auth/usecases/register/user-register.usecase';
