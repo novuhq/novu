@@ -2,6 +2,7 @@ import { Badge, Card, Container, Group, Space, useMantineTheme } from '@mantine/
 import styled from '@emotion/styled';
 import moment from 'moment';
 import { colors, shadows, Text, Title } from '../../design-system';
+/* eslint-disable max-len */
 
 export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
   const theme = useMantineTheme();

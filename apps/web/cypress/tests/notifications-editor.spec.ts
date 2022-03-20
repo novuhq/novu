@@ -1,17 +1,19 @@
 import { ChannelTypeEnum, INotificationTemplate } from '@notifire/shared';
 
-describe.skip('Notifications Creator', function () {
+describe('Notifications Creator', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });
 
   it('should not reset data when switching channel types', function () {
     cy.visit('/templates/create');
-    cy.getByTestId('inAppSelector').click({ force: true });
+    cy.getByTestId('add-channel').click({ force: true });
+    cy.getByTestId('inAppAddChannel').click({ force: true });
     cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
     });
-    cy.getByTestId('emailSelector').click({ force: true });
+    cy.getByTestId('add-channel').click({ force: true });
+    cy.getByTestId('emailAddChannel').click({ force: true });
     cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
       parseSpecialCharSequences: false,
     });
@@ -29,17 +31,21 @@ describe.skip('Notifications Creator', function () {
     cy.visit('/templates/create');
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
-    cy.getByTestId('tags').type('General {enter}');
-    cy.getByTestId('tags').type('Tasks {enter}');
+    // cy.getByTestId('tags').type('General {enter}');
+    // cy.getByTestId('tags').type('Tasks {enter}');
     cy.get('body').click();
     cy.getByTestId('trigger-code-snippet').should('not.exist');
-    cy.getByTestId('groupSelector').contains('General');
+    cy.getByTestId('groupSelector').should('have.value', 'General');
 
-    cy.getByTestId('inAppSelector').click({ force: true });
-    cy.getByTestId('inAppRedirect').type('/example/test');
+    cy.getByTestId('add-channel').click({ force: true });
+    cy.getByTestId('inAppAddChannel').click({ force: true });
+
+    // cy.getByTestId('inAppSelector').click({ force: true });
+
     cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
     });
+    cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('submit-btn').click();
 
     cy.getByTestId('success-trigger-modal').should('be.visible');
@@ -48,26 +54,27 @@ describe.skip('Notifications Creator', function () {
       .getByTestId('trigger-code-snippet')
       .contains("import { Notifire } from '@notifire/node'");
 
-    cy.get('.ant-tabs-tab-btn').contains('Curl').click();
+    cy.get('.mantine-Tabs-tabsList').contains('Curl').click();
     cy.getByTestId('success-trigger-modal')
       .getByTestId('trigger-curl-snippet')
       .contains("--header 'Authorization: ApiKey");
 
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-curl-snippet').contains('taskName');
 
-    cy.get('.ant-modal-footer .ant-btn.ant-btn-primary').click();
+    cy.getByTestId('trigger-snippet-btn').click();
     cy.location('pathname').should('equal', '/templates');
   });
 
-  it('should create email notification', function () {
+  it.skip('should create email notification', function () {
     cy.visit('/templates/create');
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
-    cy.getByTestId('tags').type('General {enter}');
-    cy.getByTestId('tags').type('Tasks {enter}');
+    // cy.getByTestId('tags').type('General {enter}');
+    // cy.getByTestId('tags').type('Tasks {enter}');
     cy.get('body').click();
 
-    cy.getByTestId('emailSelector').click({ force: true });
+    cy.getByTestId('add-channel').click({ force: true });
+    cy.getByTestId('emailAddChannel').click({ force: true });
 
     cy.getByTestId('email-editor').getByTestId('editor-row').click();
     cy.getByTestId('control-add').click({ force: true });
@@ -104,7 +111,7 @@ describe.skip('Notifications Creator', function () {
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('customVariable:');
   });
 
-  it('should create and edit group id', function () {
+  it.skip('should create and edit group id', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
 
@@ -123,13 +130,17 @@ describe.skip('Notifications Creator', function () {
   it('should edit notification', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
+    cy.getByTestId('title').should('have.value', template.name);
     cy.getByTestId('inAppSelector').click({ force: true });
-    cy.getByTestId('title').get('input').should('have.value', template.name);
+
     cy.getByTestId('in-app-editor-content-input')
       .getByTestId('in-app-editor-content-input')
       .contains('Test content for {{firstName}}');
 
+    cy.getByTestId('settingsButton').click({ force: true });
     cy.getByTestId('title').type(' This is the new notification title');
+
+    cy.getByTestId('inAppSelector').click({ force: true });
     cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
     cy.getByTestId('submit-btn').click();
 
@@ -139,7 +150,7 @@ describe.skip('Notifications Creator', function () {
     });
   });
 
-  it('should update notification active status', function () {
+  it.skip('should update notification active status', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.getByTestId('active-toggle-switch').contains('Active');
@@ -150,7 +161,7 @@ describe.skip('Notifications Creator', function () {
     cy.getByTestId('active-toggle-switch').contains('Disabled');
   });
 
-  it('should toggle active states of channels', function () {
+  it.skip('should toggle active states of channels', function () {
     cy.visit('/templates/create');
     // Enable email from button click
     cy.getByTestId('emailSelector').click({ force: true });
@@ -173,14 +184,14 @@ describe.skip('Notifications Creator', function () {
     cy.getByTestId('in-app-editor-wrapper').should('be.visible');
   });
 
-  it('should show trigger snippet block when editing', function () {
+  it.skip('should show trigger snippet block when editing', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
 
     cy.getByTestId('trigger-code-snippet').contains('test-event');
   });
 
-  it('should handle multiple email messages', function () {
+  it.skip('should handle multiple email messages', function () {
     cy.visit('/templates/create');
     cy.getByTestId('emailSelector').click({ force: true });
     cy.getByTestId('emailSubject').eq(1).should('not.exist');
@@ -271,7 +282,7 @@ describe.skip('Notifications Creator', function () {
       }).as('session');
     });
 
-    it('should prefill saved multiple email messages and filters', function () {
+    it.skip('should prefill saved multiple email messages and filters', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
       cy.getByTestId('message-header-title').eq(0).contains('Test Name of message');
@@ -281,7 +292,7 @@ describe.skip('Notifications Creator', function () {
     });
   });
 
-  it('should validate form inputs', function () {
+  it.skip('should validate form inputs', function () {
     cy.visit('/templates/create');
     cy.getByTestId('submit-btn').click();
 
@@ -292,7 +303,7 @@ describe.skip('Notifications Creator', function () {
     cy.getByTestId('in-app-content-form-item').should('have.class', 'ant-form-item-has-error');
   });
 
-  it('should allow uploading a logo from email editor', function () {
+  it.skip('should allow uploading a logo from email editor', function () {
     cy.intercept(/.*applications\/me.*/, (r) => {
       r.continue((res) => {
         if (res.body) {
@@ -310,7 +321,7 @@ describe.skip('Notifications Creator', function () {
     cy.location('pathname').should('equal', '/settings/widget');
   });
 
-  it('should show the brand logo on main page', function () {
+  it.skip('should show the brand logo on main page', function () {
     cy.visit('/templates/create');
     cy.getByTestId('emailSelector').click({ force: true });
 
@@ -319,7 +330,7 @@ describe.skip('Notifications Creator', function () {
       .should('have.attr', 'src', 'https://notifire.co/img/logo.png');
   });
 
-  it('should support RTL text content', function () {
+  it.skip('should support RTL text content', function () {
     cy.visit('/templates/create');
     cy.getByTestId('emailSelector').click({ force: true });
     cy.getByTestId('settings-row-btn').eq(0).invoke('show').click();
@@ -330,7 +341,7 @@ describe.skip('Notifications Creator', function () {
     cy.getByTestId('editable-text-content').should('have.css', 'direction', 'rtl');
   });
 
-  it('should create an SMS channel message', function () {
+  it.skip('should create an SMS channel message', function () {
     cy.visit('/templates/create');
     cy.getByTestId('title').type('Test SMS Notification Title');
     cy.getByTestId('description').type('This is a SMS test description for a test title');
@@ -355,7 +366,7 @@ describe.skip('Notifications Creator', function () {
     cy.location('pathname').should('equal', '/templates');
   });
 
-  it('should prompt for filling sms settings before accessing the data', function () {
+  it.skip('should prompt for filling sms settings before accessing the data', function () {
     cy.intercept(/.*applications\/me.*/, (r) => {
       r.continue((res) => {
         delete res.body.data.channels.sms;
@@ -369,7 +380,7 @@ describe.skip('Notifications Creator', function () {
     cy.url().should('include', '/settings/widget');
   });
 
-  it('should save HTML template email', function () {
+  it.skip('should save HTML template email', function () {
     cy.visit('/templates/create');
     cy.getByTestId('title').type('Custom Code HTML Notification Title');
     cy.getByTestId('emailSelector').click({ force: true });
