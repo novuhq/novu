@@ -11,7 +11,7 @@ export function IntegrationsStore() {
   const emailProviders = providers.filter((provider) => provider.channel === ChannelTypeEnum.EMAIL);
   const smsProvider = providers.filter((provider) => provider.channel === ChannelTypeEnum.SMS);
 
-  const [isOpened, setIsOpened] = useState(false);
+  const [isModalOpened, setModalIsOpened] = useState(false);
   const [provider, setProvider] = useState<IProviderConfig | null>(null);
 
   const { colorScheme } = useMantineColorScheme();
@@ -19,7 +19,7 @@ export function IntegrationsStore() {
   const logoSrc = provider ? `/static/images/providers/${isDark ? 'light' : 'light'}/${provider.id}.png` : '';
 
   function handlerVisible(visible: boolean, providerConfig: IProviderConfig) {
-    setIsOpened(visible);
+    setModalIsOpened(visible);
     setProvider(providerConfig);
   }
 
@@ -27,14 +27,14 @@ export function IntegrationsStore() {
     <PageContainer>
       <PageHeader title="Integration Store" />
 
-      <Modal centered size="lg" overflow="inside" opened={isOpened} onClose={() => setIsOpened(false)}>
+      <Modal centered size="lg" overflow="inside" opened={isModalOpened} onClose={() => setModalIsOpened(false)}>
         <Image radius="md" src={logoSrc} alt={`${provider?.id} image`} />
         <ConnectIntegrationForm provider={provider} />
       </Modal>
 
       <ContentWrapper>
-        <ChannelGroup providers={emailProviders} title="Email" showModalData={handlerVisible} />
-        <ChannelGroup providers={smsProvider} title="SMS" showModalData={handlerVisible} />
+        <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
+        <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
       </ContentWrapper>
     </PageContainer>
   );

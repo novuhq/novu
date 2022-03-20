@@ -10,17 +10,21 @@ export function ProviderCard({
   provider,
   connected,
   active,
-  showModal,
+  onConnectClick,
 }: {
   provider: IProviderConfig;
   connected: boolean;
   active: boolean;
-  showModal: (visible: boolean, provider: IProviderConfig) => void;
+  onConnectClick: (visible: boolean, provider: IProviderConfig) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const logoSrc = `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.id}.png`;
   const isProviderConnected = connected && active;
+
+  function handlerConnectButton() {
+    return () => onConnectClick(true, provider);
+  }
 
   return (
     <StyledCard colorScheme={colorScheme} active={active}>
@@ -29,7 +33,7 @@ export function ProviderCard({
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
         </RibbonWrapper>
       )}
-      <Group position="apart" direction="column" styles={{ root: { height: '100%', justifyContent: 'space-between' } }}>
+      <StyledGroup position="apart" direction="column">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
           {isProviderConnected ? <Settings /> : null}
@@ -37,17 +41,22 @@ export function ProviderCard({
 
         <CardFooter>
           {!isProviderConnected ? (
-            <Button fullWidth onClick={() => showModal(true, provider)}>
+            <Button fullWidth onClick={handlerConnectButton()}>
               Connect
             </Button>
           ) : (
             <CardStatusBar active={active} />
           )}
         </CardFooter>
-      </Group>
+      </StyledGroup>
     </StyledCard>
   );
 }
+
+const StyledGroup = styled(Group)`
+  height: 100%;
+  justify-content: space-between;
+`;
 
 const RibbonWrapper = styled.div`
   width: 115px;

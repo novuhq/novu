@@ -7,14 +7,14 @@ import { Title } from '../../../design-system';
 export function ChannelGroup({
   title,
   providers,
-  showModalData,
+  onProviderClick,
 }: {
   providers: any[];
   title: string;
-  showModalData: (visible: boolean, provider: IProviderConfig) => void;
+  onProviderClick: (visible: boolean, provider: IProviderConfig) => void;
 }) {
-  function showModal(visible: boolean, provider: IProviderConfig) {
-    showModalData(visible, provider);
+  function handlerOnConnectClick(visible: boolean, provider: IProviderConfig) {
+    onProviderClick(visible, provider);
   }
 
   return (
@@ -24,7 +24,7 @@ export function ChannelGroup({
       </Grid.Col>
       {providers.map((provider) => (
         <Grid.Col span={3} key={provider.id}>
-          <ProviderCard provider={provider} connected active={false} showModal={showModal} />
+          <ProviderCard provider={provider} connected active={false} onConnectClick={handlerOnConnectClick} />
         </Grid.Col>
       ))}
     </Grid>
