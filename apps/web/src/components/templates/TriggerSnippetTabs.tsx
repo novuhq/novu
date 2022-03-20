@@ -63,5 +63,5 @@ notifire.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
     },
   ];
 
-  return <Tabs menuTabs={prismTabs} />;
+  return <Tabs data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
 }
