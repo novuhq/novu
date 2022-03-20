@@ -12,6 +12,7 @@ interface ITemplateButtonProps {
   active?: boolean;
   action?: boolean;
   tabKey: string;
+  testId?: string;
   checked?: boolean;
   switchButton?: (boolean) => void;
   changeTab: (string) => void;
@@ -28,6 +29,7 @@ export function TemplateButton({
   checked = false,
   label,
   Icon,
+  testId,
   areThereErrors = false,
 }: ITemplateButtonProps) {
   const { cx, classes, theme } = useStyles();
@@ -69,6 +71,7 @@ export function TemplateButton({
       target={
         <UnstyledButton
           onClick={() => !active && changeTab(tabKey)}
+          data-test-id={testId}
           className={cx(classes.button, { [classes.active]: active })}>
           <Group position="apart">
             <Group spacing={15}>

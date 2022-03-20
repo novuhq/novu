@@ -20,7 +20,6 @@ export function ContentRow({
   block: IEmailBlock;
   onStyleChanged: (data: { textDirection: 'ltr' | 'rtl' }) => void;
 }) {
-  // const [textDirection, toggleTextDirection] = useToggle(block?.styles?.textDirection || 'ltr', ['ltr', 'rtl']);
   const [textDirection, setTextDirection] = useState<'ltr' | 'rtl'>(block?.styles?.textDirection || 'ltr');
   const parentRef = useRef<HTMLDivElement>(null);
   const theme = useMantineTheme();

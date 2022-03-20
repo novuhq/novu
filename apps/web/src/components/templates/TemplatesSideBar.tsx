@@ -39,6 +39,7 @@ export function TemplatesSideBar({
       description: 'This subtitle will describe things',
       Icon: MobileGradient,
       action: true,
+      testId: 'inAppSelector',
       channelType: ChannelTypeEnum.IN_APP,
       areThereErrors: true,
     },
@@ -47,6 +48,7 @@ export function TemplatesSideBar({
       label: 'Email Template',
       description: 'This subtitle will describe things',
       Icon: MailGradient,
+      testId: 'emailSelector',
       channelType: ChannelTypeEnum.EMAIL,
       action: true,
     },
@@ -55,6 +57,7 @@ export function TemplatesSideBar({
       label: 'SMS',
       description: 'This subtitle will describe things',
       Icon: SmsGradient,
+      testId: 'smsSelector',
       action: true,
       channelType: ChannelTypeEnum.SMS,
     },
@@ -84,6 +87,7 @@ export function TemplatesSideBar({
           tabKey="Settings"
           changeTab={changeTab}
           Icon={BellGradient}
+          testId="settingsButton"
           active={activeTab === 'Settings'}
           description="This subtitle will describe things"
           label="Notification Settings"
@@ -99,6 +103,7 @@ export function TemplatesSideBar({
           <TemplateButton
             tabKey="Add"
             changeTab={changeTab}
+            testId="add-channel"
             Icon={PlusGradient}
             active={activeTab === 'Add'}
             description="This subtitle will describe things"

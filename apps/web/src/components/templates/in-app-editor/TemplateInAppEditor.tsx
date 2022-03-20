@@ -1,4 +1,4 @@
-import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Control, Controller } from 'react-hook-form';
 import { Container, Group } from '@mantine/core';
 import { IForm } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
@@ -11,9 +11,14 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
         <Controller
           name={`inAppMessages.${index}.template.cta.data.url` as any}
           control={control}
-          data-test-id="inAppRedirect"
           render={({ field }) => (
-            <Input {...field} value={field.value || ''} label="Redirect URL" placeholder="i.e /tasks/{{taskId}}" />
+            <Input
+              {...field}
+              value={field.value || ''}
+              data-test-id="inAppRedirect"
+              label="Redirect URL"
+              placeholder="i.e /tasks/{{taskId}}"
+            />
           )}
         />
         <Controller
