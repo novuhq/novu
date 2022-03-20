@@ -13,6 +13,7 @@ export { Bell } from './general/Bell';
 export { Mail } from './general/Mail';
 export { Trash } from './general/Trash';
 export { Check } from './general/Check';
+export { CheckCircle } from './general/CheckCircle';
 export { Box } from './general/Box';
 
 export { Copy } from './actions/Copy';
@@ -32,3 +33,4 @@ export { GlobeGradient } from './gradient/GlobeGradient';
 export { CompassGradient } from './gradient/CompassGradient';
 export { SmsGradient } from './gradient/SmsGradient';
 export { TapeGradient } from './gradient/TapeGradient';
+export { BoltGradient } from './gradient/BoltGradient';
