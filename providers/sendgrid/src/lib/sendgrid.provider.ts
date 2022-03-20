@@ -5,11 +5,12 @@ import {
   ISendMessageSuccessResponse,
 } from '@notifire/core';
 
-import sendgridMail from '@sendgrid/mail';
+import { MailService } from '@sendgrid/mail';
 
 export class SendgridEmailProvider implements IEmailProvider {
   id = 'sendgrid';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+  private sendgridMail: MailService;
 
   constructor(
     private config: {
@@ -17,13 +18,14 @@ export class SendgridEmailProvider implements IEmailProvider {
       from: string;
     }
   ) {
-    sendgridMail.setApiKey(this.config.apiKey);
+    this.sendgridMail = new MailService();
+    this.sendgridMail.setApiKey(this.config.apiKey);
   }
 
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const response = await sendgridMail.send({
+    const response = await this.sendgridMail.send({
       from: options.from || this.config.from,
       to: options.to,
       html: options.html,

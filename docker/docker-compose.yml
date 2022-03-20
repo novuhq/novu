@@ -76,6 +76,7 @@ services:
     image: "ghcr.io/notifirehq/notifire/widget:latest"
     depends_on:
       - api
+      - web
     container_name: widget
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
@@ -85,6 +86,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   sdk:
+    depends_on:
+      - widget
     image: "ghcr.io/notifirehq/notifire/sdk:latest"
     container_name: sdk
     environment:
