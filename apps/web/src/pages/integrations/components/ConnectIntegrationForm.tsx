@@ -74,7 +74,7 @@ export function ConnectIntegrationForm({
     <form onSubmit={handleSubmit(onCreatIntegration)}>
       <ColumnDiv>
         <InlineDiv>
-          <span style={{ marginRight: 5 }}>Read our guide on where to get the credentials </span>
+          <span>Read our guide on where to get the credentials </span>
           <a href={provider?.docReference}>here</a>
         </InlineDiv>
         {provider?.credentials.map((credential) => (
@@ -151,6 +151,10 @@ const RowDiv = styled.div`
 const InlineDiv = styled.div`
   display: flex;
   flex-direction: row;
+
+  span {
+    margin-right: 5px;
+  }
 `;
 
 const ConnectedWrapper = styled(SideElementBase)`

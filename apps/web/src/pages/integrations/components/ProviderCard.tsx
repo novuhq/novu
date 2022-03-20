@@ -8,17 +8,21 @@ import { IIntegratedProvider } from '../IntegrationsStorePage';
 
 export function ProviderCard({
   provider,
-  showModal,
+  onConnectClick,
 }: {
   provider: IIntegratedProvider;
-  showModal: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
+  onConnectClick: (visible: boolean, create: boolean,provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const logoSrc = `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png`;
 
   function handleOnClickSettings() {
-    showModal(true, false, provider);
+    onConnectClick(true, false, provider);
+  }
+
+  function handlerConnectButton() {
+    return () => onConnectClick(true, true, provider);
   }
 
   return (
@@ -28,7 +32,7 @@ export function ProviderCard({
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
         </RibbonWrapper>
       )}
-      <Group position="apart" direction="column" styles={{ root: { height: '100%', justifyContent: 'space-between' } }}>
+      <StyledGroup position="apart" direction="column">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
           {provider.connected ? <Settings onClick={handleOnClickSettings} /> : null}
@@ -36,17 +40,22 @@ export function ProviderCard({
 
         <CardFooter>
           {!provider.connected ? (
-            <Button fullWidth onClick={() => showModal(true, true, provider)}>
+            <Button fullWidth onClick={handlerConnectButton()}>
               Connect
             </Button>
           ) : (
             <CardStatusBar active={provider.active} />
           )}
         </CardFooter>
-      </Group>
+      </StyledGroup>
     </StyledCard>
   );
 }
+
+const StyledGroup = styled(Group)`
+  height: 100%;
+  justify-content: space-between;
+`;
 
 const RibbonWrapper = styled.div`
   width: 115px;

@@ -12,7 +12,7 @@ export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
   const [emailProviders, setEmailProviders] = useState<IIntegratedProvider[]>([]);
   const [smsProvider, setSmsProvider] = useState<IIntegratedProvider[]>([]);
-  const [isOpened, setIsOpened] = useState(false);
+  const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
 
@@ -21,7 +21,7 @@ export function IntegrationsStore() {
   const logoSrc = provider ? `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png` : '';
 
   async function handlerVisible(visible: boolean, createIntegrationModal: boolean, providerConfig: any) {
-    setIsOpened(visible);
+    setModalIsOpened(visible);
     setProvider(providerConfig);
     setIsCreateIntegrationModal(createIntegrationModal);
   }
@@ -68,7 +68,7 @@ export function IntegrationsStore() {
     <PageContainer>
       <PageHeader title="Integration Store" />
 
-      <Modal centered size="lg" overflow="inside" opened={isOpened} onClose={() => setIsOpened(false)}>
+      <Modal centered size="lg" overflow="inside" opened={isModalOpened} onClose={() => setModalIsOpened(false)}>
         <Image radius="md" src={logoSrc} alt={`${provider?.providerId} image`} />
         <ConnectIntegrationForm
           provider={provider}
@@ -78,8 +78,8 @@ export function IntegrationsStore() {
       </Modal>
 
       <ContentWrapper isLoading={isLoading}>
-        <ChannelGroup providers={emailProviders} title="Email" showModalData={handlerVisible} />
-        <ChannelGroup providers={smsProvider} title="SMS" showModalData={handlerVisible} />
+        <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
+        <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
       </ContentWrapper>
     </PageContainer>
   );

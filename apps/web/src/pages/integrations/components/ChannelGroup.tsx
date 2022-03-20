@@ -7,14 +7,14 @@ import { IIntegratedProvider } from '../IntegrationsStorePage';
 export function ChannelGroup({
   title,
   providers,
-  showModalData,
+  onProviderClick,
 }: {
   providers: IIntegratedProvider[];
   title: string;
-  showModalData: (visible: boolean, createIntegrationModal: boolean, provider: IIntegratedProvider) => void;
+  onProviderClick: (visible: boolean, provider: IIntegratedProvider) => void;
 }) {
-  function showModal(visible: boolean, create: boolean, provider: IIntegratedProvider) {
-    showModalData(visible, create, provider);
+  function handlerOnConnectClick(visible: boolean,create: boolean, provider: IIntegratedProvider) {
+    onProviderClick(visible,create, provider);
   }
 
   return (
@@ -23,8 +23,8 @@ export function ChannelGroup({
         <Title size={2}>{title}</Title>
       </Grid.Col>
       {providers.map((provider) => (
-        <Grid.Col span={3} key={provider.providerId}>
-          <ProviderCard provider={provider} showModal={showModal} />
+        <Grid.Col span={3} key={provider.id}>
+          <ProviderCard provider={provider} connected active={false} onConnectClick={handlerOnConnectClick} />
         </Grid.Col>
       ))}
     </Grid>
