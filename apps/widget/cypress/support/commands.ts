@@ -1,4 +1,4 @@
-import * as faker from 'faker';
+import { faker } from '@faker-js/faker';
 
 Cypress.Commands.add('getByTestId', (selector, ...args) => {
   return cy.get(`[data-test-id=${selector}]`, ...args);

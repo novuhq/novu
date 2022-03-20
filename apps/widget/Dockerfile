@@ -16,11 +16,11 @@ COPY libs/shared ./libs/shared
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
+COPY .eslintrc.js .
+COPY .prettierrc .
 COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
-
-
 
 RUN pnpm install
 

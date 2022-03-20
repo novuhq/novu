@@ -45,7 +45,7 @@ describe('User Sign-up and Login', function () {
     it('should redirect to the dashboard page when a token exists in query', function () {
       cy.initializeSession({ disableLocalStorage: true }).then((session) => {
         cy.visit('/auth/login?token=' + session.token);
-        cy.location('pathname').should('equal', '/');
+        cy.location('pathname').should('equal', '/templates');
       });
     });
 

@@ -11,6 +11,5 @@
       "message": "chore(release): publish - ci skip"
     }
   },
-  "useWorkspaces": true,
   "version": "0.3.6-alpha.0"
 }

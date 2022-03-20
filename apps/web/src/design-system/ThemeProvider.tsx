@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MantineProvider, Global, MantineColor, ColorSchemeProvider, ColorScheme } from '@mantine/core';
+import { MantineProvider, Global, ColorSchemeProvider, ColorScheme } from '@mantine/core';
 import { mantineConfig } from './config/theme.config';
 import { colors } from './config';
 
@@ -7,14 +7,8 @@ declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';
 }
 
-export function ThemeProvider({
-  children,
-  colorSchemeOverride = 'dark',
-}: {
-  children: JSX.Element;
-  colorSchemeOverride?: ColorScheme;
-}) {
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(colorSchemeOverride);
+export function ThemeProvider({ children, dark = true }: { children: JSX.Element; dark?: Boolean }) {
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'));
 
@@ -25,7 +19,7 @@ export function ThemeProvider({
         // withNormalizeCSS
         theme={{
           // Override any other properties from default theme
-          colorScheme,
+          colorScheme: dark ? 'dark' : 'light',
           ...mantineConfig,
         }}>
         <Global

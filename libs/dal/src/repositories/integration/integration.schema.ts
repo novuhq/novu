@@ -19,8 +19,19 @@ const integrationSchema = new Schema(
     channel: Schema.Types.String,
     credentials: {
       apiKey: Schema.Types.String,
+      user: Schema.Types.String,
       secretKey: Schema.Types.String,
+      domain: Schema.Types.String,
+      password: Schema.Types.String,
+      host: Schema.Types.String,
+      port: Schema.Types.String,
+      secure: Schema.Types.String,
+      region: Schema.Types.String,
+      accountSid: Schema.Types.String,
+      messageProfileId: Schema.Types.String,
+      token: Schema.Types.String,
     },
+
     active: {
       type: Schema.Types.Boolean,
       default: false,

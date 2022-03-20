@@ -85,6 +85,9 @@ jobs:
       # Runs a single command using the runners shell
       - name: Build
         run: CI='' pnpm build:web
+          
+      - name: Build API
+        run: CI='' pnpm build:api
 
       # Runs a single command using the runners shell
       - name: Start Client
