@@ -150,15 +150,15 @@ describe('Notifications Creator', function () {
     });
   });
 
-  it.skip('should update notification active status', function () {
+  it('should update notification active status', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
-    cy.getByTestId('active-toggle-switch').contains('Active');
+    cy.getByTestId('active-toggle-switch').get('label').contains('Enabled');
     cy.getByTestId('active-toggle-switch').click();
-    cy.getByTestId('active-toggle-switch').contains('Disabled');
+    cy.getByTestId('active-toggle-switch').get('label').contains('Disabled');
 
     cy.visit('/templates/edit/' + template._id);
-    cy.getByTestId('active-toggle-switch').contains('Disabled');
+    cy.getByTestId('active-toggle-switch').get('label').contains('Disabled');
   });
 
   it.skip('should toggle active states of channels', function () {
@@ -184,10 +184,11 @@ describe('Notifications Creator', function () {
     cy.getByTestId('in-app-editor-wrapper').should('be.visible');
   });
 
-  it.skip('should show trigger snippet block when editing', function () {
+  it('should show trigger snippet block when editing', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
 
+    cy.getByTestId('"triggerCodeSelector"').click({ force: true });
     cy.getByTestId('trigger-code-snippet').contains('test-event');
   });
 
