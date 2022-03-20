@@ -72,7 +72,7 @@ export default function TemplateEditorPage() {
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
           <PageHeader
-            title="Create New Template"
+            title={editMode ? 'Edit Template' : 'Create new template'}
             actions={
               <Button
                 data-test-id="submit-btn"
