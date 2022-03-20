@@ -27,7 +27,7 @@ export function IntegrationsStore() {
   }
 
   async function handlerShowModal(showModal: boolean) {
-    await setIsOpened(showModal);
+    await setModalIsOpened(showModal);
     if (!showModal) {
       await refetch();
     }
