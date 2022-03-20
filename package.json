@@ -29,7 +29,7 @@
     "build:web": "nx build @notifire/web",
     "build:widget": "nx build @notifire/widget",
     "build:sdk": "nx build @notifire/sdk",
-    "build:storybook": "nx build @notifire/web && nx run @notifire/web:build-storybook",
+    "build:storybook": "nx run @notifire/web:build-storybook",
     "test:providers": "find providers -name package.json -not -path \"*/node_modules/*\" -exec bash -c \"pnpm --prefix \\$(dirname {}) test\" \\;",
     "release:patch": "lerna version patch",
     "release:prerelease": "lerna version prerelease",
