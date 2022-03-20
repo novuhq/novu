@@ -121,6 +121,7 @@ export function TemplatesSideBar({
               tabKey="TriggerSnippet"
               changeTab={changeTab}
               Icon={TapeGradient}
+              testId="triggerCodeSelector"
               active={activeTab === 'TriggerSnippet'}
               description="This subtitle will describe things"
               label="Trigger Snippet"

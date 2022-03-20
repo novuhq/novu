@@ -38,7 +38,7 @@ export function TemplateTriggerModal({
       shadow={dark ? shadows.dark : shadows.medium}
       radius="md"
       size="xl">
-      <TriggerSnippetTabs trigger={trigger} data-test-id="trigger-code-snippet" />
+      <TriggerSnippetTabs trigger={trigger} />
       <div style={{ alignItems: 'end' }}>
         <Button data-test-id="trigger-snippet-btn" mt={30} onClick={onDismiss} inherit>
           Got it
