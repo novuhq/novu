@@ -1,34 +1,24 @@
-import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Control, Controller } from 'react-hook-form';
 import { Container, Group } from '@mantine/core';
-import { IForm } from '../../legacy/pages/templates/editor/use-template-controller.hook';
+import { IForm } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Input } from '../../design-system';
+import { Input } from '../../../design-system';
 
-export function TemplateInAppEditor({
-  control,
-  index,
-  disabled,
-}: {
-  control: Control<IForm>;
-  index: number;
-  disabled: boolean;
-  errors: any;
-}) {
-  const {
-    formState: { errors },
-  } = useFormContext();
-
-  const disabledStyles = disabled ? { opacity: '0.3', cursor: 'not-allowed' } : {};
-
+export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   return (
-    <Container ml={0} sx={{ width: '70%', paddingLeft: '0px', ...disabledStyles }}>
+    <Container ml={0} sx={{ width: '70%', paddingLeft: '0px' }}>
       <Group grow direction="column">
         <Controller
           name={`inAppMessages.${index}.template.cta.data.url` as any}
           control={control}
-          data-test-id="inAppRedirect"
           render={({ field }) => (
-            <Input {...field} value={field.value || ''} label="Redirect URL" placeholder="i.e /tasks/{{taskId}}" />
+            <Input
+              {...field}
+              value={field.value || ''}
+              data-test-id="inAppRedirect"
+              label="Redirect URL"
+              placeholder="i.e /tasks/{{taskId}}"
+            />
           )}
         />
         <Controller

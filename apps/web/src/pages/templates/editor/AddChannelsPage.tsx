@@ -10,18 +10,21 @@ const channels = [
     tabKey: ChannelTypeEnum.EMAIL,
     icon: <MailGradient width="40px" height="40px" />,
     channelType: ChannelTypeEnum.EMAIL,
+    testId: 'emailAddChannel',
   },
   {
     label: 'SMS',
     tabKey: ChannelTypeEnum.SMS,
     icon: <SmsGradient width="40px" height="40px" />,
     channelType: ChannelTypeEnum.SMS,
+    testId: 'smsAddChannel',
   },
   {
     label: 'In-App',
     tabKey: ChannelTypeEnum.IN_APP,
     icon: <MobileGradient width="40px" height="40px" />,
     channelType: ChannelTypeEnum.IN_APP,
+    testId: 'inAppAddChannel',
   },
 ];
 
@@ -38,6 +41,7 @@ export const AddChannelsPage = ({
         <Grid.Col key={channel.label} span={4}>
           <Card
             onClick={() => handleAddChannel(channel.tabKey)}
+            data-test-id={channel.testId}
             sx={(theme) => {
               const selected = channelButtons.includes(channel.tabKey);
 

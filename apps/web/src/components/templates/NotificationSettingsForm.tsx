@@ -57,10 +57,10 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
         <Controller
           control={control}
           name="name"
-          data-test-id="title"
           render={({ field }) => (
             <Input
               {...field}
+              data-test-id="title"
               value={field.value || ''}
               error={errors.name}
               label="Notification Name"
@@ -70,13 +70,13 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
         />
         <Controller
           name="description"
-          data-test-id="description"
           control={control}
           render={({ field }) => (
             <Input
               mt={35}
               {...field}
               value={field.value || ''}
+              data-test-id="description"
               label="Notification Description"
               placeholder="Describe your notification..."
             />
@@ -86,13 +86,13 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
       <Grid.Col span={6}>
         <Controller
           name="notificationGroup"
-          data-test-id="groupSelector"
           control={control}
           render={({ field }) => (
             <>
               <Select
                 {...field}
                 label="Notification Group"
+                data-test-id="groupSelector"
                 loading={loadingGroups || loadingCreateGroup}
                 creatable
                 searchable

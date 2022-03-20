@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
-import { InAppWidgetPreview } from '../widget/InAppWidgetPreview';
+import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
 
 export function InAppEditorBlock({
   contentPlaceholder,
