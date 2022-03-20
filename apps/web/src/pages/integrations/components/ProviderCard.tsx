@@ -1,29 +1,28 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
-import { IProviderConfig } from '@notifire/shared';
 import { Button, colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
+import { IIntegratedProvider } from '../IntegrationsStorePage';
 
 export function ProviderCard({
   provider,
-  connected,
-  active,
   showModal,
 }: {
-  provider: IProviderConfig;
-  connected: boolean;
-  active: boolean;
-  showModal: (visible: boolean, provider: IProviderConfig) => void;
+  provider: IIntegratedProvider;
+  showModal: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-  const logoSrc = `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.id}.png`;
-  const isProviderConnected = connected && active;
+  const logoSrc = `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png`;
+
+  function handleOnClickSettings() {
+    showModal(true, false, provider);
+  }
 
   return (
-    <StyledCard colorScheme={colorScheme} active={active}>
+    <StyledCard colorScheme={colorScheme} active={provider.active}>
       {provider.comingSoon && (
         <RibbonWrapper>
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
@@ -32,16 +31,16 @@ export function ProviderCard({
       <Group position="apart" direction="column" styles={{ root: { height: '100%', justifyContent: 'space-between' } }}>
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
-          {isProviderConnected ? <Settings /> : null}
+          {provider.connected ? <Settings onClick={handleOnClickSettings} /> : null}
         </CardHeader>
 
         <CardFooter>
-          {!isProviderConnected ? (
-            <Button fullWidth onClick={() => showModal(true, provider)}>
+          {!provider.connected ? (
+            <Button fullWidth onClick={() => showModal(true, true, provider)}>
               Connect
             </Button>
           ) : (
-            <CardStatusBar active={active} />
+            <CardStatusBar active={provider.active} />
           )}
         </CardFooter>
       </Group>
