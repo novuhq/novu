@@ -1,4 +1,5 @@
-# This is a basic workflow to help you get started with Actions
+- name: Build API
+run: CI='' pnpm build:api# This is a basic workflow to help you get started with Actions
 
 name: Test WIDGET
 
@@ -62,6 +63,9 @@ jobs:
       # Runs a single command using the runners shell
       - name: Build
         run: CI='' pnpm build:widget
+
+      - name: Build API
+        run: CI='' pnpm build:api
 
       # Runs a single command using the runners shell
       - name: Start Client
