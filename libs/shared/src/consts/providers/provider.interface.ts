@@ -11,19 +11,20 @@ export interface IProviderConfig {
 
 export interface IConfigCredentials {
   key: string;
-  value: string;
+  value?: string;
+  displayName: string;
   type: string;
 }
 
 export const mailJsConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'secretKey',
-    value: 'Secret key',
+    displayName: 'Secret key',
     type: 'string',
   },
 ];
@@ -31,22 +32,22 @@ export const mailJsConfig: IConfigCredentials[] = [
 export const mailgunConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'username',
-    value: 'User name',
+    displayName: 'User name',
     type: 'string',
   },
   {
     key: 'domain',
-    value: 'Domain',
+    displayName: 'Domain',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -54,17 +55,17 @@ export const mailgunConfig: IConfigCredentials[] = [
 export const mailjetConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'apiSecret',
-    value: 'API Secret',
+    displayName: 'API Secret',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -72,17 +73,17 @@ export const mailjetConfig: IConfigCredentials[] = [
 export const nexmoConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'apiSecret',
-    value: 'API secret',
+    displayName: 'API secret',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -90,12 +91,12 @@ export const nexmoConfig: IConfigCredentials[] = [
 export const mandrillConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -103,32 +104,32 @@ export const mandrillConfig: IConfigCredentials[] = [
 export const nodemailerConfig: IConfigCredentials[] = [
   {
     key: 'user',
-    value: 'User',
+    displayName: 'User',
     type: 'string',
   },
   {
     key: 'password',
-    value: 'Password',
+    displayName: 'Password',
     type: 'string',
   },
   {
     key: 'host',
-    value: 'Host',
+    displayName: 'Host',
     type: 'string',
   },
   {
     key: 'port',
-    value: 'Port',
+    displayName: 'Port',
     type: 'number',
   },
   {
     key: 'secure',
-    value: 'Secure',
+    displayName: 'Secure',
     type: 'boolean',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -136,12 +137,12 @@ export const nodemailerConfig: IConfigCredentials[] = [
 export const postmarkConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -149,12 +150,12 @@ export const postmarkConfig: IConfigCredentials[] = [
 export const sendgridConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -162,7 +163,7 @@ export const sendgridConfig: IConfigCredentials[] = [
 export const sendinblueConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
 ];
@@ -170,22 +171,22 @@ export const sendinblueConfig: IConfigCredentials[] = [
 export const sesConfig: IConfigCredentials[] = [
   {
     key: 'accessKeyId',
-    value: 'Access key ID',
+    displayName: 'Access key ID',
     type: 'string',
   },
   {
     key: 'secretAccessKey',
-    value: 'Secret access key',
+    displayName: 'Secret access key',
     type: 'string',
   },
   {
     key: 'region',
-    value: 'Region',
+    displayName: 'Region',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -193,17 +194,17 @@ export const sesConfig: IConfigCredentials[] = [
 export const plivoConfig: IConfigCredentials[] = [
   {
     key: 'accountSid',
-    value: 'Account SID',
+    displayName: 'Account SID',
     type: 'string',
   },
   {
     key: 'authToken',
-    value: 'Auth token',
+    displayName: 'Auth token',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -211,12 +212,12 @@ export const plivoConfig: IConfigCredentials[] = [
 export const sms77Config: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -224,12 +225,12 @@ export const sms77Config: IConfigCredentials[] = [
 export const snsConfig: IConfigCredentials[] = [
   {
     key: 'accessKeyId',
-    value: 'Access key ID',
+    displayName: 'Access key ID',
     type: 'string',
   },
   {
     key: 'secretAccessKey',
-    value: 'Secret access key',
+    displayName: 'Secret access key',
     type: 'string',
   },
 ];
@@ -237,17 +238,17 @@ export const snsConfig: IConfigCredentials[] = [
 export const telnyxConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
-    value: 'API Key',
+    displayName: 'API Key',
     type: 'string',
   },
   {
     key: 'messageProfileId',
-    value: 'Message profile ID',
+    displayName: 'Message profile ID',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];
@@ -255,17 +256,17 @@ export const telnyxConfig: IConfigCredentials[] = [
 export const twilioConfig: IConfigCredentials[] = [
   {
     key: 'accountSid',
-    value: 'Account SID',
+    displayName: 'Account SID',
     type: 'string',
   },
   {
     key: 'authToken',
-    value: 'Auth token',
+    displayName: 'Auth token',
     type: 'string',
   },
   {
     key: 'from',
-    value: 'From',
+    displayName: 'From',
     type: 'string',
   },
 ];

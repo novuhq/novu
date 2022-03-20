@@ -18,7 +18,7 @@ export function CardStatusBar({ active }: { active: boolean }) {
 }
 
 const StyledCheckCircle = styled(CheckCircle)<{ active: boolean }>`
-  fill: ${({ active }) => (active ? '#4D9980' : '#525266')};
+  fill: ${({ active }) => (active ? colors.success : colors.B40)};
 `;
 
 const StyledText = styled(Text)`

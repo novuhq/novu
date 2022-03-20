@@ -36,14 +36,22 @@ export function IntegrationsStore() {
   useEffect(() => {
     if (integrations) {
       const initializedProviders: IIntegratedProvider[] = providers.map((x) => {
-        const integration = integrations.filter((y) => y.providerId === x.id)[0];
+        const integration = integrations.find((y) => y.providerId === x.id);
+
+        const mappedCredentials = x.credentials;
+        if (integration?.credentials) {
+          mappedCredentials.forEach((c) => {
+            // eslint-disable-next-line no-param-reassign
+            c.value = integration.credentials[c.key];
+          });
+        }
 
         return {
           providerId: x.id,
           integrationId: integration?._id ? integration._id : '',
           displayName: x.displayName,
           channel: x.channel,
-          credentials: x.credentials,
+          credentials: integration ? mappedCredentials : x.credentials,
           docReference: x.docReference,
           comingSoon: !!x.comingSoon,
           active: integration?.active ? integration.active : false,
@@ -81,8 +89,8 @@ const ContentWrapper = styled.div<{ isLoading: boolean }>`
   padding: 0 30px;
 `;
 
-const sortProviders = (messyProviders) => {
-  return messyProviders
+const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
+  return unsortedProviders
     .sort((x, y) => Number(!x.connected) - Number(!y.connected))
     .sort((a, b) => Number(!a.active) - Number(!b.active));
 };

@@ -6,8 +6,8 @@ import { useMutation } from 'react-query';
 import { message } from 'antd';
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { Check } from '../../../design-system/icons';
-import { api } from '../../../api/api.client';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { createIntegration, updateIntegration } from '../../../api/integration';
 
 export function ConnectIntegrationForm({
   provider,
@@ -24,30 +24,34 @@ export function ConnectIntegrationForm({
     { res: string },
     { error: string; message: string; statusCode: number },
     { providerId: string; channel: ChannelTypeEnum | null; credentials: ICredentialsDto; active: boolean }
-  >((data) => api.post(`/v1/integrations`, data));
+  >(createIntegration);
 
   const { mutateAsync: updateIntegrationApi } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
     {
       integrationId: string;
-      data: any;
+      data: { credentials: ICredentialsDto; active: boolean };
     }
-  >(({ data, integrationId }) => api.put(`/v1/integrations/${integrationId}`, data));
+  >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
-  async function onCreatIntegration(credentials) {
-    if (createModel) {
-      await createIntegrationApi({
-        providerId: provider?.providerId ? provider?.providerId : '',
-        channel: provider?.channel ? provider?.channel : null,
-        credentials,
-        active: isActive,
-      });
-    } else {
-      await updateIntegrationApi({
-        integrationId: provider?.integrationId ? provider?.integrationId : '',
-        data: { credentials, active: isActive },
-      });
+  async function onCreatIntegration(credentials: ICredentialsDto) {
+    try {
+      if (createModel) {
+        await createIntegrationApi({
+          providerId: provider?.providerId ? provider?.providerId : '',
+          channel: provider?.channel ? provider?.channel : null,
+          credentials,
+          active: isActive,
+        });
+      } else {
+        await updateIntegrationApi({
+          integrationId: provider?.integrationId ? provider?.integrationId : '',
+          data: { credentials, active: isActive },
+        });
+      }
+    } catch (e: any) {
+      message.warn(`Exception occured while fetching integration: ${e?.messages.toString()}`);
     }
 
     message.success(`Successfully ${createModel ? 'added' : 'updated'} integration`);
@@ -80,12 +84,13 @@ export function ConnectIntegrationForm({
             control={control}
             render={({ field }) => (
               <Input
-                label={credential.value}
+                label={credential.displayName}
+                placeholder={credential.value ? credential.value : ''}
                 required
                 data-test-id={credential.key}
                 {...field}
                 error={errors[credential.key]?.message}
-                {...register(credential.key, { required: `Please enter a ${credential.value.toLowerCase()}` })}
+                {...register(credential.key, { required: `Please enter a ${credential.displayName.toLowerCase()}` })}
               />
             )}
           />
