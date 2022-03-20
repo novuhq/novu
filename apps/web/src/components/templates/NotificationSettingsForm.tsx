@@ -32,7 +32,10 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
     if (serverGroups) {
       setGroups(serverGroups);
       if (!editMode && serverGroups?.length) {
-        setValue('notificationGroup', serverGroups[0]._id);
+        /**
+         * Quick fix to default value of notificationGroup not set when page is not refreshed
+         */
+        setTimeout(() => setValue('notificationGroup', serverGroups[0]._id), 0);
       }
     }
   }, [serverGroups]);
