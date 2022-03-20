@@ -29,4 +29,17 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(body.data.profile.phone).to.equal('054777777');
     expect(body.data.profile.lastName).to.equal('User');
   });
+
+  it('should throw an error when an invalid application Id passed', async function () {
+    const { body } = await session.testAgent.post('/v1/widgets/session/initialize').send({
+      applicationIdentifier: 'some-not-existing-id',
+      $user_id: '12345',
+      $first_name: 'Test',
+      $last_name: 'User',
+      $email: 'test@example.com',
+      $phone: '054777777',
+    });
+
+    expect(body.message).to.contain('Please provide a valid app identifier');
+  });
 });

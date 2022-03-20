@@ -9,10 +9,12 @@ import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
 import { useTemplateController } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
-import { TemplateInAppEditor } from '../../../components/templates/TemplateInAppEditor';
+import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
 import { Button } from '../../../design-system';
+import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
+import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -90,6 +92,8 @@ export default function TemplateEditorPage() {
               activeChannels={activeChannels}
               channelButtons={channelButtons}
               showTriggerSection={!!template && !!trigger}
+              errors={errors}
+              alertErrors={methods.formState.isDirty && methods.formState.isSubmitted && Object.keys(errors).length > 0}
             />
             <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
               {activePage === 'Settings' && <NotificationSettingsForm errors={errors} editMode={editMode} />}
@@ -98,18 +102,21 @@ export default function TemplateEditorPage() {
               )}
               {!loadingEditTemplate && activePage === 'in_app'
                 ? inAppFields.map((message, index) => {
-                    return (
-                      <TemplateInAppEditor
-                        disabled={!activeChannels[ChannelTypeEnum.IN_APP]}
-                        key={index}
-                        errors={errors}
-                        control={control}
-                        index={index}
-                      />
-                    );
+                    return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
                   })
                 : null}
+              {activePage === 'sms' &&
+                smsFields.map((message, index) => {
+                  return <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />;
+                })}
               {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
+              {activePage === 'email' && (
+                <EmailMessagesCards
+                  variables={trigger?.variables || []}
+                  onRemoveTab={removeEmailMessage}
+                  emailMessagesFields={emailMessagesFields}
+                />
+              )}
               {trigger && (
                 <TemplateTriggerModal
                   trigger={trigger}

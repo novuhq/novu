@@ -55,6 +55,7 @@ describe('Remove organization member - /organizations/members/:memberId (DELETE)
 
     const membersAfterRemoval: MemberEntity[] = await getOrganizationMembers();
     const user2Removed = membersAfterRemoval.find((i) => i._userId === user2.user._id);
+
     expect(user2Removed).to.not.be.ok;
   });
 
