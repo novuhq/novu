@@ -108,10 +108,25 @@ importers:
       '@nestjs/terminus': ^7.1.0
       '@nestjs/testing': ^7.4.2
       '@nestjsx/crud': ^4.6.2
+      '@notifire/core': ^0.3.6-alpha.0
       '@notifire/dal': ^0.3.5
+      '@notifire/emailjs': ^0.3.6-alpha.0
+      '@notifire/mailgun': ^0.3.6-alpha.0
+      '@notifire/mailjet': ^0.3.6-alpha.0
+      '@notifire/mandrill': ^0.3.6-alpha.0
       '@notifire/node': ^1.0.4
+      '@notifire/nodemailer': ^0.3.6-alpha.0
+      '@notifire/plivo': ^0.3.6-alpha.0
+      '@notifire/postmark': ^0.3.6-alpha.0
+      '@notifire/sendgrid': ^0.3.6-alpha.0
+      '@notifire/sendinblue': ^0.3.6-alpha.0
+      '@notifire/ses': ^0.3.6-alpha.0
       '@notifire/shared': ^0.3.5
+      '@notifire/sms77': ^0.3.6-alpha.0
+      '@notifire/sns': ^0.3.6-alpha.0
+      '@notifire/telnyx': ^0.2.3
       '@notifire/testing': ^0.3.5
+      '@notifire/twilio': ^0.3.6-alpha.0
       '@sendgrid/mail': ^7.6.0
       '@sentry/node': ^6.1.0
       '@sentry/tracing': ^6.3.6
@@ -175,10 +190,25 @@ importers:
       '@nestjs/swagger': 4.8.2_0b794bf82bedb6552d90f9c776e9d537
       '@nestjs/terminus': 7.2.0_b3355eaaab723e52e70bfca874d5ccb9
       '@nestjsx/crud': 4.6.2_d71f9d2eeeee42f14b4376bfe86f6f42
+      '@notifire/core': link:../../packages/core
       '@notifire/dal': link:../../libs/dal
+      '@notifire/emailjs': link:../../providers/emailjs
+      '@notifire/mailgun': link:../../providers/mailgun
+      '@notifire/mailjet': link:../../providers/mailjet
+      '@notifire/mandrill': link:../../providers/mandrill
       '@notifire/node': 1.0.5
+      '@notifire/nodemailer': link:../../providers/nodemailer
+      '@notifire/plivo': link:../../providers/plivo
+      '@notifire/postmark': link:../../providers/postmark
+      '@notifire/sendgrid': link:../../providers/sendgrid
+      '@notifire/sendinblue': link:../../providers/sendinblue
+      '@notifire/ses': link:../../providers/ses
       '@notifire/shared': link:../../libs/shared
+      '@notifire/sms77': link:../../providers/sms77
+      '@notifire/sns': link:../../providers/sns
+      '@notifire/telnyx': link:../../providers/telnyx
       '@notifire/testing': link:../../libs/testing
+      '@notifire/twilio': link:../../providers/twilio
       '@sendgrid/mail': 7.6.0
       '@sentry/node': 6.16.1
       '@sentry/tracing': 6.16.1
@@ -20739,7 +20769,7 @@ packages:
       duplexer: 0.1.2
       glob: 7.2.0
       glob2base: 0.0.12
-      minimatch: 3.1.2
+      minimatch: 3.0.4
       mkdirp: 0.5.5
       resolve: 1.22.0
       safe-buffer: 5.2.1
@@ -21059,7 +21089,7 @@ packages:
       gensequence: 3.1.1
       get-stdin: 8.0.0
       glob: 7.2.0
-      minimatch: 3.1.2
+      minimatch: 3.0.4
     dev: true
 
   /css-blank-pseudo/0.1.4:
@@ -23085,7 +23115,7 @@ packages:
       has: 1.0.3
       is-core-module: 2.8.1
       is-glob: 4.0.3
-      minimatch: 3.1.2
+      minimatch: 3.0.4
       object.values: 1.1.5
       resolve: 1.22.0
       tsconfig-paths: 3.13.0
@@ -23126,7 +23156,7 @@ packages:
       has: 1.0.3
       jsx-ast-utils: 3.2.1
       language-tags: 1.0.5
-      minimatch: 3.1.2
+      minimatch: 3.0.4
 
   /eslint-plugin-prettier/3.4.1_f00f7e54b4b3cd43dd9e25d0d062b490:
     resolution: {integrity: sha512-htg25EUYUeIhKHXjOinK4BgCcDwtLHjqaxCDsMy5nbnUMkKFvIhMVCp+5GFUXQ4Nr8lBsPqtGAqBenbpFqAA2g==}
@@ -23281,7 +23311,7 @@ packages:
       json-stable-stringify-without-jsonify: 1.0.1
       levn: 0.4.1
       lodash.merge: 4.6.2
-      minimatch: 3.1.2
+      minimatch: 3.0.4
       natural-compare: 1.4.0
       optionator: 0.9.1
       progress: 2.0.3
@@ -24343,7 +24373,7 @@ packages:
       deepmerge: 4.2.2
       fs-extra: 9.1.0
       memfs: 3.4.0
-      minimatch: 3.1.2
+      minimatch: 3.0.4
       schema-utils: 2.7.0
       semver: 7.3.5
       tapable: 1.1.3
@@ -25032,7 +25062,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 3.1.2
+      minimatch: 3.0.4
       once: 1.4.0
       path-is-absolute: 1.0.1
 
@@ -26178,7 +26208,7 @@ packages:
   /ignore-walk/3.0.4:
     resolution: {integrity: sha512-PY6Ii8o1jMRA1z4F2hRkH/xN59ox43DavKvD3oDpfurRlOJyAHpifIwpbdv1n4jt4ov0jSpw3kQ4GhJnpBL6WQ==}
     dependencies:
-      minimatch: 3.1.2
+      minimatch: 3.0.4
     dev: true
 
   /ignore/3.3.10:
@@ -39422,7 +39452,7 @@ packages:
     dependencies:
       '@istanbuljs/schema': 0.1.3
       glob: 7.2.0
-      minimatch: 3.1.2
+      minimatch: 3.0.4
 
   /text-extensions/1.9.0:
     resolution: {integrity: sha512-wiBrwC1EhBelW12Zy26JeOUkQ5mRu+5o8rpsJk5+2t+Y5vE7e842qtZDQ2g1NpX/29HdyFeJ4nSIhI47ENSxlQ==}
