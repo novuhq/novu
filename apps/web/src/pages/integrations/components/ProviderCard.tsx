@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
-import { ISharedProvider } from '@notifire/shared';
+import { IProviderConfig } from '@notifire/shared';
 import { Button, colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
@@ -10,15 +10,21 @@ export function ProviderCard({
   provider,
   connected,
   active,
+  onConnectClick,
 }: {
-  provider: ISharedProvider;
+  provider: IProviderConfig;
   connected: boolean;
   active: boolean;
+  onConnectClick: (visible: boolean, provider: IProviderConfig) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-  const logoSrc = `/static/images/providers/${isDark ? 'light' : 'light'}/${provider.id}.png`;
+  const logoSrc = `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.id}.png`;
   const isProviderConnected = connected && active;
+
+  function handlerConnectButton() {
+    return () => onConnectClick(true, provider);
+  }
 
   return (
     <StyledCard colorScheme={colorScheme} active={active}>
@@ -27,19 +33,30 @@ export function ProviderCard({
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
         </RibbonWrapper>
       )}
-      <Group position="apart" direction="column" styles={{ root: { height: '100%', justifyContent: 'space-between' } }}>
+      <StyledGroup position="apart" direction="column">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
           {isProviderConnected ? <Settings /> : null}
         </CardHeader>
 
         <CardFooter>
-          {!isProviderConnected ? <Button fullWidth>Connect</Button> : <CardStatusBar active={active} />}
+          {!isProviderConnected ? (
+            <Button fullWidth onClick={handlerConnectButton()}>
+              Connect
+            </Button>
+          ) : (
+            <CardStatusBar active={active} />
+          )}
         </CardFooter>
-      </Group>
+      </StyledGroup>
     </StyledCard>
   );
 }
+
+const StyledGroup = styled(Group)`
+  height: 100%;
+  justify-content: space-between;
+`;
 
 const RibbonWrapper = styled.div`
   width: 115px;
