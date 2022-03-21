@@ -11,7 +11,7 @@ export function ProviderCard({
   onConnectClick,
 }: {
   provider: IIntegratedProvider;
-  onConnectClick: (visible: boolean, create: boolean,provider: IIntegratedProvider) => void;
+  onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
