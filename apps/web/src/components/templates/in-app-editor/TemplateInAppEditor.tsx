@@ -28,7 +28,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
           render={({ field }) => {
             const { ref, ...fieldRefs } = field;
 
-            return <InAppEditorBlock {...fieldRefs} contentPlaceholder="Notification content goes here..." />;
+            return <InAppEditorBlock {...fieldRefs} contentPlaceholder="Write your notification content here..." />;
           }}
         />
       </Group>
