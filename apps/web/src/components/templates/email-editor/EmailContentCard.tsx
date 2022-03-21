@@ -80,6 +80,7 @@ export function EmailContentCard({
             <Input
               {...field}
               mb={40}
+              error={errors[`emailMessages.${index}.template.subject`]}
               label="Subject line"
               value={field.value}
               placeholder="Type the email subject..."
@@ -87,11 +88,6 @@ export function EmailContentCard({
             />
           );
         }}
-      />
-      <Controller
-        control={control}
-        name={`emailMessages.${index}.template.contentType`}
-        render={({ field }) => <></>}
       />
       <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
     </>
