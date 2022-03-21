@@ -12,6 +12,7 @@ export const colors = {
   B20: '#292933',
   B15: '#1E1E26',
   B17: '#23232B',
+  success: '#4D9980',
   error: '#E54545',
   vertical: 'linear-gradient(0deg,#FF512F 0%,#DD2476 100%)',
   horizontal: 'linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)',
