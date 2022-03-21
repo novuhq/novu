@@ -154,26 +154,20 @@ export function EmailMessageEditor({
             paddingTop: '180px',
           },
         }}
-        title={<Title>Navigate to the settings page?</Title>}
+        title={<Title size={2}>Navigate to the settings page?</Title>}
         sx={{ backdropFilter: 'blur(10px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
         size="lg">
-        <div>
-          <Title size={2}>
-            Any unsaved changes will be deleted.
-            <Space w={10} />
-            Proceed anyway?
-          </Title>
-          <Group position="right">
-            <Button mt={30} onClick={() => setConfirmModalVisible(false)}>
-              No
-            </Button>
-            <Button mt={30} onClick={navigateToBrandSettings}>
-              Yes
-            </Button>
-          </Group>
-        </div>
+        <Text>Any unsaved changes will be deleted. Proceed anyway?</Text>
+        <Group position="right">
+          <Button variant="outline" size="md" mt={30} onClick={() => setConfirmModalVisible(false)}>
+            No
+          </Button>
+          <Button mt={30} size="md" onClick={navigateToBrandSettings}>
+            Yes
+          </Button>
+        </Group>
       </Modal>
 
       <Container
