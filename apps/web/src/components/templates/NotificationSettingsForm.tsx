@@ -49,6 +49,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
               value={field.value || ''}
               error={errors.name}
               label="Notification Name"
+              description="This is will be used to identify the notification in the app."
               placeholder="Notification name goes here..."
             />
           )}
@@ -62,6 +63,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
               {...field}
               value={field.value || ''}
               data-test-id="description"
+              description="Write an internal description of when and how this notification will be used."
               label="Notification Description"
               placeholder="Describe your notification..."
             />
@@ -81,6 +83,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
                 loading={loadingGroups || loadingCreateGroup}
                 creatable
                 searchable
+                description="Categorize notifications into groups for unified settings control"
                 error={errors.notificationGroup}
                 getCreateLabel={(newGroup) => `+ Create Group ${newGroup}`}
                 onCreate={addGroupItem}

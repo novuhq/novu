@@ -19,10 +19,8 @@ export function EmailContentCard({
   const {
     control,
     formState: { errors },
-    getValues,
     setValue,
     watch,
-    register,
   } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`emailMessages.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState(0);
@@ -30,7 +28,9 @@ export function EmailContentCard({
   useEffect(() => {
     if (contentType === 'customHtml') {
       setActiveTab(1);
-    } else setActiveTab(0);
+    } else {
+      setActiveTab(0);
+    }
   }, []);
 
   const onTabChange = (tabIndex) => {

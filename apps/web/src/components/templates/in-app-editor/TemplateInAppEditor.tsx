@@ -15,6 +15,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             <Input
               {...field}
               value={field.value || ''}
+              description="The URL that will be opened when the user clicks the CTA button."
               data-test-id="inAppRedirect"
               label="Redirect URL"
               placeholder="i.e /tasks/{{taskId}}"
