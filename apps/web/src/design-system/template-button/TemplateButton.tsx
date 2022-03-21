@@ -1,5 +1,6 @@
 import React from 'react';
 import { UnstyledButton, Group, Popover } from '@mantine/core';
+import styled from 'styled-components';
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
@@ -73,27 +74,52 @@ export function TemplateButton({
           onClick={() => !active && changeTab(tabKey)}
           data-test-id={testId}
           className={cx(classes.button, { [classes.active]: active })}>
-          <Group position="apart">
-            <Group spacing={15}>
-              <div className={classes.linkIcon}>
+          <ButtonWrapper>
+            <LeftContainerWrapper>
+              <IconWrapper className={classes.linkIcon}>
                 <Icon {...disabledProp} />
-              </div>
-              <div>
+              </IconWrapper>
+              <StyledContentWrapper>
                 <Text {...disabledColor} weight="bold">
                   {label}
                 </Text>
                 <Text mt={3} color={colors.B60} {...disabledColor}>
                   {description}
                 </Text>
-              </div>
-            </Group>
-            <div style={{ alignItems: 'end' }}>
+              </StyledContentWrapper>
+            </LeftContainerWrapper>
+
+            <ActionWrapper>
               {action && <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />}
-            </div>
-          </Group>
+            </ActionWrapper>
+          </ButtonWrapper>
         </UnstyledButton>
       }>
       Something is missing here
     </Popover>
   );
 }
+
+const IconWrapper = styled.div`
+  padding-right: 15px;
+`;
+
+const ActionWrapper = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const LeftContainerWrapper = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const ButtonWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
+
+const StyledContentWrapper = styled.div`
+  padding-right: 10px;
+`;
+const StyledGroup = styled(Group)``;
