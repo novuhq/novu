@@ -1,16 +1,77 @@
-import React from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { IProviderConfig } from '@notifire/shared';
+import { ChannelTypeEnum, ICredentialsDto } from '@notifire/shared';
+import { useMutation } from 'react-query';
+import { message } from 'antd';
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { Check } from '../../../design-system/icons';
+import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { createIntegration, updateIntegration } from '../../../api/integration';
 
-export function ConnectIntegrationForm({ provider }: { provider: IProviderConfig | null }) {
-  const { handleSubmit, control } = useForm();
+export function ConnectIntegrationForm({
+  provider,
+  showModal,
+  createModel,
+}: {
+  provider: IIntegratedProvider | null;
+  showModal: (visible: boolean) => void;
+  createModel: boolean;
+}) {
+  const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
+
+  const { mutateAsync: createIntegrationApi } = useMutation<
+    { res: string },
+    { error: string; message: string; statusCode: number },
+    { providerId: string; channel: ChannelTypeEnum | null; credentials: ICredentialsDto; active: boolean }
+  >(createIntegration);
+
+  const { mutateAsync: updateIntegrationApi } = useMutation<
+    { res: string },
+    { error: string; message: string; statusCode: number },
+    {
+      integrationId: string;
+      data: { credentials: ICredentialsDto; active: boolean };
+    }
+  >(({ integrationId, data }) => updateIntegration(integrationId, data));
+
+  async function onCreatIntegration(credentials: ICredentialsDto) {
+    try {
+      if (createModel) {
+        await createIntegrationApi({
+          providerId: provider?.providerId ? provider?.providerId : '',
+          channel: provider?.channel ? provider?.channel : null,
+          credentials,
+          active: isActive,
+        });
+      } else {
+        await updateIntegrationApi({
+          integrationId: provider?.integrationId ? provider?.integrationId : '',
+          data: { credentials, active: isActive },
+        });
+      }
+    } catch (e: any) {
+      message.warn(`Exception occured while fetching integration: ${e?.messages.toString()}`);
+    }
+
+    message.success(`Successfully ${createModel ? 'added' : 'updated'} integration`);
+
+    showModal(false);
+  }
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    control,
+  } = useForm({ shouldUseNativeValidation: false });
+
+  function handlerSwitchChange() {
+    setIsActive((prev) => !prev);
+  }
 
   return (
-    // eslint-disable-next-line no-console
-    <form onSubmit={handleSubmit((data) => console.log(data))}>
+    <form onSubmit={handleSubmit(onCreatIntegration)}>
       <ColumnDiv>
         <InlineDiv>
           <span>Read our guide on where to get the credentials </span>
@@ -18,14 +79,31 @@ export function ConnectIntegrationForm({ provider }: { provider: IProviderConfig
         </InlineDiv>
         {provider?.credentials.map((credential) => (
           <Controller
+            key={credential.key}
+            name={credential.key}
             control={control}
-            name=" "
-            render={() => <Input label={credential.key} required data-test-id={credential.key} />}
+            render={({ field }) => (
+              <Input
+                label={credential.displayName}
+                placeholder={credential.value ? credential.value : ''}
+                required
+                data-test-id={credential.key}
+                {...field}
+                error={errors[credential.key]?.message}
+                {...register(credential.key, { required: `Please enter a ${credential.displayName.toLowerCase()}` })}
+              />
+            )}
           />
         ))}
         <RowDiv>
           <ActiveWrapper>
-            <Switch />
+            <Controller
+              control={control}
+              name="isActive"
+              render={({ field }) => (
+                <Switch checked={isActive} data-test-id="is_active_id" {...field} onChange={handlerSwitchChange} />
+              )}
+            />
             <StyledText>Active</StyledText>
           </ActiveWrapper>
           <ConnectedWrapper>
@@ -33,7 +111,9 @@ export function ConnectIntegrationForm({ provider }: { provider: IProviderConfig
             <Check />
           </ConnectedWrapper>
         </RowDiv>
-        <Button fullWidth>Connect</Button>
+        <Button submit fullWidth>
+          {createModel ? 'Connect' : 'Update'}
+        </Button>
       </ColumnDiv>
     </form>
   );

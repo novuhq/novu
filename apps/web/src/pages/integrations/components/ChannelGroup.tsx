@@ -1,20 +1,20 @@
 import React from 'react';
 import { Grid } from '@mantine/core';
-import { IProviderConfig } from '@notifire/shared';
 import { ProviderCard } from './ProviderCard';
 import { Title } from '../../../design-system';
+import { IIntegratedProvider } from '../IntegrationsStorePage';
 
 export function ChannelGroup({
   title,
   providers,
   onProviderClick,
 }: {
-  providers: any[];
+  providers: IIntegratedProvider[];
   title: string;
-  onProviderClick: (visible: boolean, provider: IProviderConfig) => void;
+  onProviderClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
-  function handlerOnConnectClick(visible: boolean, provider: IProviderConfig) {
-    onProviderClick(visible, provider);
+  function handlerOnConnectClick(visible: boolean, create: boolean, provider: IIntegratedProvider) {
+    onProviderClick(visible, create, provider);
   }
 
   return (
@@ -23,8 +23,8 @@ export function ChannelGroup({
         <Title size={2}>{title}</Title>
       </Grid.Col>
       {providers.map((provider) => (
-        <Grid.Col span={3} key={provider.id}>
-          <ProviderCard provider={provider} connected active={false} onConnectClick={handlerOnConnectClick} />
+        <Grid.Col span={3} key={provider.providerId}>
+          <ProviderCard provider={provider} onConnectClick={handlerOnConnectClick} />
         </Grid.Col>
       ))}
     </Grid>
