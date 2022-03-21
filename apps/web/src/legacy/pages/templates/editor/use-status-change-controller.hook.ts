@@ -1,6 +1,7 @@
 import { useMutation } from 'react-query';
 import { INotificationTemplate } from '@notifire/shared';
 import { useEffect, useState } from 'react';
+import { message } from 'antd';
 import { updateTemplateStatus } from '../../../../api/templates';
 
 export function useStatusChangeControllerHook(templateId: string, template: INotificationTemplate | undefined) {
@@ -24,6 +25,8 @@ export function useStatusChangeControllerHook(templateId: string, template: INot
       id: templateId,
       active: selected,
     });
+
+    message.success('Status changed successfully');
   }
 
   return {
