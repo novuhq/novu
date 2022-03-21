@@ -26,6 +26,18 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
     },
   });
 
+  useEffect(() => {
+    if (groups?.length && !editMode) {
+      selectFirstGroupByDefault();
+    }
+  }, [groups]);
+
+  function selectFirstGroupByDefault() {
+    setTimeout(() => {
+      setValue('notificationGroup', groups[0]._id);
+    }, 0);
+  }
+
   async function addGroupItem(newGroup) {
     if (newGroup) {
       const response = await createNotificationGroup({
