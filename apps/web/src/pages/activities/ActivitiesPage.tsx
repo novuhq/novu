@@ -13,6 +13,7 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Data, Table } from '../../design-system/table/Table';
 import { Select, Tag, Text, Tooltip, Input } from '../../design-system';
+import { ActivityStatistics } from './components/ActivityStatistics';
 
 interface IFiltersForm {
   channels: ChannelTypeEnum[];
@@ -126,6 +127,7 @@ export function ActivitiesPage() {
   return (
     <PageContainer>
       <PageHeader title="Activity Feed" />
+      <ActivityStatistics />
       <form onChange={handleSubmit(onFiltersChange)}>
         <Group>
           <Controller
