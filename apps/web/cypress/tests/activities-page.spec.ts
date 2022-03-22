@@ -15,14 +15,14 @@ describe('Activity Feed Screen', function () {
       });
   });
 
-  it.only('should display notification templates list', function () {
-    // cy.intercept('*/activity*', (r) => {
-    //   r.continue((res) => {
-    //     res.body.data[0].subscriber.firstName = 'lowercase';
-    //
-    //     res.send({ body: res.body });
-    //   });
-    // });
+  it('should display notification templates list', function () {
+    cy.intercept('*/activity*', (r) => {
+      r.continue((res) => {
+        res.body.data[0].subscriber.firstName = 'lowercase';
+
+        res.send({ body: res.body });
+      });
+    });
 
     cy.visit('/activities');
     cy.getByTestId('activities-table')
@@ -33,12 +33,10 @@ describe('Activity Feed Screen', function () {
 
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-in-app-channel').should('be.visible');
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-email-channel').should('be.visible');
-    // cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
-
-    cy.pause();
+    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
   });
 
-  it('should display stats on top of page', function () {
+  it.skip('should display stats on top of page', function () {
     cy.visit('/activities');
     cy.get('.ant-statistic')
       .contains('Sent this month', {
@@ -65,17 +63,17 @@ describe('Activity Feed Screen', function () {
       });
     });
     cy.visit('/activities');
-    cy.pause();
+
     cy.get('tbody tr').eq(0).get('.ant-badge-status-error').should('be.visible');
     cy.get('tbody tr').eq(1).get('.ant-badge-status-success').should('be.visible');
     cy.get('tbody tr').eq(2).get('.ant-badge-status-warning').should('be.visible');
   });
 
-  it('should filter by email channel', function () {
+  it.skip('should filter by email channel', function () {
     cy.visit('/activities');
     cy.getByTestId('row-email-channel').should('not.have.length', 10);
     cy.getByTestId('activities-filter').click();
-    cy.get('.ant-select-item').contains('Email').click();
+    cy.get('.mantine-MultiSelect-item').contains('Email').click();
     cy.getByTestId('row-email-channel').should('have.length', 10);
   });
 });
