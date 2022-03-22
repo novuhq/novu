@@ -32,7 +32,6 @@ export default function TemplateEditorPage() {
   };
 
   const {
-    selectedMessageType,
     editMode,
     template,
     changeSelectedMessage,
@@ -40,13 +39,11 @@ export default function TemplateEditorPage() {
     trigger,
     isLoading,
     isUpdateLoading,
-    setValue,
     onSubmit,
     loadingEditTemplate,
     activeChannels,
     toggleChannel,
     onTriggerModalDismiss,
-    addMessage,
     handleSubmit,
     control,
     emailMessagesFields,

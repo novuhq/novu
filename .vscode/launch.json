@@ -126,6 +126,20 @@
         "<node_internals>/**"
       ],
       "type": "pwa-node"
+    },
+    {
+      "name": "CORE",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:dev"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/packages/core",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
     }
   ],
   "compounds": [

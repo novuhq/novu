@@ -23,8 +23,9 @@ export function AppLayout() {
     ![
       '/',
       '/templates',
-      '/activities',
       '/settings/widget',
+      '/activities',
+      '/integrations',
       '/templates/create',
       `/templates/edit/${templateId}`,
     ].includes(location.pathname)

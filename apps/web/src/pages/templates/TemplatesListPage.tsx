@@ -1,4 +1,3 @@
-import React from 'react';
 import moment from 'moment';
 import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
 import { Link } from 'react-router-dom';
@@ -11,26 +10,6 @@ import { Tag, Button, Table, colors, Text } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system/tooltip/Tooltip';
 import { Data } from '../../design-system/table/Table';
-
-const ActionButtonWrapper = styled.div`
-  text-align: right;
-
-  a {
-    display: inline-block;
-    opacity: 0;
-    transition: opacity 0.1s ease-in;
-  }
-`;
-
-const TemplateListTableWrapper = styled.div`
-  tr:hover {
-    ${ActionButtonWrapper} {
-      a {
-        opacity: 1;
-      }
-    }
-  }
-`;
 
 function NotificationList() {
   const { templates, loading: isLoading } = useTemplates();
@@ -114,3 +93,23 @@ function NotificationList() {
 }
 
 export default NotificationList;
+
+const ActionButtonWrapper = styled.div`
+  text-align: right;
+
+  a {
+    display: inline-block;
+    opacity: 0;
+    transition: opacity 0.1s ease-in;
+  }
+`;
+
+const TemplateListTableWrapper = styled.div`
+  tr:hover {
+    ${ActionButtonWrapper} {
+      a {
+        opacity: 1;
+      }
+    }
+  }
+`;

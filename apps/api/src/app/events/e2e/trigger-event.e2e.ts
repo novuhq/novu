@@ -11,7 +11,7 @@ import { UserSession, SubscribersService } from '@notifire/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum, IEmailBlock } from '@notifire/shared';
 import axios from 'axios';
-import { mock, stub } from 'sinon';
+import { stub } from 'sinon';
 import { SmsService } from '../../shared/services/sms/sms.service';
 
 const axiosInstance = axios.create();
@@ -30,12 +30,13 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
+    await session.createIntegration();
     subscriberService = new SubscribersService(session.organization._id, session.application._id);
     subscriber = await subscriberService.createSubscriber();
   });
 
   it('should generate logs for the notification', async function () {
-    const response = await axiosInstance.post(
+    await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
@@ -223,7 +224,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         name: template.triggers[0].identifier,
         payload: {
           $user_id: subscriber.subscriberId,
-          $phone: '+972547801111',
+          $phone: '+972541111111',
           $channels: [ChannelTypeEnum.IN_APP],
           firstName: 'Testing of User Name',
         },
@@ -274,7 +275,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         name: template.triggers[0].identifier,
         payload: {
           $user_id: subscriber.subscriberId,
-          $phone: '+972547801111',
+          $phone: '+972541111111',
           $channels: [],
           firstName: 'Testing of User Name',
         },
@@ -321,7 +322,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         name: template.triggers[0].identifier,
         payload: {
           $user_id: subscriber.subscriberId,
-          $phone: '+972547801111',
+          $phone: '+972541111111',
           firstName: 'Testing of User Name',
         },
       },
@@ -339,7 +340,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       channel: ChannelTypeEnum.SMS,
     });
 
-    expect(message.phone).to.equal('+972547801111');
+    expect(message.phone).to.equal('+972541111111');
   });
 
   it('should trigger an sms error', async function () {
@@ -351,14 +352,13 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       ],
     });
-    const mocked = stub(SmsService.prototype, 'sendMessage').throws(new Error('Error from twillio'));
     const { data: body } = await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
         payload: {
           $user_id: subscriber.subscriberId,
-          $phone: '+972547802737',
+          $phone: '+972541111111',
           firstName: 'Testing of User Name',
         },
       },
@@ -375,6 +375,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     expect(message.status).to.equal('error');
-    expect(message.errorText).to.equal('Error from twillio');
+    expect(message.errorText).to.contains('Currently 3rd-party packages test are not support on test env');
   });
 });

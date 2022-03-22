@@ -20,6 +20,7 @@ import PasswordResetPage from './legacy/pages/auth/password-reset';
 import { ThemeContext } from './store/themeContext';
 import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
+import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
@@ -119,6 +120,14 @@ function App() {
                   element={
                     <RequiredAuth>
                       <WidgetSettingsPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/integrations"
+                  element={
+                    <RequiredAuth>
+                      <IntegrationsStore />
                     </RequiredAuth>
                   }
                 />
