@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { Text } from '../../design-system';
 import { DoubleArrowRight } from '../../design-system/icons/arrows/CircleArrowRight';
+import { NavigateValidatorModal } from './NavigateValidatorModal';
 
 export function LackIntegrationError({ channelType }: { channelType: string }) {
+  const [confirmModalVisible, setConfirmModalVisible] = useState<boolean>(false);
+
   return (
     <>
       <WarningMessage>
         <Text>
           {`Looks like you haven’t configured your ${channelType} provider yet, this channel will be disabled until you`}
-          <StyledLink href="/integrations">configure it</StyledLink>
+          <StyledSpan onClick={() => setConfirmModalVisible(true)}>configure it</StyledSpan>
+
+          <NavigateValidatorModal
+            isOpen={confirmModalVisible}
+            setModalVisibility={setConfirmModalVisible}
+            navigateRoute="/integrations"
+            navigateName="integration store"
+          />
         </Text>
         <DoubleArrowRight />
       </WarningMessage>
@@ -30,6 +40,7 @@ const WarningMessage = styled.div`
   border-radius: 7px;
 `;
 
-const StyledLink = styled.a`
+const StyledSpan = styled.span`
   margin-left: 4px;
+  text-decoration: underline;
 `;
