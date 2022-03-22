@@ -9,10 +9,13 @@ import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
 import { useTemplateController } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
-import { TemplateInAppEditor } from '../../../components/templates/TemplateInAppEditor';
+import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
-import { Button } from '../../../design-system';
+import { Button, Switch } from '../../../design-system';
+import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
+import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
+import { useStatusChangeControllerHook } from '../../../legacy/pages/templates/editor/use-status-change-controller.hook';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -29,7 +32,6 @@ export default function TemplateEditorPage() {
   };
 
   const {
-    selectedMessageType,
     editMode,
     template,
     changeSelectedMessage,
@@ -37,13 +39,11 @@ export default function TemplateEditorPage() {
     trigger,
     isLoading,
     isUpdateLoading,
-    setValue,
     onSubmit,
     loadingEditTemplate,
     activeChannels,
     toggleChannel,
     onTriggerModalDismiss,
-    addMessage,
     handleSubmit,
     control,
     emailMessagesFields,
@@ -53,6 +53,11 @@ export default function TemplateEditorPage() {
     methods,
     removeEmailMessage,
   } = useTemplateController(templateId);
+
+  const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
+    templateId,
+    template
+  );
 
   useEffect(() => {
     if (template) {
@@ -66,20 +71,34 @@ export default function TemplateEditorPage() {
     }
   }, [template]);
 
+  if (isLoading) return null;
+
   return (
     <PageContainer>
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
           <PageHeader
-            title="Create New Template"
+            title={editMode ? 'Edit Template' : 'Create new template'}
             actions={
-              <Button
-                data-test-id="submit-btn"
-                loading={isLoading || isUpdateLoading}
-                disabled={loadingEditTemplate || isLoading}
-                submit>
-                {editMode ? 'Update' : 'Create'}
-              </Button>
+              <Group grow spacing={40}>
+                {editMode && (
+                  <Switch
+                    label={isTemplateActive ? 'Enabled' : 'Disabled'}
+                    loading={isStatusChangeLoading}
+                    data-test-id="active-toggle-switch"
+                    onChange={(e) => changeActiveStatus(e.target.checked)}
+                    checked={isTemplateActive || false}
+                  />
+                )}
+                <Button
+                  ml={10}
+                  data-test-id="submit-btn"
+                  loading={isLoading || isUpdateLoading}
+                  disabled={loadingEditTemplate || isLoading}
+                  submit>
+                  {editMode ? 'Update' : 'Create'}
+                </Button>
+              </Group>
             }
           />
           <Group mt={20} align="flex-start" grow>
@@ -90,25 +109,33 @@ export default function TemplateEditorPage() {
               activeChannels={activeChannels}
               channelButtons={channelButtons}
               showTriggerSection={!!template && !!trigger}
+              errors={errors}
+              alertErrors={methods.formState.isDirty && methods.formState.isSubmitted && Object.keys(errors).length > 0}
             />
             <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
               {activePage === 'Settings' && <NotificationSettingsForm errors={errors} editMode={editMode} />}
               {activePage === 'Add' && (
                 <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
               )}
-              {!loadingEditTemplate && activePage === 'in_app'
-                ? inAppFields.map((message, index) => {
-                    return (
-                      <TemplateInAppEditor
-                        disabled={!activeChannels[ChannelTypeEnum.IN_APP]}
-                        key={index}
-                        errors={errors}
-                        control={control}
-                        index={index}
-                      />
-                    );
-                  })
-                : null}
+              {!loadingEditTemplate ? (
+                <div>
+                  {activePage === 'sms' &&
+                    smsFields.map((message, index) => {
+                      return <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />;
+                    })}
+                  {activePage === 'email' && (
+                    <EmailMessagesCards
+                      variables={trigger?.variables || []}
+                      onRemoveTab={removeEmailMessage}
+                      emailMessagesFields={emailMessagesFields}
+                    />
+                  )}
+                  {activePage === 'in_app' &&
+                    inAppFields.map((message, index) => {
+                      return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
+                    })}
+                </div>
+              ) : null}
               {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
               {trigger && (
                 <TemplateTriggerModal

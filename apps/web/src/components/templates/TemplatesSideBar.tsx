@@ -1,4 +1,5 @@
 import { Navbar, useMantineTheme } from '@mantine/core';
+import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@notifire/shared';
 import { colors, TemplateButton, Text } from '../../design-system';
 import {
@@ -10,33 +11,6 @@ import {
   TapeGradient,
 } from '../../design-system/icons';
 
-const templateButtons = [
-  {
-    tabKey: ChannelTypeEnum.IN_APP,
-    label: 'In-App Content',
-    description: 'This subtitle will describe things',
-    Icon: MobileGradient,
-    action: true,
-    channelType: ChannelTypeEnum.IN_APP,
-  },
-  {
-    tabKey: ChannelTypeEnum.EMAIL,
-    label: 'Email Template',
-    description: 'This subtitle will describe things',
-    Icon: MailGradient,
-    channelType: ChannelTypeEnum.EMAIL,
-    action: true,
-  },
-  {
-    tabKey: ChannelTypeEnum.SMS,
-    label: 'SMS',
-    description: 'This subtitle will describe things',
-    Icon: SmsGradient,
-    action: true,
-    channelType: ChannelTypeEnum.SMS,
-  },
-];
-
 export function TemplatesSideBar({
   activeChannels,
   activeTab,
@@ -44,6 +18,7 @@ export function TemplatesSideBar({
   toggleChannel,
   channelButtons,
   showTriggerSection = false,
+  alertErrors,
 }: {
   activeChannels: { [p: string]: boolean };
   activeTab: string;
@@ -51,7 +26,44 @@ export function TemplatesSideBar({
   toggleChannel: (channel: ChannelTypeEnum, active: boolean) => void;
   channelButtons: string[];
   showTriggerSection: boolean;
+  alertErrors: boolean;
+  errors: any;
 }) {
+  const {
+    formState: { errors },
+  } = useFormContext();
+  const templateButtons = [
+    {
+      tabKey: ChannelTypeEnum.IN_APP,
+      label: 'In-App Content',
+      description: 'This subtitle will describe things',
+      Icon: MobileGradient,
+      action: true,
+      testId: 'inAppSelector',
+      channelType: ChannelTypeEnum.IN_APP,
+      areThereErrors: alertErrors && errors['inAppMessages.0.template.content'],
+    },
+    {
+      tabKey: ChannelTypeEnum.EMAIL,
+      label: 'Email Template',
+      description: 'This subtitle will describe things',
+      Icon: MailGradient,
+      testId: 'emailSelector',
+      channelType: ChannelTypeEnum.EMAIL,
+      action: true,
+    },
+    {
+      tabKey: ChannelTypeEnum.SMS,
+      label: 'SMS',
+      description: 'This subtitle will describe things',
+      Icon: SmsGradient,
+      testId: 'smsSelector',
+      action: true,
+      channelType: ChannelTypeEnum.SMS,
+      areThereErrors: alertErrors && errors['smsMessages.0.template.content'],
+    },
+  ];
+
   const links = templateButtons.map(
     (link) =>
       channelButtons.includes(link.tabKey) && (
@@ -76,9 +88,11 @@ export function TemplatesSideBar({
           tabKey="Settings"
           changeTab={changeTab}
           Icon={BellGradient}
+          testId="settingsButton"
           active={activeTab === 'Settings'}
           description="This subtitle will describe things"
           label="Notification Settings"
+          areThereErrors={alertErrors && errors.name}
         />
       </Navbar.Section>
       <Navbar.Section mr={20}>
@@ -90,6 +104,7 @@ export function TemplatesSideBar({
           <TemplateButton
             tabKey="Add"
             changeTab={changeTab}
+            testId="add-channel"
             Icon={PlusGradient}
             active={activeTab === 'Add'}
             description="This subtitle will describe things"
@@ -107,6 +122,7 @@ export function TemplatesSideBar({
               tabKey="TriggerSnippet"
               changeTab={changeTab}
               Icon={TapeGradient}
+              testId="triggerCodeSelector"
               active={activeTab === 'TriggerSnippet'}
               description="This subtitle will describe things"
               label="Trigger Snippet"

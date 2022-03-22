@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { Route, Routes, Navigate, BrowserRouter, Outlet } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
@@ -20,6 +20,7 @@ import PasswordResetPage from './legacy/pages/auth/password-reset';
 import { ThemeContext } from './store/themeContext';
 import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
+import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
@@ -119,6 +120,14 @@ function App() {
                   element={
                     <RequiredAuth>
                       <WidgetSettingsPage />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path="/integrations"
+                  element={
+                    <RequiredAuth>
+                      <IntegrationsStore />
                     </RequiredAuth>
                   }
                 />

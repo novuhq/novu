@@ -8,6 +8,7 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, MantineMargins {
   variant?: 'outline' | 'filled';
   disabled?: boolean;
   icon?: React.ReactNode;
+  fullWidth?: boolean;
   submit?: boolean;
   onClick?: () => void;
   inherit?: boolean;
@@ -23,6 +24,7 @@ export function Button({
   submit = false,
   icon,
   size = 'md',
+  fullWidth,
   disabled = false,
   inherit = false,
   onClick,
@@ -41,6 +43,7 @@ export function Button({
       disabled={disabled}
       size={size}
       loading={loading}
+      fullWidth={fullWidth}
       {...props}>
       {children}
     </MantineButton>

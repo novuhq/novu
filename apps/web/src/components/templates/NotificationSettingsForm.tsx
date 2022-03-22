@@ -1,5 +1,5 @@
 import { Controller, useFormContext } from 'react-hook-form';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useEffect, useState } from 'react';
 import { Grid } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
@@ -7,35 +7,36 @@ import { api } from '../../api/api.client';
 import { Input, Select } from '../../design-system';
 
 export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; errors: any }) => {
+  const queryClient = useQueryClient();
   const {
     formState: { errors },
     setValue,
     control,
   } = useFormContext();
-  const {
-    data: serverGroups,
-    isLoading: loadingGroups,
-    refetch: refetchGroups,
-  } = useQuery('notificationGroups', getNotificationGroups);
-
+  const { data: groups, isLoading: loadingGroups } = useQuery('notificationGroups', getNotificationGroups);
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },
     { error: string; message: string; statusCode: number },
     {
       name: string;
     }
-  >((data) => api.post(`/v1/notification-groups`, data));
-
-  const [groups, setGroups] = useState<{ name: string; _id: string }[]>([]);
+  >((data) => api.post(`/v1/notification-groups`, data), {
+    onSuccess: (data) => {
+      queryClient.setQueryData('notificationGroups', [...groups, data]);
+    },
+  });
 
   useEffect(() => {
-    if (serverGroups) {
-      setGroups(serverGroups);
-      if (!editMode && serverGroups?.length) {
-        setValue('notificationGroup', serverGroups[0]._id);
-      }
+    if (groups?.length && !editMode) {
+      selectFirstGroupByDefault();
     }
-  }, [serverGroups]);
+  }, [groups]);
+
+  function selectFirstGroupByDefault() {
+    setTimeout(() => {
+      setValue('notificationGroup', groups[0]._id);
+    }, 0);
+  }
 
   async function addGroupItem(newGroup) {
     if (newGroup) {
@@ -43,11 +44,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
         name: newGroup,
       });
 
-      await refetchGroups();
-      /**
-       * Wrapped in setTimeout to ensure new created group is the one currently selected
-       */
-      setTimeout(() => setValue('notificationGroup', response._id), 0);
+      setValue('notificationGroup', response._id);
     }
   }
 
@@ -57,10 +54,10 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
         <Controller
           control={control}
           name="name"
-          data-test-id="title"
           render={({ field }) => (
             <Input
               {...field}
+              data-test-id="title"
               value={field.value || ''}
               error={errors.name}
               label="Notification Name"
@@ -70,13 +67,13 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
         />
         <Controller
           name="description"
-          data-test-id="description"
           control={control}
           render={({ field }) => (
             <Input
               mt={35}
               {...field}
               value={field.value || ''}
+              data-test-id="description"
               label="Notification Description"
               placeholder="Describe your notification..."
             />
@@ -86,13 +83,13 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
       <Grid.Col span={6}>
         <Controller
           name="notificationGroup"
-          data-test-id="groupSelector"
           control={control}
           render={({ field }) => (
             <>
               <Select
                 {...field}
                 label="Notification Group"
+                data-test-id="groupSelector"
                 loading={loadingGroups || loadingCreateGroup}
                 creatable
                 searchable
