@@ -1,5 +1,4 @@
 import { IEmailBlock } from '@notifire/shared';
-import { useNavigate } from 'react-router-dom';
 import { useMantineTheme, Group, Container, Card } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import React, { useEffect, useState } from 'react';
@@ -98,7 +97,7 @@ export function EmailMessageEditor({
     return null;
   }
 
-  function navigateToBrandSettings(): string {
+  function getBrandSettingsUrl(): string {
     return '/settings/widget';
   }
 
@@ -142,7 +141,7 @@ export function EmailMessageEditor({
       <NavigateValidatorModal
         isOpen={confirmModalVisible}
         setModalVisibility={setConfirmModalVisible}
-        navigateRoute={navigateToBrandSettings()}
+        navigateRoute={getBrandSettingsUrl()}
         navigateName="settings page"
       />
 
