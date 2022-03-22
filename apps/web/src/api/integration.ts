@@ -5,6 +5,10 @@ export function getIntegrations() {
   return api.get('/v1/integrations');
 }
 
+export function getActiveIntegrations() {
+  return api.get('/v1/integrations/active');
+}
+
 export function createIntegration(data: {
   providerId: string;
   channel: ChannelTypeEnum | null;
