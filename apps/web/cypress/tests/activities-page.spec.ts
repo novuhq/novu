@@ -1,4 +1,4 @@
-describe.skip('Activity Feed Screen', function () {
+describe('Activity Feed Screen', function () {
   beforeEach(function () {
     cy.initializeSession()
       .as('session')
@@ -15,14 +15,14 @@ describe.skip('Activity Feed Screen', function () {
       });
   });
 
-  it('should display notification templates list', function () {
-    cy.intercept('*/activity*', (r) => {
-      r.continue((res) => {
-        res.body.data[0].subscriber.firstName = 'lowercase';
-
-        res.send({ body: res.body });
-      });
-    });
+  it.only('should display notification templates list', function () {
+    // cy.intercept('*/activity*', (r) => {
+    //   r.continue((res) => {
+    //     res.body.data[0].subscriber.firstName = 'lowercase';
+    //
+    //     res.send({ body: res.body });
+    //   });
+    // });
 
     cy.visit('/activities');
     cy.getByTestId('activities-table')
@@ -33,7 +33,9 @@ describe.skip('Activity Feed Screen', function () {
 
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-in-app-channel').should('be.visible');
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-email-channel').should('be.visible');
-    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
+    // cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
+
+    cy.pause();
   });
 
   it('should display stats on top of page', function () {
@@ -63,6 +65,7 @@ describe.skip('Activity Feed Screen', function () {
       });
     });
     cy.visit('/activities');
+    cy.pause();
     cy.get('tbody tr').eq(0).get('.ant-badge-status-error').should('be.visible');
     cy.get('tbody tr').eq(1).get('.ant-badge-status-success').should('be.visible');
     cy.get('tbody tr').eq(2).get('.ant-badge-status-warning').should('be.visible');
