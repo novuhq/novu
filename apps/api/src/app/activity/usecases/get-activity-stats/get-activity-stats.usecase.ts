@@ -10,7 +10,16 @@ export class GetActivityStats {
   async execute(command: GetActivityStatsCommand): Promise<{
     weeklySent: number;
     monthlySent: number;
+    yearlySent: number;
   }> {
+    const yearly = await this.messageRepository.count({
+      _applicationId: command.applicationId,
+      _organizationId: command.organizationId,
+      createdAt: {
+        $gte: String(moment().subtract(1, 'year').toDate()),
+      },
+    });
+
     const monthly = await this.messageRepository.count({
       _applicationId: command.applicationId,
       _organizationId: command.organizationId,
@@ -30,6 +39,7 @@ export class GetActivityStats {
     return {
       weeklySent: weekly,
       monthlySent: monthly,
+      yearlySent: yearly,
     };
   }
 }
