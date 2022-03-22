@@ -65,23 +65,27 @@ export function IntegrationsStore() {
   }, [integrations]);
 
   return (
-    <PageContainer>
-      <PageHeader title="Integration Store" />
+    <>
+      {!isLoading ? (
+        <PageContainer>
+          <PageHeader title="Integration Store" />
 
-      <Modal centered size="lg" overflow="inside" opened={isModalOpened} onClose={() => setModalIsOpened(false)}>
-        <Image radius="md" src={logoSrc} alt={`${provider?.providerId} image`} />
-        <ConnectIntegrationForm
-          provider={provider}
-          showModal={handlerShowModal}
-          createModel={isCreateIntegrationModal}
-        />
-      </Modal>
+          <Modal centered size="lg" overflow="inside" opened={isModalOpened} onClose={() => setModalIsOpened(false)}>
+            <Image radius="md" src={logoSrc} alt={`${provider?.providerId} image`} />
+            <ConnectIntegrationForm
+              provider={provider}
+              showModal={handlerShowModal}
+              createModel={isCreateIntegrationModal}
+            />
+          </Modal>
 
-      <ContentWrapper>
-        <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
-        <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
-      </ContentWrapper>
-    </PageContainer>
+          <ContentWrapper>
+            <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
+          </ContentWrapper>
+        </PageContainer>
+      ) : null}
+    </>
   );
 }
 
