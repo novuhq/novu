@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
-import { LackIntegrationError } from './LackIntegrationError';
+import { LackIntegrationError } from '../LackIntegrationError';
 
 export function EmailContentCard({
   index,

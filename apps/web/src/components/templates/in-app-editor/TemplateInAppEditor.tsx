@@ -4,7 +4,7 @@ import React from 'react';
 import { IForm } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Input } from '../../../design-system';
-import { LackIntegrationError } from '../email-editor/LackIntegrationError';
+import { LackIntegrationError } from '../LackIntegrationError';
 
 export function TemplateInAppEditor({
   control,
