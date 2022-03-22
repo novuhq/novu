@@ -12,6 +12,7 @@ export interface IMessageValidator {
 
 export interface IMessage {
   subject?: string | ((config: ITriggerPayload) => string);
+  providerId?: string;
   channel: ChannelTypeEnum;
   template: string | ((payload: ITriggerPayload) => Promise<string> | string);
   active?: boolean | ((payload: ITriggerPayload) => Promise<boolean> | boolean);
@@ -33,6 +34,7 @@ export interface ITriggerPayload {
   $attachments?: IAttachmentOptions[];
   [key: string]:
     | string
+    | string[]
     | boolean
     | number
     | undefined

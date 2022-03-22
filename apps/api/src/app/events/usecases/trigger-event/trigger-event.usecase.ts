@@ -3,13 +3,13 @@ import {
   ApplicationEntity,
   ApplicationRepository,
   IEmailBlock,
+  IntegrationRepository,
   MessageRepository,
   NotificationEntity,
   NotificationMessagesEntity,
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  IntegrationRepository,
   SubscriberEntity,
   SubscriberRepository,
 } from '@notifire/dal';
@@ -349,30 +349,29 @@ export class TriggerEvent {
         'no_subscriber_phone',
         'Subscriber does not have active phone'
       );
-    } else if (!integration.credentials.from) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          applicationId: command.applicationId,
-          organizationId: command.organizationId,
-          text: 'Integration was not configured with a from phone number',
-          userId: command.userId,
-          subscriberId: subscriber._id,
-          code: LogCodeEnum.MISSING_SMS_PROVIDER,
-          templateId: template._id,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
-      await this.messageRepository.updateMessageStatus(
-        message._id,
+    } else if (!integration) {
+      await this.sendErrorStatus(
+        message,
         'warning',
-        null,
+        'sms_missing_integration_error',
+        'Subscriber does not have an active sms integration',
+        command,
+        notification,
+        subscriber,
+        template,
+        LogCodeEnum.MISSING_SMS_INTEGRATION
+      );
+    } else if (!integration?.credentials?.from) {
+      await this.sendErrorStatus(
+        message,
+        'warning',
         'no_integration_from_phone',
-        'Integration does not have from phone'
+        'Integration does not have from phone configured',
+        command,
+        notification,
+        subscriber,
+        template,
+        LogCodeEnum.MISSING_SMS_PROVIDER
       );
     }
   }
@@ -563,9 +562,9 @@ export class TriggerEvent {
       const errorId = 'mail_unexpected_error';
 
       if (!email) {
-        const mailErrorMessage = `${errorMessage} email adress`;
+        const mailErrorMessage = `${errorMessage} email address`;
 
-        await this.sendMailStatus(
+        await this.sendErrorStatus(
           message,
           status,
           errorId,
@@ -573,13 +572,14 @@ export class TriggerEvent {
           command,
           notification,
           subscriber,
-          template
+          template,
+          LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
         );
       }
       if (!integration) {
-        const integrationError = `${errorMessage} active integration  was found`;
+        const integrationError = `${errorMessage} active email integration not found`;
 
-        await this.sendMailStatus(
+        await this.sendErrorStatus(
           message,
           status,
           errorId,
@@ -587,13 +587,14 @@ export class TriggerEvent {
           command,
           notification,
           subscriber,
-          template
+          template,
+          LogCodeEnum.MISSING_EMAIL_INTEGRATION
         );
       }
     }
   }
 
-  private async sendMailStatus(
+  private async sendErrorStatus(
     message,
     status: 'error' | 'sent' | 'warning',
     errorId: string,
@@ -601,7 +602,8 @@ export class TriggerEvent {
     command: TriggerEventCommand,
     notification,
     subscriber,
-    template
+    template,
+    logCodeEnum: LogCodeEnum
   ) {
     await this.messageRepository.updateMessageStatus(message._id, status, null, errorId, errorMessage);
 
@@ -615,7 +617,7 @@ export class TriggerEvent {
         text: errorMessage,
         userId: command.userId,
         subscriberId: subscriber._id,
-        code: LogCodeEnum.SUBSCRIBER_MISSING_EMAIL,
+        code: logCodeEnum,
         templateId: template._id,
       })
     );

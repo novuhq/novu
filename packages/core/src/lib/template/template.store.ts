@@ -19,16 +19,11 @@ export class TemplateStore {
     const messages = [];
 
     for (const message of template.messages) {
-      let active = true;
-      if (message.active != null) {
-        if (typeof message.active === 'boolean') {
-          active = message.active;
-        } else if (typeof message.active === 'function') {
-          active = await message.active(data);
-        }
-      }
-
-      if (active) {
+      if (
+        (typeof message.active === 'boolean' && message.active) ||
+        typeof message.active === 'undefined' ||
+        (typeof message.active === 'function' && (await message.active(data)))
+      ) {
         messages.push(message);
       }
     }

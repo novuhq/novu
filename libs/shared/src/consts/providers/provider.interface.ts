@@ -198,7 +198,7 @@ export const plivoConfig: IConfigCredentials[] = [
     type: 'string',
   },
   {
-    key: 'authToken',
+    key: 'token',
     displayName: 'Auth token',
     type: 'string',
   },
@@ -260,7 +260,7 @@ export const twilioConfig: IConfigCredentials[] = [
     type: 'string',
   },
   {
-    key: 'authToken',
+    key: 'token',
     displayName: 'Auth token',
     type: 'string',
   },
