@@ -11,8 +11,8 @@ test('should register an SMS provider and return it', async () => {
       Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
-  await notifire.registerProvider(template);
-  const provider = await notifire.getProviderById('test');
+  await notifire.registerProvider('sms', template);
+  const provider = await notifire.getProviderByInternalId('test');
 
   expect(provider).toBeTruthy();
   expect(provider?.id).toEqual('test');
@@ -28,7 +28,7 @@ test('should call 2 hooks', async () => {
       Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
-  await notifire.registerProvider(template);
+  await notifire.registerProvider('sms', template);
   await notifire.registerTemplate({
     id: 'test-template',
     messages: [
