@@ -9,6 +9,7 @@ import {
   useMantineTheme,
   MantineMargins,
   LoadingOverlay,
+  SelectItem,
 } from '@mantine/core';
 import useStyles from './Select.styles';
 import { inputStyles } from '../config/inputs.styles';
@@ -30,6 +31,7 @@ interface ISelectProps extends MantineMargins {
   creatable?: boolean;
   loading?: boolean;
   type?: 'multiselect' | 'select';
+  filter?: (value: string, item: SelectItem) => boolean;
 }
 
 /**
@@ -42,6 +44,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
       data,
       type = 'select',
       value,
+      filter,
       searchable = false,
       creatable = false,
       loading = false,
@@ -68,6 +71,20 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
     } as InputBaseProps;
     const multiselect = type === 'multiselect';
 
+    let filterResults: ((value: string, item: SelectItem) => boolean) | undefined = filter;
+
+    if (creatable && !filter) {
+      filterResults = (currentValue, _) => {
+        const isEmptyValue = !currentValue;
+        const includedInExistingGroups = !!data.find((group) => {
+          return (group as SelectItem)?.label?.toLowerCase().includes(currentValue.toLowerCase());
+        });
+        const showAllOptionsInSelect = isEmptyValue || includedInExistingGroups;
+
+        return showAllOptionsInSelect;
+      };
+    }
+
     return (
       <div style={{ position: 'relative', minHeight: 50 }}>
         <LoadingOverlay
@@ -85,7 +102,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             value={value as string[] | undefined}
             {...defaultDesign}
             {...searchableSelectProps}
-            creatable
+            creatable={creatable}
             data={data}
             valueComponent={Value}
             {...props}
@@ -97,7 +114,8 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             autoComplete="nope"
             {...defaultDesign}
             {...searchableSelectProps}
-            creatable
+            creatable={creatable}
+            filter={filterResults}
             onChange={onChange}
             data={data}
             {...props}

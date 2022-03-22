@@ -41,7 +41,7 @@ export function TemplatesSideBar({
       action: true,
       testId: 'inAppSelector',
       channelType: ChannelTypeEnum.IN_APP,
-      areThereErrors: true,
+      areThereErrors: alertErrors && errors['inAppMessages.0.template.content'],
     },
     {
       tabKey: ChannelTypeEnum.EMAIL,
@@ -60,6 +60,7 @@ export function TemplatesSideBar({
       testId: 'smsSelector',
       action: true,
       channelType: ChannelTypeEnum.SMS,
+      areThereErrors: alertErrors && errors['smsMessages.0.template.content'],
     },
   ];
 
