@@ -77,7 +77,7 @@ export function IntegrationsStore() {
         />
       </Modal>
 
-      <ContentWrapper isLoading={isLoading}>
+      <ContentWrapper>
         <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
         <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
       </ContentWrapper>
@@ -85,7 +85,7 @@ export function IntegrationsStore() {
   );
 }
 
-const ContentWrapper = styled.div<{ isLoading: boolean }>`
+const ContentWrapper = styled.div`
   padding: 0 30px;
 `;
 
