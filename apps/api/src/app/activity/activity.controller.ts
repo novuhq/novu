@@ -6,10 +6,16 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetActivityStats } from './usecases/get-activity-stats/get-activity-stats.usecase';
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
+import { GetActivityGraphStats } from './usecases/get-acticity-graph-states/get-acticity-graph-states.usecase';
+import { GetActivityGraphStatsCommand } from './usecases/get-acticity-graph-states/get-acticity-graph-states.command';
 
 @Controller('/activity')
 export class ActivityController {
-  constructor(private getActivityFeedUsecase: GetActivityFeed, private getActivityStatsUsecase: GetActivityStats) {}
+  constructor(
+    private getActivityFeedUsecase: GetActivityFeed,
+    private getActivityStatsUsecase: GetActivityStats,
+    private getActivityGraphStatsUsecase: GetActivityGraphStats
+  ) {}
 
   @Get('')
   @UseGuards(JwtAuthGuard)
@@ -49,6 +55,19 @@ export class ActivityController {
   getActivityStats(@UserSession() user: IJwtPayload, @Query('page') page = 0) {
     return this.getActivityStatsUsecase.execute(
       GetActivityStatsCommand.create({
+        organizationId: user.organizationId,
+        applicationId: user.applicationId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @Get('/graph/stats')
+  @UseGuards(JwtAuthGuard)
+  getActivityGraphStats(@UserSession() user: IJwtPayload, @Query('days') days = 32) {
+    return this.getActivityGraphStatsUsecase.execute(
+      GetActivityGraphStatsCommand.create({
+        days: days ? Number(days) : 32,
         organizationId: user.organizationId,
         applicationId: user.applicationId,
         userId: user._id,
