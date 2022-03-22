@@ -26,7 +26,7 @@ export function ProviderCard({
   }
 
   return (
-    <StyledCard colorScheme={colorScheme} active={provider.active}>
+    <StyledCard colorScheme={colorScheme} active={provider.active} data-test-id="integration-provider-card">
       {provider.comingSoon && (
         <RibbonWrapper>
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
@@ -35,7 +35,9 @@ export function ProviderCard({
       <StyledGroup position="apart" direction="column">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
-          {provider.connected ? <Settings onClick={handleOnClickSettings} /> : null}
+          {provider.connected ? (
+            <Settings data-test-id="provider-card-settings-svg" onClick={handleOnClickSettings} />
+          ) : null}
         </CardHeader>
 
         <CardFooter>
