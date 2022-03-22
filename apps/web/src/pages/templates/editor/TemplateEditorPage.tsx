@@ -16,11 +16,13 @@ import { Button, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 import { useStatusChangeControllerHook } from '../../../legacy/pages/templates/editor/use-status-change-controller.hook';
+import { useActiveIntegrations } from '../../../api/hooks';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const [activePage, setActivePage] = useState<string>('Settings');
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
+  const { integrations, loading: isIntegrationsLoading } = useActiveIntegrations();
 
   const handleAddChannel = (tabKey) => {
     const foundChannel = channelButtons.find((item) => item === tabKey);
@@ -120,22 +122,39 @@ export default function TemplateEditorPage() {
               {activePage === 'Add' && (
                 <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
               )}
-              {!loadingEditTemplate ? (
+              {!loadingEditTemplate && !isIntegrationsLoading ? (
                 <div>
                   {activePage === 'sms' &&
                     smsFields.map((message, index) => {
-                      return <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />;
+                      return (
+                        <TemplateSMSEditor
+                          key={index}
+                          control={control}
+                          index={index}
+                          errors={errors}
+                          isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.SMS)}
+                        />
+                      );
                     })}
                   {activePage === 'email' && (
                     <EmailMessagesCards
                       variables={trigger?.variables || []}
                       onRemoveTab={removeEmailMessage}
                       emailMessagesFields={emailMessagesFields}
+                      isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.EMAIL)}
                     />
                   )}
                   {activePage === 'in_app' &&
                     inAppFields.map((message, index) => {
-                      return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
+                      return (
+                        <TemplateInAppEditor
+                          key={index}
+                          errors={errors}
+                          control={control}
+                          index={index}
+                          isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.IN_APP)}
+                        />
+                      );
                     })}
                 </div>
               ) : null}

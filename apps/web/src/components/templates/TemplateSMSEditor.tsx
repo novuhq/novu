@@ -1,28 +1,42 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { Textarea } from '@mantine/core';
+import React from 'react';
 import { IForm } from '../../legacy/pages/templates/editor/use-template-controller.hook';
+import { LackIntegrationError } from './email-editor/LackIntegrationError';
 
-export function TemplateSMSEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
+export function TemplateSMSEditor({
+  control,
+  index,
+  isIntegrationActive,
+}: {
+  control: Control<IForm>;
+  index: number;
+  errors: any;
+  isIntegrationActive: boolean;
+}) {
   const {
     formState: { errors },
   } = useFormContext();
 
   return (
-    <Controller
-      name={`smsMessages.${index}.template.content` as any}
-      data-test-id="smsNotificationContent"
-      control={control}
-      render={({ field }) => (
-        <Textarea
-          styles={TextAreaStyles}
-          {...field}
-          error={errors[`smsMessages.${index}.template.content`]}
-          minRows={4}
-          label="SMS message content"
-          placeholder="Add notification content here..."
-        />
-      )}
-    />
+    <>
+      {!isIntegrationActive ? <LackIntegrationError channelType="SMS" /> : null}
+      <Controller
+        name={`smsMessages.${index}.template.content` as any}
+        data-test-id="smsNotificationContent"
+        control={control}
+        render={({ field }) => (
+          <Textarea
+            styles={TextAreaStyles}
+            {...field}
+            error={errors[`smsMessages.${index}.template.content`]}
+            minRows={4}
+            label="SMS message content"
+            placeholder="Add notification content here..."
+          />
+        )}
+      />
+    </>
   );
 }
 
