@@ -60,7 +60,11 @@ export class Notifire extends EventEmitter {
   );
 
   async registerProvider(
-    providerOrProviderId: any,
+    providerOrProviderId:
+      | string
+      | IEmailProvider
+      | ISmsProvider
+      | IDirectProvider,
     provider?: IEmailProvider | ISmsProvider | IDirectProvider
   ) {
     await this.providerStore.addProvider(
