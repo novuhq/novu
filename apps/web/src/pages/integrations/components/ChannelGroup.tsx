@@ -23,7 +23,7 @@ export function ChannelGroup({
         <Title size={2}>{title}</Title>
       </Grid.Col>
       {providers.map((provider) => (
-        <Grid.Col span={3} key={provider.providerId}>
+        <Grid.Col sm={6} md={4} key={provider.providerId}>
           <ProviderCard provider={provider} onConnectClick={handlerOnConnectClick} />
         </Grid.Col>
       ))}

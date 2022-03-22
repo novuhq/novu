@@ -103,6 +103,7 @@ const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }
   padding: 25px;
   height: 200px;
   width: 100%;
+  min-width: 205px;
   transition: all 0.15s ease-in;
   position: relative;
   overflow: hidden;
