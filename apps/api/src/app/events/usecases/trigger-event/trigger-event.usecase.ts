@@ -366,7 +366,7 @@ export class TriggerEvent {
         message,
         'warning',
         'no_integration_from_phone',
-        'Subscriber does not have an configured with a from phone number',
+        'Integration does not have from phone configured',
         command,
         notification,
         subscriber,
@@ -577,7 +577,7 @@ export class TriggerEvent {
         );
       }
       if (!integration) {
-        const integrationError = `${errorMessage} active email integration`;
+        const integrationError = `${errorMessage} active email integration not found`;
 
         await this.sendErrorStatus(
           message,

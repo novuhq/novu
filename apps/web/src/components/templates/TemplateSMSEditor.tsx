@@ -22,19 +22,20 @@ export function TemplateSMSEditor({
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="SMS" /> : null}
       <Controller
-        name={`smsMessages.${index}.template.content` as any}
-        data-test-id="smsNotificationContent"
-        control={control}
-        render={({ field }) => (
-          <Textarea
-            styles={TextAreaStyles}
-            {...field}
-            error={errors[`smsMessages.${index}.template.content`]}
-            minRows={4}
-            label="SMS message content"
-            placeholder="Add notification content here..."
-          />
-        )}
+      name={`smsMessages.${index}.template.content` as any}
+      control={control}
+      render={({ field }) => (
+        <Textarea
+          styles={TextAreaStyles}
+          {...field}
+          data-test-id="smsNotificationContent"
+          error={errors[`smsMessages.${index}.template.content`]}
+          minRows={4}
+          value={field.value || ''}
+          label="SMS message content"
+          placeholder="Add notification content here..."
+        />
+      )}
       />
     </>
   );

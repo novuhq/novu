@@ -47,9 +47,9 @@ export class TriggerEngine {
     message: IMessage,
     data: ITriggerPayload
   ) {
-    const provider = await this.providerStore.getProviderByChannel(
-      message.channel
-    );
+    const provider = message.providerId
+      ? await this.providerStore.getProviderById(message.providerId)
+      : await this.providerStore.getProviderByChannel(message.channel);
 
     if (!provider) {
       throw new Error(`Provider for ${message.channel} channel was not found`);

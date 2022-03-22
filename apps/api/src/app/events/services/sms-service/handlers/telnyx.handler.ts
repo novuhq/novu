@@ -7,6 +7,7 @@ export class TelnyxHandler extends BaseSmsHandler {
   constructor() {
     super('telnyx', ChannelTypeEnum.SMS);
   }
+
   buildProvider(credentials: ICredentials) {
     const config: {
       apiKey: string;
