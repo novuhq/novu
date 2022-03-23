@@ -226,14 +226,13 @@ describe('Notifications Creator', function () {
       .should('have.attr', 'src', 'https://notifire.co/img/logo.png');
   });
 
-  it.skip('should support RTL text content', function () {
+  it('should support RTL text content', function () {
     cy.visit('/templates/create');
-    cy.getByTestId('emailSelector').click({ force: true });
+    addChannel('email');
+
     cy.getByTestId('settings-row-btn').eq(0).invoke('show').click();
     cy.getByTestId('editable-text-content').should('have.css', 'direction', 'ltr');
-    cy.getByTestId('style-setting-row-btn-drawer').click();
-    cy.getByTestId('text-direction-input').get('.ant-radio-button-wrapper').contains('RTL').click();
-    cy.getByTestId('drawer-submit-btn').click();
+    cy.getByTestId('align-right-btn').click();
     cy.getByTestId('editable-text-content').should('have.css', 'direction', 'rtl');
   });
 

@@ -46,8 +46,12 @@ export function ContentRow({
   const rowStyleMenu = [
     <DropdownItem key="ltr" sx={{ '&:hover': { backgroundColor: 'transparent' } }}>
       <RadioGroup value={textDirection} onChange={changeRowStyles}>
-        <Radio value="ltr">Align Left</Radio>
-        <Radio value="rtl">Align Right</Radio>
+        <Radio value="ltr" data-test-id="align-left-btn">
+          Align Left
+        </Radio>
+        <Radio value="rtl" data-test-id="align-right-btn">
+          Align Right
+        </Radio>
       </RadioGroup>
     </DropdownItem>,
     <DropdownItem
