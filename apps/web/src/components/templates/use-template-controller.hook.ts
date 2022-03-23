@@ -13,7 +13,7 @@ import { useMutation, useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { createTemplate, getTemplateById, updateTemplate } from '../../../../api/templates';
+import { createTemplate, getTemplateById, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
 
 export interface ITemplateMessage {
