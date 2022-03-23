@@ -88,7 +88,7 @@ export function useTemplateController(templateId: string) {
       const errors: any = {};
       let values = data;
       if (!data.name) {
-        errors.name = 'Required field';
+        errors.name = 'Required field name';
       }
 
       if (activeChannels[ChannelTypeEnum.IN_APP]) {
@@ -236,7 +236,7 @@ export function useTemplateController(templateId: string) {
           cta: {
             type: ChannelCTATypeEnum.REDIRECT,
             data: {
-              url: item.template.cta?.data.url,
+              url: item.template.cta?.data?.url,
             },
           },
         });
@@ -276,6 +276,7 @@ export function useTemplateController(templateId: string) {
     };
 
     try {
+      console.log(editMode);
       if (editMode) {
         await updateNotification({
           id: templateId,

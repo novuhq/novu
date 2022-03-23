@@ -26,12 +26,13 @@ export function EmailContentCard({
   const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
+    console.log(contentType);
     if (contentType === 'customHtml') {
       setActiveTab(1);
     } else {
       setActiveTab(0);
     }
-  }, []);
+  }, [contentType]);
 
   const onTabChange = (tabIndex) => {
     setActiveTab(tabIndex);
