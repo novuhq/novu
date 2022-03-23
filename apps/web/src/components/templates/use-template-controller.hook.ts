@@ -276,7 +276,6 @@ export function useTemplateController(templateId: string) {
     };
 
     try {
-      console.log(editMode);
       if (editMode) {
         await updateNotification({
           id: templateId,
