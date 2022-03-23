@@ -11,6 +11,7 @@ COPY apps/api ./apps/api
 COPY libs/dal ./libs/dal
 COPY libs/testing ./libs/testing
 COPY libs/shared ./libs/shared
+COPY providers ./providers
 
 COPY tsconfig.json .
 COPY tsconfig.base.json .
