@@ -18,7 +18,7 @@ const getFilledStyles = (theme) => ({
   boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.color,
 });
 
-const getOutlineStyles = (theme, disabled, variant?: 'outline' | 'filled') => {
+const getOutlineStyles = (theme, disabled) => {
   const dark = theme.colorScheme === 'dark';
   const backgroundColor = getGradient(dark ? colors.BGDark : theme.white);
   const disabledBorderColor = getGradient(dark ? colors.B20 : colors.BGLight);

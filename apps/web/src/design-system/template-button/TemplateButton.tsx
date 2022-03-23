@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UnstyledButton, Group, Popover } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
