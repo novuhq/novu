@@ -11,7 +11,6 @@ export default createStyles((theme: MantineTheme) => {
     },
     dropdown: {
       backgroundColor: dark ? theme.colors.dark[4] : theme.white,
-      height: '140px',
       borderRadius: '7px',
       padding: '5px',
       border: 'none',
@@ -29,7 +28,7 @@ export default createStyles((theme: MantineTheme) => {
       lineHeight: '20px',
     },
     values: {
-      height: '49px',
+      height: 'auto',
       lineHeight: '50px',
     },
     value: {
@@ -45,6 +44,5 @@ export default createStyles((theme: MantineTheme) => {
     hovered: {
       backgroundColor: dark ? theme.colors.dark[5] : theme.colors.gray[2],
     },
-    searchInputInputHidden: { width: 'inherit' },
   };
 });
