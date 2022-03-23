@@ -1,8 +1,8 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { Textarea } from '@mantine/core';
 import React from 'react';
-import { IForm } from '../../legacy/pages/templates/editor/use-template-controller.hook';
 import { LackIntegrationError } from './LackIntegrationError';
+import { IForm } from './use-template-controller.hook';
 
 export function TemplateSMSEditor({
   control,

@@ -2,6 +2,20 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "API - TEST ENV",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:test"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/api",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
       "name": "API",
       "request": "launch",
       "runtimeArgs": [

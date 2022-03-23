@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Grid, Group } from '@mantine/core';
 import { ChannelTypeEnum } from '@notifire/shared';
+import styled from '@emotion/styled';
 import { colors, shadows, Text } from '../../../design-system';
 import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 
@@ -51,6 +52,7 @@ export const AddChannelsPage = ({
                 height: '200px',
                 opacity: selected ? '0.5' : '1',
                 [`&:hover`]: {
+                  cursor: 'pointer',
                   ...(!selected
                     ? {
                         backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,

@@ -1,0 +1,8 @@
+{
+  "mochaExplorer.configFile": ".mocharc.json",
+  "mochaExplorer.files": ["e2e/setup.ts", "e2e/**/*.e2e.ts", "src/**/*.e2e.ts", "src/**/**/*.spec.ts"],
+  "mochaExplorer.require": ["ts-node/register"],
+  "mochaExplorer.env": {
+    "NODE_ENV": "test"
+  }
+}
