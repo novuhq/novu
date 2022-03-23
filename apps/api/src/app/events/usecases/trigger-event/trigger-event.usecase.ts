@@ -3,6 +3,7 @@ import {
   ApplicationEntity,
   ApplicationRepository,
   IEmailBlock,
+  IntegrationRepository,
   MessageRepository,
   NotificationEntity,
   NotificationMessagesEntity,
@@ -14,6 +15,7 @@ import {
 } from '@notifire/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@notifire/shared';
 import * as Sentry from '@sentry/node';
+import { IEmailOptions } from '@notifire/core';
 import { TriggerEventCommand } from './trigger-event.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -22,13 +24,16 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
-import { ISendMail, MailService } from '../../../shared/services/mail/mail.service';
+import { MailService } from '../../../shared/services/mail/mail.service';
 import { QueueService } from '../../../shared/services/queue';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { SmsService } from '../../../shared/services/sms/sms.service';
+import { SmsFactory } from '../../services/sms-service/sms.factory';
+import { MailFactory } from '../../services/mail-service/mail.factory';
 
 @Injectable()
 export class TriggerEvent {
+  private mailFactory = new MailFactory();
+  private smsFactory = new SmsFactory();
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private subscriberRepository: SubscriberRepository,
@@ -40,7 +45,8 @@ export class TriggerEvent {
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
     private analyticsService: AnalyticsService,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private integrationRepository: IntegrationRepository
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -75,7 +81,7 @@ export class TriggerEvent {
     );
 
     if (!template) {
-      this.createLogUsecase.execute(
+      await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
@@ -97,7 +103,7 @@ export class TriggerEvent {
     }
 
     if (!template.active || template.draft) {
-      this.createLogUsecase.execute(
+      await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
@@ -139,7 +145,7 @@ export class TriggerEvent {
           })
         );
       } else {
-        this.createLogUsecase.execute(
+        await this.createLogUsecase.execute(
           CreateLogCommand.create({
             transactionId: command.transactionId,
             status: LogStatusEnum.ERROR,
@@ -195,7 +201,7 @@ export class TriggerEvent {
     }
 
     if (smsMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.SMS)) {
-      await this.sendSmsMessage(smsMessages, command, notification, subscriber, template, application);
+      await this.sendSmsMessage(smsMessages, command, notification, subscriber, template);
     }
 
     if (inAppChannelMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.IN_APP)) {
@@ -206,7 +212,7 @@ export class TriggerEvent {
       await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, application);
     }
 
-    this.createLogUsecase.execute(
+    await this.createLogUsecase.execute(
       CreateLogCommand.create({
         transactionId: command.transactionId,
         status: LogStatusEnum.INFO,
@@ -254,8 +260,7 @@ export class TriggerEvent {
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
-    template: NotificationTemplateEntity,
-    application: ApplicationEntity
+    template: NotificationTemplateEntity
   ) {
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
@@ -277,23 +282,24 @@ export class TriggerEvent {
       content,
     });
 
-    if (
-      command.payload.$phone &&
-      application.channels?.sms?.twillio?.authToken &&
-      application.channels?.sms?.twillio?.accountSid
-    ) {
+    const integration = await this.integrationRepository.findOne({
+      _applicationId: command.applicationId,
+      channel: ChannelTypeEnum.SMS,
+      active: true,
+    });
+
+    if (command.payload.$phone && integration) {
       try {
-        const smsService = new SmsService(
-          application.channels?.sms?.twillio?.authToken,
-          application.channels?.sms?.twillio?.accountSid
-        );
-        const smsResponse = await smsService.sendMessage(
-          command.payload.$phone,
-          application.channels?.sms?.twillio?.phoneNumber,
-          content
-        );
+        const smsHandler = this.smsFactory.getHandler(integration);
+
+        await smsHandler.send({
+          to: command.payload.$phone,
+          from: integration.credentials.from,
+          content,
+          attachments: null,
+        });
       } catch (e) {
-        this.createLogUsecase.execute(
+        await this.createLogUsecase.execute(
           CreateLogCommand.create({
             transactionId: command.transactionId,
             status: LogStatusEnum.ERROR,
@@ -319,7 +325,7 @@ export class TriggerEvent {
         );
       }
     } else if (!command.payload.$phone) {
-      this.createLogUsecase.execute(
+      await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
@@ -343,30 +349,29 @@ export class TriggerEvent {
         'no_subscriber_phone',
         'Subscriber does not have active phone'
       );
-    } else if (!application.channels?.sms?.twillio?.authToken) {
-      this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          applicationId: command.applicationId,
-          organizationId: command.organizationId,
-          text: 'No sms provider was configured',
-          userId: command.userId,
-          subscriberId: subscriber._id,
-          code: LogCodeEnum.MISSING_SMS_PROVIDER,
-          templateId: template._id,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
-      await this.messageRepository.updateMessageStatus(
-        message._id,
+    } else if (!integration) {
+      await this.sendErrorStatus(
+        message,
         'warning',
-        null,
-        'no_sms_provider_connection',
-        'No SMS provider token found'
+        'sms_missing_integration_error',
+        'Subscriber does not have an active sms integration',
+        command,
+        notification,
+        subscriber,
+        template,
+        LogCodeEnum.MISSING_SMS_INTEGRATION
+      );
+    } else if (!integration?.credentials?.from) {
+      await this.sendErrorStatus(
+        message,
+        'warning',
+        'no_integration_from_phone',
+        'Integration does not have from phone configured',
+        command,
+        notification,
+        subscriber,
+        template,
+        LogCodeEnum.MISSING_SMS_PROVIDER
       );
     }
   }
@@ -412,7 +417,7 @@ export class TriggerEvent {
       ChannelTypeEnum.IN_APP
     );
 
-    this.createLogUsecase.execute(
+    await this.createLogUsecase.execute(
       CreateLogCommand.create({
         transactionId: command.transactionId,
         status: LogStatusEnum.SUCCESS,
@@ -432,7 +437,7 @@ export class TriggerEvent {
       })
     );
 
-    this.queueService.wsSocketQueue.add({
+    await this.queueService.wsSocketQueue.add({
       event: 'unseen_count_changed',
       userId: subscriber._id,
       payload: {
@@ -503,18 +508,25 @@ export class TriggerEvent {
       })
     );
 
-    const mailData: ISendMail = {
-      from: {
-        name: command.payload.$sender_name || application.channels?.email?.senderName || application.name,
-        email: command.payload.$sender_email || application.channels?.email?.senderEmail || 'no-reply@notifire.co',
-      },
-      html,
-      subject,
+    const mailData: IEmailOptions = {
       to: email,
+      subject,
+      html,
+      from: command.payload.$sender_email || application.channels?.email?.senderEmail || 'no-reply@notifire.co',
     };
 
-    if (email) {
-      this.mailService.sendMail(mailData).catch((error) => {
+    const integration = await this.integrationRepository.findOne({
+      _applicationId: command.applicationId,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+    });
+
+    if (email && integration) {
+      const mailHandler = this.mailFactory.getHandler(integration, mailData.from);
+
+      try {
+        await mailHandler.send(mailData);
+      } catch (error) {
         Sentry.captureException(error?.response?.body || error?.response || error);
         this.messageRepository.updateMessageStatus(
           message._id,
@@ -523,8 +535,7 @@ export class TriggerEvent {
           'mail_unexpected_error',
           'Error while sending email with provider'
         );
-
-        this.createLogUsecase.execute(
+        await this.createLogUsecase.execute(
           CreateLogCommand.create({
             transactionId: command.transactionId,
             status: LogStatusEnum.ERROR,
@@ -544,30 +555,71 @@ export class TriggerEvent {
             },
           })
         );
-      });
+      }
     } else {
-      await this.messageRepository.updateMessageStatus(
-        message._id,
-        'warning',
-        null,
-        'mail_unexpected_error',
-        'Subscriber does not have an email address'
-      );
+      const errorMessage = 'Subscriber does not have an';
+      const status = 'warning';
+      const errorId = 'mail_unexpected_error';
 
-      this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          applicationId: command.applicationId,
-          organizationId: command.organizationId,
-          notificationId: notification._id,
-          text: 'Subscriber does not have an email address',
-          userId: command.userId,
-          subscriberId: subscriber._id,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_EMAIL,
-          templateId: template._id,
-        })
-      );
+      if (!email) {
+        const mailErrorMessage = `${errorMessage} email address`;
+
+        await this.sendErrorStatus(
+          message,
+          status,
+          errorId,
+          mailErrorMessage,
+          command,
+          notification,
+          subscriber,
+          template,
+          LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
+        );
+      }
+      if (!integration) {
+        const integrationError = `${errorMessage} active email integration not found`;
+
+        await this.sendErrorStatus(
+          message,
+          status,
+          errorId,
+          integrationError,
+          command,
+          notification,
+          subscriber,
+          template,
+          LogCodeEnum.MISSING_EMAIL_INTEGRATION
+        );
+      }
     }
+  }
+
+  private async sendErrorStatus(
+    message,
+    status: 'error' | 'sent' | 'warning',
+    errorId: string,
+    errorMessage: string,
+    command: TriggerEventCommand,
+    notification,
+    subscriber,
+    template,
+    logCodeEnum: LogCodeEnum
+  ) {
+    await this.messageRepository.updateMessageStatus(message._id, status, null, errorId, errorMessage);
+
+    await this.createLogUsecase.execute(
+      CreateLogCommand.create({
+        transactionId: command.transactionId,
+        status: LogStatusEnum.ERROR,
+        applicationId: command.applicationId,
+        organizationId: command.organizationId,
+        notificationId: notification._id,
+        text: errorMessage,
+        userId: command.userId,
+        subscriberId: subscriber._id,
+        code: logCodeEnum,
+        templateId: template._id,
+      })
+    );
   }
 }

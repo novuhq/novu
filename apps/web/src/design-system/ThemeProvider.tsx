@@ -8,7 +8,7 @@ declare module '@mantine/core' {
 }
 
 export function ThemeProvider({ children, dark = true }: { children: JSX.Element; dark?: Boolean }) {
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('dark');
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'));
 
@@ -19,7 +19,7 @@ export function ThemeProvider({ children, dark = true }: { children: JSX.Element
         // withNormalizeCSS
         theme={{
           // Override any other properties from default theme
-          colorScheme: dark ? 'dark' : 'light',
+          colorScheme,
           ...mantineConfig,
         }}>
         <Global

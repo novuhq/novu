@@ -16,7 +16,7 @@ export class UpdateIntegration {
 
     const updatePayload: Partial<IntegrationEntity> = {};
 
-    if (command.active) {
+    if (command.active || command.active === false) {
       updatePayload.active = command.active;
     }
 
