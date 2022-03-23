@@ -34,15 +34,7 @@ describe('Integration store page', function () {
 
     cy.visit('/integrations');
 
-    getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Active');
-
-    getFirstIntegrationCard()
-      .getByTestId('card-status-bar-active')
-      .should(($div) => {
-        const text = $div.text();
-
-        expect(text).to.match(/^Not Active$/);
-      });
+    getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Not Active');
   });
 
   it('should display use credentials on settings modal', function () {
