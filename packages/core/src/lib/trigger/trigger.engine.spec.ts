@@ -12,7 +12,7 @@ test('emailHandler should be called correctly', async () => {
   const themeStore = new ThemeStore();
   const ee = new EventEmitter();
 
-  await providerStore.addProvider({
+  await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
     sendMessage: () =>
@@ -67,7 +67,7 @@ test('variable protection should throw if missing variable provided', async () =
     ee
   );
 
-  await providerStore.addProvider({
+  await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
     sendMessage: () =>
@@ -109,7 +109,7 @@ test('variable protection should throw if missing variable provided with templat
     ee
   );
 
-  await providerStore.addProvider({
+  await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
     sendMessage: () =>
@@ -141,7 +141,7 @@ test('TriggerEngine should call validate if validator is provided', async () => 
   const themeStore = new ThemeStore();
   const ee = new EventEmitter();
 
-  await providerStore.addProvider({
+  await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
     sendMessage: () =>
@@ -190,7 +190,7 @@ test('Validation should throw error if validate method returns false', async () 
   const themeStore = new ThemeStore();
   const ee = new EventEmitter();
 
-  await providerStore.addProvider({
+  await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
     sendMessage: () =>

@@ -7,22 +7,34 @@ import {
 } from './provider.interface';
 
 export class ProviderStore {
-  private providers: Array<ISmsProvider | IEmailProvider | IDirectProvider> =
-    [];
+  private providers: {
+    [key: string]: ISmsProvider | IEmailProvider | IDirectProvider;
+  } = {};
 
-  async addProvider(provider: IEmailProvider | ISmsProvider | IDirectProvider) {
-    this.providers.push(provider);
+  async addProvider(
+    providerId: string,
+    provider: IEmailProvider | ISmsProvider | IDirectProvider
+  ) {
+    this.providers[providerId] = provider;
   }
 
   async getProviderById(providerId: string) {
-    return this.providers.find((provider) => provider.id === providerId);
+    return this.providers[providerId];
+  }
+
+  async getProviderByInternalId(providerId: string) {
+    return (await this.getProviders()).find(
+      (provider) => provider.id === providerId
+    );
   }
 
   async getProviderByChannel(channel: ChannelTypeEnum) {
-    return this.providers.find((provider) => provider.channelType === channel);
+    return (await this.getProviders()).find(
+      (provider) => provider.channelType === channel
+    );
   }
 
   async getProviders() {
-    return this.providers;
+    return Object.values(this.providers);
   }
 }
