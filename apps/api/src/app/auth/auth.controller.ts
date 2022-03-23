@@ -35,6 +35,7 @@ import { PasswordResetRequestCommand } from './usecases/password-reset-request/p
 import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
+import { ApiException } from '../shared/exceptions/api.exception';
 
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -54,7 +55,13 @@ export class AuthController {
   ) {}
 
   @Get('/github')
-  githubTestAuth() {
+  githubAuth() {
+    if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
+      throw new ApiException(
+        'Github auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
+      );
+    }
+
     return {
       success: true,
     };

@@ -10,13 +10,21 @@ export interface ITableProps extends JSX.ElementChildrenAttribute {
   columns?: ColumnWithStrictAccessor<Data>[];
   data?: Data[];
   loading?: boolean;
+  onRowClick?: (row: Data) => void;
 }
 
 /**
  * Table component
  *
  */
-export function Table({ columns: userColumns, data: userData, loading = false, children, ...props }: ITableProps) {
+export function Table({
+  columns: userColumns,
+  data: userData,
+  loading = false,
+  children,
+  onRowClick,
+  ...props
+}: ITableProps) {
   const columns = React.useMemo(
     () =>
       userColumns?.map((col) => {
@@ -75,7 +83,10 @@ export function Table({ columns: userColumns, data: userData, loading = false, c
             prepareRow(row);
 
             return (
-              <tr {...row.getRowProps()} className={classes.tableRow}>
+              <tr
+                onClick={() => (onRowClick ? onRowClick(row) : null)}
+                {...row.getRowProps()}
+                className={classes.tableRow}>
                 {row.cells.map((cell) => {
                   return (
                     <td

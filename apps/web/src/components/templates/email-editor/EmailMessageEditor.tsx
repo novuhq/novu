@@ -122,7 +122,12 @@ export function EmailMessageEditor({
           {(status) => (
             <Group position="center" style={{ height: '100%' }}>
               {!branding?.logo ? (
-                <Group style={{ height: '100%' }} spacing={5} position="center" direction="column">
+                <Group
+                  style={{ height: '100%' }}
+                  spacing={5}
+                  position="center"
+                  direction="column"
+                  data-test-id="logo-upload-button">
                   <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
                   <Text color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>Upload Brand Logo</Text>
                 </Group>
@@ -154,26 +159,20 @@ export function EmailMessageEditor({
             paddingTop: '180px',
           },
         }}
-        title={<Title>Navigate to the settings page?</Title>}
+        title={<Title size={2}>Navigate to the settings page?</Title>}
         sx={{ backdropFilter: 'blur(10px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
         size="lg">
-        <div>
-          <Title size={2}>
-            Any unsaved changes will be deleted.
-            <Space w={10} />
-            Proceed anyway?
-          </Title>
-          <Group position="right">
-            <Button mt={30} onClick={() => setConfirmModalVisible(false)}>
-              No
-            </Button>
-            <Button mt={30} onClick={navigateToBrandSettings}>
-              Yes
-            </Button>
-          </Group>
-        </div>
+        <Text>Any unsaved changes will be deleted. Proceed anyway?</Text>
+        <Group position="right">
+          <Button variant="outline" size="md" mt={30} onClick={() => setConfirmModalVisible(false)}>
+            No
+          </Button>
+          <Button mt={30} size="md" onClick={navigateToBrandSettings}>
+            Yes
+          </Button>
+        </Group>
       </Modal>
 
       <Container
@@ -187,7 +186,7 @@ export function EmailMessageEditor({
         }}
         onMouseEnter={() => setActionBarVisible(true)}
         onMouseLeave={() => setActionBarVisible(false)}>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative' }} data-test-id="email-editor">
           {blocks.map((block, index) => {
             return (
               <ContentRow
@@ -234,7 +233,11 @@ export function EmailMessageEditor({
             );
           })}
         </div>
-        {controlBarVisible && <ControlBar top={top} onBlockAdd={onBlockAdd} />}
+        {controlBarVisible && (
+          <div>
+            <ControlBar top={top} onBlockAdd={onBlockAdd} />
+          </div>
+        )}
       </Container>
     </Card>
   );
