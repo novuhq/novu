@@ -4,17 +4,20 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
+import { LackIntegrationError } from '../LackIntegrationError';
 
 export function EmailContentCard({
   index,
   variables = [],
   application,
+  isIntegrationActive,
 }: {
   index: number;
   variables: {
     name: string;
   }[];
   application: IApplication | undefined;
+  isIntegrationActive: boolean;
 }) {
   const {
     control,
@@ -72,6 +75,7 @@ export function EmailContentCard({
 
   return (
     <>
+      {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
       <Controller
         name={`emailMessages.${index}.template.subject` as any}
         control={control}

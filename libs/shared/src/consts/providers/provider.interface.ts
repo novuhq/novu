@@ -77,7 +77,7 @@ export const nexmoConfig: IConfigCredentials[] = [
     type: 'string',
   },
   {
-    key: 'apiSecret',
+    key: 'secretKey',
     displayName: 'API secret',
     type: 'string',
   },

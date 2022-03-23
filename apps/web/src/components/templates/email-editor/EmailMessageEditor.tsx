@@ -1,14 +1,14 @@
 import { IEmailBlock } from '@notifire/shared';
-import { useNavigate } from 'react-router-dom';
-import { useMantineTheme, Group, Container, Card, Modal, Space } from '@mantine/core';
+import { useMantineTheme, Group, Container, Card } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import React, { useEffect, useState } from 'react';
 import { Upload } from '../../../design-system/icons';
-import { Button, colors, shadows, Text, Title } from '../../../design-system';
+import { colors, Text } from '../../../design-system';
 import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
+import { NavigateValidatorModal } from '../NavigateValidatorModal';
 
 export function EmailMessageEditor({
   onChange,
@@ -20,7 +20,6 @@ export function EmailMessageEditor({
   branding: { color: string; logo: string } | undefined;
 }) {
   const theme = useMantineTheme();
-  const navigate = useNavigate();
 
   const [blocks, setBlocks] = useState<IEmailBlock[]>(
     value?.length
@@ -98,8 +97,8 @@ export function EmailMessageEditor({
     return null;
   }
 
-  function navigateToBrandSettings() {
-    navigate('/settings/widget');
+  function getBrandSettingsUrl(): string {
+    return '/settings/widget';
   }
 
   return (
@@ -143,37 +142,13 @@ export function EmailMessageEditor({
           )}
         </Dropzone>
       </div>
-      <Modal
-        onClose={() => setConfirmModalVisible(false)}
-        opened={confirmModalVisible}
-        overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
-        overlayOpacity={0.7}
-        styles={{
-          modal: {
-            backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
-          },
-          body: {
-            paddingTop: '5px',
-          },
-          inner: {
-            paddingTop: '180px',
-          },
-        }}
-        title={<Title size={2}>Navigate to the settings page?</Title>}
-        sx={{ backdropFilter: 'blur(10px)' }}
-        shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
-        radius="md"
-        size="lg">
-        <Text>Any unsaved changes will be deleted. Proceed anyway?</Text>
-        <Group position="right">
-          <Button variant="outline" size="md" mt={30} onClick={() => setConfirmModalVisible(false)}>
-            No
-          </Button>
-          <Button mt={30} size="md" onClick={navigateToBrandSettings}>
-            Yes
-          </Button>
-        </Group>
-      </Modal>
+
+      <NavigateValidatorModal
+        isOpen={confirmModalVisible}
+        setModalVisibility={setConfirmModalVisible}
+        navigateRoute={getBrandSettingsUrl()}
+        navigateName="settings page"
+      />
 
       <Container
         mt={30}

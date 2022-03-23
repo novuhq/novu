@@ -4,7 +4,8 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICredentialsDto } from '@notifire/shared';
 import { useMutation } from 'react-query';
 import { message } from 'antd';
-import { Button, colors, Input, Switch, Text } from '../../../design-system';
+import { PasswordInput } from '@mantine/core';
+import { Button, colors, Switch, Text } from '../../../design-system';
 import { Check } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, updateIntegration } from '../../../api/integration';
@@ -83,9 +84,9 @@ export function ConnectIntegrationForm({
             name={credential.key}
             control={control}
             render={({ field }) => (
-              <Input
+              <PasswordInput
                 label={credential.displayName}
-                placeholder={credential.value ? credential.value : ''}
+                defaultValue={credential.value ? credential.value : ''}
                 required
                 data-test-id={credential.key}
                 {...field}
