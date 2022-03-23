@@ -15,7 +15,9 @@ export function ActivityStatistics() {
       {!loadingActivityStats ? (
         <ContentWrapper>
           <StatisticsBox>
-            <StyledNumber>{formatNumber(activityStats?.weeklySent, 0)}</StyledNumber>
+            <StyledNumber data-test-id="activity-stats-weekly-sent">
+              {formatNumber(activityStats?.weeklySent, 0)}
+            </StyledNumber>
             <StyledText>This week</StyledText>
           </StatisticsBox>
           <StatisticsBox>

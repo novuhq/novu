@@ -1,3 +1,5 @@
+import { IntegrationService } from '@notifire/testing/src/integraion.service';
+
 /**
  * @type {Cypress.PluginConfig}
  */
@@ -10,6 +12,11 @@ module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
   on('task', {
+    async createIntegration({ organizationId, applicationId }) {
+      const service = new IntegrationService();
+      await service.createIntegration(applicationId, organizationId);
+      return 'ok';
+    },
     async createNotifications({ identifier, token, count = 1, applicationId, organizationId }) {
       const subscriberService = new SubscribersService(organizationId, applicationId);
       const subscriber = await subscriberService.createSubscriber();
@@ -21,6 +28,7 @@ module.exports = (on, config) => {
       for (let i = 0; i < count; i++) {
         await service.triggerEvent(triggerIdentifier, {
           $user_id: subscriber.subscriberId,
+          $email: 'george@novu.co',
         });
       }
 
