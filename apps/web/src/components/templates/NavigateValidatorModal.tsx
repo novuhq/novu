@@ -1,7 +1,7 @@
 import React from 'react';
-import { Group, Modal, Space, useMantineTheme } from '@mantine/core';
+import { Group, Modal, useMantineTheme } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
-import { Button, colors, shadows, Title } from '../../design-system';
+import { Button, colors, shadows, Title, Text } from '../../design-system';
 
 export function NavigateValidatorModal({
   isOpen,
@@ -35,22 +35,18 @@ export function NavigateValidatorModal({
             paddingTop: '180px',
           },
         }}
-        title={<Title>Navigate to the {navigateName}?</Title>}
+        title={<Title size={2}>Navigate to the {navigateName}?</Title>}
         sx={{ backdropFilter: 'blur(10px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
         size="lg">
         <div>
-          <Title size={2}>
-            Any unsaved changes will be deleted.
-            <Space w={10} />
-            Proceed anyway?
-          </Title>
+          <Text>Any unsaved changes will be deleted. Proceed anyway?</Text>
           <Group position="right">
-            <Button mt={30} onClick={() => setModalVisibility(false)}>
+            <Button variant="outline" size="md" mt={30} onClick={() => setModalVisibility(false)}>
               No
             </Button>
-            <Button mt={30} onClick={() => navigate(navigateRoute)}>
+            <Button mt={30} size="md" onClick={() => navigate(navigateRoute)}>
               Yes
             </Button>
           </Group>
