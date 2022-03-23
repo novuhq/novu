@@ -98,7 +98,9 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
                 searchable
                 description="Categorize notifications into groups for unified settings control"
                 error={errors.notificationGroup}
-                getCreateLabel={(newGroup) => `+ Create Group ${newGroup}`}
+                getCreateLabel={(newGroup) => (
+                  <div data-test-id="submit-category-btn">`+ Create Group ${newGroup}`</div>
+                )}
                 onCreate={addGroupItem}
                 placeholder="Attach notification to group"
                 data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}

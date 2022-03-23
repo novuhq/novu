@@ -100,7 +100,7 @@ export function TemplateButton({
             mb={20}
             placement="center"
             position="right"
-            target={<ErrorCircle dark={theme.colorScheme === 'dark'} />}>
+            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}>
             {errors || 'Something is missing here'}
           </Popover>
         )}

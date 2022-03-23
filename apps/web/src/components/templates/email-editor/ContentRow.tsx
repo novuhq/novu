@@ -66,7 +66,7 @@ export function ContentRow({
         <div style={{ width: 'calc(100% - 20px)' }}>{children}</div>
         <Dropdown
           control={
-            <SettingsButton>
+            <SettingsButton data-test-id="settings-row-btn">
               <ActionIcon variant="transparent">
                 <DotsHorizontalOutlined color={theme.colorScheme === 'dark' ? colors.B30 : colors.B80} />
               </ActionIcon>

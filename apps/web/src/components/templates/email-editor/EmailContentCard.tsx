@@ -90,7 +90,9 @@ export function EmailContentCard({
           );
         }}
       />
-      <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
+      <div data-test-id="editor-type-selector">
+        <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
+      </div>
     </>
   );
 }
