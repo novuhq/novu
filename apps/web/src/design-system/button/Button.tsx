@@ -30,7 +30,7 @@ export function Button({
   onClick,
   ...props
 }: IButtonProps) {
-  const { classes } = useStyles({ disabled, inherit, variant: props.variant });
+  const { classes } = useStyles({ disabled, inherit });
   const defaultDesign = { radius: 'md', classNames: classes } as SharedButtonProps;
   const withIconProps = icon ? { leftIcon: icon } : {};
 
