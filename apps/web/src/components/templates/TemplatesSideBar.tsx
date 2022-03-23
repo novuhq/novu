@@ -18,7 +18,7 @@ export function TemplatesSideBar({
   toggleChannel,
   channelButtons,
   showTriggerSection = false,
-  alertErrors,
+  showErrors,
 }: {
   activeChannels: { [p: string]: boolean };
   activeTab: string;
@@ -26,12 +26,12 @@ export function TemplatesSideBar({
   toggleChannel: (channel: ChannelTypeEnum, active: boolean) => void;
   channelButtons: string[];
   showTriggerSection: boolean;
-  alertErrors: boolean;
-  errors: any;
+  showErrors: boolean;
 }) {
   const {
     formState: { errors },
   } = useFormContext();
+
   const templateButtons = [
     {
       tabKey: ChannelTypeEnum.IN_APP,
@@ -41,7 +41,7 @@ export function TemplatesSideBar({
       action: true,
       testId: 'inAppSelector',
       channelType: ChannelTypeEnum.IN_APP,
-      areThereErrors: alertErrors && errors['inAppMessages.0.template.content'],
+      errors: showErrors && getChannelErrors('inApp', errors),
     },
     {
       tabKey: ChannelTypeEnum.EMAIL,
@@ -51,6 +51,7 @@ export function TemplatesSideBar({
       testId: 'emailSelector',
       channelType: ChannelTypeEnum.EMAIL,
       action: true,
+      errors: showErrors && getChannelErrors('email', errors),
     },
     {
       tabKey: ChannelTypeEnum.SMS,
@@ -60,7 +61,7 @@ export function TemplatesSideBar({
       testId: 'smsSelector',
       action: true,
       channelType: ChannelTypeEnum.SMS,
-      areThereErrors: alertErrors && errors['smsMessages.0.template.content'],
+      errors: showErrors && getChannelErrors('sms', errors),
     },
   ];
 
@@ -92,7 +93,7 @@ export function TemplatesSideBar({
           active={activeTab === 'Settings'}
           description="Configure cross-channel notification settings"
           label="Notification Settings"
-          areThereErrors={alertErrors && errors.name}
+          errors={showErrors && errors.name}
         />
       </Navbar.Section>
       <Navbar.Section mr={20}>
@@ -132,4 +133,13 @@ export function TemplatesSideBar({
       )}
     </Navbar>
   );
+}
+
+function getChannelErrors(channel: 'sms' | 'email' | 'inApp', errors: { [p: string]: string }) {
+  const keys = Object.keys(errors);
+  const channelErrors = keys.filter((key) => {
+    return key.includes(`${channel}Messages`);
+  });
+
+  return channelErrors.map((key) => errors[key]).toString();
 }

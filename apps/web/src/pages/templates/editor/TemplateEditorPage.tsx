@@ -12,7 +12,7 @@ import { TemplateTriggerModal } from '../../../components/templates/TemplateTrig
 import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
-import { Button, Switch } from '../../../design-system';
+import { Button, Select, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 import { useStatusChangeControllerHook } from '../../../legacy/pages/templates/editor/use-status-change-controller.hook';
@@ -109,11 +109,10 @@ export default function TemplateEditorPage() {
               activeChannels={activeChannels}
               channelButtons={channelButtons}
               showTriggerSection={!!template && !!trigger}
-              errors={errors}
-              alertErrors={methods.formState.isDirty && methods.formState.isSubmitted && Object.keys(errors).length > 0}
+              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
             />
             <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
-              {activePage === 'Settings' && <NotificationSettingsForm errors={errors} editMode={editMode} />}
+              {activePage === 'Settings' && <NotificationSettingsForm editMode={editMode} />}
               {activePage === 'Add' && (
                 <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
               )}

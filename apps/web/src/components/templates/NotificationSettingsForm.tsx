@@ -6,13 +6,14 @@ import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
 import { Input, Select } from '../../design-system';
 
-export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; errors: any }) => {
+export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) => {
   const queryClient = useQueryClient();
   const {
     formState: { errors },
     setValue,
     control,
   } = useFormContext();
+
   const { data: groups, isLoading: loadingGroups } = useQuery('notificationGroups', getNotificationGroups);
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },

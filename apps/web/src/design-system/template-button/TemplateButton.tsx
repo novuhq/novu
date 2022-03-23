@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UnstyledButton, Group, Popover } from '@mantine/core';
 import styled from 'styled-components';
 import { Text } from '../typography/text/Text';
@@ -17,7 +17,7 @@ interface ITemplateButtonProps {
   checked?: boolean;
   switchButton?: (boolean) => void;
   changeTab: (string) => void;
-  areThereErrors?: boolean;
+  errors?: boolean | string;
 }
 
 export function TemplateButton({
@@ -31,74 +31,95 @@ export function TemplateButton({
   label,
   Icon,
   testId,
-  areThereErrors = false,
+  errors = false,
 }: ITemplateButtonProps) {
   const { cx, classes, theme } = useStyles();
   const disabled = action && !checked;
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled } : {};
+  const [popoverOpened, setPopoverOpened] = useState(false);
 
   return (
-    <Popover
-      styles={{
-        root: {
-          width: '100%',
-        },
-        inner: {
-          padding: '12px 15px 14px',
-        },
-        arrow: {
-          backgroundColor: colors.error,
-          height: '7px',
-          border: 'none',
-          margin: '0px',
-        },
-        body: {
-          backgroundColor: colors.error,
-          position: 'relative',
-          color: colors.white,
-          border: 'none',
-          marginTop: '-20px',
-        },
-      }}
-      withArrow
-      transition="rotate-left"
-      transitionDuration={250}
-      gutter={theme.spacing.xs}
-      opened={!active && areThereErrors}
-      mb={20}
-      placement="center"
-      position="right"
-      target={
-        <UnstyledButton
-          onClick={() => !active && changeTab(tabKey)}
-          data-test-id={testId}
-          className={cx(classes.button, { [classes.active]: active })}>
-          <ButtonWrapper>
-            <LeftContainerWrapper>
-              <IconWrapper className={classes.linkIcon}>
-                <Icon {...disabledProp} />
-              </IconWrapper>
-              <StyledContentWrapper>
-                <Text {...disabledColor} weight="bold">
-                  {label}
-                </Text>
-                <Text mt={3} color={colors.B60} {...disabledColor}>
-                  {description}
-                </Text>
-              </StyledContentWrapper>
-            </LeftContainerWrapper>
+    <>
+      <Button
+        onMouseEnter={() => setPopoverOpened(true)}
+        onMouseLeave={() => setPopoverOpened(false)}
+        onClick={() => !active && changeTab(tabKey)}
+        data-test-id={testId}
+        className={cx(classes.button, { [classes.active]: active })}>
+        <ButtonWrapper>
+          <LeftContainerWrapper>
+            <IconWrapper className={classes.linkIcon}>
+              <Icon {...disabledProp} />
+            </IconWrapper>
+            <StyledContentWrapper>
+              <Text {...disabledColor} weight="bold">
+                {label}
+              </Text>
+              <Text mt={3} color={colors.B60} {...disabledColor}>
+                {description}
+              </Text>
+            </StyledContentWrapper>
+          </LeftContainerWrapper>
 
-            <ActionWrapper>
-              {action && <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />}
-            </ActionWrapper>
-          </ButtonWrapper>
-        </UnstyledButton>
-      }>
-      Something is missing here
-    </Popover>
+          <ActionWrapper>
+            {action && <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />}
+          </ActionWrapper>
+        </ButtonWrapper>
+
+        {errors && (
+          <Popover
+            styles={{
+              root: {
+                position: 'absolute',
+                right: 0,
+                top: 'calc(50% - 1px)',
+              },
+              inner: {
+                padding: '12px 15px 14px',
+              },
+              arrow: {
+                backgroundColor: colors.error,
+                height: '7px',
+                border: 'none',
+                margin: '0px',
+              },
+              body: {
+                backgroundColor: colors.error,
+                position: 'relative',
+                color: colors.white,
+                border: 'none',
+                marginTop: '1px',
+              },
+            }}
+            withArrow
+            opened={popoverOpened}
+            transition="rotate-left"
+            transitionDuration={250}
+            gutter={theme.spacing.xs}
+            mb={20}
+            placement="center"
+            position="right"
+            target={<ErrorCircle dark={theme.colorScheme === 'dark'} />}>
+            {errors || 'Something is missing here'}
+          </Popover>
+        )}
+      </Button>
+    </>
   );
 }
+
+const ErrorCircle = styled.div<{ dark: boolean }>`
+  width: 11px;
+  height: 11px;
+  display: inline-block;
+  position: absolute;
+  right: -6px;
+  top: calc(50% - 4px);
+  background: ${colors.error};
+  border-radius: 50%;
+  border: 3px solid ${({ dark }) => (dark ? colors.B15 : 'white')};
+`;
 
 const IconWrapper = styled.div`
   padding-right: 15px;
@@ -122,4 +143,9 @@ const ButtonWrapper = styled.div`
 const StyledContentWrapper = styled.div`
   padding-right: 10px;
 `;
+
 const StyledGroup = styled(Group)``;
+
+const Button = styled(UnstyledButton)`
+  position: relative;
+`;
