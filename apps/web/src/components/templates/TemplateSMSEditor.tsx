@@ -1,6 +1,6 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { Textarea } from '@mantine/core';
-import { IForm } from '../../legacy/pages/templates/editor/use-template-controller.hook';
+import { IForm } from './use-template-controller.hook';
 
 export function TemplateSMSEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const {

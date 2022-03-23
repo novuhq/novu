@@ -93,7 +93,6 @@ export class UserSession {
     );
 
     this.token = `Bearer ${response.body.data}`;
-
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 

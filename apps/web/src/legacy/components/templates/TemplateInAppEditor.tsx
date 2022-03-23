@@ -1,6 +1,6 @@
 import { Card, Col, Form, Input, Row } from 'antd';
 import { Control, Controller, useFormContext } from 'react-hook-form';
-import { IForm } from '../../pages/templates/editor/use-template-controller.hook';
+import { IForm } from '../../../components/templates/use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {

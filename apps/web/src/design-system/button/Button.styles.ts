@@ -8,9 +8,11 @@ const getLabelStyles = () => ({
   backgroundClip: 'text',
   fontWeight: 'bold',
 });
+
 const getFilledDisabledStyles = (theme) => ({
   backgroundImage: theme.colorScheme === 'dark' ? getGradient(colors.B20) : getGradient(colors.B98),
 });
+
 const getFilledStyles = (theme) => ({
   border: 'transparent',
   boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.color,
@@ -18,7 +20,7 @@ const getFilledStyles = (theme) => ({
 
 const getOutlineStyles = (theme, disabled) => {
   const dark = theme.colorScheme === 'dark';
-  const backgroundColor = getGradient(dark ? theme.black : theme.white);
+  const backgroundColor = getGradient(dark ? colors.BGDark : theme.white);
   const disabledBorderColor = getGradient(dark ? colors.B20 : colors.BGLight);
 
   return {
@@ -32,13 +34,17 @@ const getOutlineStyles = (theme, disabled) => {
 };
 
 export default createStyles(
-  (theme: MantineTheme, { disabled, inherit }: { disabled: boolean; inherit: boolean }, getRef) => {
+  (
+    theme: MantineTheme,
+    { disabled, inherit, variant }: { disabled: boolean; inherit: boolean; variant?: 'outline' | 'filled' },
+    getRef
+  ) => {
     const loading = getRef('loading');
 
     return {
       label: disabled ? {} : getLabelStyles(),
       filled: disabled ? getFilledDisabledStyles(theme) : getFilledStyles(theme),
-      outline: getOutlineStyles(theme, disabled),
+      outline: getOutlineStyles(theme, disabled, variant),
       root: {
         width: inherit ? '100%' : '',
         [`&:not(.${loading}):disabled`]: {
