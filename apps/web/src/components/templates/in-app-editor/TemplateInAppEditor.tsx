@@ -1,6 +1,6 @@
 import { Control, Controller } from 'react-hook-form';
 import { Container, Group } from '@mantine/core';
-import { IForm } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
+import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Input } from '../../../design-system';
 

@@ -2,7 +2,7 @@ import { Card, Col, Form, Input } from 'antd';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import styled from 'styled-components';
 import { useEffect } from 'react';
-import { IForm } from '../../pages/templates/editor/use-template-controller.hook';
+import { IForm } from '../../../components/templates/use-template-controller.hook';
 
 export function TemplateSMSEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const {

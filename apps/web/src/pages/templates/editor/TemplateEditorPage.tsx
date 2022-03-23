@@ -7,7 +7,7 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar';
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
-import { useTemplateController } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
+import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
@@ -15,7 +15,7 @@ import { AddChannelsPage } from './AddChannelsPage';
 import { Button, Select, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
-import { useStatusChangeControllerHook } from '../../../legacy/pages/templates/editor/use-status-change-controller.hook';
+import { useStatusChangeControllerHook } from '../../../components/templates/use-status-change-controller.hook';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
