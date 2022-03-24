@@ -46,6 +46,7 @@ const useStyles = createStyles((theme) => ({
     minHeight: 950,
     position: 'absolute',
     width: '100%',
+    zIndex: -1,
     left: '0px',
     top: '0px',
     backgroundSize: 'contain',
