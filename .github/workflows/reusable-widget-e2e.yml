@@ -76,7 +76,6 @@ jobs:
           working-directory: apps/widget
           start: pnpm start:api
           wait-on: http://localhost:3500/v1/health-check
-          record: true
           browser: chrome
           install: false
           headless: true

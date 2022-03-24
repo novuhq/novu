@@ -258,7 +258,7 @@
                         </div>
                          <pre class="rounder-lg code-snippet-wrapper" onclick="copyToClipboard('curl-user-snippet2');return false;">
 
-                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'http://localhost:3000/v1/events/trigger' \
+                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'https://api.novu.co/v1/events/trigger' \
  --header 'Authorization: ApiKey *********' \
  --header 'Content-Type: application/json' \
  --data-raw '{
@@ -398,7 +398,7 @@ function pulsateBell() {
     elt.src = t;
     var before = o.getElementsByTagName(f)[0];
     before.parentNode.insertBefore(elt, before);
-  })(window, document, "http://localhost:4702/sdk.umd.min.js", "notifire", "script");
+  })(window, document, "https://sdk.novu.co/sdk.umd.min.js", "notifire", "script");
 
   notifire.init('REPLACE_WITH_applicationId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
     $user_id: 'REPLACE_WITH_$user_id',

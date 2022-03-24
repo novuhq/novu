@@ -76,6 +76,7 @@ async function handleOnboardingFlow(config: ConfigService) {
   const httpServer = new HttpServer();
 
   await httpServer.listen();
+
   let spinner: ora.Ora = null;
 
   try {
