@@ -9,6 +9,7 @@ import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
+import { API_ROOT } from '../../config';
 
 type Props = {};
 
@@ -51,6 +52,8 @@ export function LoginForm({}: Props) {
   return (
     <>
       <GithubButton
+        component="a"
+        href={`${API_ROOT}/v1/auth/github`}
         my={30}
         variant="white"
         fullWidth
