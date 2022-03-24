@@ -13,13 +13,13 @@ import ApplicationOnBoarding from './legacy/pages/onboarding/application';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import { WidgetSettingsPage } from './pages/settings/WidgetSettingsPage';
-import { OrganizationSettingsPage } from './legacy/pages/organization-settings/OrganizationSettingsPage';
 import InvitationScreen from './legacy/pages/auth/InvitationScreen';
 import { api } from './api/api.client';
 import PasswordResetPage from './legacy/pages/auth/password-reset';
 import { ThemeContext } from './store/themeContext';
 import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
+import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 
 if (process.env.REACT_APP_SENTRY_DSN) {
@@ -135,7 +135,7 @@ function App() {
                   path="/settings/organization"
                   element={
                     <RequiredAuth>
-                      <OrganizationSettingsPage />
+                      <MembersInvitePage />
                     </RequiredAuth>
                   }
                 />

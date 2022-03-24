@@ -4,7 +4,7 @@ export const inputStyles = (theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
 
   const primaryColor = dark ? theme.white : theme.colors.gray[8];
-  const invalidColor = theme.colors.gradient[5];
+  const invalidColor = theme.colors?.gradient?.[5];
   const secondaryColor = dark ? theme.colors.dark[3] : theme.colors.gray[6];
 
   return {
