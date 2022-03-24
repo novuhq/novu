@@ -2,12 +2,13 @@ import { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
-import { Divider, Container, Button as GithubButton, Center } from '@mantine/core';
+import { Divider, Button as GithubButton, Center } from '@mantine/core';
 import { message } from 'antd';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text, Title } from '../../design-system';
+import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
+import { API_ROOT } from '../../config';
 
 type Props = {
   token?: string;
@@ -75,26 +76,15 @@ export function SignUpForm({ token, email }: Props) {
   });
 
   return (
-    <Container
-      size={600}
-      sx={{
-        marginRight: '20%',
-        marginTop: '10%',
-        '@media (max-width: 1500px)': {
-          marginRight: '10%',
-        },
-      }}>
-      <Title>Sign Up</Title>
-      <Text size="lg" color={colors.B60} mb={60} mt={20}>
-        Hello and welcome! Sign up to the best notifications platform ever
-      </Text>
+    <>
       <GithubButton
         my={30}
+        component="a"
+        href={`${API_ROOT}/v1/auth/github`}
         variant="white"
         fullWidth
         radius="md"
         leftIcon={<Github />}
-        onClick={() => navigate('/v1/auth/github')}
         sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}>
         Sign Up with Github
       </GithubButton>
@@ -114,7 +104,7 @@ export function SignUpForm({ token, email }: Props) {
         />
         <Input
           error={errors.email?.message}
-          // disabled={!!email}
+          disabled={!!email}
           {...register('email', {
             required: 'Please provide an email',
             pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email' },
@@ -166,6 +156,6 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
-    </Container>
+    </>
   );
 }
