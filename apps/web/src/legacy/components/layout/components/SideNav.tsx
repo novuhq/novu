@@ -32,6 +32,11 @@ export function SideNav({}: Props) {
               <span>Activity Feed</span>
             </NavLink>
           </Menu.Item>
+          <Menu.Item icon={<SettingOutlined />} key="integrations">
+            <NavLink to="/integrations" className="nav-text" data-test-id="side-nav-settings-link">
+              <span>Integration Store</span>
+            </NavLink>
+          </Menu.Item>
           <Menu.Item icon={<SettingOutlined />} key="settings">
             <NavLink to="/settings/widget" className="nav-text" data-test-id="side-nav-settings-link">
               <span>Settings</span>

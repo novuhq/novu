@@ -13,5 +13,7 @@ export class NotificationMessageDto {
 
   content: string | IEmailBlock[];
 
+  contentType?: 'editor' | 'customHtml';
+
   cta?: ChannelCTADto;
 }

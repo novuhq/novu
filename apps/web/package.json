@@ -89,7 +89,8 @@
     "less-loader": "4.1.0",
     "nodemon": "^2.0.15",
     "start-server-and-test": "1.11.6",
-    "webpack": "4.46.0"
+    "webpack": "4.46.0",
+    "react-error-overlay": "6.0.9"
   },
   "scripts": {
     "start": "PORT=4200 craco start",
@@ -148,6 +149,7 @@
       "eslint"
     ]
   },
+  "resolutions": { "react-error-overlay": "6.0.9" },
   "eslintConfig": {
     "overrides": [
       {

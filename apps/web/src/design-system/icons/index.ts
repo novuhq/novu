@@ -15,6 +15,8 @@ export { Mail } from './general/Mail';
 export { Trash } from './general/Trash';
 export { Check } from './general/Check';
 export { TextAlignment } from './general/TextAlignment';
+export { CheckCircle } from './general/CheckCircle';
+export { Box } from './general/Box';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
@@ -36,3 +38,4 @@ export { GlobeGradient } from './gradient/GlobeGradient';
 export { CompassGradient } from './gradient/CompassGradient';
 export { SmsGradient } from './gradient/SmsGradient';
 export { TapeGradient } from './gradient/TapeGradient';
+export { BoltGradient } from './gradient/BoltGradient';

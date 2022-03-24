@@ -1,6 +1,6 @@
 name: Test providers
 on:
-  push:
+  pull_request:
     paths:
       - "providers/**"
 jobs:
@@ -25,6 +25,10 @@ jobs:
         with:
           version: 6.0.2
           run_install: true
+
+      - uses: mansagroup/nrwl-nx-action@v2
+        with:
+          targets: lint
 
       - run: pnpm build
 

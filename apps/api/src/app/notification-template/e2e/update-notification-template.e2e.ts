@@ -66,4 +66,37 @@ describe('Update notification template by id - /notification-templates/:template
     expect(foundTemplate._id).to.equal(template._id);
     expect(foundTemplate.triggers[0].variables[0].name).to.equal('newVariableFromUpdate');
   });
+
+  it('should update the contentType of a message', async function () {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.application._id
+    );
+
+    const template = await notificationTemplateService.createTemplate({
+      messages: [
+        {
+          type: ChannelTypeEnum.EMAIL,
+          contentType: 'editor',
+          content: 'Content',
+        },
+      ],
+    });
+
+    const update: IUpdateNotificationTemplate = {
+      messages: [
+        {
+          type: ChannelTypeEnum.EMAIL,
+          contentType: 'customHtml',
+          content: 'Content',
+        },
+      ],
+    };
+    const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}`).send(update);
+    const foundTemplate: INotificationTemplate = body.data;
+
+    expect(foundTemplate._id).to.equal(template._id);
+    expect(foundTemplate.messages[0].template.contentType).to.equal('customHtml');
+  });
 });

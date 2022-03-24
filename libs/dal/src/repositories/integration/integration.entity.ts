@@ -1,8 +1,19 @@
 import { ChannelTypeEnum } from '@notifire/shared';
 
-interface ICredentials {
-  apiKey: string;
-  secretKey: string;
+export interface ICredentials {
+  apiKey?: string;
+  user?: string;
+  secretKey?: string;
+  domain?: string;
+  password?: string;
+  host?: string;
+  port?: string;
+  secure?: boolean;
+  region?: string;
+  accountSid?: string;
+  messageProfileId?: string;
+  token?: string;
+  from?: string;
 }
 
 export class IntegrationEntity {

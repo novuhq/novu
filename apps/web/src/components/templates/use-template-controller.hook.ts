@@ -13,7 +13,7 @@ import { useMutation, useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { createTemplate, getTemplateById, updateTemplate } from '../../../../api/templates';
+import { createTemplate, getTemplateById, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
 
 export interface ITemplateMessage {
@@ -88,7 +88,7 @@ export function useTemplateController(templateId: string) {
       const errors: any = {};
       let values = data;
       if (!data.name) {
-        errors.name = 'Required field';
+        errors.name = 'Required field name';
       }
 
       if (activeChannels[ChannelTypeEnum.IN_APP]) {
@@ -236,7 +236,7 @@ export function useTemplateController(templateId: string) {
           cta: {
             type: ChannelCTATypeEnum.REDIRECT,
             data: {
-              url: item.template.cta?.data.url,
+              url: item.template.cta?.data?.url,
             },
           },
         });

@@ -7,7 +7,7 @@ import { useQuery } from 'react-query';
 import { IApplication } from '@notifire/shared';
 import { MessageNameEditorHeader } from './MessageNameEditorHeader';
 import { EmailContentCard } from './EmailContentCard';
-import { IForm } from '../../pages/templates/editor/use-template-controller.hook';
+import { IForm } from '../../../components/templates/use-template-controller.hook';
 import { getCurrentApplication } from '../../../api/application';
 
 export function EmailMessagesCards({

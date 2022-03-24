@@ -19,6 +19,7 @@ import { testServer } from './test-server.service';
 import { OrganizationService } from './organization.service';
 import { ApplicationService } from './application.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
+import { IntegrationService } from './integraion.service';
 
 export class UserSession {
   private userRepository = new UserRepository();
@@ -92,7 +93,6 @@ export class UserSession {
     );
 
     this.token = `Bearer ${response.body.data}`;
-
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
@@ -151,6 +151,12 @@ export class UserSession {
     const service = new NotificationTemplateService(this.user._id, this.organization._id, this.application._id);
 
     return await service.createTemplate(template);
+  }
+
+  async createIntegration() {
+    const service = new IntegrationService();
+
+    return await service.createIntegration(this.application._id, this.organization._id);
   }
 
   async createChannelTemplate(channel: ChannelTypeEnum) {

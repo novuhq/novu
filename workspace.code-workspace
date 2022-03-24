@@ -29,6 +29,10 @@
       "path": "libs/sdk"
     },
     {
+      "name": "📦 @notifire/cli",
+      "path": "packages/cli"
+    },
+    {
       "name": "📦 @notifire/shared",
       "path": "libs/shared"
     },

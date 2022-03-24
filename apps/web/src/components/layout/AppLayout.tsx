@@ -20,7 +20,15 @@ export function AppLayout() {
    * Add each new page when migrating
    */
   if (
-    !['/', '/templates', '/settings/widget', '/templates/create', '/settings/organization', `/templates/edit/${templateId}`].includes(location.pathname)
+    ![
+      '/',
+      '/templates',
+      '/settings/widget',
+      '/settings/organization',
+      '/integrations',
+      '/templates/create',
+      `/templates/edit/${templateId}`,
+    ].includes(location.pathname)
   ) {
     return (
       <LegacyAppLayout>

@@ -1,7 +1,6 @@
-import React from 'react';
 import moment from 'moment';
 import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { useTemplates } from '../../api/hooks/use-templates';
@@ -12,29 +11,10 @@ import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system/tooltip/Tooltip';
 import { Data } from '../../design-system/table/Table';
 
-const ActionButtonWrapper = styled.div`
-  text-align: right;
-
-  a {
-    display: inline-block;
-    opacity: 0;
-    transition: opacity 0.1s ease-in;
-  }
-`;
-
-const TemplateListTableWrapper = styled.div`
-  tr:hover {
-    ${ActionButtonWrapper} {
-      a {
-        opacity: 1;
-      }
-    }
-  }
-`;
-
 function NotificationList() {
   const { templates, loading: isLoading } = useTemplates();
   const theme = useMantineTheme();
+  const navigate = useNavigate();
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
@@ -94,6 +74,10 @@ function NotificationList() {
     },
   ];
 
+  function onRowClick(row) {
+    navigate(`/templates/edit/${row.values._id}`);
+  }
+
   return (
     <PageContainer>
       <PageHeader
@@ -105,7 +89,12 @@ function NotificationList() {
         }
       />
       <TemplateListTableWrapper>
-        <Table loading={isLoading} data-test-id="notifications-template" columns={columns} data={templates || []}>
+        <Table
+          onRowClick={onRowClick}
+          loading={isLoading}
+          data-test-id="notifications-template"
+          columns={columns}
+          data={templates || []}>
           {' '}
         </Table>
       </TemplateListTableWrapper>
@@ -114,3 +103,25 @@ function NotificationList() {
 }
 
 export default NotificationList;
+
+const ActionButtonWrapper = styled.div`
+  text-align: right;
+
+  a {
+    display: inline-block;
+    opacity: 0;
+    transition: opacity 0.1s ease-in;
+  }
+`;
+
+const TemplateListTableWrapper = styled.div`
+  tr:hover {
+    cursor: pointer;
+
+    ${ActionButtonWrapper} {
+      a {
+        opacity: 1;
+      }
+    }
+  }
+`;
