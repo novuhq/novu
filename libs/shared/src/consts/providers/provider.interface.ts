@@ -27,6 +27,16 @@ export const mailJsConfig: IConfigCredentials[] = [
     displayName: 'Secret key',
     type: 'string',
   },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
+    type: 'string',
+  },
 ];
 
 export const mailgunConfig: IConfigCredentials[] = [
@@ -50,6 +60,16 @@ export const mailgunConfig: IConfigCredentials[] = [
     displayName: 'From',
     type: 'string',
   },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
+    type: 'string',
+  },
 ];
 
 export const mailjetConfig: IConfigCredentials[] = [
@@ -66,6 +86,16 @@ export const mailjetConfig: IConfigCredentials[] = [
   {
     key: 'from',
     displayName: 'From',
+    type: 'string',
+  },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
     type: 'string',
   },
 ];
@@ -97,6 +127,16 @@ export const mandrillConfig: IConfigCredentials[] = [
   {
     key: 'from',
     displayName: 'From',
+    type: 'string',
+  },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
     type: 'string',
   },
 ];
@@ -132,6 +172,16 @@ export const nodemailerConfig: IConfigCredentials[] = [
     displayName: 'From',
     type: 'string',
   },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
+    type: 'string',
+  },
 ];
 
 export const postmarkConfig: IConfigCredentials[] = [
@@ -143,6 +193,16 @@ export const postmarkConfig: IConfigCredentials[] = [
   {
     key: 'from',
     displayName: 'From',
+    type: 'string',
+  },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
     type: 'string',
   },
 ];
@@ -158,12 +218,32 @@ export const sendgridConfig: IConfigCredentials[] = [
     displayName: 'From',
     type: 'string',
   },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
+    type: 'string',
+  },
 ];
 
 export const sendinblueConfig: IConfigCredentials[] = [
   {
     key: 'apiKey',
     displayName: 'API Key',
+    type: 'string',
+  },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
     type: 'string',
   },
 ];
@@ -187,6 +267,16 @@ export const sesConfig: IConfigCredentials[] = [
   {
     key: 'from',
     displayName: 'From',
+    type: 'string',
+  },
+  {
+    key: 'fromSender',
+    displayName: 'From sender',
+    type: 'string',
+  },
+  {
+    key: 'senderName',
+    displayName: 'Sender name',
     type: 'string',
   },
 ];
