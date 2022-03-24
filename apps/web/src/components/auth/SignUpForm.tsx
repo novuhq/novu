@@ -4,7 +4,7 @@ import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
-import { message } from 'antd';
+import { Alert, message } from 'antd';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
@@ -121,7 +121,7 @@ export function SignUpForm({ token, email }: Props) {
           mt={20}
           {...register('password', {
             required: 'Password, not your birthdate',
-            min: { value: 8, message: 'Minimum 8 characters' },
+            minLength: { value: 8, message: 'Minimum 8 characters' },
             pattern: {
               value: /^(?=.*\d)(?=.*[a-z])(?!.*\s).{8,}$/,
               message: 'The password must contain numbers and letters',
@@ -157,6 +157,7 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
+      {isError ? <Alert message={error?.message} type="error" /> : null}
     </>
   );
 }
