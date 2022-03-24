@@ -39,3 +39,5 @@ export { CompassGradient } from './gradient/CompassGradient';
 export { SmsGradient } from './gradient/SmsGradient';
 export { TapeGradient } from './gradient/TapeGradient';
 export { BoltGradient } from './gradient/BoltGradient';
+
+export { Github } from './social/Github';
