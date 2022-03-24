@@ -2,7 +2,8 @@ import { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
-import { Divider, Button as GithubButton, Center } from '@mantine/core';
+import styled from '@emotion/styled';
+import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { message } from 'antd';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
@@ -159,3 +160,9 @@ export function SignUpForm({ token, email }: Props) {
     </>
   );
 }
+
+const GithubButton = styled(MantineButton)`
+  :hover {
+    color: ${colors.B40};
+  }
+`;
