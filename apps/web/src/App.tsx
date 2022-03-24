@@ -6,7 +6,7 @@ import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
 import { ActivitiesPage } from './legacy/pages/activities/ActivitiesPage';
-import LoginPage from './legacy/pages/auth/login';
+import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './legacy/pages/auth/signup';
 import HomePage from './legacy/pages/HomePage';
 import ApplicationOnBoarding from './legacy/pages/onboarding/application';
