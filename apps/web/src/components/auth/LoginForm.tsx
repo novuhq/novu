@@ -1,12 +1,13 @@
 import { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
+import styled from '@emotion/styled';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { Divider, Container, Button as GithubButton, Center } from '@mantine/core';
+import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text, Title } from '../../design-system';
+import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
 
 type Props = {};
@@ -48,23 +49,9 @@ export function LoginForm({}: Props) {
   };
 
   return (
-    <Container
-      size={600}
-      sx={{
-        marginRight: '20%',
-        marginTop: '10%',
-        '@media (max-width: 1500px)': {
-          marginRight: '10%',
-        },
-      }}>
-      <Title>Sign In</Title>
-      <Text size="lg" color={colors.B60} mb={60} mt={20}>
-        Welcome back! Sign in with the data you entered in your registration
-      </Text>
+    <>
       <GithubButton
         my={30}
-        component="a"
-        href="/v1/auth/github"
         variant="white"
         fullWidth
         radius="md"
@@ -121,6 +108,12 @@ export function LoginForm({}: Props) {
           {error?.message}
         </Text>
       )}
-    </Container>
+    </>
   );
 }
+
+const GithubButton = styled(MantineButton)`
+  :hover {
+    color: ${colors.B40};
+  }
+`;

@@ -26,6 +26,7 @@ export function AppLayout() {
       '/settings/widget',
       '/integrations',
       '/templates/create',
+      '/auth/login',
       `/templates/edit/${templateId}`,
     ].includes(location.pathname)
   ) {
