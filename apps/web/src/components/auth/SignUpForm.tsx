@@ -4,7 +4,7 @@ import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
-import { Alert, message } from 'antd';
+import { message } from 'antd';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
@@ -157,7 +157,12 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
-      {isError ? <Alert message={error?.message} type="error" /> : null}
+      {isError && (
+        <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
+          {' '}
+          {error?.message}
+        </Text>
+      )}
     </>
   );
 }

@@ -15,7 +15,7 @@ import NotificationList from './pages/templates/TemplatesListPage';
 import { WidgetSettingsPage } from './pages/settings/WidgetSettingsPage';
 import InvitationScreen from './legacy/pages/auth/InvitationScreen';
 import { api } from './api/api.client';
-import PasswordResetPage from './legacy/pages/auth/password-reset';
+import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { ThemeContext } from './store/themeContext';
 import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
