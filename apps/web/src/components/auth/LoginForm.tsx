@@ -103,7 +103,7 @@ export function LoginForm({}: Props) {
         </Center>
       </form>
       {isError && (
-        <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
+        <Text data-test-id="error-alert-banner" mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}
         </Text>
