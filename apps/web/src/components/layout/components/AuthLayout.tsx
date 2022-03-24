@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, createStyles } from '@mantine/core';
+import { createStyles, Box } from '@mantine/core';
 import { ThemeProvider } from '../../../design-system/ThemeProvider';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -7,35 +7,33 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <ThemeProvider>
-      <div>
+      <div style={{ minHeight: 950 }}>
         <div className={classes.wrapper}>
           <img src="/static/images/logo.png" alt="logo" style={{ maxWidth: 150 }} />
+          <Box
+            sx={{
+              position: 'absolute',
+              display: 'flex',
+              flexDirection: 'column',
+              left: 120,
+              top: 'calc(50% - 165px)',
+              '@media (max-width: 1200px)': {
+                display: 'none',
+              },
+            }}>
+            <img src="/static/images/notifications/notification_01.png" alt="logo" style={{ maxWidth: 400 }} />
+            <img
+              src="/static/images/notifications/notification_02.png"
+              alt="logo"
+              style={{ marginTop: -15, marginLeft: 30, maxWidth: 400 }}
+            />
+            <img
+              src="/static/images/notifications/notification_03.png"
+              alt="logo"
+              style={{ marginTop: -15, maxWidth: 400 }}
+            />
+          </Box>{' '}
         </div>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            '@media (max-width: 1200px)': {
-              display: 'none',
-            },
-          }}>
-          <img
-            src="/static/images/notifications/notification_01.png"
-            alt="logo"
-            style={{ position: 'absolute', maxWidth: 400, left: '7%', top: '35%' }}
-          />
-          <img
-            src="/static/images/notifications/notification_02.png"
-            alt="logo"
-            style={{ position: 'absolute', left: '10%', top: '45%', maxWidth: 400 }}
-          />
-          <img
-            src="/static/images/notifications/notification_03.png"
-            alt="logo"
-            style={{ position: 'absolute', left: '7%', top: '55%', maxWidth: 400 }}
-          />
-        </Box>
-
         {children}
       </div>
     </ThemeProvider>
@@ -45,6 +43,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 const useStyles = createStyles((theme) => ({
   wrapper: {
     height: '100%',
+    minHeight: 950,
     position: 'absolute',
     width: '100%',
     left: '0px',
