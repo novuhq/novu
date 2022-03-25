@@ -42,7 +42,6 @@ export function SignUpForm({ token, email }: Props) {
       lastName: data.fullName.split(' ')[1],
       email: data.email,
       password: data.password,
-      organizationName: data.organizationName,
     };
 
     if (!itemData.lastName) {
@@ -56,9 +55,11 @@ export function SignUpForm({ token, email }: Props) {
       const responseInvite = await acceptInvite(token);
 
       setToken(responseInvite);
+
+      navigate('/templates');
     }
 
-    navigate('/templates');
+    navigate('/auth/application');
 
     return true;
   };
@@ -72,7 +73,6 @@ export function SignUpForm({ token, email }: Props) {
       email,
       fullName: '',
       password: '',
-      organizationName: '',
     },
   });
 
@@ -136,19 +136,6 @@ export function SignUpForm({ token, email }: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        {!token ? (
-          <Input
-            error={errors.organizationName?.message}
-            {...register('organizationName', {
-              required: 'Please provide company name',
-            })}
-            required
-            label="Company Name"
-            placeholder="Mega Corp"
-            data-test-id="companyName"
-            mt={20}
-          />
-        ) : null}
         <Button mt={60} inherit loading={isLoading || loadingAcceptInvite} submit data-test-id="submitButton">
           Sign Up {token ? '& Accept Invite' : null}
         </Button>
