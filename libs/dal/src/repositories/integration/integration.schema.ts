@@ -30,6 +30,7 @@ const integrationSchema = new Schema(
       messageProfileId: Schema.Types.String,
       token: Schema.Types.String,
       from: Schema.Types.String,
+      senderName: Schema.Types.String,
     },
 
     active: {

@@ -14,6 +14,7 @@ export interface ICredentials {
   messageProfileId?: string;
   token?: string;
   from?: string;
+  senderName?: string;
 }
 
 export class IntegrationEntity {
