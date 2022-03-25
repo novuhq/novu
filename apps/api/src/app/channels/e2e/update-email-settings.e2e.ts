@@ -1,7 +1,7 @@
 import { UserSession } from '@notifire/testing';
 import { expect } from 'chai';
 
-describe('Update Email Settings - /channels/email/settings (PUT)', function () {
+describe.skip('Update Email Settings - /channels/email/settings (PUT)', function () {
   let session: UserSession;
 
   beforeEach(async () => {

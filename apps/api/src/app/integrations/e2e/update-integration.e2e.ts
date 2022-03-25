@@ -1,6 +1,7 @@
 import { IntegrationRepository } from '@notifire/dal';
 import { UserSession } from '@notifire/testing';
 import { expect } from 'chai';
+import { ChannelTypeEnum } from '@notifire/shared';
 
 describe('Update Integration - /integrations/:integrationId (PUT)', function () {
   let session: UserSession;
@@ -14,27 +15,24 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
   it('should update newly created integration', async function () {
     const payload = {
       providerId: 'sendgrid',
-      channel: 'EMAIL',
-      credentials: { apiKey: '123', secretKey: 'abc' },
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
       active: true,
     };
 
-    // create integration
-    const initialIntegrationResponse = await session.testAgent.post('/v1/integrations').send(payload);
+    payload.credentials = { apiKey: 'new_key', secretKey: 'new_secret' };
 
-    const updatedPayload = payload;
-
-    updatedPayload.credentials = { apiKey: 'new_key', secretKey: 'new_secret' };
-
-    const integrationId = initialIntegrationResponse.body.data._id;
+    const integrationId = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (x) => x.channel === 'email'
+    )._id;
 
     // update integration
-    await session.testAgent.put(`/v1/integrations/${integrationId}`).send(updatedPayload);
+    await session.testAgent.put(`/v1/integrations/${integrationId}`).send(payload);
 
     const integration = (await integrationRepository.findByApplicationId(session.application._id))[0];
 
-    expect(integration.credentials.apiKey).to.equal(updatedPayload.credentials.apiKey);
-    expect(integration.credentials.secretKey).to.equal(updatedPayload.credentials.secretKey);
+    expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
+    expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
   });
 
   it('should deactivate other providers on the same channel', async function () {

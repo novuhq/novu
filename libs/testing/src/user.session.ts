@@ -65,6 +65,7 @@ export class UserSession {
     if (!options.noOrganization) {
       if (!options?.noApplication) {
         await this.createApplication();
+        await this.createIntegration();
       }
     }
 
@@ -75,8 +76,6 @@ export class UserSession {
         await this.updateApplicationDetails();
       }
     }
-
-    await this.createIntegration();
   }
 
   private shouldUseTestServer() {
