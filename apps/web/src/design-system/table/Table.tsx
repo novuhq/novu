@@ -1,6 +1,6 @@
-import React from 'react';
-import { TableProps, Table as MantineTable, LoadingOverlay } from '@mantine/core';
-import { useTable, Column, ColumnWithStrictAccessor } from 'react-table';
+import React, { useEffect } from 'react';
+import { TableProps, Table as MantineTable, LoadingOverlay, Pagination } from '@mantine/core';
+import { useTable, Column, ColumnWithStrictAccessor, usePagination } from 'react-table';
 import useStyles from './Table.styles';
 import { colors } from '../config';
 
@@ -10,6 +10,7 @@ export interface ITableProps extends JSX.ElementChildrenAttribute {
   columns?: ColumnWithStrictAccessor<Data>[];
   data?: Data[];
   loading?: boolean;
+  pagination?: any;
   onRowClick?: (row: Data) => void;
 }
 
@@ -20,11 +21,14 @@ export interface ITableProps extends JSX.ElementChildrenAttribute {
 export function Table({
   columns: userColumns,
   data: userData,
+  pagination = false,
   loading = false,
   children,
   onRowClick,
   ...props
 }: ITableProps) {
+  const { pageSize, total, onPageChange, current } = pagination;
+
   const columns = React.useMemo(
     () =>
       userColumns?.map((col) => {
@@ -53,7 +57,42 @@ export function Table({
 
   const data = React.useMemo(() => (userData || [])?.map((row) => ({ ...row })) as Data[], [userData]);
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data });
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    rows,
+    prepareRow,
+    page,
+    gotoPage,
+    state: { pageIndex },
+  }: any = useTable(
+    {
+      columns,
+      data,
+      ...(pagination
+        ? {
+            initialState: { pageIndex: current, pageSize },
+            manualPagination: true,
+            pageCount: Math.ceil(total / pageSize),
+          }
+        : {}),
+    } as any,
+    usePagination
+  );
+
+  useEffect(() => {
+    if (onPageChange) {
+      onPageChange(pageIndex);
+    }
+  }, [pageIndex]);
+
+  const handlePageChange = (pageNumber) => {
+    gotoPage(pageNumber - 1);
+  };
+  const getPageCount = () => {
+    return Math.ceil(total / pageSize);
+  };
 
   const { classes, theme } = useStyles();
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
@@ -79,7 +118,7 @@ export function Table({
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {rows.map((row) => {
+          {(pagination ? page : rows).map((row) => {
             prepareRow(row);
 
             return (
@@ -105,6 +144,25 @@ export function Table({
           })}
         </tbody>
       </MantineTable>
+      {pagination && (
+        <Pagination
+          styles={{
+            active: {
+              backgroundImage: colors.horizontal,
+              border: 'none',
+            },
+            item: {
+              marginTop: '15px',
+              marginBottom: '15px',
+              backgroundColor: 'transparent',
+            },
+          }}
+          total={getPageCount()}
+          page={pageIndex + 1}
+          onChange={handlePageChange}
+          position="center"
+        />
+      )}
     </div>
   );
 }

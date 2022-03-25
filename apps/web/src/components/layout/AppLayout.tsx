@@ -24,6 +24,7 @@ export function AppLayout() {
       '/',
       '/templates',
       '/settings/widget',
+      '/activities',
       '/settings/organization',
       '/integrations',
       '/templates/create',

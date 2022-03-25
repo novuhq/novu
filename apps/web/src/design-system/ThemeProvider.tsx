@@ -16,7 +16,7 @@ export function ThemeProvider({ children, dark = true }: { children: JSX.Element
     <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
       <MantineProvider
         withGlobalStyles
-        // withNormalizeCSS
+        withNormalizeCSS
         theme={{
           // Override any other properties from default theme
           colorScheme,
