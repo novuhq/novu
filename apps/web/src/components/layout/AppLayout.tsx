@@ -23,7 +23,7 @@ export function AppLayout() {
     ![
       '/',
       '/templates',
-      '/settings/widget',
+      '/settings',
       '/settings/organization',
       '/integrations',
       '/templates/create',

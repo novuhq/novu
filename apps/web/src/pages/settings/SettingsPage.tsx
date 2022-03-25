@@ -5,13 +5,11 @@ import { useApplication } from '../../api/hooks/use-application';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
-import { EmailSettingsForm } from './components/EmailSettingsForm';
-import { SmsSettingsForm } from './components/SmsSettingsForm';
 import { BrandingForm } from './components/BrandingForm';
 import { ApiKeysCard } from './components/ApiKeysCard';
 import { InAppCenterCard } from './components/InAppCenterCard';
 
-export function WidgetSettingsPage() {
+export function SettingsPage() {
   const location = useLocation();
 
   const [activeTab, setActiveTab] = useState(0);
@@ -34,14 +32,6 @@ export function WidgetSettingsPage() {
     {
       label: 'In App Center',
       content: <InAppCenterCard application={application} />,
-    },
-    {
-      label: 'Email Settings',
-      content: <EmailSettingsForm application={application} refetch={refetch} />,
-    },
-    {
-      label: 'SMS',
-      content: <SmsSettingsForm application={application} refetch={refetch} />,
     },
     {
       label: 'Api Keys',

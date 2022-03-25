@@ -9,6 +9,6 @@ describe('Side Menu', function () {
   });
 
   it('should navigate correctly to settings', function () {
-    cy.getByTestId('side-nav-settings-link').should('have.attr', 'href').should('include', '/settings/widget');
+    cy.getByTestId('side-nav-settings-link').should('have.attr', 'href').should('include', '/settings');
   });
 });

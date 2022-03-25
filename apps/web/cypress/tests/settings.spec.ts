@@ -1,7 +1,7 @@
 describe('Settings Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
-    cy.visit('/settings/widget');
+    cy.visit('/settings');
     cy.intercept('*/channels/email/settings').as('updateEmailSettings');
     cy.intercept('*/channels/sms/settings').as('updateSmsSettings');
     cy.intercept('*/applications/branding').as('updateBrandingSettings');
@@ -48,14 +48,15 @@ describe('Settings Screen', function () {
   });
 
   it('should update logo', function () {
-    cy.fixture('test-logo.png', {encoding: null}).then((contents) => {
-      cy.getByTestId('upload-image-button')
-        .find('input')
-        .selectFile({
+    cy.fixture('test-logo.png', { encoding: null }).then((contents) => {
+      cy.getByTestId('upload-image-button').find('input').selectFile(
+        {
           contents,
           fileName: 'test-logo.png',
           mimeType: 'image/png',
-        }, {force: true});
+        },
+        { force: true }
+      );
     });
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 

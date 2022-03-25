@@ -1,4 +1,3 @@
-import styled from 'styled-components';
 import { Layout, Menu } from 'antd';
 import { Scrollbars } from 'react-custom-scrollbars';
 import { useQuery } from 'react-query';
@@ -38,7 +37,7 @@ export function SideNav({}: Props) {
             </NavLink>
           </Menu.Item>
           <Menu.Item icon={<SettingOutlined />} key="settings">
-            <NavLink to="/settings/widget" className="nav-text" data-test-id="side-nav-settings-link">
+            <NavLink to="/settings" className="nav-text" data-test-id="side-nav-settings-link">
               <span>Settings</span>
             </NavLink>
           </Menu.Item>
