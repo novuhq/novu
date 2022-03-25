@@ -17,7 +17,7 @@ export const useStyles = createStyles((theme) => {
       width: '100%',
       margin: '0px',
       marginBottom: '20px',
-      padding: '20px',
+      padding: '0 20px',
       paddingLeft: '10px',
       backgroundColor: dark ? colors.B17 : colors.B98,
       borderRadius: '7px',

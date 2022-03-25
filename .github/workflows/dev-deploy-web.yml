@@ -50,6 +50,9 @@ jobs:
           version: 6.0.2
           run_install: true
 
+      - name: Build
+        run: CI='' pnpm build:web
+
       # Runs a single command using the runners shell
       - name: Build
         env:
@@ -58,7 +61,8 @@ jobs:
           REACT_APP_NOTIFIRE_APP_ID: uaahXGRverKF
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: dev
-        run: CI='' pnpm build:web
+        working-directory: apps/web
+        run: npm run build
 
       - name: Deploy WEB to DEV
         uses: nwtgck/actions-netlify@v1.2

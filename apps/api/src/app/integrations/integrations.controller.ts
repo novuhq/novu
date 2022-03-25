@@ -25,6 +25,7 @@ import { UpdateIntegration } from './usecases/update-integration/update-integrat
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
+import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -32,6 +33,7 @@ import { RemoveIntegration } from './usecases/remove-integration/remove-integrat
 export class IntegrationsController {
   constructor(
     private getIntegrationsUsecase: GetIntegrations,
+    private getActiveIntegrationsUsecase: GetActiveIntegrations,
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration,
     private removeIntegrationUsecase: RemoveIntegration
@@ -40,6 +42,13 @@ export class IntegrationsController {
   @Get('/')
   async getIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationEntity[]> {
     return await this.getIntegrationsUsecase.execute(
+      GetIntegrationsCommand.create({ applicationId: user.applicationId, organizationId: user.organizationId })
+    );
+  }
+
+  @Get('/active')
+  async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationEntity[]> {
+    return await this.getActiveIntegrationsUsecase.execute(
       GetIntegrationsCommand.create({ applicationId: user.applicationId, organizationId: user.organizationId })
     );
   }

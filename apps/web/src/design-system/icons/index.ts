@@ -25,6 +25,7 @@ export { PlusCircleOutlined } from './actions/PlusCircleOutlined';
 export { Search } from './actions/Search';
 export { Edit } from './actions/Edit';
 export { Upload } from './actions/Upload';
+export { Invite } from './actions/Invite';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';
@@ -38,3 +39,5 @@ export { CompassGradient } from './gradient/CompassGradient';
 export { SmsGradient } from './gradient/SmsGradient';
 export { TapeGradient } from './gradient/TapeGradient';
 export { BoltGradient } from './gradient/BoltGradient';
+
+export { Github } from './social/Github';

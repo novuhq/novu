@@ -69,6 +69,6 @@ const PlaceHolder = styled.div<{ show: boolean; color: string }>`
   color: ${({ color }) => color};
   z-index: 1;
   top: 0px;
-  pointer-events: visible;
+  pointer-events: none;
   display: ${({ show }) => (show ? 'block' : 'none')};
 `;

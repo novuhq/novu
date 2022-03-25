@@ -4,25 +4,26 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
+import { LackIntegrationError } from '../LackIntegrationError';
 
 export function EmailContentCard({
   index,
   variables = [],
   application,
+  isIntegrationActive,
 }: {
   index: number;
   variables: {
     name: string;
   }[];
   application: IApplication | undefined;
+  isIntegrationActive: boolean;
 }) {
   const {
     control,
     formState: { errors },
-    getValues,
     setValue,
     watch,
-    register,
   } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`emailMessages.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState(0);
@@ -30,8 +31,10 @@ export function EmailContentCard({
   useEffect(() => {
     if (contentType === 'customHtml') {
       setActiveTab(1);
-    } else setActiveTab(0);
-  }, []);
+    } else {
+      setActiveTab(0);
+    }
+  }, [contentType]);
 
   const onTabChange = (tabIndex) => {
     setActiveTab(tabIndex);
@@ -72,6 +75,7 @@ export function EmailContentCard({
 
   return (
     <>
+      {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
       <Controller
         name={`emailMessages.${index}.template.subject` as any}
         control={control}
@@ -89,7 +93,9 @@ export function EmailContentCard({
           );
         }}
       />
-      <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
+      <div data-test-id="editor-type-selector">
+        <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
+      </div>
     </>
   );
 }
