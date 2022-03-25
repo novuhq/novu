@@ -75,6 +75,8 @@ export class UserSession {
         await this.updateApplicationDetails();
       }
     }
+
+    await this.createIntegration();
   }
 
   private shouldUseTestServer() {
