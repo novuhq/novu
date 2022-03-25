@@ -11,12 +11,12 @@ import {
   LoadingOverlay,
   SelectItem,
 } from '@mantine/core';
+import styled from '@emotion/styled';
 import useStyles from './Select.styles';
 import { inputStyles } from '../config/inputs.styles';
 import { ArrowDown } from '../icons';
 import { colors } from '../config';
 import { Text } from '../index';
-import styled from '@emotion/styled';
 
 interface ISelectProps extends MantineMargins {
   data: (string | { value: string; label?: string })[];
