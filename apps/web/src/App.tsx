@@ -170,12 +170,13 @@ function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
 }
 
 function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
-  const { token, setToken, user, logout } = useAuthController();
+  const { token, setToken, user, organization, logout } = useAuthController();
 
   return (
     <AuthContext.Provider
       value={{
         currentUser: user,
+        currentOrganization: organization,
         token,
         logout,
         setToken,

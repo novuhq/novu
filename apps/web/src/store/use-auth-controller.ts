@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { IOrganizationEntity, IUserEntity } from '@notifire/shared';
+import { IJwtPayload, IOrganizationEntity, IUserEntity } from '@notifire/shared';
 import axios from 'axios';
+import jwtDecode from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
@@ -27,11 +28,19 @@ export function useAuthController() {
   const [token, setToken] = useState<string | null>(getToken());
   const isLoggedIn = !!token;
   const { data: user, refetch: refetchUser } = useQuery<IUserEntity>('/v1/users/me', getUser, {
-    enabled: isLoggedIn,
+    enabled: Boolean(isLoggedIn && axios.defaults.headers.common.Authorization),
   });
+
   const { data: organization, refetch: refetchOrganization } = useQuery<IOrganizationEntity>(
     '/v1/organizations/me',
-    getCurrentOrganization
+    getCurrentOrganization,
+    {
+      enabled: Boolean(
+        isLoggedIn &&
+          axios.defaults.headers.common.Authorization &&
+          jwtDecode<IJwtPayload>(axios.defaults.headers.common.Authorization?.split(' ')[1])?.organizationId
+      ),
+    }
   );
 
   useEffect(() => {
@@ -70,6 +79,7 @@ export function useAuthController() {
   return {
     isLoggedIn,
     user,
+    organization,
     setToken,
     token,
     logout,
