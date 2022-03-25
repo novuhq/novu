@@ -1,6 +1,6 @@
 import { MemberRoleEnum, MemberStatusEnum } from '@notifire/shared';
 
-describe.skip('Invites module', function () {
+describe('Invites module', function () {
   beforeEach(function () {
     cy.task('clearDatabase');
     cy.initializeSession()

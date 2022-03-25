@@ -1,4 +1,5 @@
 import { MantineTheme } from '@mantine/core';
+import { colors } from './colors';
 
 export const inputStyles = (theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
@@ -50,6 +51,11 @@ export const inputStyles = (theme: MantineTheme) => {
       marginTop: '0px',
       marginBottom: '10px',
       lineHeight: '17px',
+    },
+    disabled: {
+      backgroundColor: `${dark ? colors.B20 : colors.B60} !important`,
+      borderColor: `${dark ? colors.B30 : colors.B80} !important`,
+      color: `${secondaryColor} !important`,
     },
   };
 };

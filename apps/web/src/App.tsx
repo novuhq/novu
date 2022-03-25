@@ -13,7 +13,7 @@ import ApplicationOnBoarding from './legacy/pages/onboarding/application';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import { WidgetSettingsPage } from './pages/settings/WidgetSettingsPage';
-import InvitationScreen from './legacy/pages/auth/InvitationScreen';
+import InvitationPage from './pages/auth/InvitationPage';
 import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { ThemeContext } from './store/themeContext';
@@ -65,7 +65,7 @@ function App() {
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/reset/request" element={<PasswordResetPage />} />
               <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
-              <Route path="/auth/invitation/:token" element={<InvitationScreen />} />
+              <Route path="/auth/invitation/:token" element={<InvitationPage />} />
               <Route element={<AppLayout />}>
                 <Route
                   path="/*"

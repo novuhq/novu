@@ -3,12 +3,14 @@ import { colors, Text, Title, Container } from '../../../design-system';
 
 export default function AuthContainer({
   title,
-  description,
+  description = '',
   children,
+  customDescription,
 }: {
   title: string;
-  description: string;
+  description?: string;
   children: React.ReactNode;
+  customDescription?: React.ReactNode;
 }) {
   return (
     <Container
@@ -22,9 +24,11 @@ export default function AuthContainer({
       }}>
       <div style={{ marginTop: '30px' }}>
         <Title>{title}</Title>
-        <Text size="lg" color={colors.B60} mb={60} mt={20}>
-          {description}
-        </Text>
+        {customDescription || (
+          <Text size="lg" color={colors.B60} mb={60} mt={20}>
+            {description}
+          </Text>
+        )}
         {children}
       </div>
     </Container>
