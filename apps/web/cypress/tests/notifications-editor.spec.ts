@@ -214,7 +214,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('logo-upload-button').click();
 
     cy.get('.mantine-Modal-modal button').contains('Yes').click();
-    cy.location('pathname').should('equal', '/settings/widget');
+    cy.location('pathname').should('equal', '/settings');
   });
 
   it('should show the brand logo on main page', function () {

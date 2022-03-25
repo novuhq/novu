@@ -98,7 +98,7 @@ export function EmailMessageEditor({
   }
 
   function getBrandSettingsUrl(): string {
-    return '/settings/widget';
+    return '/settings';
   }
 
   return (
