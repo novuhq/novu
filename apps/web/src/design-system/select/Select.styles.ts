@@ -23,7 +23,6 @@ export default createStyles((theme: MantineTheme) => {
       color: dark ? theme.white : theme.colors.gray[8],
       left: '5px',
       top: '5px',
-      height: '40px',
       margin: '2.5px 0px',
       lineHeight: '20px',
     },
