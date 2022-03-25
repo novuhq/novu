@@ -13,9 +13,11 @@ interface ISwitchProps {
  * Switch component
  *
  */
-export function Switch({ onChange, loading = false, ...props }: ISwitchProps) {
-  const { classes } = useStyles();
-  const defaultDesign = { radius: 'xl', size: 'md', classNames: classes } as SwitchProps;
+export const Switch = React.forwardRef<HTMLInputElement, ISwitchProps>(
+  ({ onChange, loading = false, ...props }, ref) => {
+    const { classes } = useStyles();
+    const defaultDesign = { radius: 'xl', size: 'md', classNames: classes } as SwitchProps;
 
-  return <MantineSwitch onChange={onChange} {...defaultDesign} {...props} />;
-}
+    return <MantineSwitch ref={ref} onChange={onChange} {...defaultDesign} {...props} />;
+  }
+);

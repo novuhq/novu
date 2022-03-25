@@ -31,6 +31,7 @@ export function MembersInvitePage() {
 
     await sendInvite(email);
     await refetch();
+
     form.resetFields(['email']);
   }
 
@@ -41,10 +42,10 @@ export function MembersInvitePage() {
         actions={
           <Form onFinish={onSubmit} form={form}>
             <Group align="center" spacing={10}>
-              <Form.Item name="email" rules={[{ required: true }]} style={{ marginBottom: 0 }}>
-                <Input required data-test-id="invite-email-field" placeholder="Invite user by email" />
+              <Form.Item name="email" style={{ marginBottom: 0 }}>
+                <StyledInput required data-test-id="invite-email-field" placeholder="Invite user by email" />
               </Form.Item>
-              <Button submit icon={<Invite />}>
+              <Button submit icon={<Invite />} loading={loadingSendInvite}>
                 Invite
               </Button>
             </Group>
@@ -102,4 +103,16 @@ const MemberRowWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+`;
+
+const StyledInput = styled(Input)`
+  width: 300px;
+
+  .mantine-TextInput-wrapper,
+  input {
+    min-height: auto;
+    height: 42px;
+  }
+  position: relative;
+  top: -2px;
 `;

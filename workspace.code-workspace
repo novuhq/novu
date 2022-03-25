@@ -76,7 +76,8 @@
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "cSpell.words": [
-      "Chainable"
+      "Chainable",
+      "usecases"
     ]
   },
   "extensions": {

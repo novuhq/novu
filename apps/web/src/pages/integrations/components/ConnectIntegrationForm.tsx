@@ -1,24 +1,35 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICredentialsDto } from '@notifire/shared';
 import { useMutation } from 'react-query';
 import { message } from 'antd';
-import { PasswordInput } from '@mantine/core';
-import { Button, colors, Switch, Text } from '../../../design-system';
-import { Check } from '../../../design-system/icons';
+import { Image, useMantineColorScheme } from '@mantine/core';
+import { Button, colors, PasswordInput, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, updateIntegration } from '../../../api/integration';
+import { Close } from '../../../design-system/icons/actions/Close';
 
 export function ConnectIntegrationForm({
   provider,
   showModal,
   createModel,
+  onClose,
 }: {
   provider: IIntegratedProvider | null;
   showModal: (visible: boolean) => void;
   createModel: boolean;
+  onClose: () => void;
 }) {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    control,
+  } = useForm({ shouldUseNativeValidation: false });
+
+  const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
 
   const { mutateAsync: createIntegrationApi } = useMutation<
@@ -36,6 +47,14 @@ export function ConnectIntegrationForm({
     }
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
+  useEffect(() => {
+    if (provider?.credentials) {
+      for (const credential of provider.credentials) {
+        setValue(credential.key, credential.value);
+      }
+    }
+  }, [provider]);
+
   async function onCreatIntegration(credentials: ICredentialsDto) {
     try {
       if (createModel) {
@@ -52,7 +71,7 @@ export function ConnectIntegrationForm({
         });
       }
     } catch (e: any) {
-      message.warn(`Exception occured while fetching integration: ${e?.messages.toString()}`);
+      message.warn(`Exception occurred while fetching integration: ${e?.messages.toString()}`);
     }
 
     message.success(`Successfully ${createModel ? 'added' : 'updated'} integration`);
@@ -60,44 +79,49 @@ export function ConnectIntegrationForm({
     showModal(false);
   }
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    control,
-  } = useForm({ shouldUseNativeValidation: false });
-
   function handlerSwitchChange() {
     setIsActive((prev) => !prev);
   }
 
+  const isDark = colorScheme === 'dark';
+  const logoSrc = provider ? `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png` : '';
+
   return (
-    <form onSubmit={handleSubmit(onCreatIntegration)}>
+    <Form onSubmit={handleSubmit(onCreatIntegration)}>
+      <CloseButton onClick={onClose}>
+        <Close />
+      </CloseButton>
+
       <ColumnDiv>
+        <Image style={{ maxWidth: 140 }} radius="md" src={logoSrc} alt={`${provider?.providerId} image`} />
+
         <InlineDiv>
           <span>Read our guide on where to get the credentials </span>
-          <a href={provider?.docReference}>here</a>
+          <a href={provider?.docReference} target="_blank" rel="noreferrer">
+            here.
+          </a>
         </InlineDiv>
         {provider?.credentials.map((credential) => (
-          <Controller
-            key={credential.key}
-            name={credential.key}
-            control={control}
-            render={({ field }) => (
-              <PasswordInput
-                label={credential.displayName}
-                defaultValue={credential.value ? credential.value : ''}
-                required
-                data-test-id={credential.key}
-                {...field}
-                error={errors[credential.key]?.message}
-                {...register(credential.key, { required: `Please enter a ${credential.displayName.toLowerCase()}` })}
-              />
-            )}
-          />
+          <InputWrapper key={credential.key}>
+            <Controller
+              name={credential.key}
+              control={control}
+              render={({ field }) => (
+                <PasswordInput
+                  label={credential.displayName}
+                  required
+                  placeholder={credential.displayName}
+                  data-test-id={credential.key}
+                  error={errors[credential.key]?.message}
+                  {...field}
+                  {...register(credential.key, { required: `Please enter a ${credential.displayName.toLowerCase()}` })}
+                />
+              )}
+            />
+          </InputWrapper>
         ))}
         <RowDiv>
-          <ActiveWrapper>
+          <ActiveWrapper active={isActive}>
             <Controller
               control={control}
               name="isActive"
@@ -105,25 +129,21 @@ export function ConnectIntegrationForm({
                 <Switch checked={isActive} data-test-id="is_active_id" {...field} onChange={handlerSwitchChange} />
               )}
             />
-            <StyledText>Active</StyledText>
+            <StyledText>{isActive ? 'Active' : 'Disabled'}</StyledText>
           </ActiveWrapper>
-          <ConnectedWrapper>
-            <StyledText>Connected</StyledText>
-            <Check />
-          </ConnectedWrapper>
         </RowDiv>
         <Button submit fullWidth>
           {createModel ? 'Connect' : 'Update'}
         </Button>
       </ColumnDiv>
-    </form>
+    </Form>
   );
 }
 
 const StyledText = styled(Text)`
   display: inline-block;
   word-break: normal;
-  margin: 0 6px;
+  margin: 0 10px;
 `;
 
 const SideElementBase = styled.div`
@@ -131,9 +151,11 @@ const SideElementBase = styled.div`
   justify-content: flex-start;
 `;
 
-const ActiveWrapper = styled(SideElementBase)`
+const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
+  align-items: center;
+
   ${StyledText} {
-    color: red;
+    color: ${({ active }) => (active ? colors.success : colors.error)};
   }
 `;
 
@@ -152,14 +174,47 @@ const RowDiv = styled.div`
 const InlineDiv = styled.div`
   display: flex;
   flex-direction: row;
+  margin-bottom: 30px;
+  margin-top: 30px;
 
   span {
     margin-right: 5px;
   }
 `;
 
+const CloseButton = styled.button`
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: transparent;
+  border: none;
+  color: ${colors.B40};
+  outline: none;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
 const ConnectedWrapper = styled(SideElementBase)`
-  ${StyledText} {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  ${StyledText}, svg {
     color: ${colors.success};
   }
+`;
+
+const InputWrapper = styled.div`
+  margin-bottom: 30px;
+  label {
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+`;
+
+const Form = styled.form`
+  position: relative;
 `;
