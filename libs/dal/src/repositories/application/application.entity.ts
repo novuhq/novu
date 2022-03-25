@@ -1,5 +1,3 @@
-import { Exclude } from 'class-transformer';
-
 export interface IApiKey {
   key: string;
   _userId: string;
@@ -15,21 +13,6 @@ export class ApplicationEntity {
   identifier: string;
 
   apiKeys: IApiKey[];
-
-  channels?: {
-    email?: {
-      senderEmail: string;
-      senderName: string;
-    };
-
-    sms?: {
-      twillio: {
-        authToken: string;
-        accountSid: string;
-        phoneNumber: string;
-      };
-    };
-  };
 
   branding: {
     fontFamily?: string;
