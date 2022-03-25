@@ -11,10 +11,16 @@ import { AuthContext } from '../../store/authContext';
 type Props = {};
 
 export function CreateApplicationForm({}: Props) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({});
+
   const navigate = useNavigate();
   const { setToken, token } = useContext(AuthContext);
   const [loading, setLoading] = useState<boolean>();
-  const { mutateAsync: createOrganization } = useMutation<
+  const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
     { error: string; message: string; statusCode: number },
     {
@@ -40,31 +46,41 @@ export function CreateApplicationForm({}: Props) {
     }
   }, []);
 
-  const onCreateApplication = async (data: { organizationName: string }) => {
-    setLoading(true);
-
-    const itemData = {
-      name: data.organizationName,
-    };
-
-    const organization = await createOrganization(itemData);
-    const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
-
-    setToken(organizationResponseToken);
-
-    const applicationResponse = await mutateAsync(itemData);
+  async function createApplication(name: string) {
+    const applicationResponse = await mutateAsync({ name });
     const tokenResponse = await api.post(`/v1/auth/applications/${applicationResponse._id}/switch`, {});
 
     setToken(tokenResponse.token);
+  }
+
+  async function createOrganization(name: string) {
+    const organization = await createOrganizationMutation({ name });
+    const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
+
+    setToken(organizationResponseToken);
+  }
+
+  function jwtHasKey(key: string) {
+    if (!token) return false;
+    const jwt = decode<IJwtPayload>(token);
+
+    return jwt && jwt[key];
+  }
+
+  const onCreateApplication = async (data: { organizationName: string }) => {
+    setLoading(true);
+
+    if (!jwtHasKey('organizationId')) {
+      await createOrganization(data.organizationName);
+    }
+
+    if (!jwtHasKey('applicationId')) {
+      await createApplication(data.organizationName);
+    }
+
     setLoading(false);
     navigate('/');
   };
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({});
 
   return (
     <form name="create-app-form" onSubmit={handleSubmit(onCreateApplication)}>
