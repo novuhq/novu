@@ -33,16 +33,6 @@ export function PasswordResetPage({}: Props) {
           <Button data-test-id="success-screen-reset" onClick={() => navigate('/auth/login')} inherit>
             Go Back
           </Button>
-          <Link to="/auth/login">
-            <Center mt={20} inline>
-              <Text weight="bold" mr={10} size="lg" gradient>
-                {'<--'}
-              </Text>
-              <Text weight="bold" size="lg" gradient>
-                Go Back
-              </Text>
-            </Center>
-          </Link>
         </AuthContainer>
       )}
     </AuthLayout>
