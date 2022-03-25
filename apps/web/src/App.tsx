@@ -5,22 +5,23 @@ import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
-import { ActivitiesPage } from './legacy/pages/activities/ActivitiesPage';
-import LoginPage from './legacy/pages/auth/login';
-import SignUpPage from './legacy/pages/auth/signup';
+import { ActivitiesPage } from './pages/activities/ActivitiesPage';
+import LoginPage from './pages/auth/LoginPage';
+import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './legacy/pages/HomePage';
 import ApplicationOnBoarding from './legacy/pages/onboarding/application';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
-import InvitationScreen from './legacy/pages/auth/InvitationScreen';
+import InvitationPage from './pages/auth/InvitationPage';
 import { api } from './api/api.client';
-import PasswordResetPage from './legacy/pages/auth/password-reset';
+import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { ThemeContext } from './store/themeContext';
 import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
+import CreateApplicationPage from './pages/auth/CreateApplicationPage';
 
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
@@ -65,7 +66,8 @@ function App() {
               <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/reset/request" element={<PasswordResetPage />} />
               <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
-              <Route path="/auth/invitation/:token" element={<InvitationScreen />} />
+              <Route path="/auth/invitation/:token" element={<InvitationPage />} />
+              <Route path="/auth/application" element={<CreateApplicationPage />} />
               <Route element={<AppLayout />}>
                 <Route
                   path="/*"
@@ -168,12 +170,13 @@ function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
 }
 
 function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
-  const { token, setToken, user, logout } = useAuthController();
+  const { token, setToken, user, organization, logout } = useAuthController();
 
   return (
     <AuthContext.Provider
       value={{
         currentUser: user,
+        currentOrganization: organization,
         token,
         logout,
         setToken,

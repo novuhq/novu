@@ -6,12 +6,18 @@ describe('User Sign-up and Login', function () {
     });
 
     it('should allow a visitor to sign-up, login, and logout', function () {
+      cy.intercept('**/applications/**/switch').as('appSwitch');
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('example@example.com');
       cy.getByTestId('password').type('usEr_password_123');
-      cy.getByTestId('companyName').type('Mega Corp Company');
       cy.getByTestId('submitButton').click();
+      cy.location('pathname').should('equal', '/auth/application');
+      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('submit-btn').click();
+      cy.wait('@appSwitch', {
+        timeout: 10000,
+      });
       cy.location('pathname').should('equal', '/templates');
     });
   });

@@ -11,10 +11,12 @@ import {
   LoadingOverlay,
   SelectItem,
 } from '@mantine/core';
+import styled from '@emotion/styled';
 import useStyles from './Select.styles';
 import { inputStyles } from '../config/inputs.styles';
 import { ArrowDown } from '../icons';
 import { colors } from '../config';
+import { Text } from '../index';
 
 interface ISelectProps extends MantineMargins {
   data: (string | { value: string; label?: string })[];
@@ -86,7 +88,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
     }
 
     return (
-      <div style={{ position: 'relative', minHeight: 50 }}>
+      <Wrapper style={{ position: 'relative' }}>
         <LoadingOverlay
           visible={loading}
           overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
@@ -121,7 +123,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             {...props}
           />
         )}
-      </div>
+      </Wrapper>
     );
   }
 );
@@ -139,18 +141,34 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
         display: 'flex',
         borderRadius: '5px',
         backgroundColor,
-        margin: '0px 5px',
+        margin: '5px',
       }}>
       <div
         style={{
-          margin: '6.5px 3px 6.5px 10px',
+          margin: '6.5px 0px 6.5px 10px',
           lineHeight: '20px',
+          maxWidth: '80px',
           fontSize: 14,
           fontWeight: 400,
         }}>
-        {label}
+        <Text rows={1}>{label}</Text>
       </div>
       <CloseButton style={{ color }} onMouseDown={onRemove} variant="transparent" size={30} iconSize={15} />
     </Box>
   );
 }
+
+const Wrapper = styled.div`
+  .mantine-MultiSelect-values {
+    min-height: 48px;
+    padding: 0;
+  }
+
+  .mantine-MultiSelect-input {
+    min-height: 50px;
+
+    input {
+      height: 100%;
+    }
+  }
+`;

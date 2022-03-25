@@ -7,13 +7,9 @@ import {
   Menu as MantineMenu,
   Container,
 } from '@mantine/core';
-import { useQuery } from 'react-query';
-import { IOrganizationEntity, IUserEntity } from '@notifire/shared';
 import { useContext } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { AuthContext } from '../../../store/authContext';
-import { getUser } from '../../../api/user';
-import { getCurrentOrganization } from '../../../api/organization';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
 
@@ -28,14 +24,9 @@ const menuItem = [
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export function HeaderNav({}: Props) {
-  const authContext = useContext(AuthContext);
+  const { currentOrganization, currentUser, logout } = useContext(AuthContext);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
-  const { data: user, isLoading: isUserLoading } = useQuery<IUserEntity>('/v1/users/me', getUser);
-  const { data: organization, isLoading: isOrganizationLoading } = useQuery<IOrganizationEntity>(
-    '/v1/organizations/me',
-    getCurrentOrganization
-  );
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
@@ -46,14 +37,14 @@ export function HeaderNav({}: Props) {
           })}
           radius="xl"
           size={45}
-          src={user?.profilePicture || '/static/images/avatar.png'}
+          src={currentUser?.profilePicture || '/static/images/avatar.png'}
         />
         <div style={{ flex: 1 }}>
           <Text data-test-id="header-dropdown-username" rows={1}>
-            {capitalize(user?.firstName as string)} {capitalize(user?.lastName as string)}
+            {capitalize(currentUser?.firstName as string)} {capitalize(currentUser?.lastName as string)}
           </Text>
           <Text size="md" color={colors.B70} rows={1} data-test-id="header-dropdown-organization-name">
-            {capitalize(organization?.name as string)}
+            {capitalize(currentOrganization?.name as string)}
           </Text>
         </div>
       </Group>
@@ -63,7 +54,7 @@ export function HeaderNav({}: Props) {
         {title}
       </MantineMenu.Item>
     )),
-    <MantineMenu.Item key="logout" icon={<Trash />} onClick={authContext.logout} data-test-id="logout-button">
+    <MantineMenu.Item key="logout" icon={<Trash />} onClick={logout} data-test-id="logout-button">
       Sign Out
     </MantineMenu.Item>,
   ];
@@ -98,7 +89,7 @@ export function HeaderNav({}: Props) {
                   size={35}
                   radius="xl"
                   data-test-id="header-profile-avatar"
-                  src={user?.profilePicture || '/static/images/avatar.png'}
+                  src={currentUser?.profilePicture || '/static/images/avatar.png'}
                 />
               </ActionIcon>
             }>

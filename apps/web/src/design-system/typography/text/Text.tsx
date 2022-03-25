@@ -7,15 +7,19 @@ interface ITextProps extends JSX.ElementChildrenAttribute, MantineMargins {
   weight?: 'bold' | 'normal';
   color?: MantineColor;
   rows?: number;
+  gradient?: boolean;
 }
 
 /**
  * Text component
  *
  */
-export function Text({ children, ...props }: ITextProps) {
+export function Text({ children, gradient = false, ...props }: ITextProps) {
   const { colorScheme } = useMantineTheme();
   const defaultDesign = { size: 'md', weight: 'normal' } as SharedTextProps;
+  const gradientStyles = gradient
+    ? { backgroundImage: colors.horizontal, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
+    : {};
 
   let textColor = props.color;
   if (!textColor) {
@@ -23,7 +27,7 @@ export function Text({ children, ...props }: ITextProps) {
   }
 
   return (
-    <MantineText lineClamp={props.rows} {...defaultDesign} {...props} color={textColor}>
+    <MantineText lineClamp={props.rows} {...defaultDesign} style={gradientStyles} {...props} color={textColor}>
       {children}
     </MantineText>
   );

@@ -24,9 +24,12 @@ export function AppLayout() {
       '/',
       '/templates',
       '/settings',
+      '/activities',
       '/settings/organization',
       '/integrations',
       '/templates/create',
+      '/auth/login',
+      '/auth/signup',
       `/templates/edit/${templateId}`,
     ].includes(location.pathname)
   ) {

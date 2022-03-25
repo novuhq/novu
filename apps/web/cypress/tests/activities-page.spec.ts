@@ -1,4 +1,4 @@
-describe.skip('Activity Feed Screen', function () {
+describe('Activity Feed Screen', function () {
   beforeEach(function () {
     cy.initializeSession()
       .as('session')
@@ -36,7 +36,7 @@ describe.skip('Activity Feed Screen', function () {
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
   });
 
-  it('should display stats on top of page', function () {
+  it.skip('should display stats on top of page', function () {
     cy.visit('/activities');
     cy.get('.ant-statistic')
       .contains('Sent this month', {
@@ -63,6 +63,7 @@ describe.skip('Activity Feed Screen', function () {
       });
     });
     cy.visit('/activities');
+
     cy.get('tbody tr').eq(0).get('.ant-badge-status-error').should('be.visible');
     cy.get('tbody tr').eq(1).get('.ant-badge-status-success').should('be.visible');
     cy.get('tbody tr').eq(2).get('.ant-badge-status-warning').should('be.visible');
@@ -72,7 +73,7 @@ describe.skip('Activity Feed Screen', function () {
     cy.visit('/activities');
     cy.getByTestId('row-email-channel').should('not.have.length', 10);
     cy.getByTestId('activities-filter').click();
-    cy.get('.ant-select-item').contains('Email').click();
+    cy.get('.mantine-MultiSelect-item').contains('Email').click();
     cy.getByTestId('row-email-channel').should('have.length', 10);
   });
 });
