@@ -43,4 +43,8 @@ const WarningMessage = styled.div`
 const StyledSpan = styled.span`
   margin-left: 4px;
   text-decoration: underline;
+
+  &:hover {
+    cursor: pointer;
+  }
 `;

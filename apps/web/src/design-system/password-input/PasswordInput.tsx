@@ -33,9 +33,11 @@ const StyledPassword = styled(MantinePasswordInput)<{ error?: any }>`
     color: ${colors.B40};
     margin-right: 10px;
   }
+
   input {
-    height: inherit;
+    height: 100%;
   }
+
   input::placeholder {
     color: ${colors.B40};
   }

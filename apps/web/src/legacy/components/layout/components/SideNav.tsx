@@ -1,8 +1,5 @@
-import styled from 'styled-components';
 import { Layout, Menu } from 'antd';
 import { Scrollbars } from 'react-custom-scrollbars';
-import { useQuery } from 'react-query';
-import { IOrganizationEntity } from '@notifire/shared';
 import { NavLink } from 'react-router-dom';
 import { SettingOutlined, NotificationOutlined, MonitorOutlined, TeamOutlined } from '@ant-design/icons';
 import { useContext } from 'react';
@@ -14,9 +11,6 @@ type Props = {};
 
 export function SideNav({}: Props) {
   const themeContext = useContext(ThemeContext);
-
-  const { data: organization, isLoading: isOrganizationLoading } =
-    useQuery<IOrganizationEntity>('/v1/organizations/me');
 
   return (
     <Sider className="side-nav" width={250} collapsed={false} theme={themeContext.theme}>

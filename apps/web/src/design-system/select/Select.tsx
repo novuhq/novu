@@ -11,6 +11,7 @@ import {
   LoadingOverlay,
   SelectItem,
 } from '@mantine/core';
+import styled from '@emotion/styled';
 import useStyles from './Select.styles';
 import { inputStyles } from '../config/inputs.styles';
 import { ArrowDown } from '../icons';
@@ -87,7 +88,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
     }
 
     return (
-      <div style={{ position: 'relative', minHeight: 50 }}>
+      <Wrapper style={{ position: 'relative' }}>
         <LoadingOverlay
           visible={loading}
           overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
@@ -122,7 +123,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             {...props}
           />
         )}
-      </div>
+      </Wrapper>
     );
   }
 );
@@ -156,3 +157,18 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
     </Box>
   );
 }
+
+const Wrapper = styled.div`
+  .mantine-MultiSelect-values {
+    min-height: 48px;
+    padding: 0;
+  }
+
+  .mantine-MultiSelect-input {
+    min-height: 50px;
+
+    input {
+      height: 100%;
+    }
+  }
+`;

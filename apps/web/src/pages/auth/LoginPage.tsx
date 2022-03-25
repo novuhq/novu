@@ -1,5 +1,7 @@
 import { useContext, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import jwtDecode from 'jwt-decode';
+import { IJwtPayload } from '@notifire/shared';
 import { AuthContext } from '../../store/authContext';
 import { LoginForm } from '../../components/auth/LoginForm';
 import AuthLayout from '../../components/layout/components/AuthLayout';
@@ -19,7 +21,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      navigate('/');
+      const user = jwtDecode<IJwtPayload>(token);
+
+      if (!user.organizationId || !user.applicationId) {
+        navigate('/auth/application');
+      } else {
+        navigate('/');
+      }
     }
   }, [token]);
 
