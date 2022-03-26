@@ -12,33 +12,52 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import moment from 'moment';
+import { useEffect, useState } from 'react';
 import { getActivityGraphStats } from '../../../api/activity';
-import { colors } from '../../../design-system';
+import { colors, Text } from '../../../design-system';
 import { IActivityGraphStats, IChartData } from '../interfaces';
+import { activityGraphStatsMock } from '../consts';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+function checkIsTriggerSent(activityGraphStats: IActivityGraphStats[] | undefined) {
+  return activityGraphStats?.length && activityGraphStats?.length > 0;
+}
+
 export function ActivityGraph() {
-  const { data: activityGraphStats, isLoading: loadingActivityStats } = useQuery<IActivityGraphStats>(
+  const [isTriggerSent, setIsTriggerSent] = useState<boolean>(false);
+  const { data: activityGraphStats, isLoading: loadingActivityStats } = useQuery<IActivityGraphStats[]>(
     'activityGraphStats',
     getActivityGraphStats
   );
 
+  useEffect(() => {
+    if (checkIsTriggerSent(activityGraphStats)) {
+      setIsTriggerSent(true);
+    }
+  }, [activityGraphStats]);
+
   return (
     <Wrapper>
-      {!loadingActivityStats ? <StyledBar options={options} data={getDataChartJs(activityGraphStats)} /> : null}
+      {!isTriggerSent ? (
+        <MessageContainer>
+          <StyledTitle>YOUR ACTIVITY FEED</StyledTitle>
+          <StyledText>Here you will see the activity graph once you send some events</StyledText>
+        </MessageContainer>
+      ) : null}
+
+      {!loadingActivityStats ? (
+        <StyledBar
+          isTriggerSent={isTriggerSent}
+          options={options(isTriggerSent)}
+          data={getDataChartJs(activityGraphStats)}
+        />
+      ) : null}
     </Wrapper>
   );
 }
 
-function getDataChartJs(data: IActivityGraphStats | undefined): IChartData {
-  if (!data) {
-    return {
-      datasets: [],
-      labels: [],
-    };
-  }
-
+function buildChartDataContainer(data: IActivityGraphStats[]): IChartData {
   return {
     labels: buildChartDateLabels(data),
     datasets: [
@@ -51,22 +70,32 @@ function getDataChartJs(data: IActivityGraphStats | undefined): IChartData {
   };
 }
 
-export const options = {
-  maintainAspectRatio: false,
-  responsive: true,
-  height: 300,
+function getDataChartJs(data: IActivityGraphStats[] | undefined): IChartData {
+  if (!data || data?.length === 0) {
+    return buildChartDataContainer(activityGraphStatsMock);
+  }
 
-  legend: {
-    display: false,
-  },
+  return buildChartDataContainer(data);
+}
 
-  scales: getScalesConfiguration.call(this),
+function options(this: any, isTriggerSent: boolean) {
+  return {
+    maintainAspectRatio: false,
+    responsive: true,
+    height: 300,
 
-  plugins: {
-    tooltip: getTooltipConfiguration(),
-    legend: hideTitle(),
-  },
-};
+    legend: {
+      display: false,
+    },
+
+    scales: getScalesConfiguration.call(this),
+
+    plugins: {
+      tooltip: isTriggerSent ? getTooltipConfiguration() : { enabled: false },
+      legend: hideTitle(),
+    },
+  };
+}
 
 function getScalesConfiguration() {
   return {
@@ -169,7 +198,7 @@ function hideEverySecondTickLabel(this: any, index, val) {
   return index % 2 === 0 ? this.getLabelForValue(val) : '';
 }
 
-function buildChartDateLabels(data: any) {
+function buildChartDateLabels(data: IActivityGraphStats[]): string[][] {
   return data.map((x) => {
     const titleDate = moment(x._id);
 
@@ -177,18 +206,46 @@ function buildChartDateLabels(data: any) {
   });
 }
 
-function buildChartData(data: any) {
+function buildChartData(data: IActivityGraphStats[]) {
   return data.map((x) => {
     return x.count;
   });
 }
 
-const StyledBar = styled(Bar)`
+const StyledBar = styled(Bar)<{ isTriggerSent: boolean }>`
   height: 175px;
+  filter: ${({ isTriggerSent }) => (!isTriggerSent ? 'blur(4px)' : 'blur(0px)')};
 `;
 
 const Wrapper = styled.div`
+  background: rgba(30, 30, 38, 0.5);
   padding: 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+`;
+
+const StyledTitle = styled(Text)`
+  color: #dd2476; // ${colors.horizontal};
+  font-size: 11px;
+  margin: 12px 0 8px 0;
+`;
+
+const StyledText = styled(Text)`
+  margin: 0 15px 14px 15px;
+`;
+
+const MessageContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  position: absolute;
+  padding: 12px 15px 14px;
+  height: 64px;
+  background: ${colors.B20};
+  border-radius: 7px;
 `;
 
 function buildDisplayTitle(title) {
@@ -278,9 +335,6 @@ function updateTableInnerHtml(tooltipEl: HTMLElement, innerHtml: string) {
 
 function updateToolTipStyles(context, tooltipEl: HTMLElement, tooltipModel) {
   const position = context.chart.canvas.getBoundingClientRect();
-  // const bodyFont = ChartJS.helpers.toFont(tooltipModel.options.bodyFont);
-
-  // Display, position, and set styles for font
 
   /* eslint-disable no-param-reassign */
   tooltipEl.style.background = colors.B20;
@@ -290,7 +344,6 @@ function updateToolTipStyles(context, tooltipEl: HTMLElement, tooltipModel) {
   tooltipEl.style.position = 'absolute';
   tooltipEl.style.left = `${position.left + window.pageXOffset + tooltipModel.caretX}px`;
   tooltipEl.style.top = `${position.top + window.pageYOffset + tooltipModel.caretY}px`;
-  // tooltipEl.style.font = bodyFont.string;
   tooltipEl.style.pointerEvents = 'none';
   /* eslint-enable no-param-reassign */
 }

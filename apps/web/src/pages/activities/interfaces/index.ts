@@ -2,7 +2,7 @@ import { ScriptableContext } from 'chart.js';
 
 export interface IChartData {
   datasets: IDataSet[];
-  labels: string[];
+  labels: string[][];
 }
 
 export interface IDataSet {
