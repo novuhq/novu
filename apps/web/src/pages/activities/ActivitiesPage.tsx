@@ -14,6 +14,7 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import { Data, Table } from '../../design-system/table/Table';
 import { Select, Tag, Text, Tooltip, Input } from '../../design-system';
 import { ActivityStatistics } from './components/ActivityStatistics';
+import { ActivityGraph } from './components/ActivityGraph';
 
 interface IFiltersForm {
   channels: ChannelTypeEnum[];
@@ -128,6 +129,7 @@ export function ActivitiesPage() {
     <PageContainer>
       <PageHeader title="Activity Feed" />
       <ActivityStatistics />
+      <ActivityGraph />
       <form onChange={handleSubmit(onFiltersChange)}>
         <Group>
           <Controller
@@ -171,7 +173,6 @@ export function ActivitiesPage() {
           />
         </Group>
       </form>
-
       <Table
         data-test-id="activities-table"
         loading={isLoading || isFetching}

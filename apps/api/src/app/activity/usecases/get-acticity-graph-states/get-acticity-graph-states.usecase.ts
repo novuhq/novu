@@ -20,6 +20,7 @@ export class GetActivityGraphStats {
           },
         },
       },
+      { $sort: { _id: 1 } },
     ]);
   }
 }
