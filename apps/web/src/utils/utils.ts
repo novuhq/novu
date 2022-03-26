@@ -2,7 +2,7 @@ export function isBrowser() {
   return typeof window !== 'undefined';
 }
 
-export function formatNumber(num, digits) {
+export function formatNumber(num: number, digits: number) {
   const lookup = [
     { value: 1, symbol: '' },
     { value: 1e3, symbol: 'k' },
