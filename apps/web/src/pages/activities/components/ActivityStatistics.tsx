@@ -16,17 +16,17 @@ export function ActivityStatistics() {
         <ContentWrapper>
           <StatisticsBox>
             <StyledNumber data-test-id="activity-stats-weekly-sent">
-              {formatNumber(activityStats?.weeklySent, 0)}
+              {formatNumber(activityStats?.weeklySent ? activityStats?.weeklySent : 0, 0)}
             </StyledNumber>
-            <StyledText>This week</StyledText>
+            <StatsLabel>This week</StatsLabel>
           </StatisticsBox>
           <StatisticsBox>
-            <StyledNumber>{formatNumber(activityStats?.monthlySent, 0)}</StyledNumber>
-            <StyledText>This month</StyledText>
+            <StyledNumber>{formatNumber(activityStats?.monthlySent ? activityStats?.monthlySent : 0, 0)}</StyledNumber>
+            <StatsLabel>This month</StatsLabel>
           </StatisticsBox>
           <StatisticsBox>
-            <StyledNumber>{formatNumber(activityStats?.yearlySent, 0)}</StyledNumber>
-            <StyledText>This year</StyledText>
+            <StyledNumber>{formatNumber(activityStats?.yearlySent ? activityStats?.yearlySent : 0, 0)}</StyledNumber>
+            <StatsLabel>This year</StatsLabel>
           </StatisticsBox>
         </ContentWrapper>
       ) : null}
@@ -48,17 +48,12 @@ const ContentWrapper = styled.div`
 
 const StyledNumber = styled.div`
   font-size: 26px;
-  font-style: normal;
   font-weight: 800;
   line-height: 30px;
-  letter-spacing: 0;
   text-align: left;
 `;
-const StyledText = styled.div`
+
+const StatsLabel = styled.div`
   font-size: 14px;
-  font-style: normal;
-  font-weight: 700;
   line-height: 17px;
-  letter-spacing: 0;
-  text-align: left;
 `;
