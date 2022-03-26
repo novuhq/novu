@@ -27,7 +27,7 @@ import { Controller, FormProvider } from 'react-hook-form';
 import styled, { css } from 'styled-components';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChannelTypeEnum } from '@notifire/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { TemplateInAppEditor } from '../../../components/templates/TemplateInAppEditor';
@@ -100,7 +100,7 @@ function TemplateEditorPageLegacy() {
   }, [serverGroups]);
 
   function navigateToSmsSettings() {
-    navigate('/settings/widget?screen=sms');
+    navigate('/settings?screen=sms');
   }
 
   async function addGroupItem() {

@@ -30,7 +30,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
-    await session.createIntegration();
     subscriberService = new SubscribersService(session.organization._id, session.application._id);
     subscriber = await subscriberService.createSubscriber();
   });

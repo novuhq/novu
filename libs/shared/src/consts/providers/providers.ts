@@ -49,25 +49,11 @@ export const providers: IProviderConfig[] = [
     docReference: 'https://mandrillapp.com/docs/?_ga=1.34114145.1141874178.1422518109',
   },
   {
-    id: 'nexmo',
-    displayName: 'Nexmo',
-    channel: ChannelTypeEnum.SMS,
-    credentials: nexmoConfig,
-    docReference: 'https://developer.nexmo.com/api/sms?theme=dark',
-  },
-  {
     id: 'nodemailer',
     displayName: 'Nodemailer',
     channel: ChannelTypeEnum.EMAIL,
     credentials: nodemailerConfig,
     docReference: 'https://nodemailer.com/about/',
-  },
-  {
-    id: 'plivo',
-    displayName: 'Plivo',
-    channel: ChannelTypeEnum.SMS,
-    credentials: plivoConfig,
-    docReference: 'https://www.plivo.com/docs/',
   },
   {
     id: 'postmark',
@@ -98,6 +84,21 @@ export const providers: IProviderConfig[] = [
     credentials: sesConfig,
     docReference: 'https://docs.aws.amazon.com/ses/index.html',
   },
+  {
+    id: 'nexmo',
+    displayName: 'Nexmo',
+    channel: ChannelTypeEnum.SMS,
+    credentials: nexmoConfig,
+    docReference: 'https://developer.nexmo.com/api/sms?theme=dark',
+  },
+  {
+    id: 'plivo',
+    displayName: 'Plivo',
+    channel: ChannelTypeEnum.SMS,
+    credentials: plivoConfig,
+    docReference: 'https://www.plivo.com/docs/',
+  },
+
   {
     id: 'sms77',
     displayName: 'sms77',

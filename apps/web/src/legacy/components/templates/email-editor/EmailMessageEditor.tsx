@@ -1,4 +1,4 @@
-import { Card, Form, Input, Button, Popconfirm, Radio } from 'antd';
+import { Button, Popconfirm } from 'antd';
 
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
@@ -62,7 +62,7 @@ export function EmailMessageEditor({
   }
 
   function navigateToBrandSettings() {
-    navigate('/settings/widget');
+    navigate('/settings');
   }
 
   function onBlockAdd(type: 'button' | 'text') {

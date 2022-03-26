@@ -12,7 +12,7 @@ import HomePage from './legacy/pages/HomePage';
 import ApplicationOnBoarding from './legacy/pages/onboarding/application';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
-import { WidgetSettingsPage } from './pages/settings/WidgetSettingsPage';
+import { SettingsPage } from './pages/settings/SettingsPage';
 import InvitationPage from './pages/auth/InvitationPage';
 import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
@@ -118,10 +118,10 @@ function App() {
                   }
                 />
                 <Route
-                  path="/settings/widget"
+                  path="/settings"
                   element={
                     <RequiredAuth>
-                      <WidgetSettingsPage />
+                      <SettingsPage />
                     </RequiredAuth>
                   }
                 />

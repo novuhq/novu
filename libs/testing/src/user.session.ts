@@ -65,6 +65,7 @@ export class UserSession {
     if (!options.noOrganization) {
       if (!options?.noApplication) {
         await this.createApplication();
+        await this.createIntegration();
       }
     }
 

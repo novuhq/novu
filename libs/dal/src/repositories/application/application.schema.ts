@@ -24,19 +24,6 @@ const applicationSchema = new Schema(
         },
       },
     ],
-    channels: {
-      email: {
-        senderEmail: Schema.Types.String,
-        senderName: Schema.Types.String,
-      },
-      sms: {
-        twillio: {
-          authToken: Schema.Types.String,
-          accountSid: Schema.Types.String,
-          phoneNumber: Schema.Types.String,
-        },
-      },
-    },
     branding: {
       fontColor: Schema.Types.String,
       contentBackground: Schema.Types.String,
