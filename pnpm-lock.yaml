@@ -190,7 +190,7 @@ importers:
       '@nestjs/swagger': 4.8.2_0b794bf82bedb6552d90f9c776e9d537
       '@nestjs/terminus': 7.2.0_b3355eaaab723e52e70bfca874d5ccb9
       '@nestjsx/crud': 4.6.2_d71f9d2eeeee42f14b4376bfe86f6f42
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       '@notifire/dal': link:../../libs/dal
       '@notifire/emailjs': link:../../providers/emailjs
       '@notifire/mailgun': link:../../providers/mailgun
@@ -208,7 +208,7 @@ importers:
       '@notifire/telnyx': link:../../providers/telnyx
       '@notifire/testing': link:../../libs/testing
       '@notifire/twilio': link:../../providers/twilio
-      '@novu/node': link:../../packages/core
+      '@novu/node': 0.3.6-alpha.0
       '@sendgrid/mail': 7.6.0
       '@sentry/node': 6.16.1
       '@sentry/tracing': 6.16.1
@@ -1004,7 +1004,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@nestjs/common': 8.2.4
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../core
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1042,7 +1042,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1081,7 +1081,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       mailersend: 1.3.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1122,7 +1122,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       form-data: 4.0.0
       mailgun.js: 3.7.3
       nock: 13.2.1
@@ -1164,7 +1164,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       node-mailjet: 3.3.4
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1206,7 +1206,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@mailchimp/mailchimp_transactional': 1.0.46
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1285,7 +1285,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       nodemailer: 6.7.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1325,7 +1325,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       plivo: 4.26.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1364,7 +1364,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       postmark: 2.8.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1403,7 +1403,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       '@sendgrid/mail': 7.6.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1443,7 +1443,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       '@sendinblue/client': 3.0.1
       '@types/request': 2.48.7
     devDependencies:
@@ -1486,7 +1486,7 @@ importers:
       typescript: ^4.4.3
     dependencies:
       '@aws-sdk/client-ses': 3.48.0
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1527,7 +1527,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       node-fetch: 2.6.6
       sms77-client: 2.14.0_node-fetch@2.6.6
     devDependencies:
@@ -1568,7 +1568,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@aws-sdk/client-sns': 3.45.0
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1645,7 +1645,7 @@ importers:
       twilio: ^3.67.2
       typedoc: ^0.19.0
     dependencies:
-      '@notifire/core': 0.3.6-alpha.0
+      '@notifire/core': link:../../packages/core
       twilio: 3.72.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -11205,13 +11205,16 @@ packages:
       lodash.merge: 4.6.2
     dev: false
 
-  /@notifire/core/0.3.6-alpha.0:
-    resolution: {integrity: sha512-SRdrS8b6YiMrCh699q41KF2YT93oo4YZYEjWYz7Voao1Gex4e4nWXvQ/NnHSRLQmJgzNyvhUCWcJFP/l7p7/zA==}
+  /@novu/node/0.3.6-alpha.0:
+    resolution: {integrity: sha512-L4PlGICDxpQ4hBc7fR6aow3lqTEoPuZMQf1KFRvAGxRRueQ9OGEFijqhEExBpo36x7wdawXIdnbZ+AzB2w2afQ==}
     engines: {node: '>=10'}
     dependencies:
+      axios: 0.26.1
       handlebars: 4.7.7
       lodash.get: 4.4.2
       lodash.merge: 4.6.2
+    transitivePeerDependencies:
+      - debug
     dev: false
 
   /@npmcli/fs/1.1.0:
@@ -12000,7 +12003,7 @@ packages:
     dependencies:
       '@types/estree': 0.0.39
       estree-walker: 1.0.1
-      picomatch: 2.3.1
+      picomatch: 2.3.0
       rollup: 1.32.1
     dev: false
 
@@ -18006,7 +18009,7 @@ packages:
   /axios/0.21.1:
     resolution: {integrity: sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==}
     dependencies:
-      follow-redirects: 1.14.7
+      follow-redirects: 1.14.9
     transitivePeerDependencies:
       - debug
     dev: false
@@ -18030,6 +18033,14 @@ packages:
     resolution: {integrity: sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==}
     dependencies:
       follow-redirects: 1.14.7
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /axios/0.26.1:
+    resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
+    dependencies:
+      follow-redirects: 1.14.9
     transitivePeerDependencies:
       - debug
     dev: false
@@ -24367,6 +24378,16 @@ packages:
         optional: true
     dependencies:
       debug: 4.3.3_supports-color@6.1.0
+    dev: false
+
+  /follow-redirects/1.14.9:
+    resolution: {integrity: sha512-MQDfihBQYMcyy5dhRDJUHcw7lb2Pv/TuE6xP1vyraLukNDHKbDxDNaOE3NbCAdKQApno+GPRyo1YAp89yCjK4w==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
     dev: false
 
   /follow-redirects/1.5.10:
