@@ -19,6 +19,7 @@ const integrationSchema = new Schema(
     channel: Schema.Types.String,
     credentials: {
       apiKey: Schema.Types.String,
+      user: Schema.Types.String,
       secretKey: Schema.Types.String,
       domain: Schema.Types.String,
       password: Schema.Types.String,
