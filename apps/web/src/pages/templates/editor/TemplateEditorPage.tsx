@@ -142,15 +142,7 @@ export default function TemplateEditorPage() {
                   )}
                   {activePage === 'in_app' &&
                     inAppFields.map((message, index) => {
-                      return (
-                        <TemplateInAppEditor
-                          key={index}
-                          errors={errors}
-                          control={control}
-                          index={index}
-                          isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.IN_APP)}
-                        />
-                      );
+                      return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
                     })}
                 </div>
               ) : null}
