@@ -105,6 +105,8 @@ async function handleOnboardingFlow(config: ConfigService) {
     const address = httpServer.getAddress();
 
     spinner.succeed(`Created your account successfully. 
+    
+  We've created a demo web page for you to see novu notifications in action.
   Visit: ${address}/demo to continue`);
 
     await raiseDemoDashboard(httpServer, config, applicationIdentifier);
