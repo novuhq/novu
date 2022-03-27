@@ -1,0 +1,16 @@
+export enum CredentialsKeyEnum {
+  ApiKey = 'apiKey',
+  User = 'user',
+  SecretKey = 'secretKey',
+  Domain = 'domain',
+  Password = 'password',
+  Host = 'host',
+  Port = 'port',
+  Secure = 'secure',
+  Region = 'region',
+  AccountSid = 'accountSid',
+  MessageProfileId = 'messageProfileId',
+  Token = 'token',
+  From = 'from',
+  SenderName = 'senderName',
+}

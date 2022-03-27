@@ -134,7 +134,7 @@ function App() {
                   }
                 />
                 <Route
-                  path="/settings/organization"
+                  path="/team"
                   element={
                     <RequiredAuth>
                       <MembersInvitePage />

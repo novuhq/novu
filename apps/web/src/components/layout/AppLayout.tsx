@@ -15,31 +15,6 @@ export function AppLayout() {
 
   useNotifire();
 
-  /**
-   * TODO: Remove once migrated to the new styling.
-   * Add each new page when migrating
-   */
-  if (
-    ![
-      '/',
-      '/templates',
-      '/settings',
-      '/activities',
-      '/settings/organization',
-      '/integrations',
-      '/templates/create',
-      '/auth/login',
-      '/auth/signup',
-      `/templates/edit/${templateId}`,
-    ].includes(location.pathname)
-  ) {
-    return (
-      <LegacyAppLayout>
-        <Outlet />
-      </LegacyAppLayout>
-    );
-  }
-
   return (
     <ThemeProvider>
       <AppShell

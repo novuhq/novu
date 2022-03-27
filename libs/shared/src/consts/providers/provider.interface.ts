@@ -1,4 +1,5 @@
 import { ChannelTypeEnum } from '../../entities/message-template';
+import { CredentialsKeyEnum } from './provider.enum';
 
 export interface IProviderConfig {
   id: string;
@@ -10,7 +11,7 @@ export interface IProviderConfig {
 }
 
 export interface IConfigCredentials {
-  key: string;
+  key: CredentialsKeyEnum;
   value?: string;
   displayName: string;
   type: string;
@@ -18,12 +19,12 @@ export interface IConfigCredentials {
 
 const mailConfigBase: IConfigCredentials[] = [
   {
-    key: 'from',
+    key: CredentialsKeyEnum.From,
     displayName: 'From sender',
     type: 'string',
   },
   {
-    key: 'senderName',
+    key: CredentialsKeyEnum.SenderName,
     displayName: 'Sender name',
     type: 'string',
   },
@@ -31,7 +32,7 @@ const mailConfigBase: IConfigCredentials[] = [
 
 const smsConfigBase: IConfigCredentials[] = [
   {
-    key: 'from',
+    key: CredentialsKeyEnum.From,
     displayName: 'From',
     type: 'string',
   },
@@ -39,12 +40,12 @@ const smsConfigBase: IConfigCredentials[] = [
 
 export const mailJsConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
   {
-    key: 'secretKey',
+    key: CredentialsKeyEnum.SecretKey,
     displayName: 'Secret key',
     type: 'string',
   },
@@ -52,17 +53,17 @@ export const mailJsConfig: IConfigCredentials[] = [
 
 export const mailgunConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
   {
-    key: 'username',
+    key: CredentialsKeyEnum.User,
     displayName: 'User name',
     type: 'string',
   },
   {
-    key: 'domain',
+    key: CredentialsKeyEnum.Domain,
     displayName: 'Domain',
     type: 'string',
   },
@@ -70,12 +71,12 @@ export const mailgunConfig: IConfigCredentials[] = [
 
 export const mailjetConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
   {
-    key: 'apiSecret',
+    key: CredentialsKeyEnum.SecretKey,
     displayName: 'API Secret',
     type: 'string',
   },
@@ -83,12 +84,12 @@ export const mailjetConfig: IConfigCredentials[] = [
 
 export const nexmoConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
   {
-    key: 'secretKey',
+    key: CredentialsKeyEnum.SecretKey,
     displayName: 'API secret',
     type: 'string',
   },
@@ -96,7 +97,7 @@ export const nexmoConfig: IConfigCredentials[] = [
 
 export const mandrillConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
@@ -104,27 +105,27 @@ export const mandrillConfig: IConfigCredentials[] = [
 
 export const nodemailerConfig: IConfigCredentials[] = [
   {
-    key: 'user',
+    key: CredentialsKeyEnum.User,
     displayName: 'User',
     type: 'string',
   },
   {
-    key: 'password',
+    key: CredentialsKeyEnum.Password,
     displayName: 'Password',
     type: 'string',
   },
   {
-    key: 'host',
+    key: CredentialsKeyEnum.Host,
     displayName: 'Host',
     type: 'string',
   },
   {
-    key: 'port',
+    key: CredentialsKeyEnum.Port,
     displayName: 'Port',
     type: 'number',
   },
   {
-    key: 'secure',
+    key: CredentialsKeyEnum.Secure,
     displayName: 'Secure',
     type: 'boolean',
   },
@@ -132,7 +133,7 @@ export const nodemailerConfig: IConfigCredentials[] = [
 
 export const postmarkConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
@@ -140,7 +141,7 @@ export const postmarkConfig: IConfigCredentials[] = [
 
 export const sendgridConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
@@ -148,7 +149,7 @@ export const sendgridConfig: IConfigCredentials[] = [
 
 export const sendinblueConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
@@ -156,17 +157,17 @@ export const sendinblueConfig: IConfigCredentials[] = [
 
 export const sesConfig: IConfigCredentials[] = [
   {
-    key: 'accessKeyId',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access key ID',
     type: 'string',
   },
   {
-    key: 'secretAccessKey',
+    key: CredentialsKeyEnum.SecretKey,
     displayName: 'Secret access key',
     type: 'string',
   },
   {
-    key: 'region',
+    key: CredentialsKeyEnum.Region,
     displayName: 'Region',
     type: 'string',
   },
@@ -174,12 +175,12 @@ export const sesConfig: IConfigCredentials[] = [
 
 export const plivoConfig: IConfigCredentials[] = [
   {
-    key: 'accountSid',
+    key: CredentialsKeyEnum.AccountSid,
     displayName: 'Account SID',
     type: 'string',
   },
   {
-    key: 'token',
+    key: CredentialsKeyEnum.Token,
     displayName: 'Auth token',
     type: 'string',
   },
@@ -187,7 +188,7 @@ export const plivoConfig: IConfigCredentials[] = [
 
 export const sms77Config: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
@@ -195,12 +196,12 @@ export const sms77Config: IConfigCredentials[] = [
 
 export const snsConfig: IConfigCredentials[] = [
   {
-    key: 'accessKeyId',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access key ID',
     type: 'string',
   },
   {
-    key: 'secretAccessKey',
+    key: CredentialsKeyEnum.SecretKey,
     displayName: 'Secret access key',
     type: 'string',
   },
@@ -208,12 +209,12 @@ export const snsConfig: IConfigCredentials[] = [
 
 export const telnyxConfig: IConfigCredentials[] = [
   {
-    key: 'apiKey',
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
     type: 'string',
   },
   {
-    key: 'messageProfileId',
+    key: CredentialsKeyEnum.MessageProfileId,
     displayName: 'Message profile ID',
     type: 'string',
   },
@@ -221,12 +222,12 @@ export const telnyxConfig: IConfigCredentials[] = [
 
 export const twilioConfig: IConfigCredentials[] = [
   {
-    key: 'accountSid',
+    key: CredentialsKeyEnum.AccountSid,
     displayName: 'Account SID',
     type: 'string',
   },
   {
-    key: 'token',
+    key: CredentialsKeyEnum.Token,
     displayName: 'Auth token',
     type: 'string',
   },
