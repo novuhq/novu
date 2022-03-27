@@ -4,7 +4,7 @@ import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
-  const triggerCodeSnippet = `import { Notifire } from '@notifire/node'; 
+  const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
 const notifire = new Notifire('<API_KEY>');
 

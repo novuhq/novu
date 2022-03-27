@@ -52,7 +52,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
     cy.getByTestId('success-trigger-modal')
       .getByTestId('trigger-code-snippet')
-      .contains("import { Notifire } from '@notifire/node'");
+      .contains("import { Novu } from '@novu/node'");
 
     cy.get('.mantine-Tabs-tabsList').contains('Curl').click();
     cy.getByTestId('success-trigger-modal')
@@ -251,7 +251,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-sms-notification');
     cy.getByTestId('success-trigger-modal')
       .getByTestId('trigger-code-snippet')
-      .contains("import { Notifire } from '@notifire/node'");
+      .contains("import { Novu } from '@novu/node'");
 
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('taskName');
 

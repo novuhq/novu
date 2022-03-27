@@ -12,9 +12,9 @@ export function TemplateTriggerModal({
   triggerSlug: string | undefined;
 }) {
   const triggerCodeSnippet = `
-import notifire from '@notifire/node'; 
+import novu from '@novu/node'; 
 
-notifire.trigger('${triggerSlug}', {
+novu.trigger('${triggerSlug}', {
  firstName: "",
  taskName: ""
 });`;
