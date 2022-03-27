@@ -67,9 +67,15 @@ export function IntegrationsStore() {
         <PageContainer>
           <PageHeader title="Integration Store" />
 
-          <ModalhideCloseButton centered size="lg" overflow="inside" opened={isModalOpened} onClose={() => setModalIsOpened(false)}>
+          <Modal
+            hideCloseButton
+            centered
+            size="lg"
+            overflow="inside"
+            opened={isModalOpened}
+            onClose={() => setModalIsOpened(false)}>
             <ConnectIntegrationForm
-            onClose={() => setModalIsOpened(false)}
+              onClose={() => setModalIsOpened(false)}
               provider={provider}
               showModal={handlerShowModal}
               createModel={isCreateIntegrationModal}
