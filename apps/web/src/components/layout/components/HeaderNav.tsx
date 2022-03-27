@@ -9,10 +9,10 @@ import {
 } from '@mantine/core';
 import { useContext } from 'react';
 import * as capitalize from 'lodash.capitalize';
+import styled from '@emotion/styled';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
-import styled from '@emotion/styled';
 
 type Props = {};
 const menuItem = [
@@ -82,7 +82,7 @@ export function HeaderNav({}: Props) {
           </ActionIcon>
           <ActionIcon variant="transparent" id="notification-bell">
             <Bell {...headerIconsSettings} />
-            <UnseenBadge id="unseen-badge-selector"></UnseenBadge>
+            <UnseenBadge id="unseen-badge-selector" />
           </ActionIcon>
           <Dropdown
             control={
