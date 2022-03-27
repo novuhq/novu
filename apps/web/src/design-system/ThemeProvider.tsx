@@ -29,6 +29,10 @@ export function ThemeProvider({ children, dark = true }: { children: JSX.Element
               backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
               color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
             },
+            a: {
+              textDecoration: 'none',
+              color: 'inherit',
+            },
           })}
         />
         {children}
