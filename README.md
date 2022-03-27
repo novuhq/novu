@@ -1,11 +1,4 @@
 <p align="center">
-  <a href="https://discord.gg/9wcGSf22PM">
-    <img src="https://user-images.githubusercontent.com/8877285/139603641-66966234-84f4-42aa-9c31-9d296fab7ba1.png">
-  </a>
-</p>
-<p align="center">Read <a href="https://github.com/notifirehq/notifire/discussions/70">here</a> our plans for the upcoming weeks.</p>
-
-<p align="center">
   <a href="https://notifire.co">
     <img width="200" src="https://uploads-ssl.webflow.com/6130b4d29bb0ab09e14ae9ee/6130e6931f755df302203fcc_SideLogo%20-%20BLack-p-800.png">
   </a>
@@ -13,7 +6,7 @@
 <h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
-The ultimate library for managing multi-channel notifications with a single API. 
+The ultimate service for managing multi-channel notifications with a single API. 
 </div>
 
   <p align="center">
@@ -35,69 +28,18 @@ Building a notification system is hard, at first it seems like just sending an e
 
 - 🌈 Single API for all messaging providers (Email, SMS, Push, Direct)
 - 💅 Easily manage notification over multiple channels
-- 🚀 Equipped with a templating engine for advanced layouts and designs 
+- 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables
 - 📦 Easy to set up and integrate
-- 🛡 Written in TypeScript with predictable static types.
+- 🛡 Debug and analyze multi channel messages in a single dashboard
 - 👨‍💻 Community driven
 
-## 📦 Install
+## 📦 Getting Started
 
 ```bash
-npm install @notifire/core
+npx novu init
 ```
-
-```bash
-yarn add @notifire/core
-```
-
-## 🔨 Usage
-
-```ts
-import { Notifire, ChannelTypeEnum } from '@notifire/core';
-import { SendgridEmailProvider } from '@notifire/sendgrid';
-
-const notifire = new Notifire();
-
-await notifire.registerProvider(
-  new SendgridEmailProvider({
-    apiKey: process.env.SENDGRID_API_KEY,
-    from: 'sender@mail.com'
-  })
-);
-
-const passwordResetTemplate = await notifire.registerTemplate({
-  id: 'password-reset',
-  messages: [
-    {
-      subject: `You password reset request`,
-      // Or for translation or custom logic you can use function syntax
-      // subject: (payload: ITriggerPayload) => getTranslation('resetPasswordSubject', payload.language),
-      channel: ChannelTypeEnum.EMAIL,
-      template: `
-          Hi {{firstName}}!
-          
-          To reset your password click <a href="{{resetLink}}">here.</a>
-          
-          {{#if organization}}
-            <img src="{{organization.logo}}" />
-          {{/if}}
-      `
-    },
-  ]
-});
-
-await notifire.trigger('<REPLACE_WITH_EVENT_NAME>', {
-  $user_id: "<USER IDENTIFIER>",
-  $email: "test@email.com",
-  firstName: "John",
-  lastName: "Doe",
-  language: "en",
-  organization: {
-    logo: 'https://evilcorp.com/logo.png'
-  }
-});
-```
+Run this command to start the novu on-boarding proccess, after which you will be able to log-in to your novu admin instance.
 
 ## Providers
 Notifire provides a single API to manage providers across multiple channels with a single to use interface.
