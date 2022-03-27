@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, providers, IConfigCredentials } from '@notifire/shared';
-import { Modal, useMantineColorScheme, Image } from '@mantine/core';
+import { Modal } from '@mantine/core';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
@@ -15,10 +15,6 @@ export function IntegrationsStore() {
   const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
-
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
-  const logoSrc = provider ? `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png` : '';
 
   async function handlerVisible(visible: boolean, createIntegrationModal: boolean, providerConfig: any) {
     setModalIsOpened(visible);
@@ -42,7 +38,7 @@ export function IntegrationsStore() {
         if (integration?.credentials) {
           mappedCredentials.forEach((c) => {
             // eslint-disable-next-line no-param-reassign
-            c.value = integration.credentials[c.key];
+            c.value = integration.credentials[c.key]?.toString();
           });
         }
 
