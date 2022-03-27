@@ -48,7 +48,7 @@ export class AcceptInvite {
       if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
         const notifire = new Notifire(process.env.NOTIFIRE_API_KEY);
 
-        await notifire.trigger('invite-accepted-r5Q7-sQE-', {
+        await notifire.trigger('invite-accepted-dEQAsKD1E', {
           $user_id: inviter._id,
           $email: inviter.email,
           firstName: capitalize(inviter.firstName),

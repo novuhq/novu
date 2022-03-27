@@ -18,7 +18,7 @@ export class PasswordResetRequest {
       if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
         const notifire = new Notifire(process.env.NOTIFIRE_API_KEY);
 
-        await notifire.trigger('password-reset-request-8bTC73NsY', {
+        await notifire.trigger('password-reset-llS-wzWMq', {
           $user_id: foundUser._id,
           resetPasswordLink: `${process.env.FRONT_BASE_URL}/auth/reset/${token}`,
           $email: foundUser.email,
