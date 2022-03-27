@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, providers, IConfigCredentials } from '@notifire/shared';
 import { Modal } from '@mantine/core';
+import * as cloneDeep from 'lodash.cloneDeep';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
@@ -34,7 +35,7 @@ export function IntegrationsStore() {
       const initializedProviders: IIntegratedProvider[] = providers.map((x) => {
         const integration = integrations.find((y) => y.providerId === x.id);
 
-        const mappedCredentials = x.credentials;
+        const mappedCredentials = cloneDeep(x.credentials);
         if (integration?.credentials) {
           mappedCredentials.forEach((c) => {
             // eslint-disable-next-line no-param-reassign
@@ -47,7 +48,7 @@ export function IntegrationsStore() {
           integrationId: integration?._id ? integration._id : '',
           displayName: x.displayName,
           channel: x.channel,
-          credentials: integration ? mappedCredentials : x.credentials,
+          credentials: integration?.credentials ? mappedCredentials : x.credentials,
           docReference: x.docReference,
           comingSoon: !!x.comingSoon,
           active: integration?.active ? integration.active : false,
