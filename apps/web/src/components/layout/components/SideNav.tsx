@@ -22,7 +22,7 @@ export function SideNav({}: Props) {
     <Navbar
       padding={30}
       sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }}
-      width={{ base: 300 }}>
+      width={{ base: 250 }}>
       <Navbar.Section>
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
