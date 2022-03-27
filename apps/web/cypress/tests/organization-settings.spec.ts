@@ -1,7 +1,7 @@
-describe.skip('Settings Screen', function () {
+describe('Settings Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
-    cy.visit('/settings/organization');
+    cy.visit('/team');
   });
 
   it('should send organization invitation', function () {

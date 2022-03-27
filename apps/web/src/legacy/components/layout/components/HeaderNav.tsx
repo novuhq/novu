@@ -12,7 +12,7 @@ const menuItem = [
   {
     title: 'Invite Members',
     icon: SettingOutlined,
-    path: '/settings/organization',
+    path: '/team',
   },
 ];
 
