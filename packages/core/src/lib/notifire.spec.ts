@@ -1,8 +1,8 @@
-import { Notifire } from './notifire';
+import { Novu } from './notifire';
 import { ChannelTypeEnum } from './template/template.interface';
 
 test('should register an SMS provider and return it', async () => {
-  const notifire = new Notifire();
+  const notifire = new Novu();
 
   const template = {
     id: 'test',
@@ -19,7 +19,7 @@ test('should register an SMS provider and return it', async () => {
 });
 
 test('should call 2 hooks', async () => {
-  const notifire = new Notifire();
+  const notifire = new Novu();
 
   const template = {
     id: 'test',

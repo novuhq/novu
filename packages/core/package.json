@@ -1,5 +1,5 @@
 {
-  "name": "@notifire/core",
+  "name": "@novu/node",
   "version": "0.3.6-alpha.0",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
@@ -44,7 +44,8 @@
   "dependencies": {
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
-    "lodash.merge": "^4.6.2"
+    "lodash.merge": "^4.6.2",
+    "axios": "^0.26.1"
   },
   "devDependencies": {
     "@sendgrid/mail": "^7.4.6",
