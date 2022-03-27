@@ -3,6 +3,7 @@ import { Container, Grid, Group } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@notifire/shared';
 import { useParams } from 'react-router-dom';
+import styled from '@emotion/styled';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar';
@@ -17,7 +18,6 @@ import { EmailMessagesCards } from '../../../components/templates/email-editor/E
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { useStatusChangeControllerHook } from '../../../components/templates/use-status-change-controller.hook';
-import styled from '@emotion/styled';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
