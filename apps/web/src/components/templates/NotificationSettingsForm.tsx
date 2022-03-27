@@ -51,7 +51,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
 
   return (
     <Grid gutter={30} grow>
-      <Grid.Col span={6}>
+      <Grid.Col md={6} sm={12}>
         <Controller
           control={control}
           name="name"
@@ -83,7 +83,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
           )}
         />
       </Grid.Col>
-      <Grid.Col span={6}>
+      <Grid.Col md={6} sm={12}>
         <Controller
           name="notificationGroup"
           control={control}
