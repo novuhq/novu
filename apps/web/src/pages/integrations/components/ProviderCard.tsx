@@ -86,7 +86,7 @@ const CardHeader = styled.div`
 
 const Logo = styled.img`
   max-width: 140px;
-  max-height: 70px;
+  max-height: 50px;
 `;
 
 const CardFooter = styled.div`
@@ -110,7 +110,7 @@ const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }
       !active &&
       `
       ${Logo} {
-        opacity: 0.3;
+        opacity: 0.5;
       }
     `
     );

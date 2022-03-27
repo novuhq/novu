@@ -11,7 +11,7 @@ const menuItems = [
   { icon: <Settings />, link: '/settings', label: 'Settings', testId: 'side-nav-settings-link' },
   {
     icon: <Team />,
-    link: '/settings/organization',
+    link: '/team',
     label: 'Team Members',
     testId: 'side-nav-settings-organization',
   },
