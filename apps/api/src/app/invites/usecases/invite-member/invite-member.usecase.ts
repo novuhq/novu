@@ -30,6 +30,9 @@ export class InviteMember {
     const token = createGuid();
 
     if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
+      // eslint-disable-next-line no-console
+      console.log('Sending invite email', process.env.NOVU_API_KEY, process.env);
+
       const notifire = new Notifire(process.env.NOVU_API_KEY);
 
       await notifire.trigger('invite-to-organization-wBnO8NpDn', {
