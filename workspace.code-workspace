@@ -29,6 +29,10 @@
       "path": "libs/sdk"
     },
     {
+      "name": "📦 @notifire/cli",
+      "path": "packages/cli"
+    },
+    {
       "name": "📦 @notifire/shared",
       "path": "libs/shared"
     },
@@ -70,7 +74,11 @@
     "typescript.enablePromptUseWorkspaceTsdk": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
-    "editor.formatOnPaste": true
+    "editor.formatOnPaste": true,
+    "cSpell.words": [
+      "Chainable",
+      "usecases"
+    ]
   },
   "extensions": {
     "recommendations": [

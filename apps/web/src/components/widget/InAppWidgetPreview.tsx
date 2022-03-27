@@ -42,7 +42,7 @@ export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
             boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
           }}>
           <Group position="apart">
-            <div style={{ width: '70%' }}>
+            <div style={{ width: 'calc(100% - 32px)' }}>
               <Text weight="bold">{children}</Text>
               <Text mt={5} color={colors.B60}>
                 {moment(moment().subtract(5, 'minutes')).fromNow()}

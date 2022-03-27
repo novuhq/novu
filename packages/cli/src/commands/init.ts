@@ -1,7 +1,7 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
-import { ChannelCTATypeEnum, ChannelTypeEnum, IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
+import { IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
 import { prompt } from '../client';
 import {
   environmentQuestions,
@@ -33,6 +33,16 @@ import {
   getApplicationApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
+
+export enum ChannelTypeEnum {
+  IN_APP = 'in_app',
+  EMAIL = 'email',
+  SMS = 'sms',
+}
+
+export enum ChannelCTATypeEnum {
+  REDIRECT = 'redirect',
+}
 
 export async function initCommand() {
   try {
@@ -66,6 +76,7 @@ async function handleOnboardingFlow(config: ConfigService) {
   const httpServer = new HttpServer();
 
   await httpServer.listen();
+
   let spinner: ora.Ora = null;
 
   try {
@@ -94,6 +105,8 @@ async function handleOnboardingFlow(config: ConfigService) {
     const address = httpServer.getAddress();
 
     spinner.succeed(`Created your account successfully. 
+    
+  We've created a demo web page for you to see novu notifications in action.
   Visit: ${address}/demo to continue`);
 
     await raiseDemoDashboard(httpServer, config, applicationIdentifier);

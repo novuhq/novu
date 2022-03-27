@@ -69,7 +69,7 @@ describe('Activity Feed Screen', function () {
     cy.get('tbody tr').eq(2).get('.ant-badge-status-warning').should('be.visible');
   });
 
-  it.skip('should filter by email channel', function () {
+  it('should filter by email channel', function () {
     cy.visit('/activities');
     cy.getByTestId('row-email-channel').should('not.have.length', 10);
     cy.getByTestId('activities-filter').click();

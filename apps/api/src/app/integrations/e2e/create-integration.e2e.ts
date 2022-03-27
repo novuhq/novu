@@ -12,58 +12,32 @@ describe('Create Integration - /integration (POST)', function () {
   });
 
   it('should create the email integration successfully', async function () {
-    const payload = {
-      providerId: 'sendgrid',
-      channel: 'EMAIL',
-      credentials: { apiKey: '123', secretKey: 'abc' },
-      active: true,
-    };
-
-    const body = (await session.testAgent.post('/v1/integrations').send(payload)).body.data as IntegrationEntity;
-
-    const integration = (await integrationRepository.findByApplicationId(body._applicationId))[0];
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find((x) => x.channel === 'email');
 
     expect(integration.providerId).to.equal('sendgrid');
-    expect(integration.channel).to.equal('EMAIL');
+    expect(integration.channel).to.equal('email');
     expect(integration.credentials.apiKey).to.equal('123');
     expect(integration.credentials.secretKey).to.equal('abc');
     expect(integration.active).to.equal(true);
   });
 
   it('should create the sms integration successfully', async function () {
-    const payload = {
-      providerId: 'sendgrid',
-      channel: 'SMS',
-      credentials: { apiKey: '123', secretKey: 'abc' },
-      active: true,
-    };
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find((x) => x.channel === 'sms');
 
-    const body = (await session.testAgent.post('/v1/integrations').send(payload)).body.data as IntegrationEntity;
-
-    const integration = (await integrationRepository.findByApplicationId(body._applicationId))[0];
-
-    expect(integration.providerId).to.equal('sendgrid');
-    expect(integration.channel).to.equal('SMS');
-    expect(integration.credentials.apiKey).to.equal('123');
-    expect(integration.credentials.secretKey).to.equal('abc');
+    expect(integration.providerId).to.equal('twilio');
+    expect(integration.channel).to.equal('sms');
+    expect(integration.credentials.accountSid).to.equal('AC123');
+    expect(integration.credentials.token).to.equal('123');
     expect(integration.active).to.equal(true);
   });
 
   it('should create the sms and email integration successfully', async function () {
-    const payload = {
-      providerId: 'sendgrid',
-      channel: 'EMAIL',
-      credentials: { apiKey: '123', secretKey: 'abc' },
-      active: true,
-    };
-
-    const secondInsertResponse = await insertIntegrationTwice(session, payload, true);
-    const integrations = await integrationRepository.findByApplicationId(secondInsertResponse.body.data._applicationId);
+    const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
     expect(integrations.length).to.equal(2);
 
-    const emailIntegration = integrations.find((i) => i.channel.toString() === 'EMAIL');
-    const smsIntegration = integrations.find((i) => i.channel.toString() === 'SMS');
+    const emailIntegration = integrations.find((i) => i.channel.toString() === 'email');
+    const smsIntegration = integrations.find((i) => i.channel.toString() === 'sms');
 
     expect(emailIntegration).to.be.ok;
     expect(smsIntegration).to.be.ok;
@@ -72,7 +46,7 @@ describe('Create Integration - /integration (POST)', function () {
   it('should return error on creation of same provider on same application twice', async function () {
     const payload = {
       providerId: 'sendgrid',
-      channel: 'EMAIL',
+      channel: 'email',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
     };
@@ -85,7 +59,7 @@ describe('Create Integration - /integration (POST)', function () {
   it('should fail due missing param', async function () {
     const payload = {
       providerId: 'sendgrid',
-      channel: 'EMAIL',
+      channel: 'email',
       active: true,
     };
 
@@ -96,23 +70,17 @@ describe('Create Integration - /integration (POST)', function () {
 
   it('should deactivated old providers', async function () {
     const payload = {
-      providerId: 'sendgrid',
-      channel: 'EMAIL',
+      providerId: 'mailgun',
+      channel: 'email',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
     };
 
-    const firstIntegrationResponse = await session.testAgent.post('/v1/integrations').send(payload);
-
-    const secondPayload = payload;
-
-    secondPayload.providerId = 'mailgun';
+    const applicationId = (await session.testAgent.get(`/v1/integrations`)).body.data[0]._applicationId;
 
     await session.testAgent.post('/v1/integrations').send(payload);
 
-    const integrations = await integrationRepository.findByApplicationId(
-      firstIntegrationResponse.body.data._applicationId
-    );
+    const integrations = await integrationRepository.findByApplicationId(applicationId);
 
     const firstIntegration = integrations.find((i) => i.providerId.toString() === 'sendgrid');
     const secondIntegration = integrations.find((i) => i.providerId.toString() === 'mailgun');
@@ -131,7 +99,7 @@ async function insertIntegrationTwice(
 
   if (createDiffChannels) {
     // eslint-disable-next-line no-param-reassign
-    payload.channel = 'SMS';
+    payload.channel = 'sms';
   }
 
   const body = await session.testAgent.post('/v1/integrations').send(payload);

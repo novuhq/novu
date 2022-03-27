@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChannelTypeEnum } from '@notifire/shared';
 import { useQuery } from 'react-query';
 import { ColumnWithStrictAccessor } from 'react-table';
-import { Group } from '@mantine/core';
 import moment from 'moment';
 import { Badge } from 'antd';
 import { Controller, useForm } from 'react-hook-form';
@@ -38,7 +37,13 @@ export function ActivitiesPage() {
     setPage(pageIndex);
   }
 
-  const { handleSubmit, control } = useForm({});
+  const { handleSubmit, control, watch } = useForm({});
+
+  useEffect(() => {
+    const subscription = watch((values) => handleSubmit(onFiltersChange)());
+
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
@@ -130,48 +135,55 @@ export function ActivitiesPage() {
       <PageHeader title="Activity Feed" />
       <ActivityStatistics />
       <ActivityGraph />
-      <form onChange={handleSubmit(onFiltersChange)}>
-        <Group>
-          <Controller
-            render={({ field }) => (
-              <Select
-                label="Channels"
-                type="multiselect"
-                placeholder="Select channel"
-                data={[
-                  { value: ChannelTypeEnum.SMS, label: 'SMS' },
-                  { value: ChannelTypeEnum.EMAIL, label: 'Email' },
-                  { value: ChannelTypeEnum.IN_APP, label: 'In-App' },
-                ]}
-                data-test-id="activities-filter"
-                {...field}
-              />
-            )}
-            control={control}
-            name="channels"
-          />
-          <Controller
-            render={({ field }) => (
-              <Select
-                label="Templates"
-                type="multiselect"
-                data-test-id="templates-filter"
-                placeholder="Select template"
-                data={(templates || []).map((template) => ({ value: template._id as string, label: template.name }))}
-                {...field}
-              />
-            )}
-            control={control}
-            name="templates"
-          />
-          <Controller
-            render={({ field }) => (
-              <Input {...field} label="Search" placeholder="Select Email or ID" value={field.value || ''} />
-            )}
-            control={control}
-            name="search"
-          />
-        </Group>
+      <form>
+        <div style={{ width: '80%', display: 'flex', flexDirection: 'row', gap: '15px', padding: '30px' }}>
+          <div style={{ minWidth: '250px' }}>
+            <Controller
+              render={({ field }) => (
+                <Select
+                  label="Channels"
+                  type="multiselect"
+                  placeholder="Select channel"
+                  data={[
+                    { value: ChannelTypeEnum.SMS, label: 'SMS' },
+                    { value: ChannelTypeEnum.EMAIL, label: 'Email' },
+                    { value: ChannelTypeEnum.IN_APP, label: 'In-App' },
+                  ]}
+                  data-test-id="activities-filter"
+                  {...field}
+                />
+              )}
+              control={control}
+              name="channels"
+            />
+          </div>
+          <div style={{ minWidth: '250px' }}>
+            <Controller
+              render={({ field }) => (
+                <Select
+                  label="Templates"
+                  type="multiselect"
+                  data-test-id="templates-filter"
+                  loading={loadingTemplates}
+                  placeholder="Select template"
+                  data={(templates || []).map((template) => ({ value: template._id as string, label: template.name }))}
+                  {...field}
+                />
+              )}
+              control={control}
+              name="templates"
+            />
+          </div>
+          <div style={{ minWidth: '250px' }}>
+            <Controller
+              render={({ field }) => (
+                <Input {...field} label="Search" placeholder="Select Email or ID" value={field.value || ''} />
+              )}
+              control={control}
+              name="search"
+            />
+          </div>
+        </div>
       </form>
       <Table
         data-test-id="activities-table"

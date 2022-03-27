@@ -1,4 +1,3 @@
-import React from 'react';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
 import { Button, colors, shadows } from '../../../design-system';
@@ -21,12 +20,18 @@ export function ProviderCard({
     onConnectClick(true, false, provider);
   }
 
-  function handlerConnectButton() {
-    return () => onConnectClick(true, true, provider);
-  }
-
   return (
-    <StyledCard colorScheme={colorScheme} active={provider.active}>
+    <StyledCard
+      colorScheme={colorScheme}
+      active={provider.active}
+      data-test-id="integration-provider-card"
+      onClick={() => {
+        if (provider.connected) {
+          handleOnClickSettings();
+        } else {
+          onConnectClick(true, true, provider);
+        }
+      }}>
       {provider.comingSoon && (
         <RibbonWrapper>
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
@@ -35,17 +40,11 @@ export function ProviderCard({
       <StyledGroup position="apart" direction="column">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
-          {provider.connected ? <Settings onClick={handleOnClickSettings} /> : null}
+          {provider.connected ? <Settings data-test-id="provider-card-settings-svg" /> : null}
         </CardHeader>
 
         <CardFooter>
-          {!provider.connected ? (
-            <Button fullWidth onClick={handlerConnectButton()}>
-              Connect
-            </Button>
-          ) : (
-            <CardStatusBar active={provider.active} />
-          )}
+          {!provider.connected ? <Button fullWidth>Connect</Button> : <CardStatusBar active={provider.active} />}
         </CardFooter>
       </StyledGroup>
     </StyledCard>
@@ -87,7 +86,7 @@ const CardHeader = styled.div`
 
 const Logo = styled.img`
   max-width: 140px;
-  max-height: 70px;
+  max-height: 50px;
 `;
 
 const CardFooter = styled.div`
@@ -101,6 +100,7 @@ const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }
   padding: 25px;
   height: 200px;
   width: 100%;
+  min-width: 205px;
   transition: all 0.15s ease-in;
   position: relative;
   overflow: hidden;
@@ -110,15 +110,14 @@ const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }
       !active &&
       `
       ${Logo} {
-        opacity: 0.3;
+        opacity: 0.5;
       }
     `
     );
   }};
 
   &:hover {
-    ${({ active }) => active && 'cursor: pointer'}
-
+    cursor: pointer;
     ${({ colorScheme }) =>
       colorScheme === 'dark'
         ? `
@@ -128,6 +127,6 @@ const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }
         : `
             background-color: ${colors.BGLight};
             box-shadow: ${shadows.light};
-          `}
+          `};
   }
 `;

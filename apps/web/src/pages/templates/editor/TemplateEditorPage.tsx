@@ -7,20 +7,22 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar';
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
-import { useTemplateController } from '../../../legacy/pages/templates/editor/use-template-controller.hook';
+import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
-import { Button, Switch } from '../../../design-system';
+import { Button, Select, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
-import { useStatusChangeControllerHook } from '../../../legacy/pages/templates/editor/use-status-change-controller.hook';
+import { useActiveIntegrations } from '../../../api/hooks';
+import { useStatusChangeControllerHook } from '../../../components/templates/use-status-change-controller.hook';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const [activePage, setActivePage] = useState<string>('Settings');
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
+  const { integrations, loading: isIntegrationsLoading } = useActiveIntegrations();
 
   const handleAddChannel = (tabKey) => {
     const foundChannel = channelButtons.find((item) => item === tabKey);
@@ -109,25 +111,33 @@ export default function TemplateEditorPage() {
               activeChannels={activeChannels}
               channelButtons={channelButtons}
               showTriggerSection={!!template && !!trigger}
-              errors={errors}
-              alertErrors={methods.formState.isDirty && methods.formState.isSubmitted && Object.keys(errors).length > 0}
+              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
             />
             <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
-              {activePage === 'Settings' && <NotificationSettingsForm errors={errors} editMode={editMode} />}
+              {activePage === 'Settings' && <NotificationSettingsForm editMode={editMode} />}
               {activePage === 'Add' && (
                 <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
               )}
-              {!loadingEditTemplate ? (
+              {!loadingEditTemplate && !isIntegrationsLoading ? (
                 <div>
                   {activePage === 'sms' &&
                     smsFields.map((message, index) => {
-                      return <TemplateSMSEditor key={index} control={control} index={index} errors={errors} />;
+                      return (
+                        <TemplateSMSEditor
+                          key={index}
+                          control={control}
+                          index={index}
+                          errors={errors}
+                          isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.SMS)}
+                        />
+                      );
                     })}
                   {activePage === 'email' && (
                     <EmailMessagesCards
                       variables={trigger?.variables || []}
                       onRemoveTab={removeEmailMessage}
                       emailMessagesFields={emailMessagesFields}
+                      isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.EMAIL)}
                     />
                   )}
                   {activePage === 'in_app' &&

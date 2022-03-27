@@ -37,7 +37,6 @@ export function InAppEditorBlock({
     onChange(data);
 
     let showPlaceHolder = !data;
-
     if (data === '<br>') showPlaceHolder = true;
 
     setVisiblePlaceholder(showPlaceHolder);
@@ -72,6 +71,7 @@ const PlaceHolder = styled.div<{ show: boolean }>`
   position: absolute;
   z-index: 1;
   top: 0px;
-  pointer-events: visible;
+  pointer-events: none;
   display: ${({ show }) => (show ? 'block' : 'none')};
+  opacity: 0.4;
 `;

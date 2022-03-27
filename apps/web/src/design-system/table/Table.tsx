@@ -11,6 +11,7 @@ export interface ITableProps extends JSX.ElementChildrenAttribute {
   data?: Data[];
   loading?: boolean;
   pagination?: any;
+  onRowClick?: (row: Data) => void;
 }
 
 /**
@@ -23,6 +24,7 @@ export function Table({
   pagination = false,
   loading = false,
   children,
+  onRowClick,
   ...props
 }: ITableProps) {
   const { pageSize, total, onPageChange, current } = pagination;
@@ -120,7 +122,10 @@ export function Table({
             prepareRow(row);
 
             return (
-              <tr {...row.getRowProps()} className={classes.tableRow}>
+              <tr
+                onClick={() => (onRowClick ? onRowClick(row) : null)}
+                {...row.getRowProps()}
+                className={classes.tableRow}>
                 {row.cells.map((cell) => {
                   return (
                     <td

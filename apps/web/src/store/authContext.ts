@@ -1,9 +1,10 @@
 import React from 'react';
-import { IUserEntity } from '@notifire/shared';
+import { IOrganizationEntity, IUserEntity } from '@notifire/shared';
 
 export type UserContext = {
   token: string | null;
   currentUser: IUserEntity | undefined;
+  currentOrganization: IOrganizationEntity | undefined;
   setToken: (token: string) => void;
   logout: () => void;
 };
@@ -13,4 +14,5 @@ export const AuthContext = React.createContext<UserContext>({
   currentUser: undefined,
   setToken: undefined as any,
   logout: undefined as any,
+  currentOrganization: undefined as any,
 });

@@ -508,18 +508,18 @@ export class TriggerEvent {
       })
     );
 
-    const mailData: IEmailOptions = {
-      to: email,
-      subject,
-      html,
-      from: command.payload.$sender_email || application.channels?.email?.senderEmail || 'no-reply@notifire.co',
-    };
-
     const integration = await this.integrationRepository.findOne({
       _applicationId: command.applicationId,
       channel: ChannelTypeEnum.EMAIL,
       active: true,
     });
+
+    const mailData: IEmailOptions = {
+      to: email,
+      subject,
+      html,
+      from: command.payload.$sender_email || integration.credentials.from || 'no-reply@notifire.co',
+    };
 
     if (email && integration) {
       const mailHandler = this.mailFactory.getHandler(integration, mailData.from);

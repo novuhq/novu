@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 import { INotificationTemplate } from '@notifire/shared';
-import { getTemplateById } from '../../../../api/templates';
+import { getTemplateById } from '../../api/templates';
 
 export function useTemplateFetcher(templateId) {
   const {

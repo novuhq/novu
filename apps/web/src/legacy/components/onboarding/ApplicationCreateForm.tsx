@@ -14,7 +14,6 @@ export function ApplicationCreateForm({}: Props) {
   const navigate = useNavigate();
 
   const { setToken, token } = useContext(AuthContext);
-
   const [loading, setLoading] = useState<boolean>();
   const { mutateAsync } = useMutation<
     { _id: string },

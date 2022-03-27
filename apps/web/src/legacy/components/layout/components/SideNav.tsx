@@ -1,8 +1,5 @@
-import styled from 'styled-components';
 import { Layout, Menu } from 'antd';
 import { Scrollbars } from 'react-custom-scrollbars';
-import { useQuery } from 'react-query';
-import { IOrganizationEntity } from '@notifire/shared';
 import { NavLink } from 'react-router-dom';
 import { SettingOutlined, NotificationOutlined, MonitorOutlined, TeamOutlined } from '@ant-design/icons';
 import { useContext } from 'react';
@@ -14,9 +11,6 @@ type Props = {};
 
 export function SideNav({}: Props) {
   const themeContext = useContext(ThemeContext);
-
-  const { data: organization, isLoading: isOrganizationLoading } =
-    useQuery<IOrganizationEntity>('/v1/organizations/me');
 
   return (
     <Sider className="side-nav" width={250} collapsed={false} theme={themeContext.theme}>
@@ -38,12 +32,12 @@ export function SideNav({}: Props) {
             </NavLink>
           </Menu.Item>
           <Menu.Item icon={<SettingOutlined />} key="settings">
-            <NavLink to="/settings/widget" className="nav-text" data-test-id="side-nav-settings-link">
+            <NavLink to="/settings" className="nav-text" data-test-id="side-nav-settings-link">
               <span>Settings</span>
             </NavLink>
           </Menu.Item>
           <Menu.Item icon={<TeamOutlined />} key="members">
-            <NavLink to="/settings/organization" className="nav-text" data-test-id="side-nav-settings-organization">
+            <NavLink to="/team" className="nav-text" data-test-id="side-nav-settings-organization">
               <span>Team Members</span>
             </NavLink>
           </Menu.Item>

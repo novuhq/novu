@@ -6,13 +6,14 @@ import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
 import { Input, Select } from '../../design-system';
 
-export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; errors: any }) => {
+export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) => {
   const queryClient = useQueryClient();
   const {
     formState: { errors },
     setValue,
     control,
   } = useFormContext();
+
   const { data: groups, isLoading: loadingGroups } = useQuery('notificationGroups', getNotificationGroups);
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },
@@ -61,6 +62,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
               value={field.value || ''}
               error={errors.name}
               label="Notification Name"
+              description="This is will be used to identify the notification in the app."
               placeholder="Notification name goes here..."
             />
           )}
@@ -74,6 +76,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
               {...field}
               value={field.value || ''}
               data-test-id="description"
+              description="Write an internal description of when and how this notification will be used."
               label="Notification Description"
               placeholder="Describe your notification..."
             />
@@ -93,8 +96,11 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean; erro
                 loading={loadingGroups || loadingCreateGroup}
                 creatable
                 searchable
+                description="Categorize notifications into groups for unified settings control"
                 error={errors.notificationGroup}
-                getCreateLabel={(newGroup) => `+ Create Group ${newGroup}`}
+                getCreateLabel={(newGroup) => (
+                  <div data-test-id="submit-category-btn">`+ Create Group ${newGroup}`</div>
+                )}
                 onCreate={addGroupItem}
                 placeholder="Attach notification to group"
                 data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}

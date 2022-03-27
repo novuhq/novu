@@ -1,10 +1,11 @@
 import { MantineTheme } from '@mantine/core';
+import { colors } from './colors';
 
 export const inputStyles = (theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
 
   const primaryColor = dark ? theme.white : theme.colors.gray[8];
-  const invalidColor = theme.colors.gradient[5];
+  const invalidColor = theme.colors?.gradient?.[5];
   const secondaryColor = dark ? theme.colors.dark[3] : theme.colors.gray[6];
 
   return {
@@ -12,7 +13,7 @@ export const inputStyles = (theme: MantineTheme) => {
       color: `${theme.colors.gray[7]} !important`,
     },
     input: {
-      height: '50px',
+      minHeight: '50px',
       lineHeight: '50px',
       borderColor: dark ? theme.colors.dark[5] : theme.colors.gray[5],
       backgroundColor: 'transparent',
@@ -50,6 +51,11 @@ export const inputStyles = (theme: MantineTheme) => {
       marginTop: '0px',
       marginBottom: '10px',
       lineHeight: '17px',
+    },
+    disabled: {
+      backgroundColor: `${dark ? colors.B20 : colors.B60} !important`,
+      borderColor: `${dark ? colors.B30 : colors.B80} !important`,
+      color: `${secondaryColor} !important`,
     },
   };
 };

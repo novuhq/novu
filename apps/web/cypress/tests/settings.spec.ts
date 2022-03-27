@@ -1,23 +1,10 @@
 describe('Settings Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
-    cy.visit('/settings/widget');
+    cy.visit('/settings');
     cy.intercept('*/channels/email/settings').as('updateEmailSettings');
     cy.intercept('*/channels/sms/settings').as('updateSmsSettings');
     cy.intercept('*/applications/branding').as('updateBrandingSettings');
-  });
-
-  it('should update the twilio credentials', function () {
-    cy.get('.mantine-Tabs-tabsList').contains('SMS').click();
-    cy.getByTestId('account-sid').clear().type('12345');
-    cy.getByTestId('auth-token').clear().type('56789');
-    cy.getByTestId('phone-number').clear().type('+1111111');
-    cy.getByTestId('submit-update-settings').click();
-    cy.wait('@updateSmsSettings');
-    cy.reload();
-    cy.get('.mantine-Tabs-tabsList').contains('SMS').click();
-    cy.getByTestId('auth-token').should('have.value', '56789');
-    cy.getByTestId('account-sid').should('have.value', '12345');
   });
 
   it('should display the embed code successfully', function () {
@@ -34,28 +21,16 @@ describe('Settings Screen', function () {
     cy.getByTestId('api-key-container').should('have.value', this.session.application.apiKeys[0].key);
   });
 
-  it('should update the email channel senderEmail', function () {
-    cy.get('.mantine-Tabs-tabsList').contains('Email Settings').click();
-    cy.getByTestId('sender-email').type('new-testing@email.com');
-    cy.getByTestId('sender-name').type('Test Sender Name');
-    cy.getByTestId('submit-update-settings').click();
-    cy.wait('@updateEmailSettings');
-    cy.reload();
-
-    cy.get('.mantine-Tabs-tabsList').contains('Email Settings').click();
-    cy.getByTestId('sender-email').should('have.value', 'new-testing@email.com');
-    cy.getByTestId('sender-name').should('have.value', 'Test Sender Name');
-  });
-
   it('should update logo', function () {
-    cy.fixture('test-logo.png', {encoding: null}).then((contents) => {
-      cy.getByTestId('upload-image-button')
-        .find('input')
-        .selectFile({
+    cy.fixture('test-logo.png', { encoding: null }).then((contents) => {
+      cy.getByTestId('upload-image-button').find('input').selectFile(
+        {
           contents,
           fileName: 'test-logo.png',
           mimeType: 'image/png',
-        }, {force: true});
+        },
+        { force: true }
+      );
     });
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 

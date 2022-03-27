@@ -98,7 +98,8 @@
           <div class="flex-shrink-0"> <img class="h-8 w-8" src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg" alt="Workflow"> </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
-              <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" --><a href="#" class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium">Dashboard</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Team</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Projects</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Calendar</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Reports</a> </div>
+            
+            </div>
           </div>
         </div>
         <div class="hidden md:block">
@@ -169,16 +170,18 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> </svg>
           </button>
         </div>
-        <div class="mt-3 px-2 space-y-1"> <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Your
-          Profile</a> <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Settings</a> <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Sign
-          out</a> </div>
+        <div class="mt-3 px-2 space-y-1"> 
+          <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Your Profile</a>
+           <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Settings</a> 
+           <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Signout</a>
+          </div>
       </div>
     </div>
   </nav>
   <header class="bg-white shadow">
     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <h1 class="text-3xl font-bold leading-tight text-gray-900">
-        Acme Corp. Dashboard
+        Acme Corp. Demo Dashboard
       </h1> </div>
   </header>
   <main>
@@ -197,7 +200,7 @@
                       <div>
                         <h2 class="text-indigo-500 text-xl md:text-2xl font-bold">Welcome to your demo web application</h2>
                         <p class="text-gray-600">
-                          Here you can test the Notu in-app notification center and see it in action.
+                          Here you can test the Novu in-app notification center and see it in action.
                           <br />
                           Feel free to skip the tutorial and go straight to your admin panel.
                         </p>
@@ -258,7 +261,7 @@
                         </div>
                          <pre class="rounder-lg code-snippet-wrapper" onclick="copyToClipboard('curl-user-snippet2');return false;">
 
-                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'http://localhost:3000/v1/events/trigger' \
+                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'https://api.novu.co/v1/events/trigger' \
  --header 'Authorization: ApiKey *********' \
  --header 'Content-Type: application/json' \
  --data-raw '{
@@ -398,7 +401,7 @@ function pulsateBell() {
     elt.src = t;
     var before = o.getElementsByTagName(f)[0];
     before.parentNode.insertBefore(elt, before);
-  })(window, document, "http://localhost:4702/sdk.umd.min.js", "notifire", "script");
+  })(window, document, "https://sdk.novu.co/sdk.umd.min.js", "notifire", "script");
 
   notifire.init('REPLACE_WITH_applicationId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
     $user_id: 'REPLACE_WITH_$user_id',

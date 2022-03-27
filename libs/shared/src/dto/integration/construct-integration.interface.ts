@@ -12,6 +12,7 @@ export interface ICredentialsDto {
   messageProfileId?: string;
   token?: string;
   from?: string;
+  senderName?: string;
 }
 export interface IConstructIntegrationDto {
   credentials: ICredentialsDto;

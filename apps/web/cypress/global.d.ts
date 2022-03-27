@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-import { INotificationTemplate } from '@notifire/shared';
+type ICreateNotificationTemplateDto = import('@notifire/shared').ICreateNotificationTemplateDto;
 
 declare namespace Cypress {
   interface Chainable {
@@ -25,7 +25,8 @@ declare namespace Cypress {
      */
     initializeSession(settings?: {
       noApplication?: boolean;
-      partialTemplate?: Partial<INotificationTemplate>;
+      disableLocalStorage?: boolean;
+      partialTemplate?: Partial<ICreateNotificationTemplateDto>;
     }): Chainable<Response>;
   }
 }
