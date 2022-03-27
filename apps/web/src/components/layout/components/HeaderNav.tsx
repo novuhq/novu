@@ -19,7 +19,7 @@ const menuItem = [
   {
     title: 'Invite Members',
     icon: <Mail />,
-    path: '/settings/organization',
+    path: '/team',
   },
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };

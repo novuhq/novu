@@ -1,4 +1,4 @@
-import { Form } from 'antd';
+import { Form, message } from 'antd';
 import { useMutation, useQuery } from 'react-query';
 import styled from 'styled-components';
 import { MemberStatusEnum } from '@notifire/shared';
@@ -31,6 +31,8 @@ export function MembersInvitePage() {
 
     await sendInvite(email);
     await refetch();
+
+    message.success(`Invite sent to ${email}`);
 
     form.resetFields(['email']);
   }

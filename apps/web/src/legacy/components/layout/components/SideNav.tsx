@@ -37,7 +37,7 @@ export function SideNav({}: Props) {
             </NavLink>
           </Menu.Item>
           <Menu.Item icon={<TeamOutlined />} key="members">
-            <NavLink to="/settings/organization" className="nav-text" data-test-id="side-nav-settings-organization">
+            <NavLink to="/team" className="nav-text" data-test-id="side-nav-settings-organization">
               <span>Team Members</span>
             </NavLink>
           </Menu.Item>
