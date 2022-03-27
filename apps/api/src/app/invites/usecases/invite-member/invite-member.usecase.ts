@@ -13,7 +13,6 @@ import { capitalize, createGuid } from '../../../shared/services/helper/helper.s
 export class InviteMember {
   constructor(
     private organizationRepository: OrganizationRepository,
-    private mailService: MailService,
     private userRepository: UserRepository,
     private memberRepository: MemberRepository
   ) {}
