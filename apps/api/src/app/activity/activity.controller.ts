@@ -15,10 +15,10 @@ export class ActivityController {
   @UseGuards(JwtAuthGuard)
   getActivityFeed(
     @UserSession() user: IJwtPayload,
-    @Query('page') page = 0,
     @Query('channels') channels: ChannelTypeEnum[] | ChannelTypeEnum,
     @Query('templates') templates: string[] | string,
-    @Query('search') search: string
+    @Query('search') search: string,
+    @Query('page') page = 0
   ) {
     let channelsQuery: ChannelTypeEnum[];
 
