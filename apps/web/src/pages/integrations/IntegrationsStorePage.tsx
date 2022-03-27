@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, providers, IConfigCredentials } from '@notifire/shared';
 import { Modal } from '@mantine/core';
-import * as cloneDeep from 'lodash.cloneDeep';
+import * as cloneDeep from 'lodash.clonedeep';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
