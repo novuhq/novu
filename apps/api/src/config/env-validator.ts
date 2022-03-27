@@ -23,7 +23,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   MONGO_URL: str(),
   AWS_ACCESS_KEY_ID: str(),
   AWS_SECRET_ACCESS_KEY: str(),
-  NOTIFIRE_API_KEY: str({
+  NOVU_API_KEY: str({
     default: '',
   }),
 };
