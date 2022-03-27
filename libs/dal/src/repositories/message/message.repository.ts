@@ -1,5 +1,5 @@
-import { ChannelTypeEnum, IMessage } from '@notifire/shared';
-import { FilterQuery, PopulateOptions } from 'mongoose';
+import { ChannelTypeEnum } from '@notifire/shared';
+import { FilterQuery, Types } from 'mongoose';
 import { BaseRepository } from '../base-repository';
 import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
@@ -85,6 +85,27 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
         },
       }
     );
+  }
+  async getActivityGraphStats(date: Date, applicationId: string) {
+    return await this.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: date },
+          _applicationId: Types.ObjectId(applicationId),
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+          },
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
   }
 
   async getFeed(
