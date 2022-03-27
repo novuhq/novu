@@ -27,6 +27,7 @@ test('should trigger nexmo library correctly', async () => {
         ],
       });
     });
+
   await provider.sendMessage({
     to: '+176543',
     content: 'SMS Content',

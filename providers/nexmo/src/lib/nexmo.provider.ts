@@ -36,6 +36,7 @@ export class NexmoSmsProvider implements ISmsProvider {
         {},
         (err, responseData) => {
           if (err) return reject(err);
+
           return resolve(responseData.messages[0]['message-id']);
         }
       );

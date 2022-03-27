@@ -15,6 +15,7 @@ test('should trigger plivo correctly', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
     });
+
   await provider.sendMessage({
     to: '+187654',
     content: 'Test',
