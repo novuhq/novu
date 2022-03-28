@@ -2,6 +2,7 @@ import { useQuery } from 'react-query';
 import styled from '@emotion/styled';
 import { getActivityStats } from '../../../api/activity';
 import { formatNumber } from '../../../utils';
+import { colors } from '../../../design-system';
 
 export function ActivityStatistics() {
   const { data: activityStats, isLoading: loadingActivityStats } = useQuery<{
@@ -15,18 +16,22 @@ export function ActivityStatistics() {
       {!loadingActivityStats ? (
         <ContentWrapper>
           <StatisticsBox>
-            <StyledNumber data-test-id="activity-stats-weekly-sent">
+            <StyledNumber isColored={false} data-test-id="activity-stats-weekly-sent">
               {formatNumber(activityStats?.weeklySent ? activityStats?.weeklySent : 0, 0)}
             </StyledNumber>
-            <StatsLabel>This week</StatsLabel>
+            <StatsLabel isColored={false}>This week</StatsLabel>
           </StatisticsBox>
           <StatisticsBox>
-            <StyledNumber>{formatNumber(activityStats?.monthlySent ? activityStats?.monthlySent : 0, 0)}</StyledNumber>
-            <StatsLabel>This month</StatsLabel>
+            <StyledNumber isColored>
+              {formatNumber(activityStats?.monthlySent ? activityStats?.monthlySent : 0, 0)}
+            </StyledNumber>
+            <StatsLabel isColored>This month</StatsLabel>
           </StatisticsBox>
           <StatisticsBox>
-            <StyledNumber>{formatNumber(activityStats?.yearlySent ? activityStats?.yearlySent : 0, 0)}</StyledNumber>
-            <StatsLabel>This year</StatsLabel>
+            <StyledNumber isColored={false}>
+              {formatNumber(activityStats?.yearlySent ? activityStats?.yearlySent : 0, 0)}
+            </StyledNumber>
+            <StatsLabel isColored={false}>This year</StatsLabel>
           </StatisticsBox>
         </ContentWrapper>
       ) : null}
@@ -46,14 +51,20 @@ const ContentWrapper = styled.div`
   padding-left: 30px;
 `;
 
-const StyledNumber = styled.div`
+const StyledNumber = styled.div<{ isColored: boolean }>`
   font-size: 26px;
   font-weight: 800;
   line-height: 30px;
   text-align: left;
+  color: ${({ isColored }: { isColored: boolean }) => (isColored ? 'red' : colors.B60)};
+  background: ${({ isColored }: { isColored: boolean }) =>
+    isColored ? '-webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%)' : colors.B60};
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 `;
 
-const StatsLabel = styled.div`
+const StatsLabel = styled.div<{ isColored: boolean }>`
   font-size: 14px;
   line-height: 17px;
+  color: ${({ isColored }) => (isColored ? colors.white : colors.B60)};
 `;
