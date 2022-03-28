@@ -7,7 +7,8 @@ export interface IChartData {
 
 export interface IDataSet {
   data: number[];
-  backgroundColor: (context: ScriptableContext<'bar'>) => CanvasGradient;
+  backgroundColor: string;
+  hoverBackgroundColor: (context: ScriptableContext<'bar'>) => CanvasGradient;
   borderRadius: number;
 }
 

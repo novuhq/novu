@@ -61,7 +61,8 @@ function buildChartDataContainer(data: IActivityGraphStats[]): IChartData {
     labels: buildChartDateLabels(data),
     datasets: [
       {
-        backgroundColor: createGradientColor(),
+        backgroundColor: colors.B20,
+        hoverBackgroundColor: createGradientColor(),
         data: buildChartData(data),
         borderRadius: 7,
       },
