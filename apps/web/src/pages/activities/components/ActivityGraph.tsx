@@ -13,6 +13,7 @@ import {
 import { Bar } from 'react-chartjs-2';
 import moment from 'moment';
 import { useEffect, useState } from 'react';
+import * as cloneDeep from 'lodash.clonedeep';
 import { getActivityGraphStats } from '../../../api/activity';
 import { colors } from '../../../design-system';
 import { IActivityGraphStats, IChartData } from '../interfaces';
@@ -20,10 +21,6 @@ import { activityGraphStatsMock } from '../consts';
 import { MessageContainer } from './MessageContainer';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-function checkIsTriggerSent(activityGraphStats: IActivityGraphStats[] | undefined) {
-  return activityGraphStats?.length && activityGraphStats?.length > 0;
-}
 
 export function ActivityGraph() {
   const [isTriggerSent, setIsTriggerSent] = useState<boolean>(false);
@@ -53,6 +50,10 @@ export function ActivityGraph() {
   );
 }
 
+function checkIsTriggerSent(activityGraphStats: IActivityGraphStats[] | undefined) {
+  return activityGraphStats?.length && activityGraphStats?.length > 0;
+}
+
 function buildChartDataContainer(data: IActivityGraphStats[]): IChartData {
   return {
     labels: buildChartDateLabels(data),
@@ -71,7 +72,24 @@ function getDataChartJs(data: IActivityGraphStats[] | undefined): IChartData {
     return buildChartDataContainer(activityGraphStatsMock);
   }
 
+  if (data.length < 7) {
+    return buildChartDataContainer(fillWeekData(data));
+  }
+
   return buildChartDataContainer(data);
+}
+
+function fillWeekData(data: IActivityGraphStats[]) {
+  const fullWeekData = cloneDeep(data);
+  // eslint-disable-next-line no-plusplus
+  for (let i = data.length - 1; i < 6; i++) {
+    const earliestDate = fullWeekData[i]._id;
+    const newDate = moment(earliestDate).subtract(1, 'days').format('YYYY-MM-DD');
+
+    fullWeekData.push({ _id: newDate, count: 0 });
+  }
+
+  return fullWeekData;
 }
 
 function options(this: any, isTriggerSent: boolean) {
