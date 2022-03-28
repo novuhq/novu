@@ -314,6 +314,7 @@ importers:
       axios: ^0.21.1
       babel-plugin-import: ^1.13.3
       babel-plugin-styled-components: ^1.12.0
+      chart.js: ^3.7.1
       customize-cra: ^1.0.0
       cypress: ^9.5.2
       cypress-localstorage-commands: ^1.7.0
@@ -331,6 +332,7 @@ importers:
       react: ^17.0.1
       react-ace: ^9.4.3
       react-app-rewired: ^2.2.1
+      react-chartjs-2: ^4.0.1
       react-color: ^2.19.3
       react-css-theme-switcher: ^0.2.2
       react-custom-scrollbars: ^4.2.1
@@ -385,6 +387,7 @@ importers:
       autoprefixer: 9.8.8
       axios: 0.21.4
       babel-plugin-import: 1.13.3
+      chart.js: 3.7.1
       customize-cra: 1.0.0
       graphql: 15.8.0
       jwt-decode: 3.1.2
@@ -396,6 +399,7 @@ importers:
       react: 17.0.2
       react-ace: 9.5.0_react-dom@17.0.2+react@17.0.2
       react-app-rewired: 2.2.1_react-scripts@5.0.0
+      react-chartjs-2: 4.0.1_chart.js@3.7.1+react@17.0.2
       react-color: 2.19.3_react@17.0.2
       react-css-theme-switcher: 0.2.3_react@17.0.2
       react-custom-scrollbars: 4.2.1_react-dom@17.0.2+react@17.0.2
@@ -19863,6 +19867,10 @@ packages:
   /chardet/0.7.0:
     resolution: {integrity: sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==}
 
+  /chart.js/3.7.1:
+    resolution: {integrity: sha512-8knRegQLFnPQAheZV8MjxIXc5gQEfDFD897BJgv/klO/vtIyFFmgMXrNfgrXpbTr/XbTturxRgxIXx/Y+ASJBA==}
+    dev: false
+
   /check-disk-space/2.1.0:
     resolution: {integrity: sha512-f0nx9oJF/AVF8nhSYlF1EBvMNnO+CXyLwKhPvN1943iOMI9TWhQigLZm80jAf0wzQhwKkzA8XXjyvuVUeGGcVQ==}
     engines: {node: '>=8'}
@@ -36748,6 +36756,16 @@ packages:
       lodash.curry: 4.1.1
       lodash.flow: 3.5.0
       pure-color: 1.3.0
+    dev: false
+
+  /react-chartjs-2/4.0.1_chart.js@3.7.1+react@17.0.2:
+    resolution: {integrity: sha512-q8bgWzKoFvBvD7YcjT/hXG8jt55TaMAuJ1dmI3tKFJ7CijUWYz4pIfOhkTI6PBTwqu/pmeWsClBRd/7HiWzN1g==}
+    peerDependencies:
+      chart.js: ^3.5.0
+      react: ^16.8.0 || ^17.0.0
+    dependencies:
+      chart.js: 3.7.1
+      react: 17.0.2
     dev: false
 
   /react-color/2.19.3_react@17.0.2:
