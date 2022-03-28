@@ -1,8 +1,10 @@
 import { useMutation } from 'react-query';
 import { INotificationTemplate } from '@notifire/shared';
 import { useEffect, useState } from 'react';
-import { message } from 'antd';
+import { showNotification } from '@mantine/notifications';
+
 import { updateTemplateStatus } from '../../api/templates';
+import { colors } from '../../design-system';
 
 export function useStatusChangeControllerHook(templateId: string, template: INotificationTemplate | undefined) {
   const [isTemplateActive, setIsTemplateActive] = useState<boolean>();
@@ -26,7 +28,10 @@ export function useStatusChangeControllerHook(templateId: string, template: INot
       active: selected,
     });
 
-    message.success('Status changed successfully');
+    showNotification({
+      message: 'Status changed successfully',
+      color: 'green',
+    });
   }
 
   return {

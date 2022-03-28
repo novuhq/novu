@@ -115,7 +115,16 @@ export function LoginForm({}: Props) {
   );
 }
 
-const GithubButton = styled(MantineButton)`
+const GithubButton = styled(MantineButton)<{
+  component: 'a';
+  my: number;
+  href: string;
+  variant: 'white';
+  fullWidth: boolean;
+  radius: 'md';
+  leftIcon: any;
+  sx: any;
+}>`
   :hover {
     color: ${colors.B40};
   }

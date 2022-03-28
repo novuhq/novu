@@ -69,7 +69,7 @@ export function HeaderNav({}: Props) {
       })}>
       <Container
         fluid
-        padding={30}
+        p={30}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
         <img
           src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}

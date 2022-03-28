@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { message } from 'antd';
+import { showNotification } from '@mantine/notifications';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Text } from '../../design-system';
@@ -27,7 +27,10 @@ export function PasswordResetForm({ token }: Props) {
 
   const onForgotPassword = async (data) => {
     if (data.password !== data.passwordRepeat) {
-      return message.error('Passwords do not match');
+      return showNotification({
+        message: 'Passwords do not match',
+        color: 'red',
+      });
     }
 
     const itemData = {
@@ -39,7 +42,11 @@ export function PasswordResetForm({ token }: Props) {
       const response = await mutateAsync(itemData);
 
       setToken(response.token);
-      message.success('Password was changed successfully');
+
+      showNotification({
+        message: 'Password was changed successfully',
+        color: 'green',
+      });
       navigate('/templates');
     } catch (e: any) {
       if (e.statusCode !== 400) {
