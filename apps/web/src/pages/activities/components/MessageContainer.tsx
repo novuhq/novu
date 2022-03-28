@@ -22,6 +22,7 @@ const Wrapper = styled.div`
   height: 64px;
   background: ${colors.B20};
   border-radius: 7px;
+  z-index: 2;
 `;
 
 const StyledTitle = styled(Text)`
