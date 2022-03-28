@@ -66,7 +66,7 @@ export function IntegrationsStore() {
       <PageHeader title="Integration Store" />
 
       <Modal
-        hideCloseButton
+        withCloseButton={false}
         centered
         size="lg"
         overflow="inside"
