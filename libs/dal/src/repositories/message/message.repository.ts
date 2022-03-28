@@ -104,7 +104,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
           },
         },
       },
-      { $sort: { _id: 1 } },
+      { $sort: { _id: -1 } },
     ]);
   }
 
