@@ -137,14 +137,14 @@ describe('Notifications Creator', function () {
       .contains('Test content for {{firstName}}');
 
     cy.getByTestId('settingsButton').click({ force: true });
-    cy.getByTestId('title').type(' This is the new notification title');
+    cy.getByTestId('title').clear().type('This is the new notification title');
 
     cy.getByTestId('inAppSelector').click({ force: true });
     cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
     cy.getByTestId('submit-btn').click();
 
     cy.getByTestId('template-edit-link');
-    cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new notification title', {
+    cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
       matchCase: false,
     });
   });
