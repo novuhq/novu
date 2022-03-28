@@ -349,8 +349,8 @@ function updateToolTipStyles(context, tooltipEl: HTMLElement, tooltipModel) {
   tooltipEl.style.padding = '12px 15px 14px 15px';
   tooltipEl.style.opacity = '1';
   tooltipEl.style.position = 'absolute';
-  tooltipEl.style.left = `${position.left + window.pageXOffset + tooltipModel.caretX}px`;
-  tooltipEl.style.top = `${position.top + window.pageYOffset + tooltipModel.caretY}px`;
+  tooltipEl.style.left = `${position.left + window.scrollX + tooltipModel.caretX - tooltipModel.width - 15}px`;
+  tooltipEl.style.top = `${position.top + window.scrollY + tooltipModel.caretY - tooltipModel.height - 26}px`;
   tooltipEl.style.pointerEvents = 'none';
   /* eslint-enable no-param-reassign */
 }
