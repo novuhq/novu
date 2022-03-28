@@ -25,7 +25,9 @@ const Wrapper = styled.div`
 `;
 
 const StyledTitle = styled(Text)`
-  color: #dd2476; // ${colors.horizontal};
+  background: -webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-size: 11px;
   margin: 12px 0 8px 0;
 `;
