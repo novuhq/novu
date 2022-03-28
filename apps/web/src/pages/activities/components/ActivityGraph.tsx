@@ -14,9 +14,10 @@ import { Bar } from 'react-chartjs-2';
 import moment from 'moment';
 import { useEffect, useState } from 'react';
 import { getActivityGraphStats } from '../../../api/activity';
-import { colors, Text } from '../../../design-system';
+import { colors } from '../../../design-system';
 import { IActivityGraphStats, IChartData } from '../interfaces';
 import { activityGraphStatsMock } from '../consts';
+import { MessageContainer } from './MessageContainer';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -39,12 +40,7 @@ export function ActivityGraph() {
 
   return (
     <Wrapper>
-      {!isTriggerSent ? (
-        <MessageContainer>
-          <StyledTitle>YOUR ACTIVITY FEED</StyledTitle>
-          <StyledText>Here you will see the activity graph once you send some events</StyledText>
-        </MessageContainer>
-      ) : null}
+      {!isTriggerSent ? <MessageContainer /> : null}
 
       {!loadingActivityStats ? (
         <StyledBar
@@ -224,28 +220,6 @@ const Wrapper = styled.div`
   align-items: center;
   justify-content: center;
   flex-direction: column;
-`;
-
-const StyledTitle = styled(Text)`
-  color: #dd2476; // ${colors.horizontal};
-  font-size: 11px;
-  margin: 12px 0 8px 0;
-`;
-
-const StyledText = styled(Text)`
-  margin: 0 15px 14px 15px;
-`;
-
-const MessageContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  position: absolute;
-  padding: 12px 15px 14px;
-  height: 64px;
-  background: ${colors.B20};
-  border-radius: 7px;
 `;
 
 function buildDisplayTitle(title) {
