@@ -66,7 +66,7 @@ export function LegacyAppLayout({ children }: { children: any }) {
                 )}>
                 <Content style={{ padding: 25, paddingTop: 'calc(64px + 25px)' }}>
                   {children}
-                  <Footer style={{ textAlign: 'center' }}>Notifire ©2021</Footer>
+                  <Footer style={{ textAlign: 'center' }}>Novu ©2022</Footer>
                 </Content>
               </Sentry.ErrorBoundary>
             </Layout>

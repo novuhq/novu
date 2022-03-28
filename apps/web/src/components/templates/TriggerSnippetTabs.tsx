@@ -6,9 +6,9 @@ import { colors, Tabs } from '../../design-system';
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
-const notifire = new Notifire('<API_KEY>');
+const novu = new Novu('<API_KEY>');
 
-notifire.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
+novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
   $user_id: '<REPLACE_WITH_USER_ID>',
   ${trigger.variables
     .map((variable) => {
