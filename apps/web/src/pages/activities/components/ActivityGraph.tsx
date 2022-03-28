@@ -280,6 +280,10 @@ function getBodyStyle() {
   style += '; border-width: 22px';
   style += `; color: #FF512F`;
 
+  style += `; background: -webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%)`;
+  style += `; -webkit-background-clip: text`;
+  style += `; -webkit-text-fill-color: transparent`;
+
   return style;
 }
 
