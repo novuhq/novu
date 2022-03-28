@@ -35,6 +35,8 @@ export function ActivityGraph() {
     }
   }, [activityGraphStats]);
 
+  const activityGraphStatsLength = activityGraphStats?.length ? activityGraphStats?.length : 0;
+
   return (
     <Wrapper>
       {!isTriggerSent ? <MessageContainer /> : null}
@@ -42,7 +44,7 @@ export function ActivityGraph() {
       {!loadingActivityStats ? (
         <StyledBar
           isTriggerSent={isTriggerSent}
-          options={options(isTriggerSent)}
+          options={getOptions(isTriggerSent, activityGraphStatsLength)}
           data={getDataChartJs(activityGraphStats)}
         />
       ) : null}
@@ -92,7 +94,7 @@ function fillWeekData(data: IActivityGraphStats[]) {
   return fullWeekData;
 }
 
-function options(this: any, isTriggerSent: boolean) {
+function getOptions(this: any, isTriggerSent: boolean, daysCount: number) {
   return {
     maintainAspectRatio: false,
     responsive: true,
@@ -102,7 +104,7 @@ function options(this: any, isTriggerSent: boolean) {
       display: false,
     },
 
-    scales: getScalesConfiguration.call(this),
+    scales: getScalesConfiguration.call(this, daysCount),
 
     plugins: {
       tooltip: isTriggerSent ? getTooltipConfiguration() : { enabled: false },
@@ -111,7 +113,11 @@ function options(this: any, isTriggerSent: boolean) {
   };
 }
 
-function getScalesConfiguration() {
+function showLabel(this: any, value) {
+  return this.getLabelForValue(value);
+}
+
+function getScalesConfiguration(daysCount: number) {
   return {
     x: {
       reverse: true,
@@ -119,8 +125,12 @@ function getScalesConfiguration() {
         display: false,
       },
       ticks: {
-        callback(val, index) {
-          return hideEverySecondTickLabel.call(this, index, val);
+        callback(value, index) {
+          if (daysCount < 8) {
+            return showLabel.call(this, value);
+          }
+
+          return hideEverySecondTickLabel.call(this, index, value);
         },
       },
     },
