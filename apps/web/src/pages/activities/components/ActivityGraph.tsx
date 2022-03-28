@@ -108,7 +108,7 @@ function getOptions(this: any, isTriggerSent: boolean, daysCount: number) {
     scales: getScalesConfiguration.call(this, daysCount),
 
     plugins: {
-      tooltip: isTriggerSent ? getTooltipConfiguration() : { enabled: false },
+      tooltip: getTooltipConfiguration(),
       legend: hideTitle(),
     },
   };
@@ -239,7 +239,8 @@ function buildChartData(data: IActivityGraphStats[]) {
 
 const StyledBar = styled(Bar)<{ isTriggerSent: boolean }>`
   height: 175px;
-  filter: ${({ isTriggerSent }) => (!isTriggerSent ? 'blur(4px)' : 'blur(0px)')};
+  filter: ${({ isTriggerSent }) => (isTriggerSent ? 'none' : 'blur(4px)')};
+  pointer-events: ${({ isTriggerSent }) => (isTriggerSent ? 'auto' : 'none')};
 `;
 
 const Wrapper = styled.div`
