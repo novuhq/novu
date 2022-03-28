@@ -33,7 +33,7 @@
     "@nestjs/terminus": "^7.1.0",
     "@nestjsx/crud": "^4.6.2",
     "@notifire/dal": "^0.3.5",
-    "@notifire/node": "^1.0.4",
+    "@novu/node": "^0.3.6-alpha.0",
     "@notifire/shared": "^0.3.5",
     "@notifire/testing": "^0.3.5",
     "@notifire/core": "^0.3.6-alpha.0",

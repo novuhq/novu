@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICredentialsDto } from '@notifire/shared';
 import { useMutation } from 'react-query';
-import { message } from 'antd';
+import { showNotification } from '@mantine/notifications';
 import { Image, useMantineColorScheme } from '@mantine/core';
 import { Button, colors, PasswordInput, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
@@ -71,10 +71,18 @@ export function ConnectIntegrationForm({
         });
       }
     } catch (e: any) {
-      message.warn(`Exception occurred while fetching integration: ${e?.messages.toString()}`);
+      showNotification({
+        message: `Exception occurred while fetching integration: ${e?.messages.toString()}`,
+        color: 'red',
+      });
+
+      return;
     }
 
-    message.success(`Successfully ${createModel ? 'added' : 'updated'} integration`);
+    showNotification({
+      message: `Successfully ${createModel ? 'added' : 'updated'} integration`,
+      color: 'green',
+    });
 
     showModal(false);
   }

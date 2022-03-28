@@ -23,6 +23,7 @@ test('should trigger postmark correctly', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
     });
+
   await provider.sendMessage(mockNotifireMessage);
 
   expect(spy).toHaveBeenCalled();

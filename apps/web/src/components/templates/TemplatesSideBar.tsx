@@ -1,6 +1,7 @@
 import { Navbar, useMantineTheme } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@notifire/shared';
+import styled from '@emotion/styled';
 import { colors, TemplateButton, Text } from '../../design-system';
 import {
   BellGradient,
@@ -83,8 +84,8 @@ export function TemplatesSideBar({
   const textColor = theme.colorScheme === 'dark' ? colors.B40 : colors.B70;
 
   return (
-    <Navbar mb={20} padding={30} width={{ base: 450 }} sx={{ paddingTop: '0px', height: 'auto' }}>
-      <Navbar.Section mr={20}>
+    <StyledNav>
+      <NavSection>
         <TemplateButton
           tabKey="Settings"
           changeTab={changeTab}
@@ -95,8 +96,8 @@ export function TemplatesSideBar({
           label="Notification Settings"
           errors={showErrors && errors.name}
         />
-      </Navbar.Section>
-      <Navbar.Section mr={20}>
+      </NavSection>
+      <NavSection>
         <Text mt={10} mb={20} color={textColor}>
           Channels
         </Text>
@@ -112,9 +113,9 @@ export function TemplatesSideBar({
             label="Add Channel"
           />
         </div>
-      </Navbar.Section>
+      </NavSection>
       {showTriggerSection && (
-        <Navbar.Section mr={20}>
+        <NavSection>
           <Text mt={10} mb={20} color={textColor}>
             Implementation Code
           </Text>
@@ -129,9 +130,9 @@ export function TemplatesSideBar({
               label="Trigger Snippet"
             />
           </div>
-        </Navbar.Section>
+        </NavSection>
       )}
-    </Navbar>
+    </StyledNav>
   );
 }
 
@@ -143,3 +144,9 @@ function getChannelErrors(channel: 'sms' | 'email' | 'inApp', errors: { [p: stri
 
   return channelErrors.map((key) => errors[key]).toString();
 }
+
+const StyledNav = styled.div`
+  margin-bottom: 30px;
+`;
+
+const NavSection = styled.div``;

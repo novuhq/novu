@@ -57,5 +57,6 @@ function getFormattedTo(to: string | string[]): SendSmtpEmailTo[] {
   if (typeof to === 'string') {
     return [{ email: to }];
   }
+
   return to.map((email: string) => ({ email }));
 }

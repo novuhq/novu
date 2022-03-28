@@ -8,7 +8,7 @@ import { Input } from '../../../design-system';
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   return (
     <>
-      <Container ml={0} sx={{ maxWidth: '400px', paddingLeft: '0px' }}>
+      <Container pl={0} pr={0} ml={0} sx={{ maxWidth: '400px', paddingLeft: '0px' }}>
         <Group grow direction="column">
           <Controller
             name={`inAppMessages.${index}.template.cta.data.url` as any}

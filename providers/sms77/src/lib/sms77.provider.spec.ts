@@ -16,10 +16,12 @@ test('should trigger sms77 correctly', async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
     });
+
   await provider.sendMessage({
     to: '+187654',
     content: 'Test',
   });
+
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     from: '+1145678',
