@@ -1,5 +1,6 @@
 import { useQuery } from 'react-query';
 import styled from '@emotion/styled';
+import { useMantineTheme } from '@mantine/core';
 import { getActivityStats } from '../../../api/activity';
 import { formatNumber } from '../../../utils';
 import { colors } from '../../../design-system';
@@ -10,6 +11,7 @@ export function ActivityStatistics() {
     monthlySent: number;
     weeklySent: number;
   }>('activityStats', getActivityStats);
+  const isDark = useMantineTheme().colorScheme === 'dark';
 
   return (
     <>
@@ -19,19 +21,25 @@ export function ActivityStatistics() {
             <StyledNumber isColored={false} data-test-id="activity-stats-weekly-sent">
               {formatNumber(activityStats?.weeklySent ? activityStats?.weeklySent : 0, 0)}
             </StyledNumber>
-            <StatsLabel isColored={false}>This week</StatsLabel>
+            <StatsLabel isColored={false} isDark={isDark}>
+              This week
+            </StatsLabel>
           </StatisticsBox>
           <StatisticsBox>
             <StyledNumber isColored>
               {formatNumber(activityStats?.monthlySent ? activityStats?.monthlySent : 0, 0)}
             </StyledNumber>
-            <StatsLabel isColored>This month</StatsLabel>
+            <StatsLabel isColored isDark={isDark}>
+              This month
+            </StatsLabel>
           </StatisticsBox>
           <StatisticsBox>
             <StyledNumber isColored={false}>
               {formatNumber(activityStats?.yearlySent ? activityStats?.yearlySent : 0, 0)}
             </StyledNumber>
-            <StatsLabel isColored={false}>This year</StatsLabel>
+            <StatsLabel isColored={false} isDark={isDark}>
+              This year
+            </StatsLabel>
           </StatisticsBox>
         </ContentWrapper>
       ) : null}
@@ -55,15 +63,18 @@ const StyledNumber = styled.div<{ isColored: boolean }>`
   font-weight: 800;
   line-height: 30px;
   text-align: left;
-  color: ${({ isColored }: { isColored: boolean }) => (isColored ? 'red' : colors.B60)};
   background: ${({ isColored }: { isColored: boolean }) =>
     isColored ? '-webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%)' : colors.B60};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 `;
 
-const StatsLabel = styled.div<{ isColored: boolean }>`
+const StatsLabel = styled.div<{ isColored: boolean; isDark: boolean }>`
   font-size: 14px;
   line-height: 17px;
-  color: ${({ isColored }) => (isColored ? colors.white : colors.B60)};
+  color: ${({ isColored, isDark }) => {
+    const notColoredThemeTextColor = isDark ? colors.white : colors.B40;
+
+    return !isColored ? colors.B60 : notColoredThemeTextColor;
+  }};
 `;

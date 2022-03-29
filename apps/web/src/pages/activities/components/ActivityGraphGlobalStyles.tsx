@@ -1,11 +1,11 @@
 import { css, Global } from '@emotion/react';
 import { colors } from '../../../design-system';
 
-export function ActivityGraphGlobalStyles({ isTriggerSent }: { isTriggerSent: boolean }) {
-  return <Global styles={ChartStyles(isTriggerSent)} />;
+export function ActivityGraphGlobalStyles({ isTriggerSent, isDark }: { isTriggerSent: boolean; isDark: boolean }) {
+  return <Global styles={ChartStyles(isTriggerSent, isDark)} />;
 }
 
-function ChartStyles(isTriggerSent: boolean) {
+function ChartStyles(isTriggerSent: boolean, isDark: boolean) {
   const filter = isTriggerSent ? 'none' : 'blur(4px)';
   const pointerEvents = isTriggerSent ? 'auto' : 'none';
 
@@ -20,8 +20,8 @@ function ChartStyles(isTriggerSent: boolean) {
       width: 190px;
       display: flex;
       justify-content: center;
-
-      background: ${colors.B20};
+      box-shadow: 0 5px 15px rgba(38, 68, 128, 0.05);
+      background: ${isDark ? colors.B20 : colors.white};
       border-radius: 7px;
       padding: 12px 15px 14px 15px;
       pointer-events: none;
@@ -33,7 +33,7 @@ function ChartStyles(isTriggerSent: boolean) {
         content: '';
         position: absolute;
         left: calc(50% - 5px);
-        border-top: 10px solid ${colors.B20};
+        border-top: 10px solid ${isDark ? colors.B20 : colors.white};
         border-left: 10px solid transparent;
         border-right: 10px solid transparent;
       }

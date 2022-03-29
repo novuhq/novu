@@ -1,10 +1,10 @@
 import styled from '@emotion/styled';
 import { colors, Text } from '../../../design-system';
 
-export function MessageContainer() {
+export function MessageContainer({ isDark }: { isDark: boolean }) {
   return (
     <>
-      <Wrapper>
+      <Wrapper isDark={isDark}>
         <StyledTitle>YOUR ACTIVITY FEED</StyledTitle>
         <StyledText>Here you will see the activity graph once you send some events</StyledText>
       </Wrapper>
@@ -12,7 +12,7 @@ export function MessageContainer() {
   );
 }
 
-const Wrapper = styled.div`
+const Wrapper = styled.div<{ isDark: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -20,7 +20,11 @@ const Wrapper = styled.div`
   position: absolute;
   padding: 12px 15px 14px;
   height: 64px;
-  background: ${colors.B20};
+  background: ${({ isDark }) => {
+    return isDark ? colors.B20 : colors.white;
+  }};
+  box-shadow: 0 5px 15px rgba(38, 68, 128, 0.05);
+
   border-radius: 7px;
   z-index: 2;
 
@@ -30,7 +34,10 @@ const Wrapper = styled.div`
     content: '';
     position: absolute;
     left: calc(50% - 5px);
-    border-top: 10px solid ${colors.B20};
+    border-top: 10px solid
+      ${({ isDark }) => {
+        return isDark ? colors.B20 : colors.white;
+      }};
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
   }

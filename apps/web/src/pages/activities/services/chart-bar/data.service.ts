@@ -5,24 +5,24 @@ import { IActivityGraphStats, IChartData } from '../../interfaces';
 import { activityGraphStatsMock } from '../../consts';
 import { colors } from '../../../../design-system';
 
-export function getChartData(data: IActivityGraphStats[] | undefined): IChartData {
+export function getChartData(data: IActivityGraphStats[] | undefined, isDark: boolean): IChartData {
   if (!data || data?.length === 0) {
-    return buildChartDataContainer(activityGraphStatsMock);
+    return buildChartDataContainer(activityGraphStatsMock, isDark);
   }
 
   if (data.length < 7) {
-    return buildChartDataContainer(fillWeekData(data));
+    return buildChartDataContainer(fillWeekData(data), isDark);
   }
 
-  return buildChartDataContainer(data);
+  return buildChartDataContainer(data, isDark);
 }
 
-function buildChartDataContainer(data: IActivityGraphStats[]): IChartData {
+function buildChartDataContainer(data: IActivityGraphStats[], isDark: boolean): IChartData {
   return {
     labels: buildChartDateLabels(data),
     datasets: [
       {
-        backgroundColor: colors.B20,
+        backgroundColor: isDark ? colors.B20 : colors.BGLight,
         hoverBackgroundColor: createGradientColor(),
         data: buildChartData(data),
         borderRadius: 7,

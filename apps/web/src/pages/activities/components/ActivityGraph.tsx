@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { useEffect, useState } from 'react';
+import { useMantineTheme } from '@mantine/core';
 import { getActivityGraphStats } from '../../../api/activity';
 import { IActivityGraphStats } from '../interfaces';
 import { MessageContainer } from './MessageContainer';
@@ -17,6 +18,7 @@ export function ActivityGraph() {
     'activityGraphStats',
     getActivityGraphStats
   );
+  const isDark = useMantineTheme().colorScheme === 'dark';
 
   useEffect(() => {
     if (checkIsTriggerSent(activityGraphStats)) {
@@ -28,15 +30,15 @@ export function ActivityGraph() {
 
   return (
     <Wrapper>
-      <ActivityGraphGlobalStyles isTriggerSent={isTriggerSent} />
+      <ActivityGraphGlobalStyles isTriggerSent={isTriggerSent} isDark={isDark} />
 
-      {!isTriggerSent ? <MessageContainer /> : null}
+      {!isTriggerSent ? <MessageContainer isDark={isDark} /> : null}
 
       {!loadingActivityStats ? (
         <Bar
           id="chart-bar-styles"
           options={getOptions(isTriggerSent, activityGraphStatsLength)}
-          data={getChartData(activityGraphStats)}
+          data={getChartData(activityGraphStats, isDark)}
         />
       ) : null}
     </Wrapper>
@@ -48,7 +50,6 @@ function checkIsTriggerSent(activityGraphStats: IActivityGraphStats[] | undefine
 }
 
 const Wrapper = styled.div`
-  background: rgba(30, 30, 38, 0.5);
   padding: 0 30px;
   display: flex;
   align-items: center;

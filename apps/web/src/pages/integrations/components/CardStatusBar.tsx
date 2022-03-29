@@ -1,10 +1,10 @@
 import styled from '@emotion/styled';
-import { BoltGradient, CheckCircle } from '../../../design-system/icons';
+import { BoltGradient } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
 
 export function CardStatusBar({ active }: { active: boolean }) {
   return (
-    <Wrapper active={active}>
+    <Wrapper>
       <ActiveWrapper active={active}>
         <BoltGradient />
         <StyledText data-test-id="card-status-bar-active">{active ? 'Active' : 'Not Active'}</StyledText>
@@ -42,7 +42,7 @@ const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
   }}
 `;
 
-const Wrapper = styled.div<{ active: boolean }>`
+const Wrapper = styled.div`
   display: flex;
   justify-content: space-between;
 
