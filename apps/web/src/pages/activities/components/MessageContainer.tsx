@@ -23,6 +23,17 @@ const Wrapper = styled.div`
   background: ${colors.B20};
   border-radius: 7px;
   z-index: 2;
+
+  &:after {
+    display: inline-block;
+    bottom: -9px;
+    content: '';
+    position: absolute;
+    left: calc(50% - 5px);
+    border-top: 10px solid ${colors.B20};
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+  }
 `;
 
 const StyledTitle = styled(Text)`
