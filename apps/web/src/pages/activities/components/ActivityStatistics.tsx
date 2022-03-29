@@ -60,9 +60,10 @@ const ContentWrapper = styled.div`
 
 const StyledNumber = styled.div<{ isColored: boolean }>`
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 900;
   line-height: 30px;
   text-align: left;
+  margin-bottom: 2px;
   background: ${({ isColored }: { isColored: boolean }) =>
     isColored ? '-webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%)' : colors.B60};
   -webkit-background-clip: text;
@@ -72,6 +73,7 @@ const StyledNumber = styled.div<{ isColored: boolean }>`
 const StatsLabel = styled.div<{ isColored: boolean; isDark: boolean }>`
   font-size: 14px;
   line-height: 17px;
+  font-weight: 700;
   color: ${({ isColored, isDark }) => {
     const notColoredThemeTextColor = isDark ? colors.white : colors.B40;
 

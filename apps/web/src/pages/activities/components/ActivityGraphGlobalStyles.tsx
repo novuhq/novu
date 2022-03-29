@@ -50,6 +50,7 @@ function ChartStyles(isTriggerSent: boolean, isDark: boolean) {
       position: static;
       display: flex;
       justify-content: center;
+      font-weight: 700;
 
       height: 17px;
       border-width: 22px;

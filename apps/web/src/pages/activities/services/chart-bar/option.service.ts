@@ -134,7 +134,7 @@ function buildBody(html: string, bodyLines) {
   bodyLines.forEach(function (body) {
     const bodyText = getBodyText(body);
 
-    resHtml += `<span >${bodyText}</span>`;
+    resHtml += `<span >${bodyText} Total</span>`;
   });
   resHtml += '</div>';
 
