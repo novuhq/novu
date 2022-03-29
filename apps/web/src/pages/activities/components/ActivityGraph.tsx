@@ -19,6 +19,7 @@ import { colors } from '../../../design-system';
 import { IActivityGraphStats, IChartData } from '../interfaces';
 import { activityGraphStatsMock } from '../consts';
 import { MessageContainer } from './MessageContainer';
+import { ActivityGraphGlobalStyles } from './ActivityGraphGlobalStyles';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -39,11 +40,13 @@ export function ActivityGraph() {
 
   return (
     <Wrapper>
+      <ActivityGraphGlobalStyles isTriggerSent={isTriggerSent} />
+
       {!isTriggerSent ? <MessageContainer /> : null}
 
       {!loadingActivityStats ? (
-        <StyledBar
-          isTriggerSent={isTriggerSent}
+        <Bar
+          id="chart-bar-styles"
           options={getOptions(isTriggerSent, activityGraphStatsLength)}
           data={getDataChartJs(activityGraphStats)}
         />
@@ -236,19 +239,11 @@ function buildChartData(data: IActivityGraphStats[]) {
     return x.count;
   });
 }
-
-const StyledBar = styled(Bar)<{ isTriggerSent: boolean }>`
-  height: 175px;
-  filter: ${({ isTriggerSent }) => (isTriggerSent ? 'none' : 'blur(4px)')};
-  pointer-events: ${({ isTriggerSent }) => (isTriggerSent ? 'auto' : 'none')};
-`;
-
 const Wrapper = styled.div`
   background: rgba(30, 30, 38, 0.5);
   padding: 0 30px;
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-direction: column;
 `;
 
@@ -260,36 +255,7 @@ function buildDisplayTitle(title) {
   return `${data.format('dddd')}, ${data.format('MMMM')} ${data.format('Do')}`;
 }
 
-function getTitleStyle() {
-  let titleStyle = 'display: flex;';
-
-  titleStyle += 'justify-content: center;';
-  titleStyle += '; height: 17px';
-  titleStyle += '; margin-bottom: 4px';
-  titleStyle += '; border-width: 22px';
-  titleStyle += '; border-width: 22px';
-  titleStyle += `; color: ${colors.B60}`;
-
-  return titleStyle;
-}
-
-function getBodyStyle() {
-  let style = 'position: static';
-
-  style += '; display: flex;';
-  style += '; justify-content: center;';
-  style += '; height: 17px';
-  style += '; border-width: 22px';
-  style += `; color: #FF512F`;
-
-  style += `; background: -webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%)`;
-  style += `; -webkit-background-clip: text`;
-  style += `; -webkit-text-fill-color: transparent`;
-
-  return style;
-}
-
-function buildTitle(html: string, titleLines: any[]) {
+function buildTitle(html: string, titleLines: string[]) {
   let resHtml = html;
 
   resHtml += '<div class="tooltip-title">';
@@ -297,9 +263,7 @@ function buildTitle(html: string, titleLines: any[]) {
   titleLines.forEach(function (title) {
     const displayTitle = buildDisplayTitle(title);
 
-    const titleStyle = getTitleStyle();
-
-    resHtml += `<span style="${titleStyle}" >${displayTitle}</th></tr>`;
+    resHtml += `<span >${displayTitle}</th></tr>`;
   });
   resHtml += '</div>';
 
@@ -322,11 +286,9 @@ function buildBody(html: string, bodyLines) {
 
   resHtml += '<div class="tooltip-body">';
   bodyLines.forEach(function (body) {
-    const style = getBodyStyle();
-
     const bodyText = getBodyText(body);
 
-    resHtml += `<span style="${style}">${bodyText}</span>`;
+    resHtml += `<span >${bodyText}</span>`;
   });
   resHtml += '</div>';
 
@@ -345,13 +307,8 @@ function updateToolTipStyles(context, tooltipEl: HTMLElement, tooltipModel) {
   const position = context.chart.canvas.getBoundingClientRect();
 
   /* eslint-disable no-param-reassign */
-  tooltipEl.style.background = colors.B20;
-  tooltipEl.style.borderRadius = '7px';
-  tooltipEl.style.padding = '12px 15px 14px 15px';
   tooltipEl.style.opacity = '1';
-  tooltipEl.style.position = 'absolute';
-  tooltipEl.style.left = `${position.left + window.scrollX + tooltipModel.caretX - tooltipModel.width - 15}px`;
-  tooltipEl.style.top = `${position.top + window.scrollY + tooltipModel.caretY - tooltipModel.height - 26}px`;
-  tooltipEl.style.pointerEvents = 'none';
+  tooltipEl.style.left = `${position.left + window.scrollX + tooltipModel.caretX - tooltipModel.width - 40}px`;
+  tooltipEl.style.top = `${position.top + window.scrollY + tooltipModel.caretY - tooltipModel.height - 30}px`;
   /* eslint-enable no-param-reassign */
 }

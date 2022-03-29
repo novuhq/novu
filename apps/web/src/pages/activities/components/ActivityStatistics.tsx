@@ -41,7 +41,6 @@ export function ActivityStatistics() {
 
 const StatisticsBox = styled.div`
   padding-right: 30px;
-  color: #828299; //colors.B60
 `;
 
 const ContentWrapper = styled.div`
