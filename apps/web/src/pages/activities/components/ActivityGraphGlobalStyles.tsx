@@ -6,14 +6,11 @@ export function ActivityGraphGlobalStyles({ isTriggerSent, isDark }: { isTrigger
 }
 
 function ChartStyles(isTriggerSent: boolean, isDark: boolean) {
-  const filter = isTriggerSent ? 'none' : 'blur(4px)';
-  const pointerEvents = isTriggerSent ? 'auto' : 'none';
-
   return css`
     #chart-bar-styles {
       height: 175px;
-      filter: ${filter};
-      pointer-events: ${pointerEvents};
+      filter: ${isTriggerSent ? 'none' : 'blur(4px)'};
+      pointer-events: ${isTriggerSent ? 'auto' : 'none'};
     }
 
     #chartjs-tooltip {

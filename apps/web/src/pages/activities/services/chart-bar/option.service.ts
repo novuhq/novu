@@ -178,7 +178,7 @@ function buildDisplayTitle(title) {
   return `${data.format('dddd')}, ${data.format('MMMM')} ${data.format('Do')}`;
 }
 
-function normalizeDateNumber(num: string): string {
+export function normalizeDateNumber(num: string): string {
   if (num.length < 2) {
     return `0${num}`;
   }
