@@ -179,22 +179,18 @@ function getTooltipConfiguration() {
         return;
       }
 
-      // Set caret Position
-      tooltipEl.classList.remove('above', 'below', 'no-transform');
-      if (tooltipModel.yAlign) {
-        tooltipEl.classList.add(tooltipModel.yAlign);
-      } else {
-        tooltipEl.classList.add('no-transform');
-      }
-
-      function getBody(bodyItem) {
-        return bodyItem.lines;
+      function getBody(bodyItem: string[]): string[] {
+        return bodyItem;
       }
 
       // Set Text
       if (tooltipModel.body) {
         const titleLines = tooltipModel.title || [];
-        const bodyLines = tooltipModel.body.map(getBody);
+        const bodyLines = tooltipModel.body.map(
+          (x: { before: string[]; after: string[]; lines: string[] }): string[] => {
+            return getBody(x.lines);
+          }
+        );
 
         let innerHtml = '';
 
