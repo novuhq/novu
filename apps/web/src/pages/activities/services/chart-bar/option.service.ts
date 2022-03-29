@@ -172,8 +172,16 @@ function getBodyText(body: string[]): string | string[] {
 
 function buildDisplayTitle(title) {
   const dayMonth = title.split(',')[1].split('/');
-  const dateString = `1992-0${dayMonth[1]}-${dayMonth[0]}T00:00:00-00:00`;
-  const data = moment(dateString);
+  const dateString = `${normalizeDateNumber(dayMonth[1])}-${normalizeDateNumber(dayMonth[0])}`;
+  const data = moment(dateString, 'MM-DD');
 
   return `${data.format('dddd')}, ${data.format('MMMM')} ${data.format('Do')}`;
+}
+
+function normalizeDateNumber(num: string): string {
+  if (num.length < 2) {
+    return `0${num}`;
+  }
+
+  return num;
 }
