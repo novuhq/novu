@@ -15,13 +15,16 @@ const mockNotifireMessage = {
     { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
   ],
 };
+
 test('should trigger sendgrid correctly', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
   const spy = jest.spyOn(sendgridMail, 'send').mockImplementation(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {} as any;
   });
+
   await provider.sendMessage(mockNotifireMessage);
+
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     to: mockNotifireMessage.to,

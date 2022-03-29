@@ -4,22 +4,11 @@ import React from 'react';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Input } from '../../../design-system';
-import { LackIntegrationError } from '../LackIntegrationError';
 
-export function TemplateInAppEditor({
-  control,
-  index,
-  isIntegrationActive,
-}: {
-  control: Control<IForm>;
-  index: number;
-  errors: any;
-  isIntegrationActive: boolean;
-}) {
+export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channelType="In-app" /> : null}
-      <Container ml={0} sx={{ maxWidth: '400px', paddingLeft: '0px' }}>
+      <Container pl={0} pr={0} ml={0} sx={{ maxWidth: '400px', paddingLeft: '0px' }}>
         <Group grow direction="column">
           <Controller
             name={`inAppMessages.${index}.template.cta.data.url` as any}

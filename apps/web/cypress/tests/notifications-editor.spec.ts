@@ -52,7 +52,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
     cy.getByTestId('success-trigger-modal')
       .getByTestId('trigger-code-snippet')
-      .contains("import { Notifire } from '@notifire/node'");
+      .contains("import { Novu } from '@novu/node'");
 
     cy.get('.mantine-Tabs-tabsList').contains('Curl').click();
     cy.getByTestId('success-trigger-modal')
@@ -137,14 +137,14 @@ describe('Notifications Creator', function () {
       .contains('Test content for {{firstName}}');
 
     cy.getByTestId('settingsButton').click({ force: true });
-    cy.getByTestId('title').type(' This is the new notification title');
+    cy.getByTestId('title').clear().type('This is the new notification title');
 
     cy.getByTestId('inAppSelector').click({ force: true });
     cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
     cy.getByTestId('submit-btn').click();
 
     cy.getByTestId('template-edit-link');
-    cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new notification title', {
+    cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
       matchCase: false,
     });
   });
@@ -251,7 +251,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-sms-notification');
     cy.getByTestId('success-trigger-modal')
       .getByTestId('trigger-code-snippet')
-      .contains("import { Notifire } from '@notifire/node'");
+      .contains("import { Novu } from '@novu/node'");
 
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('taskName');
 

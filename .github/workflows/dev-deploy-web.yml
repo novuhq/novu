@@ -58,7 +58,7 @@ jobs:
         env:
           REACT_APP_API_URL: https://dev.api.novu.co
           REACT_APP_WIDGET_SDK_PATH: https://dev.sdk.novu.co/sdk.umd.min.js
-          REACT_APP_NOTIFIRE_APP_ID: uaahXGRverKF
+          REACT_APP_NOTIFIRE_APP_ID: ${{ secrets.NOTIFIRE_APP_ID }}
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: dev
         working-directory: apps/web

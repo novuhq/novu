@@ -9,6 +9,7 @@ import {
 } from '@mantine/core';
 import { useContext } from 'react';
 import * as capitalize from 'lodash.capitalize';
+import styled from '@emotion/styled';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
@@ -18,7 +19,7 @@ const menuItem = [
   {
     title: 'Invite Members',
     icon: <Mail />,
-    path: '/settings/organization',
+    path: '/team',
   },
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
@@ -68,7 +69,7 @@ export function HeaderNav({}: Props) {
       })}>
       <Container
         fluid
-        padding={30}
+        p={30}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
         <img
           src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}
@@ -79,8 +80,9 @@ export function HeaderNav({}: Props) {
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()} title="Toggle color scheme">
             {dark ? <Sun {...headerIconsSettings} /> : <Moon {...headerIconsSettings} />}
           </ActionIcon>
-          <ActionIcon variant="transparent">
+          <ActionIcon variant="transparent" id="notification-bell">
             <Bell {...headerIconsSettings} />
+            <UnseenBadge id="unseen-badge-selector" />
           </ActionIcon>
           <Dropdown
             control={
@@ -101,3 +103,14 @@ export function HeaderNav({}: Props) {
     </Header>
   );
 }
+
+const UnseenBadge = styled.span`
+  position: absolute;
+  background: ${colors.error};
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  right: 2px;
+  top: 2px;
+  display: none;
+`;
