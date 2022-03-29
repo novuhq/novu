@@ -95,7 +95,7 @@ class Notifire {
       }
 
       if (_this.options?.position?.left) {
-        wrapper.style.left = isNaN(_this.options?.position?.top as number)
+        wrapper.style.top = isNaN(_this.options?.position?.top as number)
           ? _this.options?.position?.top
           : `${_this.options?.position?.top}px`;
       } else {
