@@ -37,15 +37,13 @@ export function ActivityGraph() {
     <Wrapper>
       <ActivityGraphGlobalStyles isTriggerSent={isTriggerSent} isDark={isDark} />
 
-      {!isTriggerSent ? <MessageContainer isDark={isDark} /> : null}
+      {!isTriggerSent && !loadingActivityStats ? <MessageContainer isDark={isDark} /> : null}
 
-      {!loadingActivityStats ? (
-        <Bar
-          id="chart-bar-styles"
-          options={getOptions(isTriggerSent, activityGraphStatsLength)}
-          data={getChartData(graphState, isDark)}
-        />
-      ) : null}
+      <Bar
+        id="chart-bar-styles"
+        options={getOptions(isTriggerSent, activityGraphStatsLength)}
+        data={getChartData(graphState, isDark)}
+      />
     </Wrapper>
   );
 }
