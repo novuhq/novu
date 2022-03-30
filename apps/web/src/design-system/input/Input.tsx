@@ -1,8 +1,9 @@
 import React, { ChangeEvent } from 'react';
-import { TextInputProps, TextInput as MantineTextInput, MantineMargins } from '@mantine/core';
+import { TextInputProps, TextInput as MantineTextInput } from '@mantine/core';
 import { inputStyles } from '../config/inputs.styles';
+import { SpacingProps } from '../shared/spacing.props';
 
-interface IInputProps extends MantineMargins {
+interface IInputProps extends SpacingProps {
   label?: React.ReactNode;
   error?: React.ReactNode;
   placeholder?: string;

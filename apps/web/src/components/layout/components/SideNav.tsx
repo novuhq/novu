@@ -11,7 +11,7 @@ const menuItems = [
   { icon: <Settings />, link: '/settings', label: 'Settings', testId: 'side-nav-settings-link' },
   {
     icon: <Team />,
-    link: '/settings/organization',
+    link: '/team',
     label: 'Team Members',
     testId: 'side-nav-settings-organization',
   },
@@ -19,10 +19,7 @@ const menuItems = [
 
 export function SideNav({}: Props) {
   return (
-    <Navbar
-      padding={30}
-      sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }}
-      width={{ base: 300 }}>
+    <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 250 }}>
       <Navbar.Section>
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>

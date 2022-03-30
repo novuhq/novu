@@ -1,15 +1,16 @@
 import { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ButtonProps } from '@mantine/core/lib/components/Button/Button';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
-import { message } from 'antd';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
 import { API_ROOT } from '../../config';
+import { showNotification } from '@mantine/notifications';
 
 type Props = {
   token?: string;
@@ -45,7 +46,12 @@ export function SignUpForm({ token, email }: Props) {
     };
 
     if (!itemData.lastName) {
-      return message.error('Please write your full name including last name');
+      showNotification({
+        message: 'Please write your full name including last name',
+        color: 'red',
+      });
+
+      return;
     }
     const response = await mutateAsync(itemData);
 
@@ -158,7 +164,16 @@ export function SignUpForm({ token, email }: Props) {
   );
 }
 
-const GithubButton = styled(MantineButton)`
+const GithubButton = styled(MantineButton)<{
+  component: 'a';
+  my: number;
+  href: string;
+  variant: 'white';
+  fullWidth: boolean;
+  radius: 'md';
+  leftIcon: any;
+  sx: any;
+}>`
   :hover {
     color: ${colors.B40};
   }

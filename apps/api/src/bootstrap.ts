@@ -88,7 +88,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     await app.listen(process.env.PORT);
   }
 
-  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} port ${process.env.PORT}`);
+  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
   return app;
 }

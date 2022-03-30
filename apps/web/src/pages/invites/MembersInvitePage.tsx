@@ -2,12 +2,13 @@ import { Form } from 'antd';
 import { useMutation, useQuery } from 'react-query';
 import styled from 'styled-components';
 import { MemberStatusEnum } from '@notifire/shared';
+import { showNotification } from '@mantine/notifications';
 import * as capitalize from 'lodash.capitalize';
 import { Avatar, Container, Divider, Group, Text } from '@mantine/core';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { getOrganizationMembers, inviteMember } from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, Input, Tag } from '../../design-system';
+import { Button, colors, Input, Tag } from '../../design-system';
 import { Invite } from '../../design-system/icons';
 import useStyles from '../../design-system/config/text.styles';
 
@@ -32,6 +33,11 @@ export function MembersInvitePage() {
     await sendInvite(email);
     await refetch();
 
+    showNotification({
+      message: `Invite sent to ${email}`,
+      color: 'green',
+    });
+
     form.resetFields(['email']);
   }
 
@@ -45,7 +51,7 @@ export function MembersInvitePage() {
               <Form.Item name="email" style={{ marginBottom: 0 }}>
                 <StyledInput required data-test-id="invite-email-field" placeholder="Invite user by email" />
               </Form.Item>
-              <Button submit icon={<Invite />} loading={loadingSendInvite}>
+              <Button submit icon={<Invite />} loading={loadingSendInvite} data-test-id="submit-btn">
                 Invite
               </Button>
             </Group>

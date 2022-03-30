@@ -7,7 +7,6 @@ import {
   InputBaseProps,
   MultiSelectValueProps,
   useMantineTheme,
-  MantineMargins,
   LoadingOverlay,
   SelectItem,
 } from '@mantine/core';
@@ -17,8 +16,9 @@ import { inputStyles } from '../config/inputs.styles';
 import { ArrowDown } from '../icons';
 import { colors } from '../config';
 import { Text } from '../index';
+import { SpacingProps } from '../shared/spacing.props';
 
-interface ISelectProps extends MantineMargins {
+interface ISelectProps extends SpacingProps {
   data: (string | { value: string; label?: string })[];
   value?: string[] | string | null;
   onChange?: (value: string[] | string | null) => void;

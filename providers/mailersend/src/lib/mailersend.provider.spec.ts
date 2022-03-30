@@ -1,4 +1,3 @@
-import { MailerSendInterface } from './../../../mailersend/build/main/lib/mailersend.interface.d';
 import { MailersendEmailProvider } from './mailersend.provider';
 import MailerSend from 'mailersend';
 

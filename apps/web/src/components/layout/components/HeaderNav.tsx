@@ -19,7 +19,7 @@ const menuItem = [
   {
     title: 'Invite Members',
     icon: <Mail />,
-    path: '/settings/organization',
+    path: '/team',
   },
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
@@ -69,7 +69,7 @@ export function HeaderNav({}: Props) {
       })}>
       <Container
         fluid
-        padding={30}
+        p={30}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
         <img
           src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}

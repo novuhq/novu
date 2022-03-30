@@ -4,7 +4,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { Dropzone, DropzoneStatus } from '@mantine/dropzone';
 import { useMutation } from 'react-query';
 import axios from 'axios';
-import { message } from 'antd';
 import { useMantineTheme, Group, InputWrapper, LoadingOverlay } from '@mantine/core';
 import { Button, colors, Select, ColorInput } from '../../../design-system';
 import { getSignedUrl } from '../../../api/storage';
@@ -12,6 +11,7 @@ import { updateBrandingSettings } from '../../../api/application';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Upload } from '../../../design-system/icons';
 import Card from '../../../components/layout/components/Card';
+import { showNotification } from '@mantine/notifications';
 
 const mimeTypes = {
   'image/jpeg': 'jpeg',
@@ -106,7 +106,10 @@ export function BrandingForm({
 
     await updateBrandingSettingsMutation(brandData);
 
-    message.success('Branding info updated successfully');
+    showNotification({
+      message: 'Branding info updated successfully',
+      color: 'green',
+    });
   }
 
   const { setValue, handleSubmit, control } = useForm({

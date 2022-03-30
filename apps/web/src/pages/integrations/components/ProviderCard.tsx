@@ -110,7 +110,7 @@ const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }
       !active &&
       `
       ${Logo} {
-        opacity: 0.3;
+        opacity: 0.5;
       }
     `
     );
