@@ -74,7 +74,7 @@ export function HeaderNav({}: Props) {
         <img
           src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
           alt="logo"
-          style={{ maxWidth: 150 }}
+          style={{ maxWidth: 150, maxHeight: 25 }}
         />
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()} title="Toggle color scheme">
