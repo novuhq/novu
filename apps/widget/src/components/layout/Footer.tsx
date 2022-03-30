@@ -12,7 +12,7 @@ export function Footer() {
       <a
         rel="noreferrer"
         target="_blank"
-        href="https://notifire.co?utm_source=in-app-widget"
+        href="https://novu.co?utm_source=in-app-widget"
         style={{ display: 'flex', color: textColor }}>
         <svg width="107" height="16" viewBox="0 0 1049 300" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
