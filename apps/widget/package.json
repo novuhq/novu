@@ -17,6 +17,7 @@
     "antd": "^4.10.0",
     "axios": "^0.21.1",
     "babel-plugin-import": "^1.13.3",
+    "chroma-js": "^2.4.2",
     "eslint-plugin-cypress": "^2.12.1",
     "iframe-resizer": "^4.3.1",
     "jwt-decode": "^3.1.2",

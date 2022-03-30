@@ -1,13 +1,14 @@
-import styled from 'styled-components';
-import { BellOutlined, SettingOutlined } from '@ant-design/icons';
+import styled, { useTheme } from 'styled-components';
 import { useQuery } from 'react-query';
-import { Badge } from 'antd';
+import { Badge } from '@mantine/core';
 import { useContext, useEffect, useState } from 'react';
 import { getUnseenCount } from '../../api/notifications';
 import { AuthContext, IAuthContext } from '../../store/auth.context';
 import { useSocket } from '../../hooks/use-socket.hook';
+import { colors } from '../../shared/config/colors';
 
 export function Header() {
+  const theme: any = useTheme();
   const [unseenCount, setUnseenCount] = useState<number>();
   const { socket } = useSocket();
   const { token } = useContext<IAuthContext>(AuthContext);
@@ -41,28 +42,53 @@ export function Header() {
 
   return (
     <HeaderWrapper>
-      <Badge data-test-id="unseen-count-label" count={unseenCount} size="small" offset={[0, -1]}>
-        <BellOutlined style={{ fontSize: 18 }} />
-      </Badge>
-      <Text>Notifications </Text>
-      <span />
-      {/* <SettingOutlined /> */}
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
+        <Text>Notifications </Text>
+        {unseenCount && unseenCount > 0 ? (
+          <Badge
+            data-test-id="unseen-count-label"
+            sx={{
+              padding: 0,
+              width: 20,
+              height: 20,
+              pointerEvents: 'none',
+              border: 'none',
+              background: theme.colors.main,
+              fontFamily: theme.fontFamily,
+              lineHeight: '14px',
+              color: colors.white,
+              fontWeight: 'bold',
+              fontSize: '12px',
+            }}
+            radius={100}>
+            {unseenCount}
+          </Badge>
+        ) : null}
+      </div>
+      <MarkReadAction style={{ display: 'none' }}>Mark all as read</MarkReadAction>
     </HeaderWrapper>
   );
 }
 
 const HeaderWrapper = styled.div`
-  border-bottom: 1px solid #edf2f9;
-  padding: 10px 15px;
+  padding: 5px 15px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 55px;
 `;
 
 const Text = styled.div`
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+`;
+const MarkReadAction = styled.div`
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
-  line-height: 22px;
-  text-align: center;
+  line-height: 17px;
+  color: ${colors.B60};
 `;

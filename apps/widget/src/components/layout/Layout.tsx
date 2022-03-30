@@ -1,8 +1,10 @@
 import styled from 'styled-components';
-import { Spin } from 'antd';
+import { Loader } from '../Loader';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { useInitialization } from '../../hooks/use-initialization.hook';
+import { shadows } from '../../shared/config/shadows';
+import { colors } from '../../shared/config/colors';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useInitialization();
@@ -10,22 +12,7 @@ export function Layout({ children }: { children: JSX.Element }) {
   return (
     <LayoutWrapper>
       <Header />
-      <ContentWrapper>
-        {initialized ? (
-          children
-        ) : (
-          <div
-            style={{
-              textAlign: 'center',
-              minHeight: 300,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <Spin />
-          </div>
-        )}
-      </ContentWrapper>
+      <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
       <Footer />
     </LayoutWrapper>
   );
@@ -38,5 +25,9 @@ const ContentWrapper = styled.div`
 
 const LayoutWrapper = styled.div`
   background: white;
+  padding: 15px 0px;
   height: auto;
+  border-radius: 7px;
+  box-shadow: ${({ theme }) => (theme.colorScheme === 'light' ? shadows.medium : shadows.dark)};
+  background: ${({ theme }) => (theme.colorScheme === 'light' ? colors.white : colors.B15)};
 `;
