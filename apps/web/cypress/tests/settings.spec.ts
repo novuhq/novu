@@ -12,7 +12,7 @@ describe('Settings Screen', function () {
 
     cy.getByTestId('embed-code-snippet').then(function (a) {
       expect(a).to.contain(this.session.application.identifier);
-      expect(a).to.contain('notifire.init');
+      expect(a).to.contain('novu.init');
     });
   });
 

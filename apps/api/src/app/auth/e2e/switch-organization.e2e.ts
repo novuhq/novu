@@ -1,8 +1,8 @@
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
-import { OrganizationEntity } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
-import { IJwtPayload, MemberRoleEnum } from '@notifire/shared';
+import { OrganizationEntity } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 
 describe('Switch Organization - /auth/organizations/:id/switch (POST)', async () => {
   let session: UserSession;

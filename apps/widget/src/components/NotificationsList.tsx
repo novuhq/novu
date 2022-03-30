@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { IMessage } from '@notifire/shared';
+import { IMessage } from '@novu/shared';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { NotificationListItem } from './NotificationListItem';
 import { Loader } from './Loader';

@@ -1,6 +1,6 @@
-import { OrganizationRepository, MemberRepository } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
-import { MemberStatusEnum } from '@notifire/shared';
+import { OrganizationRepository, MemberRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 describe('Get invite object - /invites/:inviteToken (GET)', async () => {

@@ -1,6 +1,6 @@
 import { useMutation } from 'react-query';
 import { useContext, useEffect, useState } from 'react';
-import { ISubscriberJwt } from '@notifire/shared';
+import { ISubscriberJwt } from '@novu/shared';
 import { initializeSession } from '../api/initialize-session';
 import { applyToken } from '../store/use-auth-controller';
 import { AuthContext, IAuthContext } from '../store/auth.context';

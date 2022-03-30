@@ -8,8 +8,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload } from '@notifire/shared';
-import { ApplicationEntity } from '@notifire/dal';
+import { IJwtPayload } from '@novu/shared';
+import { ApplicationEntity } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateApplication } from './usecases/create-application/create-application.usecase';

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { UserSession, NotificationTemplateService } from '@notifire/testing';
-import { ChannelTypeEnum, INotificationTemplate, IUpdateNotificationTemplate } from '@notifire/shared';
+import { UserSession, NotificationTemplateService } from '@novu/testing';
+import { ChannelTypeEnum, INotificationTemplate, IUpdateNotificationTemplate } from '@novu/shared';
 
 describe('Update notification template by id - /notification-templates/:templateId (PUT)', async () => {
   let session: UserSession;

@@ -1,4 +1,4 @@
-import { UserEntity } from '@notifire/dal';
+import { UserEntity } from '@novu/dal';
 
 export class SeedDataBodyDto {}
 

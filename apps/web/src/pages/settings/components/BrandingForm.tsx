@@ -1,4 +1,4 @@
-import { IApplication } from '@notifire/shared';
+import { IApplication } from '@novu/shared';
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Dropzone, DropzoneStatus } from '@mantine/dropzone';

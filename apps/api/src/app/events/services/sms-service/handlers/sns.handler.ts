@@ -1,7 +1,7 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { SNSSmsProvider } from '@notifire/sns';
-import { SNSConfig } from '@notifire/sns/build/main/lib/sns.config';
-import { ICredentials } from '@notifire/dal';
+import { ChannelTypeEnum } from '@novu/shared';
+import { SNSSmsProvider } from '@novu/sns';
+import { SNSConfig } from '@novu/sns/build/main/lib/sns.config';
+import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
 
 export class SnsHandler extends BaseSmsHandler {

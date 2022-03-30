@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { ChannelTypeEnum } from '@notifire/shared';
-import { MessageRepository } from '@notifire/dal';
+import { ChannelTypeEnum } from '@novu/shared';
+import { MessageRepository } from '@novu/dal';
 
 export class NotificationsService {
   private messageRepository = new MessageRepository();

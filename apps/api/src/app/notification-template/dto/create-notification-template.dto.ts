@@ -16,7 +16,7 @@ import {
   ChannelTypeEnum,
   ICreateNotificationTemplateDto,
   IEmailBlock,
-} from '@notifire/shared';
+} from '@novu/shared';
 
 export class ChannelCTADto {
   @IsEnum(ChannelCTATypeEnum)

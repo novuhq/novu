@@ -1,5 +1,5 @@
 import { useMutation } from 'react-query';
-import { INotificationTemplate } from '@notifire/shared';
+import { INotificationTemplate } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { showNotification } from '@mantine/notifications';
 

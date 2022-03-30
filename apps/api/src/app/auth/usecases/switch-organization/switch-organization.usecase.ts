@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository } from '@notifire/dal';
+import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
 import { SwitchOrganizationCommand } from './switch-organization.command';
 import { AuthService } from '../../services/auth.service';
 

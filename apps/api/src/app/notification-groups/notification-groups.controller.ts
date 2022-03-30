@@ -1,5 +1,5 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@notifire/shared';
+import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';

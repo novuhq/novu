@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
-import { MemberRoleEnum } from '@notifire/shared';
+import { MemberRoleEnum } from '@novu/shared';
 
 export class InviteMemberDto {
   @IsEmail()

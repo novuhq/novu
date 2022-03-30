@@ -5,7 +5,7 @@ import {
   NotificationEntity,
   NotificationRepository,
   SubscriberRepository,
-} from '@notifire/dal';
+} from '@novu/dal';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 
 @Injectable()

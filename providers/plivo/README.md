@@ -1,11 +1,11 @@
 # Nodejs Plivo Provider
 
-A plivo sms provider library for [@notifire/core](https://github.com/notifirehq/notifire).
+A plivo sms provider library for [@novu/node](https://github.com/notifirehq/novu).
 
 ## Usage
 
 ```javascript
-import { PlivoSmsProvider } from '@notifire/plivo';
+import { PlivoSmsProvider } from '@novu/plivo';
 
 const provider = new PlivoSmsProvider({
   accountSid: process.env.PLIVO_ACCOUNT_ID,

@@ -1,5 +1,5 @@
 import { IsArray, IsEnum, IsMongoId, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
 

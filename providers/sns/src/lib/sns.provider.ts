@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
-} from '@notifire/core';
+} from '@novu/node';
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 
 import { SNSConfig } from './sns.config';

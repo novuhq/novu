@@ -3,12 +3,12 @@ import {
   IEmailProvider,
   ISmsProvider,
   ITemplate,
-} from '@notifire/core';
+} from '@novu/node';
 
-export interface NotifireOptions {
+export interface NovuOptions {
   //
   // This interface describes the options you want to pass to
-  // NotifireModule.
+  // NovuModule.
   //
   providers: (IEmailProvider | ISmsProvider | IDirectProvider)[];
   templates: ITemplate[];

@@ -1,6 +1,6 @@
-import { IEmailOptions, ISendMessageSuccessResponse } from '@notifire/core';
-import { ICredentials } from '@notifire/dal';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { IEmailOptions, ISendMessageSuccessResponse } from '@novu/node';
+import { ICredentials } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export interface IMailHandler {
   canHandle(providerId: string, channelType: ChannelTypeEnum);

@@ -1,7 +1,7 @@
 import { Form } from 'antd';
 import { useMutation, useQuery } from 'react-query';
 import styled from 'styled-components';
-import { MemberStatusEnum } from '@notifire/shared';
+import { MemberStatusEnum } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import * as capitalize from 'lodash.capitalize';
 import { Avatar, Container, Divider, Group, Text } from '@mantine/core';

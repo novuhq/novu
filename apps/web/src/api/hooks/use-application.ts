@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import { IApplication } from '@notifire/shared';
+import { IApplication } from '@novu/shared';
 import { getCurrentApplication } from '../application';
 
 export function useApplication() {

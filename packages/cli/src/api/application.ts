@@ -1,4 +1,4 @@
-import { IApplication } from '@notifire/shared';
+import { IApplication } from '@novu/shared';
 import {
   API_APPLICATION_KEYS,
   API_APPLICATION_ME_URL,

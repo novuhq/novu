@@ -1,6 +1,6 @@
-import { UserSession } from '@notifire/testing';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { IntegrationRepository } from '@notifire/dal';
+import { IntegrationRepository } from '@novu/dal';
 
 describe('Delete Integration - /integration/:integrationId (DELETE)', function () {
   let session: UserSession;

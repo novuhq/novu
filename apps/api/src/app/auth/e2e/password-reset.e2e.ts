@@ -1,5 +1,5 @@
-import { UserRepository } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { UserRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as moment from 'moment';
 

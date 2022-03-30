@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository, OrganizationEntity } from '@notifire/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository, OrganizationEntity } from '@novu/dal';
 import { GetNotificationTemplatesCommand } from './get-notification-templates.command';
 
 @Injectable()

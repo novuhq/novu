@@ -46,7 +46,7 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
-          projects: "@notifire/widget"
+          projects: "@novu/widget"
 
       # Runs a single command using the runners shell
       - name: Build

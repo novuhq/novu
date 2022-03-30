@@ -1,6 +1,6 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
-import { SendinblueEmailProvider } from '@notifire/sendinblue';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
+import { SendinblueEmailProvider } from '@novu/sendinblue';
 import { BaseHandler } from './base.handler';
 
 export class SendinblueHandler extends BaseHandler {

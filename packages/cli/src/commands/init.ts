@@ -1,7 +1,7 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
-import { IApplication, ICreateNotificationTemplateDto } from '@notifire/shared';
+import { IApplication, ICreateNotificationTemplateDto } from '@novu/shared';
 import { prompt } from '../client';
 import {
   environmentQuestions,

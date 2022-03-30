@@ -1,6 +1,6 @@
-import { MailgunEmailProvider } from '@notifire/mailgun';
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
+import { MailgunEmailProvider } from '@novu/mailgun';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
 import { BaseHandler } from './base.handler';
 
 export class MailgunHandler extends BaseHandler {

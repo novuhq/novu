@@ -9,8 +9,8 @@ import {
   SubscriberEntity,
   SubscriberRepository,
   MemberRepository,
-} from '@notifire/dal';
-import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum } from '@notifire/shared';
+} from '@novu/dal';
+import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum } from '@novu/shared';
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
@@ -114,7 +114,7 @@ export class AuthService {
       },
       {
         expiresIn: '15 day',
-        issuer: 'notifire_api',
+        issuer: 'novu_api',
         audience: 'widget_user',
       }
     );
@@ -140,7 +140,7 @@ export class AuthService {
       },
       {
         expiresIn: '1 day',
-        issuer: 'notifire_api',
+        issuer: 'novu_api',
         audience: 'api_token',
       }
     );
@@ -202,7 +202,7 @@ export class AuthService {
       },
       {
         expiresIn: '30 days',
-        issuer: 'notifire_api',
+        issuer: 'novu_api',
       }
     );
   }

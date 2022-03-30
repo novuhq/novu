@@ -1,4 +1,4 @@
-import { IEmailBlock } from '@notifire/shared';
+import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, MenuItem as DropdownItem, RadioGroup, Radio, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';

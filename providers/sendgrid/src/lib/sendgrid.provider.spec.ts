@@ -6,7 +6,7 @@ const mockConfig = {
   from: 'test@tet.com',
 };
 
-const mockNotifireMessage = {
+const mockNovuMessage = {
   to: 'test@test2.com',
   subject: 'test subject',
   html: '<div> Mail Content </div>',
@@ -23,14 +23,14 @@ test('should trigger sendgrid correctly', async () => {
     return {} as any;
   });
 
-  await provider.sendMessage(mockNotifireMessage);
+  await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    to: mockNotifireMessage.to,
-    subject: mockNotifireMessage.subject,
-    html: mockNotifireMessage.html,
-    from: mockNotifireMessage.from,
+    to: mockNovuMessage.to,
+    subject: mockNovuMessage.subject,
+    html: mockNovuMessage.html,
+    from: mockNovuMessage.from,
     substitutions: {},
     attachments: [
       {

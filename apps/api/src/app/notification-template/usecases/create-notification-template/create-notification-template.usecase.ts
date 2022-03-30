@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateRepository } from '@notifire/dal';
-import { INotificationTrigger, TriggerTypeEnum } from '@notifire/shared';
+import { NotificationTemplateRepository } from '@novu/dal';
+import { INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 import { CreateNotificationTemplateCommand } from './create-notification-template.command';

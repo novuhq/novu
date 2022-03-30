@@ -1,4 +1,4 @@
-import { MemberRoleEnum, MemberStatusEnum } from '@notifire/shared';
+import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 describe('Invites module', function () {
   beforeEach(function () {

@@ -1,5 +1,5 @@
-import { ApplicationRepository } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { ApplicationRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Create Application - /applications (POST)', async () => {

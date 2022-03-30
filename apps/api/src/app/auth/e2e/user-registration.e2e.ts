@@ -1,8 +1,8 @@
-import { ApplicationRepository, OrganizationRepository } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { ApplicationRepository, OrganizationRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
-import { IJwtPayload, MemberRoleEnum } from '@notifire/shared';
+import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 
 describe('User registration - /auth/register (POST)', async () => {
   let session: UserSession;

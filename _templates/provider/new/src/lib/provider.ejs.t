@@ -10,7 +10,7 @@ import {
   ISendMessageSuccessResponse,
   I<%= PascalType %>Options,
   I<%= PascalType %>Provider,
-} from '@notifire/core';
+} from '@novu/node';
 
 export class <%= PascalName %><%= PascalType %>Provider implements I<%= PascalType %>Provider {
   channelType = ChannelTypeEnum.<%= UpperType %> as ChannelTypeEnum.<%= UpperType %>;

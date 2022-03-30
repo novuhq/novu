@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IApiKey, ApplicationRepository } from '@notifire/dal';
+import { IApiKey, ApplicationRepository } from '@novu/dal';
 import { GetApiKeysCommand } from './get-api-keys.command';
 
 @Injectable()

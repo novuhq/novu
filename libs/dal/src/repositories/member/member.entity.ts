@@ -1,4 +1,4 @@
-import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@notifire/shared';
+import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { UserEntity } from '../user';
 
 export class MemberEntity {

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IMessage } from '@notifire/shared';
+import { ChannelTypeEnum, IMessage } from '@novu/shared';
 import { FilterQuery, PopulateOptions } from 'mongoose';
 import { BaseRepository } from '../base-repository';
 import { MessageEntity } from './message.entity';

@@ -7,8 +7,8 @@ name: Deploy PROD WEB
 on:
   push:
     tags:
-      - '**@notifire/web**'
-      - '**@notifire/shared**'
+      - '**@novu/web**'
+      - '**@novu/shared**'
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -56,7 +56,7 @@ jobs:
         env:
           REACT_APP_API_URL: https://api.novu.co
           REACT_APP_WIDGET_SDK_PATH: https://sdk.novu.co/sdk.umd.min.js
-          REACT_APP_NOTIFIRE_APP_ID: ${{ secrets.NOTIFIRE_APP_ID }}
+          REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: prod
         working-directory: apps/web
@@ -82,7 +82,7 @@ jobs:
         id: build-image
         env:
           REGISTERY_OWNER: notifirehq
-          DOCKER_NAME: notifire/web
+          DOCKER_NAME: novu/web
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
