@@ -4,6 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { Dropzone, DropzoneStatus } from '@mantine/dropzone';
 import { useMutation } from 'react-query';
 import axios from 'axios';
+import { showNotification } from '@mantine/notifications';
 import { useMantineTheme, Group, InputWrapper, LoadingOverlay } from '@mantine/core';
 import { Button, colors, Select, ColorInput } from '../../../design-system';
 import { getSignedUrl } from '../../../api/storage';
@@ -11,7 +12,6 @@ import { updateBrandingSettings } from '../../../api/application';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Upload } from '../../../design-system/icons';
 import Card from '../../../components/layout/components/Card';
-import { showNotification } from '@mantine/notifications';
 
 const mimeTypes = {
   'image/jpeg': 'jpeg',
@@ -47,12 +47,6 @@ export function BrandingForm({
       }
       if (application.branding?.color) {
         setValue('color', application?.branding?.color);
-      }
-      if (application.branding?.fontColor) {
-        setValue('fontColor', application?.branding?.fontColor);
-      }
-      if (application.branding?.contentBackground) {
-        setValue('contentBackground', application?.branding?.contentBackground);
       }
       if (application.branding?.fontFamily) {
         setValue('fontFamily', application?.branding?.fontFamily);
@@ -95,12 +89,10 @@ export function BrandingForm({
     setImageLoading(false);
   }
 
-  async function saveBrandsForm({ color, fontColor, contentBackground, fontFamily }) {
+  async function saveBrandsForm({ color, fontFamily }) {
     const brandData = {
       color,
       logo: image,
-      fontColor,
-      contentBackground,
       fontFamily,
     };
 
@@ -115,8 +107,6 @@ export function BrandingForm({
   const { setValue, handleSubmit, control } = useForm({
     defaultValues: {
       fontFamily: application?.branding?.fontFamily || 'Roboto',
-      fontColor: application?.branding?.fontColor || '#333737',
-      contentBackground: application?.branding?.contentBackground || '#efefef',
       color: application?.branding?.color || '#f47373',
       image: image || '',
       file: file || '',
@@ -129,48 +119,6 @@ export function BrandingForm({
       <LoadingOverlay visible={isLoading} />
       <form onSubmit={handleSubmit(saveBrandsForm)}>
         <Group grow spacing={50} mt={0} align="flex-start">
-          <Card title="In-App Widget Customizations">
-            <Controller
-              render={({ field }) => (
-                <Select
-                  label="Font Family"
-                  description="Will be used as the main font-family in the in-app widget"
-                  placeholder="Select a font family"
-                  data={['Roboto', 'Montserrat', 'Open Sans', 'Lato', 'Nunito', 'Oswald', 'Raleway']}
-                  data-test-id="font-family-selector"
-                  {...field}
-                />
-              )}
-              control={control}
-              name="fontFamily"
-            />
-            <Controller
-              render={({ field }) => (
-                <ColorInput
-                  mt={25}
-                  label="Font Color"
-                  description="Will be used for text in the in-app widget"
-                  data-test-id="font-color-picker"
-                  {...field}
-                />
-              )}
-              control={control}
-              name="fontColor"
-            />
-            <Controller
-              render={({ field }) => (
-                <ColorInput
-                  mt={25}
-                  label="Content Background Color"
-                  description="Will be used as the background color for the inner content of the in-app widget"
-                  data-test-id="content-background-picker"
-                  {...field}
-                />
-              )}
-              control={control}
-              name="contentBackground"
-            />
-          </Card>
           <Card title="Brand Setting">
             <Controller
               render={({ field }) => (
@@ -213,6 +161,22 @@ export function BrandingForm({
               )}
               control={control}
               name="color"
+            />
+          </Card>
+          <Card title="In-App Widget Customizations">
+            <Controller
+              render={({ field }) => (
+                <Select
+                  label="Font Family"
+                  description="Will be used as the main font-family in the in-app widget"
+                  placeholder="Select a font family"
+                  data={['Roboto', 'Montserrat', 'Open Sans', 'Lato', 'Nunito', 'Oswald', 'Raleway']}
+                  data-test-id="font-family-selector"
+                  {...field}
+                />
+              )}
+              control={control}
+              name="fontFamily"
             />
           </Card>
         </Group>
