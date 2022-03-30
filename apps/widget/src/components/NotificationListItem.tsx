@@ -1,5 +1,5 @@
 import styled, { css } from 'styled-components';
-import { IMessage } from '@notifire/shared';
+import { IMessage } from '@novu/shared';
 import moment from 'moment';
 import { lighten } from 'polished';
 

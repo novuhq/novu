@@ -81,7 +81,7 @@ jobs:
         id: build-image
         env:
           REGISTERY_OWNER: notifirehq
-          DOCKER_NAME: notifire/ws
+          DOCKER_NAME: novu/ws
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}

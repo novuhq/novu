@@ -1,5 +1,5 @@
-import { IntegrationRepository } from '@notifire/dal';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export class IntegrationService {
   private integrationRepository = new IntegrationRepository();

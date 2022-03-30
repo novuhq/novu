@@ -1,6 +1,6 @@
 import { Body, Controller, NotFoundException, Post } from '@nestjs/common';
-import { DalService } from '@notifire/dal';
-import { IUserEntity } from '@notifire/shared';
+import { DalService } from '@novu/dal';
+import { IUserEntity } from '@novu/shared';
 import { ISeedDataResponseDto, SeedDataBodyDto } from './dtos/seed-data.dto';
 import { SeedData } from './usecases/seed-data/seed-data.usecase';
 import { SeedDataCommand } from './usecases/seed-data/seed-data.command';

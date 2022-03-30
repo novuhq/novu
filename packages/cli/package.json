@@ -26,7 +26,7 @@
     "@types/inquirer": "^8.2.0",
     "nodemon": "^2.0.15",
     "typescript": "^4.5.5",
-    "@notifire/shared": "^0.3.5"
+    "@novu/shared": "^0.3.5"
   },
   "dependencies": {
     "axios": "^0.25.0",

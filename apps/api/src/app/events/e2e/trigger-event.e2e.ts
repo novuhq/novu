@@ -5,11 +5,11 @@ import {
   NotificationTemplateEntity,
   SubscriberEntity,
   SubscriberRepository,
-} from '@notifire/dal';
-import { UserSession, SubscribersService } from '@notifire/testing';
+} from '@novu/dal';
+import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, IEmailBlock } from '@notifire/shared';
+import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import axios from 'axios';
 import { stub } from 'sinon';
 import { SmsService } from '../../shared/services/sms/sms.service';
@@ -91,7 +91,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       $user_id: 'new-test-if-id',
       $first_name: 'Test Name',
       $last_name: 'Last of name',
-      $email: 'test@email.notifire',
+      $email: 'test@email.novu',
       firstName: 'Testing of User Name',
       urlVar: '/test/url/path',
     };

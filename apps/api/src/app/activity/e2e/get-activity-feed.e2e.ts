@@ -1,7 +1,7 @@
-import { NotificationTemplateEntity } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { NotificationTemplateEntity } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum, IMessage } from '@notifire/shared';
+import { ChannelTypeEnum, IMessage } from '@novu/shared';
 
 describe('Get activity feed - /activity (GET)', async () => {
   let session: UserSession;

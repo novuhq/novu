@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Contributing
 
-How to help us help you :) Notifire is an Open Source project, we would love for you to contribute,
+How to help us help you :) Novu is an Open Source project, we would love for you to contribute,
 you can see here our guidelines, making sure our code base is [readable](https://en.wikipedia.org/wiki/Code_Reading).
 
 - [Questions](#question)
@@ -41,7 +41,7 @@ Please consider:
 
 - **Small Feature** can be submitted directly to [submitted as a Pull Request](#submit-pr) after the implementation.
 - **Major Feature** proposal needs to be discussed first, so open a discussion in our [GitHub Discussions][github-discussions].
-  This will also allow us to prevent duplication of work, coordinate our efforts better, and ultimately build it so that it is successfully merged into the Notifire.
+  This will also allow us to prevent duplication of work, coordinate our efforts better, and ultimately build it so that it is successfully merged into the Novu.
 
 
 ## <a name="provider"></a> Missing a Provider?
@@ -63,15 +63,15 @@ Please provide us with a minimal reproduction scenario using a repository or [Gi
 
 Without said minimal reproduction, we won't be able to investigate all issues, and the issue might not be resolved.
 
-You can open a new issues with this [new issue form](https://github.com/notifirehq/notifire/issues/new).
+You can open a new issues with this [new issue form](https://github.com/notifirehq/novu/issues/new).
 
 ### <a name="submit-pr"></a> Submitting a Pull Request (PR)
 
 Before you submit your Pull Request (PR) consider the following guidelines:
 
-1. Look in our [GitHub](https://github.com/notifirehq/notifire/pulls) for an open or closed PR
+1. Look in our [GitHub](https://github.com/notifirehq/novu/pulls) for an open or closed PR
    that relates to your submission. You don't want to duplicate effort.
-1. Fork notifirehq/notifire repo, or any of our providers.
+1. Fork notifirehq/novu repo, or any of our providers.
 1. Make your changes in a new git branch:
 
    ```shell
@@ -98,7 +98,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
    git push origin my-new-branch
    ```
 
-1. In GitHub, send a pull request to `notifire:main`.
+1. In GitHub, send a pull request to `novu:main`.
 
 - If we suggest changes then:
 
@@ -167,7 +167,7 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 
 Documentation is inspired by [nestjs](https://github.com/nestjs/nest) and [supabase](https://github.com/supabase/supabase) 
 
-[github-issues]: https://github.com/notifirehq/notifire/issues
-[github-discussions]: https://github.com/notifirehq/notifire/discussions
+[github-issues]: https://github.com/notifirehq/novu/issues
+[github-discussions]: https://github.com/notifirehq/novu/discussions
 [js-style-guide]: https://eslint.org/docs/rules/
-[providers-list]: https://www.notifire.co/providers-list
+[providers-list]: https://www.novu.co/providers-list

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ISubscriberJwt } from '@notifire/shared';
+import { ISubscriberJwt } from '@novu/shared';
 
 export interface IAuthContext {
   setToken: (token: string) => void;

@@ -7,7 +7,7 @@ name: Deploy PROD SDK
 on:
   push:
     tags:
-      - '**@notifire/sdk@**'
+      - '**@novu/sdk@**'
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -64,7 +64,7 @@ jobs:
         id: build-image
         env:
           REGISTERY_OWNER: notifirehq
-          DOCKER_NAME: notifire/sdk
+          DOCKER_NAME: novu/sdk
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}

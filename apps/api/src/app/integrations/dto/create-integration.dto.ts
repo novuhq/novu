@@ -1,5 +1,5 @@
 import { IsDefined } from 'class-validator';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto, ICredentialsDto } from '@notifire/shared';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto, ICredentialsDto } from '@novu/shared';
 
 export class CreateIntegrationBodyDto implements ICreateIntegrationBodyDto {
   @IsDefined()

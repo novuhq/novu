@@ -4,7 +4,7 @@ import {
   BuilderGroupValues,
   ChannelCTATypeEnum,
   ChannelTypeEnum,
-} from '@notifire/shared';
+} from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 

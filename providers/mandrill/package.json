@@ -1,12 +1,12 @@
 {
-  "name": "@notifire/mandrill",
+  "name": "@novu/mandrill",
   "version": "0.3.6-alpha.0",
-  "description": "A mandrill wrapper for notifire",
+  "description": "A mandrill wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/notifire/",
+  "repository": "https://github.com/novu/",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@mailchimp/mailchimp_transactional": "^1.0.46",
-    "@notifire/core": "^0.3.6-alpha.0"
+    "@novu/node": "^0.3.6-alpha.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, INotificationTemplate } from '@notifire/shared';
+import { ChannelTypeEnum, INotificationTemplate } from '@novu/shared';
 
 describe('Notifications Creator', function () {
   beforeEach(function () {
@@ -221,9 +221,7 @@ describe('Notifications Creator', function () {
     cy.visit('/templates/create');
     addChannel('email');
 
-    cy.getByTestId('email-editor')
-      .getByTestId('brand-logo')
-      .should('have.attr', 'src', 'https://notifire.co/img/logo.png');
+    cy.getByTestId('email-editor').getByTestId('brand-logo').should('have.attr', 'src', 'https://novu.co/img/logo.png');
   });
 
   it('should support RTL text content', function () {

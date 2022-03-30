@@ -61,7 +61,7 @@ module.exports = {
     'no-restricted-imports': [
       'error',
       {
-        patterns: ['@notifire/shared/*', '@notifire/dal/*', '!import2/good'],
+        patterns: ['@novu/shared/*', '@novu/dal/*', '!import2/good'],
       },
     ],
     'padding-line-between-statements': [

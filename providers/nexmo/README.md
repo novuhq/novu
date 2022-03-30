@@ -1,11 +1,11 @@
-# Notifire Nexmo Provider
+# Novu Nexmo Provider
 
-A Nexmo SMS provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A Nexmo SMS provider library for [@novu/node](https://github.com/notifirehq/novu)
 
 ## Usage
 
 ```javascript
-import { NexmoSmsProvider } from '@notifire/nexmo';
+import { NexmoSmsProvider } from '@novu/nexmo';
 
 const provider = new NexmoSmsProvider({
   apiKey: process.env.VONAGE_API_KEY,

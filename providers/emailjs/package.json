@@ -1,12 +1,12 @@
 {
-  "name": "@notifire/emailjs",
+  "name": "@novu/emailjs",
   "version": "0.3.6-alpha.0",
-  "description": "An emailjs provider for notifire",
+  "description": "An emailjs provider for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/notifirehq/notifire",
+  "repository": "https://github.com/notifirehq/novu",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -44,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.3.6-alpha.0",
+    "@novu/node": "^0.3.6-alpha.0",
     "emailjs": "^3.6.0"
   },
   "devDependencies": {

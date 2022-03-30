@@ -1,4 +1,4 @@
-import { IEmailBlock } from '@notifire/shared';
+import { IEmailBlock } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { TextInput as MantineInput, Popover, Button as MantineButton } from '@mantine/core';
 import { colors, shadows } from '../../../design-system';

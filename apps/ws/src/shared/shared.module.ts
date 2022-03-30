@@ -9,7 +9,7 @@ import {
   NotificationRepository,
   MessageRepository,
   MemberRepository,
-} from '@notifire/dal';
+} from '@novu/dal';
 import { JwtModule } from '@nestjs/jwt';
 import { QueueService } from './queue';
 

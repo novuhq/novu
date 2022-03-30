@@ -1,11 +1,11 @@
 # Nodejs Mailgun Provider
 
-A mailgun email provider library for [@notifire/core](https://github.com/notifirehq/notifire).
+A mailgun email provider library for [@novu/node](https://github.com/notifirehq/novu).
 
 ## Usage
 
 ```javascript
-import { MailgunEmailProvider } from '@notifire/mailgun';
+import { MailgunEmailProvider } from '@novu/mailgun';
 
 const provider = new MailgunEmailProvider({
   apiKey: process.env.MAILGUN_API_KEY,

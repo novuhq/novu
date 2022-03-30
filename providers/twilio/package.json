@@ -1,7 +1,7 @@
 {
-  "name": "@notifire/twilio",
+  "name": "@novu/twilio",
   "version": "0.3.6-alpha.0",
-  "description": "A twilio wrapper for notifire",
+  "description": "A twilio wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -43,7 +43,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@notifire/core": "^0.3.6-alpha.0",
+    "@novu/node": "^0.3.6-alpha.0",
     "twilio": "^3.67.2"
   },
   "devDependencies": {

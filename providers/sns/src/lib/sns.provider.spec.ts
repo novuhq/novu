@@ -15,16 +15,16 @@ test('should trigger sns library correctly', async () => {
   };
   const provider = new SNSSmsProvider(mockConfig);
 
-  const mockNotifireMessage = {
+  const mockNovuMessage = {
     to: '0123456789',
     content: 'hello',
   };
-  const response = await provider.sendMessage(mockNotifireMessage);
+  const response = await provider.sendMessage(mockNovuMessage);
 
   const publishInput = {
     input: {
-      PhoneNumber: mockNotifireMessage.to,
-      Message: mockNotifireMessage.content,
+      PhoneNumber: mockNovuMessage.to,
+      Message: mockNovuMessage.content,
     },
   };
 

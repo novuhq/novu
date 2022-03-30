@@ -1,6 +1,6 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
-import { Sms77SmsProvider } from '@notifire/sms77';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
+import { Sms77SmsProvider } from '@novu/sms77';
 import { BaseSmsHandler } from './base.handler';
 
 export class Sms77Handler extends BaseSmsHandler {

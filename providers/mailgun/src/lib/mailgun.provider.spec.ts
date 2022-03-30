@@ -9,7 +9,7 @@ const mockConfig = {
   from: 'test@test.com',
 };
 
-const mockNotifireMessage = {
+const mockNovuMessage = {
   to: 'test@test2.com',
   subject: 'test subject',
   html: '<div> Mail Content </div>',
@@ -38,7 +38,7 @@ test('should trigger mailgun correctly', async () => {
     id: '<20111114174239.25659.5817@samples.mailgun.org>',
   });
 
-  await provider.sendMessage(mockNotifireMessage);
+  await provider.sendMessage(mockNovuMessage);
 
   api.done();
 });

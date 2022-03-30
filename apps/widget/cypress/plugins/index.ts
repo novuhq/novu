@@ -9,8 +9,8 @@
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
 
-import { DalService } from '@notifire/dal';
-import { UserSession, NotificationTemplateService, NotificationsService } from '@notifire/testing';
+import { DalService } from '@novu/dal';
+import { UserSession, NotificationTemplateService, NotificationsService } from '@novu/testing';
 
 /**
  * @type {Cypress.PluginConfig}
@@ -41,13 +41,13 @@ module.exports = (on, config) => {
     },
     async clearDatabase() {
       const dal = new DalService();
-      await dal.connect('mongodb://localhost:27017/notifire-test');
+      await dal.connect('mongodb://localhost:27017/novu-test');
       await dal.destroy();
       return true;
     },
     async seedDatabase() {
       const dal = new DalService();
-      await dal.connect('mongodb://localhost:27017/notifire-test');
+      await dal.connect('mongodb://localhost:27017/novu-test');
 
       const session = new UserSession('http://localhost:1336');
 
@@ -55,7 +55,7 @@ module.exports = (on, config) => {
     },
     async getSession(settings: { noApplication?: boolean } = {}) {
       const dal = new DalService();
-      await dal.connect('mongodb://localhost:27017/notifire-test');
+      await dal.connect('mongodb://localhost:27017/novu-test');
 
       const session = new UserSession('http://localhost:1336');
       await session.initialize({

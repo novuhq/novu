@@ -1,4 +1,4 @@
-import { LogCodeEnum, LogStatusEnum } from '@notifire/shared';
+import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 
 export class LogEntity {
   _id?: string;

@@ -1,5 +1,5 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { IJwtPayload } from '@notifire/shared';
+import { IJwtPayload } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
 import { UserSession } from '../shared/framework/user.decorator';

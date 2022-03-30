@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { IMessage } from '@notifire/shared';
+import { IMessage } from '@novu/shared';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { Spin } from 'antd';
 import { NotificationListItem } from './NotificationListItem';

@@ -1,5 +1,5 @@
-import { SubscriberRepository } from '@notifire/dal';
-import { UserSession, SubscribersService } from '@notifire/testing';
+import { SubscriberRepository } from '@novu/dal';
+import { UserSession, SubscribersService } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';

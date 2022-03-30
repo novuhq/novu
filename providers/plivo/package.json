@@ -1,7 +1,7 @@
 {
-  "name": "@notifire/plivo",
+  "name": "@novu/plivo",
   "version": "0.3.6-alpha.0",
-  "description": "A plivo wrapper for notifire",
+  "description": "A plivo wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -43,7 +43,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.3.6-alpha.0",
+    "@novu/node": "^0.3.6-alpha.0",
     "plivo": "^4.22.4"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
-import { BuilderFieldOperator, ChannelTypeEnum } from '@notifire/shared';
+import { BuilderFieldOperator, ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { MessageEntity, MessageFilter, NotificationMessagesEntity } from '@notifire/dal';
+import { MessageEntity, MessageFilter, NotificationMessagesEntity } from '@novu/dal';
 import { matchMessageWithFilters } from './message-filter.matcher';
 
 describe('Message filter matcher', function () {

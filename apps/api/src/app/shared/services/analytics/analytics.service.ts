@@ -1,7 +1,7 @@
 import * as MixpanelInstance from 'mixpanel';
 
 import { Mixpanel } from 'mixpanel';
-import { UserEntity } from '@notifire/dal';
+import { UserEntity } from '@novu/dal';
 
 export class AnalyticsService {
   private mixpanel: Mixpanel;

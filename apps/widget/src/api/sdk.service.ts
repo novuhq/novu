@@ -1,4 +1,4 @@
-import { IMessage } from '@notifire/shared';
+import { IMessage } from '@novu/shared';
 
 export function sendUrlChange(url: string) {
   if (!window.parentIFrame) return;

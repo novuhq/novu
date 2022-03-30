@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@notifire/dal';
+import { UserRepository } from '@novu/dal';
 import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 

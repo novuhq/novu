@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@notifire/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
 
 @Injectable()

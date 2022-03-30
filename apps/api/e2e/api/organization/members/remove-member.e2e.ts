@@ -1,7 +1,7 @@
-import { MemberEntity, OrganizationRepository, MemberRepository } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { MemberEntity, OrganizationRepository, MemberRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 
-import { MemberRoleEnum, MemberStatusEnum } from '@notifire/shared';
+import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 

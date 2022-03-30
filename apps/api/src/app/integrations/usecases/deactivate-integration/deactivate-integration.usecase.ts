@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationRepository } from '@notifire/dal';
+import { IntegrationRepository } from '@novu/dal';
 import { DeactivateSimilarChannelIntegrationsCommand } from './deactivate-integration.command';
 
 @Injectable()

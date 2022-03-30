@@ -49,7 +49,7 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
-          projects: "@notifire/web"
+          projects: "@novu/web"
 
       - name: Start Local Stack
         env:
@@ -73,7 +73,7 @@ jobs:
              echo "Trying again. Try #$counter"
              ((counter++))
           done
-          aws --endpoint-url=http://localhost:4566 s3 mb s3://notifire-test
+          aws --endpoint-url=http://localhost:4566 s3 mb s3://novu-test
 
       # Runs a single command using the runners shell
       - name: Build

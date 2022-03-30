@@ -1,12 +1,12 @@
 import { faker } from '@faker-js/faker';
-import { ChannelCTATypeEnum, ChannelTypeEnum } from '@notifire/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
 import {
   MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationMessagesEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-} from '@notifire/dal';
+} from '@novu/dal';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 
 export class NotificationTemplateService {

@@ -1,7 +1,7 @@
 {
-  "name": "@notifire/mailgun",
+  "name": "@novu/mailgun",
   "version": "0.3.6-alpha.0",
-  "description": "A mailgun wrapper for notifire",
+  "description": "A mailgun wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -43,7 +43,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@notifire/core": "^0.3.6-alpha.0",
+    "@novu/node": "^0.3.6-alpha.0",
     "form-data": "^4.0.0",
     "mailgun.js": "^3.5.8",
     "nock": "^13.1.3"

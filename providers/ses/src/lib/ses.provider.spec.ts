@@ -18,7 +18,7 @@ test('should trigger ses library correctly', async () => {
   };
   const provider = new SESEmailProvider(mockConfig);
 
-  const mockNotifireMessage = {
+  const mockNovuMessage = {
     to: 'test@test2.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
@@ -26,7 +26,7 @@ test('should trigger ses library correctly', async () => {
       { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
     ],
   };
-  const response = await provider.sendMessage(mockNotifireMessage);
+  const response = await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
   expect(response.id).toEqual(mockResponse.MessageId);

@@ -1,4 +1,4 @@
-name: Test @notifire/core
+name: Test @novu/node
 on:
   push:
     paths:

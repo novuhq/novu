@@ -5,7 +5,7 @@ const mockConfig = {
   from: 'test@test.com',
 };
 
-const mockNotifireMessage = {
+const mockNovuMessage = {
   to: 'test2@test.com',
   subject: 'test subject',
   html: '<div> Mail Content </div>',
@@ -24,15 +24,15 @@ test('should trigger postmark correctly', async () => {
       return {} as any;
     });
 
-  await provider.sendMessage(mockNotifireMessage);
+  await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     From: mockConfig.from,
-    To: mockNotifireMessage.to,
-    HtmlBody: mockNotifireMessage.html,
-    TextBody: mockNotifireMessage.html,
-    Subject: mockNotifireMessage.subject,
+    To: mockNovuMessage.to,
+    HtmlBody: mockNovuMessage.html,
+    TextBody: mockNovuMessage.html,
+    Subject: mockNovuMessage.subject,
     Attachments: [
       {
         Name: 'test.txt',

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
-import { IApplication, ISubscriberJwt } from '@notifire/shared';
+import { IApplication, ISubscriberJwt } from '@novu/shared';
 import * as WebFont from 'webfontloader';
 
 import { AuthContext } from './store/auth.context';

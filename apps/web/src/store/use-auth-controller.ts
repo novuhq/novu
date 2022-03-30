@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { IJwtPayload, IOrganizationEntity, IUserEntity } from '@notifire/shared';
+import { IJwtPayload, IOrganizationEntity, IUserEntity } from '@novu/shared';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';

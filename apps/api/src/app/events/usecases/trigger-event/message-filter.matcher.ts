@@ -1,5 +1,5 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { NotificationMessagesEntity } from '@notifire/dal';
+import { ChannelTypeEnum } from '@novu/shared';
+import { NotificationMessagesEntity } from '@novu/dal';
 
 export function matchMessageWithFilters(
   channel: ChannelTypeEnum,

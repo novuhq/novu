@@ -1,7 +1,7 @@
 import { useContext, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import jwtDecode from 'jwt-decode';
-import { IJwtPayload } from '@notifire/shared';
+import { IJwtPayload } from '@novu/shared';
 import { AuthContext } from '../../store/authContext';
 import { LoginForm } from '../../components/auth/LoginForm';
 import AuthLayout from '../../components/layout/components/AuthLayout';

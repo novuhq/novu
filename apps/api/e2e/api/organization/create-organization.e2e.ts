@@ -1,6 +1,6 @@
-import { MemberRepository, OrganizationRepository } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
-import { MemberRoleEnum } from '@notifire/shared';
+import { MemberRepository, OrganizationRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { MemberRoleEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 describe('Create Organization - /organizations (POST)', async () => {

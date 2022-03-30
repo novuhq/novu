@@ -1,7 +1,7 @@
-import { IntegrationRepository } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { IntegrationRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 
 describe('Update Integration - /integrations/:integrationId (PUT)', function () {
   let session: UserSession;

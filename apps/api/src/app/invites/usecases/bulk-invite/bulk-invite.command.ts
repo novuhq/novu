@@ -1,4 +1,4 @@
-import { MemberRoleEnum } from '@notifire/shared';
+import { MemberRoleEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { OrganizationCommand } from '../../../shared/commands/organization.command';
 

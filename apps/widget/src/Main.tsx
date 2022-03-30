@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from 'react-query';
-import { ChannelCTATypeEnum, IMessage } from '@notifire/shared';
+import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './components/NotificationsList';
 import { getNotificationsList, markMessageAsSeen } from './api/notifications';
