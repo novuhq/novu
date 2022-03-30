@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "0.3.1-alpha.9",
+  "version": "0.4.0-alpha.0",
   "description": "On-Boarding Cli",
   "main": "index.js",
   "scripts": {
@@ -22,15 +22,16 @@
     "novu": "./dist/index.js"
   },
   "devDependencies": {
+    "@novu/shared": "^0.4.0-alpha.0",
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
     "nodemon": "^2.0.15",
-    "typescript": "^4.5.5",
-    "@novu/shared": "^0.3.5"
+    "typescript": "^4.5.5"
   },
   "dependencies": {
     "axios": "^0.25.0",
     "chalk": "4.1.2",
+    "commander": "^9.0.0",
     "configstore": "^5.0.0",
     "get-port": "^5.1.1",
     "gradient-string": "^2.0.0",
@@ -38,7 +39,6 @@
     "jwt-decode": "^3.1.2",
     "open": "^8.4.0",
     "ora": "^5.4.1",
-    "ts-node": "^10.5.0",
-    "commander": "^9.0.0"
+    "ts-node": "^10.5.0"
   }
 }
