@@ -36,7 +36,7 @@ function fillWeekData(data: IActivityGraphStats[]) {
   // eslint-disable-next-line no-plusplus
   for (let i = data.length - 1; i < 6; i++) {
     const earliestDate = fullWeekData[i]._id;
-    const newDate = moment(earliestDate).subtract(1, 'days').format('YYYY-MM-DD');
+    const newDate = moment(earliestDate, 'YYYY-MM-DD').subtract(1, 'days').format('YYYY-MM-DD');
 
     fullWeekData.push({ _id: newDate, count: 0 });
   }

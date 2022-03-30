@@ -1,48 +1,49 @@
 import { useQuery } from 'react-query';
 import styled from '@emotion/styled';
-import { useMantineTheme } from '@mantine/core';
+import { Skeleton, useMantineTheme } from '@mantine/core';
 import { getActivityStats } from '../../../api/activity';
 import { formatNumber } from '../../../utils';
 import { colors } from '../../../design-system';
 
 export function ActivityStatistics() {
-  const { data: activityStats, isLoading: loadingActivityStats } = useQuery<{
+  const { data: activityStats } = useQuery<{
     yearlySent: number;
     monthlySent: number;
     weeklySent: number;
   }>('activityStats', getActivityStats);
   const isDark = useMantineTheme().colorScheme === 'dark';
+  const weekCount = typeof activityStats?.weeklySent == 'number' ? formatNumber(activityStats.weeklySent, 0) : null;
+  const monthCount = typeof activityStats?.monthlySent == 'number' ? formatNumber(activityStats.monthlySent, 0) : null;
+  const yearCount = typeof activityStats?.yearlySent == 'number' ? formatNumber(activityStats.yearlySent, 0) : null;
 
   return (
     <>
-      {!loadingActivityStats ? (
-        <ContentWrapper>
-          <StatisticsBox>
-            <StyledNumber isColored={false} data-test-id="activity-stats-weekly-sent">
-              {formatNumber(activityStats?.weeklySent ? activityStats?.weeklySent : 0, 0)}
-            </StyledNumber>
-            <StatsLabel isColored={false} isDark={isDark}>
-              This week
-            </StatsLabel>
-          </StatisticsBox>
-          <StatisticsBox>
-            <StyledNumber isColored>
-              {formatNumber(activityStats?.monthlySent ? activityStats?.monthlySent : 0, 0)}
-            </StyledNumber>
-            <StatsLabel isColored isDark={isDark}>
-              This month
-            </StatsLabel>
-          </StatisticsBox>
-          <StatisticsBox>
+      <ContentWrapper>
+        <StatisticsBox>
+          <StyledNumber isColored={false} data-test-id="activity-stats-weekly-sent">
             <StyledNumber isColored={false}>
-              {formatNumber(activityStats?.yearlySent ? activityStats?.yearlySent : 0, 0)}
+              {weekCount ? weekCount : <Skeleton height={30} width="40%" />}
             </StyledNumber>
-            <StatsLabel isColored={false} isDark={isDark}>
-              This year
-            </StatsLabel>
-          </StatisticsBox>
-        </ContentWrapper>
-      ) : null}
+          </StyledNumber>
+          <StatsLabel isColored={false} isDark={isDark}>
+            This week
+          </StatsLabel>
+        </StatisticsBox>
+        <StatisticsBox>
+          <StyledNumber isColored={false}>
+            {monthCount ? monthCount : <Skeleton height={30} width="50%" />}
+          </StyledNumber>
+          <StatsLabel isColored isDark={isDark}>
+            This month
+          </StatsLabel>
+        </StatisticsBox>
+        <StatisticsBox>
+          <StyledNumber isColored={false}>{yearCount ? yearCount : <Skeleton height={30} width="60%" />}</StyledNumber>
+          <StatsLabel isColored={false} isDark={isDark}>
+            This year
+          </StatsLabel>
+        </StatisticsBox>
+      </ContentWrapper>
     </>
   );
 }

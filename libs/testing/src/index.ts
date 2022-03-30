@@ -3,3 +3,4 @@ export * from './notification-template.service';
 export * from './subscribers.service';
 export * from './notifications.service';
 export * from './test-server.service';
+export * from './integraion.service';

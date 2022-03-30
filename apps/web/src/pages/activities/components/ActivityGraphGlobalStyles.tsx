@@ -2,10 +2,10 @@ import { css, Global } from '@emotion/react';
 import { colors } from '../../../design-system';
 
 export function ActivityGraphGlobalStyles({ isTriggerSent, isDark }: { isTriggerSent: boolean; isDark: boolean }) {
-  return <Global styles={ChartStyles(isTriggerSent, isDark)} />;
+  return <Global styles={chartStyles(isTriggerSent, isDark)} />;
 }
 
-function ChartStyles(isTriggerSent: boolean, isDark: boolean) {
+function chartStyles(isTriggerSent: boolean, isDark: boolean) {
   return css`
     #chart-bar-styles {
       height: 175px;
