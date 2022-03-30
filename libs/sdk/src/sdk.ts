@@ -24,6 +24,8 @@ class Notifire {
 
   private selector: string = '';
 
+  private options?: IOptions;
+
   private iframe: HTMLIFrameElement | undefined;
 
   private widgetVisible = false;
@@ -43,25 +45,27 @@ class Notifire {
 
   init = (
     clientId: string,
-    selector: string | { bellSelector: string; unseenBadgeSelector: string },
-    options: { userId: string; lastName: string; firstName: string; email: string }
+    selectorOrOptions: string | IOptions,
+    data: { userId: string; lastName: string; firstName: string; email: string }
   ) => {
     const _scope = this;
-    if (typeof selector === 'string') {
-      this.selector = selector;
+    if (typeof selectorOrOptions === 'string') {
+      this.selector = selectorOrOptions;
     } else {
-      this.selector = selector.bellSelector;
-      this.unseenBadgeSelector = selector.unseenBadgeSelector;
+      this.selector = selectorOrOptions.bellSelector;
+      this.unseenBadgeSelector = selectorOrOptions.unseenBadgeSelector;
+      this.options = selectorOrOptions;
     }
 
     this.clientId = clientId;
-    this.initializeIframe(clientId, options);
+    this.initializeIframe(clientId, data);
     this.mountIframe();
     const button = document.querySelector(this.selector) as HTMLButtonElement;
     if (button) {
       button.style.position = 'relative';
     }
 
+    const _this = this;
     function positionIframe() {
       const button = document.querySelector(_scope.selector);
       if (!button) {
@@ -77,14 +81,26 @@ class Notifire {
       const { top } = pos;
       const wrapper: any = document.querySelector('.wrapper-notifire-widget');
 
-      let leftPosition = left - 265;
-      if (leftPosition < 250) {
-        leftPosition = left + 265;
+      wrapper.style.position = 'absolute';
+      if (_this.options?.position?.left) {
+        wrapper.style.left = isNaN(_this.options?.position?.left as number)
+          ? _this.options?.position?.left
+          : `${_this.options?.position?.left}px`;
+      } else {
+        let leftPosition = left - 265;
+        if (leftPosition < 250) {
+          leftPosition = left + 265;
+        }
+        wrapper.style.left = `${leftPosition}px`;
       }
 
-      wrapper.style.position = 'absolute';
-      wrapper.style.left = `${leftPosition}px`;
-      wrapper.style.top = `${top + 50}px`;
+      if (_this.options?.position?.left) {
+        wrapper.style.top = isNaN(_this.options?.position?.top as number)
+          ? _this.options?.position?.top
+          : `${_this.options?.position?.top}px`;
+      } else {
+        wrapper.style.top = `${top + 50}px`;
+      }
     }
 
     function hideWidget() {
@@ -181,7 +197,7 @@ class Notifire {
                   if (!sel) {
                     if (message.count) {
                       let span = document.createElement('span') as HTMLElement;
-                      if (this.unseenBadgeSelector && document.querySelector(this.unseenBadgeSelector)) {
+                      if (this.options?.unseenBadgeSelector && document.querySelector(this.unseenBadgeSelector)) {
                         span = document.querySelector(this.unseenBadgeSelector) as HTMLElement;
                       }
 
@@ -193,8 +209,10 @@ class Notifire {
                       updateInnerTextCount(span, message.count);
 
                       if (parentSel) {
-                        (parentSel as any).style.position = 'relative';
-                        parentSel.appendChild(span);
+                        if (!this.options?.unseenBadgeSelector) {
+                          (parentSel as any).style.position = 'relative';
+                          parentSel.appendChild(span);
+                        }
                       }
                     }
                   } else if (!message.count) {
@@ -313,4 +331,13 @@ function updateInnerTextCount(element: HTMLElement, count: number) {
   if (count > 99) {
     (element as any).style.fontSize = '8px';
   }
+}
+
+interface IOptions {
+  bellSelector: string;
+  unseenBadgeSelector: string;
+  position?: {
+    top?: number | string;
+    left?: number | string;
+  };
 }
