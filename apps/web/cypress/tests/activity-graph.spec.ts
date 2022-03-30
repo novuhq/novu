@@ -6,11 +6,6 @@ describe('Activity page', function () {
       .then((session: any) => {
         cy.wait(500);
 
-        cy.task('createIntegration', {
-          organizationId: session.organization._id,
-          applicationId: session.application._id,
-        });
-
         return cy.task('createNotifications', {
           identifier: session.templates[0].triggers[0].identifier,
           token: session.token,
