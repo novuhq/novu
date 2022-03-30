@@ -1,8 +1,9 @@
+import React from 'react';
 import styled from 'styled-components';
 import { IMessage } from '@novu/shared';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { Spin } from 'antd';
 import { NotificationListItem } from './NotificationListItem';
+import { Loader } from './Loader';
 
 export function NotificationsList({
   notifications,
@@ -28,7 +29,7 @@ export function NotificationsList({
         next={onFetch}
         hasMore={hasNextPage}
         height={400}
-        loader={<Spin />}
+        loader={<Loader />}
         endMessage={false}>
         {notifications.map((page) => {
           return page.map((notification) => (
