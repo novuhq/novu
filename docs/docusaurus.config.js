@@ -11,7 +11,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
-    favicon: 'img/favicon.ico',
+    favicon: 'img/favicon-gradient.png',
     organizationName: 'novuhq', // Usually your GitHub org/user name.
     projectName: 'novu', // Usually your repo name.
 
@@ -39,10 +39,12 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           respectPrefersColorScheme: true,
         },
         navbar: {
-          title: 'Novu',
           logo: {
             alt: 'Novu Logo',
-            src: 'img/logo.svg',
+            src: 'img/logo-formerly-light-bg.svg',
+            srcDark: 'img/logo-formerly-dark-bg.svg',
+            width: 100,
+            height: 100,
           },
           items: [
             {
