@@ -763,9 +763,9 @@
     "@nodelib/fs.scandir" "2.1.5"
     "fastq" "^1.6.0"
 
-"@notifire/core@^0.1.0":
+"@novu/node@^0.1.0":
   "integrity" "sha512-j0/72zcFihdSrEuZWxL9p6nauuXdMIEboEYYdIxSXRJ/q0tCi2DT9f3t9K0qgcbDdXZZ767+14+risR8kq61DQ=="
-  "resolved" "https://registry.npmjs.org/@notifire/core/-/core-0.1.0.tgz"
+  "resolved" "https://registry.npmjs.org/@novu/node/-/core-0.1.0.tgz"
   "version" "0.1.0"
   dependencies:
     "lodash.get" "^4.4.2"

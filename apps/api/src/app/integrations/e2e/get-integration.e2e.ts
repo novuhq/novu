@@ -1,7 +1,7 @@
-import { IntegrationEntity } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { IntegrationEntity } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 
 describe('Get Integrations - /integrations (GET)', function () {
   let session: UserSession;

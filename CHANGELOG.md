@@ -16,7 +16,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Reverts
 
-* Revert "refactor(@notifire/core): adds a strict mode typescript compilation" ([f45886f](https://github.com/notifirehq/notifire/commit/f45886f452a34b2f6137d5083282e4274dd3139e))
+* Revert "refactor(@novu/node): adds a strict mode typescript compilation" ([f45886f](https://github.com/notifirehq/notifire/commit/f45886f452a34b2f6137d5083282e4274dd3139e))
 
 
 

@@ -1,7 +1,7 @@
 import { useContext, useEffect } from 'react';
 import { AuthContext } from '../store/authContext';
 
-export function useNotifire() {
+export function useNovu() {
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
@@ -27,10 +27,10 @@ export function useNotifire() {
         elt.src = t;
         const before = o.getElementsByTagName(f)[0];
         before.parentNode?.insertBefore(elt, before);
-      })(window, document, process.env.REACT_APP_WIDGET_SDK_PATH, 'notifire', 'script');
+      })(window, document, process.env.REACT_APP_WIDGET_SDK_PATH, 'novu', 'script');
 
-      (window as any).notifire.init(
-        process.env.REACT_APP_NOTIFIRE_APP_ID,
+      (window as any).novu.init(
+        process.env.REACT_APP_NOVU_APP_ID,
         { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge-selector' },
         {
           $user_id: authContext.currentUser?._id,

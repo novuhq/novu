@@ -1,4 +1,4 @@
-import { IntegrationEntity } from '@notifire/dal';
+import { IntegrationEntity } from '@novu/dal';
 import { ISmsHandler } from './sms.handler.interface';
 
 export interface ISmsFactory {

@@ -1,6 +1,6 @@
-import { MemberRoleEnum, MemberStatusEnum } from '@notifire/shared';
+import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { faker } from '@faker-js/faker';
-import { MemberRepository, OrganizationRepository } from '@notifire/dal';
+import { MemberRepository, OrganizationRepository } from '@novu/dal';
 
 export class OrganizationService {
   private organizationRepository = new OrganizationRepository();

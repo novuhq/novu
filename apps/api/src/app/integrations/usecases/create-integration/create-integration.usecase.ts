@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository, DalException } from '@notifire/dal';
+import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IApplication, IEmailBlock } from '@notifire/shared';
+import { IApplication, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';

@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import { IntegrationEntity } from '@notifire/dal';
+import { IntegrationEntity } from '@novu/dal';
 import { getIntegrations } from '../../integration';
 
 export function useIntegrations() {

@@ -5,9 +5,9 @@ name: Deploy PROD API
 on:
   push:
     tags:
-      - '**@notifire/api@**'
-      - '**@notifire/core@**'
-      - '**@notifire/shared@**'
+      - '**@novu/api@**'
+      - '**@novu/node@**'
+      - '**@novu/shared@**'
   workflow_dispatch:
 
 jobs:
@@ -45,7 +45,7 @@ jobs:
         id: build-image
         env:
           REGISTERY_OWNER: notifirehq
-          DOCKER_NAME: notifire/api
+          DOCKER_NAME: novu/api
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}

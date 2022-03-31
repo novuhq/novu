@@ -2,7 +2,7 @@ import { ProviderStore } from './provider/provider.store';
 import { TemplateStore } from './template/template.store';
 import { ThemeStore } from './theme/theme.store';
 
-export interface INotifireConfig {
+export interface INovuConfig {
   channels?: {
     email?: {
       from?: { name: string; email: string };

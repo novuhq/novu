@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@notifire/dal';
+import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { GetIntegrationsCommand } from './get-integrations.command';
 
 @Injectable()

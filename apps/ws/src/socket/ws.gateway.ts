@@ -1,7 +1,7 @@
 import { OnGatewayConnection, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { ISubscriberJwt } from '@notifire/shared';
+import { ISubscriberJwt } from '@novu/shared';
 
 @WebSocketGateway()
 export class WSGateway implements OnGatewayConnection {

@@ -1,1 +1,1 @@
-export * from './notifire.service';
+export * from './novu.service';

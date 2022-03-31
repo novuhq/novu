@@ -1,4 +1,4 @@
-import { IOrganizationDTO } from '@notifire/shared';
+import { IOrganizationDTO } from '@novu/shared';
 import { API_CREATE_ORGANIZATION_URL, API_SWITCH_ORGANIZATION_FORMAT_URL } from '../constants';
 import { post } from './api.service';
 

@@ -7,19 +7,19 @@ sidebar_position: 5
 In a collaborative project, you may want to invite others to join the organization.
 
 ```typescript
-import { Notifire, ChannelTypeEnum } from "@notifire/core";
-import { SendgridEmailProvider } from "@notifire/sendgrid";
+import { Novu, ChannelTypeEnum } from "@novu/node";
+import { SendgridEmailProvider } from "@novu/sendgrid";
 
-const notifire = new Notifire();
+const novu = new Novu();
 
-await notifire.registerProvider(
+await novu.registerProvider(
   new SendgridEmailProvider({
     apiKey: process.env.SENDGRID_API_KEY,
   })
 );
 
 // Defined in a file or folder responsible for managing templates
-const inviteToOrganizationTemplate = await notifire.registerTemplate({
+const inviteToOrganizationTemplate = await novu.registerTemplate({
   id: "invite-to-organization",
   messages: [
     {
@@ -37,7 +37,7 @@ const inviteToOrganizationTemplate = await notifire.registerTemplate({
 });
 
 // Triggered in the relevant part of the business logic of your code
-await notifire.trigger("invite-to-organization", {
+await novu.trigger("invite-to-organization", {
   $user_id: "<USER IDENTIFIER>",
   $email: "<USER EMAIL>",
   firstName: "John",

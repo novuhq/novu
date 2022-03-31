@@ -9,7 +9,7 @@ Messages are part of the notification template configuration. Each message is ti
 Here's an example of a template with a single message:
 
 ```typescript
-const passwordResetTemplate = await notifire.registerTemplate({
+const passwordResetTemplate = await novu.registerTemplate({
   id: "password-reset",
   messages: [
     {
@@ -41,7 +41,7 @@ Based on the relevant channel a provider will be fetched from the `ProviderStore
 
 ## Template
 
-The template is the main content area of the notification. In the case of other channel-specific metadata like subject or buttons, they can be added to the appropriate field. Notifire uses [Handlebars](https://handlebarsjs.com/) to render the template behind the curtain. So you can specify any Handlebars expression in the template.
+The template is the main content area of the notification. In the case of other channel-specific metadata like subject or buttons, they can be added to the appropriate field. Novu uses [Handlebars](https://handlebarsjs.com/) to render the template behind the curtain. So you can specify any Handlebars expression in the template.
 
 ```handlebars
 {{#each tasks}}

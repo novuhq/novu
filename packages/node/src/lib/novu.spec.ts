@@ -1,8 +1,8 @@
-import { Notifire } from './notifire';
+import { Novu } from './novu';
 import { ChannelTypeEnum } from './template/template.interface';
 
 test('should register an SMS provider and return it', async () => {
-  const notifire = new Notifire();
+  const novu = new Novu();
 
   const template = {
     id: 'test',
@@ -11,15 +11,15 @@ test('should register an SMS provider and return it', async () => {
       Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
-  await notifire.registerProvider('sms', template);
-  const provider = await notifire.getProviderByInternalId('test');
+  await novu.registerProvider('sms', template);
+  const provider = await novu.getProviderByInternalId('test');
 
   expect(provider).toBeTruthy();
   expect(provider?.id).toEqual('test');
 });
 
 test('should call 2 hooks', async () => {
-  const notifire = new Notifire();
+  const novu = new Novu();
 
   const template = {
     id: 'test',
@@ -28,8 +28,8 @@ test('should call 2 hooks', async () => {
       Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
-  await notifire.registerProvider('sms', template);
-  await notifire.registerTemplate({
+  await novu.registerProvider('sms', template);
+  await novu.registerTemplate({
     id: 'test-template',
     messages: [
       {
@@ -39,9 +39,9 @@ test('should call 2 hooks', async () => {
     ],
   });
 
-  const spyOn = jest.spyOn(notifire, 'emit');
+  const spyOn = jest.spyOn(novu, 'emit');
 
-  await notifire.trigger('test-template', {
+  await novu.trigger('test-template', {
     $user_id: 'test-user',
     $email: 'test-user@sd.com',
     $phone: '+12222222',

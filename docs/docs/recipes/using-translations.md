@@ -10,8 +10,8 @@ In this recipe we will use [i18n-node](https://github.com/mashpie/i18n-node), bu
 to many other translation frameworks.
 
 ```typescript
-import { Notifire, ChannelTypeEnum } from "@notifire/core";
-import { SendgridEmailProvider } from "@notifire/sendgrid";
+import { Novu, ChannelTypeEnum } from "@novu/node";
+import { SendgridEmailProvider } from "@novu/sendgrid";
 // We will use i18n as a singleton and not as an instance in this recipe
 import i18n from 'i18n';
 
@@ -20,21 +20,21 @@ i18n.configure({
   directory: path.join(__dirname, '/locales')
 })
 
-const notifire = new Notifire();
+const novu = new Novu();
 
-await notifire.registerProvider(
+await novu.registerProvider(
   new SendgridEmailProvider({
     apiKey: process.env.SENDGRID_API_KEY,
   })
 );
 
 // Defined in a file or folder responsible for managing templates
-const inviteToOrganizationTemplate = await notifire.registerTemplate({
+const inviteToOrganizationTemplate = await novu.registerTemplate({
   id: "invite-to-organization",
   messages: [
     {
       // It is important to pass a function here as the template will be stored
-      // as soon as you pass it. Passing a function will allow Notifire to
+      // as soon as you pass it. Passing a function will allow Novu to
       // dynamic fetch the actual value of the translation key, specially
       // if you have changed the locale of i18n dynamicly after
       // registering the template
@@ -52,7 +52,7 @@ const inviteToOrganizationTemplate = await notifire.registerTemplate({
 });
 
 // Triggered in the relevant part of the business logic of your code
-await notifire.trigger("invite-to-organization", {
+await novu.trigger("invite-to-organization", {
   $user_id: "<USER IDENTIFIER>",
   $email: "<USER EMAIL>",
   firstName: "John",
@@ -83,7 +83,7 @@ You can store the templates in a separte folder with each template already trans
 Then just pass the variables to `trigger`:
 
 ```js
-await notifire.trigger("invite-to-organization", {
+await novu.trigger("invite-to-organization", {
   $user_id: "<USER IDENTIFIER>",
   $email: "<USER EMAIL>",
   organizationName: "Organization Cool",
@@ -117,17 +117,17 @@ You can store a single template of your email and pass the translations by key:
 ...
 ```
 
-Then you pass the template directly to Notifire:
+Then you pass the template directly to Novu:
 
 ```js
 const inviteOrganizationTemplate = loadFile('templates/inviteOrganization.html');
 
-const inviteToOrganizationTemplate = await notifire.registerTemplate({
+const inviteToOrganizationTemplate = await novu.registerTemplate({
   id: "invite-to-organization",
   messages: [
     {
       // It is important to pass a function here as the template will be stored
-      // as soon as you pass it. Passing a function will allow Notifire to
+      // as soon as you pass it. Passing a function will allow Novu to
       // dynamic fetch the actual value of the translation key, specially
       // if you have changed the locale of i18n dynamicly after
       // registering the template
@@ -143,7 +143,7 @@ and now when you trigger the email you can pass the variables:
 
 ```js
 // At this time `title` will be the translated string without any mustaches (`{{` or `}}`).
-// Notifire will still pass your template to handlebars and it will still process
+// Novu will still pass your template to handlebars and it will still process
 // any leftover mustaches
 const titleTranslated = i18n.__n('templates.emails.invite-to-organization.title', {
   organizationName: "Organization Cool",
@@ -151,7 +151,7 @@ const titleTranslated = i18n.__n('templates.emails.invite-to-organization.title'
 })
 
 // Triggered in the relevant part of the business logic of your code
-await notifire.trigger("invite-to-organization", {
+await novu.trigger("invite-to-organization", {
   $user_id: "<USER IDENTIFIER>",
   $email: "<USER EMAIL>",
   title: titleTranslated,

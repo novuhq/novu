@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
-} from '@notifire/core';
+} from '@novu/node';
 
 import { Twilio } from 'twilio';
 

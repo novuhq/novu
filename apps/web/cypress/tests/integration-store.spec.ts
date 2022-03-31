@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 
 describe('Integration store page', function () {
   beforeEach(function () {

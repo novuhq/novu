@@ -1,6 +1,6 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
-import { NodemailerProvider } from '@notifire/nodemailer';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
+import { NodemailerProvider } from '@novu/nodemailer';
 import { BaseHandler } from './base.handler';
 
 export class NodemailerHandler extends BaseHandler {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Prism } from '@mantine/prism';
-import { IApplication } from '@notifire/shared';
+import { IApplication } from '@novu/shared';
 import { colors, Text } from '../../../design-system';
 import Card from '../../../components/layout/components/Card';
 
@@ -10,9 +10,9 @@ export const InAppCenterCard = ({ application }: { application: IApplication | u
     n[i] = {}, m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
     var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
     var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
-  })(window, document, '${process.env.REACT_APP_WIDGET_SDK_PATH}', 'notifire', 'script');
+  })(window, document, '${process.env.REACT_APP_WIDGET_SDK_PATH}', 'novu', 'script');
 
-  notifire.init('${application?.identifier}', '#notification-bell', {
+  novu.init('${application?.identifier}', '#notification-bell', {
     $user_id: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",
     $email: "<REPLACE_WITH_USER_EMAIL>",
     $first_name: "<REPLACE_WITH_USER_NAME>",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { IOrganizationEntity, IUserEntity } from '@notifire/shared';
+import { IOrganizationEntity, IUserEntity } from '@novu/shared';
 
 export type UserContext = {
   token: string | null;

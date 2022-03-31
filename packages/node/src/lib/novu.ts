@@ -1,6 +1,6 @@
 import merge from 'lodash.merge';
 import { EventEmitter } from 'events';
-import { INotifireConfig } from './notifire.interface';
+import { INovuConfig } from './novu.interface';
 import {
   IEmailProvider,
   ISmsProvider,
@@ -13,19 +13,19 @@ import { TriggerEngine } from './trigger/trigger.engine';
 import { ThemeStore } from './theme/theme.store';
 import { ITheme } from './theme/theme.interface';
 
-export class Notifire extends EventEmitter {
+export class Novu extends EventEmitter {
   private readonly templateStore: TemplateStore;
 
   private readonly providerStore: ProviderStore;
 
   private readonly themeStore: ThemeStore;
 
-  private readonly config: INotifireConfig;
+  private readonly config: INovuConfig;
 
-  constructor(config?: INotifireConfig) {
+  constructor(config?: INovuConfig) {
     super();
 
-    const defaultConfig: Partial<INotifireConfig> = {
+    const defaultConfig: Partial<INovuConfig> = {
       variableProtection: true,
     };
 

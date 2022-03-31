@@ -1,5 +1,5 @@
 import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { ChannelTypeEnum, IEmailBlock } from '@notifire/shared';
+import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
 import { ChannelCTADto } from '../../../notification-template/dto/create-notification-template.dto';

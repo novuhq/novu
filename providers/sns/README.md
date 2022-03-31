@@ -1,11 +1,11 @@
-# Notifire Sns Provider
+# Novu Sns Provider
 
-A SNS SMS provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A SNS SMS provider library for [@novu/node](https://github.com/notifirehq/novu)
 
 ## Usage
 
 ```javascript
-import { SNSSmsProvider } from "@notifire/sns"
+import { SNSSmsProvider } from "@novu/sns"
 
 const provider = new SNSSmsProvider({
     region: "eu-west-1",

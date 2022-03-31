@@ -1,7 +1,7 @@
-import { UserSession } from '@notifire/testing';
+import { UserSession } from '@novu/testing';
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
-import { IJwtPayload } from '@notifire/shared';
+import { IJwtPayload } from '@novu/shared';
 
 describe('User login - /auth/login (POST)', async () => {
   let session: UserSession;

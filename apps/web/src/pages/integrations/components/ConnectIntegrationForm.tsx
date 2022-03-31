@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, ICredentialsDto } from '@notifire/shared';
+import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 import { useMutation } from 'react-query';
 import { showNotification } from '@mantine/notifications';
 import { Image, useMantineColorScheme } from '@mantine/core';

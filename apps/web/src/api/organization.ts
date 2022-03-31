@@ -1,4 +1,4 @@
-import { MemberRoleEnum } from '@notifire/shared';
+import { MemberRoleEnum } from '@novu/shared';
 import { api } from './api.client';
 
 export function getOrganizationMembers() {

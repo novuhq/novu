@@ -8,10 +8,10 @@ import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
 import { SHOW_WIDGET } from './shared/eventTypes';
 
-const WEASL_WRAPPER_ID = 'notifire-container';
-const IFRAME_ID = 'notifire-iframe-element';
+const WEASL_WRAPPER_ID = 'novu-container';
+const IFRAME_ID = 'novu-iframe-element';
 
-class Notifire {
+class Novu {
   public clientId: string | unknown;
 
   private debugMode: boolean;
@@ -79,7 +79,7 @@ class Notifire {
 
       const { left } = pos;
       const { top } = pos;
-      const wrapper: any = document.querySelector('.wrapper-notifire-widget');
+      const wrapper: any = document.querySelector('.wrapper-novu-widget');
 
       wrapper.style.position = 'absolute';
       if (_this.options?.position?.left) {
@@ -104,7 +104,7 @@ class Notifire {
     }
 
     function hideWidget() {
-      var elem = document.querySelector('.wrapper-notifire-widget') as HTMLBodyElement;
+      var elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
 
       if (elem) {
         elem.style.display = 'none';
@@ -120,7 +120,7 @@ class Notifire {
         this.widgetVisible = !this.widgetVisible;
         positionIframe();
 
-        var elem = document.querySelector('.wrapper-notifire-widget') as HTMLBodyElement;
+        var elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
 
         if (elem) {
           elem.style.display = 'inline-block';
@@ -142,7 +142,7 @@ class Notifire {
   // PRIVATE METHODS
   ensureMounted = () => {
     if (!document.getElementById(IFRAME_ID)) {
-      throw new UnmountedError('notifire.init needs to be called first');
+      throw new UnmountedError('novu.init needs to be called first');
     }
   };
 
@@ -170,11 +170,11 @@ class Notifire {
   };
 
   handleBootstrapDone = () => {
-    const notifireApi = (window as any).notifire;
-    notifireApi._c = (window as any).notifire._c;
+    const novuApi = (window as any).novu;
+    novuApi._c = (window as any).novu._c;
 
     this.runPriorCalls();
-    (window as any).notifire = notifireApi;
+    (window as any).novu = novuApi;
   };
 
   handleDomainNotAllowed = () => {
@@ -264,8 +264,7 @@ class Notifire {
 
   runPriorCalls = () => {
     const allowedCalls: string[] = [];
-    const priorCalls =
-      window.notifire && window.notifire._c && typeof window.notifire._c === 'object' ? window.notifire._c : [];
+    const priorCalls = window.novu && window.novu._c && typeof window.novu._c === 'object' ? window.novu._c : [];
     priorCalls.forEach((call: string[]) => {
       const method: any = call[0];
       const args = call[1];
@@ -275,7 +274,7 @@ class Notifire {
         (this[method as any] as any).apply(this, args);
       }
     });
-    this.onloadFunc.call(window.notifire, window.notifire);
+    this.onloadFunc.call(window.novu, window.novu);
   };
 
   mountIframe = () => {
@@ -284,7 +283,7 @@ class Notifire {
 
       const wrapper = document.createElement('div');
 
-      wrapper.className = 'wrapper-notifire-widget';
+      wrapper.className = 'wrapper-novu-widget';
       wrapper.style.display = 'none';
       wrapper.id = WEASL_WRAPPER_ID;
       (
@@ -298,31 +297,29 @@ class Notifire {
 
 export default ((window: any) => {
   const onloadFunc =
-    window.notifire && window.notifire.onload && typeof window.notifire.onload === 'function'
-      ? window.notifire.onload
-      : function () {};
+    window.novu && window.novu.onload && typeof window.novu.onload === 'function' ? window.novu.onload : function () {};
 
-  const initCall = window.notifire._c.find((call: string[]) => call[0] === 'init');
-  const notifireApi: any = () => {};
-  const notifire = new Notifire(onloadFunc);
+  const initCall = window.novu._c.find((call: string[]) => call[0] === 'init');
+  const novuApi: any = () => {};
+  const novu = new Novu(onloadFunc);
 
-  notifireApi.init = notifire.init;
-  notifireApi.on = notifire.on;
+  novuApi.init = novu.init;
+  novuApi.on = novu.on;
 
   if (initCall) {
     // eslint-disable-next-line prefer-spread
-    notifireApi[initCall[0]].apply(notifireApi, initCall[1]);
+    novuApi[initCall[0]].apply(novuApi, initCall[1]);
 
-    const onCall = window.notifire._c.find((call: string[]) => call[0] === 'on');
+    const onCall = window.novu._c.find((call: string[]) => call[0] === 'on');
     if (onCall) {
-      notifireApi[onCall[0]].apply(notifireApi, onCall[1]);
+      novuApi[onCall[0]].apply(novuApi, onCall[1]);
     }
   } else {
     // eslint-disable-next-line no-param-reassign
-    (window as any).notifire.init = notifire.init;
+    (window as any).novu.init = novu.init;
 
     // eslint-disable-next-line no-param-reassign
-    (window as any).notifire.on = notifire.on;
+    (window as any).novu.on = novu.on;
   }
 })(window);
 

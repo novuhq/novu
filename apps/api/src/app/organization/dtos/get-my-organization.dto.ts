@@ -1,3 +1,3 @@
-import { OrganizationEntity } from '@notifire/dal';
+import { OrganizationEntity } from '@novu/dal';
 
 export type IGetMyOrganizationDto = OrganizationEntity;

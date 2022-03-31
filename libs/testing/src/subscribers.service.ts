@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { SubscriberRepository } from '@notifire/dal';
+import { SubscriberRepository } from '@novu/dal';
 
 export class SubscribersService {
   private subscriberRepository = new SubscriberRepository();

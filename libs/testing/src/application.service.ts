@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { ApplicationRepository } from '@notifire/dal';
+import { ApplicationRepository } from '@novu/dal';
 
 export class ApplicationService {
   private applicationRepository = new ApplicationRepository();

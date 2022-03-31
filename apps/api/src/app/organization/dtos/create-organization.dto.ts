@@ -1,5 +1,5 @@
 import { IsOptional, IsString } from 'class-validator';
-import { ICreateOrganizationDto } from '@notifire/shared';
+import { ICreateOrganizationDto } from '@novu/shared';
 
 export class CreateOrganizationDto implements ICreateOrganizationDto {
   @IsString()

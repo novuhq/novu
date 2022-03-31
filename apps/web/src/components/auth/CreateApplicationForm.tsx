@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import decode from 'jwt-decode';
-import { IJwtPayload } from '@notifire/shared';
+import { IJwtPayload } from '@novu/shared';
 import { Button, Input } from '../../design-system';
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
@@ -67,7 +67,9 @@ export function CreateApplicationForm({}: Props) {
     return jwt && jwt[key];
   }
 
-  const onCreateApplication = async (data: { organizationName: string }) => {
+  const onCreateApplication = async (data: { organizationName?: string }) => {
+    if (!data?.organizationName) return;
+
     setLoading(true);
 
     if (!jwtHasKey('organizationId')) {
