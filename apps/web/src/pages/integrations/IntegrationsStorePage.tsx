@@ -51,7 +51,7 @@ export function IntegrationsStore() {
           credentials: integration?.credentials ? mappedCredentials : x.credentials,
           docReference: x.docReference,
           comingSoon: !!x.comingSoon,
-          active: integration?.active ? integration.active : false,
+          active: integration?.active ?? true,
           connected: !!integration,
         };
       });
