@@ -23,9 +23,9 @@ The ultimate service for managing multi-channel notifications with a single API.
     <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
     <br />
   <br/>
-    <a href="https://github.com/novu-co/novu/issues">Report Bug</a>
+    <a href="https://github.com/novuhq/novu/issues">Report Bug</a>
     ·
-    <a href="https://github.com/novu-co/novu/discussions">Request Feature</a>
+    <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
     ·
     <a href="https://blog.novu.co/">Read our blog</a>
   </p>
@@ -133,24 +133,24 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME>', {
 Novu provides a single API to manage providers across multiple channels with a single to use interface.
 
 #### 💌 Email
-- [x] [Sendgrid](https://github.com/novu-co/novu/tree/main/providers/sendgrid)
-- [x] [Mailgun](https://github.com/novu-co/novu/tree/main/providers/mailgun)
-- [x] [SES](https://github.com/novu-co/novu/tree/main/providers/ses)
-- [x] [Postmark](https://github.com/novu-co/novu/tree/main/providers/postmark)
-- [x] [NodeMailer](https://github.com/novu-co/novu/tree/main/providers/nodemailer)
-- [x] [Mailjet](https://github.com/novu-co/novu/tree/main/providers/mailjet)
-- [x] [Mandrill](https://github.com/novu-co/novu/tree/main/providers/mandrill)
-- [x] [SendinBlue](https://github.com/novu-co/novu/tree/main/providers/sendinblue)
-- [x] [EmailJS](https://github.com/novu-co/novu/tree/main/providers/emailjs)
+- [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
+- [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
+- [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
+- [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
+- [x] [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
+- [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
+- [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
+- [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
+- [x] [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
 - [ ] SparkPost
 
 #### 📞 SMS
-- [x] [Twilio](https://github.com/novu-co/novu/tree/main/providers/twilio)
-- [x] [Plivo](https://github.com/novu-co/novu/tree/main/providers/plivo)
-- [x] [SNS](https://github.com/novu-co/novu/tree/main/providers/sns)
-- [x] [Nexmo - Vonage](https://github.com/novu-co/novu/tree/main/providers/nexmo)
-- [x] [Sms77](https://github.com/novu-co/novu/tree/main/providers/sms77)
-- [x] [Telnyx](https://github.com/novu-co/novu/tree/main/providers/telnyx)
+- [x] [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
+- [x] [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
+- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+- [x] [Nexmo - Vonage](https://github.com/novuhq/novu/tree/main/providers/nexmo)
+- [x] [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
+- [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [ ] Bandwidth
 - [ ] RingCentral
 

@@ -1,6 +1,6 @@
 # Nodejs Mandrill Provider
 
-A mandrill email provider library for [@novu/node](https://github.com/novu-co/novu)
+A mandrill email provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 

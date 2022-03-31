@@ -1,5 +1,5 @@
 {
-  "name": "novu-co",
+  "name": "novuhq",
   "private": true,
   "scripts": {
     "bootstrap": "npm run setup:dev",

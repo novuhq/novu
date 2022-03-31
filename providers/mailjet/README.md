@@ -1,6 +1,6 @@
 # Novu Mailjet Provider
 
-A Mailjet email provider library for [@novu/node](https://github.com/novu-co/novu)
+A Mailjet email provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 
