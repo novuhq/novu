@@ -21,7 +21,8 @@ export interface IConfigCredentials {
 const mailConfigBase: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.From,
-    displayName: 'From sender',
+    displayName: 'From email address',
+    credentialDescription: 'Use the authenticated email address from the delivery provider you will send emails from.',
     type: 'string',
   },
   {
