@@ -119,7 +119,7 @@ export function ConnectIntegrationForm({
                   label={credential.displayName}
                   required
                   placeholder={credential.displayName}
-                  description={credential.credentialDescription ? credential.credentialDescription : ''}
+                  description={credential.description ?? ''}
                   data-test-id={credential.key}
                   error={errors[credential.key]?.message}
                   {...field}
