@@ -46,7 +46,7 @@ jobs:
       - name: Checkout cloud infra
         uses: actions/checkout@master
         with:
-          repository: notifirehq/cloud-infra
+          repository: novu-co/cloud-infra
           token: ${{ secrets.GH_PACKAGES }}
           path: cloud-infra
 

@@ -25,7 +25,7 @@ export const API_TRIGGER_URL = `${apiAddress}/v1/events/trigger`;
 export const CLIENT_LOGIN_URL = process.env.NOVU_API_ADDRESS || 'https://web.novu.co/auth/login';
 
 // github
-export const GITHUB_DOCKER_URL = 'https://github.com/notifirehq/novu/tree/main/docker';
+export const GITHUB_DOCKER_URL = 'https://github.com/novu-co/novu/tree/main/docker';
 
 let SERVER_PORT;
 

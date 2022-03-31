@@ -63,15 +63,15 @@ Please provide us with a minimal reproduction scenario using a repository or [Gi
 
 Without said minimal reproduction, we won't be able to investigate all issues, and the issue might not be resolved.
 
-You can open a new issues with this [new issue form](https://github.com/notifirehq/novu/issues/new).
+You can open a new issues with this [new issue form](https://github.com/novu-co/novu/issues/new).
 
 ### <a name="submit-pr"></a> Submitting a Pull Request (PR)
 
 Before you submit your Pull Request (PR) consider the following guidelines:
 
-1. Look in our [GitHub](https://github.com/notifirehq/novu/pulls) for an open or closed PR
+1. Look in our [GitHub](https://github.com/novu-co/novu/pulls) for an open or closed PR
    that relates to your submission. You don't want to duplicate effort.
-1. Fork notifirehq/novu repo, or any of our providers.
+1. Fork novu-co/novu repo, or any of our providers.
 1. Make your changes in a new git branch:
 
    ```shell
@@ -167,7 +167,7 @@ To ensure consistency throughout the source code, keep these rules in mind as yo
 
 Documentation is inspired by [nestjs](https://github.com/nestjs/nest) and [supabase](https://github.com/supabase/supabase) 
 
-[github-issues]: https://github.com/notifirehq/novu/issues
-[github-discussions]: https://github.com/notifirehq/novu/discussions
+[github-issues]: https://github.com/novu-co/novu/issues
+[github-discussions]: https://github.com/novu-co/novu/discussions
 [js-style-guide]: https://eslint.org/docs/rules/
 [providers-list]: https://www.novu.co/providers-list

@@ -1,6 +1,6 @@
 # Nodejs Nodemailer Provider
 
-A nodemailer email provider library for [@novu/node](https://github.com/notifirehq/novu)
+A nodemailer email provider library for [@novu/node](https://github.com/novu-co/novu)
 
 ## Usage
 

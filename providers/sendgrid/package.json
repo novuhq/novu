@@ -6,7 +6,7 @@
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/notifirehq/sendgrid",
+  "repository": "https://github.com/novu-co/sendgrid",
   "license": "MIT",
   "keywords": [],
   "scripts": {
