@@ -14,6 +14,7 @@ export interface IConfigCredentials {
   key: CredentialsKeyEnum;
   value?: string;
   displayName: string;
+  description?: string;
   type: string;
 }
 
@@ -49,7 +50,8 @@ export const mailJsConfig: IConfigCredentials[] = [
     displayName: 'Secret key',
     type: 'string',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const mailgunConfig: IConfigCredentials[] = [
   {
@@ -67,7 +69,8 @@ export const mailgunConfig: IConfigCredentials[] = [
     displayName: 'Domain',
     type: 'string',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const mailjetConfig: IConfigCredentials[] = [
   {
@@ -80,7 +83,8 @@ export const mailjetConfig: IConfigCredentials[] = [
     displayName: 'API Secret',
     type: 'string',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const nexmoConfig: IConfigCredentials[] = [
   {
@@ -93,7 +97,8 @@ export const nexmoConfig: IConfigCredentials[] = [
     displayName: 'API secret',
     type: 'string',
   },
-].concat(smsConfigBase);
+  ...smsConfigBase,
+];
 
 export const mandrillConfig: IConfigCredentials[] = [
   {
@@ -101,7 +106,8 @@ export const mandrillConfig: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'string',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const nodemailerConfig: IConfigCredentials[] = [
   {
@@ -129,7 +135,8 @@ export const nodemailerConfig: IConfigCredentials[] = [
     displayName: 'Secure',
     type: 'boolean',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const postmarkConfig: IConfigCredentials[] = [
   {
@@ -137,7 +144,8 @@ export const postmarkConfig: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'string',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const sendgridConfig: IConfigCredentials[] = [
   {
@@ -145,7 +153,8 @@ export const sendgridConfig: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'string',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const sendinblueConfig: IConfigCredentials[] = [
   {
@@ -153,7 +162,8 @@ export const sendinblueConfig: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'string',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const sesConfig: IConfigCredentials[] = [
   {
@@ -171,7 +181,8 @@ export const sesConfig: IConfigCredentials[] = [
     displayName: 'Region',
     type: 'string',
   },
-].concat(mailConfigBase);
+  ...mailConfigBase,
+];
 
 export const plivoConfig: IConfigCredentials[] = [
   {
@@ -184,7 +195,8 @@ export const plivoConfig: IConfigCredentials[] = [
     displayName: 'Auth token',
     type: 'string',
   },
-].concat(smsConfigBase);
+  ...smsConfigBase,
+];
 
 export const sms77Config: IConfigCredentials[] = [
   {
@@ -192,7 +204,8 @@ export const sms77Config: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'string',
   },
-].concat(smsConfigBase);
+  ...smsConfigBase,
+];
 
 export const snsConfig: IConfigCredentials[] = [
   {
@@ -218,7 +231,8 @@ export const telnyxConfig: IConfigCredentials[] = [
     displayName: 'Message profile ID',
     type: 'string',
   },
-].concat(smsConfigBase);
+  ...smsConfigBase,
+];
 
 export const twilioConfig: IConfigCredentials[] = [
   {
@@ -231,4 +245,5 @@ export const twilioConfig: IConfigCredentials[] = [
     displayName: 'Auth token',
     type: 'string',
   },
-].concat(smsConfigBase);
+  ...smsConfigBase,
+];
