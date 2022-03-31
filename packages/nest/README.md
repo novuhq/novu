@@ -1,6 +1,6 @@
 # NestJS Module Wrapper
 
-A NestJS module wrapper for [@novu/node](https://github.com/novu-co/novu)
+A NestJS module wrapper for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 

@@ -12,7 +12,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
     favicon: 'img/favicon-gradient.png',
-    organizationName: 'novu-co', // Usually your GitHub org/user name.
+    organizationName: 'novuhq', // Usually your GitHub org/user name.
     projectName: 'novu', // Usually your repo name.
 
     presets: [
@@ -23,7 +23,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           docs: {
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
-            editUrl: 'https://github.com/novu-co/novu/blob/main/docs/',
+            editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
           },
           theme: {
             customCss: require.resolve('./src/css/custom.css'),
@@ -59,7 +59,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               position: 'right',
             },
             {
-              href: 'https://github.com/novu-co/novu',
+              href: 'https://github.com/novuhq/novu',
               className: 'navbar-item-github',
               position: 'right',
             },
@@ -82,7 +82,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               items: [
                 {
                   label: 'GitHub',
-                  href: 'https://github.com/novu-co/novu',
+                  href: 'https://github.com/novuhq/novu',
                 },
                 {
                   label: 'Discord',
@@ -95,7 +95,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               items: [
                 {
                   label: 'GitHub',
-                  href: 'https://github.com/novu-co/novu',
+                  href: 'https://github.com/novuhq/novu',
                 },
               ],
             },

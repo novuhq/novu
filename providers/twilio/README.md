@@ -1,6 +1,6 @@
 # Nodejs Twilio Provider
 
-A twilio sms provider library for [@novu/node](https://github.com/novu-co/novu).
+A twilio sms provider library for [@novu/node](https://github.com/novuhq/novu).
 
 ## Usage
 

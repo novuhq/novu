@@ -6,7 +6,7 @@
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/novu-co/plivo",
+  "repository": "https://github.com/novuhq/plivo",
   "license": "MIT",
   "keywords": [],
   "scripts": {
