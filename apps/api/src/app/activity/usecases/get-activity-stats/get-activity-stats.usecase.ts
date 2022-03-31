@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository } from '@notifire/dal';
+import { MessageRepository } from '@novu/dal';
 import * as moment from 'moment';
 import { GetActivityStatsCommand } from './get-activity-stats.command';
 

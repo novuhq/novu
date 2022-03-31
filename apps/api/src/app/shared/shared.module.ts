@@ -13,7 +13,7 @@ import {
   MemberRepository,
   LogRepository,
   IntegrationRepository,
-} from '@notifire/dal';
+} from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { MailService } from './services/mail/mail.service';
 import { QueueService } from './services/queue';

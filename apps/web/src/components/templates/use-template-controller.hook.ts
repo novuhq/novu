@@ -7,7 +7,7 @@ import {
   IUpdateNotificationTemplate,
   INotificationTrigger,
   IEmailBlock,
-} from '@notifire/shared';
+} from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';

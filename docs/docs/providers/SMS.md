@@ -8,7 +8,7 @@ SMS are used to send sms messages as part of your notification strategy.
 
 ## Provider interface
 
-Each sms provider in Notifire must adhere to the following interface.
+Each sms provider in Novu must adhere to the following interface.
 
 ```typescript
 export interface IProvider {
@@ -41,7 +41,7 @@ You can see how to write all types of providers in our [article][create-provider
 After you have created your provider you must register it with the library:
 
 ```typescript
-await notifire.registerProvider(
+await novu.registerProvider(
   new TwilioSmsProvider({
     accountSid: process.env.TWILIO_ACCOUNT_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN,

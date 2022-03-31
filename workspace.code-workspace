@@ -1,39 +1,39 @@
 {
   "folders": [
     {
-      "name": "✨ notifire root",
+      "name": "✨ novu root",
       "path": "."
     },
     {
-      "name": "🚀 @notifire/api",
+      "name": "🚀 @novu/api",
       "path": "apps/api"
     },
     {
-      "name": "🚀 @notifire/web",
+      "name": "🚀 @novu/web",
       "path": "apps/web"
     },
     {
-      "name": "🚀 @notifire/ws",
+      "name": "🚀 @novu/ws",
       "path": "apps/ws"
     },
     {
-      "name": "🚀 @notifire/widget",
+      "name": "🚀 @novu/widget",
       "path": "apps/widget"
     },
     {
-      "name": "📦 @notifire/dal",
+      "name": "📦 @novu/dal",
       "path": "libs/dal"
     },
     {
-      "name": "📦 @notifire/sdk",
+      "name": "📦 @novu/sdk",
       "path": "libs/sdk"
     },
     {
-      "name": "📦 @notifire/cli",
+      "name": "📦 @novu/cli",
       "path": "packages/cli"
     },
     {
-      "name": "📦 @notifire/shared",
+      "name": "📦 @novu/shared",
       "path": "libs/shared"
     },
     {

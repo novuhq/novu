@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ICredentialsDto } from '@notifire/shared';
+import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 import { api } from './api.client';
 
 export function getIntegrations() {

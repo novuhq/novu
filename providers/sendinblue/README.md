@@ -1,6 +1,6 @@
-# Notifire Sendinblue Provider
+# Novu Sendinblue Provider
 
-A Sendinblue email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A Sendinblue email provider library for [@novu/node](https://github.com/novu-co/novu)
 
 ## Usage
 

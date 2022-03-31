@@ -1,1 +1,1 @@
-export * from './notifire.module';
+export * from './novu.module';

@@ -1,8 +1,8 @@
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
-import { ApplicationEntity } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
-import { IJwtPayload } from '@notifire/shared';
+import { ApplicationEntity } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { IJwtPayload } from '@novu/shared';
 
 describe('Switch Application - /auth/applications/:id/switch (POST)', async () => {
   let session: UserSession;

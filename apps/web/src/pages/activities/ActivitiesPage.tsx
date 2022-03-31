@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { useQuery } from 'react-query';
 import { ColumnWithStrictAccessor } from 'react-table';
 import moment from 'moment';
@@ -17,7 +17,7 @@ import { ActivityStatistics } from './components/ActivityStatistics';
 import { ActivityGraph } from './components/ActivityGraph';
 
 interface IFiltersForm {
-  channels: ChannelTypeEnum[];
+  channels?: ChannelTypeEnum[];
 }
 
 export function ActivitiesPage() {

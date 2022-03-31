@@ -3,7 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-} from '@notifire/core';
+} from '@novu/node';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import Client from 'mailgun.js/dist/lib/client';

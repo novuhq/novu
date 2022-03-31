@@ -2,8 +2,8 @@
  * @type {Cypress.PluginConfig}
  */
 const injectReactScriptsDevServer = require('@cypress/react/plugins/react-scripts');
-import { DalService, NotificationTemplateEntity, UserRepository } from '@notifire/dal';
-import { UserSession, SubscribersService, NotificationTemplateService, NotificationsService } from '@notifire/testing';
+import { DalService, NotificationTemplateEntity, UserRepository } from '@novu/dal';
+import { UserSession, SubscribersService, NotificationTemplateService, NotificationsService } from '@novu/testing';
 
 const userRepository = new UserRepository();
 module.exports = (on, config) => {
@@ -28,13 +28,13 @@ module.exports = (on, config) => {
     },
     async clearDatabase() {
       const dal = new DalService();
-      await dal.connect('mongodb://localhost:27017/notifire-test');
+      await dal.connect('mongodb://localhost:27017/novu-test');
       await dal.destroy();
       return true;
     },
     async seedDatabase() {
       const dal = new DalService();
-      await dal.connect('mongodb://localhost:27017/notifire-test');
+      await dal.connect('mongodb://localhost:27017/novu-test');
 
       new UserSession('http://localhost:1336');
 
@@ -42,7 +42,7 @@ module.exports = (on, config) => {
     },
     async passwordResetToken(id: string) {
       const dal = new DalService();
-      await dal.connect('mongodb://localhost:27017/notifire-test');
+      await dal.connect('mongodb://localhost:27017/novu-test');
       const user = await userRepository.findOne({
         _id: id,
       });
@@ -52,7 +52,7 @@ module.exports = (on, config) => {
       settings: { noApplication?: boolean; partialTemplate?: Partial<NotificationTemplateEntity> } = {}
     ) {
       const dal = new DalService();
-      await dal.connect('mongodb://localhost:27017/notifire-test');
+      await dal.connect('mongodb://localhost:27017/novu-test');
 
       const session = new UserSession('http://localhost:1336');
       await session.initialize({

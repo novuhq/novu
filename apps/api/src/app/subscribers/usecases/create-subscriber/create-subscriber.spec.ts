@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@notifire/testing';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { CreateSubscriber } from './create-subscriber.usecase';
 import { SharedModule } from '../../../shared/shared.module';

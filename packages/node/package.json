@@ -1,11 +1,11 @@
 {
-  "name": "@notifire/core",
-  "version": "0.3.6-alpha.0",
+  "name": "@novu/node",
+  "version": "0.4.0-alpha.2",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "repository": "https://github.com/notifirehq/notifire",
+  "repository": "https://github.com/novu-co/novu",
   "license": "MIT",
   "keywords": [],
   "private": false,
@@ -60,7 +60,7 @@
     "run-p": "0.0.0",
     "ts-jest": "^27.0.5",
     "typedoc": "^0.19.0",
-    "typescript": "^4.1.3"
+    "typescript": "4.1.3"
   },
   "files": [
     "build/main",
@@ -74,5 +74,5 @@
   "prettier": {
     "singleQuote": true
   },
-  "gitHead": "29e2f6749f25860471f563d70b7fbf7ee304d6d4"
+  "gitHead": "565e5dcbe446aadf9fe53d13100b8cb56c0b1128"
 }

@@ -1,4 +1,4 @@
-import { AuthProviderEnum } from '@notifire/shared';
+import { AuthProviderEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 
 export class CreateUserCommand {

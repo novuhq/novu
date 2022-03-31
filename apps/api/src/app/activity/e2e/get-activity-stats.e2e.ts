@@ -1,5 +1,5 @@
-import { MessageRepository, NotificationTemplateEntity } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { MessageRepository, NotificationTemplateEntity } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as moment from 'moment';
 

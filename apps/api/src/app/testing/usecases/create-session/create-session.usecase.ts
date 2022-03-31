@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserSession } from '@notifire/testing';
+import { UserSession } from '@novu/testing';
 import { CreateSessionCommand } from './create-session.command';
 
 @Injectable()

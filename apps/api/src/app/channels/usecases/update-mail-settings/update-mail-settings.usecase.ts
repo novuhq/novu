@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApplicationEntity, ApplicationRepository } from '@notifire/dal';
+import { ApplicationEntity, ApplicationRepository } from '@novu/dal';
 import { UpdateMailSettingsCommand } from './update-mail-settings.command';
 
 @Injectable()

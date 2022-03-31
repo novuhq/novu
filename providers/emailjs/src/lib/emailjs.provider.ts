@@ -3,7 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-} from '@notifire/core';
+} from '@novu/node';
 import { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { EmailJsConfig } from './emailjs.config';
 

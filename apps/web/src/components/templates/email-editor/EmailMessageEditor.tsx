@@ -1,4 +1,4 @@
-import { IEmailBlock } from '@notifire/shared';
+import { IEmailBlock } from '@novu/shared';
 import { useMantineTheme, Group, Container, Card } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import React, { useEffect, useState } from 'react';

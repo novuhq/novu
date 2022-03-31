@@ -31,5 +31,5 @@ We currently have a JavaScript library. You can [vote on or suggest a new client
 There is a similar library for python called [Notifiers](https://github.com/liiight/notifiers).
 While Notifiers is not exactly the same, it does solve a lot of the issues, mainly around provider coupling.
 
-[github-discussions]: https://github.com/notifirehq/notifire/discussions
-[providers-list]: https://www.notifire.co/providers-list
+[github-discussions]: https://github.com/novu-co/novu/discussions
+[providers-list]: https://www.novu.co/providers-list

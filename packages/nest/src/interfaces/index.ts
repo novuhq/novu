@@ -1,1 +1,1 @@
-export * from './notifire-options.interface';
+export * from './novu-options.interface';

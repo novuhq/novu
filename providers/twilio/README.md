@@ -1,11 +1,11 @@
 # Nodejs Twilio Provider
 
-A twilio sms provider library for [@notifire/core](https://github.com/notifirehq/notifire).
+A twilio sms provider library for [@novu/node](https://github.com/novu-co/novu).
 
 ## Usage
 
 ```javascript
-import { TwilioSmsProvider } from '@notifire/twilio';
+import { TwilioSmsProvider } from '@novu/twilio';
 
 const provider = new TwilioSmsProvider({
   accountSid: process.env.TWILIO_ACCOUNT_SID,

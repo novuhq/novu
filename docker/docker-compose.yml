@@ -19,7 +19,7 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
-    image : "ghcr.io/notifirehq/notifire/api:latest"
+    image : "ghcr.io/novu-co/novu/api:latest"
     depends_on:
       - mongodb
       - redis
@@ -44,7 +44,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   ws:
-    image: "ghcr.io/notifirehq/notifire/ws:latest"
+    image: "ghcr.io/novu-co/novu/ws:latest"
     depends_on:
       - mongodb
       - redis
@@ -61,7 +61,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   web:
-    image: "ghcr.io/notifirehq/notifire/web:latest"
+    image: "ghcr.io/novu-co/novu/web:latest"
     depends_on:
       - api
     container_name: web
@@ -73,7 +73,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   widget:
-    image: "ghcr.io/notifirehq/notifire/widget:latest"
+    image: "ghcr.io/novu-co/novu/widget:latest"
     depends_on:
       - api
       - web
@@ -88,7 +88,7 @@ services:
   sdk:
     depends_on:
       - widget
-    image: "ghcr.io/notifirehq/notifire/sdk:latest"
+    image: "ghcr.io/novu-co/novu/sdk:latest"
     container_name: sdk
     environment:
       WIDGET_URL: ${WIDGET_URL}

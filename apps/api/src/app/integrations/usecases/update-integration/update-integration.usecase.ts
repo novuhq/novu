@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@notifire/dal';
+import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 

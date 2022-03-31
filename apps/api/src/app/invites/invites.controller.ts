@@ -9,7 +9,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { IBulkInviteResponse, IGetInviteResponseDto, IJwtPayload, MemberRoleEnum } from '@notifire/shared';
+import { IBulkInviteResponse, IGetInviteResponseDto, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
 import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';

@@ -1,4 +1,4 @@
-import { IBulkInviteRequestDto } from '@notifire/shared';
+import { IBulkInviteRequestDto } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { ArrayNotEmpty, IsArray, IsDefined, IsEmail, IsNotEmpty, ValidateNested } from 'class-validator';
 

@@ -16,7 +16,7 @@ import {
   ChannelCTATypeEnum,
   ChannelTypeEnum,
   IEmailBlock,
-} from '@notifire/shared';
+} from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
 

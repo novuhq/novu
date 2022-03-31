@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { MessageTemplateEntity, MessageTemplateRepository } from '@notifire/dal';
+import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
 

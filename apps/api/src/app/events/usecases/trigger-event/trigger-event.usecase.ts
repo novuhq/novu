@@ -12,10 +12,10 @@ import {
   NotificationTemplateRepository,
   SubscriberEntity,
   SubscriberRepository,
-} from '@notifire/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@notifire/shared';
+} from '@novu/dal';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { IEmailOptions } from '@notifire/core';
+import { IEmailOptions } from '@novu/node';
 import { TriggerEventCommand } from './trigger-event.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -518,7 +518,7 @@ export class TriggerEvent {
       to: email,
       subject,
       html,
-      from: command.payload.$sender_email || integration.credentials.from || 'no-reply@notifire.co',
+      from: command.payload.$sender_email || integration.credentials.from || 'no-reply@novu.co',
     };
 
     if (email && integration) {

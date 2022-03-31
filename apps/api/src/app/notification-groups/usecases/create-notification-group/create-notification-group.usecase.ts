@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationGroupRepository, NotificationGroupEntity } from '@notifire/dal';
+import { NotificationGroupRepository, NotificationGroupEntity } from '@novu/dal';
 import { CreateNotificationGroupCommand } from './create-notification-group.command';
 
 @Injectable()

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { MessageEntity, SubscriberEntity } from '@notifire/dal';
+import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { SessionInitializeBodyDto } from './dtos/session-initialize.dto';
 import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
 import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';

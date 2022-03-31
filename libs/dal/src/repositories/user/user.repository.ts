@@ -1,4 +1,4 @@
-import { AuthProviderEnum } from '@notifire/shared';
+import { AuthProviderEnum } from '@novu/shared';
 import { BaseRepository } from '../base-repository';
 import { UserEntity } from './user.entity';
 import { User } from './user.schema';

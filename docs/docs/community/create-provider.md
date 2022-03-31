@@ -5,7 +5,7 @@ sidebar_position: 4
 # How to Create Provider?
 All of our providers need to implement one or more of our provider interfaces, based on provider feature, from Email, and SMS through Direct, In-app, and push.
 
-For a provider template you can copy one of our existing provider in the `providers` folder in the notifire project, make the relevant changes and create a PR against the monorepo.
+For a provider template you can copy one of our existing provider in the `providers` folder in the novu project, make the relevant changes and create a PR against the monorepo.
 
 ## Description
 
@@ -57,7 +57,7 @@ import {
   ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
-} from '@notifire/core';
+} from '@novu/node';
 
 export class ExampleProviderEmailProvider implements IEmailProvider {
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -97,7 +97,7 @@ test('should trigger exampleProvider library correctly', async () => {
 This is a code example of a basic email provider, with minimal fields required by our ``` IEmailProvider ``` interface.
 
  ```ts
-import { ChannelTypeEnum, IEmailProvider, IEmailOptions } from "@notifire/core";
+import { ChannelTypeEnum, IEmailProvider, IEmailOptions } from "@novu/node";
 
 import sendgridMail from "@sendgrid/mail";
 
@@ -130,7 +130,7 @@ export class SendgridEmailProvider implements IEmailProvider {
 This is a code example of a basic email provider, with minimal fields required by our ``` ISmsProvider ``` interface.
 
 ```typescript
-import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from "@notifire/core";
+import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from "@novu/node";
 
 import { Twilio } from "twilio";
 
@@ -160,4 +160,4 @@ export class TwilioSmsProvider implements ISmsProvider {
 }
 ```
 
-[github-template]: https://github.com/notifirehq/provider-template
+[github-template]: https://github.com/novu-co/provider-template

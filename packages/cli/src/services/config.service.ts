@@ -1,6 +1,6 @@
 import * as Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
-import { IJwtPayload } from '@notifire/shared';
+import { IJwtPayload } from '@novu/shared';
 
 export class ConfigService {
   private _config: Configstore;

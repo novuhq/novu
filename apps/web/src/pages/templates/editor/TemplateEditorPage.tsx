@@ -1,7 +1,7 @@
 import { FormProvider } from 'react-hook-form';
 import { Container, Grid, Group } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import PageContainer from '../../../components/layout/components/PageContainer';

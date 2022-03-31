@@ -1,16 +1,16 @@
 # NestJS Module Wrapper
 
-A NestJS module wrapper for [@notifire/core](https://github.com/notifirehq/notifire)
+A NestJS module wrapper for [@novu/node](https://github.com/novu-co/novu)
 
 ## Usage
 
 Initializing module with templates and providers:
 ```javascript
-    import { NotifireModule } from "@notifire/nest";
+    import { NovuModule } from "@novu/nest";
 
     @Module({
       imports: [
-        NotifireModule.forRoot({
+        NovuModule.forRoot({
           providers: [
             new SendgridEmailProvider({
               apiKey: process.env.SENDGRID_API_KEY,
@@ -38,18 +38,18 @@ Initializing module with templates and providers:
     })
 ```
 
-Using notifire's singleton service in other services and modules:
+Using novu's singleton service in other services and modules:
 
 ```javascript
 import { Injectable, Inject } from '@nestjs/common';
-import { NotifireService } from '@notifire/nest';
+import { NovuService } from '@novu/nest';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly notifire: NotifireService) {}
+  constructor(private readonly novu: NovuService) {}
 
   async triggerEvent() {
-    await this.notifire.trigger('password-reset', {
+    await this.novu.trigger('password-reset', {
       $email: 'reciever@mail.com',
       $user_id: 'id'
     });

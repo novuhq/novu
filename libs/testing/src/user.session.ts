@@ -4,7 +4,7 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   UserRepository,
@@ -12,7 +12,7 @@ import {
   OrganizationEntity,
   NotificationTemplateEntity,
   NotificationGroupEntity,
-} from '@notifire/dal';
+} from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
 
@@ -113,7 +113,7 @@ export class UserSession {
       .put('/v1/applications/branding')
       .send({
         color: '#2a9d8f',
-        logo: 'https://notifire.co/img/logo.png',
+        logo: 'https://novu.co/img/logo.png',
         fontColor: '#214e49',
         contentBackground: '#c2cbd2',
         fontFamily: 'Montserrat',

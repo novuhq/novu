@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@notifire/dal';
+import { UserRepository } from '@novu/dal';
 import { GetMyProfileCommand } from './get-my-profile.dto';
 
 @Injectable()

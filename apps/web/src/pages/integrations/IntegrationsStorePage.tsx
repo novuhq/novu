@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, providers, IConfigCredentials } from '@notifire/shared';
+import { ChannelTypeEnum, providers, IConfigCredentials } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
 import PageHeader from '../../components/layout/components/PageHeader';

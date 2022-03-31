@@ -735,9 +735,9 @@
   dependencies:
     "axios" "^0.21.1"
 
-"@notifire/core@^0.3.6-alpha.0":
+"@novu/node@^0.3.6-alpha.0":
   "integrity" "sha512-SRdrS8b6YiMrCh699q41KF2YT93oo4YZYEjWYz7Voao1Gex4e4nWXvQ/NnHSRLQmJgzNyvhUCWcJFP/l7p7/zA=="
-  "resolved" "https://registry.npmjs.org/@notifire/core/-/core-0.3.6-alpha.0.tgz"
+  "resolved" "https://registry.npmjs.org/@novu/node/-/core-0.3.6-alpha.0.tgz"
   "version" "0.3.6-alpha.0"
   dependencies:
     "handlebars" "^4.7.7"

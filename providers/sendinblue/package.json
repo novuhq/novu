@@ -1,12 +1,12 @@
 {
-  "name": "@notifire/sendinblue",
-  "version": "0.3.6-alpha.0",
-  "description": "A sendinblue wrapper for notifire",
+  "name": "@novu/sendinblue",
+  "version": "0.4.0-alpha.2",
+  "description": "A sendinblue wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/notifirehq/notifire",
+  "repository": "https://github.com/novu-co/novu",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -31,7 +31,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.3.6-alpha.0",
+    "@novu/node": "^0.4.0-alpha.2",
     "@sendinblue/client": "^3.0.1",
     "@types/request": "^2.48.7"
   },
@@ -81,5 +81,6 @@
     "exclude": [
       "**/*.spec.js"
     ]
-  }
+  },
+  "gitHead": "565e5dcbe446aadf9fe53d13100b8cb56c0b1128"
 }

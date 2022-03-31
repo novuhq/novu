@@ -5,7 +5,7 @@ import { getHandlebarsVariables } from '../content/content.engine';
 
 import { EmailHandler } from '../handler/email.handler';
 import { SmsHandler } from '../handler/sms.handler';
-import { INotifireConfig } from '../notifire.interface';
+import { INovuConfig } from '../novu.interface';
 import { ProviderStore } from '../provider/provider.store';
 import {
   ChannelTypeEnum,
@@ -22,7 +22,7 @@ export class TriggerEngine {
     private templateStore: TemplateStore,
     private providerStore: ProviderStore,
     private themeStore: ThemeStore,
-    private config: INotifireConfig,
+    private config: INovuConfig,
     private eventEmitter: EventEmitter
   ) {}
 

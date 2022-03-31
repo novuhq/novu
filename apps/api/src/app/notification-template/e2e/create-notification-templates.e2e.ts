@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { UserSession } from '@notifire/testing';
-import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum } from '@notifire/shared';
+import { UserSession } from '@novu/testing';
+import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum } from '@novu/shared';
 import * as moment from 'moment';
 import { CreateNotificationTemplateDto } from '../dto/create-notification-template.dto';
 

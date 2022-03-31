@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { NotificationTemplateEntity } from '@notifire/dal';
-import { UserSession, NotificationTemplateService } from '@notifire/testing';
+import { NotificationTemplateEntity } from '@novu/dal';
+import { UserSession, NotificationTemplateService } from '@novu/testing';
 
 describe('Get Notification templates - /notification-templates (GET)', async () => {
   let session: UserSession;

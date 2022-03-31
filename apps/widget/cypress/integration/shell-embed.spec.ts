@@ -20,10 +20,10 @@ describe.only('Shell Embed', function () {
     cy.spy(handlerObject, 'handler').as('spy');
 
     cy.window().then((w) => {
-      w.notifire.on('notification_click', handlerObject.handler);
+      w.novu.on('notification_click', handlerObject.handler);
     });
 
-    cy.get('#notifire-iframe-element')
+    cy.get('#novu-iframe-element')
       .its('0.contentDocument.body')
       .should('not.be.empty')
       .then((body) => {
@@ -36,13 +36,13 @@ describe.only('Shell Embed', function () {
 
   it('should open and close widget on body click', function () {
     cy.get('#notification-bell').click();
-    cy.get('#notifire-iframe-element')
+    cy.get('#novu-iframe-element')
       .its('0.contentDocument.body')
       .then((body) => {
         cy.wrap(body).find('[data-test-id="main-wrapper"]').should('be.visible');
       });
     cy.get('body').click();
-    cy.get('#notifire-iframe-element')
+    cy.get('#novu-iframe-element')
       .its('0.contentDocument.body')
       .then((body) => {
         cy.wrap(body).find('[data-test-id="main-wrapper"]').should('not.be.visible');

@@ -1,12 +1,12 @@
 {
-  "name": "@notifire/sns",
-  "version": "0.3.6-alpha.0",
-  "description": "A sns wrapper for notifire",
+  "name": "@novu/sns",
+  "version": "0.4.0-alpha.2",
+  "description": "A sns wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/notifirehq/notifire",
+  "repository": "https://github.com/novu-co/novu",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-sns": "^3.39.0",
-    "@notifire/core": "^0.3.6-alpha.0"
+    "@novu/node": "^0.4.0-alpha.2"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -81,5 +81,5 @@
       "**/*.spec.js"
     ]
   },
-  "gitHead": "29e2f6749f25860471f563d70b7fbf7ee304d6d4"
+  "gitHead": "565e5dcbe446aadf9fe53d13100b8cb56c0b1128"
 }

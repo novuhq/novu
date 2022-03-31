@@ -1,5 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ChannelTypeEnum, IJwtPayload } from '@notifire/shared';
+import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
 import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
 import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
 import { UserSession } from '../shared/framework/user.decorator';

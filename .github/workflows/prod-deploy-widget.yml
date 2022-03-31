@@ -7,8 +7,8 @@ name: Deploy PROD Widget
 on:
   push:
     tags:
-      - '**@notifire/widget**'
-      - '**@notifire/shared**'
+      - '**@novu/widget**'
+      - '**@novu/shared**'
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -80,8 +80,8 @@ jobs:
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         env:
-          REGISTERY_OWNER: notifirehq
-          DOCKER_NAME: notifire/widget
+          REGISTERY_OWNER: novu-co
+          DOCKER_NAME: novu/widget
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}

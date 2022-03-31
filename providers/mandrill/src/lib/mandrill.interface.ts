@@ -1,4 +1,4 @@
-import { IAttachmentOptions } from '@notifire/core';
+import { IAttachmentOptions } from '@novu/node';
 
 export interface MandrillInterface {
   messages: {

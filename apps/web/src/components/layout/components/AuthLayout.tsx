@@ -9,7 +9,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <ThemeProvider>
       <div style={{ minHeight: 950 }}>
         <div className={classes.wrapper}>
-          <img src="/static/images/logo.png" alt="logo" style={{ maxWidth: 150 }} />
+          <img
+            src="/static/images/logo-formerly-dark-bg.png"
+            alt="logo"
+            style={{ maxWidth: 150, marginTop: 5, marginLeft: 5 }}
+          />
           <Box
             sx={{
               position: 'absolute',

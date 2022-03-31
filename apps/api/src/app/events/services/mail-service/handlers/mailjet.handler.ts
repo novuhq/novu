@@ -1,6 +1,6 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
-import { MailjetEmailProvider } from '@notifire/mailjet';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
+import { MailjetEmailProvider } from '@novu/mailjet';
 import { BaseHandler } from './base.handler';
 
 export class MailjetHandler extends BaseHandler {

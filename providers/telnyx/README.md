@@ -1,11 +1,11 @@
-# Notifire Telnyx Provider
+# Novu Telnyx Provider
 
-A Telnyx sms provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A Telnyx sms provider library for [@novu/node](https://github.com/novu-co/novu)
 
 ## Usage
 
 ```javascript
-import { TelnyxSmsProvider } from '@notifire/telnyx';
+import { TelnyxSmsProvider } from '@novu/telnyx';
 
 const provider = new TelnyxSmsProvider({
   apiKey: process.env.TELNYX_API_KEY,

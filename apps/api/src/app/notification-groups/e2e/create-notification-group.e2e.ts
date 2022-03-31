@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { UserSession } from '@notifire/testing';
+import { UserSession } from '@novu/testing';
 
 describe('Create Notification Group - /notification-groups (POST)', async () => {
   let session: UserSession;

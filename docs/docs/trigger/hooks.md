@@ -17,10 +17,10 @@ There are two methods of hooks:
 Here's an example with Pre and Post Hook:
 
 ```typescript
-const notifire = new Notifire();
+const novu = new Novu();
 
 // Pre hook usage
-notifire.on('pre:send', (data) => {
+novu.on('pre:send', (data) => {
      const {
       id,
       channel,
@@ -30,7 +30,7 @@ notifire.on('pre:send', (data) => {
 });
 
 // Post hook usage
-notifire.on('post:send', (data) => {
+novu.on('post:send', (data) => {
      const {
       id,
       channel,
