@@ -44,7 +44,35 @@ Building a notification system is hard, at first it seems like just sending an e
 - 🛡 Debug and analyze multi channel messages in a single dashboard
 - 👨‍💻 Community driven
 
-## 📦 Getting Started with the novu stateless library
+# Novu API & Admin panel (alpha)
+We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
+```
+npx novu init
+```
+After setting up your account using the cloud or docker version you can trigger the API using the `@novu/node` package.
+
+```bash
+npm install @novu/node
+```
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
+  $user_id: "<USER IDENTIFIER>",
+  $email: "test@email.com",
+  firstName: "John",
+  lastName: "Doe",
+  organization: {
+    logo: 'https://evilcorp.com/logo.png'
+  }
+});
+```
+
+# 📦 Stateless mode
+For simpler use cases, you can use the `@novu/node` library. This will require you to manage the templates content and providers registration. 
 
 ## 📦 Install
 
