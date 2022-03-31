@@ -4,6 +4,7 @@ import { Button, colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { IConfigCredentials } from '@notifire/shared';
 
 export function ProviderCard({
   provider,
@@ -12,9 +13,18 @@ export function ProviderCard({
   provider: IIntegratedProvider;
   onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = useMantineColorScheme().colorScheme === 'dark';
+
+  useMantineColorScheme;
   const logoSrc = `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png`;
+  const brightCard =
+    provider.active ||
+    provider.credentials.some((cred: IConfigCredentials) => {
+      return !cred.value;
+    });
+
+  // eslint-disable-next-line no-console
+  console.log(provider.credentials);
 
   function handleOnClickSettings() {
     onConnectClick(true, false, provider);
@@ -22,8 +32,8 @@ export function ProviderCard({
 
   return (
     <StyledCard
-      colorScheme={colorScheme}
-      active={provider.active}
+      isDark={isDark}
+      active={brightCard}
       data-test-id="integration-provider-card"
       onClick={() => {
         if (provider.connected) {
@@ -44,12 +54,25 @@ export function ProviderCard({
         </CardHeader>
 
         <CardFooter>
-          {!provider.connected ? <Button fullWidth>Connect</Button> : <CardStatusBar active={provider.active} />}
+          {!provider.connected ? (
+            <StyledBottom fullWidth variant={'outline'} isDark={isDark}>
+              Connect
+            </StyledBottom>
+          ) : (
+            <CardStatusBar active={provider.active} />
+          )}
         </CardFooter>
       </StyledGroup>
     </StyledCard>
   );
 }
+
+const StyledBottom = styled(Button)<{ isDark: boolean }>`
+  background-image: ${({ isDark }) =>
+    isDark
+      ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`
+      : `linear-gradient(0deg, ${colors.B98} 0%, ${colors.B98} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`};
+`;
 
 const StyledGroup = styled(Group)`
   height: 100%;
@@ -93,8 +116,8 @@ const CardFooter = styled.div`
   width: 100%;
 `;
 
-const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }>`
-  background-color: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B17 : colors.B98)};
+const StyledCard = styled.div<{ isDark: boolean; active: boolean }>`
+  background-color: ${({ isDark }) => (isDark ? colors.B17 : colors.B98)};
   border-radius: 7px;
   display: inline-block;
   padding: 25px;
@@ -118,8 +141,8 @@ const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }
 
   &:hover {
     cursor: pointer;
-    ${({ colorScheme }) =>
-      colorScheme === 'dark'
+    ${({ isDark }) =>
+      isDark
         ? `
             background-color: ${colors.B20};
             box-shadow: ${shadows.dark};
