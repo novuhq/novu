@@ -14,7 +14,7 @@ export interface IConfigCredentials {
   key: CredentialsKeyEnum;
   value?: string;
   displayName: string;
-  credentialDescription?: string;
+  description?: string;
   type: string;
 }
 
