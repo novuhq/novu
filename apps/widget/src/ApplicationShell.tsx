@@ -37,6 +37,6 @@ const ShellWrapper = styled.div`
   padding-top: 25px;
 
   & > div {
-    width: 280px;
+    width: 420px;
   }
 `;
