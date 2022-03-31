@@ -1,6 +1,6 @@
 # Nodejs SendGrid Provider
 
-A sendgrid email provider library for [@novu/node](https://github.com/novu-co/novu)
+A sendgrid email provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 

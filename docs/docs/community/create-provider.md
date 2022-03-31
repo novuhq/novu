@@ -160,4 +160,4 @@ export class TwilioSmsProvider implements ISmsProvider {
 }
 ```
 
-[github-template]: https://github.com/novu-co/provider-template
+[github-template]: https://github.com/novuhq/provider-template

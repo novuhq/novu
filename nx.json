@@ -1,6 +1,6 @@
 {
   "extends": "@nrwl/workspace/presets/npm.json",
-  "npmScope": "novu-co",
+  "npmScope": "novuhq",
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/nx-cloud",
