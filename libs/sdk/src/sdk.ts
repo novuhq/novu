@@ -87,9 +87,9 @@ class Novu {
           ? _this.options?.position?.left
           : `${_this.options?.position?.left}px`;
       } else {
-        let leftPosition = left - 265;
-        if (leftPosition < 250) {
-          leftPosition = left + 265;
+        let leftPosition = left - 350;
+        if (leftPosition < 330) {
+          leftPosition = left + 350;
         }
         wrapper.style.left = `${leftPosition}px`;
       }
