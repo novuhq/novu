@@ -1,8 +1,11 @@
 <p align="center">
   <a href="https://novu.co">
-    <img width="200" src="https://uploads-ssl.webflow.com/6130b4d29bb0ab09e14ae9ee/6130e6931f755df302203fcc_SideLogo%20-%20BLack-p-800.png">
+   
+<img width="200" alt="novu-logo-dark-formerly-notifire-light-background" src="https://user-images.githubusercontent.com/8872447/161003447-dab96279-a832-41a9-8a69-24967fdd64cd.png#gh-light-mode-only">
+<img width="200" alt="novu-logo-white-formerly-notifire-dark-background" src="https://user-images.githubusercontent.com/8872447/161003750-0c71e956-7448-4876-a446-876fdb7017af.png#gh-dark-mode-only">
   </a>
 </p>
+
 <h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
