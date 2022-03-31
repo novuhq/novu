@@ -1,16 +1,15 @@
-<p align="center">
-  <a href="https://novu.co">
-   
-<img width="200" alt="novu-logo-dark-formerly-notifire-light-background" src="https://user-images.githubusercontent.com/8872447/161003447-dab96279-a832-41a9-8a69-24967fdd64cd.png#gh-light-mode-only">
 
-  </a>
-</p>
-<p align="center">
-  <a href="https://novu.co">
+<div align="center">
+  
+  ![Logo Dark](https://user-images.githubusercontent.com/8872447/161003447-dab96279-a832-41a9-8a69-24967fdd64cd.png#gh-light-mode-only)
+  
+</div>
 
-<img width="200" alt="novu-logo-white-formerly-notifire-dark-background" src="https://user-images.githubusercontent.com/8872447/161003750-0c71e956-7448-4876-a446-876fdb7017af.png#gh-dark-mode-only">
-  </a>
-</p>
+<div align="center">
+  
+  ![Logo Light](https://user-images.githubusercontent.com/8872447/161003750-0c71e956-7448-4876-a446-876fdb7017af.png#gh-dark-mode-only)
+  
+</div>
 
 
 <h1 align="center">Notification management simplified.</h1>
