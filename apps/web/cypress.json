@@ -2,7 +2,7 @@
   "baseUrl": "http://localhost:4200",
   "integrationFolder": "cypress/tests",
   "viewportHeight": 700,
-  "viewportWidth": 1200,
+  "viewportWidth": 1280,
   "componentFolder": "src",
   "testFiles": "**/*.spec.*",
   "video": false,

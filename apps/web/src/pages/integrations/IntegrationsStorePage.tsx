@@ -62,33 +62,37 @@ export function IntegrationsStore() {
   }, [integrations]);
 
   return (
-    <PageContainer>
-      <PageHeader title="Integration Store" />
+    <>
+      {!isLoading ? (
+        <PageContainer>
+          <PageHeader title="Integration Store" />
 
-      <Modal
-        withCloseButton={false}
-        centered
-        size="lg"
-        overflow="inside"
-        opened={isModalOpened}
-        onClose={() => setModalIsOpened(false)}>
-        <ConnectIntegrationForm
-          onClose={() => setModalIsOpened(false)}
-          provider={provider}
-          showModal={handlerShowModal}
-          createModel={isCreateIntegrationModal}
-        />
-      </Modal>
+          <Modal
+            withCloseButton={false}
+            centered
+            size="lg"
+            overflow="inside"
+            opened={isModalOpened}
+            onClose={() => setModalIsOpened(false)}>
+            <ConnectIntegrationForm
+              onClose={() => setModalIsOpened(false)}
+              provider={provider}
+              showModal={handlerShowModal}
+              createModel={isCreateIntegrationModal}
+            />
+          </Modal>
 
-      <ContentWrapper isLoading={isLoading}>
-        <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
-        <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
-      </ContentWrapper>
-    </PageContainer>
+          <ContentWrapper>
+            <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
+          </ContentWrapper>
+        </PageContainer>
+      ) : null}
+    </>
   );
 }
 
-const ContentWrapper = styled.div<{ isLoading: boolean }>`
+const ContentWrapper = styled.div`
   padding: 0 30px;
 `;
 

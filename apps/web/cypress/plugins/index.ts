@@ -36,7 +36,7 @@ module.exports = (on, config) => {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
 
-      const session = new UserSession('http://localhost:1336');
+      new UserSession('http://localhost:1336');
 
       return true;
     },

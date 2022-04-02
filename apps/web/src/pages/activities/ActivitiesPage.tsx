@@ -13,6 +13,8 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Data, Table } from '../../design-system/table/Table';
 import { Select, Tag, Text, Tooltip, Input, colors } from '../../design-system';
+import { ActivityStatistics } from './components/ActivityStatistics';
+import { ActivityGraph } from './components/ActivityGraph';
 
 interface IFiltersForm {
   channels?: ChannelTypeEnum[];
@@ -132,6 +134,8 @@ export function ActivitiesPage() {
   return (
     <PageContainer>
       <PageHeader title="Activity Feed" />
+      <ActivityStatistics />
+      <ActivityGraph />
       <form>
         <div style={{ width: '80%', display: 'flex', flexDirection: 'row', gap: '15px', padding: '30px' }}>
           <div style={{ minWidth: '250px' }}>
