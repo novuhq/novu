@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
-} from '@notifire/core';
+} from '@novu/node';
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
 export class MailersendEmailProvider implements IEmailProvider {

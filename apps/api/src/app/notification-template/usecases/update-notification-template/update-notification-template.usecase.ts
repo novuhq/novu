@@ -1,7 +1,7 @@
 // eslint-ignore max-len
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository, NotificationMessagesEntity } from '@notifire/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository, NotificationMessagesEntity } from '@novu/dal';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';

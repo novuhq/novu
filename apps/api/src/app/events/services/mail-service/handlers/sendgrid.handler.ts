@@ -1,5 +1,5 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { SendgridEmailProvider } from '@notifire/sendgrid';
+import { ChannelTypeEnum } from '@novu/shared';
+import { SendgridEmailProvider } from '@novu/sendgrid';
 import { BaseHandler } from './base.handler';
 
 export class SendgridHandler extends BaseHandler {

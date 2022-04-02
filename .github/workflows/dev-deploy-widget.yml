@@ -83,8 +83,8 @@ jobs:
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         env:
-          REGISTERY_OWNER: notifirehq
-          DOCKER_NAME: notifire/widget
+          REGISTERY_OWNER: novuhq
+          DOCKER_NAME: novu/widget
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}

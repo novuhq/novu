@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import { IApplication } from '@notifire/shared';
+import { IApplication } from '@novu/shared';
 import { FieldArrayWithId } from 'react-hook-form';
 import { IForm } from '../use-template-controller.hook';
 import { getCurrentApplication } from '../../../api/application';

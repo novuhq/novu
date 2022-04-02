@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MemberEntity, MemberRepository, OrganizationEntity, UserRepository } from '@notifire/dal';
+import { MemberEntity, MemberRepository, OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../../services/auth.service';
 import { UserRegisterCommand } from './user-register.command';

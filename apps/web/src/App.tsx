@@ -8,8 +8,7 @@ import { applyToken, getToken, useAuthController } from './store/use-auth-contro
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
-import HomePage from './legacy/pages/HomePage';
-import ApplicationOnBoarding from './legacy/pages/onboarding/application';
+import HomePage from './pages/HomePage';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
@@ -74,14 +73,6 @@ function App() {
                   element={
                     <RequiredAuth>
                       <HomePage />
-                    </RequiredAuth>
-                  }
-                />
-                <Route
-                  path="/onboarding/application"
-                  element={
-                    <RequiredAuth>
-                      <ApplicationOnBoarding />
                     </RequiredAuth>
                   }
                 />

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { LogEntity, LogRepository } from '@notifire/dal';
+import { LogEntity, LogRepository } from '@novu/dal';
 import { CreateLogCommand } from './create-log.command';
 
 @Injectable()

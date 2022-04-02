@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { Crud } from '@nestjsx/crud';
-import { UserEntity } from '@notifire/dal';
+import { UserEntity } from '@novu/dal';
 import { UsersService } from './users.service';
 
 @Crud({

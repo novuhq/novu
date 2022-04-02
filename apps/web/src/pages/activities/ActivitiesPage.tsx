@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { useQuery } from 'react-query';
 import { ColumnWithStrictAccessor } from 'react-table';
 import moment from 'moment';
-import { Badge } from 'antd';
 import { Controller, useForm } from 'react-hook-form';
 import * as capitalize from 'lodash.capitalize';
+import { Badge } from '@mantine/core';
+import styled from '@emotion/styled';
 import { useTemplates } from '../../api/hooks/use-templates';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Data, Table } from '../../design-system/table/Table';
-import { Select, Tag, Text, Tooltip, Input } from '../../design-system';
+import { Select, Tag, Text, Tooltip, Input, colors } from '../../design-system';
+import { ActivityStatistics } from './components/ActivityStatistics';
+import { ActivityGraph } from './components/ActivityGraph';
 
 interface IFiltersForm {
-  channels: ChannelTypeEnum[];
+  channels?: ChannelTypeEnum[];
 }
 
 export function ActivitiesPage() {
@@ -51,15 +54,15 @@ export function ActivitiesPage() {
       width: 10,
       Cell: ({ status, errorText }: any) => (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {status === 'sent' ? <Badge status="success" title="Message Processed" /> : null}
+          {status === 'sent' ? <StatusBadge status="success" data-test-id={'status-badge'} /> : null}
           {status === 'error' ? (
             <Tooltip label={errorText}>
-              <Badge status="error" title={errorText} />
+              <StatusBadge status="error" data-test-id={'status-badge'} />
             </Tooltip>
           ) : null}
           {status === 'warning' ? (
             <Tooltip label={errorText}>
-              <Badge status="warning" title={errorText} />
+              <StatusBadge status="error" data-test-id={'status-badge'} />
             </Tooltip>
           ) : null}
         </div>
@@ -131,6 +134,8 @@ export function ActivitiesPage() {
   return (
     <PageContainer>
       <PageHeader title="Activity Feed" />
+      <ActivityStatistics />
+      <ActivityGraph />
       <form>
         <div style={{ width: '80%', display: 'flex', flexDirection: 'row', gap: '15px', padding: '30px' }}>
           <div style={{ minWidth: '250px' }}>
@@ -197,3 +202,24 @@ export function ActivitiesPage() {
     </PageContainer>
   );
 }
+
+const StatusBadge = styled.div<{ status: 'success' | 'error' | 'warning' }>`
+  display: inline-block;
+  width: 6px;
+  min-width: 6px;
+  height: 6px;
+  border-radius: 100%;
+
+  background-color: ${({ status }) => {
+    switch (status) {
+      case 'success':
+        return colors.success;
+      case 'warning':
+        return '#eca237';
+      case 'error':
+        return colors.error;
+      default:
+        return '#b2b2b2';
+    }
+  }};
+`;

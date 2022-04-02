@@ -6,7 +6,7 @@ sidebar_position: 3
 
 OCL was built all around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is key for easy maintenance and integration of new functionality.
 
-Let's deep dive into the building blocks of Notifire's OCL approach.
+Let's deep dive into the building blocks of Novu's OCL approach.
 
 ## The mental model
 
@@ -14,12 +14,12 @@ Let's deep dive into the building blocks of Notifire's OCL approach.
 
 ## Templates
 
-Templates are the blueprints for all notifications in Notifire. They provide the base configurations for each message. A message is tied to a specific channel, for which a content template is provided, code rules and filters, priorities, and other metadata that will affect the delivery of a specific message.
+Templates are the blueprints for all notifications in Novu. They provide the base configurations for each message. A message is tied to a specific channel, for which a content template is provided, code rules and filters, priorities, and other metadata that will affect the delivery of a specific message.
 
 Here's an example of a template:
 
 ```typescript
-const passwordResetTemplate = await notifire.registerTemplate({
+const passwordResetTemplate = await novu.registerTemplate({
   id: "password-reset",
   messages: [
     {
@@ -48,7 +48,7 @@ const passwordResetTemplate = await notifire.registerTemplate({
 
 ## Providers
 
-Providers are the delivery endpoints for your notifications. They are responsible for delivering the notifications to the end users on the specified channel. Providers usually refer to a specific channel, such as email, SMS, Direct, etc... Each provider is stateless and adheres to a specific interface, Notifire will manage state and mediate all provider-specific configurations.
+Providers are the delivery endpoints for your notifications. They are responsible for delivering the notifications to the end users on the specified channel. Providers usually refer to a specific channel, such as email, SMS, Direct, etc... Each provider is stateless and adheres to a specific interface, Novu will manage state and mediate all provider-specific configurations.
 
 ### Provider Types
 

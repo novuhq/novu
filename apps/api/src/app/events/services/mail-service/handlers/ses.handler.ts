@@ -1,7 +1,7 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
-import { SESConfig } from '@notifire/ses/build/module/lib/ses.config';
-import { SESEmailProvider } from '@notifire/ses';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
+import { SESConfig } from '@novu/ses/build/module/lib/ses.config';
+import { SESEmailProvider } from '@novu/ses';
 import { BaseHandler } from './base.handler';
 
 export class SESHandler extends BaseHandler {

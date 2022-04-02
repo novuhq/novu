@@ -1,6 +1,7 @@
 import React from 'react';
-import { ColorInput as MantineColorInput, ColorInputProps, MantineMargins } from '@mantine/core';
+import { ColorInput as MantineColorInput, ColorInputProps } from '@mantine/core';
 import { inputStyles } from '../config/inputs.styles';
+import { SpacingProps } from '../shared/spacing.props';
 
 const defaultSwatchColors: string[] = [
   '#f47373',
@@ -14,7 +15,7 @@ const defaultSwatchColors: string[] = [
   '#555555',
 ];
 
-interface IColorInputProps extends MantineMargins {
+interface IColorInputProps extends SpacingProps {
   label?: React.ReactNode;
   error?: string;
   placeholder?: string;

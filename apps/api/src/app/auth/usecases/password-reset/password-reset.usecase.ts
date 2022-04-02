@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@notifire/dal';
+import { UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { PasswordResetCommand } from './password-reset.command';

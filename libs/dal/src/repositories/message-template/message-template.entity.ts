@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, ChannelTypeEnum } from '@notifire/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
 
 export class MessageTemplateEntity {
   _id?: string;

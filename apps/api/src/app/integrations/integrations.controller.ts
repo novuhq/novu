@@ -10,8 +10,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@notifire/shared';
-import { IntegrationEntity } from '@notifire/dal';
+import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { IntegrationEntity } from '@novu/dal';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';

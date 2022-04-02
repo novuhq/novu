@@ -1,5 +1,5 @@
 import * as sanitize from 'sanitize-html';
-import { IEmailBlock } from '@notifire/shared';
+import { IEmailBlock } from '@novu/shared';
 
 export function sanitizeHTML(html: string) {
   if (!html) return html;

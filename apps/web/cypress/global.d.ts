@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-type ICreateNotificationTemplateDto = import('@notifire/shared').ICreateNotificationTemplateDto;
+type ICreateNotificationTemplateDto = import('@novu/shared').ICreateNotificationTemplateDto;
 
 declare namespace Cypress {
   interface Chainable {

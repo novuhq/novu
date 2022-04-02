@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { OrganizationRepository, MemberRepository } from '@notifire/dal';
+import { OrganizationRepository, MemberRepository } from '@novu/dal';
 import { RemoveMemberCommand } from './remove-member.command';
 import { ApiException } from '../../../../../shared/exceptions/api.exception';
 

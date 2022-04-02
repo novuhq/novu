@@ -73,8 +73,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'local') {
     const options = new DocumentBuilder()
-      .setTitle('notifire API')
-      .setDescription('The notifire API description')
+      .setTitle('novu API')
+      .setDescription('The novu API description')
       .setVersion('1.0')
       .build();
     const document = SwaggerModule.createDocument(app, options);
@@ -88,7 +88,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     await app.listen(process.env.PORT);
   }
 
-  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} port ${process.env.PORT}`);
+  Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
   return app;
 }

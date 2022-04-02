@@ -1,11 +1,11 @@
 # Nodejs Mandrill Provider
 
-A mandrill email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A mandrill email provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-import { MandrillProvider } from '@notifire/mandrill';
+import { MandrillProvider } from '@novu/mandrill';
 
 const provider = new MandrillProvider({
   apiKey: process.env.apiKey,

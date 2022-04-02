@@ -123,6 +123,15 @@ const ErrorCircle = styled.div<{ dark: boolean }>`
 
 const IconWrapper = styled.div`
   padding-right: 15px;
+
+  @media screen and (max-width: 1400px) {
+    padding-right: 5px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
 `;
 
 const ActionWrapper = styled.div`
@@ -148,4 +157,8 @@ const StyledGroup = styled(Group)``;
 
 const Button = styled(UnstyledButton)`
   position: relative;
+
+  @media screen and (max-width: 1400px) {
+    padding: 0 5px;
+  }
 `;

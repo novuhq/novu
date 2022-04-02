@@ -8,7 +8,7 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto } from '@notifire/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto } from '@novu/shared';
 
 export class ChannelCTADto {
   @IsEnum(ChannelCTATypeEnum)

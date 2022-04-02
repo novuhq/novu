@@ -3,7 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-} from '@notifire/core';
+} from '@novu/node';
 
 import mailchimp from '@mailchimp/mailchimp_transactional';
 import { MandrillInterface } from './mandrill.interface';

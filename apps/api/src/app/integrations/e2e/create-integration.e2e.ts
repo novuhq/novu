@@ -1,5 +1,5 @@
-import { IntegrationRepository, IntegrationEntity } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { IntegrationRepository, IntegrationEntity } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Create Integration - /integration (POST)', function () {

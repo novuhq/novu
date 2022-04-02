@@ -1,8 +1,9 @@
 import { FormProvider } from 'react-hook-form';
-import { Container, Group } from '@mantine/core';
+import { Container, Grid, Group } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
+import styled from '@emotion/styled';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar';
@@ -12,7 +13,7 @@ import { TemplateTriggerModal } from '../../../components/templates/TemplateTrig
 import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
-import { Button, Select, Switch } from '../../../design-system';
+import { Button, colors, Select, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 import { useActiveIntegrations } from '../../../api/hooks';
@@ -103,61 +104,80 @@ export default function TemplateEditorPage() {
               </Group>
             }
           />
-          <Group mt={20} align="flex-start" grow>
-            <TemplatesSideBar
-              activeTab={activePage}
-              toggleChannel={toggleChannel}
-              changeTab={setActivePage}
-              activeChannels={activeChannels}
-              channelButtons={channelButtons}
-              showTriggerSection={!!template && !!trigger}
-              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
-            />
-            <Container ml={25} mr={30} fluid padding={0} sx={{ maxWidth: '100%' }}>
-              {activePage === 'Settings' && <NotificationSettingsForm editMode={editMode} />}
-              {activePage === 'Add' && (
-                <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
-              )}
-              {!loadingEditTemplate && !isIntegrationsLoading ? (
-                <div>
-                  {activePage === 'sms' &&
-                    smsFields.map((message, index) => {
-                      return (
-                        <TemplateSMSEditor
-                          key={index}
-                          control={control}
-                          index={index}
-                          errors={errors}
-                          isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.SMS)}
+          <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
+            <Grid grow style={{ minHeight: 500 }}>
+              <Grid.Col md={4} sm={6}>
+                <SideBarWrapper style={{ paddingRight: 50 }}>
+                  <TemplatesSideBar
+                    activeTab={activePage}
+                    toggleChannel={toggleChannel}
+                    changeTab={setActivePage}
+                    activeChannels={activeChannels}
+                    channelButtons={channelButtons}
+                    showTriggerSection={!!template && !!trigger}
+                    showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
+                  />
+                </SideBarWrapper>
+              </Grid.Col>
+              <Grid.Col md={8} sm={6}>
+                <div style={{ paddingLeft: 23 }}>
+                  {activePage === 'Settings' && <NotificationSettingsForm editMode={editMode} />}
+                  {activePage === 'Add' && (
+                    <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
+                  )}
+                  {!loadingEditTemplate && !isIntegrationsLoading ? (
+                    <div>
+                      {activePage === 'sms' &&
+                        smsFields.map((message, index) => {
+                          return (
+                            <TemplateSMSEditor
+                              key={index}
+                              control={control}
+                              index={index}
+                              errors={errors}
+                              isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.SMS)}
+                            />
+                          );
+                        })}
+                      {activePage === 'email' && (
+                        <EmailMessagesCards
+                          variables={trigger?.variables || []}
+                          onRemoveTab={removeEmailMessage}
+                          emailMessagesFields={emailMessagesFields}
+                          isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.EMAIL)}
                         />
-                      );
-                    })}
-                  {activePage === 'email' && (
-                    <EmailMessagesCards
-                      variables={trigger?.variables || []}
-                      onRemoveTab={removeEmailMessage}
-                      emailMessagesFields={emailMessagesFields}
-                      isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.EMAIL)}
+                      )}
+                      {activePage === 'in_app' &&
+                        inAppFields.map((message, index) => {
+                          return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
+                        })}
+                    </div>
+                  ) : null}
+                  {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
+                  {trigger && (
+                    <TemplateTriggerModal
+                      trigger={trigger}
+                      onDismiss={onTriggerModalDismiss}
+                      isVisible={isEmbedModalVisible}
                     />
                   )}
-                  {activePage === 'in_app' &&
-                    inAppFields.map((message, index) => {
-                      return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
-                    })}
                 </div>
-              ) : null}
-              {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
-              {trigger && (
-                <TemplateTriggerModal
-                  trigger={trigger}
-                  onDismiss={onTriggerModalDismiss}
-                  isVisible={isEmbedModalVisible}
-                />
-              )}
-            </Container>
-          </Group>
+              </Grid.Col>
+            </Grid>
+          </div>
         </form>
       </FormProvider>
     </PageContainer>
   );
 }
+
+const SideBarWrapper = styled.div`
+  border-right: 1px solid ${colors.B20};
+  height: 100%;
+`;
+
+const EditorContentWrapper = styled.div`
+  margin-top: 20px;
+  display: flex;
+  width: 100%;
+`;

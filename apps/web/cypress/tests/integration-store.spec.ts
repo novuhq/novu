@@ -1,8 +1,7 @@
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 
 describe('Integration store page', function () {
   beforeEach(function () {
-    // @ts-ignore
     cy.initializeSession().as('session');
   });
 
@@ -44,15 +43,12 @@ describe('Integration store page', function () {
 
     getFirstIntegrationCard().getByTestId('provider-card-settings-svg').click();
 
-    // @ts-ignore
     cy.getByTestId('apiKey').should('have.value', '123');
-    // @ts-ignore
     cy.getByTestId('from').should('have.value', 'cypress');
   });
 });
 
 function getFirstIntegrationCard() {
-  // @ts-ignore
   return cy.getByTestId('integration-group-email').getByTestId('integration-provider-card').eq(0);
 }
 

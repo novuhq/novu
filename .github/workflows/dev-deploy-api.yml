@@ -48,8 +48,8 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
-          REGISTERY_OWNER: notifirehq
-          DOCKER_NAME: notifire/api
+          REGISTERY_OWNER: novuhq
+          DOCKER_NAME: novu/api
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
@@ -66,7 +66,7 @@ jobs:
       - name: Checkout cloud infra
         uses: actions/checkout@master
         with:
-          repository: notifirehq/cloud-infra
+          repository: novuhq/cloud-infra
           token: ${{ secrets.GH_PACKAGES }}
           path: cloud-infra
 

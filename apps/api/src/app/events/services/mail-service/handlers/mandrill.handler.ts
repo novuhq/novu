@@ -1,6 +1,6 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
-import { MandrillProvider } from '@notifire/mandrill';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
+import { MandrillProvider } from '@novu/mandrill';
 import { BaseHandler } from './base.handler';
 
 export class MandrillHandler extends BaseHandler {

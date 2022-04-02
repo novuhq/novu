@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { ContentService } from './content.service';
 
 describe('ContentService', function () {

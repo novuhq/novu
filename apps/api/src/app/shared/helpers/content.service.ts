@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IMessageTemplate } from '@notifire/shared';
+import { ChannelTypeEnum, IMessageTemplate } from '@novu/shared';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {

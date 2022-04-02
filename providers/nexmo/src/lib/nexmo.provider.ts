@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
-} from '@notifire/core';
+} from '@novu/node';
 
 import Vonage from '@vonage/server-sdk';
 
@@ -36,6 +36,7 @@ export class NexmoSmsProvider implements ISmsProvider {
         {},
         (err, responseData) => {
           if (err) return reject(err);
+
           return resolve(responseData.messages[0]['message-id']);
         }
       );

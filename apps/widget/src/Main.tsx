@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from 'react-query';
-import { ChannelCTATypeEnum, IMessage } from '@notifire/shared';
+import { useInfiniteQuery, useMutation } from 'react-query';
+import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './components/NotificationsList';
 import { getNotificationsList, markMessageAsSeen } from './api/notifications';
@@ -10,13 +10,13 @@ import { postUsageLog } from './api/usage';
 
 export function Main() {
   const [currentPage, setCurrentPage] = useState<number>(0);
-  const { data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } = useInfiniteQuery<
-    IMessage[]
-  >('notifications-feed', async ({ pageParam = 0 }) => getNotificationsList(pageParam), {
-    getNextPageParam: (lastPage) => {
-      return lastPage.length === 10 ? currentPage + 1 : undefined;
-    },
-  });
+
+  const { isLoading, data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } =
+    useInfiniteQuery<IMessage[]>('notifications-feed', async ({ pageParam = 0 }) => getNotificationsList(pageParam), {
+      getNextPageParam: (lastPage) => {
+        return lastPage.length === 10 ? currentPage + 1 : undefined;
+      },
+    });
   const { mutateAsync: markNotificationAsSeen } = useMutation<{ body: IMessage }, never, { messageId: string }>(
     (params) => markMessageAsSeen(params.messageId)
   );
@@ -67,16 +67,27 @@ export function Main() {
 
   return (
     <MainWrapper data-test-id="main-wrapper">
-      <NotificationsList
-        onNotificationClicked={onNotificationClicked}
-        notifications={data?.pages || []}
-        onFetch={fetchNext}
-        hasNextPage={!isFetched || (hasNextPage as boolean)}
-      />
+      {!isLoading && isFetched && !isFetching && data?.pages[0].length === 0 ? (
+        <div
+          style={{
+            textAlign: 'center',
+            minHeight: 350,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <img src="/no-new-notifications.png" alt="logo" style={{ maxWidth: 200 }} />
+        </div>
+      ) : (
+        <NotificationsList
+          onNotificationClicked={onNotificationClicked}
+          notifications={data?.pages || []}
+          onFetch={fetchNext}
+          hasNextPage={!isFetched || (hasNextPage as boolean)}
+        />
+      )}
     </MainWrapper>
   );
 }
 
-const MainWrapper = styled.div`
-  background: ${({ theme }) => theme.colors.contentBackground};
-`;
+const MainWrapper = styled.div``;

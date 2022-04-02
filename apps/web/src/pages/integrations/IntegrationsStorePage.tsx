@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, providers, IConfigCredentials } from '@notifire/shared';
+import { ChannelTypeEnum, providers, IConfigCredentials } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -51,7 +51,7 @@ export function IntegrationsStore() {
           credentials: integration?.credentials ? mappedCredentials : x.credentials,
           docReference: x.docReference,
           comingSoon: !!x.comingSoon,
-          active: integration?.active ? integration.active : false,
+          active: integration?.active ?? true,
           connected: !!integration,
         };
       });
@@ -62,33 +62,37 @@ export function IntegrationsStore() {
   }, [integrations]);
 
   return (
-    <PageContainer>
-      <PageHeader title="Integration Store" />
+    <>
+      {!isLoading ? (
+        <PageContainer>
+          <PageHeader title="Integration Store" />
 
-      <Modal
-        hideCloseButton
-        centered
-        size="lg"
-        overflow="inside"
-        opened={isModalOpened}
-        onClose={() => setModalIsOpened(false)}>
-        <ConnectIntegrationForm
-          onClose={() => setModalIsOpened(false)}
-          provider={provider}
-          showModal={handlerShowModal}
-          createModel={isCreateIntegrationModal}
-        />
-      </Modal>
+          <Modal
+            withCloseButton={false}
+            centered
+            size="lg"
+            overflow="inside"
+            opened={isModalOpened}
+            onClose={() => setModalIsOpened(false)}>
+            <ConnectIntegrationForm
+              onClose={() => setModalIsOpened(false)}
+              provider={provider}
+              showModal={handlerShowModal}
+              createModel={isCreateIntegrationModal}
+            />
+          </Modal>
 
-      <ContentWrapper isLoading={isLoading}>
-        <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
-        <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
-      </ContentWrapper>
-    </PageContainer>
+          <ContentWrapper>
+            <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
+          </ContentWrapper>
+        </PageContainer>
+      ) : null}
+    </>
   );
 }
 
-const ContentWrapper = styled.div<{ isLoading: boolean }>`
+const ContentWrapper = styled.div`
   padding: 0 30px;
 `;
 

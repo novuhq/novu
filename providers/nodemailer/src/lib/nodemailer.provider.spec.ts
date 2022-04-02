@@ -23,7 +23,7 @@ const mockConfig = {
   password: 'test123',
 };
 
-const mockNotifireMessage = {
+const mockNovuMessage = {
   to: 'test@test2.com',
   subject: 'test subject',
   html: '<div> Mail Content </div>',
@@ -34,14 +34,14 @@ const mockNotifireMessage = {
 
 test('should trigger nodemailer correctly', async () => {
   const provider = new NodemailerProvider(mockConfig);
-  await provider.sendMessage(mockNotifireMessage);
+  await provider.sendMessage(mockNovuMessage);
 
   expect(sendMailMock).toHaveBeenCalled();
   expect(sendMailMock).toHaveBeenCalledWith({
     from: mockConfig.from,
-    html: mockNotifireMessage.html,
-    subject: mockNotifireMessage.subject,
-    to: mockNotifireMessage.to,
+    html: mockNovuMessage.html,
+    subject: mockNovuMessage.subject,
+    to: mockNovuMessage.to,
     attachments: [
       {
         contentType: 'text/plain',

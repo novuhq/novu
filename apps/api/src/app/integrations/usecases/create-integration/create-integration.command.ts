@@ -1,5 +1,5 @@
 import { IsDefined } from 'class-validator';
-import { ChannelTypeEnum, ICredentialsDto } from '@notifire/shared';
+import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { ApplicationCommand } from '../../../shared/commands/project.command';
 

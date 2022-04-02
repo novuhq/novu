@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MantineProvider, Global, ColorSchemeProvider, ColorScheme } from '@mantine/core';
+import { NotificationsProvider } from '@mantine/notifications';
 import { mantineConfig } from './config/theme.config';
 import { colors } from './config';
 
@@ -29,9 +30,13 @@ export function ThemeProvider({ children, dark = true }: { children: JSX.Element
               backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
               color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
             },
+            a: {
+              textDecoration: 'none',
+              color: 'inherit',
+            },
           })}
         />
-        {children}
+        <NotificationsProvider>{children}</NotificationsProvider>
       </MantineProvider>
     </ColorSchemeProvider>
   );

@@ -1,1 +1,1 @@
-export const NOTIFIRE_OPTIONS = 'NOTIFIRE_OPTIONS';
+export const NOVU_OPTIONS = 'NOVU_OPTIONS';

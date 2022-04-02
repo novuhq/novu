@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository } from '@notifire/dal';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { MessageEntity, MessageRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
 import { QueueService } from '../../../shared/services/queue';
 import { MarkMessageAsSeenCommand } from './mark-message-as-seen.command';
 

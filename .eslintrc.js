@@ -24,6 +24,7 @@ module.exports = {
   rules: {
     '@typescript-eslint/lines-between-class-members': 'off',
     'react/jsx-wrap-multilines': 'off',
+    'react/jsx-filename-extension': 'off',
     'multiline-comment-style': ['error', 'starred-block'],
     'promise/catch-or-return': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -34,6 +35,7 @@ module.exports = {
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': ['off'],
     'mocha/no-mocha-arrows': 'off',
+    '@typescript-eslint/default-param-last': 'off',
     'no-return-await': 'off',
     'no-await-in-loop': 'off',
     'no-continue': 'off',
@@ -59,16 +61,15 @@ module.exports = {
     'no-restricted-imports': [
       'error',
       {
-        patterns: ['@notifire/shared/*', '@notifire/dal/*', '!import2/good'],
+        patterns: ['@novu/shared/*', '@novu/dal/*', '!import2/good'],
       },
     ],
     'padding-line-between-statements': [
       'error',
-      { blankLine: 'always', prev: ['const', 'let', 'var'], next: ['*'] },
       { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['if', 'for'] },
       { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
       { blankLine: 'always', prev: '*', next: 'return' },
-     ],
+    ],
     '@typescript-eslint/naming-convention': [
       'error',
       { selector: 'class', format: ['PascalCase'] },

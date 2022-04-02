@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, ICredentialsDto, CredentialsKeyEnum } from '@notifire/shared';
+import { ChannelTypeEnum, ICredentialsDto, CredentialsKeyEnum } from '@novu/shared';
 import { useMutation } from 'react-query';
-import { message } from 'antd';
+import { showNotification } from '@mantine/notifications';
 import { Image, useMantineColorScheme } from '@mantine/core';
 import { Button, colors, Input, PasswordInput, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
@@ -71,10 +71,18 @@ export function ConnectIntegrationForm({
         });
       }
     } catch (e: any) {
-      message.warn(`Exception occurred while fetching integration: ${e?.messages.toString()}`);
+      showNotification({
+        message: `Exception occurred while fetching integration: ${e?.messages.toString()}`,
+        color: 'red',
+      });
+
+      return;
     }
 
-    message.success(`Successfully ${createModel ? 'added' : 'updated'} integration`);
+    showNotification({
+      message: `Successfully ${createModel ? 'added' : 'updated'} integration`,
+      color: 'green',
+    });
 
     showModal(false);
   }
@@ -112,7 +120,7 @@ export function ConnectIntegrationForm({
                     label={credential.displayName}
                     required
                     placeholder={credential.displayName}
-                    data-test-id={credential.key}
+                    description={credential.description ?? ''}data-test-id={credential.key}
                     error={errors[credential.key]?.message}
                     {...field}
                     {...register(credential.key, {

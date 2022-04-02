@@ -1,4 +1,4 @@
-import { IntegrationEntity } from '@notifire/dal';
+import { IntegrationEntity } from '@novu/dal';
 import { ISmsFactory, ISmsHandler } from './interfaces';
 import { SnsHandler, TelnyxHandler, TwilioHandler, Sms77Handler, PlivoHandler } from './handlers';
 

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export interface ICredentials {
   apiKey?: string;

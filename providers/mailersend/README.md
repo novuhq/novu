@@ -1,11 +1,11 @@
-# Notifire Mailersend Provider
+# Novu Mailersend Provider
 
-A Mailersend email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A Mailersend email provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-import import { MailersendEmailProvider } from '@notifire/mailersend';
+import import { MailersendEmailProvider } from '@novu/mailersend';
  const provider = new MailersendEmailProvider({
      apiKey: process.env.MAILERSEND_API_KEY
  });

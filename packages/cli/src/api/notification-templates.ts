@@ -1,4 +1,4 @@
-import { ICreateNotificationTemplateDto } from '@notifire/shared';
+import { ICreateNotificationTemplateDto } from '@novu/shared';
 import { post } from './api.service';
 import { API_NOTIFICATION_TEMPLATES_URL } from '../constants';
 

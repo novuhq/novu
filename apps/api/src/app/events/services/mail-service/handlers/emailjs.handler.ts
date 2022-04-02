@@ -1,7 +1,7 @@
-import { EmailJsConfig } from '@notifire/emailjs/build/main/lib/emailjs.config';
-import { EmailJsProvider } from '@notifire/emailjs';
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
+import { EmailJsConfig } from '@novu/emailjs/build/main/lib/emailjs.config';
+import { EmailJsProvider } from '@novu/emailjs';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
 import { BaseHandler } from './base.handler';
 
 export class EmailJsHandler extends BaseHandler {

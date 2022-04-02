@@ -1,5 +1,5 @@
 import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, IsUUID } from 'class-validator';
-import { LogCodeEnum, LogStatusEnum } from '@notifire/shared';
+import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
 

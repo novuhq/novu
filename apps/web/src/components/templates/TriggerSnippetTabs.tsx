@@ -1,14 +1,14 @@
 import { Prism } from '@mantine/prism';
-import { INotificationTrigger } from '@notifire/shared';
+import { INotificationTrigger } from '@novu/shared';
 import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
-  const triggerCodeSnippet = `import { Notifire } from '@notifire/node'; 
+  const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
-const notifire = new Notifire('<API_KEY>');
+const novu = new Novu('<API_KEY>');
 
-notifire.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
+novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
   $user_id: '<REPLACE_WITH_USER_ID>',
   ${trigger.variables
     .map((variable) => {

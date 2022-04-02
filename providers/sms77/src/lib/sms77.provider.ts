@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
-} from '@notifire/core';
+} from '@novu/node';
 
 import Sms77Client, { SmsJsonResponse, SmsParams } from 'sms77-client';
 
@@ -23,7 +23,7 @@ export class Sms77SmsProvider implements ISmsProvider {
       from?: string;
     }
   ) {
-    this.sms77Client = new Sms77Client(config.apiKey, 'Notifire');
+    this.sms77Client = new Sms77Client(config.apiKey, 'Novu');
   }
 
   async sendMessage(

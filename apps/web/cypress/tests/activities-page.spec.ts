@@ -36,22 +36,6 @@ describe('Activity Feed Screen', function () {
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
   });
 
-  it.skip('should display stats on top of page', function () {
-    cy.visit('/activities');
-    cy.get('.ant-statistic')
-      .contains('Sent this month', {
-        matchCase: false,
-      })
-      .parent('.ant-statistic')
-      .contains('50');
-    cy.get('.ant-statistic')
-      .contains('Sent this week', {
-        matchCase: false,
-      })
-      .parent('.ant-statistic')
-      .contains('50');
-  });
-
   it('should show errors and warning', function () {
     cy.intercept(/.*activity\?page.*/, (r) => {
       r.continue((res) => {
@@ -64,9 +48,23 @@ describe('Activity Feed Screen', function () {
     });
     cy.visit('/activities');
 
-    cy.get('tbody tr').eq(0).get('.ant-badge-status-error').should('be.visible');
-    cy.get('tbody tr').eq(1).get('.ant-badge-status-success').should('be.visible');
-    cy.get('tbody tr').eq(2).get('.ant-badge-status-warning').should('be.visible');
+    cy.get('tbody tr')
+      .getByTestId('status-badge')
+      .eq(0)
+      .should('have.css', 'background-color')
+      .and('eq', 'rgb(229, 69, 69)');
+
+    cy.get('tbody tr')
+      .getByTestId('status-badge')
+      .eq(1)
+      .should('have.css', 'background-color')
+      .and('eq', 'rgb(77, 153, 128)');
+
+    cy.get('tbody tr')
+      .getByTestId('status-badge')
+      .eq(2)
+      .should('have.css', 'background-color')
+      .and('eq', 'rgb(229, 69, 69)');
   });
 
   it('should filter by email channel', function () {

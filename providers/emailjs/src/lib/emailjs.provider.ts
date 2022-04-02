@@ -3,7 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-} from '@notifire/core';
+} from '@novu/node';
 import { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { EmailJsConfig } from './emailjs.config';
 
@@ -31,15 +31,15 @@ export class EmailJsProvider implements IEmailProvider {
     html,
     attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const attachmentsModel: MessageAttachment[] = attachments ? attachments.map(
-      (attachment) => {
-        return {
-          name: attachment.name,
-          data: attachment.file.toString(),
-          type: attachment.mime,
-        };
-      }
-    ) : [];
+    const attachmentsModel: MessageAttachment[] = attachments
+      ? attachments.map((attachment) => {
+          return {
+            name: attachment.name,
+            data: attachment.file.toString(),
+            type: attachment.mime,
+          };
+        })
+      : [];
 
     attachmentsModel?.push({ data: html, alternative: true });
 
@@ -52,6 +52,7 @@ export class EmailJsProvider implements IEmailProvider {
         attachment: attachmentsModel,
       })
     );
+
     return {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       id: sent.header['message-id']!,

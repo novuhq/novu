@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApplicationRepository, SubscriberEntity } from '@notifire/dal';
+import { ApplicationRepository, SubscriberEntity } from '@novu/dal';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';

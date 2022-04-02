@@ -9,27 +9,27 @@ Let's create a notification layer in **under 5 minutes.**
 ## 📦 Install
 
 ```bash
-npm install @notifire/core
+npm install @novu/node
 ```
 
 ```bash
-yarn add @notifire/core
+yarn add @novu/node
 ```
 
 ## 🔨 Usage
 
 ### Register Providers
 
-Choose the providers you need, and register them to with Notifire,
+Choose the providers you need, and register them to with Novu,
 full list of providers is available at [full_providers_list], full documentation for providers, and interfaces is available at [].
 
 ```ts
-import { Notifire, ChannelTypeEnum } from "@notifire/core";
-import { SendgridEmailProvider } from "@notifire/sendgrid";
+import { Novu, ChannelTypeEnum } from "@novu/node";
+import { SendgridEmailProvider } from "@novu/sendgrid";
 
-const notifire = new Notifire();
+const novu = new Novu();
 
-await notifire.registerProvider(
+await novu.registerProvider(
   new SendgridEmailProvider({
     apiKey: process.env.SENDGRID_API_KEY,
   })
@@ -38,10 +38,10 @@ await notifire.registerProvider(
 
 ### Register Templates
 
-Choose a template created by Notifire's community, or create your own, and register with Notifire.
+Choose a template created by Novu's community, or create your own, and register with Novu.
 
 ```ts
-const passwordResetTemplate = await notifire.registerTemplate({
+const passwordResetTemplate = await novu.registerTemplate({
   id: "password-reset",
   messages: [
     {
@@ -66,7 +66,7 @@ const passwordResetTemplate = await notifire.registerTemplate({
 On the relevant business logic unit, just declare the trigger event, pass pre-defined parameters, you're done 🎊.
 
 ```ts
-await notifire.trigger("<REPLACE_WITH_EVENT_NAME>", {
+await novu.trigger("<REPLACE_WITH_EVENT_NAME>", {
   $user_id: "<USER IDENTIFIER>",
   $email: "test@email.com",
   firstName: "John",
