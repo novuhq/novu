@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, providers, IConfigCredentials } from '@novu/shared';
+import { ChannelTypeEnum, providers, IConfigCredentials, ILogoFileName } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -53,6 +53,7 @@ export function IntegrationsStore() {
           comingSoon: !!x.comingSoon,
           active: integration?.active ?? true,
           connected: !!integration,
+          logoFileName: x.logoFileName,
         };
       });
 
@@ -118,4 +119,5 @@ export interface IIntegratedProvider {
   comingSoon: boolean;
   active: boolean;
   connected: boolean;
+  logoFileName: ILogoFileName;
 }

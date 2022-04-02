@@ -91,8 +91,7 @@ export function ConnectIntegrationForm({
     setIsActive((prev) => !prev);
   }
 
-  const isDark = colorScheme === 'dark';
-  const logoSrc = provider ? `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png` : '';
+  const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
 
   return (
     <Form onSubmit={handleSubmit(onCreatIntegration)}>
@@ -202,16 +201,6 @@ const CloseButton = styled.button`
 
   &:hover {
     cursor: pointer;
-  }
-`;
-
-const ConnectedWrapper = styled(SideElementBase)`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  ${StyledText}, svg {
-    color: ${colors.success};
   }
 `;
 
