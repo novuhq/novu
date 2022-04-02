@@ -1,5 +1,4 @@
 import {
-  IProviderConfig,
   mailgunConfig,
   mailjetConfig,
   mailJsConfig,
@@ -15,8 +14,9 @@ import {
   snsConfig,
   telnyxConfig,
   twilioConfig,
-} from './provider.interface';
+} from './provider-credentials';
 import { ChannelTypeEnum } from '../../entities/message-template';
+import { IProviderConfig } from './provider.interface';
 
 export const providers: IProviderConfig[] = [
   {
@@ -25,6 +25,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailJsConfig,
     docReference: 'https://www.emailjs.com/docs/',
+    logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
   },
   {
     id: 'mailgun',
@@ -32,6 +33,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailgunConfig,
     docReference: 'https://documentation.mailgun.com/en/latest/',
+    logoFileName: { light: 'mailgun.svg', dark: 'mailgun.svg' },
   },
   {
     id: 'mailjet',
@@ -40,6 +42,7 @@ export const providers: IProviderConfig[] = [
     credentials: mailjetConfig,
     docReference:
       'https://documentation.mailjet.com/hc/en-us/categories/360003942934-Mailjet-Documentation-Center-?utm_term=&utm_campaign=2090162100&utm_content=&utm_source=google&utm_medium=cpc&creative=376403038923&keyword=&matchtype=&network=g&device=c&gclid=CjwKCAjwlcaRBhBYEiwAK341jZcp57kFjJav0TcX06RVp0Z0Ws4cMVCghQ52SIL8Fb3aJ9Fpcnu9axoCXDgQAvD_BwE',
+    logoFileName: { light: 'mailjet.png', dark: 'mailjet.png' },
   },
   {
     id: 'mandrill',
@@ -47,6 +50,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: mandrillConfig,
     docReference: 'https://mandrillapp.com/docs/?_ga=1.34114145.1141874178.1422518109',
+    logoFileName: { light: 'mandrill.svg', dark: 'mandrill.svg' },
   },
   {
     id: 'nodemailer',
@@ -54,6 +58,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: nodemailerConfig,
     docReference: 'https://nodemailer.com/about/',
+    logoFileName: { light: 'nodemailer.svg', dark: 'nodemailer.svg' },
   },
   {
     id: 'postmark',
@@ -61,6 +66,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: postmarkConfig,
     docReference: 'https://postmarkapp.com/developer',
+    logoFileName: { light: 'postmark.png', dark: 'postmark.png' },
   },
   {
     id: 'sendgrid',
@@ -68,6 +74,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendgridConfig,
     docReference: 'https://docs.sendgrid.com/',
+    logoFileName: { light: 'sendgrid.png', dark: 'sendgrid.png' },
   },
   {
     id: 'sendinblue',
@@ -76,6 +83,7 @@ export const providers: IProviderConfig[] = [
     credentials: sendinblueConfig,
     docReference:
       'https://www.sendinblue.com/?utm_source=adwords_brand&utm_medium=lastclick&utm_content=SendinBlue&utm_extension&utm_term=%2Bsendinblue&utm_matchtype=b&utm_campaign=629579262&utm_network=g&km_adid=355470526977&km_adposition&km_device=c&utm_adgroupid=31406137162&gclid=CjwKCAjwlcaRBhBYEiwAK341jUKWuciIZYX0QDYm9Y8bga6i1-bAC1D36eUPvBWJRawD347sUXlxXxoC3B4QAvD_BwE',
+    logoFileName: { light: 'sendinblue.png', dark: 'sendinblue.png' },
   },
   {
     id: 'ses',
@@ -83,6 +91,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: sesConfig,
     docReference: 'https://docs.aws.amazon.com/ses/index.html',
+    logoFileName: { light: 'ses.svg', dark: 'ses.svg' },
   },
   {
     id: 'nexmo',
@@ -90,6 +99,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: nexmoConfig,
     docReference: 'https://developer.nexmo.com/api/sms?theme=dark',
+    logoFileName: { light: 'nexmo.png', dark: 'nexmo.png' },
   },
   {
     id: 'plivo',
@@ -97,6 +107,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: plivoConfig,
     docReference: 'https://www.plivo.com/docs/',
+    logoFileName: { light: 'plivo.png', dark: 'plivo.png' },
   },
 
   {
@@ -105,6 +116,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: sms77Config,
     docReference: 'https://www.sms77.io/de/docs/gateway/http-api/',
+    logoFileName: { light: 'sms77.svg', dark: 'sms77.svg' },
   },
   {
     id: 'sns',
@@ -112,6 +124,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: snsConfig,
     docReference: 'https://docs.aws.amazon.com/sns/index.html',
+    logoFileName: { light: 'sns.svg', dark: 'sns.svg' },
   },
   {
     id: 'telnyx',
@@ -119,6 +132,7 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: telnyxConfig,
     docReference: 'https://developers.telnyx.com/',
+    logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
   },
   {
     id: 'twilio',
@@ -126,5 +140,6 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: twilioConfig,
     docReference: 'https://www.twilio.com/docs',
+    logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
   },
 ];

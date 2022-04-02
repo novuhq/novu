@@ -6,6 +6,7 @@ export interface IProviderConfig {
   displayName: string;
   channel: ChannelTypeEnum;
   credentials: IConfigCredentials[];
+  logoFileName: ILogoFileName;
   docReference: string;
   comingSoon?: boolean;
 }
