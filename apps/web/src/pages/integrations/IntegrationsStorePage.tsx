@@ -98,9 +98,15 @@ const ContentWrapper = styled.div`
 
 const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
   return unsortedProviders
-    .sort((x, y) => Number(!x.connected) - Number(!y.connected))
-    .sort((a, b) => Number(!a.active) - Number(!b.active));
+    .sort((a, b) => Number(b.active) - Number(a.active))
+    .sort((x, y) => Number(isConnected(y)) - Number(isConnected(x)));
 };
+
+function isConnected(provider: IIntegratedProvider) {
+  return provider.credentials.some((cred) => {
+    return cred.value;
+  });
+}
 
 export interface IIntegratedProvider {
   providerId: string;
