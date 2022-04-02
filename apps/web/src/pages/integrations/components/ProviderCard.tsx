@@ -4,7 +4,7 @@ import { Button, colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
-import { IConfigCredentials } from '@notifire/shared';
+import { IConfigCredentials } from '@novu/shared';
 
 export function ProviderCard({
   provider,
@@ -22,9 +22,6 @@ export function ProviderCard({
     provider.credentials.some((cred: IConfigCredentials) => {
       return !cred.value;
     });
-
-  // eslint-disable-next-line no-console
-  console.log(provider.credentials);
 
   function handleOnClickSettings() {
     onConnectClick(true, false, provider);
@@ -55,9 +52,9 @@ export function ProviderCard({
 
         <CardFooter>
           {!provider.connected ? (
-            <StyledBottom fullWidth variant={'outline'} isDark={isDark}>
+            <StyledButton fullWidth variant={'outline'} isDark={isDark}>
               Connect
-            </StyledBottom>
+            </StyledButton>
           ) : (
             <CardStatusBar active={provider.active} />
           )}
@@ -67,7 +64,7 @@ export function ProviderCard({
   );
 }
 
-const StyledBottom = styled(Button)<{ isDark: boolean }>`
+const StyledButton = styled(Button)<{ isDark: boolean }>`
   background-image: ${({ isDark }) =>
     isDark
       ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`
