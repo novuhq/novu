@@ -36,22 +36,6 @@ describe('Activity Feed Screen', function () {
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
   });
 
-  it.skip('should display stats on top of page', function () {
-    cy.visit('/activities');
-    cy.get('.ant-statistic')
-      .contains('Sent this month', {
-        matchCase: false,
-      })
-      .parent('.ant-statistic')
-      .contains('50');
-    cy.get('.ant-statistic')
-      .contains('Sent this week', {
-        matchCase: false,
-      })
-      .parent('.ant-statistic')
-      .contains('50');
-  });
-
   it('should show errors and warning', function () {
     cy.intercept(/.*activity\?page.*/, (r) => {
       r.continue((res) => {

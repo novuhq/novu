@@ -1,5 +1,5 @@
 {
-  "name": "notifirehq",
+  "name": "novuhq",
   "private": true,
   "scripts": {
     "bootstrap": "npm run setup:dev",

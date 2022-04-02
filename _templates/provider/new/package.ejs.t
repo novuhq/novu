@@ -11,7 +11,7 @@
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/notifirehq/novu",
+  "repository": "https://github.com/novuhq/novu",
   "license": "MIT",
   "keywords": [],
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "extends": "@nrwl/workspace/presets/npm.json",
-  "npmScope": "notifirehq",
+  "npmScope": "novuhq",
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/nx-cloud",

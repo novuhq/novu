@@ -5,7 +5,7 @@
 <% PascalName = h.changeCase.pascal(name) -%>
 # Novu <%= h.changeCase.pascal(name) %> Provider
 
-A <%= PascalName %> <%= LowerType %> provider library for [@novu/node](https://github.com/notifirehq/novu)
+A <%= PascalName %> <%= LowerType %> provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 

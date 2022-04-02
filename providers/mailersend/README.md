@@ -1,6 +1,6 @@
 # Novu Mailersend Provider
 
-A Mailersend email provider library for [@novu/node](https://github.com/notifirehq/novu)
+A Mailersend email provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 

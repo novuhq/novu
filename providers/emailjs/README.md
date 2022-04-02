@@ -1,6 +1,6 @@
 # EmailJs Email Provider
 
-An [emailjs](https://github.com/eleith/emailjs) email provider library for [novu](https://github.com/notifirehq/novu).
+An [emailjs](https://github.com/eleith/emailjs) email provider library for [novu](https://github.com/novuhq/novu).
 
 ## Usage
 
