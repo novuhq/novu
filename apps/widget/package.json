@@ -5,6 +5,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "^4.1.0",
+    "@novu/bell": "workspace:^0.4.0-alpha.3",
     "@novu/sdk": "^0.4.0-alpha.3",
     "@novu/shared": "^0.4.0-alpha.3",
     "@testing-library/jest-dom": "^5.11.4",
