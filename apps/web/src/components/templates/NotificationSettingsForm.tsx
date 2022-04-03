@@ -1,6 +1,6 @@
 import { Controller, useFormContext } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Grid } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
