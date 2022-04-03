@@ -1,12 +1,12 @@
 {
   "name": "novu",
-  "version": "0.4.0-alpha.2",
+  "version": "0.4.0-alpha.3",
   "description": "On-Boarding Cli",
   "main": "index.js",
   "scripts": {
     "build:post": "mkdir dist/constants/dashboard && cp src/constants/dashboard/index.html dist/constants/dashboard/index.html",
     "build:pre": "rm -rf dist ",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "pnpm build:pre && tsc -p tsconfig.build.json && pnpm build:post",
     "build:prod": "pnpm build:pre && pnpm build && pnpm build:post",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
@@ -22,7 +22,7 @@
     "novu": "./dist/index.js"
   },
   "devDependencies": {
-    "@novu/shared": "^0.4.0-alpha.2",
+    "@novu/shared": "^0.4.0-alpha.3",
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
     "nodemon": "^2.0.15",

@@ -108,24 +108,24 @@ importers:
       '@nestjs/terminus': ^7.1.0
       '@nestjs/testing': ^7.4.2
       '@nestjsx/crud': ^4.6.2
-      '@novu/dal': ^0.4.0-alpha.2
-      '@novu/emailjs': ^0.4.0-alpha.2
-      '@novu/mailgun': ^0.4.0-alpha.2
-      '@novu/mailjet': ^0.4.0-alpha.2
-      '@novu/mandrill': ^0.4.0-alpha.2
-      '@novu/node': ^0.4.0-alpha.2
-      '@novu/nodemailer': ^0.4.0-alpha.2
-      '@novu/plivo': ^0.4.0-alpha.2
-      '@novu/postmark': ^0.4.0-alpha.2
-      '@novu/sendgrid': ^0.4.0-alpha.2
-      '@novu/sendinblue': ^0.4.0-alpha.2
-      '@novu/ses': ^0.4.0-alpha.2
-      '@novu/shared': ^0.4.0-alpha.2
-      '@novu/sms77': ^0.4.0-alpha.2
-      '@novu/sns': ^0.4.0-alpha.2
-      '@novu/telnyx': ^0.4.0-alpha.2
-      '@novu/testing': ^0.4.0-alpha.2
-      '@novu/twilio': ^0.4.0-alpha.2
+      '@novu/dal': ^0.4.0-alpha.3
+      '@novu/emailjs': ^0.4.0-alpha.4
+      '@novu/mailgun': ^0.4.0-alpha.4
+      '@novu/mailjet': ^0.4.0-alpha.4
+      '@novu/mandrill': ^0.4.0-alpha.4
+      '@novu/node': ^0.4.0-alpha.4
+      '@novu/nodemailer': ^0.4.0-alpha.4
+      '@novu/plivo': ^0.4.0-alpha.4
+      '@novu/postmark': ^0.4.0-alpha.4
+      '@novu/sendgrid': ^0.4.0-alpha.4
+      '@novu/sendinblue': ^0.4.0-alpha.4
+      '@novu/ses': ^0.4.0-alpha.4
+      '@novu/shared': ^0.4.0-alpha.3
+      '@novu/sms77': ^0.4.0-alpha.4
+      '@novu/sns': ^0.4.0-alpha.4
+      '@novu/telnyx': ^0.4.0-alpha.4
+      '@novu/testing': ^0.4.0-alpha.3
+      '@novu/twilio': ^0.4.0-alpha.4
       '@sendgrid/mail': ^7.6.0
       '@sentry/node': ^6.1.0
       '@sentry/tracing': ^6.3.6
@@ -190,23 +190,23 @@ importers:
       '@nestjs/terminus': 7.2.0_b3355eaaab723e52e70bfca874d5ccb9
       '@nestjsx/crud': 4.6.2_d71f9d2eeeee42f14b4376bfe86f6f42
       '@novu/dal': link:../../libs/dal
-      '@novu/emailjs': 0.4.0-alpha.2
-      '@novu/mailgun': 0.4.0-alpha.2
-      '@novu/mailjet': 0.4.0-alpha.2
-      '@novu/mandrill': 0.4.0-alpha.2
-      '@novu/node': 0.4.0-alpha.2
-      '@novu/nodemailer': 0.4.0-alpha.2
-      '@novu/plivo': 0.4.0-alpha.2
-      '@novu/postmark': 0.4.0-alpha.2
-      '@novu/sendgrid': 0.4.0-alpha.2
-      '@novu/sendinblue': 0.4.0-alpha.2
-      '@novu/ses': 0.4.0-alpha.2
+      '@novu/emailjs': link:../../providers/emailjs
+      '@novu/mailgun': link:../../providers/mailgun
+      '@novu/mailjet': link:../../providers/mailjet
+      '@novu/mandrill': link:../../providers/mandrill
+      '@novu/node': link:../../packages/node
+      '@novu/nodemailer': link:../../providers/nodemailer
+      '@novu/plivo': link:../../providers/plivo
+      '@novu/postmark': link:../../providers/postmark
+      '@novu/sendgrid': link:../../providers/sendgrid
+      '@novu/sendinblue': link:../../providers/sendinblue
+      '@novu/ses': link:../../providers/ses
       '@novu/shared': link:../../libs/shared
-      '@novu/sms77': 0.4.0-alpha.2
-      '@novu/sns': 0.4.0-alpha.2
-      '@novu/telnyx': 0.4.0-alpha.2
+      '@novu/sms77': link:../../providers/sms77
+      '@novu/sns': link:../../providers/sns
+      '@novu/telnyx': link:../../providers/telnyx
       '@novu/testing': link:../../libs/testing
-      '@novu/twilio': 0.4.0-alpha.2
+      '@novu/twilio': link:../../providers/twilio
       '@sendgrid/mail': 7.6.2
       '@sentry/node': 6.19.3
       '@sentry/tracing': 6.19.3
@@ -284,9 +284,9 @@ importers:
       '@mantine/hooks': ^4.1.0
       '@mantine/notifications': ^4.1.0
       '@mantine/prism': ^4.1.0
-      '@novu/dal': ^0.4.0-alpha.2
-      '@novu/shared': ^0.4.0-alpha.2
-      '@novu/testing': ^0.4.0-alpha.2
+      '@novu/dal': ^0.4.0-alpha.3
+      '@novu/shared': ^0.4.0-alpha.3
+      '@novu/testing': ^0.4.0-alpha.3
       '@sentry/react': ^6.3.1
       '@sentry/tracing': ^6.3.1
       '@storybook/addon-actions': ^6.4.14
@@ -446,10 +446,10 @@ importers:
       '@craco/craco': ^6.1.1
       '@faker-js/faker': ^6.0.0
       '@mantine/core': ^4.1.0
-      '@novu/dal': ^0.4.0-alpha.2
-      '@novu/sdk': ^0.4.0-alpha.2
-      '@novu/shared': ^0.4.0-alpha.2
-      '@novu/testing': ^0.4.0-alpha.2
+      '@novu/dal': ^0.4.0-alpha.3
+      '@novu/sdk': ^0.4.0-alpha.3
+      '@novu/shared': ^0.4.0-alpha.3
+      '@novu/testing': ^0.4.0-alpha.3
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
@@ -557,9 +557,9 @@ importers:
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
       '@nestjs/websockets': ^7.6.17
-      '@novu/dal': ^0.4.0-alpha.2
-      '@novu/shared': ^0.4.0-alpha.2
-      '@novu/testing': ^0.4.0-alpha.2
+      '@novu/dal': ^0.4.0-alpha.3
+      '@novu/shared': ^0.4.0-alpha.3
+      '@novu/testing': ^0.4.0-alpha.3
       '@sentry/node': ^6.3.3
       '@types/express': ^4.17.8
       '@types/jest': ^27.0.2
@@ -676,7 +676,7 @@ importers:
       '@aws-sdk/client-s3': ^3.14.0
       '@aws-sdk/s3-request-presigner': ^3.14.0
       '@faker-js/faker': ^6.0.0
-      '@novu/shared': ^0.4.0-alpha.2
+      '@novu/shared': ^0.4.0-alpha.3
       '@octokit/graphql': ^4.3.1
       '@sendgrid/mail': ^7.4.2
       '@types/async': ^3.2.1
@@ -857,8 +857,8 @@ importers:
   libs/testing:
     specifiers:
       '@faker-js/faker': ^6.0.0
-      '@novu/dal': ^0.4.0-alpha.2
-      '@novu/shared': ^0.4.0-alpha.2
+      '@novu/dal': ^0.4.0-alpha.3
+      '@novu/shared': ^0.4.0-alpha.3
       '@types/async': ^3.2.1
       '@types/bluebird': ^3.5.30
       '@types/node': ^14.6.0
@@ -957,7 +957,7 @@ importers:
 
   packages/cli:
     specifiers:
-      '@novu/shared': ^0.4.0-alpha.2
+      '@novu/shared': ^0.4.0-alpha.3
       '@types/configstore': ^5.0.1
       '@types/inquirer': ^8.2.0
       axios: ^0.25.0
@@ -996,7 +996,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^8.2.0
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1013,7 +1013,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@nestjs/common': 8.4.3
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../node
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1038,6 +1038,7 @@ importers:
       '@types/lodash.get': ^4.4.6
       '@types/lodash.merge': ^4.6.6
       '@types/node': ^14.6.0
+      axios: ^0.26.1
       codecov: ^3.5.0
       cz-conventional-changelog: ^3.3.0
       handlebars: ^4.7.7
@@ -1051,6 +1052,7 @@ importers:
       typedoc: ^0.19.0
       typescript: 4.1.3
     dependencies:
+      axios: 0.26.1
       handlebars: 4.7.7
       lodash.get: 4.4.2
       lodash.merge: 4.6.2
@@ -1073,7 +1075,7 @@ importers:
   providers/emailjs:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1090,7 +1092,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       emailjs: 3.8.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1112,7 +1114,7 @@ importers:
   providers/mailersend:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1129,7 +1131,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       mailersend: 1.3.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1151,7 +1153,7 @@ importers:
   providers/mailgun:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1170,7 +1172,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       form-data: 4.0.0
       mailgun.js: 3.7.3
       nock: 13.2.4
@@ -1194,7 +1196,7 @@ importers:
   providers/mailjet:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       '@types/node-mailjet': ^3.3.7
       codecov: ^3.5.0
@@ -1212,7 +1214,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       node-mailjet: 3.3.7
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1236,7 +1238,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@mailchimp/mailchimp_transactional': ^1.0.46
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1254,7 +1256,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@mailchimp/mailchimp_transactional': 1.0.47
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1276,7 +1278,7 @@ importers:
   providers/nexmo:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       '@vonage/server-sdk': ^2.10.10
       codecov: ^3.5.0
@@ -1293,7 +1295,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       '@vonage/server-sdk': 2.10.11
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1315,7 +1317,7 @@ importers:
   providers/nodemailer:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       '@types/nodemailer': ^6.4.4
       codecov: ^3.5.0
@@ -1333,7 +1335,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       nodemailer: 6.7.3
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1356,7 +1358,7 @@ importers:
   providers/plivo:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1373,7 +1375,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       plivo: 4.29.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1395,7 +1397,7 @@ importers:
   providers/postmark:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1412,7 +1414,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       postmark: 2.9.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1434,7 +1436,7 @@ importers:
   providers/sendgrid:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@sendgrid/mail': ^7.4.6
       '@types/jest': 27.4.0
       codecov: ^3.5.0
@@ -1451,7 +1453,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       '@sendgrid/mail': 7.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1473,7 +1475,7 @@ importers:
   providers/sendinblue:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@sendinblue/client': ^3.0.1
       '@types/jest': 27.4.0
       '@types/request': ^2.48.7
@@ -1491,7 +1493,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       '@sendinblue/client': 3.1.0
       '@types/request': 2.48.8
     devDependencies:
@@ -1515,7 +1517,7 @@ importers:
     specifiers:
       '@aws-sdk/client-ses': 3.48.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1534,7 +1536,7 @@ importers:
       typescript: ^4.4.3
     dependencies:
       '@aws-sdk/client-ses': 3.48.0
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1557,7 +1559,7 @@ importers:
   providers/sms77:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1575,7 +1577,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       node-fetch: 2.6.7
       sms77-client: 2.17.0_node-fetch@2.6.7
     devDependencies:
@@ -1599,7 +1601,7 @@ importers:
     specifiers:
       '@aws-sdk/client-sns': ^3.39.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1616,7 +1618,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@aws-sdk/client-sns': 3.58.0
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1637,7 +1639,7 @@ importers:
   providers/telnyx:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1654,7 +1656,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       telnyx: 1.23.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1676,7 +1678,7 @@ importers:
   providers/twilio:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.2
+      '@novu/node': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1693,7 +1695,7 @@ importers:
       twilio: ^3.67.2
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.4.0-alpha.2
+      '@novu/node': link:../../packages/node
       twilio: 3.76.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -11021,151 +11023,6 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.13.0
-
-  /@novu/emailjs/0.4.0-alpha.2:
-    resolution: {integrity: sha512-Oe/t5NBWmrCGaem4gijU8c50Xa7Ks6inBo0rObaFMv8CwdBp9ZYykVak3heZgUL22FV780B5D1qy/WFiv6RImw==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      emailjs: 3.8.0
-    dev: false
-
-  /@novu/mailgun/0.4.0-alpha.2:
-    resolution: {integrity: sha512-Qkz510tMds87lg1YrMQrtEA6QMfvmX6KFun4jXFeVj5u1yDaOZR9RlZyT9Q5efGWv5cWABjNAa1iCDSPxT8inA==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      form-data: 4.0.0
-      mailgun.js: 3.7.3
-      nock: 13.2.4
-    transitivePeerDependencies:
-      - domexception
-      - supports-color
-    dev: false
-
-  /@novu/mailjet/0.4.0-alpha.2:
-    resolution: {integrity: sha512-0zEtZlxHPdbW5R0p0MuASaBZWH40GQ80NgenKIhxd9gb9pYaFyGumt83zJQe8wRYOzNO5YggBkhSYTb1jPEvWg==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      node-mailjet: 3.3.7
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
-  /@novu/mandrill/0.4.0-alpha.2:
-    resolution: {integrity: sha512-hlJn8sQgzCs5uoY6M7TrRfVl+y5lQq4Ta6kjsIQnmBB6AuidkhmpxbFxsj1/exmCtwmlC2t9xNfuEjnFiFdVOQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@mailchimp/mailchimp_transactional': 1.0.47
-      '@novu/node': 0.4.0-alpha.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /@novu/node/0.4.0-alpha.2:
-    resolution: {integrity: sha512-7qkZn7wixvPkZmWOzR7mOx26U5A7hAtqGKeVYYOXJblxNatTEOfJzzV61a6Zpbl3eG7TqZtTL58YX8HpgxDsvA==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/nodemailer/0.4.0-alpha.2:
-    resolution: {integrity: sha512-DSRhElJERbD6Ofk0MG2+UEQz2kyTo/gRi1ikM5AcTINiBHHeHLtfuymg5MIR5O3NDE9PgpFXC3u7DEj0x2z7tA==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      nodemailer: 6.7.3
-    dev: false
-
-  /@novu/plivo/0.4.0-alpha.2:
-    resolution: {integrity: sha512-Q1HTaF3P1xxfWe4qQYpPZHElZJdU81gRFcOdrkNzOIsNh660qfJPlXQtbYFDOPapZfoQV0cV4i6Sx9TGLNH/dA==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      plivo: 4.29.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: false
-
-  /@novu/postmark/0.4.0-alpha.2:
-    resolution: {integrity: sha512-p6i4zAAn764oTxCoXq7nxPyf9xSp5v2fGWsXVuZAA14alsg9LKbPngTjtekDyotJOJPDHc6rp9rmViXChJyyfg==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      postmark: 2.9.5
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /@novu/sendgrid/0.4.0-alpha.2:
-    resolution: {integrity: sha512-AvKMwXjRVYbDEv1IjtWpYk+Dp0USxeCe+1hnNUgPr//FaSMPzqzcjmu365/rZcMxD/T4NVPtxS7hm7Zvwqhwzw==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      '@sendgrid/mail': 7.6.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /@novu/sendinblue/0.4.0-alpha.2:
-    resolution: {integrity: sha512-C6cyV16ysACfr1NjN95d4SZX/C6Uyu9f7KLlOJwAegvpRZp4sX4FkfgTabIfvyB+UqDb3h5DC+3BPEdPeN6eIg==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      '@sendinblue/client': 3.1.0
-      '@types/request': 2.48.8
-    dev: false
-
-  /@novu/ses/0.4.0-alpha.2:
-    resolution: {integrity: sha512-sWFGzyRbpRxRhAQ/KxQ2QCrn7419gfLUT+pERLCCeKa/cIZMR5yCJmVF9xYSlKPi71fFJkMBcXQbrLcLTFjcAQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@aws-sdk/client-ses': 3.48.0
-      '@novu/node': 0.4.0-alpha.2
-      emailjs: 3.7.0
-    dev: false
-
-  /@novu/sms77/0.4.0-alpha.2:
-    resolution: {integrity: sha512-A8NUUjhu4IbfFB+vgvyFJl//t2A19y0wUlYhqdyOcToC8N6mncdF+IWjU+tI88074c1p9coONWZYXnhClqr2Iw==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      node-fetch: 2.6.7
-      sms77-client: 2.17.0_node-fetch@2.6.7
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
-  /@novu/sns/0.4.0-alpha.2:
-    resolution: {integrity: sha512-2QJlrHTJM6AWNq/1B50I76C2bo3UzAGAYkv5Yo2sU0oNSueR0egzIM7lzYAsMI4Ou7RK250PXqd0LW0DMRxrxg==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@aws-sdk/client-sns': 3.58.0
-      '@novu/node': 0.4.0-alpha.2
-    dev: false
-
-  /@novu/telnyx/0.4.0-alpha.2:
-    resolution: {integrity: sha512-bSe8Y8QLfS8XjcmrVwVbTejxHbrQdy6QcIkPlLXf/g7zpvOReG5ku7kQZVRnJGTHe15Jx1vsDVMXjQ8+n0kzmQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      telnyx: 1.23.0
-    dev: false
-
-  /@novu/twilio/0.4.0-alpha.2:
-    resolution: {integrity: sha512-PwbXDX4aRMi/DR8ZTsANw4Jqs5tVdCezG7ElaxaF/F5HCLK2QpPAKoRK4KpSRC1wCxCevH6cQO9w34yvLoGHOg==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.2
-      twilio: 3.76.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: false
 
   /@npmcli/fs/1.1.1:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}

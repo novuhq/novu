@@ -1,6 +1,6 @@
 {
   "name": "@novu/bell",
-  "version": "0.0.1",
+  "version": "0.4.0-alpha.3",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
@@ -40,6 +40,5 @@
   "files": [
     "build"
   ],
-  "types": "build/index.d.ts",
-  "dependencies": {}
+  "types": "build/index.d.ts"
 }
