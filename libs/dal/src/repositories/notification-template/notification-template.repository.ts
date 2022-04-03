@@ -7,9 +7,9 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     super(NotificationTemplate, NotificationTemplateEntity);
   }
 
-  async findByTriggerIdentifier(organizationId: string, identifier: string) {
+  async findByTriggerIdentifier(applicationId: string, identifier: string) {
     const item = await NotificationTemplate.findOne({
-      _organizationId: organizationId,
+      _applicationId: applicationId,
       'triggers.identifier': identifier,
     }).populate('messages.template');
 
