@@ -19,12 +19,19 @@ export class CreateNotificationTemplate {
     const contentService = new ContentService();
     const variables = contentService.extractMessageVariables(command.messages);
 
+    const templateCheck = await this.notificationTemplateRepository.findByTriggerIdentifier(
+      command.organizationId,
+      `${slugify(command.name, {
+        lower: true,
+        strict: true,
+      })}`
+    );
     const trigger: INotificationTrigger = {
       type: TriggerTypeEnum.EVENT,
       identifier: `${slugify(command.name, {
         lower: true,
         strict: true,
-      })}-${shortid.generate()}`,
+      })}${!templateCheck ? '' : '-' + shortid.generate()}`,
       variables: variables.map((i) => {
         return {
           name: i,
