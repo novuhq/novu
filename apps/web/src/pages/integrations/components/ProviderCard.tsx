@@ -13,8 +13,8 @@ export function ProviderCard({
   onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
-  const logoSrc = `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png`;
+
+  const logoSrc = `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
 
   function handleOnClickSettings() {
     onConnectClick(true, false, provider);
