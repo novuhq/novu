@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, ICredentialsDto } from '@notifire/shared';
+import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 import { useMutation } from 'react-query';
-import { message } from 'antd';
+import { showNotification } from '@mantine/notifications';
 import { Image, useMantineColorScheme } from '@mantine/core';
 import { Button, colors, PasswordInput, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
@@ -71,10 +71,18 @@ export function ConnectIntegrationForm({
         });
       }
     } catch (e: any) {
-      message.warn(`Exception occurred while fetching integration: ${e?.messages.toString()}`);
+      showNotification({
+        message: `Exception occurred while fetching integration: ${e?.messages.toString()}`,
+        color: 'red',
+      });
+
+      return;
     }
 
-    message.success(`Successfully ${createModel ? 'added' : 'updated'} integration`);
+    showNotification({
+      message: `Successfully ${createModel ? 'added' : 'updated'} integration`,
+      color: 'green',
+    });
 
     showModal(false);
   }
@@ -83,8 +91,7 @@ export function ConnectIntegrationForm({
     setIsActive((prev) => !prev);
   }
 
-  const isDark = colorScheme === 'dark';
-  const logoSrc = provider ? `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png` : '';
+  const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
 
   return (
     <Form onSubmit={handleSubmit(onCreatIntegration)}>
@@ -111,6 +118,7 @@ export function ConnectIntegrationForm({
                   label={credential.displayName}
                   required
                   placeholder={credential.displayName}
+                  description={credential.description ?? ''}
                   data-test-id={credential.key}
                   error={errors[credential.key]?.message}
                   {...field}
@@ -193,16 +201,6 @@ const CloseButton = styled.button`
 
   &:hover {
     cursor: pointer;
-  }
-`;
-
-const ConnectedWrapper = styled(SideElementBase)`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  ${StyledText}, svg {
-    color: ${colors.success};
   }
 `;
 

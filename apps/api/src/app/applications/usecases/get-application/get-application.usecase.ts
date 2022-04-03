@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApplicationRepository } from '@notifire/dal';
+import { ApplicationRepository } from '@novu/dal';
 import { GetApplicationCommand } from './get-application.command';
 
 @Injectable()

@@ -4,22 +4,15 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 
-import { ChannelTypeEnum } from '@notifire/shared';
-import {
-  UserEntity,
-  UserRepository,
-  ApplicationEntity,
-  OrganizationEntity,
-  NotificationTemplateEntity,
-  NotificationGroupEntity,
-} from '@notifire/dal';
+import { ChannelTypeEnum } from '@novu/shared';
+import { UserEntity, UserRepository, ApplicationEntity, OrganizationEntity, NotificationGroupEntity } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
 
 import { OrganizationService } from './organization.service';
 import { ApplicationService } from './application.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
-import { IntegrationService } from './integraion.service';
+import { IntegrationService } from './integration.service';
 
 export class UserSession {
   private userRepository = new UserRepository();
@@ -113,7 +106,7 @@ export class UserSession {
       .put('/v1/applications/branding')
       .send({
         color: '#2a9d8f',
-        logo: 'https://notifire.co/img/logo.png',
+        logo: 'https://novu.co/img/logo.png',
         fontColor: '#214e49',
         contentBackground: '#c2cbd2',
         fontFamily: 'Montserrat',
@@ -191,7 +184,7 @@ export class UserSession {
   }
 
   async triggerEvent(triggerName: string, payload = {}) {
-    const response = await this.testAgent.post('/v1/events/trigger').send({
+    await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
       payload,
     });

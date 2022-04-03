@@ -14,10 +14,10 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository } from '@notifire/dal';
+import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
-import { IJwtPayload } from '@notifire/shared';
+import { IJwtPayload } from '@novu/shared';
 import { AuthService } from './services/auth.service';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';

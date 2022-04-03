@@ -1,7 +1,7 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { OrganizationRepository, UserRepository, MemberRepository } from '@notifire/dal';
-import { MemberRoleEnum, MemberStatusEnum } from '@notifire/shared';
-import { Notifire } from '@notifire/node';
+import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
+import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { Novu } from '@novu/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InviteMemberCommand } from './invite-member.command';
 import { MailService } from '../../../shared/services/mail/mail.service';
@@ -30,9 +30,9 @@ export class InviteMember {
     const token = createGuid();
 
     if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
-      const notifire = new Notifire(process.env.NOVU_API_KEY);
+      const novu = new Novu(process.env.NOVU_API_KEY as any);
 
-      await notifire.trigger('invite-to-organization-wBnO8NpDn', {
+      await novu.trigger('invite-to-organization-wBnO8NpDn', {
         $user_id: command.email,
         $email: command.email,
         inviteeName: capitalize(command.email.split('@')[0]),

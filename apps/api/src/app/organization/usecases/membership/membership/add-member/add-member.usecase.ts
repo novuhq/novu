@@ -1,6 +1,6 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { OrganizationRepository, UserRepository, MemberRepository } from '@notifire/dal';
-import { MemberStatusEnum } from '@notifire/shared';
+import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
+import { MemberStatusEnum } from '@novu/shared';
 import { AddMemberCommand } from './add-member.command';
 import { ApiException } from '../../../../../shared/exceptions/api.exception';
 

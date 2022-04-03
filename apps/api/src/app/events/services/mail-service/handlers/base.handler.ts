@@ -1,5 +1,5 @@
-import { IEmailOptions, IEmailProvider } from '@notifire/core';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { IEmailOptions, IEmailProvider } from '@novu/node';
+import { ChannelTypeEnum } from '@novu/shared';
 import { IMailHandler } from '../interfaces/send.handler.interface';
 
 export abstract class BaseHandler implements IMailHandler {

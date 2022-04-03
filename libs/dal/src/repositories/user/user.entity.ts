@@ -1,4 +1,4 @@
-import { AuthProviderEnum } from '@notifire/shared';
+import { AuthProviderEnum } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 
 export interface IUserToken {

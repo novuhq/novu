@@ -1,7 +1,7 @@
-import { MessageRepository, NotificationTemplateEntity } from '@notifire/dal';
-import { UserSession } from '@notifire/testing';
+import { MessageRepository, NotificationTemplateEntity } from '@novu/dal';
+import { UserSession } from '@novu/testing';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => {

@@ -8,8 +8,8 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { ChannelCTATypeEnum, ChannelTypeEnum } from '@notifire/shared';
-import { IEmailBlock } from '@notifire/dal';
+import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
+import { IEmailBlock } from '@novu/dal';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageFilter } from '../create-notification-template';

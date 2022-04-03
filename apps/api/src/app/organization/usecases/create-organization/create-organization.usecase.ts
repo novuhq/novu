@@ -1,6 +1,6 @@
 import { Injectable, Logger, Scope } from '@nestjs/common';
-import { OrganizationEntity, OrganizationRepository, UserEntity, UserRepository } from '@notifire/dal';
-import { MemberRoleEnum } from '@notifire/shared';
+import { OrganizationEntity, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
+import { MemberRoleEnum } from '@novu/shared';
 import { capitalize } from '../../../shared/services/helper/helper.service';
 import { MailService } from '../../../shared/services/mail/mail.service';
 import { QueueService } from '../../../shared/services/queue';
@@ -63,8 +63,8 @@ export class CreateOrganization {
         templateId: '35339302-a24e-4dc2-bff5-02f32b8537cc',
         to: user.email,
         from: {
-          email: 'hi@notifire.co',
-          name: 'Notifire',
+          email: 'hi@novu.co',
+          name: 'Novu',
         },
         params: {
           firstName: capitalize(user.firstName),

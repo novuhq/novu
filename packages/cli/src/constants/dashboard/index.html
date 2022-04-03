@@ -401,16 +401,16 @@ function pulsateBell() {
     elt.src = t;
     var before = o.getElementsByTagName(f)[0];
     before.parentNode.insertBefore(elt, before);
-  })(window, document, "https://sdk.novu.co/sdk.umd.min.js", "notifire", "script");
+  })(window, document, "https://sdk.novu.co/sdk.umd.min.js", "novu", "script");
 
-  notifire.init('REPLACE_WITH_applicationId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
+  novu.init('REPLACE_WITH_applicationId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
     $user_id: 'REPLACE_WITH_$user_id',
     $first_name: 'REPLACE_WITH_$first_name',
     $last_name: 'REPLACE_WITH_$last_name',
   });
 
   var activeListener = false;
-  notifire.on('on_notification_count_change', () => {
+  novu.on('on_notification_count_change', () => {
     if (!activeListener) return;
 
     pulsateBell();

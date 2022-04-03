@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository } from '@notifire/dal';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { MessageRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
 import { GetUnseenCountCommand } from './get-unseen-count.command';
 
 @Injectable()

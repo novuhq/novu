@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 import { Injectable, Logger, Scope } from '@nestjs/common';
-import { MemberRoleEnum } from '@notifire/shared';
+import { MemberRoleEnum } from '@novu/shared';
 import { InviteMemberCommand } from '../invite-member/invite-member.command';
 import { InviteMember } from '../invite-member/invite-member.usecase';
 import { BulkInviteCommand } from './bulk-invite.command';

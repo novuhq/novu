@@ -1,10 +1,11 @@
 import React, { ChangeEvent } from 'react';
 import styled from '@emotion/styled';
-import { PasswordInputProps, PasswordInput as MantinePasswordInput, MantineMargins } from '@mantine/core';
+import { PasswordInputProps, PasswordInput as MantinePasswordInput } from '@mantine/core';
 import { colors } from '../config';
 import { inputStyles } from '../config/inputs.styles';
+import { SpacingProps } from '../shared/spacing.props';
 
-interface IPasswordInputProps extends MantineMargins {
+interface IPasswordInputProps extends SpacingProps {
   label?: React.ReactNode;
   error?: React.ReactNode;
   placeholder?: string;

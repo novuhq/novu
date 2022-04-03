@@ -1,11 +1,11 @@
-# Notifire Ses Provider
+# Novu Ses Provider
 
-A SES email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A SES email provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-import { SESEmailProvider } from "@notifire/ses"
+import { SESEmailProvider } from "@novu/ses"
 
 const provider = new SESEmailProvider({
     region: "eu-west-1",

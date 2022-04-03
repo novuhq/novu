@@ -1,6 +1,6 @@
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
-import { PostmarkEmailProvider } from '@notifire/postmark';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
+import { PostmarkEmailProvider } from '@novu/postmark';
 import { BaseHandler } from './base.handler';
 
 export class PostmarkHandler extends BaseHandler {

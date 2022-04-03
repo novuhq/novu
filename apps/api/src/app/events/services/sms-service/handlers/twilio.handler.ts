@@ -1,6 +1,6 @@
-import { TwilioSmsProvider } from '@notifire/twilio';
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
+import { TwilioSmsProvider } from '@novu/twilio';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
 
 export class TwilioHandler extends BaseSmsHandler {

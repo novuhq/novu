@@ -5,15 +5,15 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 (
   module.exports = {
-    title: 'Notifire',
+    title: 'Novu',
     tagline: 'All the tools you need to build modern transactional notification experience',
-    url: 'https://notifire.co',
+    url: 'https://novu.co',
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
-    favicon: 'img/favicon.ico',
-    organizationName: 'notifirehq', // Usually your GitHub org/user name.
-    projectName: 'notifire', // Usually your repo name.
+    favicon: 'img/favicon-gradient.png',
+    organizationName: 'novuhq', // Usually your GitHub org/user name.
+    projectName: 'novu', // Usually your repo name.
 
     presets: [
       [
@@ -23,7 +23,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           docs: {
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
-            editUrl: 'https://github.com/notifirehq/notifire/blob/main/docs/',
+            editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
           },
           theme: {
             customCss: require.resolve('./src/css/custom.css'),
@@ -39,10 +39,12 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           respectPrefersColorScheme: true,
         },
         navbar: {
-          title: 'Notifire',
           logo: {
-            alt: 'Notifire Logo',
-            src: 'img/logo.svg',
+            alt: 'Novu Logo',
+            src: 'img/logo-formerly-light-bg.svg',
+            srcDark: 'img/logo-formerly-dark-bg.svg',
+            width: 100,
+            height: 100,
           },
           items: [
             {
@@ -57,7 +59,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               position: 'right',
             },
             {
-              href: 'https://github.com/notifirehq/notifire',
+              href: 'https://github.com/novuhq/novu',
               className: 'navbar-item-github',
               position: 'right',
             },
@@ -80,7 +82,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               items: [
                 {
                   label: 'GitHub',
-                  href: 'https://github.com/notifirehq/notifire',
+                  href: 'https://github.com/novuhq/novu',
                 },
                 {
                   label: 'Discord',
@@ -93,12 +95,12 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               items: [
                 {
                   label: 'GitHub',
-                  href: 'https://github.com/notifirehq/notifire',
+                  href: 'https://github.com/novuhq/novu',
                 },
               ],
             },
           ],
-          copyright: `Copyright © ${new Date().getFullYear()} Notifire.`,
+          copyright: `Copyright © ${new Date().getFullYear()} Novu.`,
         },
         prism: {
           theme: lightCodeTheme,

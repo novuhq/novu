@@ -1,4 +1,4 @@
-import { UserSession } from '@notifire/testing';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Health-check', () => {

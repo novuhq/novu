@@ -8,7 +8,7 @@ E-mail providers are used to send e-mail messages as part of your notification s
 
 ## Provider interface
 
-Each e-mail provider in Notifire must adhere to the following interface.
+Each e-mail provider in Novu must adhere to the following interface.
 
 ```typescript
 export interface IProvider {
@@ -42,7 +42,7 @@ You can see how to write all types of providers in our [article][create-provider
 After you have created your provider you must register it with the library:
 
 ```typescript
-await notifire.registerProvider(
+await novu.registerProvider(
   new SendgridEmailProvider({
     apiKey: process.env.SENDGRID_API_KEY,
     from: "support@supercorp.io",

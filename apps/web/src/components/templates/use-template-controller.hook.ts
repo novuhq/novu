@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { message } from 'antd';
 import {
   ChannelCTATypeEnum,
   ChannelTypeEnum,
@@ -8,13 +7,15 @@ import {
   IUpdateNotificationTemplate,
   INotificationTrigger,
   IEmailBlock,
-} from '@notifire/shared';
+} from '@novu/shared';
+import { showNotification } from '@mantine/notifications';
 import { useMutation, useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { createTemplate, getTemplateById, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
+import { colors } from '../../design-system';
 
 export interface ITemplateMessage {
   template: {
@@ -283,18 +284,30 @@ export function useTemplateController(templateId: string) {
         });
 
         refetch();
-        message.success('Template updated successfully');
+
+        showNotification({
+          message: 'Template updated successfully',
+          color: 'green',
+        });
         navigate('/templates');
       } else {
         const response = await createNotification(payload);
 
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
-        message.success('Template saved successfully');
+
+        showNotification({
+          message: 'Template saved successfully',
+          color: 'green',
+        });
       }
     } catch (e: any) {
       Sentry.captureException(e);
-      message.error(e.message || 'Un-expected error occurred');
+
+      showNotification({
+        message: e.message || 'Un-expected error occurred',
+        color: 'red',
+      });
     }
   };
 

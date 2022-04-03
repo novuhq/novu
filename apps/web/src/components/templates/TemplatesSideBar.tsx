@@ -1,6 +1,6 @@
 import { Navbar, useMantineTheme } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
 import { colors, TemplateButton, Text } from '../../design-system';
 import {

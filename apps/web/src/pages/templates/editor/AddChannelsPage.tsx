@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Grid, Group } from '@mantine/core';
-import { ChannelTypeEnum } from '@notifire/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
 import { colors, shadows, Text } from '../../../design-system';
 import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';

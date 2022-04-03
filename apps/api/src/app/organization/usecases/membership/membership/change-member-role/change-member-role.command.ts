@@ -1,4 +1,4 @@
-import { MemberRoleEnum } from '@notifire/shared';
+import { MemberRoleEnum } from '@novu/shared';
 import { IsDefined, IsEnum } from 'class-validator';
 import { OrganizationCommand } from '../../../../../shared/commands/organization.command';
 import { CommandHelper } from '../../../../../shared/commands/command.helper';

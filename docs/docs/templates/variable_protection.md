@@ -8,10 +8,10 @@ If you want to protect missing variables using template, you config `TriggerEngi
 If so, you must provide all variables.
 
 
-## NotifireConfig Interface
+## NovuConfig Interface
 
 ```typescript
-export interface INotifireConfig {
+export interface INovuConfig {
   channels?: {
     email?: {
       from?: { name: string; email: string };

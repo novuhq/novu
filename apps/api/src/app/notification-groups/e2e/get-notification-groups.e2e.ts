@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { UserSession } from '@notifire/testing';
+import { UserSession } from '@novu/testing';
 
 describe('Get Notification Groups - /notification-groups (GET)', async () => {
   let session: UserSession;

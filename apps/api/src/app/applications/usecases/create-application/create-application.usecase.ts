@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApplicationRepository } from '@notifire/dal';
+import { ApplicationRepository } from '@novu/dal';
 import * as hat from 'hat';
 import { nanoid } from 'nanoid';
 import { CreateApplicationCommand } from './create-application.command';

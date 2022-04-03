@@ -25,7 +25,7 @@ Cypress.Commands.add('initializeShellSession', (userId, identifier, settings = {
         $email: faker.internet.email(),
       };
 
-      w.notifire.init(
+      w.novu.init(
         identifier,
         { unseenBadgeSelector: '#unseen-badge-span', bellSelector: '#notification-bell' },
         subscriber
@@ -35,7 +35,7 @@ Cypress.Commands.add('initializeShellSession', (userId, identifier, settings = {
     })
     .then(function (subscriber) {
       return cy
-        .get('#notifire-iframe-element')
+        .get('#novu-iframe-element')
         .its('0.contentDocument.body')
         .should('not.be.empty')
         .then((body) => {

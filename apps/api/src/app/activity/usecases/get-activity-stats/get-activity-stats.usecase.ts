@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository } from '@notifire/dal';
+import { MessageRepository } from '@novu/dal';
 import * as moment from 'moment';
 import { GetActivityStatsCommand } from './get-activity-stats.command';
 
@@ -10,7 +10,16 @@ export class GetActivityStats {
   async execute(command: GetActivityStatsCommand): Promise<{
     weeklySent: number;
     monthlySent: number;
+    yearlySent: number;
   }> {
+    const yearly = await this.messageRepository.count({
+      _applicationId: command.applicationId,
+      _organizationId: command.organizationId,
+      createdAt: {
+        $gte: String(moment().subtract(1, 'year').toDate()),
+      },
+    });
+
     const monthly = await this.messageRepository.count({
       _applicationId: command.applicationId,
       _organizationId: command.organizationId,
@@ -30,6 +39,7 @@ export class GetActivityStats {
     return {
       weeklySent: weekly,
       monthlySent: monthly,
+      yearlySent: yearly,
     };
   }
 }

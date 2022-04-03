@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import { INotificationTemplate } from '@notifire/shared';
+import { INotificationTemplate } from '@novu/shared';
 import { getNotificationsList } from '../notifications';
 
 export function useTemplates() {

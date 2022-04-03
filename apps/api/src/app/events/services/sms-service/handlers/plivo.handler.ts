@@ -1,6 +1,6 @@
-import { ChannelTypeEnum } from '@notifire/core';
-import { PlivoSmsProvider } from '@notifire/plivo';
-import { ICredentials } from '@notifire/dal';
+import { ChannelTypeEnum } from '@novu/node';
+import { PlivoSmsProvider } from '@novu/plivo';
+import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
 
 export class PlivoHandler extends BaseSmsHandler {

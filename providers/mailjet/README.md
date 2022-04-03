@@ -1,11 +1,11 @@
-# Notifire Mailjet Provider
+# Novu Mailjet Provider
 
-A Mailjet email provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A Mailjet email provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-    import { MailjetEmailProvider } from "@notifire/mailjet";
+    import { MailjetEmailProvider } from "@novu/mailjet";
     const provider = new MailjetEmailProvider({
       apiKey: process.env.MAILJET_APIKEY,
       apiSecret: process.env.MAILJET_API_SECRET,

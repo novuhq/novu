@@ -1,11 +1,11 @@
-# Notifire sms77 Provider
+# Novu sms77 Provider
 
-A sms77 sms provider library for [@notifire/core](https://github.com/notifirehq/notifire)
+A sms77 sms provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-import { Sms77SmsProvider } from '@notifire/sms77';
+import { Sms77SmsProvider } from '@novu/sms77';
 
 const provider = new Sms77SmsProvider({
     apiKey: process.env.SMS77_API_KEY,

@@ -12,7 +12,7 @@ describe('Settings Screen', function () {
 
     cy.getByTestId('embed-code-snippet').then(function (a) {
       expect(a).to.contain(this.session.application.identifier);
-      expect(a).to.contain('notifire.init');
+      expect(a).to.contain('novu.init');
     });
   });
 
@@ -49,19 +49,6 @@ describe('Settings Screen', function () {
     cy.get('div[aria-valuetext="rgba(185, 103, 199, 1)"]');
     cy.get('body').click();
 
-    /* cy.getByTestId('font-color-picker').click({ force: true });
-     cy.get('button[aria-label="#37D67A"]').click({ force: true });
-     cy.getByTestId('font-color-picker').click({ force: true });
-     cy.get('div[aria-valuetext="rgba(56, 214, 122, 1)"]');
-     cy.get('body').click();
-     */
-
-    cy.getByTestId('content-background-picker').click({ force: true });
-    cy.get('button[aria-label="#2CCCE4"]').click({ force: true });
-    cy.getByTestId('content-background-picker').click({ force: true });
-    cy.get('div[aria-valuetext="rgba(43, 202, 227, 1)"]');
-    cy.get('body').click();
-
     cy.getByTestId('font-family-selector').click({ force: true });
     cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Lato').click();
     cy.getByTestId('font-family-selector').should('have.value', 'Lato');
@@ -71,8 +58,6 @@ describe('Settings Screen', function () {
 
     cy.reload();
     cy.getByTestId('color-picker').should('have.value', '#b967c7');
-    /* cy.getByTestId('font-color-picker').should('have.value', '#0eb554'); */
-    cy.getByTestId('content-background-picker').should('have.value', '#2bcae3');
     cy.getByTestId('font-family-selector').should('have.value', 'Lato');
   });
 });

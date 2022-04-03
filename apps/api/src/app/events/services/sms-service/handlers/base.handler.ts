@@ -1,6 +1,6 @@
-import { ISmsOptions, ISmsProvider } from '@notifire/core';
-import { ChannelTypeEnum } from '@notifire/shared';
-import { ICredentials } from '@notifire/dal';
+import { ISmsOptions, ISmsProvider } from '@novu/node';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ICredentials } from '@novu/dal';
 import { ISmsHandler } from '../interfaces';
 
 export abstract class BaseSmsHandler implements ISmsHandler {

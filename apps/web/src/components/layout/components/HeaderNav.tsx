@@ -69,12 +69,12 @@ export function HeaderNav({}: Props) {
       })}>
       <Container
         fluid
-        padding={30}
+        p={30}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
         <img
-          src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}
+          src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
           alt="logo"
-          style={{ maxWidth: 150 }}
+          style={{ maxWidth: 150, maxHeight: 25 }}
         />
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()} title="Toggle color scheme">

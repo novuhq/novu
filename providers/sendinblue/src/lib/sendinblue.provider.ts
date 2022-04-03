@@ -3,7 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-} from '@notifire/core';
+} from '@novu/node';
 import {
   SendSmtpEmail,
   SendSmtpEmailTo,
@@ -57,5 +57,6 @@ function getFormattedTo(to: string | string[]): SendSmtpEmailTo[] {
   if (typeof to === 'string') {
     return [{ email: to }];
   }
+
   return to.map((email: string) => ({ email }));
 }

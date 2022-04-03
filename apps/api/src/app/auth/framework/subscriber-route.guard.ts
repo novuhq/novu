@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ISubscriberJwt } from '@notifire/shared';
+import { ISubscriberJwt } from '@novu/shared';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()

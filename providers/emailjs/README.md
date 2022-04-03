@@ -1,11 +1,11 @@
 # EmailJs Email Provider
 
-An [emailjs](https://github.com/eleith/emailjs) email provider library for [notifire](https://github.com/notifirehq/notifire).
+An [emailjs](https://github.com/eleith/emailjs) email provider library for [novu](https://github.com/novuhq/novu).
 
 ## Usage
 
 ```javascript
-import { EmailJsProvider } from '@notifire/emailjs';
+import { EmailJsProvider } from '@novu/emailjs';
 
 const provider = new EmailJsProvider({
   from: process.env.EMAILJS_FROM_EMAIL,

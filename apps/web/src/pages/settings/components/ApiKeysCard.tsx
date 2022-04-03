@@ -15,7 +15,7 @@ export const ApiKeysCard = () => {
     <Card title="Api Keys">
       <div style={{ maxWidth: '600px' }}>
         <Input
-          label="Use this api key to interact with the notifire api"
+          label="Use this api key to interact with the novu api"
           readOnly
           rightSection={
             <Tooltip label={clipboard.copied ? 'Copied!' : 'Copy Key'}>

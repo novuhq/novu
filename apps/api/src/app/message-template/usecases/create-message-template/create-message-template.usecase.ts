@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessageTemplateEntity, MessageTemplateRepository } from '@notifire/dal';
+import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
 

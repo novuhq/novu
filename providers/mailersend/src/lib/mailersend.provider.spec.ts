@@ -1,4 +1,3 @@
-import { MailerSendInterface } from './../../../mailersend/build/main/lib/mailersend.interface.d';
 import { MailersendEmailProvider } from './mailersend.provider';
 import MailerSend from 'mailersend';
 
@@ -6,7 +5,7 @@ const mockConfig = {
   apiKey: 'SG.1234',
 };
 
-const mockNotifireMessage = {
+const mockNovuMessage = {
   to: ['test@test1.com', 'test@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
@@ -24,14 +23,14 @@ test('should trigger mailerSend with expected parameters', async () => {
     .mockImplementation(async () => {
       return {} as any;
     });
-  const response = await provider.sendMessage(mockNotifireMessage);
+  const response = await provider.sendMessage(mockNovuMessage);
   expect(spy).toHaveBeenCalled();
   expect(spy).toBeCalledWith({
-    to: mockNotifireMessage.to,
-    subject: mockNotifireMessage.subject,
-    html: mockNotifireMessage.html,
-    text: mockNotifireMessage.text,
-    from: mockNotifireMessage.from,
+    to: mockNovuMessage.to,
+    subject: mockNovuMessage.subject,
+    html: mockNovuMessage.html,
+    text: mockNovuMessage.text,
+    from: mockNovuMessage.from,
     attachments: [
       {
         mime: 'text/plain',
@@ -49,16 +48,16 @@ test('should trigger mailerSend correctly', async () => {
     .mockImplementation(async () => {
       return {} as any;
     });
-  const response = await provider.sendMessage(mockNotifireMessage);
+  const response = await provider.sendMessage(mockNovuMessage);
   expect(spy).toHaveBeenCalled();
   expect(spy).toBeCalledWith('/email', {
     method: 'POST',
     body: {
       to: [{ email: 'test@test1.com' }, { email: 'test@test2.com' }],
-      subject: mockNotifireMessage.subject,
-      html: mockNotifireMessage.html,
-      text: mockNotifireMessage.text,
-      from: { email: mockNotifireMessage.from },
+      subject: mockNovuMessage.subject,
+      html: mockNovuMessage.html,
+      text: mockNovuMessage.text,
+      from: { email: mockNovuMessage.from },
       attachments: [
         {
           content: Buffer.from('ZEdWemRBPT0=').toString(),

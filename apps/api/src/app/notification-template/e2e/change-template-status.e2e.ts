@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { NotificationTemplateRepository } from '@notifire/dal';
-import { UserSession, NotificationTemplateService } from '@notifire/testing';
+import { NotificationTemplateRepository } from '@novu/dal';
+import { UserSession, NotificationTemplateService } from '@novu/testing';
 
 describe('Change template status by id - /notification-templates/:templateId/status (PUT)', async () => {
   let session: UserSession;

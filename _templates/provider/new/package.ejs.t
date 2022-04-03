@@ -4,14 +4,14 @@
 
 
 {
-  "name": "@notifire/<%= name %>",
-  "version": "0.2.3",
-  "description": "A <%= name %> wrapper for notifire",
+  "name": "@novu/<%= name %>",
+  "version": "",
+  "description": "A <%= name %> wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/notifirehq/notifire",
+  "repository": "https://github.com/novuhq/novu",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -36,7 +36,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@notifire/core": "^0.2.3"
+    "@novu/node": "0.3.6-alpha.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

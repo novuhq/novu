@@ -1,4 +1,4 @@
-import { INotificationTrigger } from '@notifire/shared';
+import { INotificationTrigger } from '@novu/shared';
 import { Modal, useMantineTheme } from '@mantine/core';
 import { Button, colors, shadows, Title } from '../../design-system';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';

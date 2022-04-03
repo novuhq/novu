@@ -1,7 +1,8 @@
-import { MantineMargins, Title as MantineTitle } from '@mantine/core';
+import { Title as MantineTitle } from '@mantine/core';
 import { colors } from '../../config';
+import { SpacingProps } from '../../shared/spacing.props';
 
-interface ITitleProps extends JSX.ElementChildrenAttribute, MantineMargins {
+interface ITitleProps extends JSX.ElementChildrenAttribute, SpacingProps {
   size?: 1 | 2;
 }
 /**

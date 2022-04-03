@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
-import { IApplication, ISubscriberJwt } from '@notifire/shared';
+import { IApplication, ISubscriberJwt } from '@novu/shared';
 import * as WebFont from 'webfontloader';
 
 import { AuthContext } from './store/auth.context';
@@ -16,6 +16,7 @@ import { SocketContext } from './store/socket/socket.store';
 import { WidgetShell } from './ApplicationShell';
 import { getApplication } from './api/application';
 import { useAuth } from './hooks/use-auth.hook';
+import { colors } from './shared/config/colors';
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
 function AppContent() {
   const { isLoggedIn } = useAuth();
   const { socket } = useSocketController();
+  const [userColorScheme, setUserColorScheme] = useState<'light' | 'dark'>('light');
   const { data: application } = useQuery<Pick<IApplication, '_id' | 'name' | 'branding'>>(
     'application',
     getApplication,
@@ -71,14 +73,15 @@ function AppContent() {
 
   const theme = {
     colors: {
-      main: application?.branding?.color || '#cd5450',
-      fontColor: application?.branding?.fontColor || '#333737',
-      contentBackground: application?.branding?.contentBackground || '#efefef',
+      main: application?.branding?.color || colors.vertical,
+      fontColor: userColorScheme === 'light' ? colors.B40 : colors.white,
+      secondaryFontColor: userColorScheme === 'light' ? colors.B80 : colors.B40,
     },
-    fontFamily: application?.branding?.fontFamily || 'Roboto',
+    fontFamily: application?.branding?.fontFamily || 'Lato',
     layout: {
       direction: (application?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
+    colorScheme: userColorScheme,
   };
 
   useEffect(() => {
@@ -118,12 +121,10 @@ function AppContent() {
 }
 
 const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string; fontColor: string }>`
-  border-radius: 3px;
   overflow: hidden;
-  border: 1px solid #e9e9e9;
-  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 7px 0px;
   direction: ${({ layoutDirection }) => layoutDirection};
   color: ${({ fontColor }) => fontColor};
+  min-width: 420px;
 
   ::-moz-selection {
     background: ${({ brandColor }) => brandColor};

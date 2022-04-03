@@ -1,7 +1,8 @@
-import { LoadingOverlay, MantineMargins, Tabs as MantineTabs } from '@mantine/core';
+import { LoadingOverlay, Tabs as MantineTabs } from '@mantine/core';
 import React, { ReactNode } from 'react';
 import useStyles from './Tabs.styles';
 import { colors } from '../config';
+import { SpacingProps } from '../shared/spacing.props';
 
 interface IMenuButtonProp {
   label: string;
@@ -9,7 +10,7 @@ interface IMenuButtonProp {
   icon?: ReactNode | string;
 }
 
-interface ITabsProp extends MantineMargins {
+interface ITabsProp extends SpacingProps {
   menuTabs: IMenuButtonProp[];
   orientation?: 'horizontal' | 'vertical';
   active?: number;

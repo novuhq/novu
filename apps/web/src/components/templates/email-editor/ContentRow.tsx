@@ -1,4 +1,4 @@
-import { IEmailBlock } from '@notifire/shared';
+import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, MenuItem as DropdownItem, RadioGroup, Radio, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
@@ -46,12 +46,8 @@ export function ContentRow({
   const rowStyleMenu = [
     <DropdownItem key="ltr" sx={{ '&:hover': { backgroundColor: 'transparent' } }}>
       <RadioGroup value={textDirection} onChange={changeRowStyles}>
-        <Radio value="ltr" data-test-id="align-left-btn">
-          Align Left
-        </Radio>
-        <Radio value="rtl" data-test-id="align-right-btn">
-          Align Right
-        </Radio>
+        <Radio value="ltr" data-test-id="align-left-btn" label="Align Left" />
+        <Radio value="rtl" data-test-id="align-right-btn" label="Align Right" />
       </RadioGroup>
     </DropdownItem>,
     <DropdownItem
