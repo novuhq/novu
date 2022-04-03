@@ -18,7 +18,7 @@ test('should register an SMS provider and return it', async () => {
   expect(provider?.id).toEqual('test');
 });
 
-test('should call 2 hooks', async () => {
+test('should call 2 hooks together', async () => {
   const novu = new Novu();
 
   const template = {
