@@ -9,13 +9,12 @@ import {
   IEmailBlock,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { createTemplate, getTemplateById, updateTemplate } from '../../api/templates';
+import { createTemplate, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
-import { colors } from '../../design-system';
 
 export interface ITemplateMessage {
   template: {
@@ -291,7 +290,7 @@ export function useTemplateController(templateId: string) {
         });
         navigate('/templates');
       } else {
-        const response = await createNotification(payload);
+        const response = await createNotification({ ...payload, active: true, draft: false });
 
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
