@@ -14,6 +14,7 @@ export function ProviderCard({
   onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
   const logoSrc = `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
   const brightCard =
     provider.active ||
@@ -27,7 +28,7 @@ export function ProviderCard({
 
   return (
     <StyledCard
-      isDark={isDark}
+      dark={isDark}
       active={brightCard}
       data-test-id="integration-provider-card"
       onClick={() => {
@@ -50,7 +51,7 @@ export function ProviderCard({
 
         <CardFooter>
           {!provider.connected ? (
-            <StyledButton fullWidth variant={'outline'} isDark={isDark}>
+            <StyledButton fullWidth variant={'outline'} dark={isDark}>
               Connect
             </StyledButton>
           ) : (
@@ -62,9 +63,9 @@ export function ProviderCard({
   );
 }
 
-const StyledButton = styled(Button)<{ isDark: boolean }>`
-  background-image: ${({ isDark }) =>
-    isDark
+const StyledButton = styled(Button)<{ dark: boolean }>`
+  background-image: ${({ dark }) =>
+    dark
       ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`
       : `linear-gradient(0deg, ${colors.B98} 0%, ${colors.B98} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`};
 `;
@@ -111,8 +112,8 @@ const CardFooter = styled.div`
   width: 100%;
 `;
 
-const StyledCard = styled.div<{ isDark: boolean; active: boolean }>`
-  background-color: ${({ isDark }) => (isDark ? colors.B17 : colors.B98)};
+const StyledCard = styled.div<{ dark: boolean; active: boolean }>`
+  background-color: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
   border-radius: 7px;
   display: inline-block;
   padding: 25px;
@@ -136,8 +137,8 @@ const StyledCard = styled.div<{ isDark: boolean; active: boolean }>`
 
   &:hover {
     cursor: pointer;
-    ${({ isDark }) =>
-      isDark
+    ${({ dark }) =>
+      dark
         ? `
             background-color: ${colors.B20};
             box-shadow: ${shadows.dark};
