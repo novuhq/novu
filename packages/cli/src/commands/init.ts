@@ -186,7 +186,7 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
     {
       type: ChannelTypeEnum.IN_APP,
       content:
-        'Welcome <b>{{$first_name}}</b>! This is your first notification, click on it to visit your live dashboard',
+        'Welcome <b>{{$first_name}}</b>! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
       cta: {
         type: ChannelCTATypeEnum.REDIRECT,
         data: {
