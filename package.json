@@ -12,8 +12,6 @@
     "generate:provider": "npx hygen provider new",
     "lint": "nx run-many --target=lint --all",
     "test": "cross-env CI=true mono-run test:watch --stream --parallel",
-    "copy:files": "cpx README.md packages/node",
-    "prerelease": "pnpm copy:files",
     "start:dev": "cross-env TZ=UTC mono-run start:dev --stream 500",
     "start:web": "cross-env nx run @novu/web:start",
     "start:widget:test": "cross-env nx run-many --target=start:test  --projects=@novu/widget",

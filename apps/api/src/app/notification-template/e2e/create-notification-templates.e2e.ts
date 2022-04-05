@@ -139,4 +139,33 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(template.triggers[0].identifier).to.include('test');
     expect(template.triggers[0].type).to.equal(TriggerTypeEnum.EVENT);
   });
+
+  it('should only add shortid to trigger identifier if same identifier exists', async () => {
+    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+      name: 'test',
+      notificationGroupId: session.notificationGroups[0]._id,
+      description: 'This is a test description',
+      messages: [],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
+    expect(body.data).to.be.ok;
+    const template: INotificationTemplate = body.data;
+
+    expect(template.triggers[0].identifier).to.equal('test');
+
+    const sameNameTemplate: Partial<CreateNotificationTemplateDto> = {
+      name: 'test',
+      notificationGroupId: session.notificationGroups[0]._id,
+      description: 'This is a test description',
+      messages: [],
+    };
+    const { body: newBody } = await session.testAgent.post(`/v1/notification-templates`).send(sameNameTemplate);
+
+    expect(newBody.data).to.be.ok;
+    const newTemplate: INotificationTemplate = newBody.data;
+
+    expect(newTemplate.triggers[0].identifier).to.include('test-');
+  });
 });
