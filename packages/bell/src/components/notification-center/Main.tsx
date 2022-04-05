@@ -5,10 +5,11 @@ import styled from 'styled-components';
 import { NotificationsList } from './components/NotificationsList';
 import { getNotificationsList, markMessageAsSeen } from '../../api/notifications';
 import { useSocket } from '../../hooks/use-socket.hook';
-import { sendNotificationClick, sendUrlChange } from '../../api/sdk.service';
 import { postUsageLog } from '../../api/usage';
+import { notificationCenterProps } from './NotificationCenter';
 
-export function Main() {
+export function Main(props: notificationCenterProps) {
+  const { sendNotificationClick, sendUrlChange } = props;
   const [currentPage, setCurrentPage] = useState<number>(0);
 
   const { isLoading, data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } =

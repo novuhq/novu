@@ -2,21 +2,21 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
-import { IApplication, ISubscriberJwt } from '@novu/shared';
 import * as WebFont from 'webfontloader';
 
-import { AuthContext } from './store/auth.context';
-
+import { IApplication, ISubscriberJwt } from '@novu/shared';
 import { Main } from './Main';
+import { AuthContext } from '../../store/auth.context';
 import { Layout } from './components/layout/Layout';
-
-import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
-import { useSocketController } from './store/socket/use-socket-controller';
-import { SocketContext } from './store/socket/socket.store';
+import { applyToken, getToken, useAuthController } from '../../store/use-auth-controller';
+import { useSocketController } from '../../store/socket/use-socket-controller';
+import { SocketContext } from '../../store/socket/socket.store';
 import { WidgetShell } from './ApplicationShell';
-import { getApplication } from './api/application';
-import { useAuth } from './hooks/use-auth.hook';
-import { colors } from './shared/config/colors';
+import { getApplication } from '../../api/application';
+import { useAuth } from '../../hooks/use-auth.hook';
+import { colors } from '../../shared/config/colors';
+import React from 'react';
+import { notificationCenterProps } from './NotificationCenter';
 
 const queryClient = new QueryClient();
 
@@ -24,10 +24,10 @@ const tokenStoredToken: string = getToken();
 
 applyToken(tokenStoredToken);
 
-function App() {
+export function App(props: notificationCenterProps) {
   return (
     <RootProviders>
-      <AppContent />
+      <AppContent {...props} />
     </RootProviders>
   );
 }
@@ -59,7 +59,7 @@ const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
   }
 `;
 
-function AppContent() {
+function AppContent(props: notificationCenterProps) {
   const { isLoggedIn } = useAuth();
   const { socket } = useSocketController();
   const [userColorScheme, setUserColorScheme] = useState<'light' | 'dark'>('light');
@@ -107,7 +107,7 @@ function AppContent() {
                   path="/:applicationId"
                   element={
                     <Layout>
-                      <Main />
+                      <Main {...props} />
                     </Layout>
                   }
                 />
@@ -134,5 +134,3 @@ const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string; fo
     background: ${({ brandColor }) => brandColor};
   }
 `;
-
-export default App;

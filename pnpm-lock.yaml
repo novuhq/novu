@@ -919,7 +919,7 @@ importers:
     specifiers:
       '@babel/core': ^7.17.8
       '@mantine/core': ^4.1.0
-      '@novu/shared': workspace:^0.4.0-alpha.3
+      '@novu/shared': ^0.4.0-alpha.3
       '@rollup/plugin-commonjs': ^21.0.1
       '@rollup/plugin-node-resolve': ^13.1.3
       '@rollup/plugin-typescript': ^8.3.0
@@ -935,7 +935,6 @@ importers:
       acorn-jsx: ^5.3.2
       axios: ^0.26.1
       babel-loader: ^8.2.4
-      build: ^0.1.4
       chroma-js: ^2.4.2
       moment: ^2.29.1
       react-infinite-scroll-component: ^6.0.0
@@ -955,7 +954,6 @@ importers:
       '@novu/shared': link:../../libs/shared
       acorn-jsx: 5.3.2
       axios: 0.26.1
-      build: 0.1.4
       chroma-js: 2.4.2
       moment: 2.29.1
       react-infinite-scroll-component: 6.1.0
@@ -18454,6 +18452,7 @@ packages:
 
   /async/1.0.0:
     resolution: {integrity: sha1-+PwEyjoTeErenhZBr5hXjPvWR6k=}
+    dev: true
 
   /async/2.6.3:
     resolution: {integrity: sha512-zflvls11DCy+dQWzTW2dzuilv8Z5X/pjfmZOWba6TNIVDm+2UDaJmXSOXlasHKfNBs8oo3M0aT50fDEWfKZjXg==}
@@ -19584,22 +19583,6 @@ packages:
     deprecated: This package is no longer maintained
     dev: false
 
-  /build/0.1.4:
-    resolution: {integrity: sha1-cH/gJv/O3crL/c3zVur9pk8VEEY=}
-    engines: {node: '>v0.4.12'}
-    dependencies:
-      cssmin: 0.3.2
-      jsmin: 1.0.1
-      jxLoader: 0.1.1
-      moo-server: 1.3.0
-      promised-io: 0.3.6
-      timespan: 2.3.0
-      uglify-js: 1.3.5
-      walker: 1.0.8
-      winston: 2.4.5
-      wrench: 1.3.9
-    dev: false
-
   /builtin-modules/2.0.0:
     resolution: {integrity: sha512-3U5kUA5VPsRUA3nofm/BXX7GVHKfxz0hOBAPxXrIvHzlDRkQVqEn6yi8QJegxl4LzOHLdvb7XF5dVawa/VVYBg==}
     engines: {node: '>=4'}
@@ -20530,6 +20513,7 @@ packages:
   /colors/1.0.3:
     resolution: {integrity: sha1-BDP0TYCWgP3rYO0mDxsMJi6CpAs=}
     engines: {node: '>=0.1.90'}
+    dev: true
 
   /colors/1.4.0:
     resolution: {integrity: sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==}
@@ -21955,11 +21939,6 @@ packages:
     dev: false
     optional: true
 
-  /cssmin/0.3.2:
-    resolution: {integrity: sha1-3c5MVHtRCuDVlKjx+/iq+OLFwA0=}
-    hasBin: true
-    dev: false
-
   /cssnano-preset-advanced/5.3.1_postcss@8.4.12:
     resolution: {integrity: sha512-kfCknalY5VX/JKJ3Iri5/5rhZmQIqkbqgXsA6oaTnfA4flY/tt+w0hMxbExr0/fVuJL8w56j211op+pkQoNzoQ==}
     engines: {node: ^10 || ^12 || >=14.0}
@@ -22143,6 +22122,7 @@ packages:
   /cycle/1.0.3:
     resolution: {integrity: sha1-IegLK+hYD5i0aPN5QwZisEbDStI=}
     engines: {node: '>=0.4.0'}
+    dev: true
 
   /cyclist/1.0.1:
     resolution: {integrity: sha1-WW6WmP0MgOEgOMK4LW6xs1tiJNk=}
@@ -24672,6 +24652,7 @@ packages:
   /eyes/0.1.8:
     resolution: {integrity: sha1-Ys8SAjTGg3hdkCNIqADvPgzCC8A=}
     engines: {node: '> 0.1.90'}
+    dev: true
 
   /fast-deep-equal/3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -29535,11 +29516,6 @@ packages:
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-  /js-yaml/0.3.7:
-    resolution: {integrity: sha1-1znY7oZGHlSzVNan19HyrZoWf2I=}
-    engines: {node: '> 0.4.11'}
-    dev: false
-
   /js-yaml/3.14.1:
     resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
     hasBin: true
@@ -29612,12 +29588,6 @@ packages:
     resolution: {integrity: sha512-OYu7XEzjkCQ3C5Ps3QIZsQfNpqoJyZZA99wd9aWd05NCtC5pWOkShK2mkL6HXQR6/Cy2lbNdPlZBpuQHXE63gA==}
     engines: {node: '>=4'}
     hasBin: true
-
-  /jsmin/1.0.1:
-    resolution: {integrity: sha1-570NzWSWw79IYyNb9GGj2YqjuYw=}
-    engines: {node: '>=0.1.93'}
-    hasBin: true
-    dev: false
 
   /json-bigint/1.0.0:
     resolution: {integrity: sha512-SiPv/8VpZuWbvLSMtTDU8hEfrZWg/mH/nV/b4o0CYbSxu1UIQPLdwKOCIyLQX+VIPO5vrLX3i8qtqFyhdPSUSQ==}
@@ -29779,16 +29749,6 @@ packages:
 
   /jwt-decode/3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
-    dev: false
-
-  /jxLoader/0.1.1:
-    resolution: {integrity: sha1-ATTqUUTlM7WU/B/yX/GU4jXFPs0=}
-    engines: {node: '>v0.4.10'}
-    dependencies:
-      js-yaml: 0.3.7
-      moo-server: 1.3.0
-      promised-io: 0.3.6
-      walker: 1.0.8
     dev: false
 
   /kareem/2.3.2:
@@ -31732,11 +31692,6 @@ packages:
       - mongodb-client-encryption
       - mongodb-extjson
       - snappy
-    dev: false
-
-  /moo-server/1.3.0:
-    resolution: {integrity: sha1-XceVaVZaENbv7VQ5SR5p0jkuWPE=}
-    engines: {node: '>v0.4.10'}
     dev: false
 
   /move-concurrently/1.0.1:
@@ -35422,10 +35377,6 @@ packages:
     resolution: {integrity: sha512-W04AqnILOL/sPRXziNicCjSNRruLAuIHEOVBazepu0545DDNGYHz7ar9ZgZ1fMU8/MA4mVxp5rkBWRi6OXIy3Q==}
     dependencies:
       asap: 2.0.6
-    dev: false
-
-  /promised-io/0.3.6:
-    resolution: {integrity: sha512-bNwZusuNIW4m0SPR8jooSyndD35ggirHlxVl/UhIaZD/F0OBv9ebfc6tNmbpZts3QXHggkjIBH8lvtnzhtcz0A==}
     dev: false
 
   /prompt/1.2.2:
@@ -39494,6 +39445,7 @@ packages:
 
   /stack-trace/0.0.10:
     resolution: {integrity: sha1-VHxws0fo0ytOEI6hoqFZ5f3eGcA=}
+    dev: true
 
   /stack-utils/2.0.5:
     resolution: {integrity: sha512-xrQcmYhOsn/1kX+Vraq+7j4oE2j/6BFscZ0etmYg81xuM8Gq0022Pxb8+IqgOFUIaxHs0KaSb7T1+OegiNrNFA==}
@@ -40732,11 +40684,6 @@ packages:
     dependencies:
       setimmediate: 1.0.5
 
-  /timespan/2.3.0:
-    resolution: {integrity: sha1-SQLOBAvRPYRcj1myfp1ZutbzmSk=}
-    engines: {node: '>= 0.2.0'}
-    dev: false
-
   /timsort/0.3.0:
     resolution: {integrity: sha1-QFQRqOfmM5/mTbmiNN4R3DHgK9Q=}
     dev: false
@@ -41742,11 +41689,6 @@ packages:
 
   /ua-parser-js/0.7.31:
     resolution: {integrity: sha512-qLK/Xe9E2uzmYI3qLeOmI0tEOt+TBBQyUIAh4aAgU05FVYzeZrKUdkAZfBNVGRaHVgV0TDkdEngJSw/SyQchkQ==}
-    dev: false
-
-  /uglify-js/1.3.5:
-    resolution: {integrity: sha1-S1v/+Rhu/7qoiOTJ6UvZ/EyUkp0=}
-    hasBin: true
     dev: false
 
   /uglify-js/3.15.3:
@@ -43164,6 +43106,7 @@ packages:
       eyes: 0.1.8
       isstream: 0.1.2
       stack-trace: 0.0.10
+    dev: true
 
   /word-wrap/1.2.3:
     resolution: {integrity: sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==}
@@ -43549,12 +43492,6 @@ packages:
 
   /wrappy/1.0.2:
     resolution: {integrity: sha1-tSQ9jz7BqjXxNkYFvA0QNuMKtp8=}
-
-  /wrench/1.3.9:
-    resolution: {integrity: sha1-bxPsNRRTF+spLKX2UxORskQRFBE=}
-    engines: {node: '>=0.1.97'}
-    deprecated: wrench.js is deprecated! You should check out fs-extra (https://github.com/jprichardson/node-fs-extra) for any operations you were using wrench for. Thanks for all the usage over the years.
-    dev: false
 
   /write-file-atomic/2.4.3:
     resolution: {integrity: sha512-GaETH5wwsX+GcnzhPgKcKjJ6M2Cq3/iZp1WyY/X1CSqrW+jVNM9Y7D8EC2sM4ZG/V8wZlSniJnCKWPmBYAucRQ==}
