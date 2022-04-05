@@ -76,7 +76,7 @@ export class TriggerEvent {
       .catch((e) => console.error(e));
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.organizationId,
+      command.applicationId,
       command.identifier
     );
 

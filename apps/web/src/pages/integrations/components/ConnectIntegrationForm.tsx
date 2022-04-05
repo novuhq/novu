@@ -91,8 +91,7 @@ export function ConnectIntegrationForm({
     setIsActive((prev) => !prev);
   }
 
-  const isDark = colorScheme === 'dark';
-  const logoSrc = provider ? `/static/images/providers/${isDark ? 'dark' : 'light'}/${provider.providerId}.png` : '';
+  const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
 
   return (
     <Form onSubmit={handleSubmit(onCreatIntegration)}>

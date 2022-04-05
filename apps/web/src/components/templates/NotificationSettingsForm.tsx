@@ -1,6 +1,6 @@
 import { Controller, useFormContext } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Grid } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
@@ -45,7 +45,9 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
         name: newGroup,
       });
 
-      setValue('notificationGroup', response._id);
+      setTimeout(() => {
+        setValue('notificationGroup', response._id);
+      }, 0);
     }
   }
 
@@ -98,9 +100,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
                 searchable
                 description="Categorize notifications into groups for unified settings control"
                 error={errors.notificationGroup}
-                getCreateLabel={(newGroup) => (
-                  <div data-test-id="submit-category-btn">`+ Create Group ${newGroup}`</div>
-                )}
+                getCreateLabel={(newGroup) => <div data-test-id="submit-category-btn">+ Create Group {newGroup}</div>}
                 onCreate={addGroupItem}
                 placeholder="Attach notification to group"
                 data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}

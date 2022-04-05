@@ -1,6 +1,7 @@
 import merge from 'lodash.merge';
 import { EventEmitter } from 'events';
 import { INovuConfig } from './novu.interface';
+import axios, { AxiosInstance } from 'axios';
 import {
   IEmailProvider,
   ISmsProvider,
@@ -15,21 +16,36 @@ import { ITheme } from './theme/theme.interface';
 
 export class Novu extends EventEmitter {
   private readonly templateStore: TemplateStore;
-
   private readonly providerStore: ProviderStore;
-
   private readonly themeStore: ThemeStore;
-
+  private readonly apiKey?: string;
+  private readonly http: AxiosInstance;
   private readonly config: INovuConfig;
 
-  constructor(config?: INovuConfig) {
+  constructor(config?: INovuConfig);
+  constructor(apiKey?: string);
+  constructor(configOrApiKey?: INovuConfig | string) {
     super();
 
     const defaultConfig: Partial<INovuConfig> = {
       variableProtection: true,
     };
 
-    this.config = merge(defaultConfig, config);
+    if (configOrApiKey) {
+      if (typeof configOrApiKey === 'string') {
+        this.apiKey = configOrApiKey;
+        this.config = { ...defaultConfig };
+
+        this.http = axios.create({
+          baseURL: 'https://api.novu.co/v1',
+          headers: {
+            Authorization: `ApiKey ${this.apiKey}`,
+          },
+        });
+      } else {
+        this.config = merge(defaultConfig, configOrApiKey);
+      }
+    }
 
     this.themeStore = this.config?.themeStore || new ThemeStore();
     this.templateStore = this.config?.templateStore || new TemplateStore();
@@ -80,6 +96,15 @@ export class Novu extends EventEmitter {
   }
 
   async trigger(eventId: string, data: ITriggerPayload) {
+    if (this.apiKey) {
+      return await this.http.post(`/events/trigger`, {
+        name: eventId,
+        payload: {
+          ...data,
+        },
+      });
+    }
+
     const triggerEngine = new TriggerEngine(
       this.templateStore,
       this.providerStore,
