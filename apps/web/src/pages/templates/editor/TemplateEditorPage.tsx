@@ -83,25 +83,29 @@ export default function TemplateEditorPage() {
           <PageHeader
             title={editMode ? 'Edit Template' : 'Create new template'}
             actions={
-              <Group grow spacing={40}>
+              <Grid align="center" gutter={50}>
                 {editMode && (
-                  <Switch
-                    label={isTemplateActive ? 'Enabled' : 'Disabled'}
-                    loading={isStatusChangeLoading}
-                    data-test-id="active-toggle-switch"
-                    onChange={(e) => changeActiveStatus(e.target.checked)}
-                    checked={isTemplateActive || false}
-                  />
+                  <Grid.Col span={6}>
+                    <Switch
+                      label={isTemplateActive ? 'Enabled' : 'Disabled'}
+                      loading={isStatusChangeLoading}
+                      data-test-id="active-toggle-switch"
+                      onChange={(e) => changeActiveStatus(e.target.checked)}
+                      checked={isTemplateActive || false}
+                    />
+                  </Grid.Col>
                 )}
-                <Button
-                  ml={10}
-                  data-test-id="submit-btn"
-                  loading={isLoading || isUpdateLoading}
-                  disabled={loadingEditTemplate || isLoading}
-                  submit>
-                  {editMode ? 'Update' : 'Create'}
-                </Button>
-              </Group>
+                <Grid.Col span={6}>
+                  <Button
+                    mr={20}
+                    data-test-id="submit-btn"
+                    loading={isLoading || isUpdateLoading}
+                    disabled={loadingEditTemplate || isLoading}
+                    submit>
+                    {editMode ? 'Update' : 'Create'}
+                  </Button>
+                </Grid.Col>
+              </Grid>
             }
           />
           <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
