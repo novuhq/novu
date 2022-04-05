@@ -109,13 +109,13 @@ export function ConnectIntegrationForm({
             here.
           </a>
         </InlineDiv>
-        {provider?.credentials.map((credential) =>
-          isNeededToHide(credential.key) ? (
-            <InputWrapper key={credential.key}>
-              <Controller
-                name={credential.key}
-                control={control}
-                render={({ field }) => (
+        {provider?.credentials.map((credential) => (
+          <InputWrapper key={credential.key}>
+            <Controller
+              name={credential.key}
+              control={control}
+              render={({ field }) =>
+                isNeededToHide(credential.key) ? (
                   <PasswordInput
                     label={credential.displayName}
                     required
@@ -128,19 +128,12 @@ export function ConnectIntegrationForm({
                       required: `Please enter a ${credential.displayName.toLowerCase()}`,
                     })}
                   />
-                )}
-              />
-            </InputWrapper>
-          ) : (
-            <InputWrapper key={credential.key}>
-              <Controller
-                name={credential.key}
-                control={control}
-                render={({ field }) => (
+                ) : (
                   <Input
                     label={credential.displayName}
                     required
                     placeholder={credential.displayName}
+                    description={credential.description ?? ''}
                     data-test-id={credential.key}
                     error={errors[credential.key]?.message}
                     {...field}
@@ -148,11 +141,11 @@ export function ConnectIntegrationForm({
                       required: `Please enter a ${credential.displayName.toLowerCase()}`,
                     })}
                   />
-                )}
-              />
-            </InputWrapper>
-          )
-        )}
+                )
+              }
+            />
+          </InputWrapper>
+        ))}
         <RowDiv>
           <ActiveWrapper active={isActive}>
             <Controller
