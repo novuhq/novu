@@ -26,6 +26,6 @@ COPY .eslintrc.js .
 COPY .prettierrc .
 COPY .prettierignore .
 
-RUN pnpm build
+RUN pnpm build:web
 
 CMD [ "pnpm", "start:static:build" ]
