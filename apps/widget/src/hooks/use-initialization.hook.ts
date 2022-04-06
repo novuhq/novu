@@ -5,6 +5,7 @@ import { initializeSession } from '../api/initialize-session';
 import { applyToken } from '../store/use-auth-controller';
 import { AuthContext, IAuthContext } from '../store/auth.context';
 import { postUsageLog } from '../api/usage';
+import { ENV } from '../api/shared';
 
 interface IUserInfo {
   firstName: string;
@@ -62,7 +63,7 @@ export function useInitialization() {
       }
     };
 
-    if (process.env.NODE_ENV === 'test') {
+    if (ENV !== 'dev' && ENV !== 'prod') {
       // eslint-disable-next-line
       (window as any).initHandler = handler;
     }
