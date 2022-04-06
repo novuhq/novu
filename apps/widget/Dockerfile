@@ -18,10 +18,13 @@ COPY tsconfig.base.json .
 
 COPY .eslintrc.js .
 COPY .prettierrc .
+COPY .prettierignore .
 COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
 RUN pnpm install
 
-CMD [ "pnpm", "start:docker:widget" ]
+RUN pnpm build:widget
+
+CMD [ "pnpm", "start:static:build" ]
