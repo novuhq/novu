@@ -61,7 +61,6 @@ jobs:
           echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
           echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
           echo REACT_APP_ENVIRONMENT=prod >> .env
-          cat .env
 
       - name: Envsetup  
         working-directory: apps/web
