@@ -25,5 +25,3 @@ yarn-error.log*
 
 cypress/videos
 cypress/screenshots
-
-/public/env-config.js

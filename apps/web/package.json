@@ -95,7 +95,7 @@
     "webpack": "4.46.0"
   },
   "scripts": {
-    "start": "npm run envsetup && PORT=4200 react-app-rewired start",
+    "start": "PORT=4200 react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "precommit": "lint-staged",
