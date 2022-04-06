@@ -56,7 +56,7 @@ jobs:
         run: CI='' pnpm build:widget
       
       - name: Create env file
-        working-directory: apps/web
+        working-directory: apps/widget
         run: |
           touch .env
           echo REACT_APP_API_URL="https://dev.api.novu.co" >> .env
@@ -65,7 +65,7 @@ jobs:
           echo REACT_APP_ENVIRONMENT=dev >> .env
 
       - name: Envsetup  
-        working-directory: apps/web
+        working-directory: apps/widget
         run: npm run envsetup
 
       - name: Build PROD
