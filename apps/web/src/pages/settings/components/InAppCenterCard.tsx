@@ -3,6 +3,7 @@ import { Prism } from '@mantine/prism';
 import { IApplication } from '@novu/shared';
 import { colors, Text } from '../../../design-system';
 import Card from '../../../components/layout/components/Card';
+import { WIDGET_SDK_PATH } from '../../../config';
 
 export const InAppCenterCard = ({ application }: { application: IApplication | undefined }) => {
   const embedCode = `<script>
@@ -10,7 +11,7 @@ export const InAppCenterCard = ({ application }: { application: IApplication | u
     n[i] = {}, m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
     var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
     var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
-  })(window, document, '${process.env.REACT_APP_WIDGET_SDK_PATH}', 'novu', 'script');
+  })(window, document, '${WIDGET_SDK_PATH}', 'novu', 'script');
 
   novu.init('${application?.identifier}', '#notification-bell', {
     $user_id: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",

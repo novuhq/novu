@@ -101,7 +101,7 @@
     "precommit": "lint-staged",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
     "start:static:build": "pnpm envsetup && http-server build -p 4200 --proxy http://localhost:4200?",
-    "start:docker": "pnpm build && pnpm envsetup && pnpm start:static:build",
+    "start:docker": "pnpm build && pnpm start:static:build",
     "start:dev": "pnpm start",
     "cypress:run": "NODE_ENV=test cypress run",
     "cypress:open": "NODE_ENV=test cypress open",
