@@ -52,6 +52,17 @@ jobs:
       - name: Build
         run: CI='' pnpm build:web
 
+      - name: Create env file
+        working-directory: apps/web
+        run: |
+          touch .env
+          echo REACT_APP_API_URL="https://api.novu.co" >> .env
+          echo REACT_APP_WIDGET_SDK_PATH="https://sdk.novu.co/sdk.umd.min.js" >> .env
+          echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
+          echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
+          echo REACT_APP_ENVIRONMENT=prod >> .env
+          cat .env
+
       - name: Build
         env:
           REACT_APP_API_URL: https://api.novu.co
