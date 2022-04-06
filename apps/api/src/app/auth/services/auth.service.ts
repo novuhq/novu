@@ -5,7 +5,7 @@ import {
   UserRepository,
   MemberEntity,
   OrganizationRepository,
-  ApplicationRepository,
+  EnvironmentRepository,
   SubscriberEntity,
   SubscriberRepository,
   MemberRepository,
@@ -14,8 +14,8 @@ import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum } from '@
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
-import { SwitchApplicationCommand } from '../usecases/switch-application/switch-application.command';
-import { SwitchApplication } from '../usecases/switch-application/switch-application.usecase';
+import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-environment.command';
+import { SwitchEnvironment } from '../usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
 import { QueueService } from '../../shared/services/queue';
@@ -31,10 +31,10 @@ export class AuthService {
     private queueService: QueueService,
     private analyticsService: AnalyticsService,
     private organizationRepository: OrganizationRepository,
-    private applicationRepository: ApplicationRepository,
+    private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
     @Inject(forwardRef(() => SwitchOrganization)) private switchOrganizationUsecase: SwitchOrganization,
-    @Inject(forwardRef(() => SwitchApplication)) private switchApplicationUsecase: SwitchApplication
+    @Inject(forwardRef(() => SwitchEnvironment)) private switchEnvironmentUsecase: SwitchEnvironment
   ) {}
 
   async authenticate(
@@ -92,13 +92,13 @@ export class AuthService {
   }
 
   async apiKeyAuthenticate(apiKey: string) {
-    const application = await this.applicationRepository.findByApiKey(apiKey);
-    if (!application) throw new UnauthorizedException('API Key not found');
+    const environment = await this.environmentRepository.findByApiKey(apiKey);
+    if (!environment) throw new UnauthorizedException('API Key not found');
 
-    const key = application.apiKeys.find((i) => i.key === apiKey);
+    const key = environment.apiKeys.find((i) => i.key === apiKey);
     const user = await this.userRepository.findById(key._userId);
 
-    return await this.getApiSignedToken(user, application._organizationId, application._id, key.key);
+    return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
 
   async getSubscriberWidgetToken(subscriber: SubscriberEntity) {
@@ -109,7 +109,7 @@ export class AuthService {
         lastName: subscriber.lastName,
         email: subscriber.email,
         organizationId: subscriber._organizationId,
-        applicationId: subscriber._applicationId,
+        environmentId: subscriber._environmentId,
         subscriberId: subscriber.subscriberId,
       },
       {
@@ -123,7 +123,7 @@ export class AuthService {
   async getApiSignedToken(
     user: UserEntity,
     organizationId: string,
-    applicationId: string,
+    environmentId: string,
     apiKey: string
   ): Promise<string> {
     return this.jwtService.sign(
@@ -136,7 +136,7 @@ export class AuthService {
         organizationId,
         roles: [MemberRoleEnum.ADMIN],
         apiKey,
-        applicationId,
+        environmentId,
       },
       {
         expiresIn: '1 day',
@@ -152,15 +152,15 @@ export class AuthService {
     if (userActiveOrganizations && userActiveOrganizations.length) {
       const organizationToSwitch = userActiveOrganizations[0];
 
-      const userActiveProjects = await this.applicationRepository.findOrganizationApplications(
+      const userActiveProjects = await this.environmentRepository.findOrganizationEnvironments(
         organizationToSwitch._id
       );
-      const applicationToSwitch = userActiveProjects[0];
+      const environmentToSwitch = userActiveProjects[0];
 
-      if (applicationToSwitch) {
-        return await this.switchApplicationUsecase.execute(
-          SwitchApplicationCommand.create({
-            newApplicationId: applicationToSwitch._id,
+      if (environmentToSwitch) {
+        return await this.switchEnvironmentUsecase.execute(
+          SwitchEnvironmentCommand.create({
+            newEnvironmentId: environmentToSwitch._id,
             organizationId: organizationToSwitch._id,
             userId: user._id,
           })
@@ -182,7 +182,7 @@ export class AuthService {
     user: UserEntity,
     organizationId?: string,
     member?: MemberEntity,
-    applicationId?: string
+    environmentId?: string
   ): Promise<string> {
     const roles = [];
     if (member && member.roles) {
@@ -198,7 +198,7 @@ export class AuthService {
         profilePicture: user.profilePicture,
         organizationId: organizationId || null,
         roles,
-        applicationId: applicationId || null,
+        environmentId: environmentId || null,
       },
       {
         expiresIn: '30 days',
@@ -219,7 +219,7 @@ export class AuthService {
 
   async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity> {
     const subscriber = await this.subscriberRepository.findOne({
-      _applicationId: payload.applicationId,
+      _environmentId: payload.environmentId,
       _id: payload._id,
     });
 

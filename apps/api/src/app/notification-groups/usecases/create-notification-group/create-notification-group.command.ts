@@ -1,8 +1,8 @@
 import { IsString } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class CreateNotificationGroupCommand extends ApplicationWithUserCommand {
+export class CreateNotificationGroupCommand extends EnvironmentWithUserCommand {
   static create(data: CreateNotificationGroupCommand) {
     return CommandHelper.create<CreateNotificationGroupCommand>(CreateNotificationGroupCommand, data);
   }

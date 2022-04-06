@@ -10,9 +10,9 @@ const subscriberSchema = new Schema(
       ref: 'Organization',
       index: true,
     },
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
       index: true,
     },
     firstName: Schema.Types.String,
@@ -24,7 +24,7 @@ const subscriberSchema = new Schema(
   schemaOptions
 );
 
-subscriberSchema.index({ _applicationId: 1, userId: 1 });
+subscriberSchema.index({ _environmentId: 1, userId: 1 });
 
 interface ISubscriberDocument extends SubscriberEntity, Document {
   _id: never;

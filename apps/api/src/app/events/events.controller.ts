@@ -18,7 +18,7 @@ export class EventsController {
     return this.triggerEvent.execute(
       TriggerEventCommand.create({
         userId: user._id,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,

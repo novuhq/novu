@@ -5,7 +5,7 @@ import { useQuery } from 'react-query';
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import Card from '../../../components/layout/components/Card';
-import { getApiKeys } from '../../../api/application';
+import { getApiKeys } from '../../../api/environment';
 
 export const ApiKeysCard = () => {
   const clipboard = useClipboard({ timeout: 1000 });

@@ -10,7 +10,7 @@ import { AuthContext } from '../../store/authContext';
 
 type Props = {};
 
-export function CreateApplicationForm({}: Props) {
+export function CreateApplication({}: Props) {
   const {
     register,
     handleSubmit,
@@ -34,21 +34,21 @@ export function CreateApplicationForm({}: Props) {
     {
       name: string;
     }
-  >((data) => api.post(`/v1/applications`, data));
+  >((data) => api.post(`/v1/environments`, data));
 
   useEffect(() => {
     if (token) {
       const userData = decode<IJwtPayload>(token);
 
-      if (userData.applicationId) {
+      if (userData.environmentId) {
         navigate('/');
       }
     }
   }, []);
 
-  async function createApplication(name: string) {
-    const applicationResponse = await mutateAsync({ name });
-    const tokenResponse = await api.post(`/v1/auth/applications/${applicationResponse._id}/switch`, {});
+  async function createEnvironment(name: string) {
+    const environmentResponse = await mutateAsync({ name });
+    const tokenResponse = await api.post(`/v1/auth/environments/${environmentResponse._id}/switch`, {});
 
     setToken(tokenResponse.token);
   }
@@ -67,7 +67,7 @@ export function CreateApplicationForm({}: Props) {
     return jwt && jwt[key];
   }
 
-  const onCreateApplication = async (data: { organizationName?: string }) => {
+  const onCreateEnvironment = async (data: { organizationName?: string }) => {
     if (!data?.organizationName) return;
 
     setLoading(true);
@@ -76,8 +76,8 @@ export function CreateApplicationForm({}: Props) {
       await createOrganization(data.organizationName);
     }
 
-    if (!jwtHasKey('applicationId')) {
-      await createApplication(data.organizationName);
+    if (!jwtHasKey('environmentId')) {
+      await createEnvironment(data.organizationName);
     }
 
     setLoading(false);
@@ -85,14 +85,14 @@ export function CreateApplicationForm({}: Props) {
   };
 
   return (
-    <form name="create-app-form" onSubmit={handleSubmit(onCreateApplication)}>
+    <form name="create-app-form" onSubmit={handleSubmit(onCreateEnvironment)}>
       <Input
         error={errors.organizationName?.message}
         {...register('organizationName', {
           required: 'Please input your app name',
         })}
         required
-        label="Application Name"
+        label="Environment Name"
         placeholder="What's the name of the app?"
         data-test-id="app-creation"
         mt={5}

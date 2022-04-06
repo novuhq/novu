@@ -7,8 +7,8 @@ import { normalizeEmail } from '../../../shared/helpers/email-normalization.serv
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
-import { CreateApplication } from '../../../applications/usecases/create-application/create-application.usecase';
-import { CreateApplicationCommand } from '../../../applications/usecases/create-application/create-application.command';
+import { CreateEnvironment } from '../../../environments/usecases/create-environment/create-environment.usecase';
+import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 // eslint-disable-next-line max-len
 
@@ -18,7 +18,7 @@ export class UserRegister {
     private authService: AuthService,
     private userRepository: UserRepository,
     private createOrganizationUsecase: CreateOrganization,
-    private createApplicationUsecase: CreateApplication,
+    private createEnvironmentUsecase: CreateEnvironment,
     private memberRepository: MemberRepository,
     private analyticsService: AnalyticsService
   ) {}
@@ -57,8 +57,8 @@ export class UserRegister {
         organization._id
       );
 
-      await this.createApplicationUsecase.execute(
-        CreateApplicationCommand.create({
+      await this.createEnvironmentUsecase.execute(
+        CreateEnvironmentCommand.create({
           userId: user._id,
           name: `${organization.name} App`,
           organizationId: organization._id,

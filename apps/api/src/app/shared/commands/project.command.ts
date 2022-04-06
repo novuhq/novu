@@ -1,8 +1,8 @@
 import { IsNotEmpty } from 'class-validator';
 
-export abstract class ApplicationWithUserCommand {
+export abstract class EnvironmentWithUserCommand {
   @IsNotEmpty()
-  readonly applicationId: string;
+  readonly environmentId: string;
 
   @IsNotEmpty()
   readonly organizationId: string;
@@ -11,9 +11,9 @@ export abstract class ApplicationWithUserCommand {
   readonly userId: string;
 }
 
-export abstract class ApplicationWithSubscriber {
+export abstract class EnvironmentWithSubscriber {
   @IsNotEmpty()
-  readonly applicationId: string;
+  readonly environmentId: string;
 
   @IsNotEmpty()
   readonly organizationId: string;
@@ -22,9 +22,9 @@ export abstract class ApplicationWithSubscriber {
   readonly subscriberId: string;
 }
 
-export abstract class ApplicationCommand {
+export abstract class EnvironmentCommand {
   @IsNotEmpty()
-  readonly applicationId: string;
+  readonly environmentId: string;
 
   @IsNotEmpty()
   readonly organizationId: string;

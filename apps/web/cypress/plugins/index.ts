@@ -10,8 +10,8 @@ module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
   on('task', {
-    async createNotifications({ identifier, token, count = 1, applicationId, organizationId }) {
-      const subscriberService = new SubscribersService(organizationId, applicationId);
+    async createNotifications({ identifier, token, count = 1, environmentId, organizationId }) {
+      const subscriberService = new SubscribersService(organizationId, environmentId);
       const subscriber = await subscriberService.createSubscriber();
 
       const triggerIdentifier = identifier;
@@ -49,24 +49,24 @@ module.exports = (on, config) => {
       return user?.resetToken;
     },
     async getSession(
-      settings: { noApplication?: boolean; partialTemplate?: Partial<NotificationTemplateEntity> } = {}
+      settings: { noEnvironment?: boolean; partialTemplate?: Partial<NotificationTemplateEntity> } = {}
     ) {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
 
       const session = new UserSession('http://localhost:1336');
       await session.initialize({
-        noApplication: settings?.noApplication,
+        noEnvironment: settings?.noEnvironment,
       });
 
       const notificationTemplateService = new NotificationTemplateService(
         session.user._id,
         session.organization._id,
-        session.application._id
+        session.environment._id
       );
 
       let templates;
-      if (!settings?.noApplication) {
+      if (!settings?.noEnvironment) {
         let templatePartial = settings?.partialTemplate || {};
 
         templates = await Promise.all([
@@ -86,7 +86,7 @@ module.exports = (on, config) => {
         token: session.token.split(' ')[1],
         user: session.user,
         organization: session.organization,
-        application: session.application,
+        environment: session.environment,
         templates,
       };
     },

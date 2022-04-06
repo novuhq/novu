@@ -18,9 +18,9 @@ import {
   IEmailBlock,
 } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class CreateNotificationTemplateCommand extends ApplicationWithUserCommand {
+export class CreateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: CreateNotificationTemplateCommand) {
     return CommandHelper.create(CreateNotificationTemplateCommand, data);
   }

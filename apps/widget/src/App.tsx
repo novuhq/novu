@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
-import { IApplication, ISubscriberJwt } from '@novu/shared';
+import { IEnvironment, ISubscriberJwt } from '@novu/shared';
 import * as WebFont from 'webfontloader';
 
 import { AuthContext } from './store/auth.context';
@@ -14,7 +14,7 @@ import { applyToken, getToken, useAuthController } from './store/use-auth-contro
 import { useSocketController } from './store/socket/use-socket-controller';
 import { SocketContext } from './store/socket/socket.store';
 import { WidgetShell } from './ApplicationShell';
-import { getApplication } from './api/application';
+import { getEnvironment } from './api/environment';
 import { useAuth } from './hooks/use-auth.hook';
 import { colors } from './shared/config/colors';
 
@@ -63,9 +63,9 @@ function AppContent() {
   const { isLoggedIn } = useAuth();
   const { socket } = useSocketController();
   const [userColorScheme, setUserColorScheme] = useState<'light' | 'dark'>('light');
-  const { data: application } = useQuery<Pick<IApplication, '_id' | 'name' | 'branding'>>(
-    'application',
-    getApplication,
+  const { data: environment } = useQuery<Pick<IEnvironment, '_id' | 'name' | 'branding'>>(
+    'environment',
+    getEnvironment,
     {
       enabled: isLoggedIn,
     }
@@ -73,13 +73,13 @@ function AppContent() {
 
   const theme = {
     colors: {
-      main: application?.branding?.color || colors.vertical,
+      main: environment?.branding?.color || colors.vertical,
       fontColor: userColorScheme === 'light' ? colors.B40 : colors.white,
       secondaryFontColor: userColorScheme === 'light' ? colors.B80 : colors.B40,
     },
-    fontFamily: application?.branding?.fontFamily || 'Lato',
+    fontFamily: environment?.branding?.fontFamily || 'Lato',
     layout: {
-      direction: (application?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
+      direction: (environment?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
     colorScheme: userColorScheme,
   };
@@ -104,7 +104,7 @@ function AppContent() {
             <Router>
               <Routes>
                 <Route
-                  path="/:applicationId"
+                  path="/:environmentId"
                   element={
                     <Layout>
                       <Main />

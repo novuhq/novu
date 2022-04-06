@@ -23,7 +23,7 @@ export class GetActivityFeed {
 
     let subscriberId: string;
     if (command.search) {
-      const foundSubscriber = await this.subscribersRepository.searchSubscriber(command.applicationId, command.search);
+      const foundSubscriber = await this.subscribersRepository.searchSubscriber(command.environmentId, command.search);
 
       subscriberId = foundSubscriber?._id;
 
@@ -38,7 +38,7 @@ export class GetActivityFeed {
     }
 
     const { data: messages, totalCount } = await this.messageRepository.getFeed(
-      command.applicationId,
+      command.environmentId,
       { channels: command.channels, templates: command.templates, subscriberId },
       command.page * LIMIT,
       LIMIT

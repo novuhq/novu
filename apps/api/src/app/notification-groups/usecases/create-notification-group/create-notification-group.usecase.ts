@@ -8,7 +8,7 @@ export class CreateNotificationGroup {
 
   async execute(command: CreateNotificationGroupCommand): Promise<NotificationGroupEntity> {
     return await this.notificationGroupRepository.create({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       name: command.name,
     });

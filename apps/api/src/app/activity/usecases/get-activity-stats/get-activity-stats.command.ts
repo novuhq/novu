@@ -1,7 +1,7 @@
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class GetActivityStatsCommand extends ApplicationWithUserCommand {
+export class GetActivityStatsCommand extends EnvironmentWithUserCommand {
   static create(data: GetActivityStatsCommand) {
     return CommandHelper.create<GetActivityStatsCommand>(GetActivityStatsCommand, data);
   }

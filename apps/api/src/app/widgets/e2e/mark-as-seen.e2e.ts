@@ -19,7 +19,7 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
     const { body } = await session.testAgent
       .post('/v1/widgets/session/initialize')
       .send({
-        applicationIdentifier: session.application.identifier,
+        environmentIdentifier: session.environment.identifier,
         $user_id: '12345',
         $first_name: 'Test',
         $last_name: 'User',
@@ -36,7 +36,7 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
     });
     const { token } = body.data;
     const messages = await messageRepository.findBySubscriberChannel(
-      session.application._id,
+      session.environment._id,
       body.data.profile._id,
       ChannelTypeEnum.IN_APP
     );

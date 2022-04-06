@@ -9,7 +9,7 @@ export class MessageEntity {
 
   _templateId: string;
 
-  _applicationId: string;
+  _environmentId: string;
 
   _messageTemplateId: string;
 

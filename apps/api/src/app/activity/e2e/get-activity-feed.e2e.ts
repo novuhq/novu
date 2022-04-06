@@ -16,7 +16,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     await session.testAgent
       .post('/v1/widgets/session/initialize')
       .send({
-        applicationIdentifier: session.application.identifier,
+        environmentIdentifier: session.environment.identifier,
         $user_id: '12345',
         $first_name: 'Test',
         $last_name: 'User',

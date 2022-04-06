@@ -1,12 +1,12 @@
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { CreateApplicationForm } from '../../components/auth/CreateApplicationForm';
+import { CreateApplication } from '../../components/auth/CreateApplicationForm';
 
-export default function CreateApplicationPage() {
+export default function CreateEnvironmentPage() {
   return (
     <AuthLayout>
-      <AuthContainer title="Create Application" description="Create your application!">
-        <CreateApplicationForm />
+      <AuthContainer title="Create Environment" description="Create your environment!">
+        <CreateApplication />
       </AuthContainer>
     </AuthLayout>
   );

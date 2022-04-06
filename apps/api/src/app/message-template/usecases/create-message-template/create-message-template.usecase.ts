@@ -16,7 +16,7 @@ export class CreateMessageTemplate {
       subject: command.subject,
       type: command.type,
       _organizationId: command.organizationId,
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _creatorId: command.userId,
     });
   }

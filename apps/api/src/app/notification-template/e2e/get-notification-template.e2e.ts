@@ -14,7 +14,7 @@ describe('Get notification template by id - /notification-templates/:templateId 
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
-      session.application._id
+      session.environment._id
     );
     const template = await notificationTemplateService.createTemplate();
     const { body } = await session.testAgent.get(`/v1/notification-templates/${template._id}`);

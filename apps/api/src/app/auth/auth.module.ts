@@ -11,7 +11,7 @@ import { USE_CASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
 import { GithubStrategy } from './services/passport/github.strategy';
 import { OrganizationModule } from '../organization/organization.module';
-import { ApplicationsModule } from '../applications/applications.module';
+import { EnvironmentsModule } from '../environments/environments.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { JwtAuthGuard } from './framework/auth.guard';
 
@@ -35,7 +35,7 @@ if (process.env.GITHUB_OAUTH_CLIENT_ID) {
         expiresIn: 360000,
       },
     }),
-    ApplicationsModule,
+    EnvironmentsModule,
   ],
   controllers: [AuthController],
   providers: [

@@ -26,7 +26,7 @@ describe('Create Subscriber', function () {
     const result = await useCase.execute(
       CreateSubscriberCommand.create({
         organizationId: session.organization._id,
-        applicationId: session.application._id,
+        environmentId: session.environment._id,
         subscriberId: '1234',
         email: 'dima@asdasdas.com',
         firstName: 'ASDAS',
@@ -38,7 +38,7 @@ describe('Create Subscriber', function () {
     await useCase.execute(
       CreateSubscriberCommand.create({
         organizationId: session.organization._id,
-        applicationId: session.application._id,
+        environmentId: session.environment._id,
         subscriberId: '1234',
         email: 'dima@asdasdas.com',
         firstName: 'First Name',
@@ -48,7 +48,7 @@ describe('Create Subscriber', function () {
     const result = await useCase.execute(
       CreateSubscriberCommand.create({
         organizationId: session.organization._id,
-        applicationId: session.application._id,
+        environmentId: session.environment._id,
         subscriberId: '1234',
         email: 'dima@asdasdas.com',
         firstName: 'Second Name',

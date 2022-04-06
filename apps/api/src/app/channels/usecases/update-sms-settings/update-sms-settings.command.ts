@@ -1,6 +1,6 @@
 import { IsDefined, ValidateNested } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 class TwillioSettings {
   @IsDefined()
@@ -13,7 +13,7 @@ class TwillioSettings {
   phoneNumber;
 }
 
-export class UpdateSmsSettingsCommand extends ApplicationWithUserCommand {
+export class UpdateSmsSettingsCommand extends EnvironmentWithUserCommand {
   static create(data: UpdateSmsSettingsCommand) {
     return CommandHelper.create<UpdateSmsSettingsCommand>(UpdateSmsSettingsCommand, data);
   }

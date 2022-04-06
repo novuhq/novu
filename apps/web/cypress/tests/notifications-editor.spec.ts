@@ -199,7 +199,7 @@ describe('Notifications Creator', function () {
   });
 
   it('should allow uploading a logo from email editor', function () {
-    cy.intercept(/.*applications\/me.*/, (r) => {
+    cy.intercept(/.*environments\/me.*/, (r) => {
       r.continue((res) => {
         if (res.body) {
           delete res.body.data.branding.logo;

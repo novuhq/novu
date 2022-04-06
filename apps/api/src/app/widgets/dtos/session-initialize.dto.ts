@@ -7,7 +7,7 @@ export class SessionInitializeBodyDto {
 
   @IsString()
   @IsDefined()
-  applicationIdentifier: string;
+  environmentIdentifier: string;
 
   @IsString()
   @IsOptional()

@@ -56,12 +56,12 @@ Cypress.Commands.add('initializeSession', function (settings = {}) {
     .then(function (session: any) {
       cy.log('Session created');
       cy.log(`Organization id: ${session.organization._id}`);
-      cy.log(`App id: ${session.application.identifier}`);
+      cy.log(`App id: ${session.environment.identifier}`);
       cy.log(`Widget initialized: ${session.userId}`);
     })
     .then((session: any) => {
       return settings?.shell
-        ? cy.initializeShellSession(session.userId, session.application.identifier).then((subscriber) => ({
+        ? cy.initializeShellSession(session.userId, session.environment.identifier).then((subscriber) => ({
             ...session,
             subscriber,
           }))
@@ -70,7 +70,7 @@ Cypress.Commands.add('initializeSession', function (settings = {}) {
 });
 
 Cypress.Commands.add('initializeWidget', (session, shell = false) => {
-  const URL = `/${session.application.identifier}`;
+  const URL = `/${session.environment.identifier}`;
   return cy.visit(URL, { log: false }).then(() =>
     cy
       .window({ log: false })
@@ -88,7 +88,7 @@ Cypress.Commands.add('initializeWidget', (session, shell = false) => {
             data: {
               type: 'INIT_IFRAME',
               value: {
-                clientId: session.application.identifier,
+                clientId: session.environment.identifier,
                 data: user,
               },
             },

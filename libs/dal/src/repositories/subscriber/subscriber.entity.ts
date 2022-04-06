@@ -13,5 +13,5 @@ export class SubscriberEntity {
 
   _organizationId: string;
 
-  _applicationId: string;
+  _environmentId: string;
 }

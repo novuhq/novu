@@ -23,7 +23,7 @@ export default function LoginPage() {
     if (token) {
       const user = jwtDecode<IJwtPayload>(token);
 
-      if (!user.organizationId || !user.applicationId) {
+      if (!user.organizationId || !user.environmentId) {
         navigate('/auth/application');
       } else {
         navigate('/');

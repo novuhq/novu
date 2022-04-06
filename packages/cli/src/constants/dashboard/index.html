@@ -198,7 +198,7 @@
                   <div class="max-w-screen-2xl px-4 mx-auto">
                     <div class="flex flex-col sm:flex-row justify-between items-center bg-gray-100 rounded-lg gap-4 p-4">
                       <div>
-                        <h2 class="text-indigo-500 text-xl md:text-2xl font-bold">Welcome to your demo web application</h2>
+                        <h2 class="text-indigo-500 text-xl md:text-2xl font-bold">Welcome to your demo web environment</h2>
                         <p class="text-gray-600">
                           Here you can test the Novu in-app notification center and see it in action.
                           <br />
@@ -263,7 +263,7 @@
 
                   <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'https://api.novu.co/v1/events/trigger' \
  --header 'Authorization: ApiKey *********' \
- --header 'Content-Type: application/json' \
+ --header 'Content-Type: environment/json' \
  --data-raw '{
     "name": "REPLACE_WITH_name",
     "payload": {
@@ -321,7 +321,7 @@
   visibility: hidden">
                   <pre data-test-id="trigger-curl-snippet" style="color: white; background: rgb(77, 64, 51); text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none; padding: 1em; margin: 0.5em 0px; overflow: auto; border: 0.3em solid rgb(122, 102, 82); border-radius: 0.5em; box-shadow: black 1px 1px 0.5em inset;"><code class="language-shell" style="color: white; background: none; text-shadow: black 0px -0.1em 0.2em; font-family: Consolas, Monaco, &quot;Andale Mono&quot;, &quot;Ubuntu Mono&quot;, monospace; font-size: 1em; text-align: left; white-space: pre; word-spacing: normal; word-break: normal; overflow-wrap: normal; line-height: 1.5; tab-size: 4; hyphens: none;"><span class="token function">curl</span><span> --location --request POST </span><span class="token" style="color: rgb(189, 224, 82);">'REPLACE_WITH_url'</span><span> </span><span class="token">\</span><span>
                     </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Authorization: ApiKey REPLACE_WITH_apiKey'</span><span> </span><span class="token">\</span><span>
-                    </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Content-Type: application/json'</span><span> </span><span class="token">\</span><span>
+                    </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Content-Type: environment/json'</span><span> </span><span class="token">\</span><span>
                     </span><span>     --data-raw </span><span class="token" style="color: rgb(189, 224, 82);">'{
                     </span><span class="token" style="color: rgb(189, 224, 82);">        "name": "REPLACE_WITH_name",
                     </span><span class="token" style="color: rgb(189, 224, 82);">        "payload": {
@@ -403,7 +403,7 @@ function pulsateBell() {
     before.parentNode.insertBefore(elt, before);
   })(window, document, "https://sdk.novu.co/sdk.umd.min.js", "novu", "script");
 
-  novu.init('REPLACE_WITH_applicationId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
+  novu.init('REPLACE_WITH_environmentId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
     $user_id: 'REPLACE_WITH_$user_id',
     $first_name: 'REPLACE_WITH_$first_name',
     $last_name: 'REPLACE_WITH_$last_name',

@@ -30,7 +30,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
-    subscriberService = new SubscribersService(session.organization._id, session.application._id);
+    subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
   });
 
@@ -54,7 +54,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await new Promise((resolve) => setTimeout(resolve, 100));
     const logs = await logRepository.find({
-      _applicationId: session.application._id,
+      _environmentId: session.environment._id,
       _organizationId: session.organization._id,
     });
 
@@ -108,7 +108,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.application._id, 'new-test-if-id');
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, 'new-test-if-id');
 
     expect(createdSubscriber.subscriberId).to.equal(payload.$user_id);
     expect(createdSubscriber.firstName).to.equal(payload.$first_name);
@@ -136,7 +136,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     const messages = await messageRepository.findBySubscriberChannel(
-      session.application._id,
+      session.environment._id,
       subscriber._id,
       ChannelTypeEnum.EMAIL
     );
@@ -162,7 +162,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
-    const notifications = await notificationRepository.findBySubscriberId(session.application._id, subscriber._id);
+    const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
     expect(notifications.length).to.equal(1);
 
@@ -172,7 +172,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(notification._templateId).to.equal(template._id);
 
     const messages = await messageRepository.findBySubscriberChannel(
-      session.application._id,
+      session.environment._id,
       subscriber._id,
       ChannelTypeEnum.IN_APP
     );
@@ -187,7 +187,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(message.lastSeenDate).to.be.not.ok;
 
     const emails = await messageRepository.findBySubscriberChannel(
-      session.application._id,
+      session.environment._id,
       subscriber._id,
       ChannelTypeEnum.EMAIL
     );
@@ -236,7 +236,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     const message = await messageRepository._model.findOne({
-      _applicationId: session.application._id,
+      _environmentId: session.environment._id,
       _templateId: template._id,
       _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.SMS,
@@ -245,7 +245,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(message).to.not.be.ok;
 
     const inAppMessages = await messageRepository._model.findOne({
-      _applicationId: session.application._id,
+      _environmentId: session.environment._id,
       _templateId: template._id,
       _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.IN_APP,
@@ -287,7 +287,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     const message = await messageRepository._model.findOne({
-      _applicationId: session.application._id,
+      _environmentId: session.environment._id,
       _templateId: template._id,
       _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.SMS,
@@ -296,7 +296,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(message).to.not.be.ok;
 
     const inAppMessages = await messageRepository._model.findOne({
-      _applicationId: session.application._id,
+      _environmentId: session.environment._id,
       _templateId: template._id,
       _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.IN_APP,
@@ -333,7 +333,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     const message = await messageRepository._model.findOne({
-      _applicationId: session.application._id,
+      _environmentId: session.environment._id,
       _templateId: template._id,
       _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.SMS,
@@ -368,7 +368,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
     const message = await messageRepository._model.findOne({
-      _applicationId: session.application._id,
+      _environmentId: session.environment._id,
       _templateId: template._id,
       _subscriberId: subscriber._id,
     });

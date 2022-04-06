@@ -10,7 +10,7 @@ import {
 import { CreateTemplatePayload } from './create-notification-template.interface';
 
 export class NotificationTemplateService {
-  constructor(private userId: string, private organizationId: string | undefined, private applicationId: string) {}
+  constructor(private userId: string, private organizationId: string | undefined, private environmentId: string) {}
 
   private notificationTemplateRepository = new NotificationTemplateRepository();
 
@@ -20,7 +20,7 @@ export class NotificationTemplateService {
 
   async createTemplate(override: Partial<CreateTemplatePayload> = {}) {
     const groups = await this.notificationGroupRepository.find({
-      _applicationId: this.applicationId,
+      _environmentId: this.environmentId,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,7 +63,7 @@ export class NotificationTemplateService {
         name: message.name,
         _creatorId: this.userId,
         _organizationId: this.organizationId,
-        _applicationId: this.applicationId,
+        _environmentId: this.environmentId,
       });
 
       templateMessages.push({
@@ -74,7 +74,7 @@ export class NotificationTemplateService {
 
     const data: NotificationTemplateEntity = {
       _notificationGroupId: groups[0]._id,
-      _applicationId: this.applicationId,
+      _environmentId: this.environmentId,
       name: faker.name.title(),
       _organizationId: this.organizationId,
       _creatorId: this.userId,

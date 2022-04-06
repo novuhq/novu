@@ -7,16 +7,16 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
     super(Subscriber, SubscriberEntity);
   }
 
-  async findBySubscriberId(applicationId: string, subscriberId: string) {
+  async findBySubscriberId(environmentId: string, subscriberId: string) {
     return await this.findOne({
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       subscriberId,
     });
   }
 
-  async searchSubscriber(applicationId: string, search: string) {
+  async searchSubscriber(environmentId: string, search: string) {
     return await this.findOne({
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       $or: [
         {
           email: {

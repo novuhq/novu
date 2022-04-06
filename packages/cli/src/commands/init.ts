@@ -1,7 +1,7 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
-import { IApplication, ICreateNotificationTemplateDto } from '@novu/shared';
+import { IEnvironment, ICreateNotificationTemplateDto } from '@novu/shared';
 import { prompt } from '../client';
 import {
   environmentQuestions,
@@ -25,12 +25,12 @@ import {
   storeHeader,
   createOrganization,
   switchOrganization,
-  createApplication,
-  getApplicationMe,
-  switchApplication,
+  createEnvironment,
+  getEnvironmentMe,
+  switchEnvironment,
   getNotificationGroup,
   createNotificationTemplates,
-  getApplicationApiKeys,
+  getEnvironmentApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
 
@@ -53,9 +53,9 @@ export async function initCommand() {
       await config.clearStore();
     }
 
-    const existingApplication = await checkExistingApplication(config);
-    if (existingApplication) {
-      const { result } = await prompt(existingSessionQuestions(existingApplication));
+    const existingEnvironment = await checkExistingEnvironment(config);
+    if (existingEnvironment) {
+      const { result } = await prompt(existingSessionQuestions(existingEnvironment));
 
       if (result === 'visitDashboard') {
         await handleExistingSession(result, config);
@@ -100,7 +100,7 @@ async function handleOnboardingFlow(config: ConfigService) {
     spinner = ora('Setting up your new account').start();
 
     await createOrganizationHandler(config, answers);
-    const applicationIdentifier = await createApplicationHandler(config, answers);
+    const environmentIdentifier = await createEnvironmentHandler(config, answers);
 
     const address = httpServer.getAddress();
 
@@ -109,7 +109,7 @@ async function handleOnboardingFlow(config: ConfigService) {
   We've created a demo web page for you to see novu notifications in action.
   Visit: ${address}/demo to continue`);
 
-    await raiseDemoDashboard(httpServer, config, applicationIdentifier);
+    await raiseDemoDashboard(httpServer, config, environmentIdentifier);
     await exitHandler();
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -139,33 +139,33 @@ async function gitHubOAuth(httpServer: HttpServer, config: ConfigService): Promi
 async function createOrganizationHandler(config: ConfigService, answers: Answers) {
   if (config.isOrganizationIdExist()) return;
 
-  const createOrganizationResponse = await createOrganization(answers.applicationName);
+  const createOrganizationResponse = await createOrganization(answers.environmentName);
 
   const newUserJwt = await switchOrganization(createOrganizationResponse._id);
 
   storeToken(config, newUserJwt);
 }
 
-async function createApplicationHandler(config: ConfigService, answers: Answers): Promise<string> {
-  if (config.isApplicationIdExist()) {
-    const existingApplication = await getApplicationMe();
-    const keys = await getApplicationApiKeys();
+async function createEnvironmentHandler(config: ConfigService, answers: Answers): Promise<string> {
+  if (config.isEnvironmentIdExist()) {
+    const existingEnvironment = await getEnvironmentMe();
+    const keys = await getEnvironmentApiKeys();
 
     config.setValue('apiKey', keys[0]?.key);
 
-    return existingApplication.identifier;
+    return existingEnvironment.identifier;
   }
 
-  const createApplicationResponse = await createApplication(answers.applicationName);
-  const newUserJwt = await switchApplication(createApplicationResponse._id);
+  const createEnvironmentResponse = await createEnvironment(answers.environmentName);
+  const newUserJwt = await switchEnvironment(createEnvironmentResponse._id);
 
-  config.setValue('apiKey', createApplicationResponse.apiKeys[0].key);
+  config.setValue('apiKey', createEnvironmentResponse.apiKeys[0].key);
   storeToken(config, newUserJwt);
 
-  return createApplicationResponse.identifier;
+  return createEnvironmentResponse.identifier;
 }
 
-async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService, applicationIdentifier: string) {
+async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService, environmentIdentifier: string) {
   const notificationGroupResponse = await getNotificationGroup();
 
   const template = buildTemplate(notificationGroupResponse[0]._id);
@@ -174,7 +174,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
   const decodedToken = config.getDecodedToken();
   const demoDashboardUrl = await getDemoDashboardUrl();
 
-  storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, applicationIdentifier);
+  storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, environmentIdentifier);
 
   httpServer.redirectSuccessDashboard(demoDashboardUrl);
 }
@@ -215,7 +215,7 @@ function storeDashboardData(
   config: ConfigService,
   createNotificationTemplatesResponse,
   decodedToken,
-  applicationIdentifier: string
+  environmentIdentifier: string
 ) {
   const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
@@ -227,7 +227,7 @@ function storeDashboardData(
     { key: '$first_name', value: decodedToken.firstName },
     { key: '$last_name', value: decodedToken.lastName },
     { key: '$email', value: decodedToken.email },
-    { key: 'applicationId', value: applicationIdentifier },
+    { key: 'environmentId', value: environmentIdentifier },
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },
   ];
@@ -255,17 +255,17 @@ const keyPress = async (): Promise<void> => {
   );
 };
 
-async function checkExistingApplication(config: ConfigService): Promise<IApplication | null> {
+async function checkExistingEnvironment(config: ConfigService): Promise<IEnvironment | null> {
   const isSessionExists = !!config.getDecodedToken();
 
   if (isSessionExists && process.env.NODE_ENV !== 'dev') {
     storeToken(config, config.getToken());
 
-    let existingApplication: IApplication;
+    let existingEnvironment: IEnvironment;
 
     try {
-      existingApplication = await getApplicationMe();
-      if (!existingApplication) {
+      existingEnvironment = await getEnvironmentMe();
+      if (!existingEnvironment) {
         return null;
       }
     } catch (e) {
@@ -274,7 +274,7 @@ async function checkExistingApplication(config: ConfigService): Promise<IApplica
       return null;
     }
 
-    return existingApplication;
+    return existingEnvironment;
   }
 
   return null;

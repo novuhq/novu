@@ -14,7 +14,7 @@ describe('Update notification template by id - /notification-templates/:template
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
-      session.application._id
+      session.environment._id
     );
     const template = await notificationTemplateService.createTemplate();
     const update: IUpdateNotificationTemplate = {
@@ -40,7 +40,7 @@ describe('Update notification template by id - /notification-templates/:template
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
-      session.application._id
+      session.environment._id
     );
 
     const template = await notificationTemplateService.createTemplate({
@@ -71,7 +71,7 @@ describe('Update notification template by id - /notification-templates/:template
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
-      session.application._id
+      session.environment._id
     );
 
     const template = await notificationTemplateService.createTemplate({
