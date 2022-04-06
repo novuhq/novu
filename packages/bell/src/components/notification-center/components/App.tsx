@@ -3,20 +3,20 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import * as WebFont from 'webfontloader';
-
 import { IApplication, ISubscriberJwt } from '@novu/shared';
+
 import { Main } from './Main';
-import { AuthContext } from '../../store/auth.context';
-import { Layout } from './components/layout/Layout';
-import { applyToken, getToken, useAuthController } from '../../store/use-auth-controller';
-import { useSocketController } from '../../store/socket/use-socket-controller';
-import { SocketContext } from '../../store/socket/socket.store';
-import { WidgetShell } from './ApplicationShell';
-import { getApplication } from '../../api/application';
-import { useAuth } from '../../hooks/use-auth.hook';
-import { colors } from '../../shared/config/colors';
+import { AuthContext } from '../../../store/auth.context';
+import { Layout } from './layout/Layout';
+import { applyToken, getToken, useAuthController } from '../../../store/use-auth-controller';
+import { useSocketController } from '../../../store/socket/use-socket-controller';
+import { SocketContext } from '../../../store/socket/socket.store';
+import { getApplication } from '../../../api/application';
+import { colors } from '../../../shared/config/colors';
 import React from 'react';
-import { notificationCenterProps } from './NotificationCenter';
+import { useAuth } from '../../../hooks/use-auth.hook';
+import { WidgetProxyContext } from '../../../store/widget-proxy.context';
+import { INotificationCenterProps } from '../../../index';
 
 const queryClient = new QueryClient();
 
@@ -24,7 +24,7 @@ const tokenStoredToken: string = getToken();
 
 applyToken(tokenStoredToken);
 
-export function App(props: notificationCenterProps) {
+export function App(props: INotificationCenterProps) {
   return (
     <RootProviders>
       <AppContent {...props} />
@@ -59,7 +59,7 @@ const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
   }
 `;
 
-function AppContent(props: notificationCenterProps) {
+function AppContent(props: INotificationCenterProps) {
   const { isLoggedIn } = useAuth();
   const { socket } = useSocketController();
   const [userColorScheme, setUserColorScheme] = useState<'light' | 'dark'>('light');
@@ -96,25 +96,25 @@ function AppContent(props: notificationCenterProps) {
     <ThemeProvider theme={theme}>
       <GlobalStyle fontFamily={theme.fontFamily} />
       <SocketContext.Provider value={{ socket }}>
-        <WidgetShell>
-          <Wrap
-            layoutDirection={theme.layout.direction}
-            brandColor={theme.colors.main}
-            fontColor={theme.colors.fontColor}>
-            <Router>
-              <Routes>
-                <Route
-                  path="/:applicationId"
-                  element={
+        <Wrap
+          layoutDirection={theme.layout.direction}
+          brandColor={theme.colors.main}
+          fontColor={theme.colors.fontColor}>
+          <Router>
+            <Routes>
+              <Route
+                path="/:applicationId"
+                element={
+                  <WidgetProxyContext.Provider value={props}>
                     <Layout>
-                      <Main {...props} />
+                      <Main />
                     </Layout>
-                  }
-                />
-              </Routes>
-            </Router>
-          </Wrap>
-        </WidgetShell>
+                  </WidgetProxyContext.Provider>
+                }
+              />
+            </Routes>
+          </Router>
+        </Wrap>
       </SocketContext.Provider>
     </ThemeProvider>
   );

@@ -1,19 +1,20 @@
 import styled, { useTheme } from 'styled-components';
-import { useQuery } from 'react-query';
 import { Badge } from '@mantine/core';
-import { useContext, useEffect, useState } from 'react';
-import { getUnseenCount } from '../../../../api/notifications';
-import { AuthContext } from '../../../../store/auth.context';
-import { useSocket } from '../../../../hooks/use-socket.hook';
 import { colors } from '../../../../shared/config/colors';
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { AuthContext } from '../../../../store/auth.context';
 import { IAuthContext } from '../../../../index';
+import { useQuery } from 'react-query';
+import { getUnseenCount } from '../../../../api/notifications';
+import { useSocket } from '../../../../hooks/use-socket.hook';
+import { WidgetProxyContext } from '../../../../store/widget-proxy.context';
 
 export function Header() {
   const theme: any = useTheme();
   const [unseenCount, setUnseenCount] = useState<number>();
   const { socket } = useSocket();
   const { token } = useContext<IAuthContext>(AuthContext);
+  const { onUnseenCountChanged } = useContext(WidgetProxyContext);
   const { data } = useQuery<{ count: number }>('unseenCount', getUnseenCount, {
     enabled: !!token,
   });
@@ -27,13 +28,7 @@ export function Header() {
   }, [socket]);
 
   useEffect(() => {
-    if ('parentIFrame' in window) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).parentIFrame.sendMessage({
-        type: 'unseen_count_changed',
-        count: unseenCount,
-      });
-    }
+    onUnseenCountChanged(unseenCount);
   }, [unseenCount, (window as any).parentIFrame]);
 
   useEffect(() => {

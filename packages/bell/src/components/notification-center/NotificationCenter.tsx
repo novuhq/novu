@@ -1,12 +1,7 @@
 import React from 'react';
-import { App } from './App';
-import { IMessage } from '@novu/shared';
+import { INotificationCenterProps } from '../../index';
+import { App } from './components/App';
 
-export interface notificationCenterProps {
-  sendUrlChange: (url: string) => void;
-  sendNotificationClick: (notification: IMessage) => void;
-}
-
-export function NotificationCenter(props: notificationCenterProps) {
+export function NotificationCenter(props: INotificationCenterProps) {
   return <App {...props} />;
 }

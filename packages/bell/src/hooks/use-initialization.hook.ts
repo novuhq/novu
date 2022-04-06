@@ -1,9 +1,9 @@
 import { useMutation } from 'react-query';
 import { useContext, useEffect, useState } from 'react';
 import { ISubscriberJwt } from '@novu/shared';
-import { initializeSession } from '../api/initialize-session';
 import { applyToken } from '../store/use-auth-controller';
 import { AuthContext } from '../store/auth.context';
+import { initializeSession } from '../api/initialize-session';
 import { postUsageLog } from '../api/usage';
 import { IAuthContext, IUserInfo } from '../index';
 

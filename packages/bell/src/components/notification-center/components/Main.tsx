@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useInfiniteQuery, useMutation } from 'react-query';
 import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
-import { NotificationsList } from './components/NotificationsList';
-import { getNotificationsList, markMessageAsSeen } from '../../api/notifications';
-import { useSocket } from '../../hooks/use-socket.hook';
-import { postUsageLog } from '../../api/usage';
-import { notificationCenterProps } from './NotificationCenter';
+import { NotificationsList } from './NotificationsList';
+import { getNotificationsList, markMessageAsSeen } from '../../../api/notifications';
+import { useSocket } from '../../../hooks/use-socket.hook';
+import { postUsageLog } from '../../../api/usage';
+import { WidgetProxyContext } from '../../../store/widget-proxy.context';
 
-export function Main(props: notificationCenterProps) {
-  const { sendNotificationClick, sendUrlChange } = props;
+export function Main() {
+  const { sendNotificationClick, sendUrlChange } = useContext(WidgetProxyContext);
   const [currentPage, setCurrentPage] = useState<number>(0);
 
   const { isLoading, data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } =

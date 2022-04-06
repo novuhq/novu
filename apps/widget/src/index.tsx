@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import reportWebVitals from './reportWebVitals';
-import { WidgetHost } from './WidgetHost';
+import { App } from './components/App';
 
 ReactDOM.render(
   <React.StrictMode>
-    <WidgetHost />
+    <App />
   </React.StrictMode>,
   document.getElementById('root')
 );

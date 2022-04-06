@@ -1,11 +1,10 @@
-import { ISubscriberJwt } from '@novu/shared';
+import { IMessage, ISubscriberJwt } from '@novu/shared';
 
 export * from './components';
 
 export interface IAuthContext {
   setToken: (token: string) => void;
   setUser: (profile: ISubscriberJwt) => void;
-
   token: string | null;
   user: ISubscriberJwt | null;
   isLoggedIn: boolean;
@@ -26,4 +25,10 @@ export interface IUserInfo {
   lastName: string;
   email: string;
   phone: string;
+}
+
+export interface INotificationCenterProps {
+  sendUrlChange: (url: string) => void;
+  sendNotificationClick: (notification: IMessage) => void;
+  onUnseenCountChanged: (unseenCount: number) => void;
 }
