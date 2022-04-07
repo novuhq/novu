@@ -19,7 +19,7 @@ To setup the repository, run the initial setup command:
 npm run setup:project
 ```
 
-At the root of the project build the `core` package to get started.
+At the root of the project build the `node` package to get started.
 
 ```zsh
 cd packages/core && yarn run build
@@ -160,4 +160,4 @@ export class TwilioSmsProvider implements ISmsProvider {
 }
 ```
 
-[github-template]: https://github.com/novuhq/provider-template
+[GitHub Template](https://github.com/novuhq/provider-template)
