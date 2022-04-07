@@ -100,14 +100,14 @@
       "type": "pwa-node"
     },
     {
-      "name": "SDK",
+      "name": "EMBED",
       "request": "launch",
       "runtimeArgs": [
         "run-script",
         "start:dev"
       ],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/libs/sdk",
+      "cwd": "${workspaceFolder}/libs/embed",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -159,7 +159,7 @@
   "compounds": [
     {
       "name": "-- RUN FULL ENV - Local",
-      "configurations": ["API", "DAL", "SDK", "SHARED", "TESTING LIB", "WS", "WEB", "WIDGET"]
+      "configurations": ["API", "DAL", "EMBED", "SHARED", "TESTING LIB", "WS", "WEB", "WIDGET"]
     }
   ]
 }

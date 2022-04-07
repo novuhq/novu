@@ -6,7 +6,7 @@ RUN npm i pnpm -g --loglevel notice --force
 
 COPY package.json .
 
-COPY libs/sdk ./libs/sdk
+COPY libs/embed ./libs/embed
 
 COPY tsconfig.json .
 COPY tsconfig.base.json .
@@ -17,4 +17,4 @@ COPY pnpm-lock.yaml .
 
 RUN pnpm install
 
-CMD [ "pnpm", "start:docker:sdk" ]
+CMD [ "pnpm", "start:docker:embed" ]

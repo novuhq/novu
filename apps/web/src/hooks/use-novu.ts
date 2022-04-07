@@ -27,7 +27,7 @@ export function useNovu() {
         elt.src = t;
         const before = o.getElementsByTagName(f)[0];
         before.parentNode?.insertBefore(elt, before);
-      })(window, document, process.env.REACT_APP_WIDGET_SDK_PATH, 'novu', 'script');
+      })(window, document, process.env.REACT_APP_WIDGET_EMBED_PATH, 'novu', 'script');
 
       (window as any).novu.init(
         process.env.REACT_APP_NOVU_APP_ID,
