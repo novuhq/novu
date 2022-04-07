@@ -1,17 +1,17 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Test SDK
+name: Test EMBED
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   pull_request:
     paths:
-      - 'libs/sdk/**'
+      - 'libs/embed/**'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  test_sdk:
+  test_embed:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
@@ -40,5 +40,5 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build
-        working-directory: libs/sdk
+        working-directory: libs/embed
         run: CI='' pnpm build:dev
