@@ -19,7 +19,7 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
     const { body } = await session.testAgent
       .post('/v1/widgets/session/initialize')
       .send({
-        environmentIdentifier: session.environment.identifier,
+        applicationIdentifier: session.environment.identifier,
         $user_id: '12345',
         $first_name: 'Test',
         $last_name: 'User',

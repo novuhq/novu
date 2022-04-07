@@ -100,7 +100,7 @@ async function handleOnboardingFlow(config: ConfigService) {
     spinner = ora('Setting up your new account').start();
 
     await createOrganizationHandler(config, answers);
-    const environmentIdentifier = await createEnvironmentHandler(config, answers);
+    const applicationIdentifier = await createEnvironmentHandler(config, answers);
 
     const address = httpServer.getAddress();
 
@@ -109,7 +109,7 @@ async function handleOnboardingFlow(config: ConfigService) {
   We've created a demo web page for you to see novu notifications in action.
   Visit: ${address}/demo to continue`);
 
-    await raiseDemoDashboard(httpServer, config, environmentIdentifier);
+    await raiseDemoDashboard(httpServer, config, applicationIdentifier);
     await exitHandler();
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -165,7 +165,7 @@ async function createEnvironmentHandler(config: ConfigService, answers: Answers)
   return createEnvironmentResponse.identifier;
 }
 
-async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService, environmentIdentifier: string) {
+async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService, applicationIdentifier: string) {
   const notificationGroupResponse = await getNotificationGroup();
 
   const template = buildTemplate(notificationGroupResponse[0]._id);
@@ -174,7 +174,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
   const decodedToken = config.getDecodedToken();
   const demoDashboardUrl = await getDemoDashboardUrl();
 
-  storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, environmentIdentifier);
+  storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, applicationIdentifier);
 
   httpServer.redirectSuccessDashboard(demoDashboardUrl);
 }
@@ -215,7 +215,7 @@ function storeDashboardData(
   config: ConfigService,
   createNotificationTemplatesResponse,
   decodedToken,
-  environmentIdentifier: string
+  applicationIdentifier: string
 ) {
   const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
@@ -227,7 +227,7 @@ function storeDashboardData(
     { key: '$first_name', value: decodedToken.firstName },
     { key: '$last_name', value: decodedToken.lastName },
     { key: '$email', value: decodedToken.email },
-    { key: 'environmentId', value: environmentIdentifier },
+    { key: 'environmentId', value: applicationIdentifier },
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },
   ];

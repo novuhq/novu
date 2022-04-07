@@ -31,7 +31,7 @@ export class WidgetsController {
     return await this.initializeSessionUsecase.execute(
       InitializeSessionCommand.create({
         subscriberId: body.$user_id,
-        environmentIdentifier: body.environmentIdentifier,
+        applicationIdentifier: body.applicationIdentifier,
         email: body.$email,
         firstName: body.$first_name,
         lastName: body.$last_name,

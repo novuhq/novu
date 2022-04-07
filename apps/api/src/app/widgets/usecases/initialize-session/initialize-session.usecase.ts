@@ -17,7 +17,7 @@ export class InitializeSession {
     token: string;
     profile: Partial<SubscriberEntity>;
   }> {
-    const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.environmentIdentifier);
+    const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
     if (!environment) {
       throw new ApiException('Please provide a valid app identifier');

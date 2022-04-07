@@ -12,7 +12,7 @@ export class InitializeSessionCommand {
 
   @IsDefined()
   @IsString()
-  environmentIdentifier: string;
+  applicationIdentifier: string;
 
   firstName?: string;
 

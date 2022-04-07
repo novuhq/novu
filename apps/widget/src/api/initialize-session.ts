@@ -6,7 +6,7 @@ export async function initializeSession(
   userInfo: { email: string; firstName: string; lastName: string; phone: string }
 ) {
   return await post(`/widgets/session/initialize`, {
-    environmentIdentifier: appId,
+    applicationIdentifier: appId,
     $user_id: userId,
     $first_name: userInfo.firstName,
     $last_name: userInfo.lastName,
