@@ -68,6 +68,7 @@ services:
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_WIDGET_SDK_PATH: ${WIDGET_SDK_PATH}
+      REACT_APP_ENVIRONMENT: ${NODE_ENV}
     ports:
         - 4200:4200
     volumes:
@@ -81,6 +82,7 @@ services:
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      REACT_APP_ENVIRONMENT: ${NODE_ENV}
     ports:
         - 4500:4500
     volumes:
