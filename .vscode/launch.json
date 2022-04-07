@@ -58,11 +58,39 @@
       "type": "pwa-node"
     },
     {
+      "name": "WIDGET - test",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:test"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/widget",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
       "name": "WS",
       "request": "launch",
       "runtimeArgs": [
         "run-script",
         "start"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/ws",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "WS - TEST ENV",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start:test"
       ],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/ws",
@@ -154,12 +182,62 @@
         "<node_internals>/**"
       ],
       "type": "pwa-node"
+    },
+    {
+      "name": "Cypress open - web",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "cypress:open"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/web",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "Cypress open - widget",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "cypress:open"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/widget",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
     }
   ],
   "compounds": [
     {
       "name": "-- RUN FULL ENV - Local",
-      "configurations": ["API", "DAL", "SDK", "SHARED", "TESTING LIB", "WS", "WEB", "WIDGET"]
+      "configurations": [
+        "API",
+        "DAL",
+        "SDK",
+        "SHARED",
+        "TESTING LIB",
+        "WS",
+        "WEB",
+        "WIDGET"
+      ]
+    },
+    {
+      "name": "-- RUN FULL ENV - Test",
+      "configurations": [
+        "API - TEST ENV",
+        "DAL",
+        "SDK",
+        "SHARED",
+        "TESTING LIB",
+        "WS - TEST ENV",
+        "WEB",
+        "WIDGET - test"
+      ]
     }
   ]
 }
