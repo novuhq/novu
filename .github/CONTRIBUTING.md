@@ -1,7 +1,6 @@
 # Contributing to Novu
 
-Your interest in contributing is much appreciated. 
-Thank you for showing an interest in contributing to Novu! Novu is an open source project, . 
+Thank you for showing an interest in contributing to Novu! All kinds of contribution is valuable to us.  
 
 - [I have a question](#questions-and-suggestions)
 - [Ways to contribute](#ways-to-contribute)
