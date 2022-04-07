@@ -67,8 +67,8 @@ services:
     container_name: web
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_WIDGET_SDK_PATH: ${WIDGET_SDK_PATH}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
+      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
     ports:
         - 4200:4200
     volumes:
@@ -87,11 +87,11 @@ services:
         - 4500:4500
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  sdk:
+  embed:
     depends_on:
       - widget
-    image: "ghcr.io/novuhq/novu/sdk:latest"
-    container_name: sdk
+    image: "ghcr.io/novuhq/novu/embed:latest"
+    container_name: embed
     environment:
       WIDGET_URL: ${WIDGET_URL}
     ports:

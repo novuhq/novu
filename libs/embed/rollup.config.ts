@@ -8,7 +8,7 @@ import replace from '@rollup/plugin-replace';
 
 const pkg = require('./package.json');
 
-const libraryName = 'sdk';
+const libraryName = 'embed';
 
 export default {
   input: `src/${libraryName}.ts`,
@@ -27,7 +27,7 @@ export default {
       plugins: [],
     },
   ],
-  // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
+  // Indicate here external modules you don't want to include in your bundle (i.e.: 'lodash')
   external: [],
   watch: {
     include: 'src/**',
