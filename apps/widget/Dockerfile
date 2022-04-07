@@ -27,4 +27,4 @@ RUN pnpm install
 
 RUN pnpm build:widget
 
-CMD [ "pnpm", "start:static:build" ]
+CMD [ "pnpm", "start:static:widget" ]
