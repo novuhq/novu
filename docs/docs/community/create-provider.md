@@ -22,7 +22,7 @@ npm run setup:project
 At the root of the project build the `node` package to get started.
 
 ```zsh
-cd packages/core && yarn run build
+cd packages/node && yarn run build
 ```
 
 ## Snippets
