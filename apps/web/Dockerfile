@@ -28,4 +28,4 @@ COPY .prettierignore .
 
 RUN pnpm build:web
 
-CMD [ "pnpm", "start:static:build" ]
+CMD [ "pnpm", "start:static:web" ]
