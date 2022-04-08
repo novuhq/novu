@@ -55,11 +55,6 @@ npm run setup:project
 npm run start
 ```
 
-## Common scripts
-
-- `npm run setup:project` - initial setup
-- `npm run start` - 
-
 ### Testing scripts
 Make sure to add tests to any changes you have made and then run the appropriate test suit.
 From root folder, run:
@@ -68,17 +63,8 @@ From root folder, run:
 - `npm run test:providers` - test providers
 
 
-## Submitting a Pull Request (PR)
-
-1. 
-
-
-
-
-
-
 ## Coding rules
 
 To ensure consistency throughout the source code, keep these rules in mind as you are working:
 - All features or bug fixes must be tested by one or more specs (unit-tests).
-- We use [Eslint default rule guide](https://eslint.org/docs/rules/), with minor changes. An automated formatter is available (npm run format).
+- We use [Eslint default rule guide](https://eslint.org/docs/rules/), with minor changes. An automated formatter is available using prettier.
