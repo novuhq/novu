@@ -172,9 +172,9 @@ export function useTemplateController(templateId: string) {
 
   useEffect(() => {
     if (template) {
-      const inAppChannel = template.messages.filter((i) => i.template.type === ChannelTypeEnum.IN_APP);
-      const emailChannel = template.messages.filter((i) => i.template.type === ChannelTypeEnum.EMAIL);
-      const smsChannel = template.messages.filter((i) => i.template.type === ChannelTypeEnum.SMS);
+      const inAppChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.IN_APP);
+      const emailChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.EMAIL);
+      const smsChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.SMS);
 
       const formValues: IForm = {
         notificationGroup: template._notificationGroupId,
@@ -225,11 +225,11 @@ export function useTemplateController(templateId: string) {
   }, [templateId]);
 
   const onSubmit = async (data: IForm) => {
-    const messagesData: any[] = [];
+    const stepsData: any[] = [];
 
     if (activeChannels[ChannelTypeEnum.IN_APP]) {
       for (const item of data.inAppMessages) {
-        messagesData.push({
+        stepsData.push({
           _id: item.template._id,
           type: ChannelTypeEnum.IN_APP,
           content: item.template.content as string,
@@ -245,7 +245,7 @@ export function useTemplateController(templateId: string) {
 
     if (activeChannels[ChannelTypeEnum.SMS]) {
       for (const item of data.smsMessages) {
-        messagesData.push({
+        stepsData.push({
           _id: item.template._id,
           type: ChannelTypeEnum.SMS,
           content: item.template.content as string,
@@ -255,7 +255,7 @@ export function useTemplateController(templateId: string) {
 
     if (activeChannels[ChannelTypeEnum.EMAIL]) {
       for (const item of data.emailMessages) {
-        messagesData.push({
+        stepsData.push({
           _id: item.template._id,
           name: item.template.name,
           subject: item.template.subject,
@@ -272,7 +272,7 @@ export function useTemplateController(templateId: string) {
       name: data.name,
       description: data.description,
       tags: data.tags,
-      steps: messagesData,
+      steps: stepsData,
     };
 
     try {
