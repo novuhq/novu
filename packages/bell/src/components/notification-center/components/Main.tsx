@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useInfiniteQuery, useMutation } from 'react-query';
 import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
-import { NotificationsList } from './components/NotificationsList';
-import { getNotificationsList, markMessageAsSeen } from '../../api/notifications';
-import { useSocket } from '../../hooks/use-socket.hook';
-import { sendNotificationClick, sendUrlChange } from '../../api/sdk.service';
-import { postUsageLog } from '../../api/usage';
+import { NotificationsList } from './NotificationsList';
+import { getNotificationsList, markMessageAsSeen } from '../../../api/notifications';
+import { useSocket } from '../../../hooks/use-socket.hook';
+import { sendNotificationClick, sendUrlChange } from '../../../api/sdk.service';
+import { postUsageLog } from '../../../api/usage';
 
 export function Main() {
   const [currentPage, setCurrentPage] = useState<number>(0);

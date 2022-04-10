@@ -284,6 +284,7 @@ importers:
       '@mantine/hooks': ^4.1.0
       '@mantine/notifications': ^4.1.0
       '@mantine/prism': ^4.1.0
+      '@novu/bell': workspace:^0.4.0-alpha.3
       '@novu/dal': ^0.4.0-alpha.3
       '@novu/shared': ^0.4.0-alpha.3
       '@novu/testing': ^0.4.0-alpha.3
@@ -367,6 +368,7 @@ importers:
       '@mantine/hooks': 4.1.0_react@17.0.2
       '@mantine/notifications': 4.1.0_93293bbf002a99ad91ad3839d1e8e057
       '@mantine/prism': 4.1.0_93293bbf002a99ad91ad3839d1e8e057
+      '@novu/bell': link:../../packages/bell
       '@novu/shared': link:../../libs/shared
       '@sentry/react': 6.19.3_react@17.0.2
       '@sentry/tracing': 6.19.3
@@ -19014,7 +19016,7 @@ packages:
       babel-plugin-syntax-jsx: 6.18.0
       lodash: 4.17.21
       picomatch: 2.3.1
-      styled-components: 5.3.5
+      styled-components: 5.3.5_react-dom@17.0.2+react@17.0.2
     dev: false
 
   /babel-plugin-syntax-jsx/6.18.0:
@@ -33717,7 +33719,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.6.3
+      ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
     dev: true
