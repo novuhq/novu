@@ -1,5 +1,15 @@
 import { NotificationCenter } from '@novu/bell';
+import { useApplication } from '../../api/hooks/use-application';
 
 export function NotificationCenterWidget() {
-  return <NotificationCenter />;
+  const { loading: isLoadingApplication } = useApplication();
+
+  return (
+    <NotificationCenter
+      sendNotificationClick={() => {}}
+      sendUrlChange={() => {}}
+      onUnseenCountChanged={() => {}}
+      isLoading={isLoadingApplication}
+    />
+  );
 }
