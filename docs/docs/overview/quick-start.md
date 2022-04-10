@@ -1,78 +1,63 @@
 ---
 sidebar_position: 2
 ---
-
 # Quick Start
 
-Let's create a notification layer in **under 5 minutes.**
+After creating your cloud or self-hosted account the next steps to sending your first notification are outlined in this guide.
 
-## 📦 Install
+- Connect your providers
+- Create a notification template
+- Send a trigger
+- Integrate the Notification Center within your app *(optional)*
 
-```bash
-npm install @novu/node
-```
+## Connect providers
 
-```bash
-yarn add @novu/node
-```
+In the “**Integration Store**” page you can configure the different providers and their respective credentials. During the alpha phase only a **single provider** is allowed **per-channel,** adding a second email provider will de-activate the previously added provider.
 
-## 🔨 Usage
+## Create a notification template
 
-### Register Providers
+After creating the designated channel provider you can create your notification template. You can think of the notification template as the blueprint for the notifications that will be sent. The template includes:
 
-Choose the providers you need, and register them to with Novu,
-full list of providers is available at [full_providers_list], full documentation for providers, and interfaces is available at [].
+- Notification details
+- Channel specific content
+- Trigger definition
 
-```ts
-import { Novu, ChannelTypeEnum } from "@novu/node";
-import { SendgridEmailProvider } from "@novu/sendgrid";
+### Notification Details
 
-const novu = new Novu();
+This section will contain the metadata for your notification, things such as name, description and group.
 
-await novu.registerProvider(
-  new SendgridEmailProvider({
-    apiKey: process.env.SENDGRID_API_KEY,
-  })
-);
-```
+The **name** of the notifications will be converted to a slug and will be used as the trigger identifier used when sending the trigger from back-end.
 
-### Register Templates
+### Channel specific content
 
-Choose a template created by Novu's community, or create your own, and register with Novu.
+#### Email
 
-```ts
-const passwordResetTemplate = await novu.registerTemplate({
-  id: "password-reset",
-  messages: [
-    {
-      subject: "Your password reset request",
-      channel: ChannelTypeEnum.EMAIL,
-      template: `
-          Hi {{firstName}}!
-          
-          To reset your password click <a href="{{resetLink}}">here.</a>
-          
-          {{#if organization}}
-            <img src="{{organization.logo}}" />
-          {{/if}}
-      `,
-    },
-  ],
-});
-```
+You can specify the content for email in two ways:
 
-### Trigger
+**Visual template builder** - For simple usecases you can use our visual template editor with limited control over design but easier to get-started.
 
-On the relevant business logic unit, just declare the trigger event, pass pre-defined parameters, you're done 🎊.
 
-```ts
-await novu.trigger("<REPLACE_WITH_EVENT_NAME>", {
-  $user_id: "<USER IDENTIFIER>",
-  $email: "test@email.com",
-  firstName: "John",
-  lastName: "Doe",
-  organization: {
-    logo: "https://evilcorp.com/logo.png",
-  },
-});
-```
+**Custom Code** - You can use the custom code section to specify custom html that will be used for the email.
+
+You can specify custom variables using the [{{handlebars}}](https://handlebarsjs.com/guide/) syntax.
+
+#### SMS
+
+Similiar to the the email, custom variables using hbs syntax can be described to create the final message.
+
+#### In-app
+
+In the notification center preview you can type the content, you can select content an use `CMD` + `B` to make the selected text bold.
+
+## Trigger the notification
+
+After creating the template trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.
+
+### Passing variables
+
+The second argument contains an object with custom variables used in the template, some variables are system variables and they will begin with a “**$**”:
+
+- **$user_id** - a unique identifier for the user, this can be your internal DB id or the user email. Make sure that this variable is unique.
+- **$email** - The email address of the user.
+- **$phone** - The user’s phone address with a country prefix (+)
+- **Custom variables -**  can be added here and used within the template.
