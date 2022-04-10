@@ -1,3 +1,3 @@
-import { Novu } from '@novu/stateless';
+import { NovuStateless } from '@novu/stateless';
 
-export class NovuService extends Novu {}
+export class NovuService extends NovuStateless {}

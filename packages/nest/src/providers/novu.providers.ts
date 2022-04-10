@@ -1,4 +1,4 @@
-import { Novu } from '@novu/stateless';
+import { NovuStateless } from '@novu/stateless';
 import { NovuOptions } from '../interfaces';
 import { NOVU_OPTIONS } from '../helpers/constants';
 import { NovuService } from '../services';
@@ -8,7 +8,7 @@ export function createNovuProviders(options: NovuOptions) {
     {
       provide: NovuService,
       useFactory: async () => {
-        const novu = new Novu();
+        const novu = new NovuStateless();
         if (options.providers) {
           for (const provider of options.providers) {
             await novu.registerProvider(provider);
