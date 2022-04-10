@@ -44,7 +44,7 @@ export class CreateNotificationTemplateCommand extends ApplicationWithUserComman
   @IsDefined()
   @IsArray()
   @ValidateNested()
-  messages: NotificationChannelDto[];
+  steps: NotificationStepDto[];
 
   @IsBoolean()
   active: boolean;
@@ -62,7 +62,7 @@ export class ChannelCTADto {
   };
 }
 
-export class NotificationChannelDto {
+export class NotificationStepDto {
   @IsOptional()
   @IsEnum(ChannelTypeEnum)
   type: ChannelTypeEnum;

@@ -6,7 +6,7 @@ import {
   IntegrationRepository,
   MessageRepository,
   NotificationEntity,
-  NotificationMessagesEntity,
+  NotificationStepEntity,
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -256,7 +256,7 @@ export class TriggerEvent {
   }
 
   private async sendSmsMessage(
-    smsMessages: NotificationMessagesEntity[],
+    smsMessages: NotificationStepEntity[],
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
@@ -377,7 +377,7 @@ export class TriggerEvent {
   }
 
   private async sendInAppMessage(
-    inAppChannelMessages: NotificationMessagesEntity[],
+    inAppChannelMessages: NotificationStepEntity[],
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
@@ -447,7 +447,7 @@ export class TriggerEvent {
   }
 
   private async sendEmailMessage(
-    emailChannelMessages: NotificationMessagesEntity[],
+    emailChannelMessages: NotificationStepEntity[],
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,

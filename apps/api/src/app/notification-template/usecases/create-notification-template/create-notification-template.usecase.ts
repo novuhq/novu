@@ -37,7 +37,7 @@ export class CreateNotificationTemplate {
       }),
     };
 
-    const templateMessages = [];
+    const templateSteps = [];
 
     for (const message of command.steps) {
       const template = await this.createMessageTemplate.execute(
@@ -54,7 +54,7 @@ export class CreateNotificationTemplate {
         })
       );
 
-      templateMessages.push({
+      templateSteps.push({
         _templateId: template._id,
         filters: message.filters,
       });
@@ -69,7 +69,7 @@ export class CreateNotificationTemplate {
       draft: command.draft,
       tags: command.tags,
       description: command.description,
-      messages: templateMessages,
+      steps: templateSteps,
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
     });

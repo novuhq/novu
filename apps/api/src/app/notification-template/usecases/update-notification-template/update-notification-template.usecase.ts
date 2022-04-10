@@ -1,7 +1,7 @@
 // eslint-ignore max-len
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository, NotificationMessagesEntity } from '@novu/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository, NotificationStepEntity } from '@novu/dal';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
@@ -40,7 +40,7 @@ export class UpdateNotificationTemplate {
 
     if (command.steps) {
       const contentService = new ContentService();
-      const { messages } = command;
+      const { steps } = command;
 
       const variables = contentService.extractMessageVariables(command.steps);
 
@@ -50,9 +50,9 @@ export class UpdateNotificationTemplate {
         };
       });
 
-      const templateMessages: NotificationMessagesEntity[] = [];
+      const templateMessages: NotificationStepEntity[] = [];
 
-      for (const message of messages) {
+      for (const message of steps) {
         if (message._id) {
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
@@ -94,7 +94,7 @@ export class UpdateNotificationTemplate {
           });
         }
       }
-      updatePayload.messages = templateMessages;
+      updatePayload.steps = templateMessages;
     }
 
     if (command.tags) {
