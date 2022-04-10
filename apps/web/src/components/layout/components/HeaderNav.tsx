@@ -12,7 +12,8 @@ import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
-import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
+import { Sun, Moon, Trash, Mail } from '../../../design-system/icons';
+import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 
 type Props = {};
 const menuItem = [
@@ -81,7 +82,7 @@ export function HeaderNav({}: Props) {
             {dark ? <Sun {...headerIconsSettings} /> : <Moon {...headerIconsSettings} />}
           </ActionIcon>
           <ActionIcon variant="transparent" id="notification-bell">
-            <Bell {...headerIconsSettings} />
+            <NotificationCenterWidget />
             <UnseenBadge id="unseen-badge-selector" />
           </ActionIcon>
           <Dropdown
