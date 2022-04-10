@@ -1,4 +1,4 @@
-import { IMessage, ISubscriberJwt } from '@novu/shared';
+import { ISubscriberJwt } from '@novu/shared';
 
 export * from './components';
 
@@ -25,10 +25,4 @@ export interface IUserInfo {
   lastName: string;
   email: string;
   phone: string;
-}
-
-export interface INotificationCenterProps {
-  sendUrlChange: (url: string) => void;
-  sendNotificationClick: (notification: IMessage) => void;
-  onUnseenCountChanged: (unseenCount: number) => void;
 }

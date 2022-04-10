@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import * as WebFont from 'webfontloader';
@@ -100,20 +99,11 @@ function AppContent(props: INotificationCenterProps) {
           layoutDirection={theme.layout.direction}
           brandColor={theme.colors.main}
           fontColor={theme.colors.fontColor}>
-          <Router>
-            <Routes>
-              <Route
-                path="/:applicationId"
-                element={
-                  <WidgetProxyContext.Provider value={props}>
-                    <Layout>
-                      <Main />
-                    </Layout>
-                  </WidgetProxyContext.Provider>
-                }
-              />
-            </Routes>
-          </Router>
+          <WidgetProxyContext.Provider value={props}>
+            <Layout>
+              <Main />
+            </Layout>
+          </WidgetProxyContext.Provider>
         </Wrap>
       </SocketContext.Provider>
     </ThemeProvider>

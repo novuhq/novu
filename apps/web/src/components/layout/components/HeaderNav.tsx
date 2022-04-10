@@ -12,7 +12,8 @@ import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
-import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
+import { Sun, Moon, Trash, Mail } from '../../../design-system/icons';
+import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 
 type Props = {};
 const menuItem = [
@@ -25,7 +26,7 @@ const menuItem = [
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export function HeaderNav({}: Props) {
-  const { currentOrganization, currentUser, logout } = useContext(AuthContext);
+  const { currentOrganization, currentUser, logout, token } = useContext(AuthContext);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
 
@@ -81,7 +82,7 @@ export function HeaderNav({}: Props) {
             {dark ? <Sun {...headerIconsSettings} /> : <Moon {...headerIconsSettings} />}
           </ActionIcon>
           <ActionIcon variant="transparent" id="notification-bell">
-            <Bell {...headerIconsSettings} />
+            <NotificationCenterWidget token={token ? token : ''} />
             <UnseenBadge id="unseen-badge-selector" />
           </ActionIcon>
           <Dropdown

@@ -7,10 +7,12 @@ import { getNotificationsList, markMessageAsSeen } from '../../../api/notificati
 import { useSocket } from '../../../hooks/use-socket.hook';
 import { postUsageLog } from '../../../api/usage';
 import { WidgetProxyContext } from '../../../store/widget-proxy.context';
+import { Bell } from './Bell';
 
 export function Main() {
   const { sendNotificationClick, sendUrlChange } = useContext(WidgetProxyContext);
   const [currentPage, setCurrentPage] = useState<number>(0);
+  const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
 
   const { isLoading, data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } =
     useInfiniteQuery<IMessage[]>('notifications-feed', async ({ pageParam = 0 }) => getNotificationsList(pageParam), {
@@ -66,9 +68,14 @@ export function Main() {
     refetch();
   }
 
+  function handlerBellClick() {
+    setIsNotificationCenterOpen(!isNotificationCenterOpen);
+  }
+
   return (
     <MainWrapper data-test-id="main-wrapper">
-      {!isLoading && isFetched && !isFetching && data?.pages[0].length === 0 ? (
+      <Bell onClick={handlerBellClick} />
+      {isNotificationCenterOpen && !isLoading && isFetched && !isFetching && data?.pages[0].length === 0 ? (
         <div
           style={{
             textAlign: 'center',
