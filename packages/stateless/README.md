@@ -54,10 +54,10 @@ yarn add @novu/node
 ## 🔨 Usage
 
 ```ts
-import { Novu, ChannelTypeEnum } from '@novu/node';
+import { NovuStateless, ChannelTypeEnum } from '@novu/stateless';
 import { SendgridEmailProvider } from '@novu/sendgrid';
 
-const novu = new Novu();
+const novu = new NovuStateless();
 
 await novu.registerProvider(
   new SendgridEmailProvider({

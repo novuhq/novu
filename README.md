@@ -74,25 +74,25 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 ```
 
 # 📦 Stateless mode
-For simpler use cases, you can use the `@novu/node` library. This will require you to manage the templates content and providers registration. 
+For simpler use cases, you can use the `@novu/stateless` library. This will require you to manage the templates content and providers registration. 
 
 ## 📦 Install
 
 ```bash
-npm install @novu/node
+npm install @novu/stateless
 ```
 
 ```bash
-yarn add @novu/node
+yarn add @novu/stateless
 ```
 
 ## 🔨 Usage
 
 ```ts
-import { Novu, ChannelTypeEnum } from '@novu/node';
+import { NovuStateless, ChannelTypeEnum } from '@novu/stateless';
 import { SendgridEmailProvider } from '@novu/sendgrid';
 
-const novu = new Novu();
+const novu = new NovuStateless();
 
 await novu.registerProvider(
   new SendgridEmailProvider({
@@ -132,7 +132,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME>', {
 ```
 
 ## Providers
-Novu provides a single API to manage providers across multiple channels with a single to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
 #### 💌 Email
 - [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
