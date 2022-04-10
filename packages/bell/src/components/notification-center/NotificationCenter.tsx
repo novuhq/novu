@@ -1,6 +1,7 @@
 import React from 'react';
 import { App } from './components/App';
 import { IMessage } from '@novu/shared';
+import { NotificationCenterContext } from '../../store/notification-center.context';
 
 export function NotificationCenter({
   sendUrlChange,
@@ -13,5 +14,17 @@ export function NotificationCenter({
   onUnseenCountChanged: (unseenCount: number) => void;
   isLoading: boolean;
 }) {
-  return <App />;
+  return (
+    <>
+      <NotificationCenterContext.Provider
+        value={{
+          sendUrlChange: sendUrlChange,
+          sendNotificationClick: sendNotificationClick,
+          onUnseenCountChanged: onUnseenCountChanged,
+          isLoading: isLoading,
+        }}>
+        <App />
+      </NotificationCenterContext.Provider>
+    </>
+  );
 }
