@@ -3,7 +3,7 @@ import {
   IEmailProvider,
   ISmsProvider,
   ITemplate,
-} from '@novu/node';
+} from '@novu/stateless';
 
 export interface NovuOptions {
   //

@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@nestjs/common": "^8.2.0",
-    "@novu/node": "^0.4.0-alpha.4"
+    "@novu/stateless": "^0.4.0-alpha.4"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

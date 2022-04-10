@@ -1,4 +1,4 @@
-import { Novu } from '@novu/node';
+import { Novu } from '@novu/stateless';
 import { NovuOptions } from '../interfaces';
 import { NOVU_OPTIONS } from '../helpers/constants';
 import { NovuService } from '../services';
