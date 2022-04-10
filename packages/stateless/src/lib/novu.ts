@@ -13,7 +13,7 @@ import { TriggerEngine } from './trigger/trigger.engine';
 import { ThemeStore } from './theme/theme.store';
 import { ITheme } from './theme/theme.interface';
 
-export class Novu extends EventEmitter {
+export class NovuStateless extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
   private readonly themeStore: ThemeStore;

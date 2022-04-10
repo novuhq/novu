@@ -1,8 +1,8 @@
-import { Novu } from './novu';
+import { NovuStateless } from './novu';
 import { ChannelTypeEnum } from './template/template.interface';
 
 test('should register an SMS provider and return it', async () => {
-  const novu = new Novu();
+  const novu = new NovuStateless();
 
   const template = {
     id: 'test',
@@ -19,7 +19,7 @@ test('should register an SMS provider and return it', async () => {
 });
 
 test('should call 2 hooks together', async () => {
-  const novu = new Novu();
+  const novu = new NovuStateless();
 
   const template = {
     id: 'test',
