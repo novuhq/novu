@@ -34,3 +34,14 @@ export interface INotificationCenterContext {
   onUnseenCountChanged: (unseenCount: number) => void;
   isLoading: boolean;
 }
+
+export interface INovuProviderContext {
+  appId?: string;
+  backendUrl?: string;
+  userId?: string;
+  clientId?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+}
