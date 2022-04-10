@@ -3,10 +3,10 @@ import { NotificationStepEntity } from '@novu/dal';
 
 export function matchMessageWithFilters(
   channel: ChannelTypeEnum,
-  messages: NotificationStepEntity[],
+  steps: NotificationStepEntity[],
   payloadVariables: { [key: string]: string | string[] | { [key: string]: string } }
 ): NotificationStepEntity[] {
-  return messages.filter((message) => {
+  return steps.filter((message) => {
     const channelIsMatching = message.template.type === channel;
 
     if (message.filters?.length) {
