@@ -27,7 +27,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
     <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
     ·
-  <a href="https://discord.gg/heTZ9zJd">Join Our Discord</a>
+  <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a>
     ·
     <a href="https://blog.novu.co/">Read our blog</a>
   </p>
