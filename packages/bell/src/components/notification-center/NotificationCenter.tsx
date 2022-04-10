@@ -9,10 +9,6 @@ export interface INotificationCenterProps {
   isLoading: boolean;
 }
 
-export interface INotificationCenter extends JSX.Element {
-  props: INotificationCenterProps;
-}
-
-export function NotificationCenter(props: INotificationCenterProps): INotificationCenter {
+export function NotificationCenter(props: INotificationCenterProps) {
   return <App {...props} />;
 }

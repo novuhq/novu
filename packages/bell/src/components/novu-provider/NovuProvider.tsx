@@ -1,6 +1,5 @@
 import React from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { INotificationCenter } from '../notification-center';
 
 export interface INovuProviderProps {
   appId?: string;
@@ -24,7 +23,7 @@ export function NovuProvider({
   email,
   phone,
 }: {
-  children: INotificationCenter;
+  children: JSX.Element;
   appId: string;
   backendUrl: string;
   userId: string;
