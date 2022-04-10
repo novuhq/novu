@@ -44,11 +44,11 @@ Building a notification system is hard, at first it seems like just sending an e
 ## 📦 Install
 
 ```bash
-npm install @novu/node
+npm install @novu/stateless
 ```
 
 ```bash
-yarn add @novu/node
+yarn add @novu/stateless
 ```
 
 ## 🔨 Usage
