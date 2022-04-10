@@ -1,7 +1,18 @@
 import React from 'react';
-import { INotificationCenterProps } from '../../index';
 import { App } from './components/App';
+import { IMessage } from '@novu/shared';
 
-export function NotificationCenter(props: INotificationCenterProps) {
+export interface INotificationCenterProps {
+  sendUrlChange: (url: string) => void;
+  sendNotificationClick: (notification: IMessage) => void;
+  onUnseenCountChanged: (unseenCount: number) => void;
+  isLoading: boolean;
+}
+
+export interface INotificationCenter extends JSX.Element {
+  props: INotificationCenterProps;
+}
+
+export function NotificationCenter(props: INotificationCenterProps): INotificationCenter {
   return <App {...props} />;
 }
