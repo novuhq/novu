@@ -1,2 +1,8 @@
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
-export const WS_URL = process.env.REACT_APP_WS_URL || 'http://localhost:3002';
+import { useContext } from 'react';
+import { NovuContext } from '../store/novu-provider.context';
+
+const { backendUrl } = useContext(NovuContext);
+
+export const API_URL = backendUrl || 'http://localhost:3000';
+
+export const WS_URL = backendUrl || 'http://localhost:3002';
