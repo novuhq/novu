@@ -38,11 +38,11 @@ export class UpdateNotificationTemplate {
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
 
-    if (command.messages) {
+    if (command.steps) {
       const contentService = new ContentService();
       const { messages } = command;
 
-      const variables = contentService.extractMessageVariables(command.messages);
+      const variables = contentService.extractMessageVariables(command.steps);
 
       updatePayload['triggers.0.variables'] = variables.map((i) => {
         return {

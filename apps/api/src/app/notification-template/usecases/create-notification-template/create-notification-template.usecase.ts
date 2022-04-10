@@ -17,7 +17,7 @@ export class CreateNotificationTemplate {
 
   async execute(command: CreateNotificationTemplateCommand) {
     const contentService = new ContentService();
-    const variables = contentService.extractMessageVariables(command.messages);
+    const variables = contentService.extractMessageVariables(command.steps);
 
     const triggerIdentifier = `${slugify(command.name, {
       lower: true,
@@ -39,7 +39,7 @@ export class CreateNotificationTemplate {
 
     const templateMessages = [];
 
-    for (const message of command.messages) {
+    for (const message of command.steps) {
       const template = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
           type: message.type,

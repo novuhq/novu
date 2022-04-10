@@ -24,7 +24,7 @@ export class NotificationTemplateService {
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const messages: any[] = override?.messages ?? [
+    const messages: any[] = override?.steps ?? [
       {
         type: ChannelTypeEnum.IN_APP,
         content: 'Test content for <b>{{firstName}}</b>',

@@ -34,7 +34,7 @@ const notificationTemplateSchema = new Schema(
       },
     ],
 
-    messages: [
+    steps: [
       {
         filters: [
           {

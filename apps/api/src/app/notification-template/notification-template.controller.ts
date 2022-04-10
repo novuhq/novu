@@ -66,7 +66,7 @@ export class NotificationTemplateController {
         name: body.name,
         tags: body.tags,
         description: body.description,
-        messages: body.messages,
+        steps: body.steps,
         notificationGroupId: body.notificationGroupId,
       })
     );
@@ -96,7 +96,7 @@ export class NotificationTemplateController {
         name: body.name,
         tags: body.tags,
         description: body.description,
-        messages: body.messages,
+        steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         active: body.active ?? false,
         draft: body.draft ?? true,

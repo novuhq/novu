@@ -272,7 +272,7 @@ export function useTemplateController(templateId: string) {
       name: data.name,
       description: data.description,
       tags: data.tags,
-      messages: messagesData,
+      steps: messagesData,
     };
 
     try {
