@@ -157,10 +157,10 @@ export class AuthService {
       );
       let environmentToSwitch = userActiveProjects[0];
 
+      const reduceEnvsToOnlyDevelopment = (prev, current) => (current.name === 'Development' ? current : prev);
+
       if (userActiveProjects.length > 1) {
-        environmentToSwitch = userActiveProjects.reduce((prev, current) => {
-          return current.name === 'Development' ? current : prev;
-        }, environmentToSwitch);
+        environmentToSwitch = userActiveProjects.reduce(reduceEnvsToOnlyDevelopment, environmentToSwitch);
       }
 
       if (environmentToSwitch) {

@@ -57,8 +57,8 @@ export class UserSession {
 
     if (!options.noOrganization) {
       if (!options?.noEnvironment) {
-        await this.createEnvironment('Development');
         await this.createEnvironment('Production');
+        await this.createEnvironment('Development', this.environment._parentId);
         await this.createIntegration();
       }
     }
@@ -91,9 +91,10 @@ export class UserSession {
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
-  async createEnvironment(name = 'Test environment') {
+  async createEnvironment(name = 'Test environment', parentId: string = undefined) {
     const response = await this.testAgent.post('/v1/environments').send({
       name,
+      parentId,
     });
 
     this.environment = response.body.data;
@@ -180,6 +181,10 @@ export class UserSession {
 
     this.organization = await organizationService.createOrganization();
     await organizationService.addMember(this.organization._id, this.user._id);
+
+    if (!this.environment) {
+      await this.createEnvironment();
+    }
 
     return this.organization;
   }
