@@ -1,12 +1,6 @@
 import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationCommand } from '../../../shared/commands/project.command';
 
-export class CreateSubscriberCommand extends ApplicationCommand {
-  static create(data: CreateSubscriberCommand) {
-    return CommandHelper.create(CreateSubscriberCommand, data);
-  }
-
+export class CreateSubscriberBodyDto {
   @IsString()
   @IsDefined()
   subscriberId: string;

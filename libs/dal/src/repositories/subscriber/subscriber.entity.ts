@@ -9,6 +9,8 @@ export class SubscriberEntity {
 
   phone?: string;
 
+  avatar?: string;
+
   subscriberId: string;
 
   _organizationId: string;
