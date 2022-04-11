@@ -29,7 +29,7 @@ export class SwitchOrganization {
       _parentId: { $exists: false },
     });
 
-    const token = await this.authService.getSignedToken(user, command.newOrganizationId, member, environment._id);
+    const token = await this.authService.getSignedToken(user, command.newOrganizationId, member, environment?._id);
 
     return token;
   }

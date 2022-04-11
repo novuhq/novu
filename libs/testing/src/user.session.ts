@@ -57,8 +57,9 @@ export class UserSession {
 
     if (!options.noOrganization) {
       if (!options?.noEnvironment) {
-        await this.createEnvironment('Production');
-        await this.createEnvironment('Development', this.environment._parentId);
+        await this.createEnvironment('Development');
+        await this.createEnvironment('Production', this.environment._parentId);
+
         await this.createIntegration();
       }
     }
