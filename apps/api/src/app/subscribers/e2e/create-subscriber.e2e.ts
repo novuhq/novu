@@ -21,6 +21,8 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         subscriberId: '123',
         firstName: 'John',
         lastName: 'Doe',
+        email: 'john@doe.com',
+        phone: '+972523333333',
       },
       {
         headers: {
@@ -35,5 +37,45 @@ describe('Create Subscriber - /subscribers (POST)', function () {
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.application._id, '123');
 
     expect(createdSubscriber.firstName).to.equal('John');
+    expect(createdSubscriber.email).to.equal('john@doe.com');
+    expect(createdSubscriber.phone).to.equal('+972523333333');
+  });
+
+  it('should update subscriber if already created', async function () {
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/subscribers`,
+      {
+        subscriberId: '123',
+        firstName: 'John',
+        lastName: 'Doe',
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+    const response = await axiosInstance.post(
+      `${session.serverUrl}/v1/subscribers`,
+      {
+        subscriberId: '123',
+        firstName: 'Mary',
+        lastName: 'Doe',
+        email: 'john@doe.com',
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const { data: body } = response;
+
+    expect(body.data).to.be.ok;
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.application._id, '123');
+
+    expect(createdSubscriber.firstName).to.equal('Mary');
+    expect(createdSubscriber.email).to.equal('john@doe.com');
   });
 });
