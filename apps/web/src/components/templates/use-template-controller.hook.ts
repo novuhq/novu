@@ -16,67 +16,6 @@ import * as Sentry from '@sentry/react';
 import { createTemplate, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
 
-export interface ITemplateMessage {
-  template: {
-    content: string | IEmailBlock[];
-    htmlContent?: string;
-    _id?: string;
-    subject?: string;
-    cta?: any;
-    name?: string;
-    type: ChannelTypeEnum;
-    contentType?: 'editor' | 'customHtml';
-  };
-  filters?: any[];
-}
-
-export interface IForm {
-  notificationGroup: string;
-  name: string;
-  description: string;
-  tags: string[];
-  emailMessages: ITemplateMessage[];
-  inAppMessages: ITemplateMessage[];
-  smsMessages: ITemplateMessage[];
-}
-
-const defaultFormValues = {
-  inAppMessages: [
-    {
-      template: {
-        _id: undefined,
-        type: ChannelTypeEnum.IN_APP,
-        content: '',
-      },
-      filters: [],
-    },
-  ] as ITemplateMessage[],
-  emailMessages: [
-    {
-      template: {
-        _id: undefined,
-        type: ChannelTypeEnum.EMAIL,
-        contentType: 'editor',
-        content: [],
-        subject: '',
-        name: 'Email Message Template',
-      },
-      filters: [],
-    },
-  ] as ITemplateMessage[],
-  smsMessages: [
-    {
-      template: {
-        _id: undefined,
-        contentType: undefined,
-        type: ChannelTypeEnum.SMS,
-        content: '',
-      },
-      filters: [],
-    },
-  ],
-};
-
 export function useTemplateController(templateId: string) {
   const [activeChannels, setActiveChannels] = useState<{ [key: string]: boolean }>({
     [ChannelTypeEnum.IN_APP]: false,
@@ -407,3 +346,64 @@ export function useTemplateController(templateId: string) {
     smsFields,
   };
 }
+
+export interface ITemplateMessage {
+  template: {
+    content: string | IEmailBlock[];
+    htmlContent?: string;
+    _id?: string;
+    subject?: string;
+    cta?: any;
+    name?: string;
+    type: ChannelTypeEnum;
+    contentType?: 'editor' | 'customHtml';
+  };
+  filters?: any[];
+}
+
+export interface IForm {
+  notificationGroup: string;
+  name: string;
+  description: string;
+  tags: string[];
+  emailMessages: ITemplateMessage[];
+  inAppMessages: ITemplateMessage[];
+  smsMessages: ITemplateMessage[];
+}
+
+const defaultFormValues = {
+  inAppMessages: [
+    {
+      template: {
+        _id: undefined,
+        type: ChannelTypeEnum.IN_APP,
+        content: '',
+      },
+      filters: [],
+    },
+  ] as ITemplateMessage[],
+  emailMessages: [
+    {
+      template: {
+        _id: undefined,
+        type: ChannelTypeEnum.EMAIL,
+        contentType: 'editor',
+        content: [],
+        subject: '',
+        name: 'Email Message Template',
+      },
+      filters: [],
+    },
+  ] as ITemplateMessage[],
+  smsMessages: [
+    {
+      template: {
+        _id: undefined,
+        contentType: undefined,
+        type: ChannelTypeEnum.SMS,
+        content: '',
+      },
+      filters: [],
+    },
+  ],
+};

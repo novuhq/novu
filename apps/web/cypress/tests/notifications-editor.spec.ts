@@ -119,10 +119,13 @@ describe('Notifications Creator', function () {
     cy.getByTestId('submit-category-btn').click();
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
 
+    cy.wait(100);
+
     cy.getByTestId('submit-btn').click();
 
     cy.getByTestId('template-edit-link');
     cy.visit('/templates/edit/' + template._id);
+
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
   });
 
