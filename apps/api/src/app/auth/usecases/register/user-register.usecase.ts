@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MemberEntity, MemberRepository, OrganizationEntity, UserRepository } from '@novu/dal';
+import { MemberEntity, OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../../services/auth.service';
 import { UserRegisterCommand } from './user-register.command';
@@ -19,7 +19,6 @@ export class UserRegister {
     private userRepository: UserRepository,
     private createOrganizationUsecase: CreateOrganization,
     private createEnvironmentUsecase: CreateEnvironment,
-    private memberRepository: MemberRepository,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -37,7 +36,6 @@ export class UserRegister {
     });
 
     let organization: OrganizationEntity;
-    let member: MemberEntity;
     if (command.organizationName) {
       organization = await this.createOrganizationUsecase.execute(
         CreateOrganizationCommand.create({
@@ -60,7 +58,14 @@ export class UserRegister {
       await this.createEnvironmentUsecase.execute(
         CreateEnvironmentCommand.create({
           userId: user._id,
-          name: `${organization.name} App`,
+          name: 'Developement',
+          organizationId: organization._id,
+        })
+      );
+      await this.createEnvironmentUsecase.execute(
+        CreateEnvironmentCommand.create({
+          userId: user._id,
+          name: 'Production',
           organizationId: organization._id,
         })
       );
