@@ -20,6 +20,7 @@ const subscriberSchema = new Schema(
     phone: Schema.Types.String,
     subscriberId: Schema.Types.String,
     email: Schema.Types.String,
+    avatar: Schema.Types.String,
   },
   schemaOptions
 );

@@ -22,12 +22,20 @@ export class UpdateSubscriber {
       updatePayload.email = command.email;
     }
 
+    if (command.phone != null) {
+      updatePayload.phone = command.phone;
+    }
+
     if (command.firstName != null) {
       updatePayload.firstName = command.firstName;
     }
 
     if (command.lastName != null) {
       updatePayload.lastName = command.lastName;
+    }
+
+    if (command.avatar != null) {
+      updatePayload.avatar = command.avatar;
     }
 
     await this.subscriberRepository.update(
