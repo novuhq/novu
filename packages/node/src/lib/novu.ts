@@ -20,13 +20,11 @@ export class Novu extends EventEmitter {
   }
 
   async trigger(eventId: string, data: ITriggerPayload) {
-    if (this.apiKey) {
-      return await this.http.post(`/events/trigger`, {
-        name: eventId,
-        payload: {
-          ...data,
-        },
-      });
-    }
+    return await this.http.post(`/events/trigger`, {
+      name: eventId,
+      payload: {
+        ...data,
+      },
+    });
   }
 }
