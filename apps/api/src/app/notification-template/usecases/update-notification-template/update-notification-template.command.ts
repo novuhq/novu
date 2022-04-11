@@ -44,7 +44,7 @@ export class UpdateNotificationTemplateCommand extends ApplicationWithUserComman
   @IsArray()
   @ValidateNested()
   @IsOptional()
-  messages: NotificationChannelDto[];
+  steps: NotificationStepDto[];
 }
 
 export class ChannelCTADto {
@@ -56,7 +56,7 @@ export class ChannelCTADto {
   };
 }
 
-export class NotificationChannelDto {
+export class NotificationStepDto {
   @IsOptional()
   @IsEnum(ChannelTypeEnum)
   type: ChannelTypeEnum;

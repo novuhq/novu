@@ -11,7 +11,7 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     const item = await NotificationTemplate.findOne({
       _applicationId: applicationId,
       'triggers.identifier': identifier,
-    }).populate('messages.template');
+    }).populate('steps.template');
 
     return this.mapEntity(item);
   }
@@ -20,7 +20,7 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     const item = await NotificationTemplate.findOne({
       _id: id,
       _organizationId: organizationId,
-    }).populate('messages.template');
+    }).populate('steps.template');
 
     return this.mapEntity(item);
   }

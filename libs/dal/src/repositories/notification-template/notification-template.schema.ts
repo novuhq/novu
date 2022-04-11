@@ -34,7 +34,7 @@ const notificationTemplateSchema = new Schema(
       },
     ],
 
-    messages: [
+    steps: [
       {
         filters: [
           {
@@ -74,9 +74,9 @@ const notificationTemplateSchema = new Schema(
   schemaOptions
 );
 
-notificationTemplateSchema.virtual('messages.template', {
+notificationTemplateSchema.virtual('steps.template', {
   ref: 'MessageTemplate',
-  localField: 'messages._templateId',
+  localField: 'steps._templateId',
   foreignField: '_id',
   justOne: true,
 });

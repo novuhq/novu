@@ -446,6 +446,7 @@ importers:
       '@craco/craco': ^6.1.1
       '@faker-js/faker': ^6.0.0
       '@mantine/core': ^4.1.0
+      '@mantine/hooks': ^4.1.0
       '@novu/dal': ^0.4.0-alpha.3
       '@novu/embed': ^0.4.0-alpha.3
       '@novu/shared': ^0.4.0-alpha.3
@@ -493,7 +494,8 @@ importers:
       webfontloader: ^1.6.28
     dependencies:
       '@ant-design/icons': 4.7.0_react-dom@17.0.2+react@17.0.2
-      '@mantine/core': 4.1.0_363bbc5b3b2ec1146a689992546b4fa7
+      '@mantine/core': 4.1.0_02d449accd6af5de518c8e0232941003
+      '@mantine/hooks': 4.1.0_react@17.0.2
       '@novu/embed': link:../../libs/embed
       '@novu/shared': link:../../libs/shared
       '@testing-library/jest-dom': 5.16.3
@@ -10277,6 +10279,27 @@ packages:
       - debug
     dev: false
 
+  /@mantine/core/4.1.0_02d449accd6af5de518c8e0232941003:
+    resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
+    peerDependencies:
+      '@mantine/hooks': 4.1.0
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      '@mantine/hooks': 4.1.0_react@17.0.2
+      '@mantine/styles': 4.1.0_363bbc5b3b2ec1146a689992546b4fa7
+      '@popperjs/core': 2.11.4
+      '@radix-ui/react-scroll-area': 0.1.4_react@17.0.2
+      clsx: 1.1.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      react-popper: 2.2.5_2e9dd80dbd4df675244d857293d4c5b0
+      react-textarea-autosize: 8.3.3_18ce5b4fa2aac98ae1c6ad949e4591be
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/react'
+    dev: false
+
   /@mantine/core/4.1.0_229613458ee597f8528794fa797ff0fa:
     resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
     peerDependencies:
@@ -10293,26 +10316,6 @@ packages:
       react-dom: 17.0.2_react@17.0.2
       react-popper: 2.2.5_2e9dd80dbd4df675244d857293d4c5b0
       react-textarea-autosize: 8.3.3_03a98942b76c57740a9573edba2d1cc1
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@types/react'
-    dev: false
-
-  /@mantine/core/4.1.0_363bbc5b3b2ec1146a689992546b4fa7:
-    resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
-    peerDependencies:
-      '@mantine/hooks': 4.1.0
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-    dependencies:
-      '@mantine/styles': 4.1.0_363bbc5b3b2ec1146a689992546b4fa7
-      '@popperjs/core': 2.11.4
-      '@radix-ui/react-scroll-area': 0.1.4_react@17.0.2
-      clsx: 1.1.1
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-      react-popper: 2.2.5_2e9dd80dbd4df675244d857293d4c5b0
-      react-textarea-autosize: 8.3.3_18ce5b4fa2aac98ae1c6ad949e4591be
     transitivePeerDependencies:
       - '@babel/core'
       - '@types/react'
