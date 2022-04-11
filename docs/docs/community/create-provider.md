@@ -57,7 +57,7 @@ import {
   ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
-} from '@novu/node';
+} from '@novu/stateless';
 
 export class ExampleProviderEmailProvider implements IEmailProvider {
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -97,7 +97,7 @@ test('should trigger exampleProvider library correctly', async () => {
 This is a code example of a basic email provider, with minimal fields required by our ``` IEmailProvider ``` interface.
 
  ```ts
-import { ChannelTypeEnum, IEmailProvider, IEmailOptions } from "@novu/node";
+import { ChannelTypeEnum, IEmailProvider, IEmailOptions } from "@novu/stateless";
 
 import sendgridMail from "@sendgrid/mail";
 
@@ -130,7 +130,7 @@ export class SendgridEmailProvider implements IEmailProvider {
 This is a code example of a basic email provider, with minimal fields required by our ``` ISmsProvider ``` interface.
 
 ```typescript
-import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from "@novu/node";
+import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from "@novu/stateless";
 
 import { Twilio } from "twilio";
 
