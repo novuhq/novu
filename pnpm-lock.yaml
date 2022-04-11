@@ -998,7 +998,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^8.2.0
-      '@novu/node': ^0.4.0-alpha.4
+      '@novu/stateless': ^0.4.0-alpha.4
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1015,7 +1015,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@nestjs/common': 8.4.3
-      '@novu/node': link:../node
+      '@novu/stateless': link:../stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1034,6 +1034,47 @@ importers:
       typedoc: 0.19.2_typescript@4.6.2
 
   packages/node:
+    specifiers:
+      '@sendgrid/mail': ^7.4.6
+      '@types/jest': 27.4.0
+      '@types/lodash.get': ^4.4.6
+      '@types/lodash.merge': ^4.6.6
+      '@types/node': ^14.6.0
+      axios: ^0.26.1
+      codecov: ^3.5.0
+      cz-conventional-changelog: ^3.3.0
+      handlebars: ^4.7.7
+      jest: ^27.0.6
+      lodash.get: ^4.4.2
+      lodash.merge: ^4.6.2
+      npm-run-all: ^4.1.5
+      open-cli: ^6.0.1
+      run-p: 0.0.0
+      ts-jest: ^27.0.5
+      typedoc: ^0.19.0
+      typescript: 4.1.3
+    dependencies:
+      axios: 0.26.1
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    devDependencies:
+      '@sendgrid/mail': 7.6.2
+      '@types/jest': 27.4.0
+      '@types/lodash.get': 4.4.6
+      '@types/lodash.merge': 4.6.6
+      '@types/node': 14.18.12
+      codecov: 3.8.3
+      cz-conventional-changelog: 3.3.0
+      jest: 27.5.1_ts-node@9.1.1
+      npm-run-all: 4.1.5
+      open-cli: 6.0.1
+      run-p: 0.0.0
+      ts-jest: 27.1.4_31da9e6f9f13c9452350083397676188
+      typedoc: 0.19.2_typescript@4.1.3
+      typescript: 4.1.3
+
+  packages/stateless:
     specifiers:
       '@sendgrid/mail': ^7.4.6
       '@types/jest': 27.4.0
