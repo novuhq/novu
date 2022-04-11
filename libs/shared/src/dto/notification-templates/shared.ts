@@ -8,7 +8,7 @@ export class ChannelCTADto {
   };
 }
 
-export class NotificationMessageDto {
+export class NotificationStepDto {
   type: ChannelTypeEnum;
 
   content: string | IEmailBlock[];

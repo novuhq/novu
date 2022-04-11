@@ -21,7 +21,7 @@ export class NotificationTemplateEntity {
 
   tags: string[];
 
-  messages: NotificationMessagesEntity[];
+  steps: NotificationStepEntity[];
 
   _organizationId: string;
 
@@ -46,17 +46,17 @@ export class NotificationTriggerEntity {
   }[];
 }
 
-export class NotificationMessagesEntity {
+export class NotificationStepEntity {
   _id?: string;
 
   _templateId: string;
 
   template?: MessageTemplateEntity;
 
-  filters?: MessageFilter[];
+  filters?: StepFilter[];
 }
 
-export class MessageFilter {
+export class StepFilter {
   isNegated: boolean;
 
   type: BuilderFieldType;

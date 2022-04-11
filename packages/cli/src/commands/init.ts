@@ -182,7 +182,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
   const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}`;
 
-  const messages = [
+  const steps = [
     {
       type: ChannelTypeEnum.IN_APP,
       content:
@@ -201,7 +201,7 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
     name: 'On-boarding notification',
     active: true,
     draft: false,
-    messages,
+    steps,
     tags: null,
     description: null,
   };

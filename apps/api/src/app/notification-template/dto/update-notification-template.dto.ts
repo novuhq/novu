@@ -19,7 +19,7 @@ export class ChannelCTADto {
   };
 }
 
-export class NotificationChannelDto {
+export class NotificationStepDto {
   @IsDefined()
   @IsEnum(ChannelTypeEnum)
   type: ChannelTypeEnum;
@@ -50,7 +50,7 @@ export class UpdateNotificationTemplateDto implements ICreateNotificationTemplat
   @IsArray()
   @IsOptional()
   @ValidateNested()
-  messages: NotificationChannelDto[];
+  steps: NotificationStepDto[];
 
   @IsOptional()
   @IsMongoId()
