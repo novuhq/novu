@@ -5,6 +5,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "^4.1.0",
+    "@mantine/hooks": "^4.1.0",
     "@novu/embed": "^0.4.0-alpha.3",
     "@novu/shared": "^0.4.0-alpha.3",
     "@testing-library/jest-dom": "^5.11.4",
@@ -60,7 +61,9 @@
     "start:dev": "PORT=4500 pnpm start",
     "start:cli:local": "pnpm start:shell:test & pnpm start:shell:embed & PORT=3500 pnpm start",
     "start:test": "pnpm start:shell:test & pnpm start:shell:embed & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 pnpm start",
-    "start:static:build": "http-server build -p 4500 --proxy http://localhost:4500?",
+    "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
+    "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
+    "start:static:build": "pnpm envsetup:docker && http-server build -p 4500 --proxy http://localhost:4500?",
     "start:docker": "pnpm build && pnpm start:static:build",
     "build": "craco build",
     "test": "craco test",
