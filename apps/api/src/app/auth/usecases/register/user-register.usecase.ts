@@ -7,8 +7,6 @@ import { normalizeEmail } from '../../../shared/helpers/email-normalization.serv
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
-import { CreateEnvironment } from '../../../environments/usecases/create-environment/create-environment.usecase';
-import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 // eslint-disable-next-line max-len
 
@@ -18,7 +16,6 @@ export class UserRegister {
     private authService: AuthService,
     private userRepository: UserRepository,
     private createOrganizationUsecase: CreateOrganization,
-    private createEnvironmentUsecase: CreateEnvironment,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -53,21 +50,6 @@ export class UserRegister {
           createdAt: user.createdAt,
         } as never,
         organization._id
-      );
-
-      await this.createEnvironmentUsecase.execute(
-        CreateEnvironmentCommand.create({
-          userId: user._id,
-          name: 'Developement',
-          organizationId: organization._id,
-        })
-      );
-      await this.createEnvironmentUsecase.execute(
-        CreateEnvironmentCommand.create({
-          userId: user._id,
-          name: 'Production',
-          organizationId: organization._id,
-        })
       );
     }
 

@@ -20,7 +20,7 @@ import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
-import CreateApplicationPage from './pages/auth/CreateApplicationPage';
+import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 
 if (process.env.REACT_APP_SENTRY_DSN) {
   Sentry.init({
@@ -66,7 +66,7 @@ function App() {
               <Route path="/auth/reset/request" element={<PasswordResetPage />} />
               <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
               <Route path="/auth/invitation/:token" element={<InvitationPage />} />
-              <Route path="/auth/application" element={<CreateApplicationPage />} />
+              <Route path="/auth/application" element={<CreateOrganizationPage />} />
               <Route element={<AppLayout />}>
                 <Route
                   path="/*"

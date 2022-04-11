@@ -10,7 +10,7 @@ import { AuthContext } from '../../store/authContext';
 
 type Props = {};
 
-export function CreateApplication({}: Props) {
+export function CreateOrganization({}: Props) {
   const {
     register,
     handleSubmit,
@@ -74,10 +74,6 @@ export function CreateApplication({}: Props) {
 
     if (!jwtHasKey('organizationId')) {
       await createOrganization(data.organizationName);
-    }
-
-    if (!jwtHasKey('environmentId')) {
-      await createEnvironment(data.organizationName);
     }
 
     setLoading(false);

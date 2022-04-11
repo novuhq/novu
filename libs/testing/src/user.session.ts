@@ -57,7 +57,8 @@ export class UserSession {
 
     if (!options.noOrganization) {
       if (!options?.noEnvironment) {
-        await this.createEnvironment();
+        await this.createEnvironment('Development');
+        await this.createEnvironment('Production');
         await this.createIntegration();
       }
     }
@@ -90,9 +91,9 @@ export class UserSession {
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
-  async createEnvironment() {
+  async createEnvironment(name = 'Test environment') {
     const response = await this.testAgent.post('/v1/environments').send({
-      name: 'Test environment',
+      name,
     });
 
     this.environment = response.body.data;

@@ -14,6 +14,8 @@ export class EnvironmentEntity {
 
   apiKeys: IApiKey[];
 
+  _parentId: string;
+
   branding: {
     fontFamily?: string;
     fontColor?: string;
