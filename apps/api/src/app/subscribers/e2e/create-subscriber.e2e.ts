@@ -36,4 +36,40 @@ describe('Create Subscriber - /subscribers (POST)', function () {
 
     expect(createdSubscriber.firstName).to.equal('John');
   });
+
+  it('should update subscriber if already created', async function () {
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/subscribers`,
+      {
+        subscriberId: '123',
+        firstName: 'John',
+        lastName: 'Doe',
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+    const response = await axiosInstance.post(
+      `${session.serverUrl}/v1/subscribers`,
+      {
+        subscriberId: '123',
+        firstName: 'Mary',
+        lastName: 'Doe',
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const { data: body } = response;
+
+    expect(body.data).to.be.ok;
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.application._id, '123');
+
+    expect(createdSubscriber.firstName).to.equal('Mary');
+  });
 });
