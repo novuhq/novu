@@ -21,6 +21,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
         subscriberId: '123',
         firstName: 'John',
         lastName: 'Doe',
+        email: 'john@doe.com',
       },
       {
         headers: {
@@ -33,6 +34,8 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
       `${session.serverUrl}/v1/subscribers/123`,
       {
         lastName: 'Test Changed',
+        email: 'changed@mail.com',
+        phone: '+972523333333',
       },
       {
         headers: {
@@ -48,5 +51,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
 
     expect(createdSubscriber.firstName).to.equal('John');
     expect(createdSubscriber.lastName).to.equal('Test Changed');
+    expect(createdSubscriber.email).to.equal('changed@mail.com');
+    expect(createdSubscriber.phone).to.equal('+972523333333');
   });
 });
