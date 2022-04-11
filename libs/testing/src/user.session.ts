@@ -157,7 +157,7 @@ export class UserSession {
     const service = new NotificationTemplateService(this.user._id, this.organization._id, this.application._id);
 
     return await service.createTemplate({
-      messages: [
+      steps: [
         {
           type: channel,
           content:

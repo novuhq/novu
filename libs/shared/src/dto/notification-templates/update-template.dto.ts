@@ -1,4 +1,4 @@
-import { NotificationMessageDto } from './shared';
+import { NotificationStepDto } from './shared';
 
 export interface IUpdateNotificationTemplate {
   name?: string;
@@ -7,7 +7,7 @@ export interface IUpdateNotificationTemplate {
 
   description?: string;
 
-  messages?: NotificationMessageDto[];
+  steps?: NotificationStepDto[];
 
   notificationGroupId?: string;
 }

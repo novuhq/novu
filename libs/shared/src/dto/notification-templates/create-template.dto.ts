@@ -1,4 +1,4 @@
-import { NotificationMessageDto } from './shared';
+import { NotificationStepDto } from './shared';
 
 export interface ICreateNotificationTemplateDto {
   name: string;
@@ -7,7 +7,7 @@ export interface ICreateNotificationTemplateDto {
 
   description: string;
 
-  messages: NotificationMessageDto[];
+  steps: NotificationStepDto[];
 
   notificationGroupId: string;
 
