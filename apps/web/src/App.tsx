@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
-import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
+import { applyToken, getToken, getTokenPayload, useAuthController } from './store/use-auth-controller';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -143,6 +143,15 @@ function App() {
 }
 
 function RequiredAuth({ children }: any) {
+  const { logout } = useContext(AuthContext);
+
+  // TODO: remove after env migration
+  const payload = getTokenPayload();
+  if (payload && (payload as any).applicationId) {
+    logout();
+    window.location.reload();
+  }
+
   return getToken() ? children : <Navigate to="/auth/login" replace />;
 }
 
