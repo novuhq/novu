@@ -40,6 +40,8 @@ export class UserSession {
 
   testServer = testServer;
 
+  apiKey: string;
+
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
 
   async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean } = {}) {
@@ -100,11 +102,20 @@ export class UserSession {
   }
 
   async createEnvironment(name = 'Test environment', parentId: string = undefined) {
+    const key = uuid();
     this.environment = await this.environmentRepository.create({
       name,
       identifier: uuid(),
       _parentId: parentId,
+      apiKeys: [
+        {
+          key: key,
+          _userId: this.user._id,
+        },
+      ],
     });
+
+    this.apiKey = key;
 
     return this.environment;
   }
