@@ -22,7 +22,7 @@
     "start:docker:embed": "cross-env nx run-many --target=start:docker --projects=@novu/embed",
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
     "build": "nx run-many --target=build --all",
-    "build:api": "nx build @novu/api",
+    "build:api": "nx build @novu/api --skip-nx-cache",
     "build:ws": "nx build @novu/ws",
     "build:web": "nx build @novu/web",
     "build:widget": "nx build @novu/widget",
@@ -76,7 +76,7 @@
     "lint-staged": "^10.5.4",
     "monorepo-run": "github:scopsy/monorepo-run",
     "pnpm": "^6.32.3",
-    "prettier": "^2.5.1",
+    "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",
     "typescript": "4.6.2"
