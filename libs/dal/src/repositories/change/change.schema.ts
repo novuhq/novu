@@ -9,10 +9,8 @@ const changeSchema = new Schema(
       type: Schema.Types.Boolean,
       default: false,
     },
-    type: Schema.Types.String,
-    createdAt: {
-      type: Schema.Types.Date,
-      default: Date.now,
+    type: {
+      type: Schema.Types.String,
     },
     change: Schema.Types.Mixed,
     _environmentId: {
