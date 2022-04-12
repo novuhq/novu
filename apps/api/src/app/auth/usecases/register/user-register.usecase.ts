@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MemberEntity, MemberRepository, OrganizationEntity, UserRepository } from '@novu/dal';
+import { MemberEntity, OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../../services/auth.service';
 import { UserRegisterCommand } from './user-register.command';
@@ -7,8 +7,6 @@ import { normalizeEmail } from '../../../shared/helpers/email-normalization.serv
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
-import { CreateEnvironment } from '../../../environments/usecases/create-environment/create-environment.usecase';
-import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 // eslint-disable-next-line max-len
 
@@ -18,8 +16,6 @@ export class UserRegister {
     private authService: AuthService,
     private userRepository: UserRepository,
     private createOrganizationUsecase: CreateOrganization,
-    private createEnvironmentUsecase: CreateEnvironment,
-    private memberRepository: MemberRepository,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -37,7 +33,6 @@ export class UserRegister {
     });
 
     let organization: OrganizationEntity;
-    let member: MemberEntity;
     if (command.organizationName) {
       organization = await this.createOrganizationUsecase.execute(
         CreateOrganizationCommand.create({
@@ -55,14 +50,6 @@ export class UserRegister {
           createdAt: user.createdAt,
         } as never,
         organization._id
-      );
-
-      await this.createEnvironmentUsecase.execute(
-        CreateEnvironmentCommand.create({
-          userId: user._id,
-          name: `${organization.name} App`,
-          organizationId: organization._id,
-        })
       );
     }
 

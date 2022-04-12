@@ -32,6 +32,10 @@ const environmentSchema = new Schema(
       color: Schema.Types.String,
       direction: Schema.Types.String,
     },
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Environment',
+    },
   },
   schemaOptions
 );

@@ -3,9 +3,17 @@ import { faker } from '@faker-js/faker';
 import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
+import { v4 as uuid } from 'uuid';
 
 import { ChannelTypeEnum } from '@novu/shared';
-import { UserEntity, UserRepository, EnvironmentEntity, OrganizationEntity, NotificationGroupEntity } from '@novu/dal';
+import {
+  UserEntity,
+  UserRepository,
+  EnvironmentEntity,
+  OrganizationEntity,
+  NotificationGroupEntity,
+  EnvironmentRepository,
+} from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
 
@@ -16,6 +24,7 @@ import { IntegrationService } from './integration.service';
 
 export class UserSession {
   private userRepository = new UserRepository();
+  private environmentRepository = new EnvironmentRepository();
 
   token: string;
 
@@ -57,7 +66,9 @@ export class UserSession {
 
     if (!options.noOrganization) {
       if (!options?.noEnvironment) {
-        await this.createEnvironment();
+        await this.createEnvironment('Development');
+        await this.createEnvironment('Production', this.environment._parentId);
+
         await this.createIntegration();
       }
     }
@@ -90,13 +101,22 @@ export class UserSession {
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
-  async createEnvironment() {
-    const response = await this.testAgent.post('/v1/environments').send({
-      name: 'Test environment',
+  async createEnvironment(name = 'Test environment', parentId: string = undefined) {
+    const key = uuid();
+    this.environment = await this.environmentRepository.create({
+      name,
+      identifier: uuid(),
+      _parentId: parentId,
+      _organizationId: this.organization._id,
+      apiKeys: [
+        {
+          key: key,
+          _userId: this.user._id,
+        },
+      ],
     });
 
-    this.environment = response.body.data;
-    this.apiKey = this.environment.apiKeys[0].key;
+    this.apiKey = key;
 
     return this.environment;
   }
@@ -137,10 +157,6 @@ export class UserSession {
     return this.environment;
   }
 
-  async enableApiTokenMode() {
-    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', `ApiKey ${this.apiKey}`);
-  }
-
   async createTemplate(template?: Partial<CreateTemplatePayload>) {
     const service = new NotificationTemplateService(this.user._id, this.organization._id, this.environment._id);
 
@@ -179,6 +195,10 @@ export class UserSession {
 
     this.organization = await organizationService.createOrganization();
     await organizationService.addMember(this.organization._id, this.user._id);
+
+    if (!this.environment) {
+      await this.createEnvironment();
+    }
 
     return this.organization;
   }

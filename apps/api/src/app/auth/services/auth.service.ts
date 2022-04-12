@@ -155,7 +155,13 @@ export class AuthService {
       const userActiveProjects = await this.environmentRepository.findOrganizationEnvironments(
         organizationToSwitch._id
       );
-      const environmentToSwitch = userActiveProjects[0];
+      let environmentToSwitch = userActiveProjects[0];
+
+      const reduceEnvsToOnlyDevelopment = (prev, current) => (current.name === 'Development' ? current : prev);
+
+      if (userActiveProjects.length > 1) {
+        environmentToSwitch = userActiveProjects.reduce(reduceEnvsToOnlyDevelopment, environmentToSwitch);
+      }
 
       if (environmentToSwitch) {
         return await this.switchEnvironmentUsecase.execute(
