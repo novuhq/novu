@@ -22,7 +22,7 @@ export const API_NOTIFICATION_TEMPLATES_URL = `${apiAddress}/v1/notification-tem
 export const API_TRIGGER_URL = `${apiAddress}/v1/events/trigger`;
 
 // Client
-export const CLIENT_LOGIN_URL = process.env.NOVU_API_ADDRESS || 'https://web.novu.co/auth/login';
+export const CLIENT_LOGIN_URL = process.env.NOVU_CLIENT_LOGIN || 'https://web.novu.co/auth/login';
 
 // github
 export const GITHUB_DOCKER_URL = 'https://github.com/novuhq/novu/tree/main/docker';
