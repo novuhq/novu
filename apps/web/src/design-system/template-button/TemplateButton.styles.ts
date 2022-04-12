@@ -1,5 +1,6 @@
 import { createStyles } from '@mantine/core';
 import { colors, shadows } from '../config';
+import { getGradient } from '../config/helper';
 
 export const useStyles = createStyles((theme) => {
   const dark = theme.colorScheme === 'dark';
@@ -36,5 +37,3 @@ export const useStyles = createStyles((theme) => {
     },
   };
 });
-
-const getGradient = (color) => `linear-gradient(0deg, ${color} 0%, ${color} 100%)`;
