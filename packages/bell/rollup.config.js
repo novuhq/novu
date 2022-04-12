@@ -22,7 +22,13 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [peerDepsExternal(), resolve(), commonjs(), typescript({ tsconfig: './tsconfig.json' }), terser()],
+    plugins: [
+      peerDepsExternal(),
+      resolve({ preferBuiltins: false, browser: true }),
+      commonjs(),
+      typescript({ tsconfig: './tsconfig.json' }),
+      terser(),
+    ],
   },
   {
     input: 'build/esm/types/index.d.ts',

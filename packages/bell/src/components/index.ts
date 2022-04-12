@@ -1,1 +1,1 @@
-export * from './Bell';
+export * from './notification-center';
