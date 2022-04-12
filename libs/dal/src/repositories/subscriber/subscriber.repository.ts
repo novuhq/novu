@@ -32,6 +32,6 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
   }
 }
 
-function regExpEscape(literalString) {
+function regExpEscape(literalString: string): string {
   return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
 }
