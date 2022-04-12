@@ -63,7 +63,7 @@ export class SubscribersController {
   async removeSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
     return await this.removeSubscriberUsecase.execute(
       RemoveSubscriberCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
       })

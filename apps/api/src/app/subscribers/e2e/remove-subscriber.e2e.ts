@@ -46,7 +46,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE)', function () 
 
     const deletedSubscriber = (
       await subscriberRepository.findDeleted({
-        applicationId: session.environment._id,
+        _environmentId: session.environment._id,
         subscriberId: '123',
       })
     )[0];
