@@ -9,7 +9,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
 
   async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity> {
     return await this.findOne({
-      _environmentId: 'WHATTT',
+      _appsTam: 'WHATTT',
       subscriberId,
     });
   }

@@ -30,7 +30,7 @@ export class InviteMember {
     const token = createGuid();
 
     if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
-      const novu = new Novu(process.env.NOVU_API_KEY as any);
+      const novu = new Novu(process.env.NOVU_API_KEY);
 
       await novu.trigger('invite-to-organization-wBnO8NpDn', {
         $user_id: command.email,
