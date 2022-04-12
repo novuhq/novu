@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import { IApplication, ISubscriberJwt } from '@novu/shared';
@@ -14,6 +14,7 @@ import { getApplication } from '../../../api/application';
 import { useAuth } from '../../../hooks/use-auth.hook';
 import { colors } from '../../../shared/config/colors';
 import React from 'react';
+import { NovuContext } from '../../../store/novu-provider.context';
 
 const queryClient = new QueryClient();
 
@@ -52,14 +53,14 @@ const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
     margin: 0;
     font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
     color: #333737;
-    background: transparent;
   }
 `;
 
 function AppContent() {
   const { isLoggedIn } = useAuth();
   const { socket } = useSocketController();
-  const [userColorScheme, setUserColorScheme] = useState<'light' | 'dark'>('light');
+  const { colorScheme } = useContext(NovuContext);
+
   const { data: application } = useQuery<Pick<IApplication, '_id' | 'name' | 'branding'>>(
     'application',
     getApplication,
@@ -71,14 +72,13 @@ function AppContent() {
   const theme = {
     colors: {
       main: application?.branding?.color || colors.vertical,
-      fontColor: userColorScheme === 'light' ? colors.B40 : colors.white,
-      secondaryFontColor: userColorScheme === 'light' ? colors.B80 : colors.B40,
+      fontColor: colorScheme === 'light' ? colors.B40 : colors.white,
+      secondaryFontColor: colorScheme === 'light' ? colors.B80 : colors.B40,
     },
     fontFamily: application?.branding?.fontFamily || 'Lato',
     layout: {
       direction: (application?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
-    colorScheme: userColorScheme,
   };
 
   useEffect(() => {
@@ -107,10 +107,10 @@ function AppContent() {
 }
 
 const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string; fontColor: string }>`
-  overflow: hidden;
   direction: ${({ layoutDirection }) => layoutDirection};
   color: ${({ fontColor }) => fontColor};
   min-width: 420px;
+  z-index: 999;
 
   ::-moz-selection {
     background: ${({ brandColor }) => brandColor};

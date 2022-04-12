@@ -5,13 +5,15 @@ import { Footer } from './Footer';
 import { useInitialization } from '../../../../hooks/use-initialization.hook';
 import { shadows } from '../../../../shared/config/shadows';
 import { colors } from '../../../../shared/config/colors';
-import React from 'react';
+import React, { useContext } from 'react';
+import { NovuContext } from '../../../../store/novu-provider.context';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useInitialization();
+  const { colorScheme } = useContext(NovuContext);
 
   return (
-    <LayoutWrapper>
+    <LayoutWrapper colorScheme={colorScheme}>
       <Header />
       <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
       <Footer />
@@ -24,11 +26,11 @@ const ContentWrapper = styled.div`
   min-height: 400px;
 `;
 
-const LayoutWrapper = styled.div`
+const LayoutWrapper = styled.div<{ colorScheme: 'light' | 'dark' }>`
   background: white;
   padding: 15px 0;
   height: auto;
   border-radius: 7px;
-  box-shadow: ${({ theme }) => (theme.colorScheme === 'light' ? shadows.medium : shadows.dark)};
-  background: ${({ theme }) => (theme.colorScheme === 'light' ? colors.white : colors.B15)};
+  box-shadow: ${({ colorScheme }) => (colorScheme === 'light' ? shadows.medium : shadows.dark)};
+  background: ${({ colorScheme }) => (colorScheme === 'light' ? colors.white : colors.B15)};
 `;

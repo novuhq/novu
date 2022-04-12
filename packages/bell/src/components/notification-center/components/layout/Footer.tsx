@@ -1,15 +1,17 @@
 /* eslint-disable max-len */
-import React from 'react';
-import styled, { useTheme } from 'styled-components';
+import React, { useContext } from 'react';
+import styled from 'styled-components';
 import { colors } from '../../../../shared/config/colors';
+import { NovuContext } from '../../../../store/novu-provider.context';
 
 export function Footer() {
-  const theme: any = useTheme();
-  const textColor = theme.colorScheme === 'light' ? 'black' : 'white';
+  const { colorScheme } = useContext(NovuContext);
+
+  const textColor = colorScheme === 'light' ? 'black' : 'white';
 
   return (
     <FooterWrapper>
-      <Text>Powered By </Text>
+      <Text colorScheme={colorScheme}>Powered By </Text>
       <a
         rel="noreferrer"
         target="_blank"
@@ -55,8 +57,8 @@ export function Footer() {
     </FooterWrapper>
   );
 }
-const Text = styled.div`
-  color: ${({ theme }) => (theme.colorScheme === 'light' ? colors.B70 : colors.B40)};
+const Text = styled.div<{ colorScheme }>`
+  color: ${({ colorScheme }) => (colorScheme === 'light' ? colors.B70 : colors.B40)};
   font-size: 10px;
   font-weight: 400;
 `;
