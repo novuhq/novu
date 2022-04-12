@@ -24,7 +24,7 @@ export class CreateNotificationTemplate {
       strict: true,
     })}`;
     const templateCheckIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.applicationId,
+      command.environmentId,
       triggerIdentifier
     );
     const trigger: INotificationTrigger = {
