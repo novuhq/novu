@@ -40,8 +40,6 @@ export class UserSession {
 
   testServer = testServer;
 
-  apiKey: string;
-
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
 
   async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean } = {}) {
@@ -108,8 +106,6 @@ export class UserSession {
       _parentId: parentId,
     });
 
-    this.apiKey = this.environment.apiKeys[0].key;
-
     return this.environment;
   }
 
@@ -147,10 +143,6 @@ export class UserSession {
     this.environment = await environmentService.createEnvironment(this.organization._id);
 
     return this.environment;
-  }
-
-  async enableApiTokenMode() {
-    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', `ApiKey ${this.apiKey}`);
   }
 
   async createTemplate(template?: Partial<CreateTemplatePayload>) {
