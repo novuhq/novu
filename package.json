@@ -22,7 +22,7 @@
     "start:docker:embed": "cross-env nx run-many --target=start:docker --projects=@novu/embed",
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
     "build": "nx run-many --target=build --all",
-    "build:api": "nx build @novu/api --skip-nx-cache",
+    "build:api": "nx build @novu/api",
     "build:ws": "nx build @novu/ws",
     "build:web": "nx build @novu/web",
     "build:widget": "nx build @novu/widget",
