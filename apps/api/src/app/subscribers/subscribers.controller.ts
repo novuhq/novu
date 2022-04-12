@@ -1,6 +1,7 @@
-import { Body, Controller, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
+import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -10,7 +11,11 @@ import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
 
 @Controller('/subscribers')
 export class SubscribersController {
-  constructor(private createSubscriberUsecase: CreateSubscriber, private updateSubscriberUsecase: UpdateSubscriber) {}
+  constructor(
+    private createSubscriberUsecase: CreateSubscriber,
+    private updateSubscriberUsecase: UpdateSubscriber,
+    private removeSubscriberUsecase: RemoveSubscriber
+  ) {}
 
   @Post('/')
   @ExternalApiAccessible()
@@ -48,6 +53,19 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+      })
+    );
+  }
+
+  @Delete('/:subscriberId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async removeSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+    return await this.removeSubscriberUsecase.execute(
+      RemoveSubscriberCommand.create({
+        applicationId: user.applicationId,
+        organizationId: user.organizationId,
+        subscriberId,
       })
     );
   }

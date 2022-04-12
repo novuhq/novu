@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
+import * as mongooseDelete from 'mongoose-delete';
 import { schemaOptions } from '../schema-default.options';
 import { SubscriberEntity } from './subscriber.entity';
 
@@ -26,6 +27,8 @@ const subscriberSchema = new Schema(
 );
 
 subscriberSchema.index({ _environmentId: 1, userId: 1 });
+
+subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 interface ISubscriberDocument extends SubscriberEntity, Document {
   _id: never;
