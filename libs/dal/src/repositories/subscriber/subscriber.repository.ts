@@ -14,7 +14,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
 
   async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity> {
     return await this.findOne({
-      _appsTam: 'WHATTT',
+      _environmentId: environmentId,
       subscriberId,
     });
   }
@@ -45,7 +45,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
       throw new DalException(`Could not find subscriber with id ${foundSubscriber.subscriberId} to delete`);
     }
     await this.subscriber.delete({
-      _applicationId: foundSubscriber._applicationId,
+      _applicationId: foundSubscriber._environmentId,
       subscriberId: foundSubscriber.subscriberId,
     });
   }
