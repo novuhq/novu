@@ -15,7 +15,8 @@ export const Loader = ({ color }: { color?: string }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-      }}>
+      }}
+    >
       <MantineLoader
         color={
           loaderColor.indexOf('gradient') === -1

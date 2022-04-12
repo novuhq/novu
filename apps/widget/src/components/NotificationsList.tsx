@@ -30,7 +30,8 @@ export function NotificationsList({
         hasMore={hasNextPage}
         height={400}
         loader={<Loader />}
-        endMessage={false}>
+        endMessage={false}
+      >
         {notifications.map((page) => {
           return page.map((notification) => (
             <NotificationListItem key={notification._id} notification={notification} onClick={onNotificationClicked} />

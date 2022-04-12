@@ -100,7 +100,8 @@ function AppContent() {
           <Wrap
             layoutDirection={theme.layout.direction}
             brandColor={theme.colors.main}
-            fontColor={theme.colors.fontColor}>
+            fontColor={theme.colors.fontColor}
+          >
             <Router>
               <Routes>
                 <Route
