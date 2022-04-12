@@ -9,7 +9,6 @@ import {
 } from '@mantine/core';
 import { useContext } from 'react';
 import * as capitalize from 'lodash.capitalize';
-import styled from '@emotion/styled';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Trash, Mail } from '../../../design-system/icons';
@@ -81,10 +80,7 @@ export function HeaderNav({}: Props) {
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()} title="Toggle color scheme">
             {dark ? <Sun {...headerIconsSettings} /> : <Moon {...headerIconsSettings} />}
           </ActionIcon>
-          <ActionIcon variant="transparent" id="notification-bell">
-            <NotificationCenterWidget user={currentUser} />
-            <UnseenBadge id="unseen-badge-selector" />
-          </ActionIcon>
+          <NotificationCenterWidget user={currentUser} />
           <Dropdown
             control={
               <ActionIcon variant="transparent">
@@ -104,14 +100,3 @@ export function HeaderNav({}: Props) {
     </Header>
   );
 }
-
-const UnseenBadge = styled.span`
-  position: absolute;
-  background: ${colors.error};
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  right: 2px;
-  top: 2px;
-  display: none;
-`;
