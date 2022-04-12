@@ -65,8 +65,10 @@ test('should update subscriber correctly', async () => {
   });
 
   expect(mockedAxios.put).toHaveBeenCalled();
-  expect(mockedAxios.put).toHaveBeenCalledWith('/subscribers', {
-    subscriberId: 'test-update-subscriber',
-    phone: '8989898',
-  });
+  expect(mockedAxios.put).toHaveBeenCalledWith(
+    `/subscribers/test-update-subscriber`,
+    {
+      phone: '8989898',
+    }
+  );
 });

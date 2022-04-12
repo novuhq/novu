@@ -16,8 +16,7 @@ export class Subscribers {
   }
 
   async update(subscriberId: string, data: ISubscriberPayload) {
-    return await this.http.put(`/subscribers`, {
-      subscriberId,
+    return await this.http.put(`/subscribers/${subscriberId}`, {
       ...data,
     });
   }

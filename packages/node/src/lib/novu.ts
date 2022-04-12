@@ -6,7 +6,7 @@ import { Subscribers } from './subscribers/subscribers';
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
   private readonly http: AxiosInstance;
-  subscribers: Subscribers;
+  readonly subscribers: Subscribers;
 
   constructor(apiKey: string) {
     super();
