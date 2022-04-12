@@ -155,7 +155,8 @@ function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
         theme: currentTheme,
         setTheme: setCurrentTheme,
         toggleTheme,
-      }}>
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
@@ -172,7 +173,8 @@ function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
         token,
         logout,
         setToken,
-      }}>
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

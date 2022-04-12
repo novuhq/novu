@@ -55,7 +55,8 @@ export function ContentRow({
       disabled={!allowRemove}
       data-test-id="remove-row-btn"
       onClick={onRemove}
-      icon={<Trash />}>
+      icon={<Trash />}
+    >
       Remove Row
     </DropdownItem>,
   ];
@@ -71,7 +72,8 @@ export function ContentRow({
                 <DotsHorizontalOutlined color={theme.colorScheme === 'dark' ? colors.B30 : colors.B80} />
               </ActionIcon>
             </SettingsButton>
-          }>
+          }
+        >
           {rowStyleMenu}
         </Dropdown>
       </ContentRowWrapper>

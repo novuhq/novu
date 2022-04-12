@@ -38,7 +38,8 @@ export const InAppCenterCard = ({ environment }: { environment: IEnvironment | u
           },
         })}
         language="jsx"
-        data-test-id="embed-code-snippet">
+        data-test-id="embed-code-snippet"
+      >
         {embedCode}
       </Prism>
     </Card>

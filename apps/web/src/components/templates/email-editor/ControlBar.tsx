@@ -9,14 +9,16 @@ export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type
       key="control-bar-add"
       data-test-id="add-btn-block"
       icon={<DoubleArrowRight />}
-      onClick={() => onBlockAdd('button')}>
+      onClick={() => onBlockAdd('button')}
+    >
       Add Button
     </DropdownItem>,
     <DropdownItem
       key="add-text-button"
       data-test-id="add-text-block"
       icon={<TextAlignment />}
-      onClick={() => onBlockAdd('text')}>
+      onClick={() => onBlockAdd('text')}
+    >
       Add Text
     </DropdownItem>,
   ];
@@ -33,7 +35,8 @@ export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type
             <ActionIcon data-test-id="control-add" variant="transparent">
               <PlusCircleOutlined color={theme.colorScheme === 'dark' ? colors.B30 : colors.B80} />
             </ActionIcon>
-          }>
+          }
+        >
           {actionsMenu}
         </Dropdown>
       }

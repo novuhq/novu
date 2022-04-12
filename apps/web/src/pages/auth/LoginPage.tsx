@@ -35,7 +35,8 @@ export default function LoginPage() {
     <AuthLayout>
       <AuthContainer
         title="Sign In"
-        description=" Welcome back! Sign in with the data you entered in your registration">
+        description=" Welcome back! Sign in with the data you entered in your registration"
+      >
         <LoginForm />
       </AuthContainer>
     </AuthLayout>

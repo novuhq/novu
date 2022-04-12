@@ -101,7 +101,8 @@ export default function TemplateEditorPage() {
                     data-test-id="submit-btn"
                     loading={isLoading || isUpdateLoading}
                     disabled={loadingEditTemplate || isLoading}
-                    submit>
+                    submit
+                  >
                     {editMode ? 'Update' : 'Create'}
                   </Button>
                 </Grid.Col>

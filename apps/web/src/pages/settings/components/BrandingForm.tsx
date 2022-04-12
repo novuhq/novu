@@ -125,7 +125,8 @@ export function BrandingForm({
                 <InputWrapper
                   styles={inputStyles}
                   label="Your Logo"
-                  description="Will be used on email templates and inbox">
+                  description="Will be used on email templates and inbox"
+                >
                   <Dropzone
                     styles={{
                       root: {
@@ -140,7 +141,8 @@ export function BrandingForm({
                     multiple={false}
                     onDrop={beforeUpload}
                     {...field}
-                    data-test-id="upload-image-button">
+                    data-test-id="upload-image-button"
+                  >
                     {(status) => dropzoneChildren(status, image)}
                   </Dropzone>
                 </InputWrapper>
