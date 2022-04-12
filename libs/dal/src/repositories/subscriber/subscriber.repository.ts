@@ -41,8 +41,9 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
       _applicationId: query.applicationId,
       subscriberId: query.subscriberId,
     });
-    if (!foundSubscriber)
+    if (!foundSubscriber) {
       throw new DalException(`Could not find subscriber with id ${foundSubscriber.subscriberId} to delete`);
+    }
     await this.subscriber.delete({
       _applicationId: foundSubscriber._applicationId,
       subscriberId: foundSubscriber.subscriberId,

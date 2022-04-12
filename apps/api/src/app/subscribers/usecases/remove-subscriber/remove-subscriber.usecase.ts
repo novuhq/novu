@@ -20,6 +20,9 @@ export class RemoveSubscriber {
       throw e;
     }
 
-    return command;
+    return {
+      acknowledged: true,
+      status: 'deleted',
+    };
   }
 }
