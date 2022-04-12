@@ -75,7 +75,8 @@ export function Main() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-          }}>
+          }}
+        >
           <img src="/no-new-notifications.png" alt="logo" style={{ maxWidth: 200 }} />
         </div>
       ) : (

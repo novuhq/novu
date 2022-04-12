@@ -31,7 +31,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE)', function () 
       }
     );
 
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.application._id, '123');
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
     expect(createdSubscriber.subscriberId).to.equal('123');
 
     await axiosInstance.delete(`${session.serverUrl}/v1/subscribers/123`, {
@@ -40,13 +40,13 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE)', function () 
       },
     });
 
-    const isDeleted = !(await subscriberRepository.findBySubscriberId(session.application._id, '123'));
+    const isDeleted = !(await subscriberRepository.findBySubscriberId(session.environment._id, '123'));
 
     expect(isDeleted).to.equal(true);
 
     const deletedSubscriber = (
       await subscriberRepository.findDeleted({
-        applicationId: session.application._id,
+        _environmentId: session.environment._id,
         subscriberId: '123',
       })
     )[0];

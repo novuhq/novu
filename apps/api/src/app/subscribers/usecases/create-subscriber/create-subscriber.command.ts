@@ -1,8 +1,8 @@
 import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class CreateSubscriberCommand extends ApplicationCommand {
+export class CreateSubscriberCommand extends EnvironmentCommand {
   static create(data: CreateSubscriberCommand) {
     return CommandHelper.create(CreateSubscriberCommand, data);
   }

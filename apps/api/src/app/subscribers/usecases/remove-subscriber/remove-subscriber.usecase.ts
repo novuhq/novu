@@ -10,7 +10,7 @@ export class RemoveSubscriber {
   async execute(command: RemoveSubscriberCommand) {
     try {
       await this.subscriberRepository.delete({
-        applicationId: command.applicationId,
+        _environmentId: command.environmentId,
         subscriberId: command.subscriberId,
       });
     } catch (e) {

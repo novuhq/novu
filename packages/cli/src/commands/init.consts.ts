@@ -4,21 +4,21 @@ import * as gradient from 'gradient-string';
 
 export const introQuestions: ListQuestionOptions[] = [
   {
-    name: 'applicationName',
-    message: 'What is your application name?',
+    name: 'environmentName',
+    message: 'What is your environment name?',
     default: 'Acme App.',
   },
 ];
 
-export const existingSessionQuestions = (existingApplication): ListQuestionOptions[] => {
+export const existingSessionQuestions = (existingEnvironment): ListQuestionOptions[] => {
   return [
     {
       type: 'list',
       name: 'result',
-      message: `Looks like you already have a created an account for ${existingApplication.name}`,
+      message: `Looks like you already have a created an account for ${existingEnvironment.name}`,
       choices: [
         {
-          name: `Visit ${existingApplication.name} Dashboard`,
+          name: `Visit ${existingEnvironment.name} Dashboard`,
           value: 'visitDashboard',
         },
         {

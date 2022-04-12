@@ -222,7 +222,7 @@ function messageWrapper(
       name,
       content: 'Test',
       _organizationId: '123',
-      _applicationId: 'asdas',
+      _environmentId: 'asdas',
       _creatorId: '123',
     },
     filters: filters?.length

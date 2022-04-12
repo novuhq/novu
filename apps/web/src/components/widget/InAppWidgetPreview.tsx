@@ -25,7 +25,8 @@ export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
                 fontWeight: 'bold',
                 fontSize: '12px',
               }}
-              radius={100}>
+              radius={100}
+            >
               1
             </Badge>
           </Group>
@@ -40,7 +41,8 @@ export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
             borderRadius: '7px',
             backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
             boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
-          }}>
+          }}
+        >
           <Group position="apart">
             <div style={{ width: 'calc(100% - 32px)' }}>
               <Text weight="bold">{children}</Text>
@@ -60,7 +62,8 @@ export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
             borderRadius: '7px',
             backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.BGLight,
             opacity: '0.5',
-          }}>
+          }}
+        >
           <Text color={colors.B60}>Notification Example</Text>
           <Text mt={5} color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>
             {moment(moment().subtract(10, 'minutes')).fromNow()}
@@ -74,7 +77,8 @@ export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
             borderRadius: '7px',
             backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.BGLight,
             opacity: '0.5',
-          }}>
+          }}
+        >
           <Text color={colors.B60}>Notification Example</Text>
           <Text mt={5} color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>
             {moment(moment().subtract(25, 'minutes')).fromNow()}
@@ -104,7 +108,8 @@ export function Footer() {
       rel="noreferrer"
       target="_blank"
       href="https://novu.co?utm_source=in-app-widget"
-      style={{ display: 'flex', width: 60 }}>
+      style={{ display: 'flex', width: 60 }}
+    >
       <svg width="107" height="16" viewBox="0 0 1049 300" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
           fillRule="evenodd"
@@ -135,7 +140,8 @@ export function Footer() {
             y1="0"
             x2="3.57628e-05"
             y2="300"
-            gradientUnits="userSpaceOnUse">
+            gradientUnits="userSpaceOnUse"
+          >
             <stop offset="0.231667" stopColor="#FF884D" />
             <stop offset="0.801667" stopColor="#E300BD" />
           </linearGradient>

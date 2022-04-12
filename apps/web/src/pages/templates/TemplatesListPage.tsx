@@ -66,7 +66,8 @@ function NotificationList() {
             variant="transparent"
             component={Link}
             to={`/templates/edit/${_id}`}
-            data-test-id="template-edit-link">
+            data-test-id="template-edit-link"
+          >
             <Edit color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
           </ActionIcon>
         </ActionButtonWrapper>
@@ -94,7 +95,8 @@ function NotificationList() {
           loading={isLoading}
           data-test-id="notifications-template"
           columns={columns}
-          data={templates || []}>
+          data={templates || []}
+        >
           {' '}
         </Table>
       </TemplateListTableWrapper>

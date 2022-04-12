@@ -22,7 +22,8 @@ export function AppLayout() {
         header={<HeaderNav />}
         styles={(theme) => ({
           main: { backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight },
-        })}>
+        })}
+      >
         <Sentry.ErrorBoundary
           fallback={({ error, resetError, eventId }) => (
             <>
@@ -37,7 +38,8 @@ export function AppLayout() {
                 </small>
               </code>
             </>
-          )}>
+          )}
+        >
           <Outlet />
         </Sentry.ErrorBoundary>
       </AppShell>

@@ -8,7 +8,7 @@ export class GetActiveIntegrations {
 
   async execute(command: GetActiveIntegrationsCommand): Promise<IntegrationEntity[]> {
     return await this.integrationRepository.find({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       active: true,
     });
   }

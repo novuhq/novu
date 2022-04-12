@@ -1,8 +1,8 @@
 import { IsString } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class RemoveSubscriberCommand extends ApplicationCommand {
+export class RemoveSubscriberCommand extends EnvironmentCommand {
   static create(data: RemoveSubscriberCommand) {
     return CommandHelper.create(RemoveSubscriberCommand, data);
   }

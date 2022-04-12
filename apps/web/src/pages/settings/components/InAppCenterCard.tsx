@@ -1,11 +1,11 @@
 import React from 'react';
 import { Prism } from '@mantine/prism';
-import { IApplication } from '@novu/shared';
+import { IEnvironment } from '@novu/shared';
 import { colors, Text } from '../../../design-system';
 import Card from '../../../components/layout/components/Card';
 import { WIDGET_EMEBED_PATH } from '../../../config';
 
-export const InAppCenterCard = ({ application }: { application: IApplication | undefined }) => {
+export const InAppCenterCard = ({ environment }: { environment: IEnvironment | undefined }) => {
   const embedCode = `<script>
   (function(n,o,t,i,f) {
     n[i] = {}, m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
@@ -13,7 +13,7 @@ export const InAppCenterCard = ({ application }: { application: IApplication | u
     var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
   })(window, document, '${WIDGET_EMEBED_PATH}', 'novu', 'script');
 
-  novu.init('${application?.identifier}', '#notification-bell', {
+  novu.init('${environment?.identifier}', '#notification-bell', {
     $user_id: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",
     $email: "<REPLACE_WITH_USER_EMAIL>",
     $first_name: "<REPLACE_WITH_USER_NAME>",
@@ -38,7 +38,8 @@ export const InAppCenterCard = ({ application }: { application: IApplication | u
           },
         })}
         language="jsx"
-        data-test-id="embed-code-snippet">
+        data-test-id="embed-code-snippet"
+      >
         {embedCode}
       </Prism>
     </Card>

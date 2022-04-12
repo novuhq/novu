@@ -1,6 +1,6 @@
 import { IsDefined, IsEmail } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class PasswordResetRequestCommand {
   static create(data: PasswordResetRequestCommand) {

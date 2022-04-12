@@ -40,7 +40,8 @@ export default function InvitationPage() {
               .
             </Text>
           </Center>
-        }>
+        }
+      >
         <div style={{ position: 'relative', minHeight: 'inherit' }}>
           <LoadingOverlay
             visible={isLoading}

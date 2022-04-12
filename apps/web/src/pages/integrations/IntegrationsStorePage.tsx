@@ -74,7 +74,8 @@ export function IntegrationsStore() {
             size="lg"
             overflow="inside"
             opened={isModalOpened}
-            onClose={() => setModalIsOpened(false)}>
+            onClose={() => setModalIsOpened(false)}
+          >
             <ConnectIntegrationForm
               onClose={() => setModalIsOpened(false)}
               provider={provider}

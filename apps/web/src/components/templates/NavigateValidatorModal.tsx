@@ -39,7 +39,8 @@ export function NavigateValidatorModal({
         sx={{ backdropFilter: 'blur(10px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
-        size="lg">
+        size="lg"
+      >
         <div>
           <Text>Any unsaved changes will be deleted. Proceed anyway?</Text>
           <Group position="right">

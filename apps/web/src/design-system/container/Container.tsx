@@ -16,7 +16,8 @@ export function Container({ children, ...props }: ContainerProps) {
         minHeight: '100%',
         backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
       })}
-      {...props}>
+      {...props}
+    >
       {children}
     </MantineContainer>
   );

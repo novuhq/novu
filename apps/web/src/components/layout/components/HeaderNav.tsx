@@ -72,11 +72,13 @@ export function HeaderNav({}: Props) {
       sx={(theme) => ({
         boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
         borderBottom: 'none',
-      })}>
+      })}
+    >
       <Container
         fluid
         p={30}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}>
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}
+      >
         <img
           src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
           alt="logo"
@@ -100,7 +102,8 @@ export function HeaderNav({}: Props) {
                   src={currentUser?.profilePicture || '/static/images/avatar.png'}
                 />
               </ActionIcon>
-            }>
+            }
+          >
             {' '}
             {profileMenuMantine}
           </Dropdown>

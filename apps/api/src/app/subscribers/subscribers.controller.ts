@@ -23,7 +23,7 @@ export class SubscribersController {
   async createSubscriber(@UserSession() user: IJwtPayload, @Body() body: CreateSubscriberBodyDto) {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId: body.subscriberId,
         firstName: body.firstName,
@@ -45,7 +45,7 @@ export class SubscribersController {
   ) {
     return await this.updateSubscriberUsecase.execute(
       UpdateSubscriberCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
         firstName: body.firstName,
@@ -63,7 +63,7 @@ export class SubscribersController {
   async removeSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
     return await this.removeSubscriberUsecase.execute(
       RemoveSubscriberCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
       })

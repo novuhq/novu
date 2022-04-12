@@ -45,7 +45,8 @@ export function Button({
       size={size}
       loading={loading}
       fullWidth={fullWidth}
-      {...props}>
+      {...props}
+    >
       {children}
     </MantineButton>
   );

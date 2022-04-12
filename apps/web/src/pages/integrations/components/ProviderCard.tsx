@@ -37,7 +37,8 @@ export function ProviderCard({
         } else {
           onConnectClick(true, true, provider);
         }
-      }}>
+      }}
+    >
       {provider.comingSoon && (
         <RibbonWrapper>
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>

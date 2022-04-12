@@ -43,7 +43,7 @@ describe('Create Integration - /integration (POST)', function () {
     expect(smsIntegration).to.be.ok;
   });
 
-  it('should return error on creation of same provider on same application twice', async function () {
+  it('should return error on creation of same provider on same environment twice', async function () {
     const payload = {
       providerId: 'sendgrid',
       channel: 'email',
@@ -76,11 +76,11 @@ describe('Create Integration - /integration (POST)', function () {
       active: true,
     };
 
-    const applicationId = (await session.testAgent.get(`/v1/integrations`)).body.data[0]._applicationId;
+    const environmentId = (await session.testAgent.get(`/v1/integrations`)).body.data[0]._environmentId;
 
     await session.testAgent.post('/v1/integrations').send(payload);
 
-    const integrations = await integrationRepository.findByApplicationId(applicationId);
+    const integrations = await integrationRepository.findByEnvironmentId(environmentId);
 
     const firstIntegration = integrations.find((i) => i.providerId.toString() === 'sendgrid');
     const secondIntegration = integrations.find((i) => i.providerId.toString() === 'mailgun');

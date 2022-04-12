@@ -23,14 +23,14 @@ describe('Update Subscriber', function () {
   });
 
   it('should update subscribers name', async function () {
-    const subscriberService = new SubscribersService(session.organization._id, session.application._id);
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
     await useCase.execute(
       UpdateSubscriberCommand.create({
         organizationId: subscriber._organizationId,
         subscriberId: subscriber.subscriberId,
         lastName: 'Test Last Name',
-        applicationId: session.application._id,
+        environmentId: session.environment._id,
       })
     );
 

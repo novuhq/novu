@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
+import { MemberRepository, OrganizationRepository, UserRepository, EnvironmentRepository } from '@novu/dal';
 import { SwitchOrganizationCommand } from './switch-organization.command';
 import { AuthService } from '../../services/auth.service';
 
@@ -9,6 +9,7 @@ export class SwitchOrganization {
     private organizationRepository: OrganizationRepository,
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
+    private environmentRepository: EnvironmentRepository,
     @Inject(forwardRef(() => AuthService)) private authService: AuthService
   ) {}
 
@@ -23,7 +24,12 @@ export class SwitchOrganization {
 
     const member = await this.memberRepository.findMemberByUserId(command.newOrganizationId, command.userId);
     const user = await this.userRepository.findById(command.userId);
-    const token = await this.authService.getSignedToken(user, command.newOrganizationId, member);
+    const environment = await this.environmentRepository.findOne({
+      _organizationId: command.newOrganizationId,
+      _parentId: { $exists: false },
+    });
+
+    const token = await this.authService.getSignedToken(user, command.newOrganizationId, member, environment?._id);
 
     return token;
   }

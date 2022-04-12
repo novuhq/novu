@@ -14,7 +14,7 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
     invitedUserSession = new UserSession();
     await invitedUserSession.initialize({
       noOrganization: true,
-      noApplication: true,
+      noEnvironment: true,
     });
 
     await session.initialize();

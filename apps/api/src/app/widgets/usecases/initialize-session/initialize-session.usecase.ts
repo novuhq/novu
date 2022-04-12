@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApplicationRepository, SubscriberEntity } from '@novu/dal';
+import { EnvironmentRepository, SubscriberEntity } from '@novu/dal';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -8,7 +8,7 @@ import { InitializeSessionCommand } from './initialize-session.command';
 @Injectable()
 export class InitializeSession {
   constructor(
-    private applicationRepository: ApplicationRepository,
+    private environmentRepository: EnvironmentRepository,
     private createSubscriber: CreateSubscriber,
     private authService: AuthService
   ) {}
@@ -17,15 +17,15 @@ export class InitializeSession {
     token: string;
     profile: Partial<SubscriberEntity>;
   }> {
-    const application = await this.applicationRepository.findApplicationByIdentifier(command.applicationIdentifier);
+    const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
-    if (!application) {
+    if (!environment) {
       throw new ApiException('Please provide a valid app identifier');
     }
 
     const commandos = CreateSubscriberCommand.create({
-      applicationId: application._id,
-      organizationId: application._organizationId,
+      environmentId: environment._id,
+      organizationId: environment._organizationId,
       subscriberId: command.subscriberId,
       firstName: command.firstName,
       lastName: command.lastName,

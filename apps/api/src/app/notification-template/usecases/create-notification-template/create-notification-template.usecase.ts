@@ -24,7 +24,7 @@ export class CreateNotificationTemplate {
       strict: true,
     })}`;
     const templateCheckIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.applicationId,
+      command.environmentId,
       triggerIdentifier
     );
     const trigger: INotificationTrigger = {
@@ -47,7 +47,7 @@ export class CreateNotificationTemplate {
           content: message.content,
           contentType: message.contentType,
           organizationId: command.organizationId,
-          applicationId: command.applicationId,
+          environmentId: command.environmentId,
           userId: command.userId,
           cta: message.cta,
           subject: message.subject,
@@ -63,7 +63,7 @@ export class CreateNotificationTemplate {
     const savedTemplate = await this.notificationTemplateRepository.create({
       _organizationId: command.organizationId,
       _creatorId: command.userId,
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       name: command.name,
       active: command.active,
       draft: command.draft,

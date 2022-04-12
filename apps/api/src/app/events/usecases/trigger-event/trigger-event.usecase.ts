@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
-  ApplicationEntity,
-  ApplicationRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
   IEmailBlock,
   IntegrationRepository,
   MessageRepository,
@@ -41,7 +41,7 @@ export class TriggerEvent {
     private messageRepository: MessageRepository,
     private mailService: MailService,
     private queueService: QueueService,
-    private applicationRepository: ApplicationRepository,
+    private environmentRepository: EnvironmentRepository,
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
     private analyticsService: AnalyticsService,
@@ -62,7 +62,7 @@ export class TriggerEvent {
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.INFO,
-          applicationId: command.applicationId,
+          environmentId: command.environmentId,
           organizationId: command.organizationId,
           text: 'Trigger request received',
           userId: command.userId,
@@ -76,7 +76,7 @@ export class TriggerEvent {
       .catch((e) => console.error(e));
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.applicationId,
+      command.environmentId,
       command.identifier
     );
 
@@ -85,7 +85,7 @@ export class TriggerEvent {
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
-          applicationId: command.applicationId,
+          environmentId: command.environmentId,
           organizationId: command.organizationId,
           text: 'Template not found',
           userId: command.userId,
@@ -107,7 +107,7 @@ export class TriggerEvent {
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
-          applicationId: command.applicationId,
+          environmentId: command.environmentId,
           organizationId: command.organizationId,
           text: 'Template not active',
           userId: command.userId,
@@ -127,7 +127,7 @@ export class TriggerEvent {
     }
 
     let subscriber = await this.subscriberRepository.findBySubscriberId(
-      command.applicationId,
+      command.environmentId,
       command.payload.$user_id
     );
 
@@ -135,7 +135,7 @@ export class TriggerEvent {
       if (command.payload.$email || command.payload.$phone) {
         subscriber = await this.createSubscriberUsecase.execute(
           CreateSubscriberCommand.create({
-            applicationId: command.applicationId,
+            environmentId: command.environmentId,
             organizationId: command.organizationId,
             subscriberId: command.payload.$user_id,
             email: command.payload.$email,
@@ -149,7 +149,7 @@ export class TriggerEvent {
           CreateLogCommand.create({
             transactionId: command.transactionId,
             status: LogStatusEnum.ERROR,
-            applicationId: command.applicationId,
+            environmentId: command.environmentId,
             organizationId: command.organizationId,
             text: 'Subscriber not found',
             userId: command.userId,
@@ -170,14 +170,14 @@ export class TriggerEvent {
     }
 
     const notification = await this.notificationRepository.create({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: subscriber._id,
       _templateId: template._id,
       transactionId: command.transactionId,
     });
 
-    const application = await this.applicationRepository.findById(command.applicationId);
+    const environment = await this.environmentRepository.findById(command.environmentId);
     const { smsMessages, inAppChannelMessages, emailChannelMessages } = this.extractMatchingMessages(
       template,
       command.payload
@@ -209,14 +209,14 @@ export class TriggerEvent {
     }
 
     if (emailChannelMessages.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.EMAIL)) {
-      await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, application);
+      await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, environment);
     }
 
     await this.createLogUsecase.execute(
       CreateLogCommand.create({
         transactionId: command.transactionId,
         status: LogStatusEnum.INFO,
-        applicationId: command.applicationId,
+        environmentId: command.environmentId,
         organizationId: command.organizationId,
         notificationId: notification._id,
         text: 'Request processed',
@@ -271,7 +271,7 @@ export class TriggerEvent {
 
     const message = await this.messageRepository.create({
       _notificationId: notification._id,
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: subscriber._id,
       _templateId: template._id,
@@ -283,7 +283,7 @@ export class TriggerEvent {
     });
 
     const integration = await this.integrationRepository.findOne({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       channel: ChannelTypeEnum.SMS,
       active: true,
     });
@@ -303,7 +303,7 @@ export class TriggerEvent {
           CreateLogCommand.create({
             transactionId: command.transactionId,
             status: LogStatusEnum.ERROR,
-            applicationId: command.applicationId,
+            environmentId: command.environmentId,
             organizationId: command.organizationId,
             text: e.message || e.name || 'Un-expect SMS provider error',
             userId: command.userId,
@@ -329,7 +329,7 @@ export class TriggerEvent {
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
-          applicationId: command.applicationId,
+          environmentId: command.environmentId,
           organizationId: command.organizationId,
           text: 'Subscriber does not have active phone',
           userId: command.userId,
@@ -400,7 +400,7 @@ export class TriggerEvent {
 
     const message = await this.messageRepository.create({
       _notificationId: notification._id,
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: subscriber._id,
       _templateId: template._id,
@@ -412,7 +412,7 @@ export class TriggerEvent {
     });
 
     const count = await this.messageRepository.getUnseenCount(
-      command.applicationId,
+      command.environmentId,
       subscriber._id,
       ChannelTypeEnum.IN_APP
     );
@@ -421,7 +421,7 @@ export class TriggerEvent {
       CreateLogCommand.create({
         transactionId: command.transactionId,
         status: LogStatusEnum.SUCCESS,
-        applicationId: command.applicationId,
+        environmentId: command.environmentId,
         organizationId: command.organizationId,
         notificationId: notification._id,
         messageId: message._id,
@@ -452,7 +452,7 @@ export class TriggerEvent {
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
     template: NotificationTemplateEntity,
-    application: ApplicationEntity
+    environment: EnvironmentEntity
   ) {
     const email = command.payload.$email || subscriber.email;
 
@@ -478,7 +478,7 @@ export class TriggerEvent {
 
     const message = await this.messageRepository.create({
       _notificationId: notification._id,
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: subscriber._id,
       _templateId: template._id,
@@ -499,8 +499,8 @@ export class TriggerEvent {
         data: {
           subject,
           branding: {
-            logo: application.branding?.logo,
-            color: application.branding?.color || '#f47373',
+            logo: environment.branding?.logo,
+            color: environment.branding?.color || '#f47373',
           },
           blocks: isEditorMode ? content : [],
           ...command.payload,
@@ -509,7 +509,7 @@ export class TriggerEvent {
     );
 
     const integration = await this.integrationRepository.findOne({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       channel: ChannelTypeEnum.EMAIL,
       active: true,
     });
@@ -539,7 +539,7 @@ export class TriggerEvent {
           CreateLogCommand.create({
             transactionId: command.transactionId,
             status: LogStatusEnum.ERROR,
-            applicationId: command.applicationId,
+            environmentId: command.environmentId,
             organizationId: command.organizationId,
             notificationId: notification._id,
             messageId: message._id,
@@ -611,7 +611,7 @@ export class TriggerEvent {
       CreateLogCommand.create({
         transactionId: command.transactionId,
         status: LogStatusEnum.ERROR,
-        applicationId: command.applicationId,
+        environmentId: command.environmentId,
         organizationId: command.organizationId,
         notificationId: notification._id,
         text: errorMessage,

@@ -8,7 +8,7 @@ export class DeactivateSimilarChannelIntegrations {
   async execute(command: DeactivateSimilarChannelIntegrationsCommand): Promise<void> {
     const otherExistedIntegration = await this.integrationRepository.find({
       _id: { $ne: command.integrationId },
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       channel: command.channel,
       active: true,
     });

@@ -16,7 +16,7 @@ export class CreateIntegration {
 
     try {
       response = await this.integrationRepository.create({
-        _applicationId: command.applicationId,
+        _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         providerId: command.providerId,
         channel: command.channel,
@@ -26,7 +26,7 @@ export class CreateIntegration {
 
       if (command.active) {
         await this.deactivateSimilarChannelIntegrations.execute({
-          applicationId: command.applicationId,
+          environmentId: command.environmentId,
           organizationId: command.organizationId,
           integrationId: response._id,
           channel: command.channel,

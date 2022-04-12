@@ -10,9 +10,9 @@ const notificationSchema = new Schema(
       ref: 'NotificationTemplate',
       index: true,
     },
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
       index: true,
     },
     _organizationId: {
@@ -32,9 +32,9 @@ const notificationSchema = new Schema(
   schemaOptions
 );
 
-notificationSchema.virtual('application', {
-  ref: 'Application',
-  localField: '_applicationId',
+notificationSchema.virtual('environment', {
+  ref: 'Environment',
+  localField: '_environmentId',
   foreignField: '_id',
   justOne: true,
 });

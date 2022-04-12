@@ -1,10 +1,10 @@
 import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { ChannelCTADto } from '../../../notification-template/dto/create-notification-template.dto';
 
-export class CreateMessageTemplateCommand extends ApplicationWithUserCommand {
+export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: CreateMessageTemplateCommand) {
     return CommandHelper.create<CreateMessageTemplateCommand>(CreateMessageTemplateCommand, data);
   }

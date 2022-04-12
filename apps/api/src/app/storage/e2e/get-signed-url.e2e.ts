@@ -16,6 +16,6 @@ describe('Get Signed Url - /storage/upload-url (GET)', function () {
 
     expect(data.path).to.contain('.jpg');
     expect(data.signedUrl).to.contain('.jpg');
-    expect(data.signedUrl).to.contain(`${session.organization._id}/${session.application._id}`);
+    expect(data.signedUrl).to.contain(`${session.organization._id}/${session.environment._id}`);
   });
 });

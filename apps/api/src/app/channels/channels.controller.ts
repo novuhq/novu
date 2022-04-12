@@ -23,7 +23,7 @@ export class ChannelsController {
     return this.updateMailSettingsUsecase.execute(
       UpdateMailSettingsCommand.create({
         userId: user._id,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         senderEmail: body.senderEmail,
         senderName: body.senderName,
@@ -40,7 +40,7 @@ export class ChannelsController {
     return this.updateSmsSettingsUsecase.execute(
       UpdateSmsSettingsCommand.create({
         userId: user._id,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         twillio: body.twillio,
       })

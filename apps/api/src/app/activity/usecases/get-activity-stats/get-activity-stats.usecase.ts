@@ -13,7 +13,7 @@ export class GetActivityStats {
     yearlySent: number;
   }> {
     const yearly = await this.messageRepository.count({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       createdAt: {
         $gte: String(moment().subtract(1, 'year').toDate()),
@@ -21,7 +21,7 @@ export class GetActivityStats {
     });
 
     const monthly = await this.messageRepository.count({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       createdAt: {
         $gte: String(moment().subtract(1, 'month').toDate()),
@@ -29,7 +29,7 @@ export class GetActivityStats {
     });
 
     const weekly = await this.messageRepository.count({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       createdAt: {
         $gte: String(moment().subtract(1, 'week').toDate()),

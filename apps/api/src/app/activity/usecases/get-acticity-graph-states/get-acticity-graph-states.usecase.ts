@@ -10,7 +10,7 @@ export class GetActivityGraphStats {
   async execute(command: GetActivityGraphStatsCommand): Promise<{ _id: string; count: number }[]> {
     return await this.messageRepository.getActivityGraphStats(
       moment().subtract(command.days, 'day').toDate(),
-      command.applicationId
+      command.environmentId
     );
   }
 }

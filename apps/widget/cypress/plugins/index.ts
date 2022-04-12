@@ -53,23 +53,23 @@ module.exports = (on, config) => {
 
       return true;
     },
-    async getSession(settings: { noApplication?: boolean } = {}) {
+    async getSession(settings: { noEnvironment?: boolean } = {}) {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
 
       const session = new UserSession('http://localhost:1336');
       await session.initialize({
-        noApplication: settings?.noApplication,
+        noEnvironment: settings?.noEnvironment,
       });
 
       const notificationTemplateService = new NotificationTemplateService(
         session.user._id,
         session.organization._id,
-        session.application._id as string
+        session.environment._id as string
       );
 
       let templates;
-      if (!settings?.noApplication) {
+      if (!settings?.noEnvironment) {
         templates = await Promise.all([
           notificationTemplateService.createTemplate(),
           notificationTemplateService.createTemplate({
@@ -87,8 +87,8 @@ module.exports = (on, config) => {
         token: session.token.split(' ')[1],
         user: session.user,
         organization: session.organization,
-        application: session.application,
-        identifier: session.application.identifier,
+        environment: session.environment,
+        identifier: session.environment.identifier,
         templates,
         session,
       };

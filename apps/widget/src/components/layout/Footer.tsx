@@ -13,7 +13,8 @@ export function Footer() {
         rel="noreferrer"
         target="_blank"
         href="https://novu.co?utm_source=in-app-widget"
-        style={{ display: 'flex', color: textColor }}>
+        style={{ display: 'flex', color: textColor }}
+      >
         <svg width="107" height="16" viewBox="0 0 1049 300" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
             fillRule="evenodd"
@@ -44,7 +45,8 @@ export function Footer() {
               y1="0"
               x2="3.57628e-05"
               y2="300"
-              gradientUnits="userSpaceOnUse">
+              gradientUnits="userSpaceOnUse"
+            >
               <stop offset="0.231667" stopColor="#FF884D" />
               <stop offset="0.801667" stopColor="#E300BD" />
             </linearGradient>

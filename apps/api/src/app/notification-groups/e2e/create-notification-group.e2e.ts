@@ -20,6 +20,6 @@ describe('Create Notification Group - /notification-groups (POST)', async () => 
     const group = body.data;
 
     expect(group.name).to.equal(`Test name`);
-    expect(group._applicationId).to.equal(session.application._id);
+    expect(group._environmentId).to.equal(session.environment._id);
   });
 });

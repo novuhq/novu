@@ -47,7 +47,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
     const { data: body } = response;
 
     expect(body.data).to.be.ok;
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.application._id, '123');
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
 
     expect(createdSubscriber.firstName).to.equal('John');
     expect(createdSubscriber.lastName).to.equal('Test Changed');
