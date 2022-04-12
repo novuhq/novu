@@ -190,23 +190,23 @@ importers:
       '@nestjs/terminus': 7.2.0_b3355eaaab723e52e70bfca874d5ccb9
       '@nestjsx/crud': 4.6.2_d71f9d2eeeee42f14b4376bfe86f6f42
       '@novu/dal': link:../../libs/dal
-      '@novu/emailjs': link:../../providers/emailjs
-      '@novu/mailgun': link:../../providers/mailgun
-      '@novu/mailjet': link:../../providers/mailjet
-      '@novu/mandrill': link:../../providers/mandrill
-      '@novu/node': link:../../packages/node
-      '@novu/nodemailer': link:../../providers/nodemailer
-      '@novu/plivo': link:../../providers/plivo
-      '@novu/postmark': link:../../providers/postmark
-      '@novu/sendgrid': link:../../providers/sendgrid
-      '@novu/sendinblue': link:../../providers/sendinblue
-      '@novu/ses': link:../../providers/ses
+      '@novu/emailjs': 0.4.0-alpha.5
+      '@novu/mailgun': 0.4.0-alpha.5
+      '@novu/mailjet': 0.4.0-alpha.5
+      '@novu/mandrill': 0.4.0-alpha.5
+      '@novu/node': 0.4.0-alpha.5
+      '@novu/nodemailer': 0.4.0-alpha.5
+      '@novu/plivo': 0.4.0-alpha.5
+      '@novu/postmark': 0.4.0-alpha.5
+      '@novu/sendgrid': 0.4.0-alpha.5
+      '@novu/sendinblue': 0.4.0-alpha.5
+      '@novu/ses': 0.4.0-alpha.5
       '@novu/shared': link:../../libs/shared
-      '@novu/sms77': link:../../providers/sms77
-      '@novu/sns': link:../../providers/sns
-      '@novu/telnyx': link:../../providers/telnyx
+      '@novu/sms77': 0.4.0-alpha.5
+      '@novu/sns': 0.4.0-alpha.5
+      '@novu/telnyx': 0.4.0-alpha.5
       '@novu/testing': link:../../libs/testing
-      '@novu/twilio': link:../../providers/twilio
+      '@novu/twilio': 0.4.0-alpha.5
       '@sendgrid/mail': 7.6.2
       '@sentry/node': 6.19.3
       '@sentry/tracing': 6.19.3
@@ -284,7 +284,7 @@ importers:
       '@mantine/hooks': ^4.1.0
       '@mantine/notifications': ^4.1.0
       '@mantine/prism': ^4.1.0
-      '@novu/bell': workspace:^0.4.0-alpha.3
+      '@novu/bell': ^0.4.0-alpha.3
       '@novu/dal': ^0.4.0-alpha.3
       '@novu/shared': ^0.4.0-alpha.3
       '@novu/testing': ^0.4.0-alpha.3
@@ -921,8 +921,10 @@ importers:
     specifiers:
       '@babel/core': ^7.17.8
       '@mantine/core': ^4.1.0
+      '@mantine/hooks': ^4.1.3
       '@novu/shared': ^0.4.0-alpha.3
       '@rollup/plugin-commonjs': ^21.0.1
+      '@rollup/plugin-image': ^2.1.1
       '@rollup/plugin-node-resolve': ^13.1.3
       '@rollup/plugin-typescript': ^8.3.0
       '@storybook/addon-actions': ^6.4.19
@@ -941,7 +943,6 @@ importers:
       moment: ^2.29.1
       react-infinite-scroll-component: ^6.0.0
       react-query: ^3.34.19
-      react-router-dom: ^6.2.2
       rollup: ^2.60.0
       rollup-plugin-dts: ^4.0.1
       rollup-plugin-peer-deps-external: ^2.2.4
@@ -952,7 +953,8 @@ importers:
       typescript: ^4.4.4
       webfontloader: ^1.6.28
     dependencies:
-      '@mantine/core': 4.1.0_3ffb35622ba092252c52225d00d80078
+      '@mantine/core': 4.1.0_1f795643509e1752dd12115ee5563477
+      '@mantine/hooks': 4.1.3
       '@novu/shared': link:../../libs/shared
       acorn-jsx: 5.3.2
       axios: 0.26.1
@@ -960,13 +962,13 @@ importers:
       moment: 2.29.1
       react-infinite-scroll-component: 6.1.0
       react-query: 3.34.19
-      react-router-dom: 6.2.2
       socket.io-client: 2.3.1
       styled-components: 5.3.5
       webfontloader: 1.6.28
     devDependencies:
       '@babel/core': 7.17.8
       '@rollup/plugin-commonjs': 21.0.3_rollup@2.70.1
+      '@rollup/plugin-image': 2.1.1_rollup@2.70.1
       '@rollup/plugin-node-resolve': 13.1.3_rollup@2.70.1
       '@rollup/plugin-typescript': 8.3.1_8fb0118e9d69f3600cbb8f144f7d456c
       '@storybook/addon-actions': 6.4.19_@types+react@17.0.43
@@ -1044,7 +1046,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@nestjs/common': 8.4.3
-      '@novu/node': link:../node
+      '@novu/node': 0.4.0-alpha.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1123,7 +1125,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       emailjs: 3.8.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1162,7 +1164,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       mailersend: 1.3.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1203,7 +1205,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       form-data: 4.0.0
       mailgun.js: 3.7.3
       nock: 13.2.4
@@ -1245,7 +1247,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       node-mailjet: 3.3.7
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1287,7 +1289,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@mailchimp/mailchimp_transactional': 1.0.47
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1326,7 +1328,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       '@vonage/server-sdk': 2.10.11
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1366,7 +1368,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       nodemailer: 6.7.3
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1406,7 +1408,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       plivo: 4.29.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1445,7 +1447,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       postmark: 2.9.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1484,7 +1486,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       '@sendgrid/mail': 7.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1524,7 +1526,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       '@sendinblue/client': 3.1.0
       '@types/request': 2.48.8
     devDependencies:
@@ -1567,7 +1569,7 @@ importers:
       typescript: ^4.4.3
     dependencies:
       '@aws-sdk/client-ses': 3.48.0
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1608,7 +1610,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       node-fetch: 2.6.7
       sms77-client: 2.17.0_node-fetch@2.6.7
     devDependencies:
@@ -1649,7 +1651,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@aws-sdk/client-sns': 3.58.0
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1687,7 +1689,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       telnyx: 1.23.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1726,7 +1728,7 @@ importers:
       twilio: ^3.67.2
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/node': 0.4.0-alpha.5
       twilio: 3.76.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -10310,6 +10312,25 @@ packages:
       - debug
     dev: false
 
+  /@mantine/core/4.1.0_1f795643509e1752dd12115ee5563477:
+    resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
+    peerDependencies:
+      '@mantine/hooks': 4.1.0
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      '@mantine/hooks': 4.1.3
+      '@mantine/styles': 4.1.0_3ffb35622ba092252c52225d00d80078
+      '@popperjs/core': 2.11.5
+      '@radix-ui/react-scroll-area': 0.1.4
+      clsx: 1.1.1
+      react-popper: 2.2.5_@popperjs+core@2.11.5
+      react-textarea-autosize: 8.3.3_@types+react@17.0.43
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/react'
+    dev: false
+
   /@mantine/core/4.1.0_229613458ee597f8528794fa797ff0fa:
     resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
     peerDependencies:
@@ -10319,12 +10340,12 @@ packages:
     dependencies:
       '@mantine/hooks': 4.1.0_react@17.0.2
       '@mantine/styles': 4.1.0_b5d7bf22a7b46dd4876f0e926ab0c987
-      '@popperjs/core': 2.11.4
+      '@popperjs/core': 2.11.5
       '@radix-ui/react-scroll-area': 0.1.4_react@17.0.2
       clsx: 1.1.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      react-popper: 2.2.5_2e9dd80dbd4df675244d857293d4c5b0
+      react-popper: 2.2.5_bdf4b8b1046519a8ec8ac2b64ac98053
       react-textarea-autosize: 8.3.3_03a98942b76c57740a9573edba2d1cc1
     transitivePeerDependencies:
       - '@babel/core'
@@ -10339,31 +10360,13 @@ packages:
       react-dom: '>=16.8.0'
     dependencies:
       '@mantine/styles': 4.1.0_363bbc5b3b2ec1146a689992546b4fa7
-      '@popperjs/core': 2.11.4
+      '@popperjs/core': 2.11.5
       '@radix-ui/react-scroll-area': 0.1.4_react@17.0.2
       clsx: 1.1.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      react-popper: 2.2.5_2e9dd80dbd4df675244d857293d4c5b0
+      react-popper: 2.2.5_bdf4b8b1046519a8ec8ac2b64ac98053
       react-textarea-autosize: 8.3.3_18ce5b4fa2aac98ae1c6ad949e4591be
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@types/react'
-    dev: false
-
-  /@mantine/core/4.1.0_3ffb35622ba092252c52225d00d80078:
-    resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
-    peerDependencies:
-      '@mantine/hooks': 4.1.0
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-    dependencies:
-      '@mantine/styles': 4.1.0_3ffb35622ba092252c52225d00d80078
-      '@popperjs/core': 2.11.4
-      '@radix-ui/react-scroll-area': 0.1.4
-      clsx: 1.1.1
-      react-popper: 2.2.5_@popperjs+core@2.11.4
-      react-textarea-autosize: 8.3.3_@types+react@17.0.43
     transitivePeerDependencies:
       - '@babel/core'
       - '@types/react'
@@ -10390,6 +10393,12 @@ packages:
       react: '>=16.8.0'
     dependencies:
       react: 17.0.2
+    dev: false
+
+  /@mantine/hooks/4.1.3:
+    resolution: {integrity: sha512-sFDdpg8TjopSqFICNEX4OYUAbarAVn35FkRfE6vk4u2ecf8ySHO12XbBn/1zybTOD1dUACT8GJ0KI0WsYgT7Uw==}
+    peerDependencies:
+      react: '>=16.8.0'
     dev: false
 
   /@mantine/notifications/4.1.0_93293bbf002a99ad91ad3839d1e8e057:
@@ -11133,6 +11142,169 @@ packages:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.13.0
 
+  /@novu/emailjs/0.4.0-alpha.5:
+    resolution: {integrity: sha512-sa4EJUH7arUsA4zoxeXLBmRg+Frb7Wq27XPb3hTN0kolXyJXOC27ppvi6w9WEnF4FKWsmNE0TG7SyHojpPP7EQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      emailjs: 3.8.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/mailgun/0.4.0-alpha.5:
+    resolution: {integrity: sha512-MjCVEU3qUJhPymU1HaqJ0FKdTMg1MKDBWSkqPZ5Jw24jIrEw1F/3J7m85dU3iNEua1jFf0f+6Yc7iM9X6CaRuA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      form-data: 4.0.0
+      mailgun.js: 3.7.3
+      nock: 13.2.4
+    transitivePeerDependencies:
+      - debug
+      - domexception
+      - supports-color
+    dev: false
+
+  /@novu/mailjet/0.4.0-alpha.5:
+    resolution: {integrity: sha512-weds81o/fi6p2GAOpvn2qADpdt8srQ6OnJmET8mvgo1x4iOikWKbT6vg1WUM/5lKDgsZJicoPxNzBWQCJQvGgg==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      node-mailjet: 3.3.7
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
+  /@novu/mandrill/0.4.0-alpha.5:
+    resolution: {integrity: sha512-+iwBhqEFp/rod6IZNuNh2KyKJPV6RdbBmOxgWuNSSkbWbNxbWsWHdW8Ja+T/cvGXoKqEK2OsrlkK5gTzK39H0g==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@mailchimp/mailchimp_transactional': 1.0.47
+      '@novu/node': 0.4.0-alpha.5
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/node/0.4.0-alpha.5:
+    resolution: {integrity: sha512-5FNRD6U8yoASsmKT4R8aCdO8jNRhVBntpFP3XZf+F9Db1KwpKdr6S6D0c9fCSE21/6+PvsJLJSEAf/2M/IkhRQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      axios: 0.26.1
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/nodemailer/0.4.0-alpha.5:
+    resolution: {integrity: sha512-GSjTUlG+OEh/WppH+DDV6kj75jQTZldqDg85G4cffHXUmVc0qVS2e8hz2i/55QnE85WwzzGy64EMfEb42X1iTw==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      nodemailer: 6.7.3
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/plivo/0.4.0-alpha.5:
+    resolution: {integrity: sha512-fFxxa1KUzY0dGIxUPUya9FRWqrKOqmrmUsxHhI0QN3bH3aiEhC/spxgNz5SsiMUrcdZZGfoYx6ILMM6UgRR0rw==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      plivo: 4.29.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
+  /@novu/postmark/0.4.0-alpha.5:
+    resolution: {integrity: sha512-5HggIQ/hR4yqXpQfjT2efUEfQhlL0DFy4x6OY4FtohUcGsQYwx+3/qdiR2fl3HP7ReLDK2c7GGFLkmlrELIzcA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      postmark: 2.9.5
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/sendgrid/0.4.0-alpha.5:
+    resolution: {integrity: sha512-Q5EgQpiBoKfpcW0zKzt41a/NXgECkSveN3CiHKnLGe5OjYC1ixTZV6sq/6oPC84l2xx1+Fyq/CxPJ3zDxyBH+g==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      '@sendgrid/mail': 7.6.2
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/sendinblue/0.4.0-alpha.5:
+    resolution: {integrity: sha512-U1/XIL2EGQqZ335PVAV6cx3R705u9KvlNvQ/wFAiS3ZWO6qzSV8X/4LT/K9wag2mTD29cjvQ9Y4CDfUjudfvSQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      '@sendinblue/client': 3.1.0
+      '@types/request': 2.48.8
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/ses/0.4.0-alpha.5:
+    resolution: {integrity: sha512-7vjKyHGqsJHIUjATlw76Md/1+my5EEGXKFfkgaQVjX6qzJ28pMRHIHCGhhoKZaGgbPR+zPMyC7dg1CJTpsMv0g==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@aws-sdk/client-ses': 3.48.0
+      '@novu/node': 0.4.0-alpha.5
+      emailjs: 3.7.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/sms77/0.4.0-alpha.5:
+    resolution: {integrity: sha512-kANzGFHrPGnPYcT+vEAgFHhtuCXYzFZwIQjkGYR03Xt4zZAUkQqcHB1nSnghSbyUgePbhXudeYG/4SGpU2jc1Q==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      node-fetch: 2.6.7
+      sms77-client: 2.17.0_node-fetch@2.6.7
+    transitivePeerDependencies:
+      - debug
+      - encoding
+    dev: false
+
+  /@novu/sns/0.4.0-alpha.5:
+    resolution: {integrity: sha512-y6d6fzCqW0PL78cLJXrDoHnERFxDiEHAKyXGpgxMG9BjbsHGP0L0CPMLnZmxHi+1mRO1khW/T0+qjlSschFGKA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@aws-sdk/client-sns': 3.58.0
+      '@novu/node': 0.4.0-alpha.5
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/telnyx/0.4.0-alpha.5:
+    resolution: {integrity: sha512-aqF88W2dLUPRTtvfgxLDADi+PQgOr3piZ+0wa3XptsGlTpCVcijx0xl6wj8DVe3+Jpa3gBc6vSYQ9FqxjVE1pQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      telnyx: 1.23.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/twilio/0.4.0-alpha.5:
+    resolution: {integrity: sha512-uWZluhs8b18qyGTtpmoWi/gNHXAJGfoeoziExBNCCDlNEyf6FZhTT1AbN14Gc2DD15+wj+Kq/CUyKzeF3UeAIA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/node': 0.4.0-alpha.5
+      twilio: 3.76.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@npmcli/fs/1.1.1:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}
     dependencies:
@@ -11681,8 +11853,8 @@ packages:
     resolution: {integrity: sha512-a5Sab1C4/icpTZVzZc5Ghpz88yQtGOyNqYXcZgOssB2uuAr+wF/MvN6bgtW32q7HHrvBki+BsZ0OuNv6EV3K9g==}
     dev: false
 
-  /@popperjs/core/2.11.4:
-    resolution: {integrity: sha512-q/ytXxO5NKvyT37pmisQAItCFqA7FD/vNb8dgaJy3/630Fsc+Mz9/9f2SziBoIZ30TJooXyTwZmhi1zjXmObYg==}
+  /@popperjs/core/2.11.5:
+    resolution: {integrity: sha512-9X2obfABZuDVLCgPK9aX0a/x4jaOEweTTWE2+9sr0Qqqevj2Uv5XorvusThmc9XGYpS9yI+fhh8RTafBtGposw==}
 
   /@protobufjs/aspromise/1.1.2:
     resolution: {integrity: sha1-m4sMxmPWaafY9vXQiToU00jzD78=}
@@ -11948,6 +12120,17 @@ packages:
       is-reference: 1.2.1
       magic-string: 0.25.9
       resolve: 1.22.0
+      rollup: 2.70.1
+    dev: true
+
+  /@rollup/plugin-image/2.1.1_rollup@2.70.1:
+    resolution: {integrity: sha512-AgP4U85zuQJdUopLUCM+hTf45RepgXeTb8EJsleExVy99dIoYpt3ZlDYJdKmAc2KLkNntCDg6BPJvgJU3uGF+g==}
+    engines: {node: '>= 8.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0 || ^2.0.0
+    dependencies:
+      '@rollup/pluginutils': 3.1.0_rollup@2.70.1
+      mini-svg-data-uri: 1.4.4
       rollup: 2.70.1
     dev: true
 
@@ -13652,7 +13835,7 @@ packages:
       react: ^16.8.0 || ^17.0.0
       react-dom: ^16.8.0 || ^17.0.0
     dependencies:
-      '@popperjs/core': 2.11.4
+      '@popperjs/core': 2.11.5
       '@storybook/client-logger': 6.4.19
       '@storybook/csf': 0.0.2--canary.87bc651.0
       '@storybook/theming': 6.4.19
@@ -13686,7 +13869,7 @@ packages:
       react: ^16.8.0 || ^17.0.0
       react-dom: ^16.8.0 || ^17.0.0
     dependencies:
-      '@popperjs/core': 2.11.4
+      '@popperjs/core': 2.11.5
       '@storybook/client-logger': 6.4.19
       '@storybook/csf': 0.0.2--canary.87bc651.0
       '@storybook/theming': 6.4.19_react-dom@17.0.2+react@17.0.2
@@ -19016,7 +19199,7 @@ packages:
       babel-plugin-syntax-jsx: 6.18.0
       lodash: 4.17.21
       picomatch: 2.3.1
-      styled-components: 5.3.5_react-dom@17.0.2+react@17.0.2
+      styled-components: 5.3.5
     dev: false
 
   /babel-plugin-syntax-jsx/6.18.0:
@@ -31314,6 +31497,11 @@ packages:
       webpack: 5.70.0
     dev: false
 
+  /mini-svg-data-uri/1.4.4:
+    resolution: {integrity: sha512-r9deDe9p5FJUPZAk3A59wGH7Ii9YrjjWw0jmw/liSbHl2CHiyXj6FcDXDu2K3TjVAXqiJdaw3xxwlZZr9E6nHg==}
+    hasBin: true
+    dev: true
+
   /minimalistic-assert/1.0.1:
     resolution: {integrity: sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==}
 
@@ -33719,7 +33907,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.6.3
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -36760,8 +36948,8 @@ packages:
       react-dom: ^16.6.0 || ^17.0.0
     dependencies:
       '@babel/runtime': 7.17.8
-      '@popperjs/core': 2.11.4
-      react-popper: 2.2.5_@popperjs+core@2.11.4
+      '@popperjs/core': 2.11.5
+      react-popper: 2.2.5_@popperjs+core@2.11.5
     dev: true
 
   /react-popper-tooltip/3.1.1_react-dom@17.0.2+react@17.0.2:
@@ -36771,29 +36959,29 @@ packages:
       react-dom: ^16.6.0 || ^17.0.0
     dependencies:
       '@babel/runtime': 7.17.8
-      '@popperjs/core': 2.11.4
+      '@popperjs/core': 2.11.5
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      react-popper: 2.2.5_2e9dd80dbd4df675244d857293d4c5b0
+      react-popper: 2.2.5_bdf4b8b1046519a8ec8ac2b64ac98053
 
-  /react-popper/2.2.5_2e9dd80dbd4df675244d857293d4c5b0:
+  /react-popper/2.2.5_@popperjs+core@2.11.5:
     resolution: {integrity: sha512-kxGkS80eQGtLl18+uig1UIf9MKixFSyPxglsgLBxlYnyDf65BiY9B3nZSc6C9XUNDgStROB0fMQlTEz1KxGddw==}
     peerDependencies:
       '@popperjs/core': ^2.0.0
       react: ^16.8.0 || ^17
     dependencies:
-      '@popperjs/core': 2.11.4
-      react: 17.0.2
+      '@popperjs/core': 2.11.5
       react-fast-compare: 3.2.0
       warning: 4.0.3
 
-  /react-popper/2.2.5_@popperjs+core@2.11.4:
+  /react-popper/2.2.5_bdf4b8b1046519a8ec8ac2b64ac98053:
     resolution: {integrity: sha512-kxGkS80eQGtLl18+uig1UIf9MKixFSyPxglsgLBxlYnyDf65BiY9B3nZSc6C9XUNDgStROB0fMQlTEz1KxGddw==}
     peerDependencies:
       '@popperjs/core': ^2.0.0
       react: ^16.8.0 || ^17
     dependencies:
-      '@popperjs/core': 2.11.4
+      '@popperjs/core': 2.11.5
+      react: 17.0.2
       react-fast-compare: 3.2.0
       warning: 4.0.3
 
@@ -36876,6 +37064,7 @@ packages:
     dependencies:
       history: 5.3.0
       react-router: 6.2.2
+    dev: true
 
   /react-router-dom/6.2.2_react-dom@17.0.2+react@17.0.2:
     resolution: {integrity: sha512-AtYEsAST7bDD4dLSQHDnk/qxWLJdad5t1HFa1qJyUrCeGgEuCSw0VB/27ARbF9Fi/W5598ujvJOm3ujUCVzuYQ==}
@@ -36912,6 +37101,7 @@ packages:
       react: '>=16.8'
     dependencies:
       history: 5.3.0
+    dev: true
 
   /react-router/6.2.2_react@17.0.2:
     resolution: {integrity: sha512-/MbxyLzd7Q7amp4gDOGaYvXwhEojkJD5BtExkuKmj39VEE0m3l/zipf6h2WIB2jyAO0lI6NGETh4RDcktRm4AQ==}
