@@ -31,7 +31,7 @@ describe('Switch Environment - /auth/environments/:id/switch (POST)', async () =
 
       expect(newJwt._id).to.equal(session.user._id);
       expect(newJwt.organizationId).to.equal(session.organization._id);
-      expect(newJwt.environmentId).not.equal(secondEnvironment._id);
+      expect(newJwt.environmentId).not.equal(firstEnvironment._id);
     });
   });
 });

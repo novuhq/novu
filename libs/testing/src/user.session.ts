@@ -5,7 +5,14 @@ import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 
 import { ChannelTypeEnum } from '@novu/shared';
-import { UserEntity, UserRepository, EnvironmentEntity, OrganizationEntity, NotificationGroupEntity } from '@novu/dal';
+import {
+  UserEntity,
+  UserRepository,
+  EnvironmentEntity,
+  OrganizationEntity,
+  NotificationGroupEntity,
+  EnvironmentRepository,
+} from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
 
@@ -16,6 +23,7 @@ import { IntegrationService } from './integration.service';
 
 export class UserSession {
   private userRepository = new UserRepository();
+  private environmentRepository = new EnvironmentRepository();
 
   token: string;
 
@@ -93,12 +101,11 @@ export class UserSession {
   }
 
   async createEnvironment(name = 'Test environment', parentId: string = undefined) {
-    const response = await this.testAgent.post('/v1/environments').send({
+    this.environment = await this.environmentRepository.create({
       name,
-      parentId,
+      _parentId: parentId,
     });
 
-    this.environment = response.body.data;
     this.apiKey = this.environment.apiKeys[0].key;
 
     return this.environment;
