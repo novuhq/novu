@@ -82,7 +82,7 @@ export function HeaderNav({}: Props) {
             {dark ? <Sun {...headerIconsSettings} /> : <Moon {...headerIconsSettings} />}
           </ActionIcon>
           <ActionIcon variant="transparent" id="notification-bell">
-            <NotificationCenterWidget />
+            <NotificationCenterWidget user={currentUser} />
             <UnseenBadge id="unseen-badge-selector" />
           </ActionIcon>
           <Dropdown
