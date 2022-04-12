@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
+import { v4 as uuid } from 'uuid';
 
 import { ChannelTypeEnum } from '@novu/shared';
 import {
@@ -103,6 +104,7 @@ export class UserSession {
   async createEnvironment(name = 'Test environment', parentId: string = undefined) {
     this.environment = await this.environmentRepository.create({
       name,
+      identifier: uuid(),
       _parentId: parentId,
     });
 
