@@ -8,12 +8,14 @@ import { useSocket } from '../../../../hooks/use-socket.hook';
 import { colors } from '../../../../shared/config/colors';
 import React from 'react';
 import { IAuthContext } from '../../../../index';
+import { NotificationCenterContext } from '../../../../store/notification-center.context';
 
 export function Header() {
   const theme: any = useTheme();
   const [unseenCount, setUnseenCount] = useState<number>();
   const { socket } = useSocket();
   const { token } = useContext<IAuthContext>(AuthContext);
+  const { onUnseenCountChanged } = useContext(NotificationCenterContext);
   const { data } = useQuery<{ count: number }>('unseenCount', getUnseenCount, {
     enabled: !!token,
   });
@@ -27,13 +29,7 @@ export function Header() {
   }, [socket]);
 
   useEffect(() => {
-    if ('parentIFrame' in window) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).parentIFrame.sendMessage({
-        type: 'unseen_count_changed',
-        count: unseenCount,
-      });
-    }
+    if (onUnseenCountChanged) onUnseenCountChanged(unseenCount);
   }, [unseenCount, (window as any).parentIFrame]);
 
   useEffect(() => {
