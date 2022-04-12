@@ -107,6 +107,7 @@ export class UserSession {
       name,
       identifier: uuid(),
       _parentId: parentId,
+      _organizationId: this.organization._id,
       apiKeys: [
         {
           key: key,
