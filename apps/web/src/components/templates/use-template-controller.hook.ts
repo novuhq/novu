@@ -9,74 +9,12 @@ import {
   IEmailBlock,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { createTemplate, getTemplateById, updateTemplate } from '../../api/templates';
+import { createTemplate, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
-import { colors } from '../../design-system';
-
-export interface ITemplateMessage {
-  template: {
-    content: string | IEmailBlock[];
-    htmlContent?: string;
-    _id?: string;
-    subject?: string;
-    cta?: any;
-    name?: string;
-    type: ChannelTypeEnum;
-    contentType?: 'editor' | 'customHtml';
-  };
-  filters?: any[];
-}
-
-export interface IForm {
-  notificationGroup: string;
-  name: string;
-  description: string;
-  tags: string[];
-  emailMessages: ITemplateMessage[];
-  inAppMessages: ITemplateMessage[];
-  smsMessages: ITemplateMessage[];
-}
-
-const defaultFormValues = {
-  inAppMessages: [
-    {
-      template: {
-        _id: undefined,
-        type: ChannelTypeEnum.IN_APP,
-        content: '',
-      },
-      filters: [],
-    },
-  ] as ITemplateMessage[],
-  emailMessages: [
-    {
-      template: {
-        _id: undefined,
-        type: ChannelTypeEnum.EMAIL,
-        contentType: 'editor',
-        content: [],
-        subject: '',
-        name: 'Email Message Template',
-      },
-      filters: [],
-    },
-  ] as ITemplateMessage[],
-  smsMessages: [
-    {
-      template: {
-        _id: undefined,
-        contentType: undefined,
-        type: ChannelTypeEnum.SMS,
-        content: '',
-      },
-      filters: [],
-    },
-  ],
-};
 
 export function useTemplateController(templateId: string) {
   const [activeChannels, setActiveChannels] = useState<{ [key: string]: boolean }>({
@@ -173,9 +111,9 @@ export function useTemplateController(templateId: string) {
 
   useEffect(() => {
     if (template) {
-      const inAppChannel = template.messages.filter((i) => i.template.type === ChannelTypeEnum.IN_APP);
-      const emailChannel = template.messages.filter((i) => i.template.type === ChannelTypeEnum.EMAIL);
-      const smsChannel = template.messages.filter((i) => i.template.type === ChannelTypeEnum.SMS);
+      const inAppChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.IN_APP);
+      const emailChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.EMAIL);
+      const smsChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.SMS);
 
       const formValues: IForm = {
         notificationGroup: template._notificationGroupId,
@@ -226,11 +164,11 @@ export function useTemplateController(templateId: string) {
   }, [templateId]);
 
   const onSubmit = async (data: IForm) => {
-    const messagesData: any[] = [];
+    const stepsData: any[] = [];
 
     if (activeChannels[ChannelTypeEnum.IN_APP]) {
       for (const item of data.inAppMessages) {
-        messagesData.push({
+        stepsData.push({
           _id: item.template._id,
           type: ChannelTypeEnum.IN_APP,
           content: item.template.content as string,
@@ -246,7 +184,7 @@ export function useTemplateController(templateId: string) {
 
     if (activeChannels[ChannelTypeEnum.SMS]) {
       for (const item of data.smsMessages) {
-        messagesData.push({
+        stepsData.push({
           _id: item.template._id,
           type: ChannelTypeEnum.SMS,
           content: item.template.content as string,
@@ -256,7 +194,7 @@ export function useTemplateController(templateId: string) {
 
     if (activeChannels[ChannelTypeEnum.EMAIL]) {
       for (const item of data.emailMessages) {
-        messagesData.push({
+        stepsData.push({
           _id: item.template._id,
           name: item.template.name,
           subject: item.template.subject,
@@ -273,7 +211,7 @@ export function useTemplateController(templateId: string) {
       name: data.name,
       description: data.description,
       tags: data.tags,
-      messages: messagesData,
+      steps: stepsData,
     };
 
     try {
@@ -291,7 +229,7 @@ export function useTemplateController(templateId: string) {
         });
         navigate('/templates');
       } else {
-        const response = await createNotification(payload);
+        const response = await createNotification({ ...payload, active: true, draft: false });
 
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
@@ -408,3 +346,64 @@ export function useTemplateController(templateId: string) {
     smsFields,
   };
 }
+
+export interface ITemplateMessage {
+  template: {
+    content: string | IEmailBlock[];
+    htmlContent?: string;
+    _id?: string;
+    subject?: string;
+    cta?: any;
+    name?: string;
+    type: ChannelTypeEnum;
+    contentType?: 'editor' | 'customHtml';
+  };
+  filters?: any[];
+}
+
+export interface IForm {
+  notificationGroup: string;
+  name: string;
+  description: string;
+  tags: string[];
+  emailMessages: ITemplateMessage[];
+  inAppMessages: ITemplateMessage[];
+  smsMessages: ITemplateMessage[];
+}
+
+const defaultFormValues = {
+  inAppMessages: [
+    {
+      template: {
+        _id: undefined,
+        type: ChannelTypeEnum.IN_APP,
+        content: '',
+      },
+      filters: [],
+    },
+  ] as ITemplateMessage[],
+  emailMessages: [
+    {
+      template: {
+        _id: undefined,
+        type: ChannelTypeEnum.EMAIL,
+        contentType: 'editor',
+        content: [],
+        subject: '',
+        name: 'Email Message Template',
+      },
+      filters: [],
+    },
+  ] as ITemplateMessage[],
+  smsMessages: [
+    {
+      template: {
+        _id: undefined,
+        contentType: undefined,
+        type: ChannelTypeEnum.SMS,
+        content: '',
+      },
+      filters: [],
+    },
+  ],
+};

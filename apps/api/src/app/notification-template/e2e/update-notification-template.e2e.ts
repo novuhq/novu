@@ -19,7 +19,7 @@ describe('Update notification template by id - /notification-templates/:template
     const template = await notificationTemplateService.createTemplate();
     const update: IUpdateNotificationTemplate = {
       name: 'new name for notification',
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.IN_APP,
           content: 'This is new content for notification',
@@ -32,8 +32,8 @@ describe('Update notification template by id - /notification-templates/:template
     expect(foundTemplate._id).to.equal(template._id);
     expect(foundTemplate.name).to.equal('new name for notification');
     expect(foundTemplate.description).to.equal(template.description);
-    expect(foundTemplate.messages.length).to.equal(1);
-    expect(foundTemplate.messages[0].template.content).to.equal(update.messages[0].content);
+    expect(foundTemplate.steps.length).to.equal(1);
+    expect(foundTemplate.steps[0].template.content).to.equal(update.steps[0].content);
   });
 
   it('should generate new variables on update', async function () {
@@ -44,7 +44,7 @@ describe('Update notification template by id - /notification-templates/:template
     );
 
     const template = await notificationTemplateService.createTemplate({
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.IN_APP,
           content: 'This is new content for notification {{otherVariable}}',
@@ -53,7 +53,7 @@ describe('Update notification template by id - /notification-templates/:template
     });
 
     const update: IUpdateNotificationTemplate = {
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.IN_APP,
           content: 'This is new content for notification {{newVariableFromUpdate}}',
@@ -75,7 +75,7 @@ describe('Update notification template by id - /notification-templates/:template
     );
 
     const template = await notificationTemplateService.createTemplate({
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.EMAIL,
           contentType: 'editor',
@@ -85,7 +85,7 @@ describe('Update notification template by id - /notification-templates/:template
     });
 
     const update: IUpdateNotificationTemplate = {
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.EMAIL,
           contentType: 'customHtml',
@@ -97,6 +97,6 @@ describe('Update notification template by id - /notification-templates/:template
     const foundTemplate: INotificationTemplate = body.data;
 
     expect(foundTemplate._id).to.equal(template._id);
-    expect(foundTemplate.messages[0].template.contentType).to.equal('customHtml');
+    expect(foundTemplate.steps[0].template.contentType).to.equal('customHtml');
   });
 });

@@ -7,12 +7,13 @@ import {
   Menu as MantineMenu,
   Container,
 } from '@mantine/core';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
+import { useColorScheme } from '@mantine/hooks';
 
 type Props = {};
 const menuItem = [
@@ -26,8 +27,13 @@ const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
+  const browserColorScheme = useColorScheme();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
+
+  useEffect(() => {
+    toggleColorScheme(browserColorScheme);
+  }, [browserColorScheme]);
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">

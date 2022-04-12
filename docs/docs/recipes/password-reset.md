@@ -7,11 +7,11 @@ sidebar_position: 4
 Password reset is one of the things you encounter with when building authentication if not using Auth0 or Cognito services.
 
 ```typescript
-import { Novu, ChannelTypeEnum } from "@novu/node";
+import { NovuStateless, ChannelTypeEnum } from "@novu/stateless";
 import { SendgridEmailProvider } from "@novu/sendgrid";
 import { TwilioSmsProvider } from "@novu/twilio";
 
-const novu = new Novu();
+const novu = new NovuStateless();
 
 await novu.registerProvider(
   new TwilioSmsProvider({

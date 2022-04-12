@@ -23,4 +23,8 @@ export class UpdateSubscriberCommand extends EnvironmentCommand {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 }

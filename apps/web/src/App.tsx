@@ -21,12 +21,13 @@ import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
+import { ENV, SENTRY_DSN } from './config/index';
 
-if (process.env.REACT_APP_SENTRY_DSN) {
+if (SENTRY_DSN) {
   Sentry.init({
-    dsn: process.env.REACT_APP_SENTRY_DSN,
+    dsn: SENTRY_DSN,
     integrations: [new Integrations.BrowserTracing()],
-    environment: process.env.REACT_APP_ENVIRONMENT,
+    environment: ENV,
     /*
      * Set tracesSampleRate to 1.0 to capture 100%
      * of transactions for performance monitoring.

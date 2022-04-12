@@ -401,7 +401,7 @@ function pulsateBell() {
     elt.src = t;
     var before = o.getElementsByTagName(f)[0];
     before.parentNode.insertBefore(elt, before);
-  })(window, document, "https://sdk.novu.co/sdk.umd.min.js", "novu", "script");
+  })(window, document, "https://embed.novu.co/embed.umd.min.js", "novu", "script");
 
   novu.init('REPLACE_WITH_environmentId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
     $user_id: 'REPLACE_WITH_$user_id',

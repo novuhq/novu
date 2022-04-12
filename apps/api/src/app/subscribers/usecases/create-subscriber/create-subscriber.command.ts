@@ -26,4 +26,8 @@ export class CreateSubscriberCommand extends EnvironmentCommand {
   @IsString()
   @IsOptional()
   phone?: string;
+
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 }

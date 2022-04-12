@@ -1,6 +1,6 @@
 import { BuilderFieldOperator, ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { MessageEntity, MessageFilter, NotificationMessagesEntity } from '@novu/dal';
+import { MessageEntity, StepFilter, NotificationStepEntity } from '@novu/dal';
 import { matchMessageWithFilters } from './message-filter.matcher';
 
 describe('Message filter matcher', function () {
@@ -213,7 +213,7 @@ function messageWrapper(
     operator: BuilderFieldOperator;
   }[],
   channel = ChannelTypeEnum.EMAIL
-): NotificationMessagesEntity {
+): NotificationStepEntity {
   return {
     _templateId: '123',
     template: {

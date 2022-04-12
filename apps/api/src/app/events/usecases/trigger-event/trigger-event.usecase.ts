@@ -6,7 +6,7 @@ import {
   IntegrationRepository,
   MessageRepository,
   NotificationEntity,
-  NotificationMessagesEntity,
+  NotificationStepEntity,
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -76,7 +76,7 @@ export class TriggerEvent {
       .catch((e) => console.error(e));
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.organizationId,
+      command.applicationId,
       command.identifier
     );
 
@@ -248,15 +248,15 @@ export class TriggerEvent {
   }
 
   private extractMatchingMessages(template: NotificationTemplateEntity, payload) {
-    const smsMessages = matchMessageWithFilters(ChannelTypeEnum.SMS, template.messages, payload);
-    const inAppChannelMessages = matchMessageWithFilters(ChannelTypeEnum.IN_APP, template.messages, payload);
-    const emailChannelMessages = matchMessageWithFilters(ChannelTypeEnum.EMAIL, template.messages, payload);
+    const smsMessages = matchMessageWithFilters(ChannelTypeEnum.SMS, template.steps, payload);
+    const inAppChannelMessages = matchMessageWithFilters(ChannelTypeEnum.IN_APP, template.steps, payload);
+    const emailChannelMessages = matchMessageWithFilters(ChannelTypeEnum.EMAIL, template.steps, payload);
 
     return { smsMessages, inAppChannelMessages, emailChannelMessages };
   }
 
   private async sendSmsMessage(
-    smsMessages: NotificationMessagesEntity[],
+    smsMessages: NotificationStepEntity[],
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
@@ -377,7 +377,7 @@ export class TriggerEvent {
   }
 
   private async sendInAppMessage(
-    inAppChannelMessages: NotificationMessagesEntity[],
+    inAppChannelMessages: NotificationStepEntity[],
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
@@ -447,7 +447,7 @@ export class TriggerEvent {
   }
 
   private async sendEmailMessage(
-    emailChannelMessages: NotificationMessagesEntity[],
+    emailChannelMessages: NotificationStepEntity[],
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,

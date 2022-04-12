@@ -7,10 +7,10 @@ sidebar_position: 5
 In a collaborative project, you may want to invite others to join the organization.
 
 ```typescript
-import { Novu, ChannelTypeEnum } from "@novu/node";
+import { NovuStateless, ChannelTypeEnum } from "@novu/stateless";
 import { SendgridEmailProvider } from "@novu/sendgrid";
 
-const novu = new Novu();
+const novu = new NovuStateless();
 
 await novu.registerProvider(
   new SendgridEmailProvider({

@@ -16,7 +16,7 @@ services:
     build:
       dockerfile: "apps/widget/Dockerfile"
       context: "../"
-  sdk:
+  embed:
     build:
-      dockerfile: "libs/sdk/Dockerfile"
+      dockerfile: "libs/embed/Dockerfile"
       context: "../"

@@ -19,10 +19,10 @@ To setup the repository, run the initial setup command:
 npm run setup:project
 ```
 
-At the root of the project build the `core` package to get started.
+At the root of the project build the `node` package to get started.
 
 ```zsh
-cd packages/core && yarn run build
+cd packages/node && yarn run build
 ```
 
 ## Snippets
@@ -57,7 +57,7 @@ import {
   ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
-} from '@novu/node';
+} from '@novu/stateless';
 
 export class ExampleProviderEmailProvider implements IEmailProvider {
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -97,7 +97,7 @@ test('should trigger exampleProvider library correctly', async () => {
 This is a code example of a basic email provider, with minimal fields required by our ``` IEmailProvider ``` interface.
 
  ```ts
-import { ChannelTypeEnum, IEmailProvider, IEmailOptions } from "@novu/node";
+import { ChannelTypeEnum, IEmailProvider, IEmailOptions } from "@novu/stateless";
 
 import sendgridMail from "@sendgrid/mail";
 
@@ -130,7 +130,7 @@ export class SendgridEmailProvider implements IEmailProvider {
 This is a code example of a basic email provider, with minimal fields required by our ``` ISmsProvider ``` interface.
 
 ```typescript
-import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from "@novu/node";
+import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from "@novu/stateless";
 
 import { Twilio } from "twilio";
 
@@ -160,4 +160,4 @@ export class TwilioSmsProvider implements ISmsProvider {
 }
 ```
 
-[github-template]: https://github.com/novuhq/provider-template
+[GitHub Template](https://github.com/novuhq/provider-template)

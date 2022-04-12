@@ -94,7 +94,7 @@ export class CreateNotificationTemplateDto implements ICreateNotificationTemplat
   @IsDefined()
   @IsArray()
   @ValidateNested()
-  messages: NotificationChannelDto[];
+  steps: NotificationChannelDto[];
 
   @IsBoolean()
   @IsOptional()

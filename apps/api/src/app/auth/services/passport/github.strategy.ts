@@ -33,7 +33,7 @@ export class GithubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
         accessToken,
         refreshToken,
         profile,
-        req.query.state
+        this.parseState(req)?.distinctId
       );
 
       done(null, {
@@ -42,6 +42,14 @@ export class GithubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
       });
     } catch (err) {
       done(err, false);
+    }
+  }
+
+  private parseState(req) {
+    try {
+      return JSON.parse(req.query.state);
+    } catch (e) {
+      return {};
     }
   }
 }

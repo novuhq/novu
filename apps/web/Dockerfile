@@ -22,4 +22,10 @@ COPY pnpm-lock.yaml .
 RUN pnpm install
 RUN pnpm add @babel/core -W
 
-CMD [ "pnpm", "start:docker:web" ]
+COPY .eslintrc.js .
+COPY .prettierrc .
+COPY .prettierignore .
+
+RUN pnpm build:web
+
+CMD [ "pnpm", "start:static:web" ]

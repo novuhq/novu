@@ -11,7 +11,7 @@
       <excludeFolder url="file://$MODULE_DIR$/apps/ws/dist" />
       <excludeFolder url="file://$MODULE_DIR$/docs/build" />
       <excludeFolder url="file://$MODULE_DIR$/libs/dal/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/libs/sdk/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/libs/embed/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
