@@ -20,4 +20,8 @@ export class Subscribers {
       ...data,
     });
   }
+
+  async delete(subscriberId: string) {
+    return await this.http.delete(`/subscribers/${subscriberId}`);
+  }
 }
