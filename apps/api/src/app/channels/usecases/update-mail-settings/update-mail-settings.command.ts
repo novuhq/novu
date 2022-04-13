@@ -1,8 +1,8 @@
 import { IsDefined, IsEmail } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class UpdateMailSettingsCommand extends ApplicationWithUserCommand {
+export class UpdateMailSettingsCommand extends EnvironmentWithUserCommand {
   static create(data: UpdateMailSettingsCommand) {
     return CommandHelper.create<UpdateMailSettingsCommand>(UpdateMailSettingsCommand, data);
   }

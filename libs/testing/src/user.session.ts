@@ -3,19 +3,28 @@ import { faker } from '@faker-js/faker';
 import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
+import { v4 as uuid } from 'uuid';
 
 import { ChannelTypeEnum } from '@novu/shared';
-import { UserEntity, UserRepository, ApplicationEntity, OrganizationEntity, NotificationGroupEntity } from '@novu/dal';
+import {
+  UserEntity,
+  UserRepository,
+  EnvironmentEntity,
+  OrganizationEntity,
+  NotificationGroupEntity,
+  EnvironmentRepository,
+} from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
 
 import { OrganizationService } from './organization.service';
-import { ApplicationService } from './application.service';
+import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
 
 export class UserSession {
   private userRepository = new UserRepository();
+  private environmentRepository = new EnvironmentRepository();
 
   token: string;
 
@@ -27,7 +36,7 @@ export class UserSession {
 
   testAgent: SuperTest<Test>;
 
-  application: ApplicationEntity;
+  environment: EnvironmentEntity;
 
   testServer = testServer;
 
@@ -35,7 +44,7 @@ export class UserSession {
 
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
 
-  async initialize(options: { noOrganization?: boolean; noApplication?: boolean } = {}) {
+  async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean } = {}) {
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
@@ -56,8 +65,10 @@ export class UserSession {
     await this.fetchJWT();
 
     if (!options.noOrganization) {
-      if (!options?.noApplication) {
-        await this.createApplication();
+      if (!options?.noEnvironment) {
+        await this.createEnvironment('Development');
+        await this.createEnvironment('Production', this.environment._parentId);
+
         await this.createIntegration();
       }
     }
@@ -65,8 +76,8 @@ export class UserSession {
     await this.fetchJWT();
 
     if (!options.noOrganization) {
-      if (!options?.noApplication) {
-        await this.updateApplicationDetails();
+      if (!options?.noEnvironment) {
+        await this.updateEnvironmentDetails();
       }
     }
   }
@@ -81,8 +92,8 @@ export class UserSession {
 
   async fetchJWT() {
     const response = await request(this.requestEndpoint).get(
-      `/v1/auth/test/token/${this.user._id}?applicationId=${
-        this.application ? this.application._id : ''
+      `/v1/auth/test/token/${this.user._id}?environmentId=${
+        this.environment ? this.environment._id : ''
       }&organizationId=${this.organization ? this.organization._id : ''}`
     );
 
@@ -90,20 +101,29 @@ export class UserSession {
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
-  async createApplication() {
-    const response = await this.testAgent.post('/v1/applications').send({
-      name: 'Test application',
+  async createEnvironment(name = 'Test environment', parentId: string = undefined) {
+    const key = uuid();
+    this.environment = await this.environmentRepository.create({
+      name,
+      identifier: uuid(),
+      _parentId: parentId,
+      _organizationId: this.organization._id,
+      apiKeys: [
+        {
+          key: key,
+          _userId: this.user._id,
+        },
+      ],
     });
 
-    this.application = response.body.data;
-    this.apiKey = this.application.apiKeys[0].key;
+    this.apiKey = key;
 
-    return this.application;
+    return this.environment;
   }
 
-  async updateApplicationDetails() {
+  async updateEnvironmentDetails() {
     await this.testAgent
-      .put('/v1/applications/branding')
+      .put('/v1/environments/branding')
       .send({
         color: '#2a9d8f',
         logo: 'https://novu.co/img/logo.png',
@@ -129,20 +149,16 @@ export class UserSession {
     this.notificationGroups = groupsResponse.body.data;
   }
 
-  async addApplication() {
-    const applicationService = new ApplicationService();
+  async addEnvironment() {
+    const environmentService = new EnvironmentService();
 
-    this.application = await applicationService.createApplication(this.organization._id);
+    this.environment = await environmentService.createEnvironment(this.organization._id);
 
-    return this.application;
-  }
-
-  async enableApiTokenMode() {
-    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', `ApiKey ${this.apiKey}`);
+    return this.environment;
   }
 
   async createTemplate(template?: Partial<CreateTemplatePayload>) {
-    const service = new NotificationTemplateService(this.user._id, this.organization._id, this.application._id);
+    const service = new NotificationTemplateService(this.user._id, this.organization._id, this.environment._id);
 
     return await service.createTemplate(template);
   }
@@ -150,11 +166,11 @@ export class UserSession {
   async createIntegration() {
     const service = new IntegrationService();
 
-    return await service.createIntegration(this.application._id, this.organization._id);
+    return await service.createIntegration(this.environment._id, this.organization._id);
   }
 
   async createChannelTemplate(channel: ChannelTypeEnum) {
-    const service = new NotificationTemplateService(this.user._id, this.organization._id, this.application._id);
+    const service = new NotificationTemplateService(this.user._id, this.organization._id, this.environment._id);
 
     return await service.createTemplate({
       steps: [
@@ -179,6 +195,10 @@ export class UserSession {
 
     this.organization = await organizationService.createOrganization();
     await organizationService.addMember(this.organization._id, this.user._id);
+
+    if (!this.environment) {
+      await this.createEnvironment();
+    }
 
     return this.organization;
   }

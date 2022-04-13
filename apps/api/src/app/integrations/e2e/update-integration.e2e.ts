@@ -29,7 +29,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     // update integration
     await session.testAgent.put(`/v1/integrations/${integrationId}`).send(payload);
 
-    const integration = (await integrationRepository.findByApplicationId(session.application._id))[0];
+    const integration = (await integrationRepository.findByEnvironmentId(session.environment._id))[0];
 
     expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
     expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
@@ -62,7 +62,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     secondProviderPayload.active = true;
     await session.testAgent.put(`/v1/integrations/${mailgunIntegrationId}`).send(secondProviderPayload);
 
-    const integrations = await integrationRepository.findByApplicationId(session.application._id);
+    const integrations = await integrationRepository.findByEnvironmentId(session.environment._id);
 
     const firstProviderIntegration = integrations.find(
       (i) => i.providerId.toString() === 'sendgrid' && i.channel.toString() === 'EMAIL'

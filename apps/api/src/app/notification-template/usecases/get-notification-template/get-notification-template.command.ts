@@ -1,8 +1,8 @@
 import { IsDefined, IsMongoId } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class GetNotificationTemplateCommand extends ApplicationWithUserCommand {
+export class GetNotificationTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: GetNotificationTemplateCommand) {
     return CommandHelper.create<GetNotificationTemplateCommand>(GetNotificationTemplateCommand, data);
   }

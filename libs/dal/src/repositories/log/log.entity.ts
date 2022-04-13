@@ -24,5 +24,5 @@ export class LogEntity {
 
   _organizationId: string;
 
-  _applicationId: string;
+  _environmentId: string;
 }

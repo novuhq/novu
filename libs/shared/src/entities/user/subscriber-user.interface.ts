@@ -4,6 +4,6 @@ export interface ISubscriberJwt {
   lastName: string;
   email: string;
   organizationId?: string;
-  applicationId?: string;
+  environmentId?: string;
   aud: 'widget_user';
 }

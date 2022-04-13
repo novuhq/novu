@@ -61,7 +61,8 @@ export const AddChannelsPage = ({
                     : {}),
                 },
               };
-            }}>
+            }}
+          >
             <StyledCardContent>
               <div>{channel.icon}</div>
               <Text weight="bold" size="lg">
@@ -89,7 +90,8 @@ const StyledCardContent = ({ children }: { children: React.ReactNode }) => {
           marginRight: '-50%',
           transform: 'translate(-50%, -50%)',
         },
-      }}>
+      }}
+    >
       {children}
     </Group>
   );

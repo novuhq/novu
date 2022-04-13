@@ -4,21 +4,21 @@ describe('Settings Screen', function () {
     cy.visit('/settings');
     cy.intercept('*/channels/email/settings').as('updateEmailSettings');
     cy.intercept('*/channels/sms/settings').as('updateSmsSettings');
-    cy.intercept('*/applications/branding').as('updateBrandingSettings');
+    cy.intercept('*/environments/branding').as('updateBrandingSettings');
   });
 
   it('should display the embed code successfully', function () {
     cy.get('.mantine-Tabs-tabsList').contains('In App Center').click();
 
     cy.getByTestId('embed-code-snippet').then(function (a) {
-      expect(a).to.contain(this.session.application.identifier);
+      expect(a).to.contain(this.session.environment.identifier);
       expect(a).to.contain('novu.init');
     });
   });
 
   it('should display the api key of the app', function () {
     cy.get('.mantine-Tabs-tabsList').contains('Api Keys').click();
-    cy.getByTestId('api-key-container').should('have.value', this.session.application.apiKeys[0].key);
+    cy.getByTestId('api-key-container').should('have.value', this.session.environment.apiKeys[0].key);
   });
 
   it('should update logo', function () {

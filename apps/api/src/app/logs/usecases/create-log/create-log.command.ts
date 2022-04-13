@@ -1,9 +1,9 @@
 import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, IsUUID } from 'class-validator';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class CreateLogCommand extends ApplicationWithUserCommand {
+export class CreateLogCommand extends EnvironmentWithUserCommand {
   static create(data: CreateLogCommand) {
     return CommandHelper.create<CreateLogCommand>(CreateLogCommand, data);
   }

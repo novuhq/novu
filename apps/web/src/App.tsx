@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
-import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
+import { applyToken, getToken, getTokenPayload, useAuthController } from './store/use-auth-controller';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -20,7 +20,7 @@ import { useThemeController } from './store/use-theme-controller';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
-import CreateApplicationPage from './pages/auth/CreateApplicationPage';
+import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN } from './config/index';
 
 if (SENTRY_DSN) {
@@ -67,7 +67,7 @@ function App() {
               <Route path="/auth/reset/request" element={<PasswordResetPage />} />
               <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
               <Route path="/auth/invitation/:token" element={<InvitationPage />} />
-              <Route path="/auth/application" element={<CreateApplicationPage />} />
+              <Route path="/auth/application" element={<CreateOrganizationPage />} />
               <Route element={<AppLayout />}>
                 <Route
                   path="/*"
@@ -143,6 +143,15 @@ function App() {
 }
 
 function RequiredAuth({ children }: any) {
+  const { logout } = useContext(AuthContext);
+
+  // TODO: remove after env migration
+  const payload = getTokenPayload();
+  if (payload && (payload as any).applicationId) {
+    logout();
+    window.location.reload();
+  }
+
   return getToken() ? children : <Navigate to="/auth/login" replace />;
 }
 
@@ -155,7 +164,8 @@ function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
         theme: currentTheme,
         setTheme: setCurrentTheme,
         toggleTheme,
-      }}>
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
@@ -172,7 +182,8 @@ function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
         token,
         logout,
         setToken,
-      }}>
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -60,7 +60,8 @@ export function Header() {
               fontWeight: 'bold',
               fontSize: '12px',
             }}
-            radius={100}>
+            radius={100}
+          >
             {unseenCount}
           </Badge>
         ) : null}

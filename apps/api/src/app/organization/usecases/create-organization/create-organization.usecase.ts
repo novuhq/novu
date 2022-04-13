@@ -1,6 +1,8 @@
 import { Injectable, Logger, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { MemberRoleEnum } from '@novu/shared';
+import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
+import { CreateEnvironment } from '../../../environments/usecases/create-environment/create-environment.usecase';
 import { capitalize } from '../../../shared/services/helper/helper.service';
 import { MailService } from '../../../shared/services/mail/mail.service';
 import { QueueService } from '../../../shared/services/queue';
@@ -20,7 +22,8 @@ export class CreateOrganization {
     private readonly getOrganizationUsecase: GetOrganization,
     private readonly queueService: QueueService,
     private readonly userRepository: UserRepository,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly createEnvironmentUsecase: CreateEnvironment
   ) {}
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
@@ -38,6 +41,22 @@ export class CreateOrganization {
         roles: [MemberRoleEnum.ADMIN],
         organizationId: createdOrganization._id,
         userId: command.userId,
+      })
+    );
+
+    const devEnv = await this.createEnvironmentUsecase.execute(
+      CreateEnvironmentCommand.create({
+        userId: user._id,
+        name: 'Developement',
+        organizationId: createdOrganization._id,
+      })
+    );
+    await this.createEnvironmentUsecase.execute(
+      CreateEnvironmentCommand.create({
+        userId: user._id,
+        name: 'Production',
+        organizationId: createdOrganization._id,
+        parentEnvironmentId: devEnv._id,
       })
     );
 

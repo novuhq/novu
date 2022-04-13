@@ -16,7 +16,7 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
     await session.testAgent
       .post('/v1/widgets/session/initialize')
       .send({
-        applicationIdentifier: session.application.identifier,
+        applicationIdentifier: session.environment.identifier,
         $user_id: '12345',
         $first_name: 'Test',
         $last_name: 'User',
@@ -38,7 +38,7 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
 
     const existing = await messageRepository.find(
       {
-        _applicationId: session.application._id,
+        _environmentId: session.environment._id,
       },
       null,
       { limit: 2 }

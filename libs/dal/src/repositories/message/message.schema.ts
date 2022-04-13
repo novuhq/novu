@@ -10,9 +10,9 @@ const messageSchema = new Schema(
       ref: 'NotificationTemplate',
       index: true,
     },
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
       index: true,
     },
     _messageTemplateId: {

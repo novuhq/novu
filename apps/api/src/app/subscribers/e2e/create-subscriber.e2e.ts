@@ -34,7 +34,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
     const { data: body } = response;
 
     expect(body.data).to.be.ok;
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.application._id, '123');
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
 
     expect(createdSubscriber.firstName).to.equal('John');
     expect(createdSubscriber.email).to.equal('john@doe.com');
@@ -73,7 +73,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
     const { data: body } = response;
 
     expect(body.data).to.be.ok;
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.application._id, '123');
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
 
     expect(createdSubscriber.firstName).to.equal('Mary');
     expect(createdSubscriber.email).to.equal('john@doe.com');

@@ -58,9 +58,9 @@ const notificationTemplateSchema = new Schema(
         },
       },
     ],
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
     },
     _organizationId: {
       type: Schema.Types.ObjectId,

@@ -38,6 +38,6 @@
     ]
   },
   "affected": {
-    "defaultBase": "master"
+    "defaultBase": "main"
   }
 }

@@ -1,25 +1,81 @@
 import { Novu } from './novu';
+import axios from 'axios';
 
 const mockConfig = {
   apiKey: '1234',
 };
 
-test('should trigger correctly', async () => {
-  const novu = new Novu(mockConfig.apiKey);
+jest.mock('axios');
 
-  const spy = jest.spyOn(novu, 'trigger').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return {} as any;
+describe('test use of novu node package', () => {
+  const mockedAxios = axios as jest.Mocked<typeof axios>;
+  let novu: Novu;
+
+  beforeEach(() => {
+    mockedAxios.create.mockReturnThis();
+    novu = new Novu(mockConfig.apiKey);
   });
 
-  await novu.trigger('test-template', {
-    $user_id: 'test-user',
-    $email: 'test-user@sd.com',
+  test('should trigger correctly', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.trigger('test-template', {
+      $user_id: 'test-user',
+      $email: 'test-user@sd.com',
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
+      name: 'test-template',
+      payload: {
+        $user_id: 'test-user',
+        $email: 'test-user@sd.com',
+      },
+    });
   });
 
-  expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith('test-template', {
-    $user_id: 'test-user',
-    $email: 'test-user@sd.com',
+  test('should identify subscriber correctly', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.subscribers.identify('test-new-subscriber', {
+      firstName: 'Test',
+      lastName: 'Identify',
+      email: 'email',
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/subscribers', {
+      subscriberId: 'test-new-subscriber',
+      firstName: 'Test',
+      lastName: 'Identify',
+      email: 'email',
+    });
+  });
+
+  test('should update subscriber correctly', async () => {
+    mockedAxios.put.mockResolvedValue({});
+
+    await novu.subscribers.update('test-update-subscriber', {
+      phone: '8989898',
+    });
+
+    expect(mockedAxios.put).toHaveBeenCalled();
+    expect(mockedAxios.put).toHaveBeenCalledWith(
+      `/subscribers/test-update-subscriber`,
+      {
+        phone: '8989898',
+      }
+    );
+  });
+
+  test('should update subscriber correctly', async () => {
+    mockedAxios.delete.mockResolvedValue({});
+
+    await novu.subscribers.delete('test-delete-subscriber');
+
+    expect(mockedAxios.delete).toHaveBeenCalled();
+    expect(mockedAxios.delete).toHaveBeenCalledWith(
+      `/subscribers/test-delete-subscriber`
+    );
   });
 });

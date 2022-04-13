@@ -33,9 +33,9 @@ const logSchema = new Schema(
       ref: 'Organization',
       index: true,
     },
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
       index: true,
     },
     _subscriberId: {
@@ -47,7 +47,7 @@ const logSchema = new Schema(
   schemaOptions
 );
 
-logSchema.index({ _applicationId: 1, createdAt: -1 });
+logSchema.index({ _environmentId: 1, createdAt: -1 });
 
 interface ILogDocument extends LogEntity, Document {
   _id: never;

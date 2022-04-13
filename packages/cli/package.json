@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "0.4.0-alpha.5",
+  "version": "0.4.0-alpha.6",
   "description": "On-Boarding Cli",
   "main": "index.js",
   "scripts": {
@@ -11,8 +11,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
-    "start:dev": "cross-env TZ=UTC nodemon",
-    "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon",
+    "start:dev": "cross-env NOVU_API_ADDRESS=http://localhost:3000 NOVU_CLIENT_LOGIN=http://localhost:4200/auth/login TZ=UTC nodemon init",
+    "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon init",
     "start:debug": "TZ=UTC nodemon --config nodemon-debug.json",
     "start:prod": "TZ=UTC node dist/index.js"
   },
@@ -22,7 +22,7 @@
     "novu": "./dist/index.js"
   },
   "devDependencies": {
-    "@novu/shared": "^0.4.0-alpha.5",
+    "@novu/shared": "^0.4.0-alpha.6",
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
     "nodemon": "^2.0.15",

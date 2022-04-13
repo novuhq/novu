@@ -1,6 +1,6 @@
 {
   "name": "@novu/postmark",
-  "version": "0.4.0-alpha.5",
+  "version": "0.4.0-alpha.6",
   "description": "A postmark wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -44,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/node": "^0.4.0-alpha.5",
+    "@novu/node": "^0.4.0-alpha.6",
     "postmark": "^2.7.8"
   },
   "devDependencies": {

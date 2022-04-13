@@ -7,9 +7,9 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
     super(Notification, NotificationEntity);
   }
 
-  async findBySubscriberId(applicationId: string, subscriberId: string) {
+  async findBySubscriberId(environmentId: string, subscriberId: string) {
     return await this.find({
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       _subscriberId: subscriberId,
     });
   }

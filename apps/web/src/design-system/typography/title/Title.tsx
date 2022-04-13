@@ -16,7 +16,8 @@ export function Title({ size = 1, children }: ITitleProps) {
         fontWeight: size === 1 ? '800' : '700',
         color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
       })}
-      order={size}>
+      order={size}
+    >
       {children}
     </MantineTitle>
   );

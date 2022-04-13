@@ -27,7 +27,7 @@ export class NotificationTemplateEntity {
 
   _creatorId: string;
 
-  _applicationId: string;
+  _environmentId: string;
 
   triggers: NotificationTriggerEntity[];
 

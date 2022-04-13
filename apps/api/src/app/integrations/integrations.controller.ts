@@ -42,14 +42,14 @@ export class IntegrationsController {
   @Get('/')
   async getIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationEntity[]> {
     return await this.getIntegrationsUsecase.execute(
-      GetIntegrationsCommand.create({ applicationId: user.applicationId, organizationId: user.organizationId })
+      GetIntegrationsCommand.create({ environmentId: user.environmentId, organizationId: user.organizationId })
     );
   }
 
   @Get('/active')
   async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationEntity[]> {
     return await this.getActiveIntegrationsUsecase.execute(
-      GetIntegrationsCommand.create({ applicationId: user.applicationId, organizationId: user.organizationId })
+      GetIntegrationsCommand.create({ environmentId: user.environmentId, organizationId: user.organizationId })
     );
   }
 
@@ -60,7 +60,7 @@ export class IntegrationsController {
   ): Promise<IntegrationEntity> {
     return await this.createIntegrationUsecase.execute(
       CreateIntegrationCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         providerId: body.providerId,
         channel: body.channel,
@@ -79,7 +79,7 @@ export class IntegrationsController {
   ) {
     return this.updateIntegrationUsecase.execute(
       UpdateIntegrationCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
         credentials: body.credentials,
@@ -92,7 +92,7 @@ export class IntegrationsController {
   async removeIntegration(@UserSession() user: IJwtPayload, @Param('integrationId') integrationId: string) {
     return await this.removeIntegrationUsecase.execute(
       RemoveIntegrationCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
       })

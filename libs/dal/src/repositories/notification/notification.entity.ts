@@ -5,7 +5,7 @@ export class NotificationEntity {
 
   _templateId: string;
 
-  _applicationId: string;
+  _environmentId: string;
 
   _organizationId: string;
 

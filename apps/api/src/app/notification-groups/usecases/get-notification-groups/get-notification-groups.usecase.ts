@@ -13,14 +13,14 @@ export class GetNotificationGroups {
 
   async execute(command: GetNotificationGroupsCommand): Promise<NotificationGroupEntity[]> {
     const groups = await this.notificationGroupRepository.find({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
     });
 
     if (!groups.length) {
       await this.createNotificationGroup.execute(
         CreateNotificationGroupCommand.create({
           organizationId: command.organizationId,
-          applicationId: command.applicationId,
+          environmentId: command.environmentId,
           userId: command.userId,
           name: 'General',
         })
@@ -28,7 +28,7 @@ export class GetNotificationGroups {
     }
 
     return await this.notificationGroupRepository.find({
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
     });
   }
 }

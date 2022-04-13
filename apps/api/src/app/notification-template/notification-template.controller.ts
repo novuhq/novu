@@ -45,7 +45,7 @@ export class NotificationTemplateController {
       GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
       })
     );
   }
@@ -59,7 +59,7 @@ export class NotificationTemplateController {
   ) {
     return this.updateTemplateByIdUsecase.execute(
       UpdateNotificationTemplateCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         templateId,
@@ -77,7 +77,7 @@ export class NotificationTemplateController {
   getNotificationTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string) {
     return this.getNotificationTemplateUsecase.execute(
       GetNotificationTemplateCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         templateId,
@@ -92,7 +92,7 @@ export class NotificationTemplateController {
       CreateNotificationTemplateCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         name: body.name,
         tags: body.tags,
         description: body.description,
@@ -115,7 +115,7 @@ export class NotificationTemplateController {
       ChangeTemplateActiveStatusCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         active: body.active,
         templateId,
       })

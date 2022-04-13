@@ -9,7 +9,7 @@ export class UpdateSubscriber {
 
   async execute(command: UpdateSubscriberCommand) {
     const foundSubscriber = await this.subscriberRepository.findBySubscriberId(
-      command.applicationId,
+      command.environmentId,
       command.subscriberId
     );
 
