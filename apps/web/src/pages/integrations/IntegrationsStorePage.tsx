@@ -32,33 +32,37 @@ export function IntegrationsStore() {
 
   useEffect(() => {
     if (integrations) {
-      const initializedProviders: IIntegratedProvider[] = providers.map((x) => {
-        const integration = integrations.find((y) => y.providerId === x.id);
+      const initializedProviders: IIntegratedProvider[] = providers.map((providerItem) => {
+        const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
 
-        const mappedCredentials = cloneDeep(x.credentials);
+        const mappedCredentials = cloneDeep(providerItem.credentials);
         if (integration?.credentials) {
-          mappedCredentials.forEach((c) => {
+          mappedCredentials.forEach((credential) => {
             // eslint-disable-next-line no-param-reassign
-            c.value = integration.credentials[c.key]?.toString();
+            credential.value = integration.credentials[credential.key]?.toString();
           });
         }
 
         return {
-          providerId: x.id,
+          providerId: providerItem.id,
           integrationId: integration?._id ? integration._id : '',
-          displayName: x.displayName,
-          channel: x.channel,
-          credentials: integration?.credentials ? mappedCredentials : x.credentials,
-          docReference: x.docReference,
-          comingSoon: !!x.comingSoon,
+          displayName: providerItem.displayName,
+          channel: providerItem.channel,
+          credentials: integration?.credentials ? mappedCredentials : providerItem.credentials,
+          docReference: providerItem.docReference,
+          comingSoon: !!providerItem.comingSoon,
           active: integration?.active ?? true,
           connected: !!integration,
-          logoFileName: x.logoFileName,
+          logoFileName: providerItem.logoFileName,
         };
       });
 
-      setEmailProviders(sortProviders(initializedProviders.filter((p) => p.channel === ChannelTypeEnum.EMAIL)));
-      setSmsProvider(sortProviders(initializedProviders.filter((p) => p.channel === ChannelTypeEnum.SMS)));
+      setEmailProviders(
+        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL))
+      );
+      setSmsProvider(
+        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS))
+      );
     }
   }, [integrations]);
 
@@ -101,7 +105,7 @@ const ContentWrapper = styled.div`
 const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
   return unsortedProviders
     .sort((a, b) => Number(b.active) - Number(a.active))
-    .sort((x, y) => Number(isConnected(y)) - Number(isConnected(x)));
+    .sort((a, b) => Number(isConnected(b)) - Number(isConnected(a)));
 };
 
 function isConnected(provider: IIntegratedProvider) {

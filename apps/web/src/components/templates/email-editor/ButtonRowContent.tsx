@@ -73,7 +73,7 @@ export function ButtonRowContent({
               },
             }}
             color="red"
-            onClick={() => setDropDownVisible((o) => !o)}
+            onClick={() => setDropDownVisible((open) => !open)}
           >
             {block.content}
           </MantineButton>

@@ -45,16 +45,16 @@ function fillWeekData(data: IActivityGraphStats[]) {
 }
 
 function buildChartDateLabels(data: IActivityGraphStats[]): string[][] {
-  return data.map((x) => {
-    const titleDate = moment(x._id);
+  return data.map((item) => {
+    const titleDate = moment(item._id);
 
     return [titleDate.format('ddd'), `${titleDate.date()}/${titleDate.month() + 1}`];
   });
 }
 
 function buildChartData(data: IActivityGraphStats[]) {
-  return data.map((x) => {
-    return x.count;
+  return data.map((item) => {
+    return item.count;
   });
 }
 

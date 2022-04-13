@@ -21,8 +21,8 @@ export class MongooseCrudService<T> extends CrudService<T> {
       skip,
       limit,
       // eslint-disable-next-line no-return-assign
-      sort: sort.reduce((acc, v) => ((acc[v.field] = v.order === 'ASC' ? 1 : -1), acc), {}),
-      populate: join.map((v) => v.field),
+      sort: sort.reduce((acc, sortItem) => ((acc[sortItem.field] = sortItem.order === 'ASC' ? 1 : -1), acc), {}),
+      populate: join.map((item) => item.field),
       select: fields.join(' '),
     };
 
@@ -65,7 +65,7 @@ export class MongooseCrudService<T> extends CrudService<T> {
       return acc;
     }, {});
 
-    const idParam = paramsFilter.find((v) => v.field === 'id');
+    const idParam = paramsFilter.find((param) => param.field === 'id');
 
     return { options, where, id: idParam ? idParam.value : null };
   }
@@ -81,8 +81,8 @@ export class MongooseCrudService<T> extends CrudService<T> {
         ...where,
       });
 
-    options.populate.forEach((v) => {
-      queryBuilder.populate(v);
+    options.populate.forEach((option) => {
+      queryBuilder.populate(option);
     });
 
     const data = await queryBuilder.exec();
@@ -111,8 +111,8 @@ export class MongooseCrudService<T> extends CrudService<T> {
         ...where,
       });
 
-    options.populate.forEach((v) => {
-      queryBuilder.populate(v);
+    options.populate.forEach((option) => {
+      queryBuilder.populate(option);
     });
 
     const data = await queryBuilder.exec();

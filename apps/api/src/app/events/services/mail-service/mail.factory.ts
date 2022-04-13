@@ -27,7 +27,8 @@ export class MailFactory {
 
   getHandler(integration: IntegrationEntity, from: string): IMailHandler {
     try {
-      const handler = this.handlers.find((x) => x.canHandle(integration.providerId, integration.channel)) ?? null;
+      const handler =
+        this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
       if (!handler) return null;
 
