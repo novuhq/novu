@@ -3,9 +3,11 @@ import { UserSession } from '@novu/testing';
 import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum } from '@novu/shared';
 import * as moment from 'moment';
 import { CreateNotificationTemplateDto } from '../dto/create-notification-template.dto';
+import { ChangeRepository } from '@novu/dal';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
+  const changeRepository: ChangeRepository = new ChangeRepository();
 
   before(async () => {
     session = new UserSession();
@@ -71,6 +73,11 @@ describe('Create Notification template - /notification-templates (POST)', async 
     } else {
       throw new Error('content must be an array');
     }
+
+    const change = await changeRepository.findOne({
+      _entityId: template._id,
+    });
+    expect(change._entityId).to.eq(template._id);
   });
 
   it('should create a valid notification', async () => {
