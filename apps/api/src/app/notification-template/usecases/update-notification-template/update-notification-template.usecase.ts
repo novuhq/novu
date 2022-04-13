@@ -11,6 +11,7 @@ import { UpdateMessageTemplateCommand } from '../../../message-template/usecases
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { ChangeEntityType } from '@novu/dal/src/repositories/change/change.entity';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -125,7 +126,7 @@ export class UpdateNotificationTemplate {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
-        type: 'NotificationTemplate',
+        type: ChangeEntityType.NotificationTemplate,
         item,
       })
     );

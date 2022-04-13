@@ -17,3 +17,7 @@ export class ChangeEntity {
 
   createdAt: string;
 }
+
+export enum ChangeEntityType {
+  NotificationTemplate = 'NotificationTemplate',
+}

@@ -9,6 +9,7 @@ import { CreateMessageTemplate } from '../../../message-template/usecases/create
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { ChangeEntityType } from '../../../../../../../libs/dal/src/repositories/change/change.entity';
 
 @Injectable()
 export class CreateNotificationTemplate {
@@ -84,7 +85,7 @@ export class CreateNotificationTemplate {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
-        type: 'NotificationTemplate',
+        type: ChangeEntityType.NotificationTemplate,
         item,
       })
     );

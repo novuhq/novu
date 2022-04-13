@@ -1,3 +1,4 @@
+import { ChangeEntityType } from '@novu/dal/src/repositories/change/change.entity';
 import { IsDefined, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 import { CommandHelper } from '../../shared/commands/command.helper';
@@ -13,5 +14,5 @@ export class CreateChangeCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   @IsString()
-  type: string;
+  type: ChangeEntityType;
 }

@@ -1,4 +1,10 @@
-function getDiff(obj1, obj2, basePath, diffs, pathConverter) {
+function getDiff(
+  obj1: Record<string, unknown>,
+  obj2: Record<string, unknown>,
+  basePath: string[],
+  diffs: any,
+  pathConverter
+) {
   const obj1Keys = Object.keys(obj1);
   const obj1KeysLength = obj1Keys.length;
   const obj2Keys = Object.keys(obj2);
@@ -41,7 +47,7 @@ function getDiff(obj1, obj2, basePath, diffs, pathConverter) {
         ) {
           path = pushReplace(path, basePath, key, diffs, pathConverter, obj2);
         } else {
-          getDiff(obj1[key], obj2[key], basePath.concat(key), diffs, pathConverter);
+          getDiff(obj1[key] as any, obj2[key] as any, basePath.concat(key), diffs, pathConverter);
         }
       }
     }
@@ -74,6 +80,6 @@ function pushReplace(path, basePath, key, diffs, pathConverter, obj2) {
   return path;
 }
 
-export function jsonPatchPathConverter(arrayPath) {
-  return [''].concat(arrayPath).join('/');
+export function jsonPatchPathConverter(path: string[]) {
+  return [''].concat(path).join('/');
 }

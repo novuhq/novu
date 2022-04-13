@@ -8,31 +8,21 @@ export class CreateChange {
   constructor(private changeRepository: ChangeRepository) {}
 
   async execute(command: CreateChangeCommand) {
-    const res = await this.changeRepository.find(
-      {
-        _entityId: command.item._id,
-        type: command.type,
-        enabled: true,
-      },
-      '',
-      {
-        sort: { createdAt: 1 },
-      }
-    );
+    const changes = await this.changeRepository.getEntityChanges(command.type, command.item._id);
 
-    const aggregatedItem = res.reduce((prev, change) => {
+    const aggregatedItem = changes.reduce((prev, change) => {
       diffApply(prev, change.change);
 
       return prev;
     }, {});
 
-    const d = diff(aggregatedItem, command.item);
+    const changePayload = diff(aggregatedItem, command.item);
 
-    await this.changeRepository.create({
+    return await this.changeRepository.create({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       _creatorId: command.userId,
-      change: d,
+      change: changePayload,
       type: command.type,
       _entityId: command.item._id,
       enabled: true,

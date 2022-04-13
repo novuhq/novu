@@ -1,2 +1,2 @@
-export * from './applyDiff';
+export * from './apply-diff';
 export * from './diff';

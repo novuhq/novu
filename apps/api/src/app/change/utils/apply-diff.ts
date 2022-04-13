@@ -3,7 +3,7 @@ const REPLACE = 'replace';
 const ADD = 'add';
 const MOVE = 'move';
 
-export function diffApply(obj, diff, pathConverter?) {
+export function diffApply(obj: any, diff: any[], pathConverter?) {
   if (!obj || typeof obj != 'object') {
     throw new Error('base object must be an object or an array');
   }
@@ -99,8 +99,8 @@ function transformPath(pathConverter, thisPath) {
   return thisPath;
 }
 
-export function jsonPatchPathConverterApply(stringPath) {
-  return stringPath.split('/').slice(1);
+export function jsonPatchPathConverterApply(path: string) {
+  return path.split('/').slice(1);
 }
 
 function prototypeCheck(prop) {
