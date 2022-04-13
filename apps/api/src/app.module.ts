@@ -22,6 +22,7 @@ import { InvitesModule } from './app/invites/invites.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { QueueService } from './app/shared/services/queue';
 import { IntegrationModule } from './app/integrations/integrations.module';
+import { ChangeModule } from './app/change/change.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   OrganizationModule,
@@ -41,6 +42,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   InvitesModule,
   ContentTemplatesModule,
   IntegrationModule,
+  ChangeModule,
 ];
 
 const providers = [];

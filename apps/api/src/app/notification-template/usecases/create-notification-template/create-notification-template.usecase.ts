@@ -7,12 +7,15 @@ import { CreateNotificationTemplateCommand } from './create-notification-templat
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
+import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { CreateChange } from '../../../change/usecases/create-change.usecase';
 
 @Injectable()
 export class CreateNotificationTemplate {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private createMessageTemplate: CreateMessageTemplate
+    private createMessageTemplate: CreateMessageTemplate,
+    private createChange: CreateChange
   ) {}
 
   async execute(command: CreateNotificationTemplateCommand) {
@@ -69,6 +72,18 @@ export class CreateNotificationTemplate {
       _notificationGroupId: command.notificationGroupId,
     });
 
-    return await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
+    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
+
+    await this.createChange.execute(
+      CreateChangeCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        type: 'NotificationTemplate',
+        item,
+      })
+    );
+
+    return item;
   }
 }
