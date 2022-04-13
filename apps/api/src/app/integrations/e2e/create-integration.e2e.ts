@@ -12,7 +12,9 @@ describe('Create Integration - /integration (POST)', function () {
   });
 
   it('should create the email integration successfully', async function () {
-    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find((x) => x.channel === 'email');
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (searchIntegration) => searchIntegration.channel === 'email'
+    );
 
     expect(integration.providerId).to.equal('sendgrid');
     expect(integration.channel).to.equal('email');
@@ -22,7 +24,9 @@ describe('Create Integration - /integration (POST)', function () {
   });
 
   it('should create the sms integration successfully', async function () {
-    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find((x) => x.channel === 'sms');
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (searchIntegration) => searchIntegration.channel === 'sms'
+    );
 
     expect(integration.providerId).to.equal('twilio');
     expect(integration.channel).to.equal('sms');

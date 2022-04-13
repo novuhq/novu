@@ -6,11 +6,11 @@ export function useNovu() {
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
-    if ((ENV === 'dev' || ENV === 'prod') && authContext.currentUser) {
-      // eslint-disable-next-line func-names
+    if ((ENV === 'dev' || ENV === 'prod' || true) && authContext.currentUser) {
+      // eslint-disable-next-line func-names,id-length
       (function (n, o, t, i, f) {
-        let m;
         /* eslint-disable */
+        let m;
         (n[i] = {}), (m = ['init']);
         n[i]._c = [];
         m.forEach(
@@ -26,6 +26,8 @@ export function useNovu() {
         const before = o.getElementsByTagName(f)[0];
         before.parentNode?.insertBefore(elt, before);
       })(window, document, WIDGET_EMEBED_PATH, 'novu', 'script');
+
+      console.log(WIDGET_EMEBED_PATH);
 
       (window as any).novu.init(
         APP_ID,

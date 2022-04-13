@@ -140,7 +140,9 @@ export default function TemplateEditorPage() {
                               control={control}
                               index={index}
                               errors={errors}
-                              isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.SMS)}
+                              isIntegrationActive={
+                                !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)
+                              }
                             />
                           );
                         })}
@@ -149,7 +151,9 @@ export default function TemplateEditorPage() {
                           variables={trigger?.variables || []}
                           onRemoveTab={removeEmailMessage}
                           emailMessagesFields={emailMessagesFields}
-                          isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.EMAIL)}
+                          isIntegrationActive={
+                            !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)
+                          }
                         />
                       )}
                       {activePage === 'in_app' &&
