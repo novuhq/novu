@@ -1,4 +1,4 @@
-import { ChangeEntityType } from '@novu/dal/src/repositories/change/change.entity';
+import { ChangeEntityType } from '@novu/dal';
 import { IsDefined, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 import { CommandHelper } from '../../shared/commands/command.helper';

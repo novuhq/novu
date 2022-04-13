@@ -11,7 +11,7 @@ export class ChangeEntity {
 
   enabled: boolean;
 
-  type: string;
+  type: ChangeEntityType;
 
   change: any;
 
