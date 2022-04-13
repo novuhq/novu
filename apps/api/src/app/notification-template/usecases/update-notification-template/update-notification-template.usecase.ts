@@ -1,7 +1,12 @@
 // eslint-ignore max-len
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository, NotificationStepEntity } from '@novu/dal';
+import {
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  NotificationStepEntity,
+  ChangeEntityTypeEnum,
+} from '@novu/dal';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
@@ -9,13 +14,16 @@ import { CreateMessageTemplate } from '../../../message-template/usecases/create
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
 import { UpdateMessageTemplateCommand } from '../../../message-template/usecases/update-message-template/update-message-template.command';
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
+import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 
 @Injectable()
 export class UpdateNotificationTemplate {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
-    private updateMessageTemplate: UpdateMessageTemplate
+    private updateMessageTemplate: UpdateMessageTemplate,
+    private createChange: CreateChange
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -115,6 +123,18 @@ export class UpdateNotificationTemplate {
       }
     );
 
-    return await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const item = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+
+    await this.createChange.execute(
+      CreateChangeCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+        item,
+      })
+    );
+
+    return item;
   }
 }
