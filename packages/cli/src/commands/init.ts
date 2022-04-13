@@ -100,7 +100,10 @@ async function handleOnboardingFlow(config: ConfigService) {
     spinner = ora('Setting up your new account').start();
 
     await createOrganizationHandler(config, answers);
-    const applicationIdentifier = await createEnvironmentHandler(config, answers);
+    const existingEnvironment = await getEnvironmentMe();
+    const keys = await getEnvironmentApiKeys();
+    config.setValue('apiKey', keys[0]?.key);
+    const applicationIdentifier = existingEnvironment.identifier;
 
     const address = httpServer.getAddress();
 
@@ -144,25 +147,6 @@ async function createOrganizationHandler(config: ConfigService, answers: Answers
   const newUserJwt = await switchOrganization(createOrganizationResponse._id);
 
   storeToken(config, newUserJwt);
-}
-
-async function createEnvironmentHandler(config: ConfigService, answers: Answers): Promise<string> {
-  if (config.isEnvironmentIdExist()) {
-    const existingEnvironment = await getEnvironmentMe();
-    const keys = await getEnvironmentApiKeys();
-
-    config.setValue('apiKey', keys[0]?.key);
-
-    return existingEnvironment.identifier;
-  }
-
-  const createEnvironmentResponse = await createEnvironment(answers.environmentName);
-  const newUserJwt = await switchEnvironment(createEnvironmentResponse._id);
-
-  config.setValue('apiKey', createEnvironmentResponse.apiKeys[0].key);
-  storeToken(config, newUserJwt);
-
-  return createEnvironmentResponse.identifier;
 }
 
 async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService, applicationIdentifier: string) {
