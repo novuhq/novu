@@ -19,6 +19,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "axios": "^0.26.1",
     "class-transformer": "0.5.1",
     "class-validator": "^0.9.1",
     "mixpanel": "^0.13.0",
