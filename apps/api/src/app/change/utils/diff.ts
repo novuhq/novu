@@ -5,8 +5,10 @@ function getDiff(obj1, obj2, basePath, diffs, pathConverter) {
   const obj2KeysLength = obj2Keys.length;
   let path;
 
-  for (var i = 0; i < obj1KeysLength; i++) {
-    var key = Array.isArray(obj1) ? Number(obj1Keys[i]) : obj1Keys[i];
+  let key;
+  let i;
+  for (i = 0; i < obj1KeysLength; i++) {
+    key = Array.isArray(obj1) ? Number(obj1Keys[i]) : obj1Keys[i];
     if (!(key in obj2)) {
       path = basePath.concat(key);
       diffs.remove.push({
@@ -16,8 +18,8 @@ function getDiff(obj1, obj2, basePath, diffs, pathConverter) {
     }
   }
 
-  for (var i = 0; i < obj2KeysLength; i++) {
-    var key = Array.isArray(obj2) ? Number(obj2Keys[i]) : obj2Keys[i];
+  for (i = 0; i < obj2KeysLength; i++) {
+    key = Array.isArray(obj2) ? Number(obj2Keys[i]) : obj2Keys[i];
     const obj1AtKey = obj1[key];
     const obj2AtKey = obj2[key];
     if (!(key in obj1)) {
