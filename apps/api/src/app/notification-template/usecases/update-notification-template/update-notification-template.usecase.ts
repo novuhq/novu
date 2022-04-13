@@ -5,7 +5,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   NotificationStepEntity,
-  ChangeEntityType,
+  ChangeEntityTypeEnum,
 } from '@novu/dal';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
@@ -130,7 +130,7 @@ export class UpdateNotificationTemplate {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
-        type: ChangeEntityType.NotificationTemplate,
+        type: ChangeEntityTypeEnum.NOTIFICATIONTEMPLATE,
         item,
       })
     );

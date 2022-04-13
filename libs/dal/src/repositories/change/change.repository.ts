@@ -1,5 +1,5 @@
 import { BaseRepository } from '../base-repository';
-import { ChangeEntity, ChangeEntityType } from './change.entity';
+import { ChangeEntity, ChangeEntityTypeEnum } from './change.entity';
 import { Change } from './change.schema';
 
 export class ChangeRepository extends BaseRepository<ChangeEntity> {
@@ -7,7 +7,7 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
     super(Change, ChangeEntity);
   }
 
-  public async getEntityChanges(entityType: ChangeEntityType, entityId: string): Promise<ChangeEntity[]> {
+  public async getEntityChanges(entityType: ChangeEntityTypeEnum, entityId: string): Promise<ChangeEntity[]> {
     return await this.find(
       {
         _entityId: entityId,

@@ -11,13 +11,13 @@ export class ChangeEntity {
 
   enabled: boolean;
 
-  type: ChangeEntityType;
+  type: ChangeEntityTypeEnum;
 
   change: any;
 
   createdAt: string;
 }
 
-export enum ChangeEntityType {
-  NotificationTemplate = 'NotificationTemplate',
+export enum ChangeEntityTypeEnum {
+  NOTIFICATIONTEMPLATE = 'NotificationTemplate',
 }
