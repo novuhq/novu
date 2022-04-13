@@ -28,7 +28,7 @@ export function useNovu() {
       })(window, document, WIDGET_EMEBED_PATH, 'novu', 'script');
 
       (window as any).novu.init(
-        APP_ID || 'GtUsnlZG4ymp',
+        APP_ID,
         { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge-selector' },
         {
           $user_id: authContext.currentUser?._id,
