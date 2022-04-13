@@ -205,7 +205,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should trigger based on $channels in payload', async function () {
     template = await session.createTemplate({
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.SMS,
           content: 'Hello world {{firstName}}' as string,
@@ -256,7 +256,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should ignore all templates if $channels is empty', async function () {
     template = await session.createTemplate({
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.SMS,
           content: 'Hello world {{firstName}}' as string,
@@ -307,7 +307,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should trigger SMS notification', async function () {
     template = await session.createTemplate({
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.SMS,
           content: 'Hello world {{firstName}}' as string,
@@ -344,7 +344,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should trigger an sms error', async function () {
     template = await session.createTemplate({
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.SMS,
           content: 'Hello world {{firstName}}' as string,

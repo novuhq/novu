@@ -4,6 +4,7 @@ import { Button, colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { IConfigCredentials } from '@novu/shared';
 
 export function ProviderCard({
   provider,
@@ -13,8 +14,13 @@ export function ProviderCard({
   onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
-
+  const isDark = colorScheme === 'dark';
   const logoSrc = `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
+  const brightCard =
+    provider.active ||
+    provider.credentials.some((cred: IConfigCredentials) => {
+      return !cred.value;
+    });
 
   function handleOnClickSettings() {
     onConnectClick(true, false, provider);
@@ -22,8 +28,8 @@ export function ProviderCard({
 
   return (
     <StyledCard
-      colorScheme={colorScheme}
-      active={provider.active}
+      dark={isDark}
+      active={brightCard}
       data-test-id="integration-provider-card"
       onClick={() => {
         if (provider.connected) {
@@ -31,7 +37,8 @@ export function ProviderCard({
         } else {
           onConnectClick(true, true, provider);
         }
-      }}>
+      }}
+    >
       {provider.comingSoon && (
         <RibbonWrapper>
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
@@ -44,12 +51,25 @@ export function ProviderCard({
         </CardHeader>
 
         <CardFooter>
-          {!provider.connected ? <Button fullWidth>Connect</Button> : <CardStatusBar active={provider.active} />}
+          {!provider.connected ? (
+            <StyledButton fullWidth variant={'outline'} dark={isDark}>
+              Connect
+            </StyledButton>
+          ) : (
+            <CardStatusBar active={provider.active} />
+          )}
         </CardFooter>
       </StyledGroup>
     </StyledCard>
   );
 }
+
+const StyledButton = styled(Button)<{ dark: boolean }>`
+  background-image: ${({ dark }) =>
+    dark
+      ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`
+      : `linear-gradient(0deg, ${colors.B98} 0%, ${colors.B98} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`};
+`;
 
 const StyledGroup = styled(Group)`
   height: 100%;
@@ -93,8 +113,8 @@ const CardFooter = styled.div`
   width: 100%;
 `;
 
-const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }>`
-  background-color: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B17 : colors.B98)};
+const StyledCard = styled.div<{ dark: boolean; active: boolean }>`
+  background-color: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
   border-radius: 7px;
   display: inline-block;
   padding: 25px;
@@ -118,8 +138,8 @@ const StyledCard = styled.div<{ colorScheme: 'dark' | 'light'; active: boolean }
 
   &:hover {
     cursor: pointer;
-    ${({ colorScheme }) =>
-      colorScheme === 'dark'
+    ${({ dark }) =>
+      dark
         ? `
             background-color: ${colors.B20};
             box-shadow: ${shadows.dark};

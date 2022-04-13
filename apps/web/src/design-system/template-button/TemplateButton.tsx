@@ -46,7 +46,8 @@ export function TemplateButton({
         onMouseLeave={() => setPopoverOpened(false)}
         onClick={() => !active && changeTab(tabKey)}
         data-test-id={testId}
-        className={cx(classes.button, { [classes.active]: active })}>
+        className={cx(classes.button, { [classes.active]: active })}
+      >
         <ButtonWrapper>
           <LeftContainerWrapper>
             <IconWrapper className={classes.linkIcon}>
@@ -100,7 +101,8 @@ export function TemplateButton({
             mb={20}
             placement="center"
             position="right"
-            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}>
+            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+          >
             {errors || 'Something is missing here'}
           </Popover>
         )}

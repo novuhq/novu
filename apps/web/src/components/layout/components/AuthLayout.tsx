@@ -24,7 +24,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               '@media (max-width: 1200px)': {
                 display: 'none',
               },
-            }}>
+            }}
+          >
             <img src="/static/images/notifications/notification_01.png" alt="logo" style={{ maxWidth: 400 }} />
             <img
               src="/static/images/notifications/notification_02.png"

@@ -24,7 +24,8 @@ export function Radio({ value, onChange, disabled = false, checked, children, ..
       classNames={classes}
       disabled={disabled}
       size="md"
-      {...props}>
+      {...props}
+    >
       {children}
     </MantineRadio>
   );

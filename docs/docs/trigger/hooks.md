@@ -17,7 +17,7 @@ There are two methods of hooks:
 Here's an example with Pre and Post Hook:
 
 ```typescript
-const novu = new Novu();
+const novu = new NovuStateless();
 
 // Pre hook usage
 novu.on('pre:send', (data) => {

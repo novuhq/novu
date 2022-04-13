@@ -9,11 +9,11 @@ Let's create a notification layer in **under 5 minutes.**
 ## 📦 Install
 
 ```bash
-npm install @novu/node
+npm install @novu/stateless
 ```
 
 ```bash
-yarn add @novu/node
+yarn add @novu/stateless
 ```
 
 ## 🔨 Usage
@@ -24,10 +24,10 @@ Choose the providers you need, and register them to with Novu,
 full list of providers is available at [full_providers_list], full documentation for providers, and interfaces is available at [].
 
 ```ts
-import { Novu, ChannelTypeEnum } from "@novu/node";
+import { NovuStateless, ChannelTypeEnum } from "@novu/stateless";
 import { SendgridEmailProvider } from "@novu/sendgrid";
 
-const novu = new Novu();
+const novu = new NovuStateless();
 
 await novu.registerProvider(
   new SendgridEmailProvider({

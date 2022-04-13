@@ -1,12 +1,13 @@
 {
   "name": "@novu/widget",
-  "version": "0.4.0-alpha.3",
+  "version": "0.4.0-alpha.6",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "^4.1.0",
-    "@novu/sdk": "^0.4.0-alpha.3",
-    "@novu/shared": "^0.4.0-alpha.3",
+    "@mantine/hooks": "^4.1.0",
+    "@novu/embed": "^0.4.0-alpha.5",
+    "@novu/shared": "^0.4.0-alpha.6",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
@@ -40,8 +41,8 @@
   "devDependencies": {
     "@craco/craco": "^6.1.1",
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.4.0-alpha.3",
-    "@novu/testing": "^0.4.0-alpha.3",
+    "@novu/dal": "^0.4.0-alpha.6",
+    "@novu/testing": "^0.4.0-alpha.6",
     "@types/moment": "^2.13.0",
     "@types/react-router-dom": "^5.1.7",
     "@types/styled-components": "^5.1.7",
@@ -58,9 +59,11 @@
   "scripts": {
     "start": "craco start",
     "start:dev": "PORT=4500 pnpm start",
-    "start:cli:local": "pnpm start:shell:test & pnpm start:shell:sdk & PORT=3500 pnpm start",
-    "start:test": "pnpm start:shell:test & pnpm start:shell:sdk & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 pnpm start",
-    "start:static:build": "http-server build -p 4500 --proxy http://localhost:4500?",
+    "start:cli:local": "pnpm start:shell:test & pnpm start:shell:embed & PORT=3500 pnpm start",
+    "start:test": "pnpm start:shell:test & pnpm start:shell:embed & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 pnpm start",
+    "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
+    "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
+    "start:static:build": "pnpm envsetup:docker && http-server build -p 4500 --proxy http://localhost:4500?",
     "start:docker": "pnpm build && pnpm start:static:build",
     "build": "craco build",
     "test": "craco test",
@@ -70,7 +73,7 @@
     "cypress:run": "cypress run",
     "cypress:open": "pnpm start:shell:test & cypress open",
     "start:shell:test": "http-server . -p 4700",
-    "start:shell:sdk": "http-server ../../libs/sdk/dist -p 4702",
+    "start:shell:embed": "http-server ../../libs/embed/dist -p 4702",
     "start:api": "cd ../../ && pnpm run start:e2e:api"
   },
   "browserslist": {

@@ -1,20 +1,22 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Deploy PROD SDK
+name: Deploy DEV EMBED
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    tags:
-      - '**@novu/sdk@**'
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'libs/embed/**'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  deploy_sdk:
-    environment: Production
+  deploy_embed:
+    environment: Development
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
@@ -43,37 +45,35 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build
-        working-directory: libs/sdk
-        run: CI='' npm run build:prod
+        working-directory: libs/embed
+        run: CI='' npm run build:dev
 
-      - name: Deploy SDK to PROD
+      - name: Deploy EMBED to DEV
         uses: nwtgck/actions-netlify@v1.2
         with:
-          publish-dir: libs/sdk/dist
+          publish-dir: libs/embed/dist
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: prod
+          deploy-message: dev
           production-deploy: true
-          alias: Prod
-          github-deployment-environment: Production
+          alias: dev
+          github-deployment-environment: development
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: 0689c015-fca0-4940-a26d-3e33f561bc48
+          NETLIFY_SITE_ID: 22682666-3a8d-40be-af26-017bfadf5ae9
         timeout-minutes: 1
 
-      - name: Build, tag, and push image to ghcr.io
+      - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
           REGISTERY_OWNER: novuhq
-          DOCKER_NAME: novu/sdk
+          DOCKER_NAME: novu/embed
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f libs/sdk/Dockerfile .
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
+          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f libs/embed/Dockerfile .
+          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"

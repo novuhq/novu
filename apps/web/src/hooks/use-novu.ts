@@ -1,14 +1,12 @@
 import { useContext, useEffect } from 'react';
+import { APP_ID, ENV, WIDGET_EMEBED_PATH } from '../config';
 import { AuthContext } from '../store/authContext';
 
 export function useNovu() {
   const authContext = useContext(AuthContext);
 
   useEffect(() => {
-    if (
-      (process.env.REACT_APP_ENVIRONMENT === 'dev' || process.env.REACT_APP_ENVIRONMENT === 'prod') &&
-      authContext.currentUser
-    ) {
+    if ((ENV === 'dev' || ENV === 'prod') && authContext.currentUser) {
       // eslint-disable-next-line func-names
       (function (n, o, t, i, f) {
         let m;
@@ -27,10 +25,10 @@ export function useNovu() {
         elt.src = t;
         const before = o.getElementsByTagName(f)[0];
         before.parentNode?.insertBefore(elt, before);
-      })(window, document, process.env.REACT_APP_WIDGET_SDK_PATH, 'novu', 'script');
+      })(window, document, WIDGET_EMEBED_PATH, 'novu', 'script');
 
       (window as any).novu.init(
-        process.env.REACT_APP_NOVU_APP_ID,
+        APP_ID,
         { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge-selector' },
         {
           $user_id: authContext.currentUser?._id,

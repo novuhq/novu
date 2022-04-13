@@ -18,6 +18,13 @@ export function applyToken(token: string | null) {
   }
 }
 
+export function getTokenPayload() {
+  const token = getToken();
+  if (!token) return null;
+
+  return jwtDecode<IJwtPayload>(token);
+}
+
 export function getToken(): string {
   return localStorage.getItem('auth_token') as string;
 }

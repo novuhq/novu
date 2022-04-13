@@ -1,12 +1,12 @@
 {
-  "name": "@novu/sdk",
-  "version": "0.4.0-alpha.3",
+  "name": "@novu/embed",
+  "version": "0.4.0-alpha.5",
   "private": true,
   "description": "",
   "keywords": [],
-  "main": "dist/sdk.umd.min.js",
-  "module": "dist/sdk.es5.min.js",
-  "typings": "dist/types/sdk.d.ts",
+  "main": "dist/embed.umd.min.js",
+  "module": "dist/embed.es5.min.js",
+  "typings": "dist/types/embed.d.ts",
   "files": [
     "dist"
   ],

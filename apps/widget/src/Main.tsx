@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { NotificationsList } from './components/NotificationsList';
 import { getNotificationsList, markMessageAsSeen } from './api/notifications';
 import { useSocket } from './hooks/use-socket.hook';
-import { sendNotificationClick, sendUrlChange } from './api/sdk.service';
+import { sendNotificationClick, sendUrlChange } from './api/embed.service';
 import { postUsageLog } from './api/usage';
 
 export function Main() {
@@ -75,7 +75,8 @@ export function Main() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-          }}>
+          }}
+        >
           <img src="/no-new-notifications.png" alt="logo" style={{ maxWidth: 200 }} />
         </div>
       ) : (

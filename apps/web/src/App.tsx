@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
-import { applyToken, getToken, useAuthController } from './store/use-auth-controller';
+import { applyToken, getToken, getTokenPayload, useAuthController } from './store/use-auth-controller';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -21,12 +21,13 @@ import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
+import { ENV, SENTRY_DSN } from './config/index';
 
-if (process.env.REACT_APP_SENTRY_DSN) {
+if (SENTRY_DSN) {
   Sentry.init({
-    dsn: process.env.REACT_APP_SENTRY_DSN,
+    dsn: SENTRY_DSN,
     integrations: [new Integrations.BrowserTracing()],
-    environment: process.env.REACT_APP_ENVIRONMENT,
+    environment: ENV,
     /*
      * Set tracesSampleRate to 1.0 to capture 100%
      * of transactions for performance monitoring.
@@ -142,6 +143,15 @@ function App() {
 }
 
 function RequiredAuth({ children }: any) {
+  const { logout } = useContext(AuthContext);
+
+  // TODO: remove after env migration
+  const payload = getTokenPayload();
+  if (payload && (payload as any).applicationId) {
+    logout();
+    window.location.reload();
+  }
+
   return getToken() ? children : <Navigate to="/auth/login" replace />;
 }
 
@@ -154,7 +164,8 @@ function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
         theme: currentTheme,
         setTheme: setCurrentTheme,
         toggleTheme,
-      }}>
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
@@ -171,7 +182,8 @@ function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
         token,
         logout,
         setToken,
-      }}>
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

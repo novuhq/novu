@@ -21,7 +21,8 @@ export default function AuthContainer({
         '@media (max-width: 1500px)': {
           marginRight: '10%',
         },
-      }}>
+      }}
+    >
       <div style={{ marginTop: '30px' }}>
         <Title>{title}</Title>
         {customDescription || (

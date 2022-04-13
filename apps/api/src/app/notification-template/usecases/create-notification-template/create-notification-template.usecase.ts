@@ -20,14 +20,19 @@ export class CreateNotificationTemplate {
 
   async execute(command: CreateNotificationTemplateCommand) {
     const contentService = new ContentService();
-    const variables = contentService.extractMessageVariables(command.messages);
+    const variables = contentService.extractMessageVariables(command.steps);
 
+    const triggerIdentifier = `${slugify(command.name, {
+      lower: true,
+      strict: true,
+    })}`;
+    const templateCheckIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
+      command.environmentId,
+      triggerIdentifier
+    );
     const trigger: INotificationTrigger = {
       type: TriggerTypeEnum.EVENT,
-      identifier: `${slugify(command.name, {
-        lower: true,
-        strict: true,
-      })}-${shortid.generate()}`,
+      identifier: `${triggerIdentifier}${!templateCheckIdentifier ? '' : '-' + shortid.generate()}`,
       variables: variables.map((i) => {
         return {
           name: i,
@@ -35,9 +40,9 @@ export class CreateNotificationTemplate {
       }),
     };
 
-    const templateMessages = [];
+    const templateSteps = [];
 
-    for (const message of command.messages) {
+    for (const message of command.steps) {
       const template = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
           type: message.type,
@@ -52,7 +57,7 @@ export class CreateNotificationTemplate {
         })
       );
 
-      templateMessages.push({
+      templateSteps.push({
         _templateId: template._id,
         filters: message.filters,
       });
@@ -67,7 +72,7 @@ export class CreateNotificationTemplate {
       draft: command.draft,
       tags: command.tags,
       description: command.description,
-      messages: templateMessages,
+      steps: templateSteps,
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
     });

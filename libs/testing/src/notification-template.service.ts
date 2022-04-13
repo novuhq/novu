@@ -3,7 +3,7 @@ import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
 import {
   MessageTemplateRepository,
   NotificationGroupRepository,
-  NotificationMessagesEntity,
+  NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
@@ -24,7 +24,7 @@ export class NotificationTemplateService {
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const messages: any[] = override?.messages ?? [
+    const steps: any[] = override?.steps ?? [
       {
         type: ChannelTypeEnum.IN_APP,
         content: 'Test content for <b>{{firstName}}</b>',
@@ -52,9 +52,9 @@ export class NotificationTemplateService {
       },
     ];
 
-    const templateMessages: NotificationMessagesEntity[] = [];
+    const templateSteps: NotificationStepEntity[] = [];
 
-    for (const message of messages) {
+    for (const message of steps) {
       const saved = await this.messageTemplateRepository.create({
         type: message.type,
         cta: message.cta,
@@ -66,7 +66,7 @@ export class NotificationTemplateService {
         _environmentId: this.environmentId,
       });
 
-      templateMessages.push({
+      templateSteps.push({
         filters: message.filters,
         _templateId: saved._id,
       });
@@ -90,7 +90,7 @@ export class NotificationTemplateService {
         },
       ],
       ...override,
-      messages: templateMessages,
+      steps: templateSteps,
     };
 
     const notificationTemplate = await this.notificationTemplateRepository.create(data);
