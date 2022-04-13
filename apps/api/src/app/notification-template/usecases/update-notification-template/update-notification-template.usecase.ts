@@ -130,7 +130,7 @@ export class UpdateNotificationTemplate {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
-        type: ChangeEntityTypeEnum.NOTIFICATIONTEMPLATE,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item,
       })
     );

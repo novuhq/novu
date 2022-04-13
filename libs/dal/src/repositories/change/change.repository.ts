@@ -12,7 +12,6 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
       {
         _entityId: entityId,
         type: entityType,
-        enabled: true,
       },
       '',
       {

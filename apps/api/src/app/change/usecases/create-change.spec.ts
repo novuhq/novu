@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { CreateChange } from './create-change.usecase';
 import { ChangeModule } from '../change.module';
 import { CreateChangeCommand } from './create-change.command';
-import { ChangeEntityType } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/dal';
 import { SharedModule } from '../../shared/shared.module';
 import { expect } from 'chai';
 
@@ -29,7 +29,7 @@ describe('Create Change', function () {
       CreateChangeCommand.create({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
-        type: ChangeEntityType.NotificationTemplate,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         userId: session.user._id,
         item: {
           _id,
@@ -41,7 +41,7 @@ describe('Create Change', function () {
     expect(result._creatorId).to.be.eq(session.user._id);
     expect(result._environmentId).to.be.eq(session.environment._id);
     expect(result._organizationId).to.be.eq(session.organization._id);
-    expect(result.type).to.be.eq(ChangeEntityType.NotificationTemplate);
+    expect(result.type).to.be.eq(ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE);
   });
 
   it('should find diff for item', async function () {
@@ -49,7 +49,7 @@ describe('Create Change', function () {
       CreateChangeCommand.create({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
-        type: ChangeEntityType.NotificationTemplate,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         userId: session.user._id,
         item: {
           _id,
@@ -60,7 +60,7 @@ describe('Create Change', function () {
       CreateChangeCommand.create({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
-        type: ChangeEntityType.NotificationTemplate,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         userId: session.user._id,
         item: {
           _id,

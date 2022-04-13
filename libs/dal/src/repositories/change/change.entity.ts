@@ -19,5 +19,5 @@ export class ChangeEntity {
 }
 
 export enum ChangeEntityTypeEnum {
-  NOTIFICATIONTEMPLATE = 'NotificationTemplate',
+  NOTIFICATION_TEMPLATE = 'NotificationTemplate',
 }
