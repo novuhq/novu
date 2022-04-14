@@ -39,7 +39,7 @@ export class CreateChange {
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
-          itemId: item._id,
+          itemId: command.item._id,
           type: command.type,
         })
       );

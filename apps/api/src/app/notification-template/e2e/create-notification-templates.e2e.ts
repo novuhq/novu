@@ -3,11 +3,12 @@ import { UserSession } from '@novu/testing';
 import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum } from '@novu/shared';
 import * as moment from 'moment';
 import { CreateNotificationTemplateDto } from '../dto/create-notification-template.dto';
-import { ChangeRepository } from '@novu/dal';
+import { ChangeRepository, NotificationTemplateRepository } from '@novu/dal';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
+  const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
 
   before(async () => {
     session = new UserSession();
@@ -78,6 +79,19 @@ describe('Create Notification template - /notification-templates (POST)', async 
       _entityId: template._id,
     });
     expect(change._entityId).to.eq(template._id);
+
+    const prodVersion = await notificationTemplateRepository.findOne({
+      _parentId: template._id,
+    });
+
+    expect(prodVersion.tags[0]).to.equal(template.tags[0]);
+    expect(prodVersion.steps.length).to.equal(template.steps.length);
+    expect(prodVersion.triggers[0].type).to.equal(template.triggers[0].type);
+    expect(prodVersion.triggers[0].identifier).to.equal(template.triggers[0].identifier);
+    expect(prodVersion.active).to.equal(template.active);
+    expect(prodVersion.draft).to.equal(template.draft);
+    expect(prodVersion.name).to.equal(template.name);
+    expect(prodVersion.description).to.equal(template.description);
   });
 
   it('should create a valid notification', async () => {

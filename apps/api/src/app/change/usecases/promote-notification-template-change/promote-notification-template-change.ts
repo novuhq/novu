@@ -25,7 +25,7 @@ export class PromoteNotificationTemplateChange {
     const messages = await this.messageTemplateRepository.find({
       _environmentId: command.environmentId,
       _parentId: {
-        $in: newItem.steps ? newItem.steps.map((step) => step._id) : [],
+        $in: newItem.steps ? newItem.steps.map((step) => step._templateId) : [],
       },
     });
 
@@ -33,15 +33,15 @@ export class PromoteNotificationTemplateChange {
 
     const mapNewStepItem = (step: NotificationStepEntity) => {
       const oldMessage = messages.find((message) => {
-        return message._parentId === step._id;
+        return message._parentId === step._templateId;
       });
 
       if (!oldMessage) {
-        missingMessages.push(step._id);
+        missingMessages.push(step._templateId);
 
         return undefined;
       }
-      step._id = oldMessage._id;
+      step._templateId = oldMessage._id;
 
       return step;
     };
@@ -62,6 +62,7 @@ export class PromoteNotificationTemplateChange {
         tags: newItem.tags,
         triggers: newItem.triggers,
         steps,
+        _parentId: command.item._id,
       });
     }
 
