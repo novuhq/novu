@@ -33,6 +33,8 @@ export class NotificationTemplateEntity {
 
   _notificationGroupId: string;
 
+  _parentId?: string;
+
   readonly notificationGroup?: NotificationGroupEntity;
 }
 
