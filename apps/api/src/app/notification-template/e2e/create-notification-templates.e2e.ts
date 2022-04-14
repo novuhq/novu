@@ -3,12 +3,13 @@ import { UserSession } from '@novu/testing';
 import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum } from '@novu/shared';
 import * as moment from 'moment';
 import { CreateNotificationTemplateDto } from '../dto/create-notification-template.dto';
-import { ChangeRepository, NotificationTemplateRepository } from '@novu/dal';
+import { ChangeRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
+  const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
 
   before(async () => {
     session = new UserSession();
@@ -80,18 +81,28 @@ describe('Create Notification template - /notification-templates (POST)', async 
     });
     expect(change._entityId).to.eq(template._id);
 
-    const prodVersion = await notificationTemplateRepository.findOne({
+    const prodVersionNotification = await notificationTemplateRepository.findOne({
       _parentId: template._id,
     });
 
-    expect(prodVersion.tags[0]).to.equal(template.tags[0]);
-    expect(prodVersion.steps.length).to.equal(template.steps.length);
-    expect(prodVersion.triggers[0].type).to.equal(template.triggers[0].type);
-    expect(prodVersion.triggers[0].identifier).to.equal(template.triggers[0].identifier);
-    expect(prodVersion.active).to.equal(template.active);
-    expect(prodVersion.draft).to.equal(template.draft);
-    expect(prodVersion.name).to.equal(template.name);
-    expect(prodVersion.description).to.equal(template.description);
+    expect(prodVersionNotification.tags[0]).to.equal(template.tags[0]);
+    expect(prodVersionNotification.steps.length).to.equal(template.steps.length);
+    expect(prodVersionNotification.triggers[0].type).to.equal(template.triggers[0].type);
+    expect(prodVersionNotification.triggers[0].identifier).to.equal(template.triggers[0].identifier);
+    expect(prodVersionNotification.active).to.equal(template.active);
+    expect(prodVersionNotification.draft).to.equal(template.draft);
+    expect(prodVersionNotification.name).to.equal(template.name);
+    expect(prodVersionNotification.description).to.equal(template.description);
+
+    const prodVersionMessage = await messageTemplateRepository.findOne({
+      _parentId: message._templateId,
+    });
+
+    expect(message.template.name).to.equal(prodVersionMessage.name);
+    expect(message.template.subject).to.equal(prodVersionMessage.subject);
+    expect(message.template.type).to.equal(prodVersionMessage.type);
+    expect(message.template.content).to.deep.equal(prodVersionMessage.content);
+    expect(message.template.active).to.equal(prodVersionMessage.active);
   });
 
   it('should create a valid notification', async () => {
