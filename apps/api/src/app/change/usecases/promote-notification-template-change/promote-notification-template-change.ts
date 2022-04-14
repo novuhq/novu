@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { NotificationTemplateEntity, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
+import {
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  MessageTemplateRepository,
+  NotificationStepEntity,
+} from '@novu/dal';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
@@ -25,24 +30,23 @@ export class PromoteNotificationTemplateChange {
     });
 
     const missingMessages = [];
-    const steps = newItem.steps
-      ? newItem.steps
-          .map((step) => {
-            const oldMessage = messages.find((message) => {
-              return message._parentId === step._id;
-            });
 
-            if (!oldMessage) {
-              missingMessages.push(step._id);
+    const mapNewStepItem = (step: NotificationStepEntity) => {
+      const oldMessage = messages.find((message) => {
+        return message._parentId === step._id;
+      });
 
-              return undefined;
-            }
-            step._id = oldMessage._id;
+      if (!oldMessage) {
+        missingMessages.push(step._id);
 
-            return step;
-          })
-          .filter((step) => step !== undefined)
-      : [];
+        return undefined;
+      }
+      step._id = oldMessage._id;
+
+      return step;
+    };
+
+    const steps = newItem.steps ? newItem.steps.map(mapNewStepItem).filter((step) => step !== undefined) : [];
 
     if (missingMessages.length > 0 && steps.length > 0) {
       Logger.error(
