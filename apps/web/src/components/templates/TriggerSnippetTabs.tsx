@@ -4,27 +4,41 @@ import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
+  // eslint-disable-next-line no-console
+  console.log(trigger.subscriberVariables);
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
 const novu = new Novu('<API_KEY>');
 
-novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
-  $user_id: '<REPLACE_WITH_USER_ID>',
-  ${trigger.variables
-    .map((variable) => {
+novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}',
+  { subscriberId: '<REPLACE_WITH_USER_ID>', ${trigger.subscriberVariables
+    ?.map((variable) => {
       return `${variable.name}: "<REPLACE_WITH_DATA>",`;
     })
-    .join('\n  ')}
-});
+    .join(' ')} }, {
+  payload: {
+    ${trigger.variables
+      .map((variable) => {
+        return `${variable.name}: "<REPLACE_WITH_DATA>",`;
+      })
+      .join('\n    ')} 
+}});
 `;
 
   const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
      --header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
-     --header 'Content-Type: environment/json' \\
+     --header 'Content-Type: application/json' \\
      --data-raw '{
         "name": "${trigger.identifier?.replace(/'/g, "\\'")}",
+        "subscribers" : {
+            "subscriberId": "<REPLACE_WITH_USER_ID>",
+            ${trigger.subscriberVariables
+              ?.map((variable) => {
+                return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
+              })
+              .join(',\n            ')} 
+        },
         "payload": {
-            "$user_id": "<REPLACE_WITH_USER_ID>",
             ${trigger.variables
               .map((variable) => {
                 return `"${variable.name}": "<REPLACE_WITH_DATA>"`;

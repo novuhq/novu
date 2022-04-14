@@ -15,6 +15,8 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
   trackEvent(@UserSession() user: IJwtPayload, @Body() body: TriggerEventDto) {
+    const subscribers = Array.isArray(body.subscribers) ? body.subscribers : [body.subscribers];
+
     return this.triggerEvent.execute(
       TriggerEventCommand.create({
         userId: user._id,
@@ -22,6 +24,7 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
+        subscribers,
         transactionId: uuidv4(),
       })
     );

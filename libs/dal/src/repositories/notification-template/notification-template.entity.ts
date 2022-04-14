@@ -44,6 +44,10 @@ export class NotificationTriggerEntity {
   variables: {
     name: string;
   }[];
+
+  subscriberVariables?: {
+    name: string;
+  }[];
 }
 
 export class NotificationStepEntity {

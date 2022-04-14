@@ -14,6 +14,9 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
+  @IsDefined()
+  subscribers: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
   @IsUUID()
   @IsDefined()
   transactionId: string;

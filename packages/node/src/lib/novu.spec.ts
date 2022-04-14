@@ -19,18 +19,72 @@ describe('test use of novu node package', () => {
   test('should trigger correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.trigger('test-template', {
-      $user_id: 'test-user',
-      $email: 'test-user@sd.com',
+    await novu.trigger('test-template', 'test-user', {
+      payload: {
+        email: 'test-user@sd.com',
+      },
     });
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
       name: 'test-template',
+      subscribers: 'test-user',
       payload: {
-        $user_id: 'test-user',
-        $email: 'test-user@sd.com',
+        email: 'test-user@sd.com',
       },
+    });
+  });
+
+  test('should trigger correctly for all subscribers definitions ', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.trigger('test-template', ['test-user', 'test-another-user'], {
+      payload: {
+        organizationName: 'Company',
+      },
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
+      name: 'test-template',
+      subscribers: ['test-user', 'test-another-user'],
+      payload: {
+        organizationName: 'Company',
+      },
+    });
+
+    await novu.trigger(
+      'test-template',
+      [
+        { subscriberId: 'test-user', firstName: 'test' },
+        { subscriberId: 'test-another-user' },
+      ],
+      {
+        payload: {
+          organizationName: 'Company',
+        },
+      }
+    );
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
+      name: 'test-template',
+      subscribers: [
+        { subscriberId: 'test-user', firstName: 'test' },
+        { subscriberId: 'test-another-user' },
+      ],
+      payload: {
+        organizationName: 'Company',
+      },
+    });
+
+    await novu.trigger('test-template', 'userId');
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
+      name: 'test-template',
+      subscribers: 'userId',
+      payload: {},
     });
   });
 

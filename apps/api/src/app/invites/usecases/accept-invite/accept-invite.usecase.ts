@@ -48,12 +48,13 @@ export class AcceptInvite {
       if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
         const novu = new Novu(process.env.NOVU_API_KEY);
 
-        await novu.trigger('invite-accepted-dEQAsKD1E', {
-          $user_id: inviter._id,
-          $email: inviter.email,
-          firstName: capitalize(inviter.firstName),
-          invitedUserEmail: member.invite.email,
-          ctaUrl: '/settings/organization',
+        await novu.trigger('invite-accepted-dEQAsKD1E', inviter._id, {
+          payload: {
+            email: inviter.email,
+            firstName: capitalize(inviter.firstName),
+            invitedUserEmail: member.invite.email,
+            ctaUrl: '/settings/organization',
+          },
         });
       }
     } catch (e) {
