@@ -20,29 +20,31 @@ export class ChangeEnabledNotificationTemplate {
     const messages = await this.messageTemplateRepository.find({
       _environmentId: command.environmentId,
       _parentId: {
-        $in: newItem.steps.map((step) => step._id),
+        $in: newItem.steps ? newItem.steps.map((step) => step._id) : [],
       },
     });
 
     const missingMessages = [];
     const steps = newItem.steps
-      .map((step) => {
-        const oldMessage = messages.reduce((prev, message) => {
-          return message._parentId === step._id ? message : prev;
-        }, undefined);
+      ? newItem.steps
+          .map((step) => {
+            const oldMessage = messages.reduce((prev, message) => {
+              return message._parentId === step._id ? message : prev;
+            }, undefined);
 
-        if (!oldMessage) {
-          missingMessages.push(step._id);
+            if (!oldMessage) {
+              missingMessages.push(step._id);
 
-          return undefined;
-        }
-        step._id = oldMessage._id;
+              return undefined;
+            }
+            step._id = oldMessage._id;
 
-        return step;
-      })
-      .filter((step) => step !== undefined);
+            return step;
+          })
+          .filter((step) => step !== undefined)
+      : [];
 
-    if (missingMessages.length > 0) {
+    if (missingMessages.length > 0 && steps.length > 0) {
       Logger.error(
         `Message templates with ids ${missingMessages.join(', ')} are missing for notification template ${item._id}`
       );

@@ -39,10 +39,10 @@ export class ChangeEnabled {
 
     switch (command.type) {
       case ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE:
-        this.changeEnabledNotificationTemplate.execute(typeCommand);
+        await this.changeEnabledNotificationTemplate.execute(typeCommand);
         break;
       case ChangeEntityTypeEnum.MESSAGE_TEMPLATE:
-        this.changeEnabledMessageTemplate.execute(typeCommand);
+        await this.changeEnabledMessageTemplate.execute(typeCommand);
         break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);
