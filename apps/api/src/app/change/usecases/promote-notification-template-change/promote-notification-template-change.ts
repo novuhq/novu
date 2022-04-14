@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TypeChangeEnabledCommand } from '../type-change-enabled.command';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { NotificationTemplateEntity, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
 
 @Injectable()
-export class ChangeEnabledNotificationTemplate {
+export class PromoteNotificationTemplateChange {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository
   ) {}
 
-  async execute(command: TypeChangeEnabledCommand) {
+  async execute(command: PromoteTypeChangeCommand) {
     const item = await this.notificationTemplateRepository.findOne({
       _environmentId: command.environmentId,
       _parentId: command.item._id,
@@ -28,9 +28,9 @@ export class ChangeEnabledNotificationTemplate {
     const steps = newItem.steps
       ? newItem.steps
           .map((step) => {
-            const oldMessage = messages.reduce((prev, message) => {
-              return message._parentId === step._id ? message : prev;
-            }, undefined);
+            const oldMessage = messages.find((message) => {
+              return message._parentId === step._id;
+            });
 
             if (!oldMessage) {
               missingMessages.push(step._id);

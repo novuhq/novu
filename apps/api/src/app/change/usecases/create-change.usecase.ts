@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
 import { diff, diffApply } from '../utils';
-import { ChangeEnabledCommand } from './change-enabled/change-enabled.command';
-import { ChangeEnabled } from './change-enabled/change-enabled.usecase';
+import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment/promote-change-to-environment.command';
+import { PromoteChangeToEnvironment } from './promote-change-to-environment/promote-change-to-environment.usecase';
 import { CreateChangeCommand } from './create-change.command';
 
 @Injectable()
 export class CreateChange {
-  constructor(private changeRepository: ChangeRepository, private changeEnabled: ChangeEnabled) {}
+  constructor(
+    private changeRepository: ChangeRepository,
+    private promoteChangeToEnvironment: PromoteChangeToEnvironment
+  ) {}
 
   async execute(command: CreateChangeCommand) {
     const changes = await this.changeRepository.getEntityChanges(command.type, command.item._id);
@@ -31,8 +34,8 @@ export class CreateChange {
     });
 
     if (item.enabled) {
-      await this.changeEnabled.execute(
-        ChangeEnabledCommand.create({
+      await this.promoteChangeToEnvironment.execute(
+        PromoteChangeToEnvironmentCommand.create({
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,

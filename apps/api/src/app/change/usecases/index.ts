@@ -1,5 +1,10 @@
-import { ChangeEnabledMessageTemplate } from './change-enabled-message-template/change-enabled-message-template';
-import { ChangeEnabledNotificationTemplate } from './change-enabled-notification-template/change-enabled-notification-template';
-import { ChangeEnabled } from './change-enabled/change-enabled.usecase';
+import { PromoteMessageTemplateChange } from './promote-message-template-change/promote-message-template-change';
+import { PromoteNotificationTemplateChange } from './promote-notification-template-change/promote-notification-template-change';
+import { PromoteChangeToEnvironment } from './promote-change-to-environment/promote-change-to-environment.usecase';
 import { CreateChange } from './create-change.usecase';
-export const USE_CASES = [CreateChange, ChangeEnabled, ChangeEnabledNotificationTemplate, ChangeEnabledMessageTemplate];
+export const USE_CASES = [
+  CreateChange,
+  PromoteChangeToEnvironment,
+  PromoteNotificationTemplateChange,
+  PromoteMessageTemplateChange,
+];

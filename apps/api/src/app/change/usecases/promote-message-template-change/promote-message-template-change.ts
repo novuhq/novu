@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { TypeChangeEnabledCommand } from '../type-change-enabled.command';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
 
 @Injectable()
-export class ChangeEnabledMessageTemplate {
+export class PromoteMessageTemplateChange {
   constructor(private messageTemplateRepository: MessageTemplateRepository) {}
 
-  async execute(command: TypeChangeEnabledCommand) {
+  async execute(command: PromoteTypeChangeCommand) {
     const item = await this.messageTemplateRepository.findOne({
       _environmentId: command.environmentId,
       _parentId: command.item._id,

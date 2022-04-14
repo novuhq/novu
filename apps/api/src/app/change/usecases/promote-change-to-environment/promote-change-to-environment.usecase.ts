@@ -1,22 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ChangeEntityTypeEnum, ChangeRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum, ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { diffApply } from '../../utils';
-import { ChangeEnabledCommand } from './change-enabled.command';
-import { EnvironmentRepository } from '../../../../../../../libs/dal/src/repositories/environment/environment.repository';
-import { TypeChangeEnabledCommand } from '../type-change-enabled.command';
-import { ChangeEnabledNotificationTemplate } from '../change-enabled-notification-template/change-enabled-notification-template';
-import { ChangeEnabledMessageTemplate } from '../change-enabled-message-template/change-enabled-message-template';
+import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { PromoteNotificationTemplateChange } from '../promote-notification-template-change/promote-notification-template-change';
+import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 
 @Injectable()
-export class ChangeEnabled {
+export class PromoteChangeToEnvironment {
   constructor(
     private changeRepository: ChangeRepository,
     private environmentRepository: EnvironmentRepository,
-    private changeEnabledNotificationTemplate: ChangeEnabledNotificationTemplate,
-    private changeEnabledMessageTemplate: ChangeEnabledMessageTemplate
+    private changeEnabledNotificationTemplate: PromoteNotificationTemplateChange,
+    private changeEnabledMessageTemplate: PromoteMessageTemplateChange
   ) {}
 
-  async execute(command: ChangeEnabledCommand) {
+  async execute(command: PromoteChangeToEnvironmentCommand) {
     const changes = await this.changeRepository.getEntityChanges(command.type, command.itemId);
     const aggregatedItem = changes
       .filter((change) => change.enabled)
@@ -30,7 +29,7 @@ export class ChangeEnabled {
       _parentId: command.environmentId,
     });
 
-    const typeCommand = TypeChangeEnabledCommand.create({
+    const typeCommand = PromoteTypeChangeCommand.create({
       organizationId: command.organizationId,
       environmentId: environment._id,
       item: aggregatedItem,
