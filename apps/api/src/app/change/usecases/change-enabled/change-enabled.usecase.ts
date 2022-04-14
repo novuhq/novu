@@ -17,12 +17,14 @@ export class ChangeEnabled {
   ) {}
 
   async execute(command: ChangeEnabledCommand) {
-    const changes = await this.changeRepository.getEntityChanges(command.type, command.itemId, true);
-    const aggregatedItem = changes.reduce((prev, change) => {
-      diffApply(prev, change.change);
+    const changes = await this.changeRepository.getEntityChanges(command.type, command.itemId);
+    const aggregatedItem = changes
+      .filter((change) => change.enabled)
+      .reduce((prev, change) => {
+        diffApply(prev, change.change);
 
-      return prev;
-    }, {});
+        return prev;
+      }, {});
 
     const environment = await this.environmentRepository.findOne({
       _parentId: command.environmentId,

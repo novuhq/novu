@@ -15,7 +15,7 @@ export class MessageTemplateEntity {
 
   contentType?: 'editor' | 'customHtml';
 
-  active: boolean;
+  active?: boolean;
 
   subject?: string;
 

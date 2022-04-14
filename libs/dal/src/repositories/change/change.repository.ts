@@ -7,16 +7,11 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
     super(Change, ChangeEntity);
   }
 
-  public async getEntityChanges(
-    entityType: ChangeEntityTypeEnum,
-    entityId: string,
-    enabled?: boolean
-  ): Promise<ChangeEntity[]> {
+  public async getEntityChanges(entityType: ChangeEntityTypeEnum, entityId: string): Promise<ChangeEntity[]> {
     return await this.find(
       {
         _entityId: entityId,
         type: entityType,
-        enabled,
       },
       '',
       {
