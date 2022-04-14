@@ -26,13 +26,11 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should get the current activity feed of user', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
@@ -49,18 +47,15 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by channel', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
@@ -73,18 +68,17 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by templateId', async function () {
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
+      payload: {
+        firstName: 'Test',
+      },
+    });
+
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
-      firstName: 'Test',
-    });
-
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
@@ -99,24 +93,20 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by email', async function () {
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '1234564',
+    await session.triggerEvent(template.triggers[0].identifier, '1234564', {
       firstName: 'Test',
-      $email: 'test@email.coms',
+      email: 'test@email.coms',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 

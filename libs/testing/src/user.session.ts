@@ -203,9 +203,10 @@ export class UserSession {
     return this.organization;
   }
 
-  async triggerEvent(triggerName: string, payload = {}) {
+  async triggerEvent(triggerName: string, subscriberId: string, payload = {}) {
     await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
+      subscribers: subscriberId,
       payload,
     });
   }
