@@ -70,8 +70,12 @@ module.exports = {
       { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
       { blankLine: 'always', prev: '*', next: 'return' },
     ],
+    'id-length': ['error', { min: 2, exceptions: ['i', 'e', 'a', 'b', '_'], properties: 'never' }],
     '@typescript-eslint/naming-convention': [
       'error',
+
+      { selector: 'enumMember', format: ['UPPER_CASE'] },
+      { selector: 'enum', format: ['PascalCase'], suffix: ['Enum'] },
       { selector: 'class', format: ['PascalCase'] },
       { selector: 'variableLike', format: ['camelCase', 'UPPER_CASE'], leadingUnderscore: 'allow' },
       {

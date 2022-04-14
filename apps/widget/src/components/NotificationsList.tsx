@@ -16,8 +16,8 @@ export function NotificationsList({
   hasNextPage: boolean;
   onNotificationClicked: (notification: IMessage) => void;
 }) {
-  const totalCount = notifications.reduce((h, i) => {
-    const newCount = h + i.length;
+  const totalCount = notifications.reduce((history, messages) => {
+    const newCount = history + messages.length;
 
     return newCount;
   }, 0);

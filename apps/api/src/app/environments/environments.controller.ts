@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { EnvironmentEntity } from '@novu/dal';
-import { AuthGuard } from '@nestjs/passport';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
@@ -18,6 +17,8 @@ import { CreateEnvironmentBodyDto } from './dto/create-environment.dto';
 import { GetApiKeysCommand } from './usecases/get-api-keys/get-api-keys.command';
 import { GetApiKeys } from './usecases/get-api-keys/get-api-keys.usecase';
 import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environment';
+import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
+import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
@@ -30,6 +31,7 @@ export class EnvironmentsController {
     private createEnvironmentUsecase: CreateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
+    private getMyEnvironmentsUsecase: GetMyEnvironments,
     private updateBrandingDetailsUsecase: UpdateBrandingDetails
   ) {}
 
@@ -52,6 +54,16 @@ export class EnvironmentsController {
     return await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         name: body.name,
+        userId: user._id,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Get('/')
+  async getMyEnvironments(@UserSession() user: IJwtPayload): Promise<EnvironmentEntity[]> {
+    return await this.getMyEnvironmentsUsecase.execute(
+      GetMyEnvironmentsCommand.create({
         userId: user._id,
         organizationId: user.organizationId,
       })

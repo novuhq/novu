@@ -7,10 +7,10 @@ export function useNovu() {
 
   useEffect(() => {
     if ((ENV === 'dev' || ENV === 'prod') && authContext.currentUser) {
-      // eslint-disable-next-line func-names
+      // eslint-disable-next-line func-names,id-length
       (function (n, o, t, i, f) {
-        let m;
         /* eslint-disable */
+        let m;
         (n[i] = {}), (m = ['init']);
         n[i]._c = [];
         m.forEach(

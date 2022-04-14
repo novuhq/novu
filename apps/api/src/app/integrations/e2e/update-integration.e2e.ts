@@ -23,7 +23,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     payload.credentials = { apiKey: 'new_key', secretKey: 'new_secret' };
 
     const integrationId = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
-      (x) => x.channel === 'email'
+      (integration) => integration.channel === 'email'
     )._id;
 
     // update integration
