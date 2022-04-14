@@ -93,8 +93,8 @@ function getTooltipConfiguration() {
       if (tooltipModel.body) {
         const titleLines = tooltipModel.title || [];
         const bodyLines = tooltipModel.body.map(
-          (x: { before: string[]; after: string[]; lines: string[] }): string[] => {
-            return getBody(x.lines);
+          (bodyItem: { before: string[]; after: string[]; lines: string[] }): string[] => {
+            return getBody(bodyItem.lines);
           }
         );
 
@@ -160,7 +160,7 @@ function updateToolTipStyles(context, tooltipEl: HTMLElement, tooltipModel) {
 }
 
 function getBodyText(body: string[]): string | string[] {
-  const total = body.find((x) => x.toLowerCase().includes('total'));
+  const total = body.find((bodyItem) => bodyItem.toLowerCase().includes('total'));
   if (total) {
     const count = total.split(':')[1];
 
