@@ -7,7 +7,6 @@ import { api } from '../../../api/api.client';
 import { NavMenu, SegmentedControl } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team } from '../../../design-system/icons';
 import { AuthContext } from '../../../store/authContext';
-import { act } from 'react-dom/test-utils';
 
 type Props = {};
 const menuItems = [
