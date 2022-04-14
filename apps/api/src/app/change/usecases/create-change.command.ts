@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 import { CommandHelper } from '../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../shared/commands/project.command';
 
-interface IItem extends Pick<Document, '_id'> {
+export interface IItem extends Pick<Document, '_id'> {
   [key: string]: any;
 }
 
