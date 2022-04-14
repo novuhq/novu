@@ -25,6 +25,8 @@ export class MessageTemplateEntity {
       url?: string;
     };
   };
+
+  _parentId?: string;
 }
 
 export class IEmailBlock {
