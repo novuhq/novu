@@ -196,7 +196,7 @@ importers:
       '@novu/mailjet': link:../../providers/mailjet
       '@novu/mandrill': link:../../providers/mandrill
       '@novu/node': link:../../packages/node
-      '@novu/nodemailer': 0.4.0-alpha.6
+      '@novu/nodemailer': link:../../providers/nodemailer
       '@novu/plivo': link:../../providers/plivo
       '@novu/postmark': link:../../providers/postmark
       '@novu/sendgrid': link:../../providers/sendgrid
@@ -11071,28 +11071,6 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.13.0
-
-  /@novu/node/0.4.0-alpha.6:
-    resolution: {integrity: sha512-NEofP9ST68k2bkzLFNn1ju/2UCZ4TQ7xa+Y+uBKv8WeUygcfhZrUQKvXkJeEr2x0pZKBy1A93rGQTkM4Fi/1wA==}
-    engines: {node: '>=10'}
-    dependencies:
-      axios: 0.26.1
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /@novu/nodemailer/0.4.0-alpha.6:
-    resolution: {integrity: sha512-pMZj93iQgimgnQMrmvk+zGeDHYfYyJuGpXz7zmIAGTyPJoqThKi3PzcoutUmnxw4V6vlHFLnwukwz6cyHLSOSA==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@novu/node': 0.4.0-alpha.6
-      nodemailer: 6.7.3
-    transitivePeerDependencies:
-      - debug
-    dev: false
 
   /@npmcli/fs/1.1.1:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}

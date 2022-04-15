@@ -5,7 +5,7 @@ A nodemailer email provider library for [@novu/stateless](https://github.com/nov
 ## Usage
 
 ```javascript
-import { NodemailerProvider } from '@novu/statelessmailer';
+import { NodemailerProvider } from '@novu/nodemailer';
 
 const provider = new NodemailerProvider({
   from: process.env.NODEMAILER_FROM_EMAIL,
