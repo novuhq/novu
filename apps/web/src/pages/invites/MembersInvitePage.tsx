@@ -5,6 +5,7 @@ import { MemberStatusEnum } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import * as capitalize from 'lodash.capitalize';
 import { Avatar, Container, Divider, Group, Text } from '@mantine/core';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { getOrganizationMembers, inviteMember } from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -43,6 +44,7 @@ export function MembersInvitePage() {
 
   return (
     <PageContainer>
+      <PageMeta title="Team" />
       <PageHeader
         title="Team Members"
         actions={
