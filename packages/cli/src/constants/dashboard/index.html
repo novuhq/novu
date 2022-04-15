@@ -258,15 +258,15 @@
                         </div>
                          <pre class="rounder-lg code-snippet-wrapper" onclick="copyToClipboard('curl-user-snippet2');return false;">
 
-                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'https://api.novu.co/v1/events/trigger' \
+                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'REPLACE_WITH_url' \
  --header 'Authorization: ApiKey *********' \
  --header 'Content-Type: application/json' \
  --data-raw '{
     "name": "REPLACE_WITH_name",
-    "subscribers": {
-        "subscriberId": "REPLACE_WITH_$user_id",
-        "first_name": "REPLACE_WITH_$first_name",
-        "last_name": "REPLACE_WITH_$last_name"
+    "to": {
+        "subscriberId": "REPLACE_WITH_subscriberId",
+        "firstName": "REPLACE_WITH_firstName",
+        "lastName": "REPLACE_WITH_lastName"
     },
     "payload": {
         "token": "*********"
@@ -323,10 +323,10 @@
                     </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Content-Type: application/json'</span><span> </span><span class="token">\</span><span>
                     </span><span>     --data-raw </span><span class="token" style="color: rgb(189, 224, 82);">'{
                     </span><span class="token" style="color: rgb(189, 224, 82);">        "name": "REPLACE_WITH_name",
-                    </span><span class="token" style="color: rgb(189, 224, 82);">        "subscribers": {
-                    </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">subscriberId</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_$user_id",
-                    </span><span class="token" style="color: rgb(189, 224, 82);">            "first_name": "REPLACE_WITH_$first_name",
-                    </span><span class="token" style="color: rgb(189, 224, 82);">            "last_name": "REPLACE_WITH_$last_name"
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        "to": {
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">subscriberId</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_subscriberId",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "firstName": "REPLACE_WITH_firstName",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "lastName": "REPLACE_WITH_lastName"
                     </span><span class="token" style="color: rgb(189, 224, 82);">        },
                     </span><span class="token" style="color: rgb(189, 224, 82);">        "payload": {
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "$on_boarding_trigger": "true",
@@ -402,12 +402,12 @@ function pulsateBell() {
     elt.src = t;
     var before = o.getElementsByTagName(f)[0];
     before.parentNode.insertBefore(elt, before);
-  })(window, document, "https://embed.novu.co/embed.umd.min.js", "novu", "script");
+  })(window, document, "REPLACE_WITH_embedPath", "novu", "script");
 
   novu.init('REPLACE_WITH_environmentId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
-    $user_id: 'REPLACE_WITH_$user_id',
-    $first_name: 'REPLACE_WITH_$first_name',
-    $last_name: 'REPLACE_WITH_$last_name',
+    $user_id: 'REPLACE_WITH_subscriberId',
+    $first_name: 'REPLACE_WITH_firstName',
+    $last_name: 'REPLACE_WITH_lastName',
   });
 
   var activeListener = false;
