@@ -19,7 +19,8 @@ describe('test use of novu node package', () => {
   test('should trigger correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.trigger('test-template', 'test-user', {
+    await novu.trigger('test-template', {
+      to: 'test-user',
       payload: {
         email: 'test-user@sd.com',
       },
@@ -28,7 +29,7 @@ describe('test use of novu node package', () => {
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
       name: 'test-template',
-      subscribers: 'test-user',
+      to: 'test-user',
       payload: {
         email: 'test-user@sd.com',
       },
@@ -38,7 +39,8 @@ describe('test use of novu node package', () => {
   test('should trigger correctly for all subscribers definitions ', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.trigger('test-template', ['test-user', 'test-another-user'], {
+    await novu.trigger('test-template', {
+      to: ['test-user', 'test-another-user'],
       payload: {
         organizationName: 'Company',
       },
@@ -47,29 +49,14 @@ describe('test use of novu node package', () => {
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
       name: 'test-template',
-      subscribers: ['test-user', 'test-another-user'],
+      to: ['test-user', 'test-another-user'],
       payload: {
         organizationName: 'Company',
       },
     });
 
-    await novu.trigger(
-      'test-template',
-      [
-        { subscriberId: 'test-user', firstName: 'test' },
-        { subscriberId: 'test-another-user' },
-      ],
-      {
-        payload: {
-          organizationName: 'Company',
-        },
-      }
-    );
-
-    expect(mockedAxios.post).toHaveBeenCalled();
-    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
-      name: 'test-template',
-      subscribers: [
+    await novu.trigger('test-template', {
+      to: [
         { subscriberId: 'test-user', firstName: 'test' },
         { subscriberId: 'test-another-user' },
       ],
@@ -78,13 +65,16 @@ describe('test use of novu node package', () => {
       },
     });
 
-    await novu.trigger('test-template', 'userId');
-
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
       name: 'test-template',
-      subscribers: 'userId',
-      payload: {},
+      to: [
+        { subscriberId: 'test-user', firstName: 'test' },
+        { subscriberId: 'test-another-user' },
+      ],
+      payload: {
+        organizationName: 'Company',
+      },
     });
   });
 

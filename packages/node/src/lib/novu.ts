@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
 import {
-  ISubscribersTriggerOptions,
+  TriggerRecipientsType,
   ITriggerPayloadOptions,
 } from './subscribers/subscriber.interface';
 
@@ -26,14 +26,10 @@ export class Novu extends EventEmitter {
     this.subscribers = new Subscribers(this.http);
   }
 
-  async trigger(
-    eventId: string,
-    subscribers: ISubscribersTriggerOptions,
-    data?: ITriggerPayloadOptions
-  ) {
+  async trigger(eventId: string, data: ITriggerPayloadOptions) {
     return await this.http.post(`/events/trigger`, {
       name: eventId,
-      subscribers: subscribers,
+      to: data.to,
       payload: {
         ...data?.payload,
       },

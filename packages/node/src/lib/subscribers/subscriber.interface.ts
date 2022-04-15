@@ -1,5 +1,3 @@
-import { ChannelTypeEnum } from '../template/template.interface';
-
 export interface ISubscriberPayload {
   firstName?: string;
   lastName?: string;
@@ -13,14 +11,23 @@ export interface ISubscribersDefine extends ISubscriberPayload {
   subscriberId: string;
 }
 
-export type ISubscribersTriggerOptions =
-  | string
-  | string[]
-  | ISubscribersDefine
-  | ISubscribersDefine[];
+export enum ChannelTypeEnum {
+  EMAIL = 'email',
+  SMS = 'sms',
+  DIRECT = 'direct',
+}
+
+export type TriggerRecipientsTypeArray = string[] | ISubscribersDefine[];
+
+export type TriggerRecipientsTypeSingle = string | ISubscribersDefine;
+
+export type TriggerRecipientsType =
+  | TriggerRecipientsTypeSingle
+  | TriggerRecipientsTypeArray;
 
 export interface ITriggerPayloadOptions {
   payload: ITriggerPayload;
+  to: TriggerRecipientsType;
 }
 
 export interface ITriggerPayload {

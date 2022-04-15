@@ -62,15 +62,14 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-await novu.trigger(
-  '<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
   {
-    subscriberId: '<USER_IDENTIFIER>',
-    email: 'test@email.com',
-    firstName: 'John',
-    lastName: 'Doe',
-  },
-  {
+    to: {
+      subscriberId: '<USER_IDENTIFIER>',
+      email: 'test@email.com',
+      firstName: 'John',
+      lastName: 'Doe',
+    },
     payload: {
       organization: {
         logo: 'https://evilcorp.com/logo.png',

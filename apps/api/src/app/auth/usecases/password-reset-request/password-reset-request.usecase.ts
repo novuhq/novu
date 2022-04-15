@@ -18,10 +18,13 @@ export class PasswordResetRequest {
       if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
         const novu = new Novu(process.env.NOVU_API_KEY);
 
-        await novu.trigger('password-reset-llS-wzWMq', foundUser._id, {
+        await novu.trigger('password-reset-llS-wzWMq', {
+          to: {
+            subscriberId: foundUser._id,
+            email: foundUser.email,
+          },
           payload: {
             resetPasswordLink: `${process.env.FRONT_BASE_URL}/auth/reset/${token}`,
-            email: foundUser.email,
           },
         });
       }

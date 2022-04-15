@@ -15,7 +15,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { IEmailOptions } from '@novu/node';
+import { IEmailOptions } from '@novu/stateless';
 import { TriggerEventCommand } from './trigger-event.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -29,6 +29,7 @@ import { QueueService } from '../../../shared/services/queue';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { MailFactory } from '../../services/mail-service/mail.factory';
+import { ISubscribersDefine } from '@novu/node';
 
 @Injectable()
 export class TriggerEvent {
@@ -68,7 +69,7 @@ export class TriggerEvent {
           userId: command.userId,
           code: LogCodeEnum.TRIGGER_RECEIVED,
           raw: {
-            subscribers: command.subscribers,
+            subscribers: command.to,
             payload: command.payload,
           },
         })
@@ -133,137 +134,31 @@ export class TriggerEvent {
       command.payload
     );
 
-    let channelsToSend: ChannelTypeEnum[] = [];
-    if (!command.payload.$channels || !Array.isArray(command.payload.$channels)) {
-      if (smsMessages?.length) {
-        channelsToSend.push(ChannelTypeEnum.SMS);
-      }
-
-      if (inAppChannelMessages?.length) {
-        channelsToSend.push(ChannelTypeEnum.IN_APP);
-      }
-
-      if (emailChannelMessages?.length) {
-        channelsToSend.push(ChannelTypeEnum.EMAIL);
-      }
-    } else {
-      channelsToSend = command.payload.$channels;
+    const channelsToSend: ChannelTypeEnum[] = [];
+    if (smsMessages?.length) {
+      channelsToSend.push(ChannelTypeEnum.SMS);
     }
 
-    for (const subscriberToTrigger of command.subscribers) {
-      const withSubscriberPayload = !(typeof subscriberToTrigger === 'string');
-      const searchSubscriberId = withSubscriberPayload ? subscriberToTrigger.subscriberId : subscriberToTrigger;
-      const allowPayloadExtraction = !withSubscriberPayload && command.subscribers.length === 1;
+    if (inAppChannelMessages?.length) {
+      channelsToSend.push(ChannelTypeEnum.IN_APP);
+    }
 
-      let subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, searchSubscriberId);
-      if (!subscriber) {
-        if (withSubscriberPayload) {
-          if (subscriberToTrigger.email || subscriberToTrigger.phone) {
-            subscriber = await this.createSubscriberUsecase.execute(
-              CreateSubscriberCommand.create({
-                environmentId: command.environmentId,
-                organizationId: command.organizationId,
-                subscriberId: searchSubscriberId,
-                email: subscriberToTrigger.email,
-                firstName: subscriberToTrigger.first_name,
-                lastName: subscriberToTrigger.last_name,
-                phone: subscriberToTrigger.phone,
-              })
-            );
-          } else {
-            await this.createLogUsecase.execute(
-              CreateLogCommand.create({
-                transactionId: command.transactionId,
-                status: LogStatusEnum.ERROR,
-                environmentId: command.environmentId,
-                organizationId: command.organizationId,
-                text: 'Subscriber not found',
-                userId: command.userId,
-                code: LogCodeEnum.SUBSCRIBER_NOT_FOUND,
-                templateId: template._id,
-                raw: {
-                  payload: command.payload,
-                  subscriber: subscriberToTrigger,
-                  triggerIdentifier: command.identifier,
-                },
-              })
-            );
+    if (emailChannelMessages?.length) {
+      channelsToSend.push(ChannelTypeEnum.EMAIL);
+    }
 
-            return {
-              acknowledged: true,
-              status: 'subscriber_not_found',
-            };
-          }
-        } else if (allowPayloadExtraction && (command.payload.email || command.payload.phone)) {
-          subscriber = await this.createSubscriberUsecase.execute(
-            CreateSubscriberCommand.create({
-              environmentId: command.environmentId,
-              organizationId: command.organizationId,
-              subscriberId: searchSubscriberId,
-              email: command.payload.email,
-              firstName: command.payload.first_name,
-              lastName: command.payload.last_name,
-              phone: command.payload.phone,
-            })
-          );
-        } else {
-          await this.createLogUsecase.execute(
-            CreateLogCommand.create({
-              transactionId: command.transactionId,
-              status: LogStatusEnum.ERROR,
-              environmentId: command.environmentId,
-              organizationId: command.organizationId,
-              text: 'Subscriber not found',
-              userId: command.userId,
-              code: LogCodeEnum.SUBSCRIBER_NOT_FOUND,
-              templateId: template._id,
-              raw: {
-                payload: command.payload,
-                subscriber: subscriberToTrigger,
-                triggerIdentifier: command.identifier,
-              },
-            })
-          );
+    const errors = [];
 
-          return {
-            acknowledged: true,
-            status: 'subscriber_not_found',
-          };
-        }
-      }
-      const notification = await this.notificationRepository.create({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _subscriberId: subscriber._id,
-        _templateId: template._id,
-        transactionId: command.transactionId,
-      });
-
-      if (smsMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.SMS)) {
-        await this.sendSmsMessage(smsMessages, command, notification, subscriber, template);
-      }
-
-      if (inAppChannelMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.IN_APP)) {
-        await this.sendInAppMessage(inAppChannelMessages, command, notification, subscriber, template);
-      }
-
-      if (emailChannelMessages.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.EMAIL)) {
-        await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, environment);
-      }
-
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.INFO,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          notificationId: notification._id,
-          text: 'Request processed',
-          userId: command.userId,
-          subscriberId: subscriber._id,
-          code: LogCodeEnum.TRIGGER_PROCESSED,
-          templateId: template._id,
-        })
+    for (const subscriberToTrigger of command.to) {
+      await this.processSubscriber(
+        subscriberToTrigger,
+        command,
+        template,
+        smsMessages,
+        channelsToSend,
+        inAppChannelMessages,
+        emailChannelMessages,
+        environment
       );
     }
 
@@ -280,6 +175,99 @@ export class TriggerEvent {
     return {
       acknowledged: true,
       status: 'processed',
+    };
+  }
+
+  private async processSubscriber(
+    subscriberPayload: ISubscribersDefine,
+    command: TriggerEventCommand,
+    template: NotificationTemplateEntity,
+    smsMessages: NotificationStepEntity[],
+    channelsToSend: ChannelTypeEnum[],
+    inAppChannelMessages: NotificationStepEntity[],
+    emailChannelMessages: NotificationStepEntity[],
+    environment: EnvironmentEntity
+  ) {
+    let subscriber = await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      subscriberPayload.subscriberId
+    );
+
+    if (!subscriber) {
+      if (subscriberPayload.email || subscriberPayload.phone) {
+        subscriber = await this.createSubscriberUsecase.execute(
+          CreateSubscriberCommand.create({
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            subscriberId: subscriberPayload.subscriberId,
+            email: subscriberPayload.email,
+            firstName: subscriberPayload.firstName,
+            lastName: subscriberPayload.lastName,
+            phone: subscriberPayload.phone,
+          })
+        );
+      } else {
+        await this.createLogUsecase.execute(
+          CreateLogCommand.create({
+            transactionId: command.transactionId,
+            status: LogStatusEnum.ERROR,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            text: 'Subscriber not found',
+            userId: command.userId,
+            code: LogCodeEnum.SUBSCRIBER_NOT_FOUND,
+            templateId: template._id,
+            raw: {
+              payload: command.payload,
+              subscriber: subscriberPayload,
+              triggerIdentifier: command.identifier,
+            },
+          })
+        );
+
+        return {
+          status: 'subscriber_not_found',
+        };
+      }
+    }
+
+    const notification = await this.notificationRepository.create({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _subscriberId: subscriber._id,
+      _templateId: template._id,
+      transactionId: command.transactionId,
+    });
+
+    if (smsMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.SMS)) {
+      await this.sendSmsMessage(smsMessages, command, notification, subscriber, template);
+    }
+
+    if (inAppChannelMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.IN_APP)) {
+      await this.sendInAppMessage(inAppChannelMessages, command, notification, subscriber, template);
+    }
+
+    if (emailChannelMessages.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.EMAIL)) {
+      await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, environment);
+    }
+
+    await this.createLogUsecase.execute(
+      CreateLogCommand.create({
+        transactionId: command.transactionId,
+        status: LogStatusEnum.INFO,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        notificationId: notification._id,
+        text: 'Request processed',
+        userId: command.userId,
+        subscriberId: subscriber._id,
+        code: LogCodeEnum.TRIGGER_PROCESSED,
+        templateId: template._id,
+      })
+    );
+
+    return {
+      status: 'success',
     };
   }
 

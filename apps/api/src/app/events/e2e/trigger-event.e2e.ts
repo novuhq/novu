@@ -13,6 +13,7 @@ import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import axios from 'axios';
 import { stub } from 'sinon';
 import { SmsService } from '../../shared/services/sms/sms.service';
+import { ISubscribersDefine } from '@novu/node';
 
 const axiosInstance = axios.create();
 
@@ -39,7 +40,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
-        subscribers: subscriber.subscriberId,
+        to: subscriber.subscriberId,
         payload: {
           firstName: 'Testing of User Name',
           urlVariable: '/test/url/path',
@@ -66,7 +67,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
-        subscribers: subscriber.subscriberId,
+        to: subscriber.subscriberId,
         payload: {
           firstName: 'Testing of User Name',
           urlVariable: '/test/url/path',
@@ -88,19 +89,22 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should create a subscriber based on event', async function () {
     const subscriberId = 'new-test-if-id';
-    const payload = {
-      first_name: 'Test Name',
-      last_name: 'Last of name',
+    const payload: ISubscribersDefine = {
+      subscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
       email: 'test@email.novu',
-      firstName: 'Testing of User Name',
-      urlVar: '/test/url/path',
     };
     const { data: body } = await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
-        subscribers: subscriberId,
-        payload,
+        to: {
+          ...payload,
+        },
+        payload: {
+          urlVar: '/test/url/path',
+        },
       },
       {
         headers: {
@@ -109,11 +113,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, 'new-test-if-id');
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
     expect(createdSubscriber.subscriberId).to.equal(subscriberId);
-    expect(createdSubscriber.firstName).to.equal(payload.first_name);
-    expect(createdSubscriber.lastName).to.equal(payload.last_name);
+    expect(createdSubscriber.firstName).to.equal(payload.firstName);
+    expect(createdSubscriber.lastName).to.equal(payload.lastName);
     expect(createdSubscriber.email).to.equal(payload.email);
   });
 
@@ -122,7 +126,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
-        subscribers: [
+        to: [
           { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
           { subscriberId: '1234', email: 'gg@ff.com' },
         ],
@@ -161,7 +165,9 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
-        subscribers: subscriber.subscriberId,
+        to: {
+          subscriberId: subscriber.subscriberId,
+        },
         payload: {
           firstName: 'Testing of User Name',
           urlVar: '/test/url/path',
@@ -214,114 +220,12 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
   });
 
-  it('should trigger based on $channels in payload', async function () {
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{firstName}}' as string,
-        },
-        {
-          type: ChannelTypeEnum.IN_APP,
-          content: 'Hello world {{firstName}}' as string,
-        },
-      ],
-    });
-
-    const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        subscribers: subscriber.subscriberId,
-        payload: {
-          phone: '+972541111111',
-          $channels: [ChannelTypeEnum.IN_APP],
-          firstName: 'Testing of User Name',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    const message = await messageRepository._model.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.SMS,
-    });
-
-    expect(message).to.not.be.ok;
-
-    const inAppMessages = await messageRepository._model.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.IN_APP,
-    });
-
-    expect(inAppMessages).to.be.ok;
-  });
-
-  it('should ignore all templates if $channels is empty', async function () {
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{firstName}}' as string,
-        },
-        {
-          type: ChannelTypeEnum.IN_APP,
-          content: 'Hello world {{firstName}}' as string,
-        },
-      ],
-    });
-
-    const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        subscribers: subscriber.subscriberId,
-        payload: {
-          phone: '+972541111111',
-          $channels: [],
-          firstName: 'Testing of User Name',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    const message = await messageRepository._model.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.SMS,
-    });
-
-    expect(message).to.not.be.ok;
-
-    const inAppMessages = await messageRepository._model.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.IN_APP,
-    });
-
-    expect(inAppMessages).to.not.be.ok;
-  });
-
   it('should trigger SMS notification', async function () {
     template = await session.createTemplate({
       steps: [
         {
           type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{firstName}}' as string,
+          content: 'Hello world {{customVar}}' as string,
         },
       ],
     });
@@ -330,10 +234,9 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
-        subscribers: subscriber.subscriberId,
+        to: [subscriber.subscriberId],
         payload: {
-          phone: '+972541111111',
-          firstName: 'Testing of User Name',
+          customVar: 'Testing of User Name',
         },
       },
       {
@@ -350,7 +253,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       channel: ChannelTypeEnum.SMS,
     });
 
-    expect(message.phone).to.equal('+972541111111');
+    expect(message.phone).to.equal(subscriber.phone);
   });
 
   it('should trigger SMS notification for all subscribers', async function () {
@@ -367,7 +270,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
-        subscribers: [{ subscriberId: subscriber.subscriberId }, { subscriberId: '1234', phone: '+972541111111' }],
+        to: [{ subscriberId: subscriber.subscriberId }, { subscriberId: '1234', phone: '+972541111111' }],
         payload: {
           organizationName: 'Testing of Organization Name',
         },
@@ -411,7 +314,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
-        subscribers: subscriber.subscriberId,
+        to: subscriber.subscriberId,
         payload: {
           phone: '+972541111111',
           firstName: 'Testing of User Name',

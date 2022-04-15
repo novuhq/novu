@@ -32,7 +32,11 @@ export class InviteMember {
     if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
       const novu = new Novu(process.env.NOVU_API_KEY);
 
-      await novu.trigger('invite-to-organization-wBnO8NpDn', command.email, {
+      await novu.trigger('invite-to-organization-wBnO8NpDn', {
+        to: {
+          subscriberId: command.email,
+          email: command.email,
+        },
         payload: {
           email: command.email,
           inviteeName: capitalize(command.email.split('@')[0]),

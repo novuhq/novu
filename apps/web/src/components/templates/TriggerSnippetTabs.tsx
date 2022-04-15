@@ -9,11 +9,13 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
 const novu = new Novu('<API_KEY>');
 
 novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}',
-  { subscriberId: '<REPLACE_WITH_USER_ID>', ${trigger.subscriberVariables
+  {
+  to: { subscriberId: '<REPLACE_WITH_USER_ID>', ${trigger.subscriberVariables
     ?.map((variable) => {
       return `${variable.name}: "<REPLACE_WITH_DATA>",`;
     })
-    .join(' ')} }, {
+    .join(' ')} 
+  },
   payload: {
     ${trigger.variables
       .map((variable) => {
@@ -28,7 +30,7 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}',
      --header 'Content-Type: application/json' \\
      --data-raw '{
         "name": "${trigger.identifier?.replace(/'/g, "\\'")}",
-        "subscribers" : {
+        "to" : {
             "subscriberId": "<REPLACE_WITH_USER_ID>",
             ${trigger.subscriberVariables
               ?.map((variable) => {
