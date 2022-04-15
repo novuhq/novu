@@ -32,9 +32,7 @@ module.exports = (on, config) => {
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < count; i++) {
         await service.triggerEvent(triggerIdentifier, userId, {
-          payload: {
-            firstName: 'John',
-          },
+          firstName: 'John',
         });
       }
 
