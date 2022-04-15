@@ -12,7 +12,7 @@ export class NotificationsService {
       'http://localhost:1336/v1/events/trigger',
       {
         name,
-        subscribers: subscriberId,
+        to: subscriberId,
         payload,
       },
       {
