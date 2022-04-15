@@ -1,11 +1,11 @@
 # Nodejs Nodemailer Provider
 
-A nodemailer email provider library for [@novu/node](https://github.com/novuhq/novu)
+A nodemailer email provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-import { NodemailerProvider } from '@novu/nodemailer';
+import { NodemailerProvider } from '@novu/statelessmailer';
 
 const provider = new NodemailerProvider({
   from: process.env.NODEMAILER_FROM_EMAIL,

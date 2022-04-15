@@ -1,6 +1,6 @@
 # Nodejs Plivo Provider
 
-A plivo sms provider library for [@novu/node](https://github.com/novuhq/novu).
+A plivo sms provider library for [@novu/stateless](https://github.com/novuhq/novu).
 
 ## Usage
 
