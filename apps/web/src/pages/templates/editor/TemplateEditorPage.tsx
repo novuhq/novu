@@ -5,6 +5,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import PageContainer from '../../../components/layout/components/PageContainer';
+import PageMeta from '../../../components/layout/components/PageMeta';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar';
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
@@ -78,6 +79,7 @@ export default function TemplateEditorPage() {
 
   return (
     <PageContainer>
+      <PageMeta title={editMode ? template?.name : 'Create Template'} />
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
           <PageHeader
