@@ -8,13 +8,13 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
 
 const novu = new Novu('<API_KEY>');
 
-novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}',
-  {
-  to: { subscriberId: '<REPLACE_WITH_USER_ID>', ${trigger.subscriberVariables
-    ?.map((variable) => {
-      return `${variable.name}: "<REPLACE_WITH_DATA>",`;
-    })
-    .join(' ')} 
+novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
+  to: { 
+    subscriberId: '<REPLACE_WITH_USER_ID>', ${trigger.subscriberVariables
+      ?.map((variable) => {
+        return `${variable.name}: "<REPLACE_WITH_DATA>",`;
+      })
+      .join(' ')}
   },
   payload: {
     ${trigger.variables
@@ -22,7 +22,8 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}',
         return `${variable.name}: "<REPLACE_WITH_DATA>",`;
       })
       .join('\n    ')} 
-}});
+  }
+});
 `;
 
   const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\

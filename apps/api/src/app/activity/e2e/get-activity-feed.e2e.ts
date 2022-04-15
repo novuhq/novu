@@ -132,6 +132,6 @@ describe('Get activity feed - /activity (GET)', async () => {
     const activities: IMessage[] = body.data;
 
     expect(activities.length).to.equal(1);
-    expect(activities[0]._templateId).to.equal(template._id);
+    expect(activities[0]._templateId).to.equal(smsOnlyTemplate._id);
   });
 });
