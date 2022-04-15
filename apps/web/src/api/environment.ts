@@ -4,6 +4,10 @@ export function getCurrentEnvironment() {
   return api.get('/v1/environments/me');
 }
 
+export function getMyEnvironments() {
+  return api.get('/v1/environments');
+}
+
 export function getApiKeys() {
   return api.get(`/v1/environments/api-keys`);
 }

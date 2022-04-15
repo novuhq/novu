@@ -10,7 +10,6 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
     root: {
       width: '100%',
       maxWidth: '300px',
-      marginBottom: '30px',
       background: dark ? theme.colors.dark[7] : theme.white,
       padding: '5px',
       boxShadow: dark ? shadows.dark : shadows.light,
