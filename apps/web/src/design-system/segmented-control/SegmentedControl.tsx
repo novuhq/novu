@@ -7,6 +7,7 @@ import {
 } from '@mantine/core';
 import useStyles from './SegmentedControl.styles';
 import { colors } from '../config';
+import styled from '@emotion/styled';
 
 interface ISegmentedControlProps {
   data: string[] | SegmentedControlItem[];
@@ -32,7 +33,7 @@ export const SegmentedControl = React.forwardRef<HTMLDivElement, ISegmentedContr
     } as SegmentedControlProps;
 
     return (
-      <div style={{ position: 'relative', marginBottom: 30 }}>
+      <ControlWrapper style={{ position: 'relative', marginBottom: 30 }}>
         <LoadingOverlay
           visible={loading}
           overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
@@ -40,8 +41,17 @@ export const SegmentedControl = React.forwardRef<HTMLDivElement, ISegmentedContr
             color: colors.error,
           }}
         />
-        <MantineSegmentedControl ref={ref} onChange={onChange} {...defaultDesign} {...props} />{' '}
-      </div>
+        <MantineSegmentedControl ref={ref} onChange={onChange} {...defaultDesign} {...props} />
+      </ControlWrapper>
     );
   }
 );
+
+const ControlWrapper = styled.div`
+  position: relative;
+  margin-bottom: 30px;
+
+  .mantine-SegmentedControl-control {
+    border-color: transparent;
+  }
+`;

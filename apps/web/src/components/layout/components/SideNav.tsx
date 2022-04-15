@@ -41,6 +41,10 @@ export function SideNav({}: Props) {
     }
 
     const targetEnvironment = environments?.find((_environment) => _environment.name === environmentName);
+    if (!targetEnvironment) {
+      return;
+    }
+
     setIsLoading(true);
 
     const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
@@ -54,7 +58,7 @@ export function SideNav({}: Props) {
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
         <SegmentedControl
-          data={environments?.map(({ name }) => name) || ['Development', 'Production']}
+          data={['Development', 'Production']}
           defaultValue={environment?.name}
           value={environment?.name}
           onChange={async (value) => {
