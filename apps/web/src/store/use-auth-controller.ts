@@ -33,6 +33,7 @@ export function useAuthController() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(getToken());
+  const [jwtPayload, setJwtPayload] = useState<IJwtPayload>();
   const isLoggedIn = !!token;
   const { data: user, refetch: refetchUser } = useQuery<IUserEntity>('/v1/users/me', getUser, {
     enabled: Boolean(isLoggedIn && axios.defaults.headers.common.Authorization),
@@ -61,6 +62,11 @@ export function useAuthController() {
 
   useEffect(() => {
     applyToken(token);
+
+    if (token) {
+      const payload = jwtDecode<IJwtPayload>(token);
+      setJwtPayload(payload);
+    }
   }, [token]);
 
   useEffect(() => {
@@ -90,5 +96,6 @@ export function useAuthController() {
     setToken,
     token,
     logout,
+    jwtPayload,
   };
 }

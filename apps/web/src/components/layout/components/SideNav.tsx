@@ -24,7 +24,7 @@ const menuItems = [
 
 export function SideNav({}: Props) {
   const queryClient = useQueryClient();
-  const { setToken } = useContext(AuthContext);
+  const { setToken, jwtPayload } = useContext(AuthContext);
   const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
     'myEnvironments',
     getMyEnvironments
@@ -36,22 +36,24 @@ export function SideNav({}: Props) {
   const [isLoading, setIsLoading] = useState(false);
 
   async function changeEnvironment(environmentName: string) {
+    if (isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment) {
+      return;
+    }
+
     const targetEnvironment = environments?.find((_environment) => _environment.name === environmentName);
     setIsLoading(true);
 
     const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
     setToken(tokenResponse.token);
-
-    queryClient.clear();
-
     setIsLoading(false);
+
+    await queryClient.refetchQueries();
   }
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
         <SegmentedControl
-          loading={isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading}
           data={environments?.map(({ name }) => name) || ['Development', 'Production']}
           defaultValue={environment?.name}
           value={environment?.name}
