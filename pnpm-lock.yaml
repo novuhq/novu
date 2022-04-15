@@ -864,6 +864,7 @@ importers:
     specifiers:
       '@faker-js/faker': ^6.0.0
       '@novu/dal': ^0.4.0-alpha.6
+      '@novu/node': ^0.4.0-alpha.6
       '@novu/shared': ^0.4.0-alpha.6
       '@types/async': ^3.2.1
       '@types/bluebird': ^3.5.30
@@ -892,6 +893,7 @@ importers:
     dependencies:
       '@faker-js/faker': 6.1.1
       '@novu/dal': link:../dal
+      '@novu/node': link:../../packages/node
       '@novu/shared': link:../shared
       async: 3.2.3
       axios: 0.25.0

@@ -93,28 +93,45 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by email', async function () {
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
-      firstName: 'Test',
-    });
+    await session.triggerEvent(
+      smsOnlyTemplate.triggers[0].identifier,
+      {
+        subscriberId: '1234522',
+        email: 'test@email.coms',
+      },
+      {
+        firstName: 'Test',
+      }
+    );
 
     await session.triggerEvent(template.triggers[0].identifier, '1234564', {
       firstName: 'Test',
-      email: 'test@email.coms',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, '12345', {
-      firstName: 'Test',
-    });
+    await session.triggerEvent(
+      template.triggers[0].identifier,
+      {
+        subscriberId: '123452',
+      },
+      {
+        firstName: 'Test',
+      }
+    );
 
-    await session.triggerEvent(template.triggers[0].identifier, '12345', {
-      firstName: 'Test',
-    });
+    await session.triggerEvent(
+      template.triggers[0].identifier,
+      {
+        subscriberId: '12345',
+      },
+      {
+        firstName: 'Test',
+      }
+    );
 
     const { body } = await session.testAgent.get(`/v1/activity?page=0&search=test@email.coms`);
     const activities: IMessage[] = body.data;
 
-    expect(activities.length).to.equal(2);
+    expect(activities.length).to.equal(1);
     expect(activities[0]._templateId).to.equal(template._id);
-    expect(activities[1]._templateId).to.equal(template._id);
   });
 });
