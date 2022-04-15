@@ -4,8 +4,6 @@ import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
-  // eslint-disable-next-line no-console
-  console.log(trigger.subscriberVariables);
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
 const novu = new Novu('<API_KEY>');

@@ -7,11 +7,12 @@ export class NotificationsService {
 
   constructor(private token: string) {}
 
-  async triggerEvent(name: string, payload = {}) {
+  async triggerEvent(name: string, subscriberId: string, payload = {}) {
     await axios.post(
       'http://localhost:1336/v1/events/trigger',
       {
         name,
+        subscribers: subscriberId,
         payload,
       },
       {
