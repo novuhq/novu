@@ -20,7 +20,7 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
 
   const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
      --header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
-     --header 'Content-Type: environment/json' \\
+     --header 'Content-Type: application/json' \\
      --data-raw '{
         "name": "${trigger.identifier?.replace(/'/g, "\\'")}",
         "payload": {
