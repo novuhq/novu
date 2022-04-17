@@ -78,7 +78,7 @@ export class UserSession {
 
     if (!options.noOrganization) {
       if (!options?.noEnvironment) {
-        await this.updateEnvironmentDetails();
+        await this.updateOrganizationDetails();
       }
     }
   }
@@ -122,9 +122,9 @@ export class UserSession {
     return this.environment;
   }
 
-  async updateEnvironmentDetails() {
+  async updateOrganizationDetails() {
     await this.testAgent
-      .put('/v1/environments/branding')
+      .put('/v1/organizations/branding')
       .send({
         color: '#2a9d8f',
         logo: 'https://novu.co/img/logo.png',

@@ -13,4 +13,12 @@ export interface IOrganizationEntity {
     invite?: IMemberInvite;
     memberStatus: MemberStatusEnum;
   }[];
+  branding?: {
+    color: string;
+    logo: string;
+    fontColor: string;
+    fontFamily: string;
+    contentBackground: string;
+    direction: 'ltr' | 'rtl';
+  };
 }

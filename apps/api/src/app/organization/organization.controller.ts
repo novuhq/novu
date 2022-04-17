@@ -28,6 +28,8 @@ import { GetMembersCommand } from './usecases/membership/membership/get-members/
 import { GetMembers } from './usecases/membership/membership/get-members/get-members.usecase';
 import { ChangeMemberRoleCommand } from './usecases/membership/membership/change-member-role/change-member-role.command';
 import { ChangeMemberRole } from './usecases/membership/membership/change-member-role/change-member-role.usecase';
+import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
+import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -38,7 +40,8 @@ export class OrganizationController {
     private getMyOrganizationUsecase: GetMyOrganization,
     private getMembers: GetMembers,
     private removeMemberUsecase: RemoveMember,
-    private changeMemberRoleUsecase: ChangeMemberRole
+    private changeMemberRoleUsecase: ChangeMemberRole,
+    private updateBrandingDetailsUsecase: UpdateBrandingDetails
   ) {}
 
   @Post('/')
@@ -115,5 +118,23 @@ export class OrganizationController {
     });
 
     return await this.getMyOrganizationUsecase.execute(command);
+  }
+
+  @Put('/branding')
+  async updateBrandingDetails(
+    @UserSession() user: IJwtPayload,
+    @Body() body: { color: string; logo: string; fontColor: string; contentBackground: string; fontFamily: string }
+  ) {
+    return await this.updateBrandingDetailsUsecase.execute(
+      UpdateBrandingDetailsCommand.create({
+        logo: body.logo,
+        color: body.color,
+        userId: user._id,
+        id: user.organizationId,
+        fontColor: body.fontColor,
+        fontFamily: body.fontFamily,
+        contentBackground: body.contentBackground,
+      })
+    );
   }
 }

@@ -4,7 +4,7 @@ describe('Settings Screen', function () {
     cy.visit('/settings');
     cy.intercept('*/channels/email/settings').as('updateEmailSettings');
     cy.intercept('*/channels/sms/settings').as('updateSmsSettings');
-    cy.intercept('*/environments/branding').as('updateBrandingSettings');
+    cy.intercept('*/organizations/branding').as('updateBrandingSettings');
   });
 
   it('should display the embed code successfully', function () {

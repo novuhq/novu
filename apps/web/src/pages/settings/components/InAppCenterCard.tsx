@@ -1,9 +1,9 @@
 import React from 'react';
 import { Prism } from '@mantine/prism';
-import { IEnvironment } from '@novu/shared';
 import { colors, Text } from '../../../design-system';
 import Card from '../../../components/layout/components/Card';
 import { WIDGET_EMEBED_PATH } from '../../../config';
+import { useEnvironment } from '../../../api/hooks/use-environment';
 
 export const InAppCenterCard = ({ environment }: { environment: IEnvironment | undefined }) => {
   const embedCode = `<script>

@@ -15,3 +15,7 @@ export function inviteMember(email: string) {
     role: MemberRoleEnum.ADMIN,
   });
 }
+
+export function updateBrandingSettings(payload: { color: string | undefined; logo: string | undefined }) {
+  return api.put(`/v1/organizations/branding`, payload);
+}
