@@ -2,15 +2,13 @@ import styled from 'styled-components';
 import { Loader } from '../Loader';
 import { Header } from './Header';
 import { Footer } from './Footer';
-import { useInitialization } from '../../../../hooks/use-initialization.hook';
 import { shadows } from '../../../../shared/config/shadows';
 import { colors } from '../../../../shared/config/colors';
 import React, { useContext } from 'react';
 import { NovuContext } from '../../../../store/novu-provider.context';
 
 export function Layout({ children }: { children: JSX.Element }) {
-  const { initialized } = useInitialization();
-  const { colorScheme } = useContext(NovuContext);
+  const { colorScheme, initialized } = useContext(NovuContext);
 
   return (
     <LayoutWrapper colorScheme={colorScheme}>

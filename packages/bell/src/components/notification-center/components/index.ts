@@ -6,3 +6,5 @@ export * from './Main';
 export * from './NotificationListItem';
 export * from './SeenAllBlock';
 export * from './NotificationsList';
+export * from './AppContent';
+export * from './RootProviders';
