@@ -44,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/node": "^0.4.0-alpha.6",
+    "@novu/stateless": "^0.4.0-alpha.5",
     "@sendgrid/mail": "^7.4.6"
   },
   "devDependencies": {

@@ -5,7 +5,7 @@ import * as gradient from 'gradient-string';
 export const introQuestions: ListQuestionOptions[] = [
   {
     name: 'environmentName',
-    message: 'What is your environment name?',
+    message: 'What is your application name?',
     default: 'Acme App.',
   },
 ];

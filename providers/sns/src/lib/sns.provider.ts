@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
-} from '@novu/node';
+} from '@novu/stateless';
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 
 import { SNSConfig } from './sns.config';

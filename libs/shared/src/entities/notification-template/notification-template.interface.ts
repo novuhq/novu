@@ -23,6 +23,7 @@ export interface INotificationTrigger {
   type: TriggerTypeEnum;
   identifier: string;
   variables: { name: string }[];
+  subscriberVariables?: { name: string }[];
 }
 
 export interface INotificationTemplateStep {

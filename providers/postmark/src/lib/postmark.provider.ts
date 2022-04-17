@@ -3,7 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-} from '@novu/node';
+} from '@novu/stateless';
 import { ServerClient, Models } from 'postmark';
 
 export class PostmarkEmailProvider implements IEmailProvider {

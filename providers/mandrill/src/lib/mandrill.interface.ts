@@ -1,4 +1,4 @@
-import { IAttachmentOptions } from '@novu/node';
+import { IAttachmentOptions } from '@novu/stateless';
 
 export interface MandrillInterface {
   messages: {

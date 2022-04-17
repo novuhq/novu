@@ -55,6 +55,20 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         },
       }
     );
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/subscribers`,
+      {
+        subscriberId: '456',
+        firstName: 'John',
+        lastName: 'Doe',
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
     const response = await axiosInstance.post(
       `${session.serverUrl}/v1/subscribers`,
       {

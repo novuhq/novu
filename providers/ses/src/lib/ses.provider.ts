@@ -3,7 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-} from '@novu/node';
+} from '@novu/stateless';
 import { Message, MessageAttachment, MessageHeaders } from 'emailjs';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { SESConfig } from './ses.config';

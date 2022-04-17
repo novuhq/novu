@@ -123,6 +123,7 @@ importers:
       '@novu/shared': ^0.4.0-alpha.6
       '@novu/sms77': ^0.4.0-alpha.6
       '@novu/sns': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@novu/telnyx': ^0.4.0-alpha.6
       '@novu/testing': ^0.4.0-alpha.6
       '@novu/twilio': ^0.4.0-alpha.6
@@ -204,6 +205,7 @@ importers:
       '@novu/shared': link:../../libs/shared
       '@novu/sms77': link:../../providers/sms77
       '@novu/sns': link:../../providers/sns
+      '@novu/stateless': link:../../packages/stateless
       '@novu/telnyx': link:../../providers/telnyx
       '@novu/testing': link:../../libs/testing
       '@novu/twilio': link:../../providers/twilio
@@ -862,6 +864,7 @@ importers:
     specifiers:
       '@faker-js/faker': ^6.0.0
       '@novu/dal': ^0.4.0-alpha.6
+      '@novu/node': ^0.4.0-alpha.6
       '@novu/shared': ^0.4.0-alpha.6
       '@types/async': ^3.2.1
       '@types/bluebird': ^3.5.30
@@ -890,6 +893,7 @@ importers:
     dependencies:
       '@faker-js/faker': 6.1.1
       '@novu/dal': link:../dal
+      '@novu/node': link:../../packages/node
       '@novu/shared': link:../shared
       async: 3.2.3
       axios: 0.25.0
@@ -1120,7 +1124,7 @@ importers:
   providers/emailjs:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1137,7 +1141,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       emailjs: 3.8.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1159,7 +1163,7 @@ importers:
   providers/mailersend:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1176,7 +1180,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       mailersend: 1.3.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1198,7 +1202,7 @@ importers:
   providers/mailgun:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1217,7 +1221,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       form-data: 4.0.0
       mailgun.js: 3.7.3
       nock: 13.2.4
@@ -1241,7 +1245,7 @@ importers:
   providers/mailjet:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       '@types/node-mailjet': ^3.3.7
       codecov: ^3.5.0
@@ -1259,7 +1263,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       node-mailjet: 3.3.7
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1283,7 +1287,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@mailchimp/mailchimp_transactional': ^1.0.46
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1301,7 +1305,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@mailchimp/mailchimp_transactional': 1.0.47
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1323,7 +1327,7 @@ importers:
   providers/nexmo:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       '@vonage/server-sdk': ^2.10.10
       codecov: ^3.5.0
@@ -1340,7 +1344,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       '@vonage/server-sdk': 2.10.11
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1362,7 +1366,7 @@ importers:
   providers/nodemailer:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       '@types/nodemailer': ^6.4.4
       codecov: ^3.5.0
@@ -1380,7 +1384,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       nodemailer: 6.7.3
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1403,7 +1407,7 @@ importers:
   providers/plivo:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1420,7 +1424,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       plivo: 4.29.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1442,7 +1446,7 @@ importers:
   providers/postmark:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1459,7 +1463,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       postmark: 2.9.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1481,7 +1485,7 @@ importers:
   providers/sendgrid:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@sendgrid/mail': ^7.4.6
       '@types/jest': 27.4.0
       codecov: ^3.5.0
@@ -1498,7 +1502,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       '@sendgrid/mail': 7.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1520,7 +1524,7 @@ importers:
   providers/sendinblue:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@sendinblue/client': ^3.0.1
       '@types/jest': 27.4.0
       '@types/request': ^2.48.7
@@ -1538,7 +1542,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       '@sendinblue/client': 3.1.0
       '@types/request': 2.48.8
     devDependencies:
@@ -1562,7 +1566,7 @@ importers:
     specifiers:
       '@aws-sdk/client-ses': 3.48.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1581,7 +1585,7 @@ importers:
       typescript: ^4.4.3
     dependencies:
       '@aws-sdk/client-ses': 3.48.0
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1604,7 +1608,7 @@ importers:
   providers/sms77:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1622,7 +1626,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       node-fetch: 2.6.7
       sms77-client: 2.17.0_node-fetch@2.6.7
     devDependencies:
@@ -1646,7 +1650,7 @@ importers:
     specifiers:
       '@aws-sdk/client-sns': ^3.39.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1663,7 +1667,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@aws-sdk/client-sns': 3.58.0
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1684,7 +1688,7 @@ importers:
   providers/telnyx:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1701,7 +1705,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       telnyx: 1.23.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1723,7 +1727,7 @@ importers:
   providers/twilio:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/node': ^0.4.0-alpha.6
+      '@novu/stateless': ^0.4.0-alpha.5
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1740,7 +1744,7 @@ importers:
       twilio: ^3.67.2
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
       twilio: 3.76.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -33587,7 +33591,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.6.3
     transitivePeerDependencies:
       - typescript
     dev: true

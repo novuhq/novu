@@ -38,6 +38,7 @@
     "@novu/mailjet": "^0.4.0-alpha.6",
     "@novu/mandrill": "^0.4.0-alpha.6",
     "@novu/node": "^0.4.0-alpha.6",
+    "@novu/stateless": "^0.4.0-alpha.5",
     "@novu/nodemailer": "^0.4.0-alpha.6",
     "@novu/plivo": "^0.4.0-alpha.6",
     "@novu/postmark": "^0.4.0-alpha.6",

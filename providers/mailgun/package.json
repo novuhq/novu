@@ -43,7 +43,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@novu/node": "^0.4.0-alpha.6",
+    "@novu/stateless": "^0.4.0-alpha.5",
     "form-data": "^4.0.0",
     "mailgun.js": "^3.5.8",
     "nock": "^13.1.3"

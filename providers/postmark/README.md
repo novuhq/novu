@@ -1,6 +1,6 @@
 # Nodejs Postmark Provider
 
-A postmark email provider library for [@novu/node](https://github.com/novuhq/novu)
+A postmark email provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 

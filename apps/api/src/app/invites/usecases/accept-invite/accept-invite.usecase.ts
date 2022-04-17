@@ -49,11 +49,15 @@ export class AcceptInvite {
         const novu = new Novu(process.env.NOVU_API_KEY);
 
         await novu.trigger('invite-accepted-dEQAsKD1E', {
-          $user_id: inviter._id,
-          $email: inviter.email,
-          firstName: capitalize(inviter.firstName),
-          invitedUserEmail: member.invite.email,
-          ctaUrl: '/settings/organization',
+          to: {
+            subscriberId: inviter._id,
+            firstName: capitalize(inviter.firstName),
+            email: inviter.email,
+          },
+          payload: {
+            invitedUserEmail: member.invite.email,
+            ctaUrl: '/settings/organization',
+          },
         });
       }
     } catch (e) {

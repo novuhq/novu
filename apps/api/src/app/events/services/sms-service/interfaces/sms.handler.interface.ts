@@ -1,4 +1,4 @@
-import { ISendMessageSuccessResponse, ISmsOptions } from '@novu/node';
+import { ISendMessageSuccessResponse, ISmsOptions } from '@novu/stateless';
 import { ICredentials } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 
