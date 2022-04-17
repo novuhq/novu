@@ -52,10 +52,4 @@ export function PopoverNotificationCenter(props: IPopoverNotificationCenterProps
   );
 }
 
-const StyledPopover = styled(Popover)`
-  & .your-inner-class {
-    background: green;
-  }
-`;
-
 const BellContainer = styled.span``;
