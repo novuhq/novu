@@ -1,32 +1,40 @@
-import { useContext, useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import { IApplication, ISubscriberJwt } from '@novu/shared';
 import * as WebFont from 'webfontloader';
 
-import { Main } from './Main';
-import { Layout } from './layout/Layout';
 import { AuthContext } from '../../../store/auth.context';
 import { applyToken, getToken, useAuthController } from '../../../store/use-auth-controller';
 import { useSocketController } from '../../../store/socket/use-socket-controller';
 import { SocketContext } from '../../../store/socket/socket.store';
-import { getApplication } from '../../../api/application';
-import { useAuth } from '../../../hooks/use-auth.hook';
 import { colors } from '../../../shared/config/colors';
-import React from 'react';
 import { NovuContext } from '../../../store/novu-provider.context';
+import { useAuth } from '../../../hooks';
+import { getApplication } from '../../../api/application';
+import { Main, Layout } from '../components';
+import { NotificationCenterContext } from '../../../store/notification-center.context';
+import { INotificationCenterProps } from '../NotificationCenter';
 
 const queryClient = new QueryClient();
-
 const tokenStoredToken: string = getToken();
-
 applyToken(tokenStoredToken);
 
-export function App() {
+export function App(props: INotificationCenterProps) {
+  const { applicationIdentifier } = useContext(NovuContext);
+
   return (
-    <RootProviders>
-      <AppContent />
-    </RootProviders>
+    <NotificationCenterContext.Provider
+      value={{
+        sendUrlChange: props.onUrlChange,
+        sendNotificationClick: props.onNotificationClick,
+        onUnseenCountChanged: props.onUnseenCountChanged,
+        isLoading: !applicationIdentifier,
+      }}>
+      <RootProviders>
+        <AppContent />
+      </RootProviders>
+    </NotificationCenterContext.Provider>
   );
 }
 
