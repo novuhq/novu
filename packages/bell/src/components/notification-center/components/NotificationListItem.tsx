@@ -4,7 +4,9 @@ import moment from 'moment';
 import { shadows } from '../../../shared/config/shadows';
 import { colors } from '../../../shared/config/colors';
 import { DotsHorizontal } from '../../../shared/icons/DotsHorizontal';
-import React from 'react';
+import React, { useContext } from 'react';
+import { NovuContext } from '../../../store/novu-provider.context';
+import { ColorScheme } from '../../../index';
 
 export function NotificationListItem({
   notification,
@@ -13,8 +15,11 @@ export function NotificationListItem({
   notification: IMessage;
   onClick: (notification: IMessage) => void;
 }) {
+  const { colorScheme } = useContext(NovuContext);
+
   return (
     <ItemWrapper
+      colorScheme={colorScheme}
       data-test-id="notification-list-item"
       unseen={!notification.seen}
       onClick={() => onClick(notification)}>
@@ -43,9 +48,9 @@ const SettingsActionWrapper = styled.div`
   color: ${({ theme }) => theme.colors.secondaryFontColor};
 `;
 
-const unseenNotificationStyles = css`
-  background: ${({ theme }) => (theme.colorScheme === 'light' ? colors.white : colors.B20)};
-  box-shadow: ${({ theme }) => (theme.colorScheme === 'light' ? shadows.medium : shadows.dark)};
+const unseenNotificationStyles = css<{ colorScheme: ColorScheme }>`
+  background: ${({ colorScheme }) => (colorScheme === 'light' ? colors.white : colors.B20)};
+  box-shadow: ${({ colorScheme }) => (colorScheme === 'light' ? shadows.medium : shadows.dark)};
   font-weight: 700;
 
   &:before {
@@ -66,7 +71,7 @@ const seenNotificationStyles = css`
   font-size: 14px;
 `;
 
-const ItemWrapper = styled.div<{ unseen?: boolean }>`
+const ItemWrapper = styled.div<{ unseen?: boolean; colorScheme: ColorScheme }>`
   padding: 14px 15px 14px 15px;
   position: relative;
   display: flex;
@@ -75,7 +80,7 @@ const ItemWrapper = styled.div<{ unseen?: boolean }>`
   align-items: center;
   border-radius: 7px;
   margin: 10px 15px;
-  background: ${({ theme }) => (theme.colorScheme === 'light' ? colors.B98 : colors.B17)};
+  background: ${({ colorScheme }) => (colorScheme === 'light' ? colors.B98 : colors.B17)};
 
   &:hover {
     cursor: pointer;
