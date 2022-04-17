@@ -12,6 +12,10 @@ Let's deep dive into the building blocks of Novu's OCL approach.
 
 Templates are the blueprints for all notifications in Novu. They provide the base configurations for each message. A message is tied to a specific channel, for which a content template is provided, code rules and filters, priorities, and other metadata that will affect the delivery of a specific message.
 
+
+## Environments
+
+
 ## Providers
 
 Providers are the delivery endpoints for your notifications. They are responsible for delivering the notifications to the end users on the specified channel. Providers usually refer to a specific channel, such as email, SMS, Direct, etc... Each provider is stateless and adheres to a specific interface, Novu will manage state and mediate all provider-specific configurations.

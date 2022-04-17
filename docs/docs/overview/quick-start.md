@@ -53,11 +53,60 @@ In the notification center preview you can type the content, you can select cont
 
 After creating the template trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.
 
-### Passing variables
+```typescript
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
+  {
+    to: {
+      subscriberId: '<USER_IDENTIFIER>',
+      email: 'email@email.com',
+      firstName: 'John',
+      lastName: 'Doe',
+    },
+    payload: {
+      customVariables: 'Hello'
+    },
+  }
+);
+```
+The trigger function contains a parameters object as the second parameter. Let's explore it's different options:
 
-The second argument contains an object with custom variables used in the template, some variables are system variables and they will begin with a “**$**”:
+### `to` key
+The `to` parameter contains the information about the subscriber of the notification, you can work with Novu in 2 modes:
 
-- **$user_id** - a unique identifier for the user, this can be your internal DB id or the user email. Make sure that this variable is unique.
-- **$email** - The email address of the user.
-- **$phone** - The user’s phone address with a country prefix (+)
-- **Custom variables -**  can be added here and used within the template.
+#### Pass the subscriber information in trigger (Quickest)
+You can pass the subscriber object containing the following keys as this paramter:
+```typescript
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
+  {
+    to: {
+      subscriberId: 'Unique Subscriber Identifier',
+      firstName,
+      lastName,
+      email,
+      phone,
+      avatar
+    },
+    payload: {}
+  }
+);
+
+```
+
+The `subscriberId` is a custom identifier used when identifying your users within the Novu platform. We suggest using your internal DB identifier for this field.
+
+Novu will create an upsert command and either create a subscriber with specified payload, or update the existing subscriber with passed information.
+
+**Note:** The api will perform a PATCH command, updating only the fields passed to it. So in order to reset a specific field you must explicitly pass `null` as the fields param.
+
+
+#### Pass only the subscriberId (Recommended)
+```typescript
+{
+  to: 'SUBSCRIBER_ID',
+  payload: {}
+}
+```
+In this approach, you will only pass the subscriberId as part of the trigger, however it will require you to identify the subscriber using the `identify` method from the `@novu/node` library.
+
+### `payload` object
+Can pass any serializible JSON object to be used in the notification templates. 

@@ -1,9 +1,9 @@
 # Environments
 
-Novu runs all your requests in the context of an environment. By default we will create 2 environments when your account was just created: Development, and production.
+Novu runs all your requests in the context of an environment. By default, we will create 2 environments when your account was just created: Development, and production.
 
 #### Development environment
-Used for testing purposes and validating notification changes prior to commiting them to the production environment. 
+Used for testing purposes and validating notification changes prior to committing them to the production environment. 
 
 #### Production
 Will be your live/production environment, you cannot make changes to this environment templates directly. You will first have to make the changes in Development mode and then promote the to Production.
@@ -16,7 +16,7 @@ Novu will separate most of the data associated to your account based on the curr
 - Messages
 - Logs
 - Connected integrations
-- Notificaiton feeds
+- Notification feeds
 
 Each environment will be accessed using a separate credential sets: 
 - **Application Identifier** - Is a public identifier used in client-side environments to identify your application.
