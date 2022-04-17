@@ -47,7 +47,7 @@ export class CreateOrganization {
     const devEnv = await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         userId: user._id,
-        name: 'Developement',
+        name: 'Development',
         organizationId: createdOrganization._id,
       })
     );

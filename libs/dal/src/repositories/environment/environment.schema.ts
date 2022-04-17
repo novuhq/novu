@@ -17,7 +17,10 @@ const environmentSchema = new Schema(
     },
     apiKeys: [
       {
-        key: Schema.Types.String,
+        key: {
+          type: Schema.Types.String,
+          unique: true,
+        },
         _userId: {
           type: Schema.Types.ObjectId,
           ref: 'User',
