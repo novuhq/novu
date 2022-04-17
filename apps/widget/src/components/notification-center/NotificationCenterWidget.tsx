@@ -1,21 +1,21 @@
-import { ColorScheme, NotificationBell, NotificationCenter, NovuProvider } from '@novu/bell';
-import { IApplication, IUserEntity } from '@novu/shared';
+import { NotificationCenter, NovuProvider } from '@novu/bell';
+import { IMessage } from '@novu/shared';
 
-export function NotificationCenterWidget({
-  user,
-  application,
-  colorScheme,
-}: {
-  user: IUserEntity | undefined;
-  application: IApplication | undefined;
-  colorScheme: ColorScheme;
-}) {
+interface INotificationCenterWidgetProps {
+  onUrlChange: (url: string) => void;
+  onNotificationClick: (notification: IMessage) => void;
+  onUnseenCountChanged: (unseenCount: number) => void;
+  applicationIdentifier: string | undefined;
+}
+
+export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
   return (
-    <NovuProvider
-      subscriberId={user?._id as string}
-      applicationIdentifier={application?.identifier as string}
-      colorScheme={colorScheme}>
-      <NotificationCenter bell={<NotificationBell />} />
+    <NovuProvider applicationIdentifier={props.applicationIdentifier as string} colorScheme="light">
+      <NotificationCenter
+        onNotificationClick={props.onNotificationClick}
+        onUrlChange={props.onUrlChange}
+        onUnseenCountChanged={props.onUnseenCountChanged}
+      />
     </NovuProvider>
   );
 }

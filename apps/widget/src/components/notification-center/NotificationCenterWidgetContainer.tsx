@@ -1,11 +1,22 @@
-import { IUserEntity } from '@novu/shared';
-import { useMantineColorScheme } from '@mantine/core';
-import { useApplication } from '../../api';
 import { NotificationCenterWidget } from './NotificationCenterWidget';
+import { useParams } from 'react-router-dom';
+import { IMessage } from '@novu/shared';
 
-export function NotificationCenterWidgetContainer({ user }: { user: IUserEntity | undefined }) {
-  const { application } = useApplication();
-  const { colorScheme } = useMantineColorScheme();
+export interface INotificationCenterWidgetContainerProps {
+  onUrlChange: (url: string) => void;
+  onNotificationClick: (notification: IMessage) => void;
+  onUnseenCountChanged: (unseenCount: number) => void;
+}
 
-  return <NotificationCenterWidget user={user} application={application} colorScheme={colorScheme} />;
+export function NotificationCenterWidgetContainer(props: INotificationCenterWidgetContainerProps) {
+  const { applicationId = '' } = useParams<{ applicationId: string }>();
+
+  return (
+    <NotificationCenterWidget
+      onNotificationClick={props.onNotificationClick}
+      onUrlChange={props.onUrlChange}
+      onUnseenCountChanged={props.onUnseenCountChanged}
+      applicationIdentifier={applicationId}
+    />
+  );
 }

@@ -1,4 +1,4 @@
-import { NotificationBell, NotificationCenter, NovuProvider } from '@novu/bell';
+import { NotificationBell, NovuProvider, PopoverNotificationCenter } from '@novu/bell';
 import { useApplication } from '../../api/hooks/use-application';
 import { IUserEntity } from '@novu/shared';
 import { useMantineColorScheme } from '@mantine/core';
@@ -12,7 +12,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
       subscriberId={user?._id as string}
       applicationIdentifier={application?.identifier as string}
       colorScheme={colorScheme}>
-      <NotificationCenter bell={<NotificationBell />} />
+      <PopoverNotificationCenter bell={<NotificationBell />} />
     </NovuProvider>
   );
 }
