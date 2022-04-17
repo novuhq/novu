@@ -1,16 +1,6 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useQueryClient } from 'react-query';
-
-export function applyToken(token: string | null) {
-  if (token) {
-    localStorage.setItem('widget_user_auth_token', token);
-    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-  } else {
-    localStorage.removeItem('widget_user_auth_token');
-    delete axios.defaults.headers.common.Authorization;
-  }
-}
+import { applyToken } from '../shared/utils/applyToken';
 
 export function getToken(): string {
   return localStorage.getItem('widget_user_auth_token') as string;
