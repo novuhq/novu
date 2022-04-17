@@ -3,20 +3,6 @@ export interface IApplication {
   name: string;
   _organizationId: string;
   identifier: string;
-  channels?: {
-    email?: {
-      senderEmail: string;
-      senderName: string;
-    };
-
-    sms?: {
-      twillio: {
-        authToken: string;
-        accountSid: string;
-        phoneNumber: string;
-      };
-    };
-  };
 
   branding?: {
     color: string;
