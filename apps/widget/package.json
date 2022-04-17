@@ -1,13 +1,13 @@
 {
   "name": "@novu/widget",
-  "version": "0.4.0-alpha.6",
+  "version": "0.4.0-alpha.7",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "^4.1.0",
     "@mantine/hooks": "^4.1.0",
     "@novu/embed": "^0.4.0-alpha.5",
-    "@novu/shared": "^0.4.0-alpha.6",
+    "@novu/shared": "^0.4.0-alpha.7",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
@@ -41,8 +41,8 @@
   "devDependencies": {
     "@craco/craco": "^6.1.1",
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.4.0-alpha.6",
-    "@novu/testing": "^0.4.0-alpha.6",
+    "@novu/dal": "^0.4.0-alpha.7",
+    "@novu/testing": "^0.4.0-alpha.7",
     "@types/moment": "^2.13.0",
     "@types/react-router-dom": "^5.1.7",
     "@types/styled-components": "^5.1.7",
