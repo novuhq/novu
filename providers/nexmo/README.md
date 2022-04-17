@@ -1,6 +1,6 @@
 # Novu Nexmo Provider
 
-A Nexmo SMS provider library for [@novu/node](https://github.com/novuhq/novu)
+A Nexmo SMS provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 

@@ -1,6 +1,6 @@
 # Novu Ses Provider
 
-A SES email provider library for [@novu/node](https://github.com/novuhq/novu)
+A SES email provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 

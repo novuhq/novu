@@ -6,6 +6,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { TriggerEventDto } from './dto/trigger-event.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ISubscribersDefine } from '@novu/node';
 
 @Controller('events')
 export class EventsController {
@@ -15,6 +16,17 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
   trackEvent(@UserSession() user: IJwtPayload, @Body() body: TriggerEventDto) {
+    const subscribers = Array.isArray(body.to) ? body.to : [body.to];
+    const mappedSubscribers: ISubscribersDefine[] = subscribers.map((subscriber) => {
+      if (typeof subscriber === 'string') {
+        return {
+          subscriberId: subscriber,
+        };
+      } else {
+        return subscriber;
+      }
+    });
+
     return this.triggerEvent.execute(
       TriggerEventCommand.create({
         userId: user._id,
@@ -22,6 +34,7 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
+        to: mappedSubscribers,
         transactionId: uuidv4(),
       })
     );

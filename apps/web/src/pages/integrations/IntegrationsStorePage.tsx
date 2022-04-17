@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum, providers, IConfigCredentials, ILogoFileName } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
@@ -68,6 +69,7 @@ export function IntegrationsStore() {
 
   return (
     <>
+      <PageMeta title="Integrations" />
       {!isLoading ? (
         <PageContainer>
           <PageHeader title="Integration Store" />
