@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "0.4.0-alpha.7",
+  "version": "0.4.0-alpha.8",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
@@ -74,8 +74,8 @@
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/runtime": "^7.14.6",
-    "@novu/dal": "^0.4.0-alpha.7",
-    "@novu/testing": "^0.4.0-alpha.7",
+    "@novu/dal": "^0.4.0-alpha.8",
+    "@novu/testing": "^0.4.0-alpha.8",
     "@storybook/addon-actions": "^6.4.14",
     "@storybook/addon-essentials": "^6.4.14",
     "@storybook/addon-links": "^6.4.14",
