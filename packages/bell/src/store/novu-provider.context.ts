@@ -5,4 +5,5 @@ export const NovuContext = React.createContext<INovuProviderContext>({
   backendUrl: null,
   subscriberId: null,
   colorScheme: 'light',
+  initialized: false,
 });
