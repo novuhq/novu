@@ -5,7 +5,8 @@ import Card from '../../../components/layout/components/Card';
 import { WIDGET_EMEBED_PATH } from '../../../config';
 import { useEnvironment } from '../../../api/hooks/use-environment';
 
-export const InAppCenterCard = ({ environment }: { environment: IEnvironment | undefined }) => {
+export const InAppCenterCard = () => {
+  const { environment } = useEnvironment();
   const embedCode = `<script>
   (function(n,o,t,i,f) {
     n[i] = {}, m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
