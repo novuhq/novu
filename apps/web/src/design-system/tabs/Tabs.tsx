@@ -51,7 +51,8 @@ export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
           onTabChange={onTabChange}
           position={position}
           variant="unstyled"
-          classNames={classes}>
+          classNames={classes}
+        >
           {menuTabs.map((menuTab, i) =>
             withIcon ? (
               <MantineTabs.Tab label={menuTab.label} icon={menuTab.icon} key={i}>

@@ -29,7 +29,8 @@ export function PasswordResetPage({}: Props) {
       {showSentSuccess && (
         <AuthContainer
           title="Reset Sent!"
-          description="We've sent a password reset link to the account associated with your email">
+          description="We've sent a password reset link to the account associated with your email"
+        >
           <Button data-test-id="success-screen-reset" onClick={() => navigate('/auth/login')} inherit>
             Go Back
           </Button>

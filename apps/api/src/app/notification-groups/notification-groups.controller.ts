@@ -25,7 +25,7 @@ export class NotificationGroupsController {
       CreateNotificationGroupCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         name: body.name,
       })
     );
@@ -38,7 +38,7 @@ export class NotificationGroupsController {
       GetNotificationGroupsCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
       })
     );
   }

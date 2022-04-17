@@ -22,7 +22,7 @@ export class SubscriberRouteGuard implements CanActivate {
     const tokenContent = jwt.decode(token) as ISubscriberJwt;
     if (!tokenContent) return false;
     if (tokenContent.aud !== 'widget_user') return false;
-    if (!tokenContent.applicationId) return false;
+    if (!tokenContent.environmentId) return false;
 
     return true;
   }

@@ -16,7 +16,7 @@ describe('Get Integrations - /integrations (GET)', function () {
 
     expect(integrations.length).to.equal(2);
 
-    const integration = integrations.find((x) => x.channel === 'email');
+    const integration = integrations.find((integrationItem) => integrationItem.channel === 'email');
 
     expect(integration.providerId).to.equal('sendgrid');
     expect(integration.channel).to.equal(ChannelTypeEnum.EMAIL);

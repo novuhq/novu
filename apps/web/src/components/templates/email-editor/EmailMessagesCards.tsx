@@ -1,8 +1,8 @@
 import { useQuery } from 'react-query';
-import { IApplication } from '@novu/shared';
+import { IEnvironment } from '@novu/shared';
 import { FieldArrayWithId } from 'react-hook-form';
 import { IForm } from '../use-template-controller.hook';
-import { getCurrentApplication } from '../../../api/application';
+import { getCurrentEnvironment } from '../../../api/environment';
 import { EmailContentCard } from './EmailContentCard';
 
 export function EmailMessagesCards({
@@ -16,7 +16,7 @@ export function EmailMessagesCards({
   variables: { name: string }[];
   isIntegrationActive: boolean;
 }) {
-  const { data: application } = useQuery<IApplication>('currentApplication', getCurrentApplication);
+  const { data: environment } = useQuery<IEnvironment>('currentEnvironment', getCurrentEnvironment);
 
   return (
     <>
@@ -24,7 +24,7 @@ export function EmailMessagesCards({
         return (
           <EmailContentCard
             key={index}
-            application={application}
+            environment={environment}
             variables={variables}
             index={index}
             isIntegrationActive={isIntegrationActive}

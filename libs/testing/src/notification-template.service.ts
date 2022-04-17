@@ -3,14 +3,14 @@ import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
 import {
   MessageTemplateRepository,
   NotificationGroupRepository,
-  NotificationMessagesEntity,
+  NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 
 export class NotificationTemplateService {
-  constructor(private userId: string, private organizationId: string | undefined, private applicationId: string) {}
+  constructor(private userId: string, private organizationId: string | undefined, private environmentId: string) {}
 
   private notificationTemplateRepository = new NotificationTemplateRepository();
 
@@ -20,11 +20,11 @@ export class NotificationTemplateService {
 
   async createTemplate(override: Partial<CreateTemplatePayload> = {}) {
     const groups = await this.notificationGroupRepository.find({
-      _applicationId: this.applicationId,
+      _environmentId: this.environmentId,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const messages: any[] = override?.messages ?? [
+    const steps: any[] = override?.steps ?? [
       {
         type: ChannelTypeEnum.IN_APP,
         content: 'Test content for <b>{{firstName}}</b>',
@@ -52,9 +52,9 @@ export class NotificationTemplateService {
       },
     ];
 
-    const templateMessages: NotificationMessagesEntity[] = [];
+    const templateSteps: NotificationStepEntity[] = [];
 
-    for (const message of messages) {
+    for (const message of steps) {
       const saved = await this.messageTemplateRepository.create({
         type: message.type,
         cta: message.cta,
@@ -63,10 +63,10 @@ export class NotificationTemplateService {
         name: message.name,
         _creatorId: this.userId,
         _organizationId: this.organizationId,
-        _applicationId: this.applicationId,
+        _environmentId: this.environmentId,
       });
 
-      templateMessages.push({
+      templateSteps.push({
         filters: message.filters,
         _templateId: saved._id,
       });
@@ -74,7 +74,7 @@ export class NotificationTemplateService {
 
     const data: NotificationTemplateEntity = {
       _notificationGroupId: groups[0]._id,
-      _applicationId: this.applicationId,
+      _environmentId: this.environmentId,
       name: faker.name.title(),
       _organizationId: this.organizationId,
       _creatorId: this.userId,
@@ -90,7 +90,7 @@ export class NotificationTemplateService {
         },
       ],
       ...override,
-      messages: templateMessages,
+      steps: templateSteps,
     };
 
     const notificationTemplate = await this.notificationTemplateRepository.create(data);

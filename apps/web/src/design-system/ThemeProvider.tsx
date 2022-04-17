@@ -22,7 +22,8 @@ export function ThemeProvider({ children, dark = true }: { children: JSX.Element
           // Override any other properties from default theme
           colorScheme,
           ...mantineConfig,
-        }}>
+        }}
+      >
         <Global
           styles={(theme) => ({
             body: {

@@ -11,7 +11,7 @@ describe('Activity page', function () {
           token: session.token,
           count: 25,
           organizationId: session.organization._id,
-          applicationId: session.application._id,
+          environmentId: session.environment._id,
         });
       });
   });

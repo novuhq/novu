@@ -4,7 +4,7 @@ import { INotificationTemplate } from '../notification-template';
 export interface IMessage {
   _id: string;
   _templateId: string;
-  _applicationId: string;
+  _environmentId: string;
   _organizationId: string;
   _notificationId: string;
   _subscriberId: string;

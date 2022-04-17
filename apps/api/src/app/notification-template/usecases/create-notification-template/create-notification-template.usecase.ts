@@ -17,14 +17,15 @@ export class CreateNotificationTemplate {
 
   async execute(command: CreateNotificationTemplateCommand) {
     const contentService = new ContentService();
-    const variables = contentService.extractMessageVariables(command.messages);
+    const variables = contentService.extractMessageVariables(command.steps);
+    const subscriberVariables = contentService.extractSubscriberMessageVariables(command.steps);
 
     const triggerIdentifier = `${slugify(command.name, {
       lower: true,
       strict: true,
     })}`;
     const templateCheckIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.applicationId,
+      command.environmentId,
       triggerIdentifier
     );
     const trigger: INotificationTrigger = {
@@ -35,11 +36,16 @@ export class CreateNotificationTemplate {
           name: i,
         };
       }),
+      subscriberVariables: subscriberVariables.map((i) => {
+        return {
+          name: i,
+        };
+      }),
     };
 
-    const templateMessages = [];
+    const templateSteps = [];
 
-    for (const message of command.messages) {
+    for (const message of command.steps) {
       const template = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
           type: message.type,
@@ -47,14 +53,14 @@ export class CreateNotificationTemplate {
           content: message.content,
           contentType: message.contentType,
           organizationId: command.organizationId,
-          applicationId: command.applicationId,
+          environmentId: command.environmentId,
           userId: command.userId,
           cta: message.cta,
           subject: message.subject,
         })
       );
 
-      templateMessages.push({
+      templateSteps.push({
         _templateId: template._id,
         filters: message.filters,
       });
@@ -63,13 +69,13 @@ export class CreateNotificationTemplate {
     const savedTemplate = await this.notificationTemplateRepository.create({
       _organizationId: command.organizationId,
       _creatorId: command.userId,
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
       name: command.name,
       active: command.active,
       draft: command.draft,
       tags: command.tags,
       description: command.description,
-      messages: templateMessages,
+      steps: templateSteps,
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
     });

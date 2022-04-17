@@ -10,7 +10,7 @@ import { TestingModule } from './app/testing/testing.module';
 import { HealthModule } from './app/health/health.module';
 import { AdminModule } from './app/admin/admin.module';
 import { OrganizationModule } from './app/organization/organization.module';
-import { ApplicationsModule } from './app/applications/applications.module';
+import { EnvironmentsModule } from './app/environments/environments.module';
 import { NotificationTemplateModule } from './app/notification-template/notification-template.module';
 import { EventsModule } from './app/events/events.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
@@ -22,6 +22,7 @@ import { InvitesModule } from './app/invites/invites.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { QueueService } from './app/shared/services/queue';
 import { IntegrationModule } from './app/integrations/integrations.module';
+import { SubscribersModule } from './app/subscribers/subscribers.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   OrganizationModule,
@@ -30,7 +31,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   AuthModule,
   HealthModule,
   AdminModule,
-  ApplicationsModule,
+  EnvironmentsModule,
   NotificationTemplateModule,
   EventsModule,
   WidgetsModule,
@@ -41,6 +42,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   InvitesModule,
   ContentTemplatesModule,
   IntegrationModule,
+  SubscribersModule,
 ];
 
 const providers = [];
@@ -50,7 +52,7 @@ if (process.env.SENTRY_DSN) {
   providers.push({
     provide: APP_INTERCEPTOR,
     useValue: new RavenInterceptor({
-      user: ['_id', 'firstName', 'email', 'organizationId', 'applicationId'],
+      user: ['_id', 'firstName', 'email', 'organizationId', 'environmentId'],
     }),
   });
 }

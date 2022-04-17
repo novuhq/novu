@@ -1,8 +1,8 @@
 import { IsBoolean, IsDefined, IsMongoId } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class ChangeTemplateActiveStatusCommand extends ApplicationWithUserCommand {
+export class ChangeTemplateActiveStatusCommand extends EnvironmentWithUserCommand {
   static create(data: ChangeTemplateActiveStatusCommand) {
     return CommandHelper.create<ChangeTemplateActiveStatusCommand>(ChangeTemplateActiveStatusCommand, data);
   }

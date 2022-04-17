@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Container } from '@mantine/core';
-import { useApplication } from '../../api/hooks/use-application';
+import { useEnvironment } from '../../api/hooks/use-environment';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
@@ -14,7 +15,7 @@ export function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState(0);
 
-  const { application, loading: isLoadingApplication, refetch } = useApplication();
+  const { environment, loading: isLoadingEnvironment, refetch } = useEnvironment();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -27,11 +28,11 @@ export function SettingsPage() {
   const menuTabs = [
     {
       label: 'Branding',
-      content: <BrandingForm isLoading={isLoadingApplication} application={application} />,
+      content: <BrandingForm isLoading={isLoadingEnvironment} environment={environment} />,
     },
     {
       label: 'In App Center',
-      content: <InAppCenterCard application={application} />,
+      content: <InAppCenterCard environment={environment} />,
     },
     {
       label: 'Api Keys',
@@ -41,9 +42,10 @@ export function SettingsPage() {
 
   return (
     <PageContainer>
+      <PageMeta title="Settings" />
       <PageHeader title="Settings" />
       <Container fluid mt={15} ml={5}>
-        <Tabs loading={isLoadingApplication} active={activeTab} onTabChange={setActiveTab} menuTabs={menuTabs} />
+        <Tabs loading={isLoadingEnvironment} active={activeTab} onTabChange={setActiveTab} menuTabs={menuTabs} />
       </Container>
     </PageContainer>
   );

@@ -3,7 +3,7 @@ import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
 export class MessageTemplateEntity {
   _id?: string;
 
-  _applicationId: string;
+  _environmentId: string;
 
   _organizationId: string;
 

@@ -1,8 +1,8 @@
 import { IsEmail, IsOptional, IsString } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class UpdateSubscriberCommand extends ApplicationCommand {
+export class UpdateSubscriberCommand extends EnvironmentCommand {
   static create(data: UpdateSubscriberCommand) {
     return CommandHelper.create(UpdateSubscriberCommand, data);
   }
@@ -23,4 +23,8 @@ export class UpdateSubscriberCommand extends ApplicationCommand {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 }

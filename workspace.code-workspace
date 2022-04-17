@@ -25,8 +25,8 @@
       "path": "libs/dal"
     },
     {
-      "name": "📦 @novu/sdk",
-      "path": "libs/sdk"
+      "name": "📦 @novu/embed",
+      "path": "libs/embed"
     },
     {
       "name": "📦 @novu/cli",

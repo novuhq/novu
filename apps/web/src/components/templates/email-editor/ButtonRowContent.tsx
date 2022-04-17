@@ -40,7 +40,8 @@ export function ButtonRowContent({
   return (
     <div
       style={{ textAlign: 'center', direction: block?.styles?.textDirection || 'ltr' }}
-      data-test-id="button-block-wrapper">
+      data-test-id="button-block-wrapper"
+    >
       <Popover
         styles={(theme) => ({
           inner: {
@@ -72,10 +73,12 @@ export function ButtonRowContent({
               },
             }}
             color="red"
-            onClick={() => setDropDownVisible((o) => !o)}>
+            onClick={() => setDropDownVisible((open) => !open)}
+          >
             {block.content}
           </MantineButton>
-        }>
+        }
+      >
         <MantineInput
           data-test-id="button-text-input"
           icon={<TextAlignment />}

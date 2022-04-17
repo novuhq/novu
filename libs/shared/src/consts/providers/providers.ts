@@ -40,8 +40,7 @@ export const providers: IProviderConfig[] = [
     displayName: 'Mailjet',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailjetConfig,
-    docReference:
-      'https://documentation.mailjet.com/hc/en-us/categories/360003942934-Mailjet-Documentation-Center-?utm_term=&utm_campaign=2090162100&utm_content=&utm_source=google&utm_medium=cpc&creative=376403038923&keyword=&matchtype=&network=g&device=c&gclid=CjwKCAjwlcaRBhBYEiwAK341jZcp57kFjJav0TcX06RVp0Z0Ws4cMVCghQ52SIL8Fb3aJ9Fpcnu9axoCXDgQAvD_BwE',
+    docReference: 'https://documentation.mailjet.com/hc/en-us/categories/360003942934-Mailjet-Documentation-Center-',
     logoFileName: { light: 'mailjet.png', dark: 'mailjet.png' },
   },
   {
@@ -81,8 +80,7 @@ export const providers: IProviderConfig[] = [
     displayName: 'Sendinblue',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendinblueConfig,
-    docReference:
-      'https://www.sendinblue.com/?utm_source=adwords_brand&utm_medium=lastclick&utm_content=SendinBlue&utm_extension&utm_term=%2Bsendinblue&utm_matchtype=b&utm_campaign=629579262&utm_network=g&km_adid=355470526977&km_adposition&km_device=c&utm_adgroupid=31406137162&gclid=CjwKCAjwlcaRBhBYEiwAK341jUKWuciIZYX0QDYm9Y8bga6i1-bAC1D36eUPvBWJRawD347sUXlxXxoC3B4QAvD_BwE',
+    docReference: 'https://www.sendinblue.com/',
     logoFileName: { light: 'sendinblue.png', dark: 'sendinblue.png' },
   },
   {

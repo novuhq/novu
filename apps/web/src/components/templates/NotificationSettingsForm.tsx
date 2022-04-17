@@ -89,24 +89,26 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
         <Controller
           name="notificationGroup"
           control={control}
-          render={({ field }) => (
-            <>
-              <Select
-                {...field}
-                label="Notification Group"
-                data-test-id="groupSelector"
-                loading={loadingGroups || loadingCreateGroup}
-                creatable
-                searchable
-                description="Categorize notifications into groups for unified settings control"
-                error={errors.notificationGroup}
-                getCreateLabel={(newGroup) => <div data-test-id="submit-category-btn">+ Create Group {newGroup}</div>}
-                onCreate={addGroupItem}
-                placeholder="Attach notification to group"
-                data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}
-              />
-            </>
-          )}
+          render={({ field }) => {
+            return (
+              <>
+                <Select
+                  {...field}
+                  label="Notification Group"
+                  data-test-id="groupSelector"
+                  loading={loadingGroups || loadingCreateGroup}
+                  creatable
+                  searchable
+                  description="Categorize notifications into groups for unified settings control"
+                  error={errors.notificationGroup}
+                  getCreateLabel={(newGroup) => <div data-test-id="submit-category-btn">+ Create Group {newGroup}</div>}
+                  onCreate={addGroupItem}
+                  placeholder="Attach notification to group"
+                  data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}
+                />
+              </>
+            );
+          }}
         />
       </Grid.Col>
     </Grid>

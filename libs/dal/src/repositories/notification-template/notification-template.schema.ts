@@ -31,10 +31,15 @@ const notificationTemplateSchema = new Schema(
             name: Schema.Types.String,
           },
         ],
+        subscriberVariables: [
+          {
+            name: Schema.Types.String,
+          },
+        ],
       },
     ],
 
-    messages: [
+    steps: [
       {
         filters: [
           {
@@ -58,9 +63,9 @@ const notificationTemplateSchema = new Schema(
         },
       },
     ],
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
@@ -74,9 +79,9 @@ const notificationTemplateSchema = new Schema(
   schemaOptions
 );
 
-notificationTemplateSchema.virtual('messages.template', {
+notificationTemplateSchema.virtual('steps.template', {
   ref: 'MessageTemplate',
-  localField: 'messages._templateId',
+  localField: 'steps._templateId',
   foreignField: '_id',
   justOne: true,
 });

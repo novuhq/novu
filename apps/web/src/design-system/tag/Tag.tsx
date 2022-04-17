@@ -27,7 +27,8 @@ export function Tag({ children, color, border, ...props }: ITagProps) {
       variant="outline"
       size="md"
       radius="xs"
-      {...props}>
+      {...props}
+    >
       {children}
     </Badge>
   );

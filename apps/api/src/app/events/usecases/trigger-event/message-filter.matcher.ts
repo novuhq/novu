@@ -1,12 +1,12 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { NotificationMessagesEntity } from '@novu/dal';
+import { NotificationStepEntity } from '@novu/dal';
 
 export function matchMessageWithFilters(
   channel: ChannelTypeEnum,
-  messages: NotificationMessagesEntity[],
+  steps: NotificationStepEntity[],
   payloadVariables: { [key: string]: string | string[] | { [key: string]: string } }
-): NotificationMessagesEntity[] {
-  return messages.filter((message) => {
+): NotificationStepEntity[] {
+  return steps.filter((message) => {
     const channelIsMatching = message.template.type === channel;
 
     if (message.filters?.length) {

@@ -1,4 +1,4 @@
-import { ApplicationRepository, OrganizationRepository } from '@novu/dal';
+import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
@@ -6,7 +6,7 @@ import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 
 describe('User registration - /auth/register (POST)', async () => {
   let session: UserSession;
-  const applicationRepository = new ApplicationRepository();
+  const environmentRepository = new EnvironmentRepository();
   const organizationRepository = new OrganizationRepository();
 
   before(async () => {
@@ -65,12 +65,12 @@ describe('User registration - /auth/register (POST)', async () => {
 
     expect(organization.name).to.equal('Sample org');
 
-    // Should generate application and api keys
-    expect(jwtContent.applicationId).to.be.ok;
-    const application = await applicationRepository.findById(jwtContent.applicationId);
+    // Should generate environment and api keys
+    expect(jwtContent.environmentId).to.be.ok;
+    const environment = await environmentRepository.findById(jwtContent.environmentId);
 
-    expect(application.apiKeys.length).to.equal(1);
-    expect(application.apiKeys[0].key).to.ok;
+    expect(environment.apiKeys.length).to.equal(1);
+    expect(environment.apiKeys[0].key).to.ok;
 
     expect(jwtContent.roles[0]).to.equal(MemberRoleEnum.ADMIN);
   });

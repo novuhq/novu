@@ -16,8 +16,8 @@ export function NotificationsList({
   hasNextPage: boolean;
   onNotificationClicked: (notification: IMessage) => void;
 }) {
-  const totalCount = notifications.reduce((h, i) => {
-    const newCount = h + i.length;
+  const totalCount = notifications.reduce((history, messages) => {
+    const newCount = history + messages.length;
 
     return newCount;
   }, 0);
@@ -30,7 +30,8 @@ export function NotificationsList({
         hasMore={hasNextPage}
         height={400}
         loader={<Loader />}
-        endMessage={false}>
+        endMessage={false}
+      >
         {notifications.map((page) => {
           return page.map((notification) => (
             <NotificationListItem key={notification._id} notification={notification} onClick={onNotificationClicked} />

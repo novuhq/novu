@@ -3,7 +3,7 @@ import {
   DalService,
   UserRepository,
   OrganizationRepository,
-  ApplicationRepository,
+  EnvironmentRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
   NotificationRepository,
@@ -16,7 +16,7 @@ import { QueueService } from './queue';
 const DAL_MODELS = [
   UserRepository,
   OrganizationRepository,
-  ApplicationRepository,
+  EnvironmentRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
   NotificationRepository,

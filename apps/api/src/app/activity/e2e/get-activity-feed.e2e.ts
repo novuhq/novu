@@ -16,7 +16,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     await session.testAgent
       .post('/v1/widgets/session/initialize')
       .send({
-        applicationIdentifier: session.application.identifier,
+        applicationIdentifier: session.environment.identifier,
         $user_id: '12345',
         $first_name: 'Test',
         $last_name: 'User',
@@ -26,13 +26,11 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should get the current activity feed of user', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
@@ -49,18 +47,15 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by channel', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
@@ -73,18 +68,17 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by templateId', async function () {
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
+      payload: {
+        firstName: 'Test',
+      },
+    });
+
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
-      firstName: 'Test',
-    });
-
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(template.triggers[0].identifier, '12345', {
       firstName: 'Test',
     });
 
@@ -99,32 +93,45 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by email', async function () {
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, {
-      $user_id: '12345',
+    await session.triggerEvent(
+      smsOnlyTemplate.triggers[0].identifier,
+      {
+        subscriberId: '1234522',
+        email: 'test@email.coms',
+      },
+      {
+        firstName: 'Test',
+      }
+    );
+
+    await session.triggerEvent(template.triggers[0].identifier, '1234564', {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '1234564',
-      firstName: 'Test',
-      $email: 'test@email.coms',
-    });
+    await session.triggerEvent(
+      template.triggers[0].identifier,
+      {
+        subscriberId: '123452',
+      },
+      {
+        firstName: 'Test',
+      }
+    );
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
-      firstName: 'Test',
-    });
-
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
-      firstName: 'Test',
-    });
+    await session.triggerEvent(
+      template.triggers[0].identifier,
+      {
+        subscriberId: '12345',
+      },
+      {
+        firstName: 'Test',
+      }
+    );
 
     const { body } = await session.testAgent.get(`/v1/activity?page=0&search=test@email.coms`);
     const activities: IMessage[] = body.data;
 
-    expect(activities.length).to.equal(2);
-    expect(activities[0]._templateId).to.equal(template._id);
-    expect(activities[1]._templateId).to.equal(template._id);
+    expect(activities.length).to.equal(1);
+    expect(activities[0]._templateId).to.equal(smsOnlyTemplate._id);
   });
 });

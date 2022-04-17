@@ -142,7 +142,8 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
         borderRadius: '5px',
         backgroundColor,
         margin: '5px',
-      }}>
+      }}
+    >
       <div
         style={{
           margin: '6.5px 0px 6.5px 10px',
@@ -150,7 +151,8 @@ function Value({ label, onRemove }: MultiSelectValueProps) {
           maxWidth: '80px',
           fontSize: 14,
           fontWeight: 400,
-        }}>
+        }}
+      >
         <Text rows={1}>{label}</Text>
       </div>
       <CloseButton style={{ color }} onMouseDown={onRemove} variant="transparent" size={30} iconSize={15} />

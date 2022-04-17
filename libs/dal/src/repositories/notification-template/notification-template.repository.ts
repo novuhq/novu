@@ -7,11 +7,11 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     super(NotificationTemplate, NotificationTemplateEntity);
   }
 
-  async findByTriggerIdentifier(applicationId: string, identifier: string) {
+  async findByTriggerIdentifier(environmentId: string, identifier: string) {
     const item = await NotificationTemplate.findOne({
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       'triggers.identifier': identifier,
-    }).populate('messages.template');
+    }).populate('steps.template');
 
     return this.mapEntity(item);
   }
@@ -20,14 +20,14 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     const item = await NotificationTemplate.findOne({
       _id: id,
       _organizationId: organizationId,
-    }).populate('messages.template');
+    }).populate('steps.template');
 
     return this.mapEntity(item);
   }
 
-  async getList(organizationId: string, applicationId: string) {
+  async getList(organizationId: string, environmentId: string) {
     const items = await NotificationTemplate.find({
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       _organizationId: organizationId,
     }).populate('notificationGroup');
 

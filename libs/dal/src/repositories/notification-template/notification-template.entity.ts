@@ -21,13 +21,13 @@ export class NotificationTemplateEntity {
 
   tags: string[];
 
-  messages: NotificationMessagesEntity[];
+  steps: NotificationStepEntity[];
 
   _organizationId: string;
 
   _creatorId: string;
 
-  _applicationId: string;
+  _environmentId: string;
 
   triggers: NotificationTriggerEntity[];
 
@@ -44,19 +44,23 @@ export class NotificationTriggerEntity {
   variables: {
     name: string;
   }[];
+
+  subscriberVariables?: {
+    name: string;
+  }[];
 }
 
-export class NotificationMessagesEntity {
+export class NotificationStepEntity {
   _id?: string;
 
   _templateId: string;
 
   template?: MessageTemplateEntity;
 
-  filters?: MessageFilter[];
+  filters?: StepFilter[];
 }
 
-export class MessageFilter {
+export class StepFilter {
   isNegated: boolean;
 
   type: BuilderFieldType;

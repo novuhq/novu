@@ -3,7 +3,7 @@ import {
   DalService,
   UserRepository,
   OrganizationRepository,
-  ApplicationRepository,
+  EnvironmentRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
   NotificationRepository,
@@ -22,7 +22,7 @@ import { StorageService } from './services/storage/storage.service';
 const DAL_MODELS = [
   UserRepository,
   OrganizationRepository,
-  ApplicationRepository,
+  EnvironmentRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
   NotificationRepository,

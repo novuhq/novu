@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { useTemplates } from '../../api/hooks/use-templates';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tag, Button, Table, colors, Text } from '../../design-system';
@@ -66,7 +67,8 @@ function NotificationList() {
             variant="transparent"
             component={Link}
             to={`/templates/edit/${_id}`}
-            data-test-id="template-edit-link">
+            data-test-id="template-edit-link"
+          >
             <Edit color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
           </ActionIcon>
         </ActionButtonWrapper>
@@ -80,6 +82,7 @@ function NotificationList() {
 
   return (
     <PageContainer>
+      <PageMeta title="Templates" />
       <PageHeader
         title="Notification Template"
         actions={
@@ -94,7 +97,8 @@ function NotificationList() {
           loading={isLoading}
           data-test-id="notifications-template"
           columns={columns}
-          data={templates || []}>
+          data={templates || []}
+        >
           {' '}
         </Table>
       </TemplateListTableWrapper>
