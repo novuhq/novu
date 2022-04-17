@@ -56,7 +56,7 @@ export class AcceptInvite {
           },
           payload: {
             invitedUserEmail: member.invite.email,
-            ctaUrl: '/settings/organization',
+            ctaUrl: '/team',
           },
         });
       }
