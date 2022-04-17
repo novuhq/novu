@@ -92,7 +92,6 @@ export function HeaderNav({}: Props) {
                 />
               </ActionIcon>
             }>
-            {' '}
             {profileMenuMantine}
           </Dropdown>
         </Group>
