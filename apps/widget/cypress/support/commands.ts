@@ -105,7 +105,7 @@ Cypress.Commands.add('initializeWidget', (session, shell = false) => {
 
 Cypress.Commands.add('initializeOrganization', (settings = {}) => {
   return cy.task('getSession', settings, { log: false }).then((response: any) => {
-    const userId = faker.random.uuid();
+    const userId = faker.datatype.uuid();
 
     return {
       userId,
