@@ -20,16 +20,60 @@ describe('test use of novu node package', () => {
     mockedAxios.post.mockResolvedValue({});
 
     await novu.trigger('test-template', {
-      $user_id: 'test-user',
-      $email: 'test-user@sd.com',
+      to: 'test-user',
+      payload: {
+        email: 'test-user@sd.com',
+      },
     });
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
       name: 'test-template',
+      to: 'test-user',
       payload: {
-        $user_id: 'test-user',
-        $email: 'test-user@sd.com',
+        email: 'test-user@sd.com',
+      },
+    });
+  });
+
+  test('should trigger correctly for all subscribers definitions ', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.trigger('test-template', {
+      to: ['test-user', 'test-another-user'],
+      payload: {
+        organizationName: 'Company',
+      },
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
+      name: 'test-template',
+      to: ['test-user', 'test-another-user'],
+      payload: {
+        organizationName: 'Company',
+      },
+    });
+
+    await novu.trigger('test-template', {
+      to: [
+        { subscriberId: 'test-user', firstName: 'test' },
+        { subscriberId: 'test-another-user' },
+      ],
+      payload: {
+        organizationName: 'Company',
+      },
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
+      name: 'test-template',
+      to: [
+        { subscriberId: 'test-user', firstName: 'test' },
+        { subscriberId: 'test-another-user' },
+      ],
+      payload: {
+        organizationName: 'Company',
       },
     });
   });

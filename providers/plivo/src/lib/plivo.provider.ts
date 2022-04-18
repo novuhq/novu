@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
-} from '@novu/node';
+} from '@novu/stateless';
 
 import * as plivo from 'plivo';
 

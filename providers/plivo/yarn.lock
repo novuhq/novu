@@ -756,9 +756,9 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@novu/node@^0.1.1":
+"@novu/stateless@^0.1.1":
   version "0.1.1"
-  resolved "https://registry.npmjs.org/@novu/node/-/core-0.1.1.tgz"
+  resolved "https://registry.npmjs.org/@novu/stateless/-/core-0.1.1.tgz"
   integrity sha512-DIhN9NqIbtFcCVJQ0OtUGZvpiy61usHyKGG1T2bmySZagEBJH/LSfpcBcnTfDgjIYEcl90ZGOu2zToJRDJbOgg==
   dependencies:
     lodash.get "^4.4.2"

@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
-} from '@novu/node';
+} from '@novu/stateless';
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
 export class MailersendEmailProvider implements IEmailProvider {

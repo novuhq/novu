@@ -1,6 +1,6 @@
 # Novu sms77 Provider
 
-A sms77 sms provider library for [@novu/node](https://github.com/novuhq/novu)
+A sms77 sms provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 

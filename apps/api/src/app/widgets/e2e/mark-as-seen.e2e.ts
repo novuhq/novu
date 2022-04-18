@@ -27,13 +27,9 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
       })
       .expect(201);
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
-    });
+    await session.triggerEvent(template.triggers[0].identifier, '12345');
 
-    await session.triggerEvent(template.triggers[0].identifier, {
-      $user_id: '12345',
-    });
+    await session.triggerEvent(template.triggers[0].identifier, '12345');
     const { token } = body.data;
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

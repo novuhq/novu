@@ -13,6 +13,7 @@ export class CreateEnvironment {
       _organizationId: command.organizationId,
       name: command.name,
       identifier: nanoid(12),
+      _parentId: command.parentEnvironmentId,
       apiKeys: [
         {
           key: hat(),

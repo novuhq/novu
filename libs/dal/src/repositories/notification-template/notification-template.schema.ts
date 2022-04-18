@@ -31,6 +31,11 @@ const notificationTemplateSchema = new Schema(
             name: Schema.Types.String,
           },
         ],
+        subscriberVariables: [
+          {
+            name: Schema.Types.String,
+          },
+        ],
       },
     ],
 
