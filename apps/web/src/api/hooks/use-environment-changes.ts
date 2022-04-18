@@ -21,8 +21,6 @@ export function useEnvironmentChanges() {
     enabled: false,
   });
 
-  console.log(changes);
-
   return {
     changes,
     isLoadingChanges,
