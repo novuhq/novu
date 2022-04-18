@@ -23,14 +23,14 @@ export function SideNav({}: Props) {
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
-        <SegmentedControl
+        {/*     <SegmentedControl
           data={[
             { value: 'Development', label: 'Development' },
             { value: 'Production', label: 'Production' },
           ]}
           defaultValue={activeMode}
           onChange={(value) => setActiveMode(value)}
-        />
+        />*/}
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
     </Navbar>
