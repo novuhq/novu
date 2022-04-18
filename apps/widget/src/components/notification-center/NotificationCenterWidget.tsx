@@ -20,9 +20,6 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
       }
     };
 
-    // eslint-disable-next-line no-console
-    console.log('HANDLER', handler, process.env.NODE_ENV);
-
     if (process.env.NODE_ENV === 'test') {
       // eslint-disable-next-line
       (window as any).initHandler = handler;
@@ -34,9 +31,6 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   }, []);
 
   if (!userDataPayload) return null;
-
-  // eslint-disable-next-line no-console
-  console.log(userDataPayload);
 
   return (
     <NovuProvider

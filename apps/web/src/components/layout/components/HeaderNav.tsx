@@ -13,6 +13,7 @@ import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
 import { useColorScheme } from '@mantine/hooks';
+import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 
 type Props = {};
 const menuItem = [

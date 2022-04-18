@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useInfiniteQuery, useMutation } from 'react-query';
 import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
-import { sendNotificationClick, sendUrlChange } from './api/embed.service';
 import { NotificationsList } from './NotificationsList';
 import { getNotificationsList, markMessageAsSeen } from '../../../api/notifications';
 import { useSocket } from '../../../hooks/use-socket.hook';
@@ -26,13 +25,9 @@ export function Main() {
     (params) => markMessageAsSeen(params.messageId)
   );
 
-  console.log({ socket });
-
   useEffect(() => {
     if (socket) {
-      console.log('LISTENED TO EVENT');
       socket.on('unseen_count_changed', () => {
-        console.log('COUNT CHANGED');
         refetch();
       });
     }

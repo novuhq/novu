@@ -3,8 +3,8 @@ import { useSocketController } from '../../../store/socket/use-socket-controller
 import React, { useContext, useEffect } from 'react';
 import { NovuContext } from '../../../store/novu-provider.context';
 import { useQuery } from 'react-query';
-import { IApplication } from '@novu/shared';
-import { getApplication } from '../../../api/application';
+import { IOrganizationEntity } from '@novu/shared';
+import { getOrganization } from '../../../api/organization';
 import { colors } from '../../../shared/config/colors';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { SocketContext } from '../../../store/socket/socket.store';
@@ -17,9 +17,9 @@ export function AppContent() {
   const { socket } = useSocketController();
   const { colorScheme } = useContext(NovuContext);
 
-  const { data: application } = useQuery<Pick<IApplication, '_id' | 'name' | 'branding'>>(
-    'application',
-    getApplication,
+  const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
+    'organization',
+    getOrganization,
     {
       enabled: isLoggedIn,
     }
@@ -27,13 +27,13 @@ export function AppContent() {
 
   const theme = {
     colors: {
-      main: application?.branding?.color || colors.vertical,
+      main: organization?.branding?.color || colors.vertical,
       fontColor: colorScheme === 'light' ? colors.B40 : colors.white,
       secondaryFontColor: colorScheme === 'light' ? colors.B80 : colors.B40,
     },
-    fontFamily: application?.branding?.fontFamily || 'Lato',
+    fontFamily: organization?.branding?.fontFamily || 'Lato',
     layout: {
-      direction: (application?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
+      direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
   };
 
@@ -52,7 +52,8 @@ export function AppContent() {
         <Wrap
           layoutDirection={theme.layout.direction}
           brandColor={theme.colors.main}
-          fontColor={theme.colors.fontColor}>
+          fontColor={theme.colors.fontColor}
+        >
           <Layout>
             <Main />
           </Layout>

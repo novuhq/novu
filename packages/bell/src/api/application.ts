@@ -1,5 +1,5 @@
 import { get } from './api.service';
 
-export function getApplication() {
+export function getOrganization() {
   return get('/widgets/application');
 }

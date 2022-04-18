@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { WidgetShell } from './ApplicationShell';
 import { NotificationCenterWidgetContainer } from './notification-center';
-import { sendNotificationClick, sendUrlChange, unseenChanged } from '../sdk/sdk.service';
+import { sendNotificationClick, sendUrlChange, unseenChanged } from '../embed/embed.service';
 
 export function App() {
   return (
