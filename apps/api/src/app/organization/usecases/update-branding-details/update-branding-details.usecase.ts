@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { EnvironmentRepository } from '@novu/dal';
+import { OrganizationRepository } from '@novu/dal';
 import { UpdateBrandingDetailsCommand } from './update-branding-details.command';
 
 @Injectable()
 export class UpdateBrandingDetails {
-  constructor(private environmentRepository: EnvironmentRepository) {}
+  constructor(private organizationRepository: OrganizationRepository) {}
 
   async execute(command: UpdateBrandingDetailsCommand) {
     const payload = {
@@ -15,7 +15,7 @@ export class UpdateBrandingDetails {
       fontFamily: command.fontFamily,
     };
 
-    await this.environmentRepository.updateBrandingDetails(command.environmentId, payload);
+    await this.organizationRepository.updateBrandingDetails(command.id, payload);
 
     return payload;
   }
