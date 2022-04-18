@@ -1,62 +1,18 @@
-import { useContext, useEffect } from 'react';
+import { useAuth } from '../../../hooks';
+import { useSocketController } from '../../../store/socket/use-socket-controller';
+import React, { useContext, useEffect } from 'react';
+import { NovuContext } from '../../../store/novu-provider.context';
+import { useQuery } from 'react-query';
+import { IApplication } from '@novu/shared';
+import { getApplication } from '../../../api/application';
+import { colors } from '../../../shared/config/colors';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
-import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
-import { IApplication, ISubscriberJwt } from '@novu/shared';
+import { SocketContext } from '../../../store/socket/socket.store';
+import { Layout } from './layout/Layout';
+import { Main } from './Main';
 import * as WebFont from 'webfontloader';
 
-import { Main } from './Main';
-import { Layout } from './layout/Layout';
-import { AuthContext } from '../../../store/auth.context';
-import { applyToken, getToken, useAuthController } from '../../../store/use-auth-controller';
-import { useSocketController } from '../../../store/socket/use-socket-controller';
-import { SocketContext } from '../../../store/socket/socket.store';
-import { getApplication } from '../../../api/application';
-import { useAuth } from '../../../hooks/use-auth.hook';
-import { colors } from '../../../shared/config/colors';
-import React from 'react';
-import { NovuContext } from '../../../store/novu-provider.context';
-
-const queryClient = new QueryClient();
-
-const tokenStoredToken: string = getToken();
-
-applyToken(tokenStoredToken);
-
-export function App() {
-  return (
-    <RootProviders>
-      <AppContent />
-    </RootProviders>
-  );
-}
-
-function RootProviders({ children }: { children: JSX.Element }) {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
-    </QueryClientProvider>
-  );
-}
-
-function AuthProvider({ children }: { children: JSX.Element }) {
-  const { token, setToken, user, setUser, isLoggedIn } = useAuthController();
-
-  return (
-    <AuthContext.Provider value={{ token, setToken, user: user as ISubscriberJwt, setUser, isLoggedIn }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
-  body {
-    margin: 0;
-    font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
-    color: #333737;
-  }
-`;
-
-function AppContent() {
+export function AppContent() {
   const { isLoggedIn } = useAuth();
   const { socket } = useSocketController();
   const { colorScheme } = useContext(NovuContext);
@@ -105,6 +61,14 @@ function AppContent() {
     </ThemeProvider>
   );
 }
+
+const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
+  body {
+    margin: 0;
+    font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
+    color: #333737;
+  }
+`;
 
 const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string; fontColor: string }>`
   direction: ${({ layoutDirection }) => layoutDirection};

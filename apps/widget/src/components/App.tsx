@@ -1,11 +1,9 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { WidgetShell } from './ApplicationShell';
-import { NotificationCenterWidgetContainer } from './notification-center/NotificationCenterWidgetContainer';
-import { useUser } from '../api/hooks/use-user';
+import { NotificationCenterWidgetContainer } from './notification-center';
+import { sendNotificationClick, sendUrlChange, unseenChanged } from '../sdk/sdk.service';
 
 export function App() {
-  const { user } = useUser();
-
   return (
     <Router>
       <Routes>
@@ -13,7 +11,11 @@ export function App() {
           path="/:applicationId"
           element={
             <WidgetShell>
-              <NotificationCenterWidgetContainer user={user} />
+              <NotificationCenterWidgetContainer
+                onNotificationClick={sendNotificationClick}
+                onUrlChange={sendUrlChange}
+                onUnseenCountChanged={unseenChanged}
+              />
             </WidgetShell>
           }
         />

@@ -11,6 +11,7 @@ export function useSocketController() {
   const [socketInstance, setSocketInstance] = useState<ISocket | null>(null);
 
   useEffect(() => {
+    console.log({ token });
     if (token && !socket) {
       socket = io(WS_URL, {
         reconnectionDelayMax: 10000,

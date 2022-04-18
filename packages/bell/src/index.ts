@@ -40,6 +40,7 @@ export interface INovuProviderContext {
   subscriberId?: string;
   applicationIdentifier?: string;
   colorScheme: ColorScheme;
+  initialized: boolean;
 }
 
 export declare type ColorScheme = 'light' | 'dark';

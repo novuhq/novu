@@ -1,30 +1,69 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme } from '../../index';
-import { API_URL } from '../../api/shared';
+import { ColorScheme, IAuthContext } from '../../index';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { applyToken } from '../../shared/utils/applyToken';
+import { initializeSession } from '../../api/initialize-session';
+import { RootProviders } from '../notification-center/components';
+import { AuthContext } from '../../store/auth.context';
+import { postUsageLog } from '../../api/usage';
 
-export function NovuProvider({
-  children,
-  backendUrl = API_URL,
-  subscriberId,
-  applicationIdentifier,
-  colorScheme,
-}: {
-  children: JSX.Element;
+interface INovuProviderProps {
+  children: JSX.Element | Element;
   backendUrl?: string;
-  subscriberId: string;
+  subscriberId?: string;
   applicationIdentifier: string;
   colorScheme?: ColorScheme;
-}) {
+}
+
+export function NovuProvider(props: INovuProviderProps) {
   return (
-    <NovuContext.Provider
-      value={{
-        backendUrl: backendUrl,
-        subscriberId: subscriberId,
-        applicationIdentifier: applicationIdentifier,
-        colorScheme: colorScheme || 'light',
-      }}>
-      {children}
-    </NovuContext.Provider>
+    <RootProviders>
+      <SessionInitialization {...props}>
+        <NovuContext.Provider
+          value={{
+            backendUrl: props.backendUrl,
+            subscriberId: props.subscriberId,
+            applicationIdentifier: props.applicationIdentifier,
+            colorScheme: props.colorScheme || 'light',
+            initialized: true,
+          }}>
+          {props.children}
+        </NovuContext.Provider>
+      </SessionInitialization>
+    </RootProviders>
   );
+}
+
+function SessionInitialization({ children, ...props }) {
+  const [initialized, setInitialized] = useState<boolean>(false);
+  const { setToken, setUser, user, isLoggedIn } = useContext<IAuthContext>(AuthContext);
+  useEffect(() => {
+    if (props.subscriberId && props.applicationIdentifier) {
+      (async () => {
+        await initSession({
+          clientId: props.applicationIdentifier,
+          data: { $user_id: props.subscriberId },
+        });
+      })();
+    }
+  }, [props.subscriberId, props.applicationIdentifier]);
+
+  async function initSession(payload: { clientId: string; data: { $user_id: string } }) {
+    if ('parentIFrame' in window) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).parentIFrame.autoResize(true);
+    }
+
+    const response = await initializeSession(payload.clientId, payload.data.$user_id);
+
+    applyToken(response.token);
+
+    setUser(response.profile);
+    setToken(response.token);
+
+    setInitialized(true);
+  }
+
+  return initialized && isLoggedIn ? children : null;
 }
