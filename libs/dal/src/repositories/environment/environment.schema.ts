@@ -27,14 +27,6 @@ const environmentSchema = new Schema(
         },
       },
     ],
-    branding: {
-      fontColor: Schema.Types.String,
-      contentBackground: Schema.Types.String,
-      fontFamily: Schema.Types.String,
-      logo: Schema.Types.String,
-      color: Schema.Types.String,
-      direction: Schema.Types.String,
-    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

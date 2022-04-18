@@ -11,8 +11,8 @@ import { GetUnseenCount } from './usecases/get-unseen-count/get-unseen-count.use
 import { GetUnseenCountCommand } from './usecases/get-unseen-count/get-unseen-count.command';
 import { MarkMessageAsSeenCommand } from './usecases/mark-message-as-seen/mark-message-as-seen.command';
 import { MarkMessageAsSeen } from './usecases/mark-message-as-seen/mark-message-as-seen.usecase';
-import { GetEnvironmentData } from './usecases/get-environment-data/get-environment-data.usecase';
-import { GetEnvironmentDataCommand } from './usecases/get-environment-data/get-environment-data.command';
+import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
+import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 
 @Controller('/widgets')
@@ -22,7 +22,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
-    private getEnvironmentUsecase: GetEnvironmentData,
+    private getOrganizationUsecase: GetOrganizationData,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -82,15 +82,15 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Get('/environment')
-  async getEnvironment(@SubscriberSession() subscriberSession: SubscriberEntity) {
-    const command = GetEnvironmentDataCommand.create({
+  @Get('/organization')
+  async GetOrganizationData(@SubscriberSession() subscriberSession: SubscriberEntity) {
+    const command = GetOrganizationDataCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
     });
 
-    return await this.getEnvironmentUsecase.execute(command);
+    return await this.getOrganizationUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
