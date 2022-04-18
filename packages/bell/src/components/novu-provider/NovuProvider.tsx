@@ -18,7 +18,7 @@ interface INovuProviderProps {
 
 export function NovuProvider(props: INovuProviderProps) {
   const [initialized, setInitialized] = useState<boolean>(false);
-  const { setToken, setUser } = useContext<IAuthContext>(AuthContext);
+  const { setToken, setUser, user } = useContext<IAuthContext>(AuthContext);
   const queryClient = new QueryClient();
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export function NovuProvider(props: INovuProviderProps) {
             colorScheme: props.colorScheme || 'light',
             initialized: initialized,
           }}>
-          {props.children}
+          {initialized && props.children}
         </NovuContext.Provider>
       </QueryClientProvider>
     </RootProviders>
