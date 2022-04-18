@@ -17,10 +17,27 @@ interface INovuProviderProps {
 }
 
 export function NovuProvider(props: INovuProviderProps) {
-  const [initialized, setInitialized] = useState<boolean>(false);
-  const { setToken, setUser, user } = useContext<IAuthContext>(AuthContext);
-  const queryClient = new QueryClient();
+  return (
+    <RootProviders>
+      <SessionInitialization {...props}>
+        <NovuContext.Provider
+          value={{
+            backendUrl: props.backendUrl,
+            subscriberId: props.subscriberId,
+            applicationIdentifier: props.applicationIdentifier,
+            colorScheme: props.colorScheme || 'light',
+            initialized: true,
+          }}>
+          {props.children}
+        </NovuContext.Provider>
+      </SessionInitialization>
+    </RootProviders>
+  );
+}
 
+function SessionInitialization({ children, ...props }) {
+  const [initialized, setInitialized] = useState<boolean>(false);
+  const { setToken, setUser, user, isLoggedIn } = useContext<IAuthContext>(AuthContext);
   useEffect(() => {
     if (props.subscriberId && props.applicationIdentifier) {
       (async () => {
@@ -31,49 +48,6 @@ export function NovuProvider(props: INovuProviderProps) {
       })();
     }
   }, [props.subscriberId, props.applicationIdentifier]);
-
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = async (event: { data: any }) => {
-      try {
-        if (event.data.type === 'INIT_IFRAME') {
-          await initSession(event.data.value);
-          postUsageLog('Load Widget', {});
-        } else if (event.data.type === 'SHOW_WIDGET') {
-          postUsageLog('Open Widget', {});
-        }
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-      }
-    };
-
-    if (process.env.NODE_ENV === 'test') {
-      // eslint-disable-next-line
-      (window as any).initHandler = handler;
-    }
-
-    window.addEventListener('message', handler);
-
-    return () => window.removeEventListener('message', handler);
-  }, []); // empty array => run only once on start
-
-  return (
-    <RootProviders>
-      <QueryClientProvider client={queryClient}>
-        <NovuContext.Provider
-          value={{
-            backendUrl: props.backendUrl,
-            subscriberId: props.subscriberId,
-            applicationIdentifier: props.applicationIdentifier,
-            colorScheme: props.colorScheme || 'light',
-            initialized: initialized,
-          }}>
-          {initialized && props.children}
-        </NovuContext.Provider>
-      </QueryClientProvider>
-    </RootProviders>
-  );
 
   async function initSession(payload: { clientId: string; data: { $user_id: string } }) {
     if ('parentIFrame' in window) {
@@ -87,6 +61,9 @@ export function NovuProvider(props: INovuProviderProps) {
 
     setUser(response.profile);
     setToken(response.token);
+
     setInitialized(true);
   }
+
+  return initialized && isLoggedIn ? children : null;
 }

@@ -10,6 +10,7 @@ import { NotificationCenterContext } from '../../../store/notification-center.co
 import image from '../../../images/no-new-notifications.png';
 
 export function Main() {
+  const { socket } = useSocket();
   const { sendNotificationClick, sendUrlChange } = useContext(NotificationCenterContext);
   const [currentPage, setCurrentPage] = useState<number>(0);
 
@@ -19,14 +20,18 @@ export function Main() {
         return lastPage.length === 10 ? currentPage + 1 : undefined;
       },
     });
+
   const { mutateAsync: markNotificationAsSeen } = useMutation<{ body: IMessage }, never, { messageId: string }>(
     (params) => markMessageAsSeen(params.messageId)
   );
-  const { socket } = useSocket();
+
+  console.log({ socket });
 
   useEffect(() => {
     if (socket) {
+      console.log('LISTENED TO EVENT');
       socket.on('unseen_count_changed', () => {
+        console.log('COUNT CHANGED');
         refetch();
       });
     }
