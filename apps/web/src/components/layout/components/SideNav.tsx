@@ -1,11 +1,11 @@
 import { useState, useContext } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { Navbar } from '@mantine/core';
+import { Badge, Navbar } from '@mantine/core';
 import { IEnvironment } from '@novu/shared';
 import { getMyEnvironments, getCurrentEnvironment } from '../../../api/environment';
 import { api } from '../../../api/api.client';
-import { NavMenu, SegmentedControl } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team } from '../../../design-system/icons';
+import { colors, NavMenu, SegmentedControl } from '../../../design-system';
+import { Activity, Bolt, Box, Repeat, Settings, Team } from '../../../design-system/icons';
 import { AuthContext } from '../../../store/authContext';
 
 type Props = {};
@@ -19,6 +19,32 @@ const menuItems = [
     link: '/team',
     label: 'Team Members',
     testId: 'side-nav-settings-organization',
+  },
+  {
+    icon: <Repeat />,
+    link: '/changes',
+    label: 'Changes',
+    testId: 'side-nav-changes-link',
+    rightSide: (
+      <Badge
+        data-test-id="side-nav-changes-count"
+        sx={{
+          padding: 0,
+          width: 20,
+          height: 20,
+          pointerEvents: 'none',
+          border: 'none',
+          background: colors.horizontal,
+          lineHeight: '14px',
+          color: colors.white,
+          fontWeight: 'bold',
+          fontSize: '12px',
+        }}
+        radius={100}
+      >
+        4
+      </Badge>
+    ),
   },
 ];
 
