@@ -846,11 +846,13 @@ importers:
   libs/shared:
     specifiers:
       '@types/bluebird': ^3.5.24
+      axios: ^0.26.1
       class-transformer: 0.5.1
       class-validator: ^0.9.1
       mixpanel: ^0.13.0
       typescript: 4.1.3
     dependencies:
+      axios: 0.26.1
       class-transformer: 0.5.1
       class-validator: 0.9.1
       mixpanel: 0.13.0
