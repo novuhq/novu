@@ -1,5 +1,5 @@
 import React from 'react';
-import { DocsContainer as BaseContainer } from '@storybook/addon-docs/blocks';
+import { DocsContainer as BaseContainer } from '@storybook/addon-docs';
 import { useDarkMode } from 'storybook-dark-mode';
 import { themes } from '@storybook/theming';
 
