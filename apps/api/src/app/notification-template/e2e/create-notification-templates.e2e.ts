@@ -18,7 +18,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       description: 'This is a test description',
       tags: ['test-tag'],
       notificationGroupId: session.notificationGroups[0]._id,
-      messages: [
+      steps: [
         {
           name: 'Message Name',
           subject: 'Test email subject',
@@ -53,21 +53,21 @@ describe('Create Notification template - /notification-templates (POST)', async 
     const template: INotificationTemplate = body.data;
 
     expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
-    const message = template.messages[0];
+    const message = template.steps[0];
 
-    expect(message.template.name).to.equal(`${testTemplate.messages[0].name}`);
-    expect(message.template.subject).to.equal(`${testTemplate.messages[0].subject}`);
-    expect(message.filters[0].type).to.equal(testTemplate.messages[0].filters[0].type);
-    expect(message.filters[0].children.length).to.equal(testTemplate.messages[0].filters[0].children.length);
+    expect(message.template.name).to.equal(`${testTemplate.steps[0].name}`);
+    expect(message.template.subject).to.equal(`${testTemplate.steps[0].subject}`);
+    expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
+    expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
 
-    expect(message.filters[0].children[0].value).to.equal(testTemplate.messages[0].filters[0].children[0].value);
+    expect(message.filters[0].children[0].value).to.equal(testTemplate.steps[0].filters[0].children[0].value);
 
-    expect(message.filters[0].children[0].operator).to.equal(testTemplate.messages[0].filters[0].children[0].operator);
+    expect(message.filters[0].children[0].operator).to.equal(testTemplate.steps[0].filters[0].children[0].operator);
 
     expect(message.template.type).to.equal(ChannelTypeEnum.EMAIL);
     expect(template.tags[0]).to.equal('test-tag');
-    if (Array.isArray(message.template.content) && Array.isArray(testTemplate.messages[0].content)) {
-      expect(message.template.content[0].type).to.equal(testTemplate.messages[0].content[0].type);
+    if (Array.isArray(message.template.content) && Array.isArray(testTemplate.steps[0].content)) {
+      expect(message.template.content[0].type).to.equal(testTemplate.steps[0].content[0].type);
     } else {
       throw new Error('content must be an array');
     }
@@ -78,7 +78,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       name: 'test template',
       description: 'This is a test description',
       notificationGroupId: session.notificationGroups[0]._id,
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.IN_APP,
           content: 'Test Template',
@@ -104,10 +104,10 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(template.active).to.equal(false);
     expect(moment(template.createdAt).isSame(moment(), 'day'));
 
-    expect(template.messages.length).to.equal(1);
-    expect(template.messages[0].template.type).to.equal(ChannelTypeEnum.IN_APP);
-    expect(template.messages[0].template.content).to.equal(testTemplate.messages[0].content);
-    expect(template.messages[0].template.cta.data.url).to.equal(testTemplate.messages[0].cta.data.url);
+    expect(template.steps.length).to.equal(1);
+    expect(template.steps[0].template.type).to.equal(ChannelTypeEnum.IN_APP);
+    expect(template.steps[0].template.content).to.equal(testTemplate.steps[0].content);
+    expect(template.steps[0].template.cta.data.url).to.equal(testTemplate.steps[0].cta.data.url);
   });
 
   it('should create event trigger', async () => {
@@ -115,7 +115,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       name: 'test template',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
-      messages: [
+      steps: [
         {
           type: ChannelTypeEnum.IN_APP,
           content: 'Test Template {{name}} {{lastName}}',
@@ -145,7 +145,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       name: 'test',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
-      messages: [],
+      steps: [],
     };
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
@@ -159,7 +159,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       name: 'test',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
-      messages: [],
+      steps: [],
     };
     const { body: newBody } = await session.testAgent.post(`/v1/notification-templates`).send(sameNameTemplate);
 

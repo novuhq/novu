@@ -15,7 +15,7 @@ export class StorageController {
   async signedUrl(@UserSession() user: IJwtPayload, @Query('extension') extension: string) {
     return await this.getSignedUrlUsecase.execute(
       GetSignedUrlCommand.create({
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         extension,

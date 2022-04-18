@@ -11,7 +11,7 @@ export interface INotificationTemplate {
   active: boolean;
   createdAt?: string;
   updatedAt?: string;
-  messages: INotificationTemplateMessage[];
+  steps: INotificationTemplateStep[];
   triggers: INotificationTrigger[];
 }
 
@@ -23,9 +23,10 @@ export interface INotificationTrigger {
   type: TriggerTypeEnum;
   identifier: string;
   variables: { name: string }[];
+  subscriberVariables?: { name: string }[];
 }
 
-export interface INotificationTemplateMessage {
+export interface INotificationTemplateStep {
   _id?: string;
   filters?: IMessageFilter[];
   _templateId?: string;

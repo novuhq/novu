@@ -9,7 +9,7 @@ export class GetNotificationsFeed {
 
   async execute(command: GetNotificationsFeedCommand): Promise<MessageEntity[]> {
     return await this.messageRepository.findBySubscriberChannel(
-      command.applicationId,
+      command.environmentId,
       command.subscriberId,
       ChannelTypeEnum.IN_APP,
       {

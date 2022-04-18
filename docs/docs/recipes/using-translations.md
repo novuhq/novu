@@ -10,7 +10,7 @@ In this recipe we will use [i18n-node](https://github.com/mashpie/i18n-node), bu
 to many other translation frameworks.
 
 ```typescript
-import { Novu, ChannelTypeEnum } from "@novu/node";
+import { NovuStateless, ChannelTypeEnum } from "@novu/stateless";
 import { SendgridEmailProvider } from "@novu/sendgrid";
 // We will use i18n as a singleton and not as an instance in this recipe
 import i18n from 'i18n';
@@ -20,7 +20,7 @@ i18n.configure({
   directory: path.join(__dirname, '/locales')
 })
 
-const novu = new Novu();
+const novu = new NovuStateless();
 
 await novu.registerProvider(
   new SendgridEmailProvider({

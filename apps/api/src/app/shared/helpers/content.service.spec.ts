@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ContentService } from './content.service';
+import { IMessageTemplate } from '@novu/shared';
 
 describe('ContentService', function () {
   describe('replaceVariables', function () {
@@ -89,13 +90,13 @@ describe('ContentService', function () {
           content: [],
         },
       ]);
-      expect(variables.length).to.equal(2);
+      expect(variables.length).to.equal(1);
       expect(variables).to.include('firstName');
     });
 
     it('should add $phone when SMS channel Exists', function () {
       const contentService = new ContentService();
-      const variables = contentService.extractMessageVariables([
+      const variables = contentService.extractSubscriberMessageVariables([
         {
           type: ChannelTypeEnum.IN_APP,
           subject: 'Test',
@@ -107,12 +108,12 @@ describe('ContentService', function () {
         },
       ]);
       expect(variables.length).to.equal(1);
-      expect(variables[0]).to.equal('$phone');
+      expect(variables[0]).to.equal('phone');
     });
 
     it('should add $email when EMAIL channel Exists', function () {
       const contentService = new ContentService();
-      const variables = contentService.extractMessageVariables([
+      const variables = contentService.extractSubscriberMessageVariables([
         {
           type: ChannelTypeEnum.EMAIL,
           subject: 'Test',
@@ -124,12 +125,12 @@ describe('ContentService', function () {
         },
       ]);
       expect(variables.length).to.equal(1);
-      expect(variables[0]).to.equal('$email');
+      expect(variables[0]).to.equal('email');
     });
 
     it('should extract email content variables', function () {
       const contentService = new ContentService();
-      const variables = contentService.extractMessageVariables([
+      const messages = [
         {
           type: ChannelTypeEnum.EMAIL,
           subject: 'Test {{firstName}}',
@@ -160,12 +161,16 @@ describe('ContentService', function () {
             },
           ],
         },
-      ]);
-      expect(variables.length).to.equal(5);
+      ] as IMessageTemplate[];
+
+      const variables = contentService.extractMessageVariables(messages);
+      const subscriberVariables = contentService.extractSubscriberMessageVariables(messages);
+      expect(variables.length).to.equal(4);
+      expect(subscriberVariables.length).to.equal(1);
       expect(variables).to.include('lastName');
       expect(variables).to.include('url');
       expect(variables).to.include('firstName');
-      expect(variables).to.include('email');
+      expect(subscriberVariables).to.include('email');
     });
 
     it('should extract in-app content variables', function () {

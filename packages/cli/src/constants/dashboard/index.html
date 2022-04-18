@@ -112,9 +112,7 @@
             </button>
             <!-- Profile dropdown -->
             <div class="ml-3 relative">
-              <div>
-                <button class="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" id="user-menu" aria-haspopup="true"> <span class="sr-only">Open user menu</span> <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt=""> </button>
-              </div>
+
               <!--
               Profile dropdown panel, show/hide based on dropdown state.
 
@@ -159,7 +157,6 @@
         <!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" --><a href="#" class="bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium">Acme Corp.</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Team</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Projects</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Calendar</a> <a href="#" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Reports</a> </div>
       <div class="pt-4 pb-3 border-t border-gray-700">
         <div class="flex items-center px-5">
-          <div class="flex-shrink-0"> <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt=""> </div>
           <div class="ml-3">
             <div class="text-base font-medium leading-none text-white">Tom Cook</div>
             <div class="text-sm font-medium leading-none text-gray-400">tom@example.com</div>
@@ -198,7 +195,7 @@
                   <div class="max-w-screen-2xl px-4 mx-auto">
                     <div class="flex flex-col sm:flex-row justify-between items-center bg-gray-100 rounded-lg gap-4 p-4">
                       <div>
-                        <h2 class="text-indigo-500 text-xl md:text-2xl font-bold">Welcome to your demo web application</h2>
+                        <h2 class="text-indigo-500 text-xl md:text-2xl font-bold">Welcome to your demo web environment</h2>
                         <p class="text-gray-600">
                           Here you can test the Novu in-app notification center and see it in action.
                           <br />
@@ -261,15 +258,17 @@
                         </div>
                          <pre class="rounder-lg code-snippet-wrapper" onclick="copyToClipboard('curl-user-snippet2');return false;">
 
-                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'https://api.novu.co/v1/events/trigger' \
+                  <code id="curl-user-snippet" class="language-bash ">curl --location --request POST 'REPLACE_WITH_url' \
  --header 'Authorization: ApiKey *********' \
  --header 'Content-Type: application/json' \
  --data-raw '{
     "name": "REPLACE_WITH_name",
+    "to": {
+        "subscriberId": "REPLACE_WITH_subscriberId",
+        "firstName": "REPLACE_WITH_firstName",
+        "lastName": "REPLACE_WITH_lastName"
+    },
     "payload": {
-        "$user_id": "REPLACE_WITH_$user_id",
-        "$first_name": "REPLACE_WITH_$first_name",
-        "$last_name": "REPLACE_WITH_$last_name",
         "token": "*********"
     }
   }'</code></pre>
@@ -324,10 +323,12 @@
                     </span><span>     --header </span><span class="token" style="color: rgb(189, 224, 82);">'Content-Type: application/json'</span><span> </span><span class="token">\</span><span>
                     </span><span>     --data-raw </span><span class="token" style="color: rgb(189, 224, 82);">'{
                     </span><span class="token" style="color: rgb(189, 224, 82);">        "name": "REPLACE_WITH_name",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        "to": {
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">subscriberId</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_subscriberId",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "firstName": "REPLACE_WITH_firstName",
+                    </span><span class="token" style="color: rgb(189, 224, 82);">            "lastName": "REPLACE_WITH_lastName"
+                    </span><span class="token" style="color: rgb(189, 224, 82);">        },
                     </span><span class="token" style="color: rgb(189, 224, 82);">        "payload": {
-                    </span><span class="token" style="color: rgb(189, 224, 82);">            "</span><span class="token" style="color: rgb(245, 184, 61);">$user_id</span><span class="token" style="color: rgb(189, 224, 82);">": "REPLACE_WITH_$user_id",
-                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$first_name": "REPLACE_WITH_$first_name",
-                    </span><span class="token" style="color: rgb(189, 224, 82);">            "$last_name": "REPLACE_WITH_$last_name",
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "$on_boarding_trigger": "true",
                     </span><span class="token" style="color: rgb(189, 224, 82);">            "token": "REPLACE_WITH_token"
                     </span><span class="token" style="color: rgb(189, 224, 82);">        }
@@ -401,12 +402,12 @@ function pulsateBell() {
     elt.src = t;
     var before = o.getElementsByTagName(f)[0];
     before.parentNode.insertBefore(elt, before);
-  })(window, document, "https://sdk.novu.co/sdk.umd.min.js", "novu", "script");
+  })(window, document, "REPLACE_WITH_embedPath", "novu", "script");
 
-  novu.init('REPLACE_WITH_applicationId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
-    $user_id: 'REPLACE_WITH_$user_id',
-    $first_name: 'REPLACE_WITH_$first_name',
-    $last_name: 'REPLACE_WITH_$last_name',
+  novu.init('REPLACE_WITH_environmentId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
+    $user_id: 'REPLACE_WITH_subscriberId',
+    $first_name: 'REPLACE_WITH_firstName',
+    $last_name: 'REPLACE_WITH_lastName',
   });
 
   var activeListener = false;

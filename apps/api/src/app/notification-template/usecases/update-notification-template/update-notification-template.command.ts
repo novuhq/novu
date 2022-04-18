@@ -11,10 +11,10 @@ import {
 import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
 import { IEmailBlock } from '@novu/dal';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageFilter } from '../create-notification-template';
 
-export class UpdateNotificationTemplateCommand extends ApplicationWithUserCommand {
+export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: UpdateNotificationTemplateCommand) {
     return CommandHelper.create<UpdateNotificationTemplateCommand>(UpdateNotificationTemplateCommand, data);
   }
@@ -44,7 +44,7 @@ export class UpdateNotificationTemplateCommand extends ApplicationWithUserComman
   @IsArray()
   @ValidateNested()
   @IsOptional()
-  messages: NotificationChannelDto[];
+  steps: NotificationStepDto[];
 }
 
 export class ChannelCTADto {
@@ -56,7 +56,7 @@ export class ChannelCTADto {
   };
 }
 
-export class NotificationChannelDto {
+export class NotificationStepDto {
   @IsOptional()
   @IsEnum(ChannelTypeEnum)
   type: ChannelTypeEnum;

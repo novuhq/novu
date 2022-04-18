@@ -14,6 +14,6 @@ export interface IJwtPayload {
   email: string;
   profilePicture: string;
   organizationId?: string;
-  applicationId?: string;
+  environmentId?: string;
   roles?: string[];
 }

@@ -11,14 +11,14 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
   }
 
   async findBySubscriberChannel(
-    applicationId: string,
+    environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     return await this.find(
       {
-        _applicationId: applicationId,
+        _environmentId: environmentId,
         _subscriberId: subscriberId,
         channel,
       },
@@ -31,9 +31,9 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     );
   }
 
-  async getUnseenCount(applicationId: string, subscriberId: string, channel: ChannelTypeEnum) {
+  async getUnseenCount(environmentId: string, subscriberId: string, channel: ChannelTypeEnum) {
     return await this.count({
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       _subscriberId: subscriberId,
       seen: false,
       channel,
@@ -55,9 +55,9 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     );
   }
 
-  async getBulkMessagesByNotificationIds(applicationId: string, notificationIds: string[]) {
+  async getBulkMessagesByNotificationIds(environmentId: string, notificationIds: string[]) {
     return this.find({
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       _notificationId: {
         $in: notificationIds,
       },
@@ -86,12 +86,12 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       }
     );
   }
-  async getActivityGraphStats(date: Date, applicationId: string) {
+  async getActivityGraphStats(date: Date, environmentId: string) {
     return await this.aggregate([
       {
         $match: {
           createdAt: { $gte: date },
-          _applicationId: Types.ObjectId(applicationId),
+          _environmentId: Types.ObjectId(environmentId),
         },
       },
       {
@@ -109,13 +109,13 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
   }
 
   async getFeed(
-    applicationId: string,
+    environmentId: string,
     query: { channels?: ChannelTypeEnum[]; templates?: string[]; subscriberId?: string } = {},
     skip = 0,
     limit = 10
   ) {
     const requestQuery: FilterQuery<NotificationTemplateEntity> = {
-      _applicationId: applicationId,
+      _environmentId: environmentId,
     };
 
     if (query?.channels) {

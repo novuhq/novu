@@ -4,9 +4,9 @@ import { ChannelTypeEnum } from '@novu/shared';
 export class IntegrationService {
   private integrationRepository = new IntegrationRepository();
 
-  async createIntegration(applicationId: string, organizationId: string) {
+  async createIntegration(environmentId: string, organizationId: string) {
     const mailPayload = {
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       _organizationId: organizationId,
       providerId: 'sendgrid',
       channel: ChannelTypeEnum.EMAIL,
@@ -17,7 +17,7 @@ export class IntegrationService {
     await this.integrationRepository.create(mailPayload);
 
     const smsPayload = {
-      _applicationId: applicationId,
+      _environmentId: environmentId,
       _organizationId: organizationId,
       providerId: 'twilio',
       channel: ChannelTypeEnum.SMS,

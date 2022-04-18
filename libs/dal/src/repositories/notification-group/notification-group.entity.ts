@@ -3,7 +3,7 @@ export class NotificationGroupEntity {
 
   name: string;
 
-  _applicationId: string;
+  _environmentId: string;
 
   _organizationId: string;
 }

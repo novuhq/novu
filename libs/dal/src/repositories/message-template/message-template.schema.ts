@@ -22,9 +22,9 @@ const messageTemplateSchema = new Schema(
       },
       data: Schema.Types.Mixed,
     },
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
     },
     _organizationId: {
       type: Schema.Types.ObjectId,

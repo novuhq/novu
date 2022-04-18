@@ -12,7 +12,7 @@ export class MarkMessageAsSeen {
     await this.messageRepository.changeSeenStatus(command.subscriberId, command.messageId, true);
 
     const count = await this.messageRepository.getUnseenCount(
-      command.applicationId,
+      command.environmentId,
       command.subscriberId,
       ChannelTypeEnum.IN_APP
     );

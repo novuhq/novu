@@ -1,4 +1,4 @@
-import { IApplication } from '@novu/shared';
+import { IOrganizationEntity } from '@novu/shared';
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Dropzone, DropzoneStatus } from '@mantine/dropzone';
@@ -8,7 +8,7 @@ import { showNotification } from '@mantine/notifications';
 import { useMantineTheme, Group, InputWrapper, LoadingOverlay } from '@mantine/core';
 import { Button, colors, Select, ColorInput } from '../../../design-system';
 import { getSignedUrl } from '../../../api/storage';
-import { updateBrandingSettings } from '../../../api/application';
+import { updateBrandingSettings } from '../../../api/organization';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Upload } from '../../../design-system/icons';
 import Card from '../../../components/layout/components/Card';
@@ -20,10 +20,10 @@ const mimeTypes = {
 
 export function BrandingForm({
   isLoading,
-  application,
+  organization,
 }: {
   isLoading: boolean;
-  application: IApplication | undefined;
+  organization: IOrganizationEntity | undefined;
 }) {
   const [image, setImage] = useState<string>();
   const [file, setFile] = useState<File>();
@@ -41,18 +41,18 @@ export function BrandingForm({
   >(updateBrandingSettings);
 
   useEffect(() => {
-    if (application) {
-      if (application.branding?.logo) {
-        setImage(application.branding.logo);
+    if (organization) {
+      if (organization.branding?.logo) {
+        setImage(organization.branding.logo);
       }
-      if (application.branding?.color) {
-        setValue('color', application?.branding?.color);
+      if (organization.branding?.color) {
+        setValue('color', organization?.branding?.color);
       }
-      if (application.branding?.fontFamily) {
-        setValue('fontFamily', application?.branding?.fontFamily);
+      if (organization.branding?.fontFamily) {
+        setValue('fontFamily', organization?.branding?.fontFamily);
       }
     }
-  }, [application]);
+  }, [organization]);
 
   function beforeUpload(files: File[]) {
     setFile(files[0]);
@@ -106,8 +106,8 @@ export function BrandingForm({
 
   const { setValue, handleSubmit, control } = useForm({
     defaultValues: {
-      fontFamily: application?.branding?.fontFamily || 'Roboto',
-      color: application?.branding?.color || '#f47373',
+      fontFamily: organization?.branding?.fontFamily || 'Roboto',
+      color: organization?.branding?.color || '#f47373',
       image: image || '',
       file: file || '',
     },
@@ -125,7 +125,8 @@ export function BrandingForm({
                 <InputWrapper
                   styles={inputStyles}
                   label="Your Logo"
-                  description="Will be used on email templates and inbox">
+                  description="Will be used on email templates and inbox"
+                >
                   <Dropzone
                     styles={{
                       root: {
@@ -140,7 +141,8 @@ export function BrandingForm({
                     multiple={false}
                     onDrop={beforeUpload}
                     {...field}
-                    data-test-id="upload-image-button">
+                    data-test-id="upload-image-button"
+                  >
                     {(status) => dropzoneChildren(status, image)}
                   </Dropzone>
                 </InputWrapper>

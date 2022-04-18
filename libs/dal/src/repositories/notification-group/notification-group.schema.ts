@@ -12,9 +12,9 @@ const NotificationGroupSchema = new Schema(
       ref: 'Organization',
       index: true,
     },
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
       index: true,
     },
   },

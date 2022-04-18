@@ -1,6 +1,6 @@
 # Novu Sns Provider
 
-A SNS SMS provider library for [@novu/node](https://github.com/novuhq/novu)
+A SNS SMS provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 

@@ -10,6 +10,7 @@ import styled from '@emotion/styled';
 import { useTemplates } from '../../api/hooks/use-templates';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Data, Table } from '../../design-system/table/Table';
 import { Select, Tag, Text, Tooltip, Input, colors } from '../../design-system';
@@ -133,6 +134,7 @@ export function ActivitiesPage() {
 
   return (
     <PageContainer>
+      <PageMeta title="Activity Feed" />
       <PageHeader title="Activity Feed" />
       <ActivityStatistics />
       <ActivityGraph />
@@ -196,7 +198,8 @@ export function ActivitiesPage() {
           current: page,
           total: data?.totalCount,
           onPageChange: handleTableChange,
-        }}>
+        }}
+      >
         {' '}
       </Table>
     </PageContainer>

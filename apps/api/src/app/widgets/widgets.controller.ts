@@ -11,8 +11,8 @@ import { GetUnseenCount } from './usecases/get-unseen-count/get-unseen-count.use
 import { GetUnseenCountCommand } from './usecases/get-unseen-count/get-unseen-count.command';
 import { MarkMessageAsSeenCommand } from './usecases/mark-message-as-seen/mark-message-as-seen.command';
 import { MarkMessageAsSeen } from './usecases/mark-message-as-seen/mark-message-as-seen.usecase';
-import { GetApplicationData } from './usecases/get-application-data/get-application-data.usecase';
-import { GetApplicationDataCommand } from './usecases/get-application-data/get-application-data.command';
+import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
+import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 
 @Controller('/widgets')
@@ -22,7 +22,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
-    private getApplicationUsecase: GetApplicationData,
+    private getOrganizationUsecase: GetOrganizationData,
     private analyticsService: AnalyticsService
   ) {}
 
@@ -46,7 +46,7 @@ export class WidgetsController {
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
-      applicationId: subscriberSession._applicationId,
+      environmentId: subscriberSession._environmentId,
       page,
     });
 
@@ -59,7 +59,7 @@ export class WidgetsController {
     const command = GetUnseenCountCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
-      applicationId: subscriberSession._applicationId,
+      environmentId: subscriberSession._environmentId,
     });
 
     return await this.genUnseenCountUsecase.execute(command);
@@ -74,7 +74,7 @@ export class WidgetsController {
     const command = MarkMessageAsSeenCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
-      applicationId: subscriberSession._applicationId,
+      environmentId: subscriberSession._environmentId,
       messageId,
     });
 
@@ -82,15 +82,15 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Get('/application')
-  async getApplication(@SubscriberSession() subscriberSession: SubscriberEntity) {
-    const command = GetApplicationDataCommand.create({
+  @Get('/organization')
+  async GetOrganizationData(@SubscriberSession() subscriberSession: SubscriberEntity) {
+    const command = GetOrganizationDataCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
-      applicationId: subscriberSession._applicationId,
+      environmentId: subscriberSession._environmentId,
     });
 
-    return await this.getApplicationUsecase.execute(command);
+    return await this.getOrganizationUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -100,7 +100,7 @@ export class WidgetsController {
     @Body() body: { name: string; payload: any } // eslint-disable-line @typescript-eslint/no-explicit-any
   ) {
     this.analyticsService.track(body.name, subscriberSession._organizationId, {
-      applicationId: subscriberSession._applicationId,
+      environmentId: subscriberSession._environmentId,
       ...(body.payload || {}),
     });
 

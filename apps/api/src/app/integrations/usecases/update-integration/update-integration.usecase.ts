@@ -31,7 +31,7 @@ export class UpdateIntegration {
     await this.integrationRepository.update(
       {
         _id: command.integrationId,
-        _applicationId: command.applicationId,
+        _environmentId: command.environmentId,
       },
       {
         $set: updatePayload,
@@ -40,7 +40,7 @@ export class UpdateIntegration {
 
     if (command.active) {
       await this.deactivateSimilarChannelIntegrations.execute({
-        applicationId: command.applicationId,
+        environmentId: command.environmentId,
         organizationId: command.organizationId,
         integrationId: command.integrationId,
         channel: existingIntegration.channel,
@@ -49,7 +49,7 @@ export class UpdateIntegration {
 
     return await this.integrationRepository.findOne({
       _id: command.integrationId,
-      _applicationId: command.applicationId,
+      _environmentId: command.environmentId,
     });
   }
 }

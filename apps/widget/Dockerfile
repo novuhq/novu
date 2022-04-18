@@ -9,7 +9,7 @@ COPY package.json .
 COPY apps/widget ./apps/widget
 
 COPY libs/dal ./libs/dal
-COPY libs/sdk ./libs/sdk
+COPY libs/embed ./libs/embed
 COPY libs/testing ./libs/testing
 COPY libs/shared ./libs/shared
 
@@ -18,10 +18,13 @@ COPY tsconfig.base.json .
 
 COPY .eslintrc.js .
 COPY .prettierrc .
+COPY .prettierignore .
 COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
 RUN pnpm install
 
-CMD [ "pnpm", "start:docker:widget" ]
+RUN pnpm build:widget
+
+CMD [ "pnpm", "start:static:widget" ]

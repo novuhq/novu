@@ -5,6 +5,7 @@ import { MemberStatusEnum } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import * as capitalize from 'lodash.capitalize';
 import { Avatar, Container, Divider, Group, Text } from '@mantine/core';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { getOrganizationMembers, inviteMember } from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -43,6 +44,7 @@ export function MembersInvitePage() {
 
   return (
     <PageContainer>
+      <PageMeta title="Team" />
       <PageHeader
         title="Team Members"
         actions={
@@ -60,36 +62,34 @@ export function MembersInvitePage() {
       />
 
       <Container fluid mt={15} ml={5}>
-        {members?.map((i) => {
+        {members?.map((member) => {
           return (
-            <>
-              <MemberRowWrapper key={i._id}>
-                <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={i.user?.profilePicture} radius="xl">
-                  {capitalize(i.user?.firstName[0])} {capitalize(i.user?.lastName[0])}
-                </Avatar>
-                <Group direction="column" spacing={5}>
-                  <Text className={classes.heading}>
-                    {i.user
-                      ? `${capitalize(i.user?.firstName as string)} ${capitalize(i.user?.lastName as string)}`
-                      : i.invite.email}
-                  </Text>
-                  <Text className={classes.subHeading}>{i.user?.email ? i?.user.email : null}</Text>
-                </Group>
-                <ActionsSider>
-                  <div style={{ marginLeft: 10 }}>
-                    {/* eslint-disable-next-line no-nested-ternary */}
-                    {i.memberStatus === MemberStatusEnum.INVITED ? (
-                      <Tag>Invite Pending</Tag>
-                    ) : i.roles.find((role: string) => role === 'admin') ? (
-                      <Tag>Admin</Tag>
-                    ) : (
-                      <Tag>Member</Tag>
-                    )}
-                  </div>
-                </ActionsSider>
-              </MemberRowWrapper>
+            <MemberRowWrapper key={member._id}>
+              <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={member.user?.profilePicture} radius="xl">
+                {capitalize(member.user?.firstName[0])} {capitalize(member.user?.lastName[0])}
+              </Avatar>
+              <Group direction="column" spacing={5}>
+                <Text className={classes.heading}>
+                  {member.user
+                    ? `${capitalize(member.user?.firstName as string)} ${capitalize(member.user?.lastName as string)}`
+                    : member.invite.email}
+                </Text>
+                <Text className={classes.subHeading}>{member.user?.email ? member?.user.email : null}</Text>
+              </Group>
+              <ActionsSider>
+                <div style={{ marginLeft: 10 }}>
+                  {/* eslint-disable-next-line no-nested-ternary */}
+                  {member.memberStatus === MemberStatusEnum.INVITED ? (
+                    <Tag>Invite Pending</Tag>
+                  ) : member.roles.find((role: string) => role === 'admin') ? (
+                    <Tag>Admin</Tag>
+                  ) : (
+                    <Tag>Member</Tag>
+                  )}
+                </div>
+              </ActionsSider>
               <Divider className={classes.seperator} />
-            </>
+            </MemberRowWrapper>
           );
         })}
       </Container>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IApplication, IEmailBlock } from '@novu/shared';
+import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
@@ -9,14 +9,14 @@ import { LackIntegrationError } from '../LackIntegrationError';
 export function EmailContentCard({
   index,
   variables = [],
-  application,
+  organization,
   isIntegrationActive,
 }: {
   index: number;
   variables: {
     name: string;
   }[];
-  application: IApplication | undefined;
+  organization: IOrganizationEntity | undefined;
   isIntegrationActive: boolean;
 }) {
   const {
@@ -50,7 +50,7 @@ export function EmailContentCard({
           render={({ field, formState }) => {
             return (
               <EmailMessageEditor
-                branding={application?.branding}
+                branding={organization?.branding}
                 onChange={field.onChange}
                 value={field.value as IEmailBlock[]}
               />

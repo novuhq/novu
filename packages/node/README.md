@@ -54,46 +54,25 @@ yarn add @novu/node
 ## 🔨 Usage
 
 ```ts
-import { Novu, ChannelTypeEnum } from '@novu/node';
-import { SendgridEmailProvider } from '@novu/sendgrid';
+import { Novu } from '@novu/node';
 
-const novu = new Novu();
+const novu = new Novu(process.env.NOVU_API_KEY);
 
-await novu.registerProvider(
-  new SendgridEmailProvider({
-    apiKey: process.env.SENDGRID_API_KEY,
-    from: 'sender@mail.com'
-  })
-);
-
-const passwordResetTemplate = await novu.registerTemplate({
-  id: 'password-reset',
-  messages: [
-    {
-      subject: 'Your password reset request',
-      channel: ChannelTypeEnum.EMAIL,
-      template: `
-          Hi {{firstName}}!
-          
-          To reset your password click <a href="{{resetLink}}">here.</a>
-          
-          {{#if organization}}
-            <img src="{{organization.logo}}" />
-          {{/if}}
-      `
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
+  {
+    to: {
+      subscriberId: '<USER_IDENTIFIER>',
+      email: 'test@email.com',
+      firstName: 'John',
+      lastName: 'Doe',
     },
-  ]
-});
-
-await novu.trigger('<REPLACE_WITH_EVENT_NAME>', {
-  $user_id: "<USER IDENTIFIER>",
-  $email: "test@email.com",
-  firstName: "John",
-  lastName: "Doe",
-  organization: {
-    logo: 'https://evilcorp.com/logo.png'
+    payload: {
+      organization: {
+        logo: 'https://evilcorp.com/logo.png',
+      },
+    },
   }
-});
+);
 ```
 
 ## Providers

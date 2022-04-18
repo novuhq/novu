@@ -24,7 +24,7 @@ declare namespace Cypress {
      * Logs-in user by using API request
      */
     initializeSession(settings?: {
-      noApplication?: boolean;
+      noEnvironment?: boolean;
       disableLocalStorage?: boolean;
       partialTemplate?: Partial<ICreateNotificationTemplateDto>;
     }): Chainable<Response>;

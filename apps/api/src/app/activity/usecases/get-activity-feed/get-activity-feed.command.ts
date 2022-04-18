@@ -1,9 +1,9 @@
 import { IsArray, IsEnum, IsMongoId, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 import { ChannelTypeEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class GetActivityFeedCommand extends ApplicationWithUserCommand {
+export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   static create(data: GetActivityFeedCommand) {
     return CommandHelper.create<GetActivityFeedCommand>(GetActivityFeedCommand, data);
   }

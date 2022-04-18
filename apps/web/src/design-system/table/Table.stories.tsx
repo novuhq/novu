@@ -41,7 +41,8 @@ const badgeCell = (props) => {
       })}
       variant="outline"
       size="md"
-      radius="xs">
+      radius="xs"
+    >
       {props.category}
     </Badge>
   );

@@ -40,14 +40,20 @@ export class ContentService {
       variables.push(...extractedVariables);
     }
 
+    return Array.from(new Set(variables));
+  }
+
+  extractSubscriberMessageVariables(messages: IMessageTemplate[]): string[] {
+    const variables = [];
+
     const hasSmsMessage = !!messages.find((i) => i.type === ChannelTypeEnum.SMS);
     if (hasSmsMessage) {
-      variables.push('$phone');
+      variables.push('phone');
     }
 
     const hasEmailMessage = !!messages.find((i) => i.type === ChannelTypeEnum.EMAIL);
     if (hasEmailMessage) {
-      variables.push('$email');
+      variables.push('email');
     }
 
     return Array.from(new Set(variables));

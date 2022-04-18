@@ -6,7 +6,7 @@ describe('User Sign-up and Login', function () {
     });
 
     it('should allow a visitor to sign-up, login, and logout', function () {
-      cy.intercept('**/applications/**/switch').as('appSwitch');
+      cy.intercept('**/organization/**/switch').as('appSwitch');
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('example@example.com');
@@ -15,9 +15,6 @@ describe('User Sign-up and Login', function () {
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
       cy.getByTestId('submit-btn').click();
-      cy.wait('@appSwitch', {
-        timeout: 10000,
-      });
       cy.location('pathname').should('equal', '/templates');
     });
   });

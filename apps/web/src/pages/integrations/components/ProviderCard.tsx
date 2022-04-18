@@ -1,10 +1,10 @@
+import { IConfigCredentials } from '@novu/shared';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
 import { Button, colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
-import { IConfigCredentials } from '@novu/shared';
 
 export function ProviderCard({
   provider,
@@ -14,7 +14,6 @@ export function ProviderCard({
   onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
   const logoSrc = `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
   const brightCard =
     provider.active ||
@@ -28,7 +27,7 @@ export function ProviderCard({
 
   return (
     <StyledCard
-      dark={isDark}
+      dark={colorScheme === 'dark'}
       active={brightCard}
       data-test-id="integration-provider-card"
       onClick={() => {
@@ -37,7 +36,8 @@ export function ProviderCard({
         } else {
           onConnectClick(true, true, provider);
         }
-      }}>
+      }}
+    >
       {provider.comingSoon && (
         <RibbonWrapper>
           <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
@@ -51,7 +51,7 @@ export function ProviderCard({
 
         <CardFooter>
           {!provider.connected ? (
-            <StyledButton fullWidth variant={'outline'} dark={isDark}>
+            <StyledButton fullWidth variant={'outline'} theme={colorScheme}>
               Connect
             </StyledButton>
           ) : (
@@ -63,9 +63,9 @@ export function ProviderCard({
   );
 }
 
-const StyledButton = styled(Button)<{ dark: boolean }>`
-  background-image: ${({ dark }) =>
-    dark
+const StyledButton = styled(Button)<{ theme: string }>`
+  background-image: ${({ theme }) =>
+    theme === 'dark'
       ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`
       : `linear-gradient(0deg, ${colors.B98} 0%, ${colors.B98} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`};
 `;

@@ -6,9 +6,9 @@ import { IntegrationEntity } from './integration.entity';
 
 const integrationSchema = new Schema(
   {
-    _applicationId: {
+    _environmentId: {
       type: Schema.Types.ObjectId,
-      ref: 'Application',
+      ref: 'Environment',
       index: true,
     },
     _organizationId: {

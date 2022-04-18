@@ -7,6 +7,14 @@ const organizationSchema = new Schema(
   {
     name: Schema.Types.String,
     logo: Schema.Types.String,
+    branding: {
+      fontColor: Schema.Types.String,
+      contentBackground: Schema.Types.String,
+      fontFamily: Schema.Types.String,
+      logo: Schema.Types.String,
+      color: Schema.Types.String,
+      direction: Schema.Types.String,
+    },
   },
   schemaOptions
 );

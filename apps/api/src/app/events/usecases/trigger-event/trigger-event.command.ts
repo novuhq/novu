@@ -1,8 +1,9 @@
 import { IsDefined, IsString, IsUUID } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { ISubscribersDefine } from '@novu/node';
 
-export class TriggerEventCommand extends ApplicationWithUserCommand {
+export class TriggerEventCommand extends EnvironmentWithUserCommand {
   static create(data: TriggerEventCommand) {
     return CommandHelper.create(TriggerEventCommand, data);
   }
@@ -13,6 +14,9 @@ export class TriggerEventCommand extends ApplicationWithUserCommand {
 
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  @IsDefined()
+  to: ISubscribersDefine[]; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsUUID()
   @IsDefined()

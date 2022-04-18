@@ -24,8 +24,8 @@ export class ConfigService {
     return !!this.getDecodedToken().organizationId;
   }
 
-  isApplicationIdExist(): boolean {
-    return !!this.getDecodedToken().applicationId;
+  isEnvironmentIdExist(): boolean {
+    return !!this.getDecodedToken().environmentId;
   }
 
   getToken(): string {

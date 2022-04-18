@@ -125,7 +125,8 @@ export function Table({
               <tr
                 onClick={() => (onRowClick ? onRowClick(row) : null)}
                 {...row.getRowProps()}
-                className={classes.tableRow}>
+                className={classes.tableRow}
+              >
                 {row.cells.map((cell) => {
                   return (
                     <td
@@ -134,7 +135,8 @@ export function Table({
                           maxWidth: cell.column.maxWidth,
                           width: cell.column.width,
                         },
-                      })}>
+                      })}
+                    >
                       {cell.render('Cell')}
                     </td>
                   );
@@ -144,7 +146,7 @@ export function Table({
           })}
         </tbody>
       </MantineTable>
-      {pagination && total && pageSize > 1 && (
+      {pagination && total > 0 && pageSize > 1 && (
         <Pagination
           styles={{
             active: {

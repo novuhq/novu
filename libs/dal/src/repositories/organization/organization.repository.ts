@@ -14,7 +14,20 @@ export class OrganizationRepository extends BaseRepository<OrganizationEntity> {
     const members = await this.memberRepository.findUserActiveMembers(userId);
 
     return await this.find({
-      _id: members.map((m) => m._organizationId),
+      _id: members.map((member) => member._organizationId),
     });
+  }
+
+  async updateBrandingDetails(organizationId: string, branding: { color: string; logo: string }) {
+    return this.update(
+      {
+        _id: organizationId,
+      },
+      {
+        $set: {
+          branding,
+        },
+      }
+    );
   }
 }

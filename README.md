@@ -27,6 +27,8 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
     <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
     ·
+  <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a>
+    ·
     <a href="https://blog.novu.co/">Read our blog</a>
   </p>
   
@@ -60,37 +62,43 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
-  $user_id: "<USER IDENTIFIER>",
-  $email: "test@email.com",
-  firstName: "John",
-  lastName: "Doe",
-  organization: {
-    logo: 'https://evilcorp.com/logo.png'
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
+  {
+    to: {
+      subscriberId: '<USER_IDENTIFIER>',
+      email: 'test@email.com',
+      firstName: 'John',
+      lastName: 'Doe',
+    },
+    payload: {
+      organization: {
+        logo: 'https://evilcorp.com/logo.png',
+      },
+    },
   }
-});
+);
 ```
 
 # 📦 Stateless mode
-For simpler use cases, you can use the `@novu/node` library. This will require you to manage the templates content and providers registration. 
+For simpler use cases, you can use the `@novu/stateless` library. This will require you to manage the templates content and providers registration. 
 
 ## 📦 Install
 
 ```bash
-npm install @novu/node
+npm install @novu/stateless
 ```
 
 ```bash
-yarn add @novu/node
+yarn add @novu/stateless
 ```
 
 ## 🔨 Usage
 
 ```ts
-import { Novu, ChannelTypeEnum } from '@novu/node';
+import { NovuStateless, ChannelTypeEnum } from '@novu/stateless';
 import { SendgridEmailProvider } from '@novu/sendgrid';
 
-const novu = new Novu();
+const novu = new NovuStateless();
 
 await novu.registerProvider(
   new SendgridEmailProvider({
@@ -130,7 +138,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME>', {
 ```
 
 ## Providers
-Novu provides a single API to manage providers across multiple channels with a single to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
 #### 💌 Email
 - [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)

@@ -1,9 +1,9 @@
 import { IsDefined } from 'class-validator';
 import { ChannelTypeEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
-import { ApplicationCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class DeactivateSimilarChannelIntegrationsCommand extends ApplicationCommand {
+export class DeactivateSimilarChannelIntegrationsCommand extends EnvironmentCommand {
   static create(data: DeactivateSimilarChannelIntegrationsCommand) {
     return CommandHelper.create(DeactivateSimilarChannelIntegrationsCommand, data);
   }

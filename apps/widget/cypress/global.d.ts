@@ -30,7 +30,7 @@ declare namespace Cypress {
     /**
      * Logs-in user by using API request
      */
-    initializeSession(settings?: { noApplication?: boolean; shell?: boolean }): Chainable<Response>;
+    initializeSession(settings?: { noEnvironment?: boolean; shell?: boolean }): Chainable<Response>;
 
     logout(): Chainable<Response>;
   }

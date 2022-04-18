@@ -1,4 +1,4 @@
-import { IEmailOptions, IEmailProvider } from '@novu/node';
+import { IEmailOptions, IEmailProvider } from '@novu/stateless';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IMailHandler } from '../interfaces/send.handler.interface';
 

@@ -22,7 +22,8 @@ export function NotificationListItem({
       colorScheme={colorScheme}
       data-test-id="notification-list-item"
       unseen={!notification.seen}
-      onClick={() => onClick(notification)}>
+      onClick={() => onClick(notification)}
+    >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'left' }}>
         <TextContent
           data-test-id="notification-content"

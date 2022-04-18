@@ -3,7 +3,7 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
-} from '@novu/node';
+} from '@novu/stateless';
 
 import Sms77Client, { SmsJsonResponse, SmsParams } from 'sms77-client';
 

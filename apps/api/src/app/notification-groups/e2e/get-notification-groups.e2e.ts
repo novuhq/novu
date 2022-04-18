@@ -23,7 +23,7 @@ describe('Get Notification Groups - /notification-groups (GET)', async () => {
     const group = body.data.find((i) => i.name === 'Test name');
 
     expect(group.name).to.equal(`Test name`);
-    expect(group._applicationId).to.equal(session.application._id);
+    expect(group._environmentId).to.equal(session.environment._id);
   });
 
   it('should create a default group when fetching', async function () {

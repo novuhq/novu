@@ -2,7 +2,7 @@ export * from './dal.service';
 export * from './repositories/user';
 export * from './repositories/base-repository';
 export * from './repositories/organization';
-export * from './repositories/application';
+export * from './repositories/environment';
 export * from './repositories/notification-template';
 export * from './repositories/subscriber';
 export * from './repositories/notification';

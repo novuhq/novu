@@ -41,7 +41,7 @@ export class ActivityController {
       GetActivityFeedCommand.create({
         page: page ? Number(page) : 0,
         organizationId: user.organizationId,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         userId: user._id,
         channels: channelsQuery,
         templates: templatesQuery,
@@ -56,7 +56,7 @@ export class ActivityController {
     return this.getActivityStatsUsecase.execute(
       GetActivityStatsCommand.create({
         organizationId: user.organizationId,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         userId: user._id,
       })
     );
@@ -69,7 +69,7 @@ export class ActivityController {
       GetActivityGraphStatsCommand.create({
         days: days ? Number(days) : 32,
         organizationId: user.organizationId,
-        applicationId: user.applicationId,
+        environmentId: user.environmentId,
         userId: user._id,
       })
     );

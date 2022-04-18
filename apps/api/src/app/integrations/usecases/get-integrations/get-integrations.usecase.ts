@@ -7,6 +7,6 @@ export class GetIntegrations {
   constructor(private integrationRepository: IntegrationRepository) {}
 
   async execute(command: GetIntegrationsCommand): Promise<IntegrationEntity[]> {
-    return await this.integrationRepository.findByApplicationId(command.applicationId);
+    return await this.integrationRepository.findByEnvironmentId(command.environmentId);
   }
 }

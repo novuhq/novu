@@ -5,6 +5,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import PageContainer from '../../../components/layout/components/PageContainer';
+import PageMeta from '../../../components/layout/components/PageMeta';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { TemplatesSideBar } from '../../../components/templates/TemplatesSideBar';
 import { NotificationSettingsForm } from '../../../components/templates/NotificationSettingsForm';
@@ -78,30 +79,36 @@ export default function TemplateEditorPage() {
 
   return (
     <PageContainer>
+      <PageMeta title={editMode ? template?.name : 'Create Template'} />
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
           <PageHeader
             title={editMode ? 'Edit Template' : 'Create new template'}
             actions={
-              <Group grow spacing={40}>
+              <Grid align="center" gutter={50}>
                 {editMode && (
-                  <Switch
-                    label={isTemplateActive ? 'Enabled' : 'Disabled'}
-                    loading={isStatusChangeLoading}
-                    data-test-id="active-toggle-switch"
-                    onChange={(e) => changeActiveStatus(e.target.checked)}
-                    checked={isTemplateActive || false}
-                  />
+                  <Grid.Col span={6}>
+                    <Switch
+                      label={isTemplateActive ? 'Enabled' : 'Disabled'}
+                      loading={isStatusChangeLoading}
+                      data-test-id="active-toggle-switch"
+                      onChange={(e) => changeActiveStatus(e.target.checked)}
+                      checked={isTemplateActive || false}
+                    />
+                  </Grid.Col>
                 )}
-                <Button
-                  ml={10}
-                  data-test-id="submit-btn"
-                  loading={isLoading || isUpdateLoading}
-                  disabled={loadingEditTemplate || isLoading}
-                  submit>
-                  {editMode ? 'Update' : 'Create'}
-                </Button>
-              </Group>
+                <Grid.Col span={6}>
+                  <Button
+                    mr={20}
+                    data-test-id="submit-btn"
+                    loading={isLoading || isUpdateLoading}
+                    disabled={loadingEditTemplate || isLoading}
+                    submit
+                  >
+                    {editMode ? 'Update' : 'Create'}
+                  </Button>
+                </Grid.Col>
+              </Grid>
             }
           />
           <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
@@ -135,7 +142,9 @@ export default function TemplateEditorPage() {
                               control={control}
                               index={index}
                               errors={errors}
-                              isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.SMS)}
+                              isIntegrationActive={
+                                !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)
+                              }
                             />
                           );
                         })}
@@ -144,7 +153,9 @@ export default function TemplateEditorPage() {
                           variables={trigger?.variables || []}
                           onRemoveTab={removeEmailMessage}
                           emailMessagesFields={emailMessagesFields}
-                          isIntegrationActive={!!integrations?.some((x) => x.channel === ChannelTypeEnum.EMAIL)}
+                          isIntegrationActive={
+                            !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)
+                          }
                         />
                       )}
                       {activePage === 'in_app' &&

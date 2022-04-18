@@ -15,7 +15,7 @@ describe('Change template status by id - /notification-templates/:templateId/sta
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
-      session.application._id
+      session.environment._id
     );
     const template = await notificationTemplateService.createTemplate({
       active: false,

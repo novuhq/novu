@@ -16,7 +16,7 @@ export class GetSignedUrl {
     signedUrl: string;
     path: string;
   }> {
-    const path = `${command.organizationId}/${command.applicationId}/${hat()}.${command.extension}`;
+    const path = `${command.organizationId}/${command.environmentId}/${hat()}.${command.extension}`;
 
     const response = await this.storageService.getSignedUrl(path, mimeTypes[command.extension]);
 

@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { ApplicationEntity, ApplicationRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { UpdateSmsSettingsCommand } from './update-sms-settings.command';
 
 @Injectable()
 export class UpdateSmsSettings {
-  constructor(private applicationRepository: ApplicationRepository) {}
+  constructor(private environmentRepository: EnvironmentRepository) {}
 
-  async execute(command: UpdateSmsSettingsCommand): Promise<ApplicationEntity> {
-    await this.applicationRepository.update(
+  async execute(command: UpdateSmsSettingsCommand): Promise<EnvironmentEntity> {
+    await this.environmentRepository.update(
       {
-        _id: command.applicationId,
+        _id: command.environmentId,
       },
       {
         $set: {
@@ -20,6 +20,6 @@ export class UpdateSmsSettings {
       }
     );
 
-    return await this.applicationRepository.findById(command.applicationId);
+    return await this.environmentRepository.findById(command.environmentId);
   }
 }

@@ -26,8 +26,8 @@ import { Login } from './usecases/login/login.usecase';
 import { LoginBodyDto } from './dtos/login.dto';
 import { LoginCommand } from './usecases/login/login.command';
 import { UserSession } from '../shared/framework/user.decorator';
-import { SwitchApplication } from './usecases/switch-application/switch-application.usecase';
-import { SwitchApplicationCommand } from './usecases/switch-application/switch-application.command';
+import { SwitchEnvironment } from './usecases/switch-environment/switch-environment.usecase';
+import { SwitchEnvironmentCommand } from './usecases/switch-environment/switch-environment.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { JwtAuthGuard } from './framework/auth.guard';
@@ -47,7 +47,7 @@ export class AuthController {
     private userRegisterUsecase: UserRegister,
     private loginUsecase: Login,
     private organizationRepository: OrganizationRepository,
-    private switchApplicationUsecase: SwitchApplication,
+    private switchEnvironmentUsecase: SwitchEnvironment,
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
     private passwordResetRequestUsecase: PasswordResetRequest,
@@ -150,21 +150,21 @@ export class AuthController {
     return await this.switchOrganizationUsecase.execute(command);
   }
 
-  @Post('/applications/:applicationId/switch')
+  @Post('/environments/:environmentId/switch')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   async projectSwitch(
     @UserSession() user: IJwtPayload,
-    @Param('applicationId') applicationId: string
+    @Param('environmentId') environmentId: string
   ): Promise<{ token: string }> {
-    const command = SwitchApplicationCommand.create({
+    const command = SwitchEnvironmentCommand.create({
       userId: user._id,
-      newApplicationId: applicationId,
+      newEnvironmentId: environmentId,
       organizationId: user.organizationId,
     });
 
     return {
-      token: await this.switchApplicationUsecase.execute(command),
+      token: await this.switchEnvironmentUsecase.execute(command),
     };
   }
 
@@ -172,7 +172,7 @@ export class AuthController {
   async authenticateTest(
     @Param('userId') userId: string,
     @Query('organizationId') organizationId: string,
-    @Query('applicationId') applicationId: string
+    @Query('environmentId') environmentId: string
   ) {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 
@@ -181,6 +181,6 @@ export class AuthController {
 
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
 
-    return await this.authService.getSignedToken(user, organizationId, member, applicationId);
+    return await this.authService.getSignedToken(user, organizationId, member, environmentId);
   }
 }

@@ -1,7 +1,7 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
-import { IApplication, ICreateNotificationTemplateDto } from '@novu/shared';
+import { IEnvironment, ICreateNotificationTemplateDto } from '@novu/shared';
 import { prompt } from '../client';
 import {
   environmentQuestions,
@@ -20,17 +20,18 @@ import {
   CLIENT_LOGIN_URL,
   getServerPort,
   GITHUB_DOCKER_URL,
+  EMBED_PATH,
 } from '../constants';
 import {
   storeHeader,
   createOrganization,
   switchOrganization,
-  createApplication,
-  getApplicationMe,
-  switchApplication,
+  createEnvironment,
+  getEnvironmentMe,
+  switchEnvironment,
   getNotificationGroup,
   createNotificationTemplates,
-  getApplicationApiKeys,
+  getEnvironmentApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
 
@@ -53,9 +54,9 @@ export async function initCommand() {
       await config.clearStore();
     }
 
-    const existingApplication = await checkExistingApplication(config);
-    if (existingApplication) {
-      const { result } = await prompt(existingSessionQuestions(existingApplication));
+    const existingEnvironment = await checkExistingEnvironment(config);
+    if (existingEnvironment) {
+      const { result } = await prompt(existingSessionQuestions(existingEnvironment));
 
       if (result === 'visitDashboard') {
         await handleExistingSession(result, config);
@@ -100,7 +101,7 @@ async function handleOnboardingFlow(config: ConfigService) {
     spinner = ora('Setting up your new account').start();
 
     await createOrganizationHandler(config, answers);
-    const applicationIdentifier = await createApplicationHandler(config, answers);
+    const applicationIdentifier = await createEnvironmentHandler(config, answers);
 
     const address = httpServer.getAddress();
 
@@ -139,30 +140,30 @@ async function gitHubOAuth(httpServer: HttpServer, config: ConfigService): Promi
 async function createOrganizationHandler(config: ConfigService, answers: Answers) {
   if (config.isOrganizationIdExist()) return;
 
-  const createOrganizationResponse = await createOrganization(answers.applicationName);
+  const createOrganizationResponse = await createOrganization(answers.environmentName);
 
   const newUserJwt = await switchOrganization(createOrganizationResponse._id);
 
   storeToken(config, newUserJwt);
 }
 
-async function createApplicationHandler(config: ConfigService, answers: Answers): Promise<string> {
-  if (config.isApplicationIdExist()) {
-    const existingApplication = await getApplicationMe();
-    const keys = await getApplicationApiKeys();
+async function createEnvironmentHandler(config: ConfigService, answers: Answers): Promise<string> {
+  if (config.isEnvironmentIdExist()) {
+    const existingEnvironment = await getEnvironmentMe();
+    const keys = await getEnvironmentApiKeys();
 
     config.setValue('apiKey', keys[0]?.key);
 
-    return existingApplication.identifier;
+    return existingEnvironment.identifier;
   }
 
-  const createApplicationResponse = await createApplication(answers.applicationName);
-  const newUserJwt = await switchApplication(createApplicationResponse._id);
+  const createEnvironmentResponse = await createEnvironment(answers.environmentName);
+  const newUserJwt = await switchEnvironment(createEnvironmentResponse._id);
 
-  config.setValue('apiKey', createApplicationResponse.apiKeys[0].key);
+  config.setValue('apiKey', createEnvironmentResponse.apiKeys[0].key);
   storeToken(config, newUserJwt);
 
-  return createApplicationResponse.identifier;
+  return createEnvironmentResponse.identifier;
 }
 
 async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService, applicationIdentifier: string) {
@@ -182,11 +183,11 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
   const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}`;
 
-  const messages = [
+  const steps = [
     {
       type: ChannelTypeEnum.IN_APP,
       content:
-        'Welcome <b>{{$first_name}}</b>! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
+        'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
       cta: {
         type: ChannelCTATypeEnum.REDIRECT,
         data: {
@@ -201,7 +202,7 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
     name: 'On-boarding notification',
     active: true,
     draft: false,
-    messages,
+    steps,
     tags: null,
     description: null,
   };
@@ -220,14 +221,15 @@ function storeDashboardData(
   const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
   const tmpPayload: { key: string; value: string }[] = [
+    { key: 'embedPath', value: EMBED_PATH },
     { key: 'url', value: API_TRIGGER_URL },
     { key: 'apiKey', value: config.getValue('apiKey') },
     { key: 'name', value: createNotificationTemplatesResponse.triggers[0].identifier },
-    { key: '$user_id', value: decodedToken._id },
-    { key: '$first_name', value: decodedToken.firstName },
-    { key: '$last_name', value: decodedToken.lastName },
-    { key: '$email', value: decodedToken.email },
-    { key: 'applicationId', value: applicationIdentifier },
+    { key: 'subscriberId', value: decodedToken._id },
+    { key: 'firstName', value: decodedToken.firstName },
+    { key: 'lastName', value: decodedToken.lastName },
+    { key: 'email', value: decodedToken.email },
+    { key: 'environmentId', value: applicationIdentifier },
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },
   ];
@@ -255,17 +257,17 @@ const keyPress = async (): Promise<void> => {
   );
 };
 
-async function checkExistingApplication(config: ConfigService): Promise<IApplication | null> {
+async function checkExistingEnvironment(config: ConfigService): Promise<IEnvironment | null> {
   const isSessionExists = !!config.getDecodedToken();
 
   if (isSessionExists && process.env.NODE_ENV !== 'dev') {
     storeToken(config, config.getToken());
 
-    let existingApplication: IApplication;
+    let existingEnvironment: IEnvironment;
 
     try {
-      existingApplication = await getApplicationMe();
-      if (!existingApplication) {
+      existingEnvironment = await getEnvironmentMe();
+      if (!existingEnvironment) {
         return null;
       }
     } catch (e) {
@@ -274,7 +276,7 @@ async function checkExistingApplication(config: ConfigService): Promise<IApplica
       return null;
     }
 
-    return existingApplication;
+    return existingEnvironment;
   }
 
   return null;
