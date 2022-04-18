@@ -110,7 +110,7 @@ export function useTemplateController(templateId: string) {
   >(({ id, data }) => updateTemplate(id, data));
 
   useEffect(() => {
-    if (template) {
+    if (template && template.steps) {
       const inAppChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.IN_APP);
       const emailChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.EMAIL);
       const smsChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.SMS);
