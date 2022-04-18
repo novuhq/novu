@@ -1,38 +1,28 @@
 import React from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
+import { ColorScheme } from '../../index';
+import { API_URL } from '../../api/shared';
 
 export function NovuProvider({
   children,
-  appId,
-  backendUrl,
-  userId,
-  clientId,
-  firstName,
-  lastName,
-  email,
-  phone,
+  backendUrl = API_URL,
+  subscriberId,
+  applicationIdentifier,
+  colorScheme,
 }: {
   children: JSX.Element;
-  appId: string;
-  backendUrl: string;
-  userId: string;
-  clientId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
+  backendUrl?: string;
+  subscriberId: string;
+  applicationIdentifier: string;
+  colorScheme?: ColorScheme;
 }) {
   return (
     <NovuContext.Provider
       value={{
-        appId: appId,
         backendUrl: backendUrl,
-        userId: userId,
-        clientId: clientId,
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        phone: phone,
+        subscriberId: subscriberId,
+        applicationIdentifier: applicationIdentifier,
+        colorScheme: colorScheme || 'light',
       }}>
       {children}
     </NovuContext.Provider>

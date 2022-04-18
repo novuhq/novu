@@ -36,12 +36,10 @@ export interface INotificationCenterContext {
 }
 
 export interface INovuProviderContext {
-  appId?: string;
   backendUrl?: string;
-  userId?: string;
-  clientId?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
+  subscriberId?: string;
+  applicationIdentifier?: string;
+  colorScheme: ColorScheme;
 }
+
+export declare type ColorScheme = 'light' | 'dark';

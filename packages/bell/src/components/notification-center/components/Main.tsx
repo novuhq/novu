@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useInfiniteQuery, useMutation } from 'react-query';
 import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './NotificationsList';
 import { getNotificationsList, markMessageAsSeen } from '../../../api/notifications';
 import { useSocket } from '../../../hooks/use-socket.hook';
-import { sendNotificationClick, sendUrlChange } from '../../../api/sdk.service';
 import { postUsageLog } from '../../../api/usage';
+import { NotificationCenterContext } from '../../../store/notification-center.context';
+import image from '../../../images/no-new-notifications.png';
 
 export function Main() {
+  const { sendNotificationClick, sendUrlChange } = useContext(NotificationCenterContext);
   const [currentPage, setCurrentPage] = useState<number>(0);
 
   const { isLoading, data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } =
@@ -76,7 +78,7 @@ export function Main() {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-          <img src="/no-new-notifications.png" alt="logo" style={{ maxWidth: 200 }} />
+          <img src={image as any} alt="logo" style={{ maxWidth: 200 }} />
         </div>
       ) : (
         <NotificationsList

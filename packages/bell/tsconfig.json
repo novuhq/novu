@@ -1,4 +1,5 @@
 {
+  "include": ["src"],
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
@@ -9,7 +10,7 @@
     "module": "ESNext",
     "declarationDir": "types",
     "sourceMap": true,
-    "outDir": "build",
+    "outDir": "dist",
     "emitDeclarationOnly": true,
   }
 }
