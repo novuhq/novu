@@ -1,6 +1,6 @@
 describe('App Branding', function () {
   beforeEach(function () {
-    cy.intercept('**/widgets/application').as('applicationSettings');
+    cy.intercept('**/widgets/organization').as('organizationSettings');
 
     cy.initializeSession()
       .as('session')
@@ -24,7 +24,7 @@ describe('App Branding', function () {
    * For now, user's branding will only include font family, layout direction and brand color.
    */
   it('change main theme color', function () {
-    cy.wait('@applicationSettings');
+    cy.wait('@organizationSettings');
 
     cy.getByTestId('notification-list-item').then(($els) => {
       // get Window reference from element
