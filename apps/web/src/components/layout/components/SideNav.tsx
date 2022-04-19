@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Navbar } from '@mantine/core';
 import { IEnvironment } from '@novu/shared';
+import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import { getMyEnvironments, getCurrentEnvironment } from '../../../api/environment';
 import { api } from '../../../api/api.client';
 import { NavMenu, SegmentedControl } from '../../../design-system';
@@ -33,9 +34,9 @@ export function SideNav({}: Props) {
     'currentEnvironment',
     getCurrentEnvironment
   );
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useStateWithCallbackLazy(false);
 
-  async function changeEnvironment(environmentName: string) {
+  function changeEnvironment(environmentName: string) {
     if (isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment) {
       return;
     }
@@ -45,25 +46,39 @@ export function SideNav({}: Props) {
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(true, () => {
+      api
+        .post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {})
+        .then((tokenResponse) => {
+          setToken(tokenResponse.token);
 
-    const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
-    setToken(tokenResponse.token);
-    setIsLoading(false);
+          return tokenResponse;
+        })
+        .then(() => {
+          // eslint-disable-next-line promise/no-nesting
+          queryClient.refetchQueries().then(() => {
+            setIsLoading(false, () => {});
 
-    await queryClient.refetchQueries();
+            return false;
+          });
+
+          return true;
+        });
+    });
   }
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
         <SegmentedControl
+          loading={isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading}
           data={['Development', 'Production']}
           defaultValue={environment?.name}
           value={environment?.name}
-          onChange={async (value) => {
-            await changeEnvironment(value);
+          onChange={(value) => {
+            changeEnvironment(value);
           }}
+          data-test-id="environment-switch"
         />
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
