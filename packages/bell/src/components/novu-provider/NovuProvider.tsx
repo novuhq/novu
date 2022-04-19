@@ -19,7 +19,7 @@ interface INovuProviderProps {
 export function NovuProvider(props: INovuProviderProps) {
   return (
     <RootProviders>
-      <SessionInitialization {...props}>
+      <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
         <NovuContext.Provider
           value={{
             backendUrl: props.backendUrl,
