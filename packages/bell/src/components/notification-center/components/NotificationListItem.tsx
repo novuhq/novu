@@ -3,7 +3,7 @@ import { IMessage } from '@novu/shared';
 import moment from 'moment';
 import { shadows } from '../../../shared/config/shadows';
 import { colors } from '../../../shared/config/colors';
-import { DotsHorizontal } from '../../../shared/icons/DotsHorizontal';
+import { DotsHorizontal } from '../../../shared/icons';
 import React, { useContext } from 'react';
 import { NovuContext } from '../../../store/novu-provider.context';
 import { ColorScheme } from '../../../index';

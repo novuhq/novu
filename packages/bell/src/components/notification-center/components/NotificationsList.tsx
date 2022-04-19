@@ -17,9 +17,7 @@ export function NotificationsList({
   onNotificationClicked: (notification: IMessage) => void;
 }) {
   const totalCount = notifications.reduce((history, messages) => {
-    const newCount = history + messages.length;
-
-    return newCount;
+    return history + messages.length;
   }, 0);
 
   return (
