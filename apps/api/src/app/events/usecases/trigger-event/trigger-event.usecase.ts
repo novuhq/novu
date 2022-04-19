@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  EnvironmentEntity,
-  EnvironmentRepository,
   IEmailBlock,
   IntegrationRepository,
   MessageRepository,
@@ -12,10 +10,12 @@ import {
   NotificationTemplateRepository,
   SubscriberEntity,
   SubscriberRepository,
+  OrganizationRepository,
+  OrganizationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { IEmailOptions } from '@novu/node';
+import { IEmailOptions } from '@novu/stateless';
 import { TriggerEventCommand } from './trigger-event.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -29,6 +29,7 @@ import { QueueService } from '../../../shared/services/queue';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { MailFactory } from '../../services/mail-service/mail.factory';
+import { ISubscribersDefine } from '@novu/node';
 
 @Injectable()
 export class TriggerEvent {
@@ -41,7 +42,7 @@ export class TriggerEvent {
     private messageRepository: MessageRepository,
     private mailService: MailService,
     private queueService: QueueService,
-    private environmentRepository: EnvironmentRepository,
+    private organizationRepository: OrganizationRepository,
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
     private analyticsService: AnalyticsService,
@@ -68,6 +69,7 @@ export class TriggerEvent {
           userId: command.userId,
           code: LogCodeEnum.TRIGGER_RECEIVED,
           raw: {
+            subscribers: command.to,
             payload: command.payload,
           },
         })
@@ -126,22 +128,82 @@ export class TriggerEvent {
       };
     }
 
+    const organization = await this.organizationRepository.findById(command.organizationId);
+    const { smsMessages, inAppChannelMessages, emailChannelMessages } = this.extractMatchingMessages(
+      template,
+      command.payload
+    );
+
+    const channelsToSend: ChannelTypeEnum[] = [];
+    if (smsMessages?.length) {
+      channelsToSend.push(ChannelTypeEnum.SMS);
+    }
+
+    if (inAppChannelMessages?.length) {
+      channelsToSend.push(ChannelTypeEnum.IN_APP);
+    }
+
+    if (emailChannelMessages?.length) {
+      channelsToSend.push(ChannelTypeEnum.EMAIL);
+    }
+
+    const errors = [];
+
+    for (const subscriberToTrigger of command.to) {
+      await this.processSubscriber(
+        subscriberToTrigger,
+        command,
+        template,
+        smsMessages,
+        channelsToSend,
+        inAppChannelMessages,
+        emailChannelMessages,
+        organization
+      );
+    }
+
+    this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
+      smsChannel: !!smsMessages?.length,
+      emailChannel: !!emailChannelMessages?.length,
+      inAppChannel: !!inAppChannelMessages?.length,
+    });
+
+    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
+      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
+    }
+
+    return {
+      acknowledged: true,
+      status: 'processed',
+    };
+  }
+
+  private async processSubscriber(
+    subscriberPayload: ISubscribersDefine,
+    command: TriggerEventCommand,
+    template: NotificationTemplateEntity,
+    smsMessages: NotificationStepEntity[],
+    channelsToSend: ChannelTypeEnum[],
+    inAppChannelMessages: NotificationStepEntity[],
+    emailChannelMessages: NotificationStepEntity[],
+    organization: OrganizationEntity
+  ) {
     let subscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
-      command.payload.$user_id
+      subscriberPayload.subscriberId
     );
 
     if (!subscriber) {
-      if (command.payload.$email || command.payload.$phone) {
+      if (subscriberPayload.email || subscriberPayload.phone) {
         subscriber = await this.createSubscriberUsecase.execute(
           CreateSubscriberCommand.create({
             environmentId: command.environmentId,
             organizationId: command.organizationId,
-            subscriberId: command.payload.$user_id,
-            email: command.payload.$email,
-            firstName: command.payload.$first_name,
-            lastName: command.payload.$last_name,
-            phone: command.payload.$phone,
+            subscriberId: subscriberPayload.subscriberId,
+            email: subscriberPayload.email,
+            firstName: subscriberPayload.firstName,
+            lastName: subscriberPayload.lastName,
+            phone: subscriberPayload.phone,
           })
         );
       } else {
@@ -157,13 +219,13 @@ export class TriggerEvent {
             templateId: template._id,
             raw: {
               payload: command.payload,
+              subscriber: subscriberPayload,
               triggerIdentifier: command.identifier,
             },
           })
         );
 
         return {
-          acknowledged: true,
           status: 'subscriber_not_found',
         };
       }
@@ -177,29 +239,6 @@ export class TriggerEvent {
       transactionId: command.transactionId,
     });
 
-    const environment = await this.environmentRepository.findById(command.environmentId);
-    const { smsMessages, inAppChannelMessages, emailChannelMessages } = this.extractMatchingMessages(
-      template,
-      command.payload
-    );
-
-    let channelsToSend: ChannelTypeEnum[] = [];
-    if (!command.payload.$channels || !Array.isArray(command.payload.$channels)) {
-      if (smsMessages?.length) {
-        channelsToSend.push(ChannelTypeEnum.SMS);
-      }
-
-      if (inAppChannelMessages?.length) {
-        channelsToSend.push(ChannelTypeEnum.IN_APP);
-      }
-
-      if (emailChannelMessages?.length) {
-        channelsToSend.push(ChannelTypeEnum.EMAIL);
-      }
-    } else {
-      channelsToSend = command.payload.$channels;
-    }
-
     if (smsMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.SMS)) {
       await this.sendSmsMessage(smsMessages, command, notification, subscriber, template);
     }
@@ -209,7 +248,7 @@ export class TriggerEvent {
     }
 
     if (emailChannelMessages.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.EMAIL)) {
-      await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, environment);
+      await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, organization);
     }
 
     await this.createLogUsecase.execute(
@@ -227,19 +266,8 @@ export class TriggerEvent {
       })
     );
 
-    this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
-      smsChannel: !!smsMessages?.length,
-      emailChannel: !!emailChannelMessages?.length,
-      inAppChannel: !!inAppChannelMessages?.length,
-    });
-
-    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
-      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
-    }
-
     return {
-      acknowledged: true,
-      status: 'processed',
+      status: 'success',
     };
   }
 
@@ -268,6 +296,7 @@ export class TriggerEvent {
     const smsChannel = smsMessages[0];
     const contentService = new ContentService();
     const content = contentService.replaceVariables(smsChannel.template.content as string, command.payload);
+    const phone = command.payload.phone || subscriber.phone;
 
     const message = await this.messageRepository.create({
       _notificationId: notification._id,
@@ -278,7 +307,7 @@ export class TriggerEvent {
       _messageTemplateId: smsChannel.template._id,
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
-      phone: command.payload.$phone,
+      phone,
       content,
     });
 
@@ -288,12 +317,12 @@ export class TriggerEvent {
       active: true,
     });
 
-    if (command.payload.$phone && integration) {
+    if (phone && integration) {
       try {
         const smsHandler = this.smsFactory.getHandler(integration);
 
         await smsHandler.send({
-          to: command.payload.$phone,
+          to: phone,
           from: integration.credentials.from,
           content,
           attachments: null,
@@ -324,7 +353,7 @@ export class TriggerEvent {
           e.message || e.name || 'Un-expect SMS provider error'
         );
       }
-    } else if (!command.payload.$phone) {
+    } else if (!phone) {
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
@@ -452,9 +481,9 @@ export class TriggerEvent {
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
     template: NotificationTemplateEntity,
-    environment: EnvironmentEntity
+    organization: OrganizationEntity
   ) {
-    const email = command.payload.$email || subscriber.email;
+    const email = command.payload.email || subscriber.email;
 
     Sentry.addBreadcrumb({
       message: 'Sending Email',
@@ -499,8 +528,8 @@ export class TriggerEvent {
         data: {
           subject,
           branding: {
-            logo: environment.branding?.logo,
-            color: environment.branding?.color || '#f47373',
+            logo: organization.branding?.logo,
+            color: organization.branding?.color || '#f47373',
           },
           blocks: isEditorMode ? content : [],
           ...command.payload,
@@ -518,7 +547,7 @@ export class TriggerEvent {
       to: email,
       subject,
       html,
-      from: command.payload.$sender_email || integration.credentials.from || 'no-reply@novu.co',
+      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
     };
 
     if (email && integration) {

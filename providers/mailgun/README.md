@@ -1,6 +1,6 @@
 # Nodejs Mailgun Provider
 
-A mailgun email provider library for [@novu/node](https://github.com/novuhq/novu).
+A mailgun email provider library for [@novu/stateless](https://github.com/novuhq/novu).
 
 ## Usage
 

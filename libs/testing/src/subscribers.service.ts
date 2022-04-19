@@ -11,6 +11,7 @@ export class SubscribersService {
       lastName: faker.name.lastName(),
       firstName: faker.name.firstName(),
       email: faker.internet.email(),
+      phone: faker.phone.phoneNumber(),
       _environmentId: this._environmentId,
       _organizationId: this._organizationId,
       subscriberId: faker.datatype.uuid(),

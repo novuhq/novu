@@ -20,6 +20,7 @@ import {
   CLIENT_LOGIN_URL,
   getServerPort,
   GITHUB_DOCKER_URL,
+  EMBED_PATH,
 } from '../constants';
 import {
   storeHeader,
@@ -186,7 +187,7 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
     {
       type: ChannelTypeEnum.IN_APP,
       content:
-        'Welcome <b>{{$first_name}}</b>! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
+        'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
       cta: {
         type: ChannelCTATypeEnum.REDIRECT,
         data: {
@@ -220,13 +221,14 @@ function storeDashboardData(
   const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
 
   const tmpPayload: { key: string; value: string }[] = [
+    { key: 'embedPath', value: EMBED_PATH },
     { key: 'url', value: API_TRIGGER_URL },
     { key: 'apiKey', value: config.getValue('apiKey') },
     { key: 'name', value: createNotificationTemplatesResponse.triggers[0].identifier },
-    { key: '$user_id', value: decodedToken._id },
-    { key: '$first_name', value: decodedToken.firstName },
-    { key: '$last_name', value: decodedToken.lastName },
-    { key: '$email', value: decodedToken.email },
+    { key: 'subscriberId', value: decodedToken._id },
+    { key: 'firstName', value: decodedToken.firstName },
+    { key: 'lastName', value: decodedToken.lastName },
+    { key: 'email', value: decodedToken.email },
     { key: 'environmentId', value: applicationIdentifier },
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },

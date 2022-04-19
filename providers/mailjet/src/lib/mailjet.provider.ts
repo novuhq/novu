@@ -3,7 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-} from '@novu/node';
+} from '@novu/stateless';
 import Client, { Email } from 'node-mailjet';
 import { MailjetResponse } from './mailjet-response.interface';
 

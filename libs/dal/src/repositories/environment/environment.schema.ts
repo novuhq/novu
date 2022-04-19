@@ -17,21 +17,16 @@ const environmentSchema = new Schema(
     },
     apiKeys: [
       {
-        key: Schema.Types.String,
+        key: {
+          type: Schema.Types.String,
+          unique: true,
+        },
         _userId: {
           type: Schema.Types.ObjectId,
           ref: 'User',
         },
       },
     ],
-    branding: {
-      fontColor: Schema.Types.String,
-      contentBackground: Schema.Types.String,
-      fontFamily: Schema.Types.String,
-      logo: Schema.Types.String,
-      color: Schema.Types.String,
-      direction: Schema.Types.String,
-    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
