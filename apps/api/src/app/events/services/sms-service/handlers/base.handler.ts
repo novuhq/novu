@@ -1,4 +1,4 @@
-import { ISmsOptions, ISmsProvider } from '@novu/node';
+import { ISmsOptions, ISmsProvider } from '@novu/stateless';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
 import { ISmsHandler } from '../interfaces';

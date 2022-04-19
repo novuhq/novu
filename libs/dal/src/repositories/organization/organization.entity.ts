@@ -4,4 +4,13 @@ export class OrganizationEntity {
   name: string;
 
   logo: string;
+
+  branding: {
+    fontFamily?: string;
+    fontColor?: string;
+    contentBackground?: string;
+    logo: string;
+    color: string;
+    direction?: 'ltr' | 'rtl';
+  };
 }

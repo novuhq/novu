@@ -1,6 +1,6 @@
 # Novu Telnyx Provider
 
-A Telnyx sms provider library for [@novu/node](https://github.com/novuhq/novu)
+A Telnyx sms provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 

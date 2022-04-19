@@ -1,13 +1,4 @@
-import {
-  Body,
-  ClassSerializerInterceptor,
-  Controller,
-  Get,
-  Post,
-  Put,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { EnvironmentEntity } from '@novu/dal';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -20,8 +11,6 @@ import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environmen
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
-import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -31,8 +20,7 @@ export class EnvironmentsController {
     private createEnvironmentUsecase: CreateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
-    private getMyEnvironmentsUsecase: GetMyEnvironments,
-    private updateBrandingDetailsUsecase: UpdateBrandingDetails
+    private getMyEnvironmentsUsecase: GetMyEnvironments
   ) {}
 
   @Get('/me')
@@ -66,25 +54,6 @@ export class EnvironmentsController {
       GetMyEnvironmentsCommand.create({
         userId: user._id,
         organizationId: user.organizationId,
-      })
-    );
-  }
-
-  @Put('/branding')
-  async updateBrandingDetails(
-    @UserSession() user: IJwtPayload,
-    @Body() body: { color: string; logo: string; fontColor: string; contentBackground: string; fontFamily: string }
-  ) {
-    return await this.updateBrandingDetailsUsecase.execute(
-      UpdateBrandingDetailsCommand.create({
-        logo: body.logo,
-        color: body.color,
-        environmentId: user.environmentId,
-        userId: user._id,
-        organizationId: user.organizationId,
-        fontColor: body.fontColor,
-        fontFamily: body.fontFamily,
-        contentBackground: body.contentBackground,
       })
     );
   }

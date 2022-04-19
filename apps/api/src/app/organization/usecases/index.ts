@@ -5,6 +5,7 @@ import { AddMember } from './membership/add-member/add-member.usecase';
 import { RemoveMember } from './membership/remove-member/remove-member.usecase';
 import { GetMembers } from './membership/membership/get-members/get-members.usecase';
 import { ChangeMemberRole } from './membership/membership/change-member-role/change-member-role.usecase';
+import { UpdateBrandingDetails } from './update-branding-details/update-branding-details.usecase';
 
 export const USE_CASES = [
   AddMember,
@@ -14,4 +15,5 @@ export const USE_CASES = [
   GetMembers,
   RemoveMember,
   ChangeMemberRole,
+  UpdateBrandingDetails,
 ];

@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthContext } from './store/authContext';
@@ -57,88 +58,90 @@ applyToken(tokenStoredToken);
 
 function App() {
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthHandlerComponent>
-          <ThemeHandlerComponent>
-            <Routes>
-              <Route path="/auth/signup" element={<SignUpPage />} />
-              <Route path="/auth/login" element={<LoginPage />} />
-              <Route path="/auth/reset/request" element={<PasswordResetPage />} />
-              <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
-              <Route path="/auth/invitation/:token" element={<InvitationPage />} />
-              <Route path="/auth/application" element={<CreateOrganizationPage />} />
-              <Route element={<AppLayout />}>
-                <Route
-                  path="/*"
-                  element={
-                    <RequiredAuth>
-                      <HomePage />
-                    </RequiredAuth>
-                  }
-                />
-                <Route
-                  path="/templates/create"
-                  element={
-                    <RequiredAuth>
-                      <TemplateEditorPage />
-                    </RequiredAuth>
-                  }
-                />
-                <Route
-                  path="/templates/edit/:templateId"
-                  element={
-                    <RequiredAuth>
-                      <TemplateEditorPage />
-                    </RequiredAuth>
-                  }
-                />
-                <Route
-                  path="/templates"
-                  element={
-                    <RequiredAuth>
-                      <NotificationList />
-                    </RequiredAuth>
-                  }
-                />
-                <Route
-                  path="/activities"
-                  element={
-                    <RequiredAuth>
-                      <ActivitiesPage />
-                    </RequiredAuth>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <RequiredAuth>
-                      <SettingsPage />
-                    </RequiredAuth>
-                  }
-                />
-                <Route
-                  path="/integrations"
-                  element={
-                    <RequiredAuth>
-                      <IntegrationsStore />
-                    </RequiredAuth>
-                  }
-                />
-                <Route
-                  path="/team"
-                  element={
-                    <RequiredAuth>
-                      <MembersInvitePage />
-                    </RequiredAuth>
-                  }
-                />
-              </Route>
-            </Routes>
-          </ThemeHandlerComponent>
-        </AuthHandlerComponent>
-      </QueryClientProvider>
-    </BrowserRouter>
+    <HelmetProvider>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <AuthHandlerComponent>
+            <ThemeHandlerComponent>
+              <Routes>
+                <Route path="/auth/signup" element={<SignUpPage />} />
+                <Route path="/auth/login" element={<LoginPage />} />
+                <Route path="/auth/reset/request" element={<PasswordResetPage />} />
+                <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
+                <Route path="/auth/invitation/:token" element={<InvitationPage />} />
+                <Route path="/auth/application" element={<CreateOrganizationPage />} />
+                <Route element={<AppLayout />}>
+                  <Route
+                    path="/*"
+                    element={
+                      <RequiredAuth>
+                        <HomePage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/templates/create"
+                    element={
+                      <RequiredAuth>
+                        <TemplateEditorPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/templates/edit/:templateId"
+                    element={
+                      <RequiredAuth>
+                        <TemplateEditorPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/templates"
+                    element={
+                      <RequiredAuth>
+                        <NotificationList />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/activities"
+                    element={
+                      <RequiredAuth>
+                        <ActivitiesPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <RequiredAuth>
+                        <SettingsPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/integrations"
+                    element={
+                      <RequiredAuth>
+                        <IntegrationsStore />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/team"
+                    element={
+                      <RequiredAuth>
+                        <MembersInvitePage />
+                      </RequiredAuth>
+                    }
+                  />
+                </Route>
+              </Routes>
+            </ThemeHandlerComponent>
+          </AuthHandlerComponent>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </HelmetProvider>
   );
 }
 

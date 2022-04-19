@@ -90,10 +90,12 @@ export class HttpServer {
       API_TRIGGER_URL,
       {
         name: this.getPayloadValue('name'),
+        to: {
+          subscriberId: this.getPayloadValue('subscriberId'),
+          firstName: this.getPayloadValue('firstName'),
+          lastName: this.getPayloadValue('lastName'),
+        },
         payload: {
-          $user_id: this.getPayloadValue('$user_id'),
-          $first_name: this.getPayloadValue('$first_name'),
-          $last_name: this.getPayloadValue('$last_name'),
           token: this.getPayloadValue('token'),
         },
       },

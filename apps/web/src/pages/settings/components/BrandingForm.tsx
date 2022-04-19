@@ -1,4 +1,4 @@
-import { IEnvironment } from '@novu/shared';
+import { IOrganizationEntity } from '@novu/shared';
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Dropzone, DropzoneStatus } from '@mantine/dropzone';
@@ -8,7 +8,7 @@ import { showNotification } from '@mantine/notifications';
 import { useMantineTheme, Group, InputWrapper, LoadingOverlay } from '@mantine/core';
 import { Button, colors, Select, ColorInput } from '../../../design-system';
 import { getSignedUrl } from '../../../api/storage';
-import { updateBrandingSettings } from '../../../api/environment';
+import { updateBrandingSettings } from '../../../api/organization';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Upload } from '../../../design-system/icons';
 import Card from '../../../components/layout/components/Card';
@@ -20,10 +20,10 @@ const mimeTypes = {
 
 export function BrandingForm({
   isLoading,
-  environment,
+  organization,
 }: {
   isLoading: boolean;
-  environment: IEnvironment | undefined;
+  organization: IOrganizationEntity | undefined;
 }) {
   const [image, setImage] = useState<string>();
   const [file, setFile] = useState<File>();
@@ -41,18 +41,18 @@ export function BrandingForm({
   >(updateBrandingSettings);
 
   useEffect(() => {
-    if (environment) {
-      if (environment.branding?.logo) {
-        setImage(environment.branding.logo);
+    if (organization) {
+      if (organization.branding?.logo) {
+        setImage(organization.branding.logo);
       }
-      if (environment.branding?.color) {
-        setValue('color', environment?.branding?.color);
+      if (organization.branding?.color) {
+        setValue('color', organization?.branding?.color);
       }
-      if (environment.branding?.fontFamily) {
-        setValue('fontFamily', environment?.branding?.fontFamily);
+      if (organization.branding?.fontFamily) {
+        setValue('fontFamily', organization?.branding?.fontFamily);
       }
     }
-  }, [environment]);
+  }, [organization]);
 
   function beforeUpload(files: File[]) {
     setFile(files[0]);
@@ -106,8 +106,8 @@ export function BrandingForm({
 
   const { setValue, handleSubmit, control } = useForm({
     defaultValues: {
-      fontFamily: environment?.branding?.fontFamily || 'Roboto',
-      color: environment?.branding?.color || '#f47373',
+      fontFamily: organization?.branding?.fontFamily || 'Roboto',
+      color: organization?.branding?.color || '#f47373',
       image: image || '',
       file: file || '',
     },

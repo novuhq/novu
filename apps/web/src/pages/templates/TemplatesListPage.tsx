@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { useTemplates } from '../../api/hooks/use-templates';
+import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tag, Button, Table, colors, Text } from '../../design-system';
@@ -81,6 +82,7 @@ function NotificationList() {
 
   return (
     <PageContainer>
+      <PageMeta title="Templates" />
       <PageHeader
         title="Notification Template"
         actions={
