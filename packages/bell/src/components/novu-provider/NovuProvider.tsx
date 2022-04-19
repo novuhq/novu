@@ -35,9 +35,15 @@ export function NovuProvider(props: INovuProviderProps) {
   );
 }
 
-function SessionInitialization({ children, ...props }) {
+interface ISessionInitializationProps {
+  applicationIdentifier: string;
+  subscriberId?: string;
+  children: JSX.Element;
+}
+
+function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
   const [initialized, setInitialized] = useState<boolean>(false);
-  const { setToken, setUser, user, isLoggedIn } = useContext<IAuthContext>(AuthContext);
+  const { setToken, setUser, isLoggedIn } = useContext<IAuthContext>(AuthContext);
   useEffect(() => {
     if (props.subscriberId && props.applicationIdentifier) {
       (async () => {
@@ -58,10 +64,8 @@ function SessionInitialization({ children, ...props }) {
     const response = await initializeSession(payload.clientId, payload.data.$user_id);
 
     applyToken(response.token);
-
     setUser(response.profile);
     setToken(response.token);
-
     setInitialized(true);
   }
 
