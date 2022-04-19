@@ -25,6 +25,7 @@ describe('App Branding', function () {
    */
   it('change main theme color', function () {
     cy.wait('@organizationSettings');
+    cy.wait(1000);
 
     cy.getByTestId('notification-list-item').then(($els) => {
       // get Window reference from element
