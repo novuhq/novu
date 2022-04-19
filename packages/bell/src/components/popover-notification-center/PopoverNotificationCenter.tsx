@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IMessage } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { getUnseenCount } from '../../api/notifications';
@@ -11,24 +11,28 @@ interface IPopoverNotificationCenterProps {
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
   children: (props: INotificationBellProps) => JSX.Element;
-  unseenCount: number;
   header?: (props: IHeaderProps) => JSX.Element;
   footer?: () => JSX.Element;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
-  const { unseenCount } = props;
+  const [unseenCount, setUnseenCount] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
+      const count = (await getUnseenCount()).count;
+      setUnseenCount(count);
+
       if (props.onUnseenCountChanged) {
-        props.onUnseenCountChanged((await getUnseenCount()).count);
+        props.onUnseenCountChanged(count);
       }
     })();
   }, []);
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
+    setUnseenCount(count);
+
     if (props.onUnseenCountChanged) {
       props.onUnseenCountChanged(count);
     }
