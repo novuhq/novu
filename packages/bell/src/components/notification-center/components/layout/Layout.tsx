@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { Loader } from '../Loader';
-import { Header } from './Header';
+import { HeaderContainer } from './header/HeaderContainer';
 import { Footer } from './Footer';
 import { shadows } from '../../../../shared/config/shadows';
 import { colors } from '../../../../shared/config/colors';
@@ -12,7 +12,7 @@ export function Layout({ children }: { children: JSX.Element }) {
 
   return (
     <LayoutWrapper colorScheme={colorScheme}>
-      <Header />
+      <HeaderContainer />
       <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
       <Footer />
     </LayoutWrapper>

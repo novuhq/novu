@@ -1,48 +1,20 @@
 import styled, { useTheme } from 'styled-components';
-import { useQuery } from 'react-query';
 import { Badge } from '@mantine/core';
-import { useContext, useEffect, useState } from 'react';
-import { getUnseenCount } from '../../../../api/notifications';
-import { AuthContext } from '../../../../store/auth.context';
-import { useSocket } from '../../../../hooks/use-socket.hook';
-import { colors } from '../../../../shared/config/colors';
+import { colors } from '../../../../../shared/config/colors';
 import React from 'react';
-import { IAuthContext } from '../../../../index';
-import { NotificationCenterContext } from '../../../../store/notification-center.context';
 
-export function Header() {
+interface IHeaderProps {
+  unseenCount: number;
+}
+
+export function Header(props: IHeaderProps) {
   const theme: any = useTheme();
-  const [unseenCount, setUnseenCount] = useState<number>();
-  const { socket } = useSocket();
-  const { token } = useContext<IAuthContext>(AuthContext);
-  const { onUnseenCountChanged } = useContext(NotificationCenterContext);
-  const { data } = useQuery<{ count: number }>('unseenCount', getUnseenCount, {
-    enabled: !!token,
-  });
-
-  useEffect(() => {
-    if (socket) {
-      socket.on('unseen_count_changed', (payload) => {
-        setUnseenCount(payload.unseenCount);
-      });
-    }
-  }, [socket]);
-
-  useEffect(() => {
-    if (onUnseenCountChanged) onUnseenCountChanged(unseenCount);
-  }, [unseenCount, (window as any).parentIFrame]);
-
-  useEffect(() => {
-    if (data) {
-      setUnseenCount(data?.count);
-    }
-  }, [data?.count]);
 
   return (
     <HeaderWrapper>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
         <Text>Notifications </Text>
-        {unseenCount && unseenCount > 0 ? (
+        {props.unseenCount && props.unseenCount > 0 ? (
           <Badge
             data-test-id="unseen-count-label"
             sx={{
@@ -60,7 +32,7 @@ export function Header() {
             }}
             radius={100}
           >
-            {unseenCount}
+            {props.unseenCount}
           </Badge>
         ) : null}
       </div>
