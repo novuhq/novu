@@ -34,9 +34,7 @@ export function SideNav({}: Props) {
     getCurrentEnvironment
   );
   const [isLoading, setIsLoading] = useState(false);
-
   const [changesCount, setChangesCount] = useState<number>(3);
-
 
   async function changeEnvironment(environmentName: string) {
     if (isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment) {
@@ -64,7 +62,6 @@ export function SideNav({}: Props) {
     testId: 'side-nav-changes-link',
     rightSide: <NotificationBadge data-test-id="side-nav-changes-count">{changesCount}</NotificationBadge>,
   };
-
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
