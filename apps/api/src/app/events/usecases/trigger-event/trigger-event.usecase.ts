@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  EnvironmentEntity,
-  EnvironmentRepository,
   IEmailBlock,
   IntegrationRepository,
   MessageRepository,
@@ -12,6 +10,8 @@ import {
   NotificationTemplateRepository,
   SubscriberEntity,
   SubscriberRepository,
+  OrganizationRepository,
+  OrganizationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -42,7 +42,7 @@ export class TriggerEvent {
     private messageRepository: MessageRepository,
     private mailService: MailService,
     private queueService: QueueService,
-    private environmentRepository: EnvironmentRepository,
+    private organizationRepository: OrganizationRepository,
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
     private analyticsService: AnalyticsService,
@@ -128,7 +128,7 @@ export class TriggerEvent {
       };
     }
 
-    const environment = await this.environmentRepository.findById(command.environmentId);
+    const organization = await this.organizationRepository.findById(command.organizationId);
     const { smsMessages, inAppChannelMessages, emailChannelMessages } = this.extractMatchingMessages(
       template,
       command.payload
@@ -158,7 +158,7 @@ export class TriggerEvent {
         channelsToSend,
         inAppChannelMessages,
         emailChannelMessages,
-        environment
+        organization
       );
     }
 
@@ -186,7 +186,7 @@ export class TriggerEvent {
     channelsToSend: ChannelTypeEnum[],
     inAppChannelMessages: NotificationStepEntity[],
     emailChannelMessages: NotificationStepEntity[],
-    environment: EnvironmentEntity
+    organization: OrganizationEntity
   ) {
     let subscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
@@ -248,7 +248,7 @@ export class TriggerEvent {
     }
 
     if (emailChannelMessages.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.EMAIL)) {
-      await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, environment);
+      await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, organization);
     }
 
     await this.createLogUsecase.execute(
@@ -481,7 +481,7 @@ export class TriggerEvent {
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
     template: NotificationTemplateEntity,
-    environment: EnvironmentEntity
+    organization: OrganizationEntity
   ) {
     const email = command.payload.email || subscriber.email;
 
@@ -528,8 +528,8 @@ export class TriggerEvent {
         data: {
           subject,
           branding: {
-            logo: environment.branding?.logo,
-            color: environment.branding?.color || '#f47373',
+            logo: organization.branding?.logo,
+            color: organization.branding?.color || '#f47373',
           },
           blocks: isEditorMode ? content : [],
           ...command.payload,

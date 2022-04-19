@@ -1,6 +1,6 @@
-import React from 'react';
+import { useState } from 'react';
 import { Navbar } from '@mantine/core';
-import { NavMenu } from '../../../design-system';
+import { NavMenu, SegmentedControl } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team } from '../../../design-system/icons';
 
 type Props = {};
@@ -18,9 +18,19 @@ const menuItems = [
 ];
 
 export function SideNav({}: Props) {
+  const [activeMode, setActiveMode] = useState('Development');
+
   return (
-    <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 250 }}>
+    <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
+        {/*     <SegmentedControl
+          data={[
+            { value: 'Development', label: 'Development' },
+            { value: 'Production', label: 'Production' },
+          ]}
+          defaultValue={activeMode}
+          onChange={(value) => setActiveMode(value)}
+        />*/}
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
     </Navbar>

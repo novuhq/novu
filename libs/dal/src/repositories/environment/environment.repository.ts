@@ -7,19 +7,6 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentEntity> {
     super(Environment, EnvironmentEntity);
   }
 
-  async updateBrandingDetails(environmentId: string, branding: { color: string; logo: string }) {
-    return this.update(
-      {
-        _id: environmentId,
-      },
-      {
-        $set: {
-          branding,
-        },
-      }
-    );
-  }
-
   async findEnvironmentByIdentifier(identifier: string) {
     return await this.findOne({
       identifier,

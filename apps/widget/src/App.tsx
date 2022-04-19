@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
-import { IEnvironment, ISubscriberJwt } from '@novu/shared';
+import { IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
 import * as WebFont from 'webfontloader';
 
 import { AuthContext } from './store/auth.context';
@@ -14,7 +14,7 @@ import { applyToken, getToken, useAuthController } from './store/use-auth-contro
 import { useSocketController } from './store/socket/use-socket-controller';
 import { SocketContext } from './store/socket/socket.store';
 import { WidgetShell } from './ApplicationShell';
-import { getEnvironment } from './api/environment';
+import { getOrganization } from './api/organization';
 import { useAuth } from './hooks/use-auth.hook';
 import { colors } from './shared/config/colors';
 
@@ -63,9 +63,9 @@ function AppContent() {
   const { isLoggedIn } = useAuth();
   const { socket } = useSocketController();
   const [userColorScheme, setUserColorScheme] = useState<'light' | 'dark'>('light');
-  const { data: environment } = useQuery<Pick<IEnvironment, '_id' | 'name' | 'branding'>>(
-    'environment',
-    getEnvironment,
+  const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
+    'organization',
+    getOrganization,
     {
       enabled: isLoggedIn,
     }
@@ -73,13 +73,13 @@ function AppContent() {
 
   const theme = {
     colors: {
-      main: environment?.branding?.color || colors.vertical,
+      main: organization?.branding?.color || colors.vertical,
       fontColor: userColorScheme === 'light' ? colors.B40 : colors.white,
       secondaryFontColor: userColorScheme === 'light' ? colors.B80 : colors.B40,
     },
-    fontFamily: environment?.branding?.fontFamily || 'Lato',
+    fontFamily: organization?.branding?.fontFamily || 'Lato',
     layout: {
-      direction: (environment?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
+      direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
     colorScheme: userColorScheme,
   };
