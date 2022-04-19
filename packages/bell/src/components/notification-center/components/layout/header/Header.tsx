@@ -3,7 +3,7 @@ import { Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
 import React from 'react';
 
-interface IHeaderProps {
+export interface IHeaderProps {
   unseenCount: number;
 }
 

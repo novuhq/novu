@@ -37,7 +37,6 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
       applicationIdentifier={props.applicationIdentifier as string}
       subscriberId={userDataPayload.$user_id}
       colorScheme="light"
-      //
     >
       <NotificationCenter
         onNotificationClick={props.onNotificationClick}

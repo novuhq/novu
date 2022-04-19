@@ -12,7 +12,7 @@ export function HeaderContainer() {
   const [unseenCount, setUnseenCount] = useState<number>();
   const { socket } = useSocket();
   const { token } = useContext<IAuthContext>(AuthContext);
-  const { onUnseenCountChanged } = useContext(NotificationCenterContext);
+  const { onUnseenCountChanged, header } = useContext(NotificationCenterContext);
   const { data } = useQuery<{ count: number }>('unseenCount', getUnseenCount, {
     enabled: !!token,
   });
@@ -35,5 +35,9 @@ export function HeaderContainer() {
     }
   }, [data?.count]);
 
-  return <Header unseenCount={unseenCount} />;
+  function getHeader() {
+    return header ? header({ unseenCount: unseenCount }) : <Header unseenCount={unseenCount} />;
+  }
+
+  return <>{getHeader()}</>;
 }

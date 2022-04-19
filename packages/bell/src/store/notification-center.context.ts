@@ -7,5 +7,7 @@ export const NotificationCenterContext = React.createContext<INotificationCenter
   sendNotificationClick: (notification: IMessage) => {},
   onUnseenCountChanged: (unseenCount: number) => {},
   isLoading: true,
+  header: null,
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any);
