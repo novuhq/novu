@@ -1,5 +1,4 @@
 import { useQuery } from 'react-query';
-import { getCurrentEnvironment } from '../environment';
 import { getPromotedChanges, getUnpromotedChanges } from '../changes';
 
 export function useEnvironmentChanges() {
@@ -35,34 +34,42 @@ const placeholderData = [
   {
     id: '1',
     type: 'NotificationTemplate',
-    changedBy: { firstName: 'gosha', lastName: 'gosha' },
+    changedBy: { firstName: 'Doc', lastName: 'sus' },
     createdAt: new Date(),
     enabled: false,
-    change: 'this text changed',
+    change: 'Description',
   },
   {
     id: '2',
     type: 'MessageTemplate',
-    changedBy: { firstName: 'dima', lastName: 'dima' },
+    changedBy: { firstName: 'arthur', lastName: 'pendragon' },
     createdAt: new Date(),
     enabled: false,
-    change: 'this text changed',
+    change: 'Text changed',
   },
   {
     id: '3',
     type: 'NotificationTemplate',
-    changedBy: { firstName: 'david', lastName: 'david' },
+    changedBy: { firstName: 'Moses', lastName: 'of Egypt' },
     createdAt: new Date(),
     enabled: false,
-    change: 'this text changed',
+    change: 'Be free',
   },
   {
     id: '4',
     type: 'MessageTemplate',
-    changedBy: { firstName: 'gali', lastName: 'gali' },
+    changedBy: { firstName: 'harry', lastName: 'potter' },
     createdAt: new Date(),
     enabled: true,
-    change: 'this text changed',
+    change: 'Expelliarmus',
+  },
+  {
+    id: '5',
+    type: 'MessageTemplate',
+    changedBy: { firstName: 'mr', lastName: 'x' },
+    createdAt: new Date(),
+    enabled: true,
+    change: 'Powerful change',
   },
 ];
 
