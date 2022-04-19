@@ -1,5 +1,5 @@
 export * from './layout/Layout';
-export * from './layout/Footer';
+export * from './layout/footer/FooterContainer';
 export * from './layout/header/HeaderContainer';
 export * from './Loader';
 export * from './Main';

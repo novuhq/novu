@@ -1,8 +1,8 @@
 /* eslint-disable max-len */
 import React, { useContext } from 'react';
 import styled from 'styled-components';
-import { colors } from '../../../../shared/config/colors';
-import { NovuContext } from '../../../../store/novu-provider.context';
+import { colors } from '../../../../../shared/config/colors';
+import { NovuContext } from '../../../../../store/novu-provider.context';
 
 export function Footer() {
   const { colorScheme } = useContext(NovuContext);

@@ -8,6 +8,7 @@ export const NotificationCenterContext = React.createContext<INotificationCenter
   onUnseenCountChanged: (unseenCount: number) => {},
   isLoading: true,
   header: null,
+  footer: null,
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any);

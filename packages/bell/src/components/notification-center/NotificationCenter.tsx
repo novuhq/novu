@@ -12,6 +12,7 @@ export interface INotificationCenterProps {
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: (props: IHeaderProps) => JSX.Element;
+  footer?: () => JSX.Element;
 }
 
 export function NotificationCenter(props: INotificationCenterProps) {
@@ -27,6 +28,7 @@ export function NotificationCenter(props: INotificationCenterProps) {
           onUnseenCountChanged: props.onUnseenCountChanged,
           isLoading: !applicationIdentifier,
           header: props.header,
+          footer: props.footer,
         }}
       >
         <AppContent />

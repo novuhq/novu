@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { Loader } from '../Loader';
-import { HeaderContainer } from './header/HeaderContainer';
-import { Footer } from './Footer';
+import { HeaderContainer as Header } from './header/HeaderContainer';
+import { FooterContainer as Footer } from './footer/FooterContainer';
 import { shadows } from '../../../../shared/config/shadows';
 import { colors } from '../../../../shared/config/colors';
 import React, { useContext } from 'react';
@@ -12,7 +12,7 @@ export function Layout({ children }: { children: JSX.Element }) {
 
   return (
     <LayoutWrapper colorScheme={colorScheme}>
-      <HeaderContainer />
+      <Header />
       <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
       <Footer />
     </LayoutWrapper>

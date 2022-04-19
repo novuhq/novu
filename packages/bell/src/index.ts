@@ -35,6 +35,7 @@ export interface INotificationCenterContext {
   onUnseenCountChanged: (unseenCount: number) => void;
   isLoading: boolean;
   header: (props: IHeaderProps) => JSX.Element;
+  footer: () => JSX.Element;
 }
 
 export interface INovuProviderContext {

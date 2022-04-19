@@ -13,6 +13,7 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   unseenCount: number;
   header?: (props: IHeaderProps) => JSX.Element;
+  footer?: () => JSX.Element;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -40,6 +41,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         onUnseenCountChanged={handlerOnUnseenCount}
         onUrlChange={props.onUrlChange}
         header={props.header}
+        footer={props.footer}
       />
     </Popover>
   );
