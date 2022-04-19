@@ -4,8 +4,8 @@ import { Navbar } from '@mantine/core';
 import { IEnvironment } from '@novu/shared';
 import { getMyEnvironments, getCurrentEnvironment } from '../../../api/environment';
 import { api } from '../../../api/api.client';
-import { NavMenu, SegmentedControl } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team } from '../../../design-system/icons';
+import { NotificationBadge, NavMenu, SegmentedControl } from '../../../design-system';
+import { Activity, Bolt, Box, Repeat, Settings, Team } from '../../../design-system/icons';
 import { AuthContext } from '../../../store/authContext';
 
 type Props = {};
@@ -34,6 +34,7 @@ export function SideNav({}: Props) {
     getCurrentEnvironment
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [changesCount, setChangesCount] = useState<number>(3);
 
   async function changeEnvironment(environmentName: string) {
     if (isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment) {
@@ -54,6 +55,14 @@ export function SideNav({}: Props) {
     await queryClient.refetchQueries();
   }
 
+  const changesNavButton = {
+    icon: <Repeat />,
+    link: '/changes',
+    label: 'Changes',
+    testId: 'side-nav-changes-link',
+    rightSide: <NotificationBadge data-test-id="side-nav-changes-count">{changesCount}</NotificationBadge>,
+  };
+
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
@@ -65,7 +74,7 @@ export function SideNav({}: Props) {
             await changeEnvironment(value);
           }}
         />
-        <NavMenu menuItems={menuItems} />
+        <NavMenu menuItems={[...menuItems, changesNavButton]} />
       </Navbar.Section>
     </Navbar>
   );
