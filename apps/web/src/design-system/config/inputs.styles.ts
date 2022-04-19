@@ -56,6 +56,9 @@ export const inputStyles = (theme: MantineTheme) => {
       backgroundColor: `${dark ? colors.B20 : colors.B60} !important`,
       borderColor: `${dark ? colors.B30 : colors.B80} !important`,
       color: `${secondaryColor} !important`,
+      '&::placeholder': {
+        color: `${secondaryColor} !important`,
+      },
     },
   };
 };

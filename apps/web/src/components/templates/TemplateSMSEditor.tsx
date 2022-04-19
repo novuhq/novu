@@ -1,8 +1,10 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { Textarea } from '@mantine/core';
-import React from 'react';
+import React, { useContext } from 'react';
 import { LackIntegrationError } from './LackIntegrationError';
 import { IForm } from './use-template-controller.hook';
+import { EnvContext } from '../../store/environmentContext';
+import { colors } from '../../design-system';
 
 export function TemplateSMSEditor({
   control,
@@ -14,6 +16,7 @@ export function TemplateSMSEditor({
   errors: any;
   isIntegrationActive: boolean;
 }) {
+  const { readonly } = useContext(EnvContext);
   const {
     formState: { errors },
   } = useFormContext();
@@ -30,6 +33,7 @@ export function TemplateSMSEditor({
             {...field}
             data-test-id="smsNotificationContent"
             error={errors[`smsMessages.${index}.template.content`]}
+            disabled={readonly}
             minRows={4}
             value={field.value || ''}
             label="SMS message content"
@@ -78,6 +82,14 @@ const TextAreaStyles = (theme) => {
     error: {
       color: `${invalidColor} !important`,
       fontSize: '12px',
+    },
+    disabled: {
+      backgroundColor: `${dark ? colors.B20 : colors.B60} !important`,
+      borderColor: `${dark ? colors.B30 : colors.B80} !important`,
+      color: `${secondaryColor} !important`,
+      '&::placeholder': {
+        color: `${secondaryColor} !important`,
+      },
     },
   };
 };

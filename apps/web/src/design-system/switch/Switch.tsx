@@ -7,6 +7,7 @@ interface ISwitchProps {
   checked?: boolean;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   loading?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -14,10 +15,10 @@ interface ISwitchProps {
  *
  */
 export const Switch = React.forwardRef<HTMLInputElement, ISwitchProps>(
-  ({ onChange, loading = false, ...props }, ref) => {
+  ({ onChange, loading = false, disabled = false, ...props }, ref) => {
     const { classes } = useStyles();
     const defaultDesign = { radius: 'xl', size: 'md', classNames: classes } as SwitchProps;
 
-    return <MantineSwitch ref={ref} onChange={onChange} {...defaultDesign} {...props} />;
+    return <MantineSwitch ref={ref} disabled={disabled} onChange={onChange} {...defaultDesign} {...props} />;
   }
 );

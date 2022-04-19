@@ -1,12 +1,8 @@
-import { useState, useContext } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import React, { useContext } from 'react';
 import { Navbar } from '@mantine/core';
-import { IEnvironment } from '@novu/shared';
-import { getMyEnvironments, getCurrentEnvironment } from '../../../api/environment';
-import { api } from '../../../api/api.client';
-import { NavMenu, SegmentedControl } from '../../../design-system';
+import { colors, NavMenu, SegmentedControl } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team } from '../../../design-system/icons';
-import { AuthContext } from '../../../store/authContext';
+import { EnvContext } from '../../../store/environmentContext';
 
 type Props = {};
 const menuItems = [
@@ -23,46 +19,17 @@ const menuItems = [
 ];
 
 export function SideNav({}: Props) {
-  const queryClient = useQueryClient();
-  const { setToken, jwtPayload } = useContext(AuthContext);
-  const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
-    'myEnvironments',
-    getMyEnvironments
-  );
-  const { data: environment, isLoading: isLoadingCurrentEnvironment } = useQuery<IEnvironment>(
-    'currentEnvironment',
-    getCurrentEnvironment
-  );
-  const [isLoading, setIsLoading] = useState(false);
-
-  async function changeEnvironment(environmentName: string) {
-    if (isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment) {
-      return;
-    }
-
-    const targetEnvironment = environments?.find((_environment) => _environment.name === environmentName);
-    if (!targetEnvironment) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
-    setToken(tokenResponse.token);
-    setIsLoading(false);
-
-    await queryClient.refetchQueries();
-  }
+  const { currentEnvironment, setEnvironment } = useContext(EnvContext);
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
         <SegmentedControl
           data={['Development', 'Production']}
-          defaultValue={environment?.name}
-          value={environment?.name}
+          defaultValue={currentEnvironment?.name}
+          value={currentEnvironment?.name}
           onChange={async (value) => {
-            await changeEnvironment(value);
+            await setEnvironment(value);
           }}
         />
         <NavMenu menuItems={menuItems} />

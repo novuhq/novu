@@ -1,9 +1,10 @@
 import { IEmailBlock } from '@novu/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { ActionIcon, MenuItem as DropdownItem, RadioGroup, Radio, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { colors, Dropdown } from '../../../design-system';
+import { EnvContext } from '../../../store/environmentContext';
 
 export function ContentRow({
   children,
@@ -20,6 +21,7 @@ export function ContentRow({
   block: IEmailBlock;
   onStyleChanged: (data: { textDirection: 'ltr' | 'rtl' }) => void;
 }) {
+  const { readonly } = useContext(EnvContext);
   const [textDirection, setTextDirection] = useState<'ltr' | 'rtl'>(block?.styles?.textDirection || 'ltr');
   const parentRef = useRef<HTMLDivElement>(null);
   const theme = useMantineTheme();
@@ -65,17 +67,19 @@ export function ContentRow({
     <div onMouseEnter={onHover} ref={parentRef} data-test-id="editor-row">
       <ContentRowWrapper>
         <div style={{ width: 'calc(100% - 20px)' }}>{children}</div>
-        <Dropdown
-          control={
-            <SettingsButton data-test-id="settings-row-btn">
-              <ActionIcon variant="transparent">
-                <DotsHorizontalOutlined color={theme.colorScheme === 'dark' ? colors.B30 : colors.B80} />
-              </ActionIcon>
-            </SettingsButton>
-          }
-        >
-          {rowStyleMenu}
-        </Dropdown>
+        {!readonly && (
+          <Dropdown
+            control={
+              <SettingsButton data-test-id="settings-row-btn">
+                <ActionIcon variant="transparent">
+                  <DotsHorizontalOutlined color={theme.colorScheme === 'dark' ? colors.B30 : colors.B80} />
+                </ActionIcon>
+              </SettingsButton>
+            }
+          >
+            {rowStyleMenu}
+          </Dropdown>
+        )}
       </ContentRowWrapper>
     </div>
   );

@@ -1,6 +1,6 @@
 import { FormProvider } from 'react-hook-form';
 import { Container, Grid, Group } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
@@ -19,9 +19,11 @@ import { EmailMessagesCards } from '../../../components/templates/email-editor/E
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { useStatusChangeControllerHook } from '../../../components/templates/use-status-change-controller.hook';
+import { EnvContext } from '../../../store/environmentContext';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
+  const { readonly } = useContext(EnvContext);
   const [activePage, setActivePage] = useState<string>('Settings');
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { integrations, loading: isIntegrationsLoading } = useActiveIntegrations();
@@ -91,6 +93,7 @@ export default function TemplateEditorPage() {
                     <Switch
                       label={isTemplateActive ? 'Enabled' : 'Disabled'}
                       loading={isStatusChangeLoading}
+                      disabled={readonly}
                       data-test-id="active-toggle-switch"
                       onChange={(e) => changeActiveStatus(e.target.checked)}
                       checked={isTemplateActive || false}
@@ -102,7 +105,7 @@ export default function TemplateEditorPage() {
                     mr={20}
                     data-test-id="submit-btn"
                     loading={isLoading || isUpdateLoading}
-                    disabled={loadingEditTemplate || isLoading}
+                    disabled={readonly || loadingEditTemplate || isLoading}
                     submit
                   >
                     {editMode ? 'Update' : 'Create'}
@@ -119,6 +122,7 @@ export default function TemplateEditorPage() {
                     activeTab={activePage}
                     toggleChannel={toggleChannel}
                     changeTab={setActivePage}
+                    readonly={readonly}
                     activeChannels={activeChannels}
                     channelButtons={channelButtons}
                     showTriggerSection={!!template && !!trigger}
