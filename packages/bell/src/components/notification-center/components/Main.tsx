@@ -4,7 +4,7 @@ import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './NotificationsList';
 import { getNotificationsList, markMessageAsSeen } from '../../../api/notifications';
-import { useSocket } from '../../../hooks/use-socket.hook';
+import { useSocket } from '../../../hooks';
 import { postUsageLog } from '../../../api/usage';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
 import image from '../../../images/no-new-notifications.png';
