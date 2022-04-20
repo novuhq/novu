@@ -3,18 +3,15 @@ import { NovuContext } from '../../../store/novu-provider.context';
 import { Popover as MantinePopover } from '@mantine/core';
 import { colors } from '../../../shared/config/colors';
 import styled from 'styled-components';
-import { INotificationBellProps } from '../../notification-bell';
 
 interface INovuPopoverProps {
-  bell: (props: INotificationBellProps) => JSX.Element;
+  bell: (props: any) => JSX.Element;
   children: JSX.Element;
-  unseenCount: number;
 }
 
-export function Popover({ children, bell, ...props }: INovuPopoverProps) {
+export function Popover({ children, bell }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const { colorScheme } = useContext(NovuContext);
-  const { unseenCount } = props;
 
   function handlerBellClick() {
     setIsVisible(!isVisible);
@@ -24,7 +21,7 @@ export function Popover({ children, bell, ...props }: INovuPopoverProps) {
     <MantinePopover
       opened={isVisible}
       onClose={() => setIsVisible(false)}
-      target={<BellContainer onClick={handlerBellClick}> {bell({ unseenCount })}</BellContainer>}
+      target={<BellContainer onClick={handlerBellClick}> {bell({})}</BellContainer>}
       position={'bottom'}
       placement={'end'}
       withArrow

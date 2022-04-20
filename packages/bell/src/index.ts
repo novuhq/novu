@@ -1,5 +1,4 @@
 import { IMessage, ISubscriberJwt } from '@novu/shared';
-import { IHeaderProps } from './components/notification-center/components/layout/header/Header';
 
 export * from './components';
 
@@ -34,7 +33,7 @@ export interface INotificationCenterContext {
   sendNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
   isLoading: boolean;
-  header: (props: IHeaderProps) => JSX.Element;
+  header: () => JSX.Element;
   footer: () => JSX.Element;
 }
 

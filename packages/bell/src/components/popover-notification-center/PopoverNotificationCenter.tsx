@@ -1,55 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { IMessage } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
-import { getUnseenCount } from '../../api/notifications';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { IHeaderProps } from '../notification-center/components/layout/header/Header';
-import { useSocket } from '../../hooks';
+import { UnseenCountContext } from '../../store/unseen-count.context';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
   children: (props: INotificationBellProps) => JSX.Element;
-  header?: (props: IHeaderProps) => JSX.Element;
+  header?: () => JSX.Element;
   footer?: () => JSX.Element;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
-  const [unseenCount, setUnseenCount] = useState<number>(0);
-  const { socket } = useSocket();
-
-  useEffect(() => {
-    if (socket) {
-      socket.on('unseen_count_changed', (data: { unseenCount: number }) => {
-        setUnseenCount(data.unseenCount);
-      });
-    }
-  }, [socket]);
-
-  useEffect(() => {
-    (async () => {
-      const count = (await getUnseenCount()).count;
-      setUnseenCount(count);
-
-      if (props.onUnseenCountChanged) {
-        props.onUnseenCountChanged(count);
-      }
-    })();
-  }, []);
+  const { setUnseenCount } = useContext(UnseenCountContext);
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
     setUnseenCount(count);
-
     if (props.onUnseenCountChanged) {
       props.onUnseenCountChanged(count);
     }
   }
 
   return (
-    <Popover bell={(bellProps) => children(bellProps)} unseenCount={unseenCount}>
+    <Popover bell={(bellProps) => children(bellProps)}>
       <NotificationCenter
         onNotificationClick={props.onNotificationClick}
         onUnseenCountChanged={handlerOnUnseenCount}

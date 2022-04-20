@@ -1,42 +1,21 @@
-import { useQuery } from 'react-query';
-import { useContext, useEffect, useState } from 'react';
-import { getUnseenCount } from '../../../../../api/notifications';
-import { AuthContext } from '../../../../../store/auth.context';
-import { useSocket } from '../../../../../hooks';
+import { useContext, useEffect } from 'react';
 import React from 'react';
-import { IAuthContext } from '../../../../../index';
-import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { Header } from './Header';
+import { NotificationCenterContext } from '../../../../../store/notification-center.context';
+import { UnseenCountContext } from '../../../../../store/unseen-count.context';
 
 export function HeaderContainer() {
-  const [unseenCount, setUnseenCount] = useState<number>();
-  const { socket } = useSocket();
-  const { token } = useContext<IAuthContext>(AuthContext);
   const { onUnseenCountChanged, header } = useContext(NotificationCenterContext);
-  const { data } = useQuery<{ count: number }>('unseenCount', getUnseenCount, {
-    enabled: !!token,
-  });
+  const { unseenCount } = useContext(UnseenCountContext);
 
   useEffect(() => {
-    if (socket) {
-      socket.on('unseen_count_changed', (payload) => {
-        setUnseenCount(payload.unseenCount);
-      });
+    if (onUnseenCountChanged) {
+      onUnseenCountChanged(unseenCount);
     }
-  }, [socket]);
-
-  useEffect(() => {
-    if (onUnseenCountChanged) onUnseenCountChanged(unseenCount);
   }, [unseenCount, (window as any).parentIFrame]);
 
-  useEffect(() => {
-    if (data) {
-      setUnseenCount(data?.count);
-    }
-  }, [data?.count]);
-
   function getHeader() {
-    return header ? header({ unseenCount: unseenCount }) : <Header unseenCount={unseenCount} />;
+    return header ? header() : <Header unseenCount={unseenCount} />;
   }
 
   return <>{getHeader()}</>;

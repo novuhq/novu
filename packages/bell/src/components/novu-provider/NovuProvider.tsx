@@ -7,6 +7,8 @@ import { RootProviders } from '../notification-center/components';
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
+import { useSocket, useUnseenCount } from '../../hooks';
+import { UnseenCountContext } from '../../store/unseen-count.context';
 
 interface INovuProviderProps {
   children: JSX.Element | Element;
@@ -21,17 +23,19 @@ export function NovuProvider(props: INovuProviderProps) {
     <RootProviders>
       <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
         <SocketInitialization>
-          <NovuContext.Provider
-            value={{
-              backendUrl: props.backendUrl,
-              subscriberId: props.subscriberId,
-              applicationIdentifier: props.applicationIdentifier,
-              colorScheme: props.colorScheme || 'light',
-              initialized: true,
-            }}
-          >
-            {props.children}
-          </NovuContext.Provider>
+          <UnseenProvider>
+            <NovuContext.Provider
+              value={{
+                backendUrl: props.backendUrl,
+                subscriberId: props.subscriberId,
+                applicationIdentifier: props.applicationIdentifier,
+                colorScheme: props.colorScheme || 'light',
+                initialized: true,
+              }}
+            >
+              {props.children}
+            </NovuContext.Provider>
+          </UnseenProvider>
         </SocketInitialization>
       </SessionInitialization>
     </RootProviders>
@@ -79,4 +83,37 @@ function SocketInitialization({ children }: { children: JSX.Element }) {
   const { socket } = useSocketController();
 
   return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
+}
+
+function UnseenSocketUpdate({ children }: { children: JSX.Element }) {
+  const { setUnseenCount } = useContext(UnseenCountContext);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('unseen_count_changed', (onData: { unseenCount: number }) => {
+        if (!isNaN(onData?.unseenCount)) {
+          setUnseenCount(onData.unseenCount);
+        }
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('unseen_count_changed');
+      }
+    };
+  }, [socket]);
+
+  return children;
+}
+
+function UnseenProvider({ children }: { children: JSX.Element }) {
+  const { unseenCount, setUnseenCount } = useUnseenCount();
+
+  return (
+    <UnseenCountContext.Provider value={{ unseenCount, setUnseenCount }}>
+      <UnseenSocketUpdate>{children}</UnseenSocketUpdate>
+    </UnseenCountContext.Provider>
+  );
 }

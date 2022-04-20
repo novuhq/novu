@@ -4,14 +4,17 @@ import { Bell as BellIcon, GradientDot } from '../../shared/icons';
 import { ActionIcon } from '@mantine/core';
 import { NovuContext } from '../../store/novu-provider.context';
 import styled from 'styled-components';
+import { UnseenCountContext } from '../../store/unseen-count.context';
 
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export interface INotificationBellProps {
-  unseenCount: number;
+  unseenCount?: number;
 }
 
-export function NotificationBell({ unseenCount }: INotificationBellProps) {
+export function NotificationBell(props: INotificationBellProps) {
+  const { unseenCount } = useContext(UnseenCountContext);
+
   return (
     <ActionIcon variant="transparent">
       <BellIcon {...headerIconsSettings} />

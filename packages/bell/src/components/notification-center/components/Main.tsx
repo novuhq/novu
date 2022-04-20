@@ -4,16 +4,15 @@ import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './NotificationsList';
 import { getNotificationsList, markMessageAsSeen } from '../../../api/notifications';
-import { useSocket } from '../../../hooks';
 import { postUsageLog } from '../../../api/usage';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
 import image from '../../../images/no-new-notifications.png';
+import { UnseenCountContext } from '../../../store/unseen-count.context';
 
 export function Main() {
-  const { socket } = useSocket();
   const { sendNotificationClick, sendUrlChange } = useContext(NotificationCenterContext);
+  const { unseenCount } = useContext(UnseenCountContext);
   const [currentPage, setCurrentPage] = useState<number>(0);
-
   const { isLoading, data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } =
     useInfiniteQuery<IMessage[]>('notifications-feed', async ({ pageParam = 0 }) => getNotificationsList(pageParam), {
       getNextPageParam: (lastPage) => {
@@ -26,18 +25,10 @@ export function Main() {
   );
 
   useEffect(() => {
-    if (socket) {
-      socket.on('unseen_count_changed', () => {
-        refetch();
-      });
+    if (!isNaN(unseenCount)) {
+      refetch();
     }
-
-    return () => {
-      if (socket) {
-        socket.off('unseen_count_changed');
-      }
-    };
-  }, [socket]);
+  }, [unseenCount]);
 
   async function fetchNext() {
     if (isFetchingNextPage) return;

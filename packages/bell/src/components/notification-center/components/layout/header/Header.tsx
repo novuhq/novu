@@ -3,18 +3,14 @@ import { Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
 import React from 'react';
 
-export interface IHeaderProps {
-  unseenCount: number;
-}
-
-export function Header(props: IHeaderProps) {
+export function Header({ unseenCount }: { unseenCount: number }) {
   const theme: any = useTheme();
 
   return (
     <HeaderWrapper>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
         <Text>Notifications </Text>
-        {props.unseenCount && props.unseenCount > 0 ? (
+        {unseenCount && unseenCount > 0 ? (
           <Badge
             data-test-id="unseen-count-label"
             sx={{
@@ -32,7 +28,7 @@ export function Header(props: IHeaderProps) {
             }}
             radius={100}
           >
-            {props.unseenCount}
+            {unseenCount}
           </Badge>
         ) : null}
       </div>
