@@ -2,9 +2,11 @@ import { PromoteMessageTemplateChange } from './promote-message-template-change/
 import { PromoteNotificationTemplateChange } from './promote-notification-template-change/promote-notification-template-change';
 import { PromoteChangeToEnvironment } from './promote-change-to-environment/promote-change-to-environment.usecase';
 import { CreateChange } from './create-change.usecase';
+import { ApplyChange } from './apply-change/apply-change.usecase';
 export const USE_CASES = [
   CreateChange,
   PromoteChangeToEnvironment,
   PromoteNotificationTemplateChange,
   PromoteMessageTemplateChange,
+  ApplyChange,
 ];

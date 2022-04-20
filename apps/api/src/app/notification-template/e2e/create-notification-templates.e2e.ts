@@ -76,10 +76,15 @@ describe('Create Notification template - /notification-templates (POST)', async 
       throw new Error('content must be an array');
     }
 
-    const change = await changeRepository.findOne({
+    let change = await changeRepository.findOne({
+      _entityId: message._templateId,
+    });
+    await session.testAgent.post(`/v1/changes/${change._id}/apply`);
+
+    change = await changeRepository.findOne({
       _entityId: template._id,
     });
-    expect(change._entityId).to.eq(template._id);
+    await session.testAgent.post(`/v1/changes/${change._id}/apply`);
 
     const prodVersionNotification = await notificationTemplateRepository.findOne({
       _parentId: template._id,
