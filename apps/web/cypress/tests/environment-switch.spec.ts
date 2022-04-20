@@ -29,6 +29,7 @@ describe('Environment Switch Control', function () {
       cy.getByTestId('environment-switch-loading-overlay').should('be.visible').then(() => {
         interception.sendResponse();
         
+        cy.wait(500);
         cy.getByTestId('environment-switch-loading-overlay').should('not.exist').then(() => {
           cy.task('getSession', {}).then((response: any) => {
             expect(response.token).not.to.equal(originToken);
@@ -47,7 +48,8 @@ describe('Environment Switch Control', function () {
         cy.getByTestId('environment-switch').find(`input[value="${modes[1]}"]`).click({force: true});
         cy.getByTestId('environment-switch-loading-overlay').should('be.visible').then(() => {
           interception.sendResponse();
-          
+
+          cy.wait(500);
           cy.getByTestId('environment-switch-loading-overlay').should('not.exist').then(() => {
             cy.getByTestId('environment-switch').find('.mantine-SegmentedControl-controlActive').contains(modes[1]);
           });
@@ -57,6 +59,7 @@ describe('Environment Switch Control', function () {
         cy.getByTestId('environment-switch-loading-overlay').should('be.visible').then(() => {
           interception.sendResponse();
           
+          cy.wait(500);
           cy.getByTestId('environment-switch-loading-overlay').should('not.exist').then(() => {
             cy.getByTestId('environment-switch').find('.mantine-SegmentedControl-controlActive').contains(modes[0]);
           });
