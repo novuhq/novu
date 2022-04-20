@@ -36,7 +36,7 @@ describe('Create Change', function () {
         },
       })
     );
-    expect(result.enabled).to.be.eq(true);
+    expect(result.enabled).to.be.eq(false);
     expect(result._entityId).to.be.eq(_id);
     expect(result._creatorId).to.be.eq(session.user._id);
     expect(result._environmentId).to.be.eq(session.environment._id);
