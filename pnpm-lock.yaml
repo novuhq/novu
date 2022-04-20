@@ -351,7 +351,6 @@ importers:
       styled-components: ^5.2.1
       typescript: 4.5.4
       uniqid: ^5.3.0
-      use-state-with-callback: ^3.0.2
       web-vitals: ^1.0.1
       webpack: 4.46.0
     dependencies:
@@ -418,7 +417,6 @@ importers:
       styled-components: 5.3.5_react-dom@17.0.2+react@17.0.2
       typescript: 4.5.4
       uniqid: 5.4.0
-      use-state-with-callback: 3.0.2_react-dom@17.0.2+react@17.0.2
       web-vitals: 1.1.2
     devDependencies:
       '@babel/polyfill': 7.12.1
@@ -42867,16 +42865,6 @@ packages:
       '@types/react': 17.0.43
       use-isomorphic-layout-effect: 1.1.2_@types+react@17.0.43
     dev: true
-
-  /use-state-with-callback/3.0.2_react-dom@17.0.2+react@17.0.2:
-    resolution: {integrity: sha512-gs6t5ilsbi2UvoYXdw8+dwQg6yT3QfO/sYhm5Wa3tfwcL6BSad85FiET8ZtTWid4gjul1T1TJ8ReV4Wk1B7UZg==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-    dependencies:
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-    dev: false
 
   /use/3.1.1:
     resolution: {integrity: sha512-cwESVXlO3url9YWlFW/TA9cshCEhtu7IKJ/p5soJ/gGpj7vbvFrAY/eIioQ6Dw23KjZhYgiIo8HOs1nQ2vr/oQ==}

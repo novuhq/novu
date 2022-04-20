@@ -35,4 +35,26 @@ describe('Environment Switch Control', function () {
       }
     }); 
   });
+
+  it('should use different jwt token after switches', function () {
+    const interception = interceptIndefinitely('data-url');
+
+    cy.getByTestId('environment-switch').find('.mantine-SegmentedControl-controlActive').then((dom) => {
+      if (dom.find('input').prop('value') === modes[0]) {
+        cy.getByTestId('environment-switch').find(`input[value="${modes[1]}"]`).click({force: true});
+        cy.getByTestId('environment-switch-loading-overlay').should('be.visible').then(() => {
+          interception.sendResponse();
+          
+          cy.getByTestId('environment-switch').find('.mantine-SegmentedControl-controlActive').contains(modes[1]);
+        });
+      } else {
+        cy.getByTestId('environment-switch').find(`input[value="${modes[0]}"]`).click({force: true});
+        cy.getByTestId('environment-switch-loading-overlay').should('be.visible').then(() => {
+          interception.sendResponse();
+          
+          cy.getByTestId('environment-switch').find('.mantine-SegmentedControl-controlActive').contains(modes[0]);
+        });
+      }
+    }); 
+  });
 });

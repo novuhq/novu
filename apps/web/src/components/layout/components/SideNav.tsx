@@ -1,8 +1,7 @@
 import { useState, useContext } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQuery } from 'react-query';
 import { Navbar } from '@mantine/core';
 import { IEnvironment } from '@novu/shared';
-import { useStateWithCallbackLazy } from 'use-state-with-callback';
 import { getMyEnvironments, getCurrentEnvironment } from '../../../api/environment';
 import { api } from '../../../api/api.client';
 import { NavMenu, SegmentedControl } from '../../../design-system';
@@ -24,19 +23,18 @@ const menuItems = [
 ];
 
 export function SideNav({}: Props) {
-  const queryClient = useQueryClient();
-  const { setToken, jwtPayload } = useContext(AuthContext);
+  const { setToken } = useContext(AuthContext);
   const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
-    'myEnvironments',
+    '/v1/environments',
     getMyEnvironments
   );
   const { data: environment, isLoading: isLoadingCurrentEnvironment } = useQuery<IEnvironment>(
     'currentEnvironment',
     getCurrentEnvironment
   );
-  const [isLoading, setIsLoading] = useStateWithCallbackLazy(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function changeEnvironment(environmentName: string) {
+  async function changeEnvironment(environmentName: string) {
     if (isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment) {
       return;
     }
@@ -46,25 +44,17 @@ export function SideNav({}: Props) {
       return;
     }
 
-    setIsLoading(true, () => {
-      api
-        .post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {})
-        .then((tokenResponse) => {
-          setToken(tokenResponse.token);
+    setIsLoading(true);
+    const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
 
-          return tokenResponse;
-        })
-        .then(() => {
-          // eslint-disable-next-line promise/no-nesting
-          queryClient.refetchQueries().then(() => {
-            setIsLoading(false, () => {});
+    if (!tokenResponse.token) {
+      setIsLoading(false);
 
-            return false;
-          });
+      return;
+    }
 
-          return true;
-        });
-    });
+    setToken(tokenResponse.token);
+    setIsLoading(false);
   }
 
   return (
@@ -75,8 +65,8 @@ export function SideNav({}: Props) {
           data={['Development', 'Production']}
           defaultValue={environment?.name}
           value={environment?.name}
-          onChange={(value) => {
-            changeEnvironment(value);
+          onChange={async (value) => {
+            await changeEnvironment(value);
           }}
           data-test-id="environment-switch"
         />
