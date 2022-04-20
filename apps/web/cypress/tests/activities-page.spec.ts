@@ -52,7 +52,6 @@ describe('Activity Feed Screen', function () {
     });
     cy.visit('/activities');
 
-    cy.pause();
     cy.get('tbody tr')
       .getByTestId('status-badge')
       .eq(0)
