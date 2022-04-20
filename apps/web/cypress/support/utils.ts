@@ -1,21 +1,18 @@
-import {
-    HttpResponseInterceptor,
-    RouteMatcher,
-    StaticResponse,
-} from 'cypress/types/net-stubbing';
-  
+import { HttpResponseInterceptor, RouteMatcher, StaticResponse } from 'cypress/types/net-stubbing';
+
 export function interceptIndefinitely(
-    requestMatcher: RouteMatcher,
-    response?: StaticResponse | HttpResponseInterceptor
+  requestMatcher: RouteMatcher,
+  response?: StaticResponse | HttpResponseInterceptor
 ): { sendResponse: () => void } {
-    let sendResponse;
-    const trigger = new Promise((resolve) => {
-        sendResponse = resolve;
+  let sendResponse;
+  const trigger = new Promise((resolve) => {
+    sendResponse = resolve;
+  });
+
+  cy.intercept(requestMatcher, (request) => {
+    return trigger.then(() => {
+      request.reply(response);
     });
-    cy.intercept(requestMatcher, (request) => {
-        return trigger.then(() => {
-        request.reply(response);
-        });
-    });
-    return { sendResponse };
+  });
+  return { sendResponse };
 }

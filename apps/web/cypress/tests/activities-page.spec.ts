@@ -18,6 +18,8 @@ describe('Activity Feed Screen', function () {
   it('should display notification templates list', function () {
     cy.intercept('*/activity*', (r) => {
       r.continue((res) => {
+        if (!res.body?.data) return;
+
         res.body.data[0].subscriber.firstName = 'lowercase';
 
         res.send({ body: res.body });
@@ -39,6 +41,8 @@ describe('Activity Feed Screen', function () {
   it('should show errors and warning', function () {
     cy.intercept(/.*activity\?page.*/, (r) => {
       r.continue((res) => {
+        if (!res.body?.data) return;
+
         res.body.data[0].status = 'error';
         res.body.data[0].errorText = 'Test Error Text';
         res.body.data[2].status = 'warning';
@@ -48,6 +52,7 @@ describe('Activity Feed Screen', function () {
     });
     cy.visit('/activities');
 
+    cy.pause();
     cy.get('tbody tr')
       .getByTestId('status-badge')
       .eq(0)
