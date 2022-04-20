@@ -14,6 +14,11 @@ export interface INotificationBellProps {
 
 export function NotificationBell(props: INotificationBellProps) {
   const { unseenCount } = useContext(UnseenCountContext);
+  const { bellLoading } = useContext(NovuContext);
+
+  if (bellLoading) {
+    bellLoading(false);
+  }
 
   return (
     <ActionIcon variant="transparent">

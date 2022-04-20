@@ -43,6 +43,7 @@ export interface INovuProviderContext {
   applicationIdentifier?: string;
   colorScheme: ColorScheme;
   initialized: boolean;
+  bellLoading: (isLoading) => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';

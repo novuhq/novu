@@ -6,4 +6,5 @@ export const NovuContext = React.createContext<INovuProviderContext>({
   subscriberId: null,
   colorScheme: 'light',
   initialized: false,
+  bellLoading: (isLoading: boolean) => {},
 });

@@ -16,6 +16,7 @@ interface INovuProviderProps {
   subscriberId?: string;
   applicationIdentifier: string;
   colorScheme?: ColorScheme;
+  bellLoading?: (isLoading: boolean) => void;
 }
 
 export function NovuProvider(props: INovuProviderProps) {
@@ -31,6 +32,7 @@ export function NovuProvider(props: INovuProviderProps) {
                 applicationIdentifier: props.applicationIdentifier,
                 colorScheme: props.colorScheme || 'light',
                 initialized: true,
+                bellLoading: props.bellLoading,
               }}
             >
               {props.children}
