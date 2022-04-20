@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
 import { ColorScheme, IAuthContext } from '../../index';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { applyToken } from '../../shared/utils/applyToken';
 import { initializeSession } from '../../api/initialize-session';
 import { RootProviders } from '../notification-center/components';
 import { AuthContext } from '../../store/auth.context';
-import { postUsageLog } from '../../api/usage';
+import { useSocketController } from '../../store/socket/use-socket-controller';
+import { SocketContext } from '../../store/socket/socket.store';
 
 interface INovuProviderProps {
   children: JSX.Element | Element;
@@ -20,16 +20,19 @@ export function NovuProvider(props: INovuProviderProps) {
   return (
     <RootProviders>
       <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
-        <NovuContext.Provider
-          value={{
-            backendUrl: props.backendUrl,
-            subscriberId: props.subscriberId,
-            applicationIdentifier: props.applicationIdentifier,
-            colorScheme: props.colorScheme || 'light',
-            initialized: true,
-          }}>
-          {props.children}
-        </NovuContext.Provider>
+        <SocketInitialization>
+          <NovuContext.Provider
+            value={{
+              backendUrl: props.backendUrl,
+              subscriberId: props.subscriberId,
+              applicationIdentifier: props.applicationIdentifier,
+              colorScheme: props.colorScheme || 'light',
+              initialized: true,
+            }}
+          >
+            {props.children}
+          </NovuContext.Provider>
+        </SocketInitialization>
       </SessionInitialization>
     </RootProviders>
   );
@@ -70,4 +73,10 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   }
 
   return initialized && isLoggedIn ? children : null;
+}
+
+function SocketInitialization({ children }: { children: JSX.Element }) {
+  const { socket } = useSocketController();
+
+  return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
 }

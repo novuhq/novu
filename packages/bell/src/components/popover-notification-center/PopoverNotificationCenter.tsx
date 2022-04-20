@@ -5,6 +5,7 @@ import { getUnseenCount } from '../../api/notifications';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
 import { IHeaderProps } from '../notification-center/components/layout/header/Header';
+import { useSocket } from '../../hooks';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
