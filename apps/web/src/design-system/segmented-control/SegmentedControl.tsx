@@ -40,6 +40,7 @@ export const SegmentedControl = React.forwardRef<HTMLDivElement, ISegmentedContr
           loaderProps={{
             color: colors.error,
           }}
+          data-test-id={props['data-test-id'] + '-loading-overlay'}
         />
         <MantineSegmentedControl ref={ref} onChange={onChange} {...defaultDesign} {...props} />
       </ControlWrapper>

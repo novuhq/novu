@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQuery } from 'react-query';
 import { Navbar } from '@mantine/core';
 import { IEnvironment } from '@novu/shared';
 import { getMyEnvironments, getCurrentEnvironment } from '../../../api/environment';
@@ -23,10 +23,9 @@ const menuItems = [
 ];
 
 export function SideNav({}: Props) {
-  const queryClient = useQueryClient();
-  const { setToken, jwtPayload } = useContext(AuthContext);
+  const { setToken } = useContext(AuthContext);
   const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
-    'myEnvironments',
+    '/v1/environments',
     getMyEnvironments
   );
   const { data: environment, isLoading: isLoadingCurrentEnvironment } = useQuery<IEnvironment>(
@@ -47,12 +46,16 @@ export function SideNav({}: Props) {
     }
 
     setIsLoading(true);
-
     const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
+
+    if (!tokenResponse.token) {
+      setIsLoading(false);
+
+      return;
+    }
+
     setToken(tokenResponse.token);
     setIsLoading(false);
-
-    await queryClient.refetchQueries();
   }
 
   const changesNavButton = {
@@ -67,12 +70,14 @@ export function SideNav({}: Props) {
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
         <SegmentedControl
+          loading={isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading}
           data={['Development', 'Production']}
           defaultValue={environment?.name}
           value={environment?.name}
           onChange={async (value) => {
             await changeEnvironment(value);
           }}
+          data-test-id="environment-switch"
         />
         <NavMenu menuItems={[...menuItems, changesNavButton]} />
       </Navbar.Section>
