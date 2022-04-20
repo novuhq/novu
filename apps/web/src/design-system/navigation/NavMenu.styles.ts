@@ -17,6 +17,7 @@ export default createStyles((theme: MantineTheme) => {
     link: {
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'space-between',
       height: '50px',
       width: '100%',
       margin: '15px 0px',
@@ -41,6 +42,7 @@ export default createStyles((theme: MantineTheme) => {
       '&, &:hover': {
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         width: '100%',
         height: '50px',
         position: 'relative',
