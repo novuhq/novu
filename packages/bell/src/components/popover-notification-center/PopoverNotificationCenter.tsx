@@ -18,6 +18,15 @@ interface IPopoverNotificationCenterProps {
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
   const [unseenCount, setUnseenCount] = useState<number>(0);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('unseen_count_changed', (data: { unseenCount: number }) => {
+        setUnseenCount(data.unseenCount);
+      });
+    }
+  }, [socket]);
 
   useEffect(() => {
     (async () => {
