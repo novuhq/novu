@@ -13,8 +13,6 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
     window.location.href = url;
   }
 
-  console.log({ colorScheme });
-
   return (
     <>
       <NovuProvider
