@@ -52,12 +52,12 @@ export class NotificationTemplateController {
 
   @Put('/:templateId')
   @Roles(MemberRoleEnum.ADMIN)
-  updateTemplateById(
+  async updateTemplateById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string,
     @Body() body: UpdateNotificationTemplateDto
   ) {
-    return this.updateTemplateByIdUsecase.execute(
+    return await this.updateTemplateByIdUsecase.execute(
       UpdateNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,

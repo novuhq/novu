@@ -25,18 +25,14 @@ export class ChangesController {
 
   @Get('/')
   async getChanges(@UserSession() user: IJwtPayload, @Query('promoted') promoted = 'false'): Promise<ChangeEntity[]> {
-    try {
-      return await this.getChangesUsecase.execute(
-        GetChangesCommand.create({
-          promoted: promoted === 'true',
-          environmentId: user.environmentId,
-          organizationId: user.organizationId,
-          userId: user._id,
-        })
-      );
-    } catch (e) {
-      console.log(e);
-    }
+    return await this.getChangesUsecase.execute(
+      GetChangesCommand.create({
+        promoted: promoted === 'true',
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
+    );
   }
 
   @Post('/:changeId/apply')

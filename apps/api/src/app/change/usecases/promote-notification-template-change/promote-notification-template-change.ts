@@ -48,7 +48,7 @@ export class PromoteNotificationTemplateChange {
 
     const steps = newItem.steps ? newItem.steps.map(mapNewStepItem).filter((step) => step !== undefined) : [];
 
-    if (missingMessages.length > 0 && steps.length > 0) {
+    if (missingMessages.length > 0 && steps.length > 0 && item) {
       Logger.error(
         `Message templates with ids ${missingMessages.join(', ')} are missing for notification template ${item._id}`
       );
