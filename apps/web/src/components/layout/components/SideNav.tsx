@@ -1,7 +1,12 @@
-import React from 'react';
+import { useState, useContext } from 'react';
+import { useQuery } from 'react-query';
 import { Navbar } from '@mantine/core';
-import { NavMenu } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team } from '../../../design-system/icons';
+import { IEnvironment } from '@novu/shared';
+import { getMyEnvironments, getCurrentEnvironment } from '../../../api/environment';
+import { api } from '../../../api/api.client';
+import { NotificationBadge, NavMenu, SegmentedControl } from '../../../design-system';
+import { Activity, Bolt, Box, Repeat, Settings, Team } from '../../../design-system/icons';
+import { AuthContext } from '../../../store/authContext';
 
 type Props = {};
 const menuItems = [
@@ -18,10 +23,63 @@ const menuItems = [
 ];
 
 export function SideNav({}: Props) {
+  const { setToken } = useContext(AuthContext);
+  const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
+    '/v1/environments',
+    getMyEnvironments
+  );
+  const { data: environment, isLoading: isLoadingCurrentEnvironment } = useQuery<IEnvironment>(
+    'currentEnvironment',
+    getCurrentEnvironment
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [changesCount, setChangesCount] = useState<number>(3);
+
+  async function changeEnvironment(environmentName: string) {
+    if (isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment) {
+      return;
+    }
+
+    const targetEnvironment = environments?.find((_environment) => _environment.name === environmentName);
+    if (!targetEnvironment) {
+      return;
+    }
+
+    setIsLoading(true);
+    const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
+
+    if (!tokenResponse.token) {
+      setIsLoading(false);
+
+      return;
+    }
+
+    setToken(tokenResponse.token);
+    setIsLoading(false);
+  }
+
+  const changesNavButton = {
+    icon: <Repeat />,
+    link: '/changes',
+    label: 'Changes',
+    testId: 'side-nav-changes-link',
+    rightSide: <NotificationBadge data-test-id="side-nav-changes-count">{changesCount}</NotificationBadge>,
+  };
+
   return (
-    <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 250 }}>
+    <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
-        <NavMenu menuItems={menuItems} />
+        <SegmentedControl
+          loading={isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading}
+          data={['Development', 'Production']}
+          defaultValue={environment?.name}
+          value={environment?.name}
+          onChange={async (value) => {
+            await changeEnvironment(value);
+          }}
+          data-test-id="environment-switch"
+        />
+        <NavMenu menuItems={[...menuItems, changesNavButton]} />
       </Navbar.Section>
     </Navbar>
   );

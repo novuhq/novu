@@ -58,6 +58,14 @@ export class UpdateNotificationTemplate {
         };
       });
 
+      const subscribersVariables = contentService.extractSubscriberMessageVariables(command.steps);
+
+      updatePayload['triggers.0.subscribersVariables'] = subscribersVariables.map((i) => {
+        return {
+          name: i,
+        };
+      });
+
       const templateMessages: NotificationStepEntity[] = [];
 
       for (const message of steps) {

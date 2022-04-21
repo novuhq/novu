@@ -7,6 +7,8 @@ export const REDIRECT_ROUTE = '/cli/callback';
 export const WIDGET_DEMO_ROUTH = '/demo';
 export const TRIGGER_ROUTE = '/trigger';
 
+export const EMBED_PATH = process.env.NOVU_EMBED_PATH ?? 'https://embed.novu.co/embed.umd.min.js';
+
 // API
 const apiAddress = process.env.NOVU_API_ADDRESS ?? 'https://api.novu.co';
 

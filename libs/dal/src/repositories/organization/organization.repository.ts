@@ -17,4 +17,17 @@ export class OrganizationRepository extends BaseRepository<OrganizationEntity> {
       _id: members.map((member) => member._organizationId),
     });
   }
+
+  async updateBrandingDetails(organizationId: string, branding: { color: string; logo: string }) {
+    return this.update(
+      {
+        _id: organizationId,
+      },
+      {
+        $set: {
+          branding,
+        },
+      }
+    );
+  }
 }

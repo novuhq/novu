@@ -17,3 +17,5 @@ export { Tooltip } from './tooltip/Tooltip';
 export { ColorInput } from './color-input/ColorInput';
 export { TemplateButton } from './template-button/TemplateButton';
 export { PasswordInput } from './password-input/PasswordInput';
+export { SegmentedControl } from './segmented-control/SegmentedControl';
+export { NotificationBadge } from './notification-badge/NotificationBadge';

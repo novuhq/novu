@@ -21,6 +21,7 @@ export class CreateNotificationTemplate {
   async execute(command: CreateNotificationTemplateCommand) {
     const contentService = new ContentService();
     const variables = contentService.extractMessageVariables(command.steps);
+    const subscriberVariables = contentService.extractSubscriberMessageVariables(command.steps);
 
     const triggerIdentifier = `${slugify(command.name, {
       lower: true,
@@ -34,6 +35,11 @@ export class CreateNotificationTemplate {
       type: TriggerTypeEnum.EVENT,
       identifier: `${triggerIdentifier}${!templateCheckIdentifier ? '' : '-' + shortid.generate()}`,
       variables: variables.map((i) => {
+        return {
+          name: i,
+        };
+      }),
+      subscriberVariables: subscriberVariables.map((i) => {
         return {
           name: i,
         };

@@ -1,6 +1,6 @@
 # Novu Sendinblue Provider
 
-A Sendinblue email provider library for [@novu/node](https://github.com/novuhq/novu)
+A Sendinblue email provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 
