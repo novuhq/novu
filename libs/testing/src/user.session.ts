@@ -67,8 +67,10 @@ export class UserSession {
 
     if (!options.noOrganization) {
       if (!options?.noEnvironment) {
-        await this.createEnvironment('Development');
-        await this.createEnvironment('Production', this.environment._parentId);
+        const environment = await this.createEnvironment('Development');
+        await this.createEnvironment('Production', this.environment._id);
+        this.environment = environment;
+        this.apiKey = this.environment.apiKeys[0].key;
 
         await this.createIntegration();
       }
@@ -103,7 +105,6 @@ export class UserSession {
   }
 
   async createEnvironment(name = 'Test environment', parentId: string = undefined) {
-    const key = uuid();
     this.environment = await this.environmentRepository.create({
       name,
       identifier: uuid(),
@@ -111,13 +112,11 @@ export class UserSession {
       _organizationId: this.organization._id,
       apiKeys: [
         {
-          key: key,
+          key: uuid(),
           _userId: this.user._id,
         },
       ],
     });
-
-    this.apiKey = key;
 
     return this.environment;
   }
@@ -196,10 +195,6 @@ export class UserSession {
 
     this.organization = await organizationService.createOrganization();
     await organizationService.addMember(this.organization._id, this.user._id);
-
-    if (!this.environment) {
-      await this.createEnvironment();
-    }
 
     return this.organization;
   }

@@ -75,6 +75,10 @@ const notificationTemplateSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'NotificationTemplate',
+    },
   },
   schemaOptions
 );

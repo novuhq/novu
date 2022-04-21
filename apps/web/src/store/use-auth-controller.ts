@@ -64,6 +64,12 @@ export function useAuthController() {
     applyToken(token);
 
     if (token) {
+      queryClient.removeQueries({
+        predicate: (query) =>
+          query.queryKey !== '/v1/users/me' &&
+          query.queryKey !== '/v1/environments' &&
+          query.queryKey !== '/v1/organizations/me',
+      });
       const payload = jwtDecode<IJwtPayload>(token);
       setJwtPayload(payload);
     }

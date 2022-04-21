@@ -25,6 +25,7 @@ import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN } from './config/index';
 import { useEnvController } from './store/use-env-controller';
 import { EnvContext } from './store/environmentContext';
+import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -135,6 +136,14 @@ function App() {
                       element={
                         <RequiredAuth>
                           <MembersInvitePage />
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/changes"
+                      element={
+                        <RequiredAuth>
+                          <PromoteChangesPage />
                         </RequiredAuth>
                       }
                     />
