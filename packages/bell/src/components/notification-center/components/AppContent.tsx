@@ -22,7 +22,7 @@ export function AppContent() {
       enabled: isLoggedIn && api.isAuthenticated,
     }
   );
-  s;
+
   const theme = {
     colors: {
       main: organization?.branding?.color || colors.vertical,
