@@ -5,11 +5,13 @@ import { ActionIcon } from '@mantine/core';
 import { NovuContext } from '../../store/novu-provider.context';
 import styled from 'styled-components';
 import { UnseenCountContext } from '../../store/unseen-count.context';
+import { ColorScheme } from '../../index';
 
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export interface INotificationBellProps {
   unseenCount?: number;
+  colorScheme?: ColorScheme;
 }
 
 export function NotificationBell(props: INotificationBellProps) {
@@ -23,13 +25,12 @@ export function NotificationBell(props: INotificationBellProps) {
   return (
     <ActionIcon variant="transparent">
       <BellIcon {...headerIconsSettings} />
-      {unseenCount > 0 ? <StyledGradientDot /> : null}
+      {unseenCount > 0 ? <StyledGradientDot colorScheme={props.colorScheme} /> : null}
     </ActionIcon>
   );
 }
 
-export function GradientDotWrap(props: any) {
-  const { colorScheme } = useContext(NovuContext);
+export function GradientDotWrap({ colorScheme, ...props }) {
   const borderColor = colorScheme === 'dark' ? colors.B15 : colors.white;
 
   return <GradientDot {...props} color={borderColor} />;

@@ -5,6 +5,8 @@ import { NovuContext } from '../../store/novu-provider.context';
 import { NotificationCenterContext } from '../../store/notification-center.context';
 import { AppContent } from './components';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { ColorScheme } from '../../index';
+import { ThemeContext } from '../../store/novu-theme.context';
 
 export interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -12,6 +14,7 @@ export interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
+  colorScheme: ColorScheme;
 }
 
 export function NotificationCenter(props: INotificationCenterProps) {
@@ -19,19 +22,21 @@ export function NotificationCenter(props: INotificationCenterProps) {
   const { applicationIdentifier } = useContext(NovuContext);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <NotificationCenterContext.Provider
-        value={{
-          sendUrlChange: props.onUrlChange,
-          sendNotificationClick: props.onNotificationClick,
-          onUnseenCountChanged: props.onUnseenCountChanged,
-          isLoading: !applicationIdentifier,
-          header: props.header,
-          footer: props.footer,
-        }}
-      >
-        <AppContent />
-      </NotificationCenterContext.Provider>
-    </QueryClientProvider>
+    <ThemeContext.Provider value={{ colorScheme: props.colorScheme }}>
+      <QueryClientProvider client={queryClient}>
+        <NotificationCenterContext.Provider
+          value={{
+            sendUrlChange: props.onUrlChange,
+            sendNotificationClick: props.onNotificationClick,
+            onUnseenCountChanged: props.onUnseenCountChanged,
+            isLoading: !applicationIdentifier,
+            header: props.header,
+            footer: props.footer,
+          }}
+        >
+          <AppContent />
+        </NotificationCenterContext.Provider>
+      </QueryClientProvider>
+    </ThemeContext.Provider>
   );
 }

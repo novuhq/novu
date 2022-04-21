@@ -6,9 +6,11 @@ import { shadows } from '../../../../shared/config/shadows';
 import { colors } from '../../../../shared/config/colors';
 import React, { useContext } from 'react';
 import { NovuContext } from '../../../../store/novu-provider.context';
+import { ThemeContext } from '../../../../store/novu-theme.context';
 
 export function Layout({ children }: { children: JSX.Element }) {
-  const { colorScheme, initialized } = useContext(NovuContext);
+  const { initialized } = useContext(NovuContext);
+  const { colorScheme } = useContext(ThemeContext);
 
   return (
     <LayoutWrapper colorScheme={colorScheme}>

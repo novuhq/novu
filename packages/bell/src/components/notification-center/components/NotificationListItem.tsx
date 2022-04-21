@@ -7,6 +7,7 @@ import { DotsHorizontal } from '../../../shared/icons';
 import React, { useContext } from 'react';
 import { NovuContext } from '../../../store/novu-provider.context';
 import { ColorScheme } from '../../../index';
+import { ThemeContext } from '../../../store/novu-theme.context';
 
 export function NotificationListItem({
   notification,
@@ -15,7 +16,7 @@ export function NotificationListItem({
   notification: IMessage;
   onClick: (notification: IMessage) => void;
 }) {
-  const { colorScheme } = useContext(NovuContext);
+  const { colorScheme } = useContext(ThemeContext);
 
   return (
     <ItemWrapper

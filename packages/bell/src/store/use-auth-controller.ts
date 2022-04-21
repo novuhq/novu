@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useQueryClient } from 'react-query';
-import { applyToken } from '../shared/utils/applyToken';
+import { useContext, useEffect, useState } from 'react';
+import { ApiContext, IApiContext } from './api.context';
+import { useApi } from '../hooks/use-api';
 
 export function getToken(): string {
   return localStorage.getItem('widget_user_auth_token') as string;
 }
 
 export function useAuthController() {
-  const queryClient = useQueryClient();
+  const { api } = useApi();
   const [token, setToken] = useState<string | null>(getToken());
   const [user, setUser] = useState<{ _id: string; firstName: string; lastName: string } | null>(null);
 
@@ -20,12 +20,13 @@ export function useAuthController() {
   }, []);
 
   useEffect(() => {
-    applyToken(token);
-  }, [token]);
+    if (api && token) {
+      api.setAuthorizationToken(token);
+    }
+  }, [token, api]);
 
   const logout = () => {
     setToken(null);
-    queryClient.clear();
   };
 
   return {

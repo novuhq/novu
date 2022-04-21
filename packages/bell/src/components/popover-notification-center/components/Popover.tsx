@@ -1,17 +1,17 @@
 import React, { useContext, useState } from 'react';
-import { NovuContext } from '../../../store/novu-provider.context';
 import { Popover as MantinePopover } from '@mantine/core';
 import { colors } from '../../../shared/config/colors';
 import styled from 'styled-components';
+import { ColorScheme } from '../../../index';
 
 interface INovuPopoverProps {
   bell: (props: any) => JSX.Element;
   children: JSX.Element;
+  colorScheme: ColorScheme;
 }
 
-export function Popover({ children, bell }: INovuPopoverProps) {
+export function Popover({ children, bell, colorScheme }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
-  const { colorScheme } = useContext(NovuContext);
 
   function handlerBellClick() {
     setIsVisible(!isVisible);
@@ -28,7 +28,7 @@ export function Popover({ children, bell }: INovuPopoverProps) {
       styles={{
         inner: { margin: 0, padding: 0 },
         body: { border: 0 },
-        popover: { background: `${colorScheme === 'dark' ? colors.B15 : colors.white}` },
+        popover: { background: `transparent` },
         arrow: {
           background: `${colorScheme === 'dark' ? colors.B15 : colors.white}`,
           backgroundColor: `${colorScheme === 'dark' ? colors.B15 : colors.white}`,

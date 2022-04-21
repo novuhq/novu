@@ -1,8 +1,9 @@
 import { NotificationBell, NovuProvider, PopoverNotificationCenter } from '@novu/bell';
 import { useEnvironment } from '../../api/hooks/use-environment';
 import { IUserEntity } from '@novu/shared';
-import { Skeleton, useMantineColorScheme } from '@mantine/core';
-import React, { useState } from 'react';
+import { useMantineColorScheme } from '@mantine/core';
+import React from 'react';
+import { API_ROOT, WS_URL } from '../../config';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
   const { environment } = useEnvironment();
@@ -12,14 +13,17 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
     window.location.href = url;
   }
 
+  console.log({ colorScheme });
+
   return (
     <>
       <NovuProvider
+        backendUrl={API_ROOT}
+        socketUrl={WS_URL}
         subscriberId={user?._id as string}
         applicationIdentifier={environment?.identifier as string}
-        colorScheme={colorScheme}
       >
-        <PopoverNotificationCenter onUrlChange={handlerOnUrlChange}>
+        <PopoverNotificationCenter colorScheme={colorScheme} onUrlChange={handlerOnUrlChange}>
           {(props) => <NotificationBell {...props} />}
         </PopoverNotificationCenter>
       </NovuProvider>

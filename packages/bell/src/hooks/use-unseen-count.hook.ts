@@ -1,22 +1,22 @@
 import { useContext, useEffect, useState } from 'react';
-import { getUnseenCount } from '../api/notifications';
 import { IAuthContext } from '../index';
 import { AuthContext } from '../store/auth.context';
+import { useApi } from './use-api';
 
-export function useUnseenCount() {
+export function useUnseenController() {
+  const { api } = useApi();
   const { token } = useContext<IAuthContext>(AuthContext);
   const [unseenCount, setUnseenCount] = useState<number>(0);
 
   useEffect(() => {
-    if (!token) return null;
+    if (!token || !api?.isAuthenticated) return null;
 
     (async () => {
-      setTimeout(async () => {
-        const countRes = (await getUnseenCount()).count;
-        setUnseenCount(countRes);
-      }, 100);
+      const { count } = await api.getUnseenCount();
+
+      setUnseenCount(count);
     })();
-  }, [token]);
+  }, [token, api?.isAuthenticated]);
 
   return {
     unseenCount,

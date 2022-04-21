@@ -1,6 +1,7 @@
 import { NotificationCenter, NovuProvider } from '@novu/bell';
 import { IMessage } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import { API_URL, WS_URL } from '../../config';
 
 interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;
@@ -34,11 +35,13 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
   return (
     <NovuProvider
+      backendUrl={API_URL}
+      socketUrl={WS_URL}
       applicationIdentifier={props.applicationIdentifier as string}
       subscriberId={userDataPayload.$user_id}
-      colorScheme="light"
     >
       <NotificationCenter
+        colorScheme="light"
         onNotificationClick={props.onNotificationClick}
         onUrlChange={props.onUrlChange}
         onUnseenCountChanged={props.onUnseenCountChanged}

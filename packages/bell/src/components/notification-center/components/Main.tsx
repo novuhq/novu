@@ -3,25 +3,30 @@ import { useInfiniteQuery, useMutation } from 'react-query';
 import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './NotificationsList';
-import { getNotificationsList, markMessageAsSeen } from '../../../api/notifications';
-import { postUsageLog } from '../../../api/usage';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
 import image from '../../../images/no-new-notifications.png';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
+import { useApi } from '../../../hooks/use-api';
 
 export function Main() {
+  const { api } = useApi();
   const { sendNotificationClick, sendUrlChange } = useContext(NotificationCenterContext);
   const { unseenCount } = useContext(UnseenCountContext);
   const [currentPage, setCurrentPage] = useState<number>(0);
+
   const { isLoading, data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } =
-    useInfiniteQuery<IMessage[]>('notifications-feed', async ({ pageParam = 0 }) => getNotificationsList(pageParam), {
-      getNextPageParam: (lastPage) => {
-        return lastPage.length === 10 ? currentPage + 1 : undefined;
-      },
-    });
+    useInfiniteQuery<IMessage[]>(
+      'notifications-feed',
+      async ({ pageParam = 0 }) => api.getNotificationsList(pageParam),
+      {
+        getNextPageParam: (lastPage) => {
+          return lastPage.length === 10 ? currentPage + 1 : undefined;
+        },
+      }
+    );
 
   const { mutateAsync: markNotificationAsSeen } = useMutation<{ body: IMessage }, never, { messageId: string }>(
-    (params) => markMessageAsSeen(params.messageId)
+    (params) => api.markMessageAsSeen(params.messageId)
   );
 
   useEffect(() => {
@@ -32,9 +37,11 @@ export function Main() {
 
   async function fetchNext() {
     if (isFetchingNextPage) return;
+
     fetchNextPage({
       pageParam: currentPage + 1,
     });
+
     setCurrentPage(currentPage + 1);
   }
 
@@ -48,7 +55,7 @@ export function Main() {
     }
     const hasCta = notification.cta?.type === ChannelCTATypeEnum.REDIRECT && notification.cta?.data?.url;
 
-    postUsageLog('Notification Click', {
+    api.postUsageLog('Notification Click', {
       notificationId: notification._id,
       hasCta,
     });

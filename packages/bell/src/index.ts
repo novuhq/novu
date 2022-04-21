@@ -41,9 +41,9 @@ export interface INovuProviderContext {
   backendUrl?: string;
   subscriberId?: string;
   applicationIdentifier?: string;
-  colorScheme: ColorScheme;
   initialized: boolean;
   bellLoading: (isLoading) => void;
+  socketUrl?: string;
 }
 
 export declare type ColorScheme = 'light' | 'dark';

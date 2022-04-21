@@ -1,27 +1,28 @@
 import { useAuth } from '../../../hooks';
 import React, { useContext, useEffect } from 'react';
-import { NovuContext } from '../../../store/novu-provider.context';
 import { useQuery } from 'react-query';
 import { IOrganizationEntity } from '@novu/shared';
-import { getOrganization } from '../../../api/organization';
 import { colors } from '../../../shared/config/colors';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { Layout } from './layout/Layout';
 import { Main } from './Main';
 import * as WebFont from 'webfontloader';
+import { useApi } from '../../../hooks/use-api';
+import { ThemeContext } from '../../../store/novu-theme.context';
 
 export function AppContent() {
+  const { api } = useApi();
   const { isLoggedIn } = useAuth();
-  const { colorScheme } = useContext(NovuContext);
+  const { colorScheme } = useContext(ThemeContext);
 
   const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
     'organization',
-    getOrganization,
+    () => api.getOrganization(),
     {
-      enabled: isLoggedIn,
+      enabled: isLoggedIn && api.isAuthenticated,
     }
   );
-
+  s;
   const theme = {
     colors: {
       main: organization?.branding?.color || colors.vertical,
