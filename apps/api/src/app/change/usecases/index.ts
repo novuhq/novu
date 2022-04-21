@@ -3,10 +3,12 @@ import { PromoteNotificationTemplateChange } from './promote-notification-templa
 import { PromoteChangeToEnvironment } from './promote-change-to-environment/promote-change-to-environment.usecase';
 import { CreateChange } from './create-change.usecase';
 import { ApplyChange } from './apply-change/apply-change.usecase';
+import { GetChanges } from './get-changes/get-changes.usecase';
 export const USE_CASES = [
   CreateChange,
   PromoteChangeToEnvironment,
   PromoteNotificationTemplateChange,
   PromoteMessageTemplateChange,
   ApplyChange,
+  GetChanges,
 ];
