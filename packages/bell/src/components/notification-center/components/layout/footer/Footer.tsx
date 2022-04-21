@@ -2,10 +2,10 @@
 import React, { useContext } from 'react';
 import styled from 'styled-components';
 import { colors } from '../../../../../shared/config/colors';
-import { NovuContext } from '../../../../../store/novu-provider.context';
+import { ThemeContext } from '../../../../../store/novu-theme.context';
 
 export function Footer() {
-  const { colorScheme } = useContext(NovuContext);
+  const { colorScheme } = useContext(ThemeContext);
 
   const textColor = colorScheme === 'light' ? 'black' : 'white';
 
