@@ -57,7 +57,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Start Client
-        run: pnpm start:widget:test
+        run: pnpm start:widget:test &
 
       # Runs a single command using the runners shell
       - name: Start WS
@@ -75,7 +75,7 @@ jobs:
         with:
           working-directory: apps/widget
           start: pnpm start:api
-          wait-on: http://localhost:3500/v1/health-check
+          wait-on: http://localhost:1336/v1/health-check
           browser: chrome
           install: false
           headless: true
