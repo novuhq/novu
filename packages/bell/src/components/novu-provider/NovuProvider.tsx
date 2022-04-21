@@ -78,7 +78,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
     setInitialized(true);
   }
 
-  return initialized && isLoggedIn ? children : null;
+  return children;
 }
 
 function SocketInitialization({ children }: { children: JSX.Element }) {

@@ -65,7 +65,7 @@ const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
 const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string; fontColor: string }>`
   direction: ${({ layoutDirection }) => layoutDirection};
   color: ${({ fontColor }) => fontColor};
-  min-width: 420px;
+  width: 420px;
   z-index: 999;
 
   ::-moz-selection {
