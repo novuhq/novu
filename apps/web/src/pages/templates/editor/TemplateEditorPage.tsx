@@ -1,6 +1,6 @@
 import { FormProvider } from 'react-hook-form';
-import { Container, Grid, Group } from '@mantine/core';
-import { useContext, useEffect, useState } from 'react';
+import { Grid } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
@@ -14,16 +14,16 @@ import { TemplateTriggerModal } from '../../../components/templates/TemplateTrig
 import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
-import { Button, colors, Select, Switch } from '../../../design-system';
+import { Button, colors, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { useStatusChangeControllerHook } from '../../../components/templates/use-status-change-controller.hook';
-import { EnvContext } from '../../../store/environmentContext';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
   const [activePage, setActivePage] = useState<string>('Settings');
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { integrations, loading: isIntegrationsLoading } = useActiveIntegrations();

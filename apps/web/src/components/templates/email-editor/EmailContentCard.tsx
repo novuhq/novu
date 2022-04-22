@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
-import { EnvContext } from '../../../store/environmentContext';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export function EmailContentCard({
   index,
@@ -20,7 +20,7 @@ export function EmailContentCard({
   organization: IOrganizationEntity | undefined;
   isIntegrationActive: boolean;
 }) {
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
   const {
     control,
     formState: { errors },

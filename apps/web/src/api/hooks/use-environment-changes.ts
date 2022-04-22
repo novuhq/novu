@@ -1,24 +1,21 @@
 import { useQuery } from 'react-query';
+import { useEnvController } from '../../store/use-env-controller';
 import { getPromotedChanges, getUnpromotedChanges } from '../changes';
+import { QueryKeys } from '../query.keys';
 
 export function useEnvironmentChanges() {
+  const { environment } = useEnvController();
   const {
     data: changes,
     isLoading: isLoadingChanges,
     refetch: refetchChanges,
-  } = useQuery('currentChanges', getUnpromotedChanges, {
-    placeholderData: () => generateChanges(false),
-    enabled: false,
-  });
+  } = useQuery([QueryKeys.currentUnpromotedChanges, environment], getUnpromotedChanges, {});
 
   const {
     data: history,
     isLoading: isLoadingHistory,
     refetch: refetchHistory,
-  } = useQuery('currentChanges', getPromotedChanges, {
-    placeholderData: () => generateChanges(true),
-    enabled: false,
-  });
+  } = useQuery([QueryKeys.currentPromotedChanges, environment], getPromotedChanges, {});
 
   return {
     changes,
@@ -29,52 +26,3 @@ export function useEnvironmentChanges() {
     refetchHistory,
   };
 }
-
-const placeholderData = [
-  {
-    id: '1',
-    type: 'NotificationTemplate',
-    changedBy: { firstName: 'Doc', lastName: 'sus' },
-    createdAt: new Date(),
-    enabled: false,
-    change: 'Description',
-  },
-  {
-    id: '2',
-    type: 'MessageTemplate',
-    changedBy: { firstName: 'arthur', lastName: 'pendragon' },
-    createdAt: new Date(),
-    enabled: false,
-    change: 'Text changed',
-  },
-  {
-    id: '3',
-    type: 'NotificationTemplate',
-    changedBy: { firstName: 'Moses', lastName: 'of Egypt' },
-    createdAt: new Date(),
-    enabled: false,
-    change: 'Be free',
-  },
-  {
-    id: '4',
-    type: 'MessageTemplate',
-    changedBy: { firstName: 'harry', lastName: 'potter' },
-    createdAt: new Date(),
-    enabled: true,
-    change: 'Expelliarmus',
-  },
-  {
-    id: '5',
-    type: 'MessageTemplate',
-    changedBy: { firstName: 'mr', lastName: 'x' },
-    createdAt: new Date(),
-    enabled: true,
-    change: 'Powerful change',
-  },
-];
-
-const generateChanges = (promoted: boolean) => {
-  return {
-    data: placeholderData.filter(({ enabled }) => enabled === promoted),
-  };
-};

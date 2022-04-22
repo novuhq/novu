@@ -1,13 +1,12 @@
 import { Control, Controller } from 'react-hook-form';
 import { Container, Group } from '@mantine/core';
-import React, { useContext } from 'react';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Input } from '../../../design-system';
-import { EnvContext } from '../../../store/environmentContext';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
 
   return (
     <>

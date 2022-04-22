@@ -1,13 +1,8 @@
-import React, { useContext, useState } from 'react';
 import { Navbar } from '@mantine/core';
-import { useQuery } from 'react-query';
-import { IEnvironment } from '@novu/shared';
-import { colors, NavMenu, SegmentedControl, NotificationBadge } from '../../../design-system';
+import { NavMenu, SegmentedControl } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat } from '../../../design-system/icons';
-import { EnvContext } from '../../../store/environmentContext';
-import { getMyEnvironments, getCurrentEnvironment } from '../../../api/environment';
-import { api } from '../../../api/api.client';
-import { AuthContext } from '../../../store/authContext';
+import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
+import { useEnvController } from '../../../store/use-env-controller';
 
 type Props = {};
 const menuItems = [
@@ -24,24 +19,24 @@ const menuItems = [
 ];
 
 export function SideNav({}: Props) {
-  const { currentEnvironment, setEnvironment } = useContext(EnvContext);
+  const { setEnvironment, isLoading, environment } = useEnvController();
 
   const changesNavButton = {
     icon: <Repeat />,
     link: '/changes',
     label: 'Changes',
     testId: 'side-nav-changes-link',
-    rightSide: <NotificationBadge data-test-id="side-nav-changes-count">{changesCount}</NotificationBadge>,
+    rightSide: <ChangesCountBadge />,
   };
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
         <SegmentedControl
-          loading={isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading}
+          loading={isLoading}
           data={['Development', 'Production']}
-          defaultValue={currentEnvironment?.name}
-          value={currentEnvironment?.name}
+          defaultValue={environment?.name}
+          value={environment?.name}
           onChange={async (value) => {
             await setEnvironment(value);
           }}

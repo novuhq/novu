@@ -5,11 +5,11 @@ export async function getChanges() {
 }
 
 export async function getPromotedChanges() {
-  return api.get('/v1/changes/history');
+  return api.get('/v1/changes?promoted=true');
 }
 
 export async function getUnpromotedChanges() {
-  return api.get('/v1/changes/current');
+  return api.get('/v1/changes?promoted=false');
 }
 
 export async function getChangesCount() {
@@ -17,5 +17,9 @@ export async function getChangesCount() {
 }
 
 export async function promoteChange(changeId: string) {
-  return api.put(`/v1/changes/${changeId}/enabled`, {});
+  return api.post(`/v1/changes/${changeId}/apply`, {});
+}
+
+export async function bulkPromoteChanges(changeIds: string[]) {
+  return api.post(`/v1/changes/bulk/apply`, changeIds);
 }

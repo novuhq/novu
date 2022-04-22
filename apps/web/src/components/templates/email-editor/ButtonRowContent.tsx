@@ -1,9 +1,9 @@
 import { IEmailBlock } from '@novu/shared';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TextInput as MantineInput, Popover, Button as MantineButton } from '@mantine/core';
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
-import { EnvContext } from '../../../store/environmentContext';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export function ButtonRowContent({
   block,
@@ -16,7 +16,7 @@ export function ButtonRowContent({
   onUrlChange: (url: string) => void;
   brandingColor: string | undefined;
 }) {
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
   const [url, setUrl] = useState<string>();
   const [text, setText] = useState<string>();
   const [dropDownVisible, setDropDownVisible] = useState<boolean>(false);

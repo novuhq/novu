@@ -19,4 +19,14 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
       }
     );
   }
+
+  public async getList(organizationId: string, environmentId: string, enabled: boolean) {
+    const items = await Change.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      enabled,
+    }).populate('user');
+
+    return this.mapEntities(items);
+  }
 }

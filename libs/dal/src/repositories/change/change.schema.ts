@@ -26,6 +26,7 @@ const changeSchema = new Schema(
     _creatorId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      index: true,
     },
   },
   { ...schemaOptions }
@@ -34,6 +35,13 @@ const changeSchema = new Schema(
 interface IChangeDocument extends ChangeEntity, Document {
   _id: never;
 }
+
+changeSchema.virtual('user', {
+  ref: 'User',
+  localField: '_creatorId',
+  foreignField: '_id',
+  justOne: true,
+});
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Change = mongoose.models.Change || mongoose.model<IChangeDocument>('Change', changeSchema);

@@ -1,13 +1,13 @@
 import { IEmailBlock } from '@novu/shared';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { useMantineTheme } from '@mantine/core';
 import { colors } from '../../../design-system';
-import { EnvContext } from '../../../store/environmentContext';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; onTextChange: (text: string) => void }) {
   const theme = useMantineTheme();
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
   const ref = useRef<HTMLDivElement>(null);
   const [text, setText] = useState<string>(block.content);
   const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!block.content);

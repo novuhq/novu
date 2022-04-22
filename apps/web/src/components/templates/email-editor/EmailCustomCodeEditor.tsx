@@ -2,12 +2,11 @@ import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-handlebars';
 import 'ace-builds/src-noconflict/theme-monokai';
 import { Card } from '@mantine/core';
-import React, { useContext } from 'react';
 import { colors } from '../../../design-system';
-import { EnvContext } from '../../../store/environmentContext';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export function EmailCustomCodeEditor({ onChange, value }: { onChange?: (string) => void; value?: string }) {
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
 
   return (
     <Card withBorder sx={styledCard}>

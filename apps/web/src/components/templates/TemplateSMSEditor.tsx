@@ -1,10 +1,9 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { Textarea } from '@mantine/core';
-import React, { useContext } from 'react';
 import { LackIntegrationError } from './LackIntegrationError';
 import { IForm } from './use-template-controller.hook';
-import { EnvContext } from '../../store/environmentContext';
 import { colors } from '../../design-system';
+import { useEnvController } from '../../store/use-env-controller';
 
 export function TemplateSMSEditor({
   control,
@@ -16,7 +15,7 @@ export function TemplateSMSEditor({
   errors: any;
   isIntegrationActive: boolean;
 }) {
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
   const {
     formState: { errors },
   } = useFormContext();

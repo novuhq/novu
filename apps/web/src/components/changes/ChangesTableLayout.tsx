@@ -1,10 +1,12 @@
 import moment from 'moment';
-import React from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { Data, Table } from '../../design-system/table/Table';
 import { useMantineColorScheme } from '@mantine/core';
 import { ColumnWithStrictAccessor } from 'react-table';
 import { Button, colors, Text } from '../../design-system';
+import { useMutation, useQueryClient } from 'react-query';
+import { promoteChange } from '../../api/changes';
+import { QueryKeys } from '../../api/query.keys';
 
 export enum ChangeEntityTypeEnum {
   NOTIFICATION_TEMPLATE = 'NotificationTemplate',
@@ -12,7 +14,15 @@ export enum ChangeEntityTypeEnum {
 }
 
 export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: boolean }) => {
+  const queryClient = useQueryClient();
   const { colorScheme } = useMantineColorScheme();
+  const { mutate, isLoading } = useMutation(promoteChange, {
+    onSuccess: () => {
+      queryClient.refetchQueries([QueryKeys.currentUnpromotedChanges]);
+      queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
+      queryClient.refetchQueries([QueryKeys.changesCount]);
+    },
+  });
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
@@ -27,17 +37,17 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Message Change</Text>
           )}
           <Text rows={1} mt={5}>
-            {change}
+            {JSON.stringify(change)}
           </Text>
         </div>
       ),
     },
     {
-      accessor: 'changedBy',
+      accessor: 'user',
       Header: 'Changed By',
-      Cell: ({ changedBy }: any) => (
+      Cell: ({ user }: any) => (
         <Text data-test-id="subscriber-name" rows={1}>
-          {capitalize(changedBy.firstName)} {capitalize(changedBy.lastName)}
+          {capitalize(user.firstName)} {capitalize(user.lastName)}
         </Text>
       ),
     },
@@ -49,13 +59,20 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
       },
     },
     {
-      accessor: 'id',
+      accessor: '_id',
       Header: '',
       maxWidth: 50,
-      Cell: ({ id, enabled }: any) => {
+      Cell: ({ _id, enabled }: any) => {
         return (
           <div style={{ textAlign: 'right' }}>
-            <Button variant="outline" disabled={enabled}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                mutate(_id);
+              }}
+              disabled={enabled}
+              loading={isLoading}
+            >
               Promote
             </Button>
           </div>

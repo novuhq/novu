@@ -1,10 +1,10 @@
 import { IEmailBlock } from '@novu/shared';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, MenuItem as DropdownItem, RadioGroup, Radio, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { colors, Dropdown } from '../../../design-system';
-import { EnvContext } from '../../../store/environmentContext';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export function ContentRow({
   children,
@@ -21,7 +21,7 @@ export function ContentRow({
   block: IEmailBlock;
   onStyleChanged: (data: { textDirection: 'ltr' | 'rtl' }) => void;
 }) {
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
   const [textDirection, setTextDirection] = useState<'ltr' | 'rtl'>(block?.styles?.textDirection || 'ltr');
   const parentRef = useRef<HTMLDivElement>(null);
   const theme = useMantineTheme();

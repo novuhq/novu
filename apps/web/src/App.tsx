@@ -23,8 +23,6 @@ import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN } from './config/index';
-import { useEnvController } from './store/use-env-controller';
-import { EnvContext } from './store/environmentContext';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 
 if (SENTRY_DSN) {
@@ -66,90 +64,88 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <AuthHandlerComponent>
             <ThemeHandlerComponent>
-              <EnvHandlerComponent>
-                <Routes>
-                  <Route path="/auth/signup" element={<SignUpPage />} />
-                  <Route path="/auth/login" element={<LoginPage />} />
-                  <Route path="/auth/reset/request" element={<PasswordResetPage />} />
-                  <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
-                  <Route path="/auth/invitation/:token" element={<InvitationPage />} />
-                  <Route path="/auth/application" element={<CreateOrganizationPage />} />
-                  <Route element={<AppLayout />}>
-                    <Route
-                      path="/*"
-                      element={
-                        <RequiredAuth>
-                          <HomePage />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/templates/create"
-                      element={
-                        <RequiredAuth>
-                          <TemplateEditorPage />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/templates/edit/:templateId"
-                      element={
-                        <RequiredAuth>
-                          <TemplateEditorPage />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/templates"
-                      element={
-                        <RequiredAuth>
-                          <NotificationList />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/activities"
-                      element={
-                        <RequiredAuth>
-                          <ActivitiesPage />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/settings"
-                      element={
-                        <RequiredAuth>
-                          <SettingsPage />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/integrations"
-                      element={
-                        <RequiredAuth>
-                          <IntegrationsStore />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/team"
-                      element={
-                        <RequiredAuth>
-                          <MembersInvitePage />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/changes"
-                      element={
-                        <RequiredAuth>
-                          <PromoteChangesPage />
-                        </RequiredAuth>
-                      }
-                    />
-                  </Route>
-                </Routes>
-              </EnvHandlerComponent>
+              <Routes>
+                <Route path="/auth/signup" element={<SignUpPage />} />
+                <Route path="/auth/login" element={<LoginPage />} />
+                <Route path="/auth/reset/request" element={<PasswordResetPage />} />
+                <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
+                <Route path="/auth/invitation/:token" element={<InvitationPage />} />
+                <Route path="/auth/application" element={<CreateOrganizationPage />} />
+                <Route element={<AppLayout />}>
+                  <Route
+                    path="/*"
+                    element={
+                      <RequiredAuth>
+                        <HomePage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/templates/create"
+                    element={
+                      <RequiredAuth>
+                        <TemplateEditorPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/templates/edit/:templateId"
+                    element={
+                      <RequiredAuth>
+                        <TemplateEditorPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/templates"
+                    element={
+                      <RequiredAuth>
+                        <NotificationList />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/activities"
+                    element={
+                      <RequiredAuth>
+                        <ActivitiesPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <RequiredAuth>
+                        <SettingsPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/integrations"
+                    element={
+                      <RequiredAuth>
+                        <IntegrationsStore />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/team"
+                    element={
+                      <RequiredAuth>
+                        <MembersInvitePage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/changes"
+                    element={
+                      <RequiredAuth>
+                        <PromoteChangesPage />
+                      </RequiredAuth>
+                    }
+                  />
+                </Route>
+              </Routes>
             </ThemeHandlerComponent>
           </AuthHandlerComponent>
         </QueryClientProvider>
@@ -203,22 +199,6 @@ function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
-  );
-}
-
-function EnvHandlerComponent({ children }: { children: React.ReactNode }) {
-  const { environment, readonly, setEnvironment } = useEnvController();
-
-  return (
-    <EnvContext.Provider
-      value={{
-        currentEnvironment: environment,
-        readonly,
-        setEnvironment,
-      }}
-    >
-      {children}
-    </EnvContext.Provider>
   );
 }
 

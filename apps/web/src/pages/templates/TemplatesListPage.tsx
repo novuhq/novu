@@ -11,11 +11,10 @@ import { Tag, Button, Table, colors, Text } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system/tooltip/Tooltip';
 import { Data } from '../../design-system/table/Table';
-import { useContext } from 'react';
-import { EnvContext } from '../../store/environmentContext';
+import { useEnvController } from '../../store/use-env-controller';
 
 function NotificationList() {
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
   const { templates, loading: isLoading } = useTemplates();
   const theme = useMantineTheme();
   const navigate = useNavigate();

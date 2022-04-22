@@ -7,10 +7,6 @@ export class GetChanges {
   constructor(private changeRepository: ChangeRepository) {}
 
   async execute(command: GetChangesCommand): Promise<ChangeEntity[]> {
-    return await this.changeRepository.find({
-      _organizationId: command.organizationId,
-      enabled: command.promoted,
-      _environmentId: command.environmentId,
-    });
+    return await this.changeRepository.getList(command.organizationId, command.environmentId, command.promoted);
   }
 }

@@ -1,15 +1,15 @@
 import { Controller, useFormContext } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Grid } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
 import { Input, Select } from '../../design-system';
-import { EnvContext } from '../../store/environmentContext';
+import { useEnvController } from '../../store/use-env-controller';
 
 export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) => {
   const queryClient = useQueryClient();
-  const { readonly } = useContext(EnvContext);
+  const { readonly } = useEnvController();
   const {
     formState: { errors },
     setValue,

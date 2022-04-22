@@ -4,25 +4,34 @@ import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 import { useContext, useEffect, useState } from 'react';
 import { api } from '../api/api.client';
 import { AuthContext } from './authContext';
+import { QueryKeys } from '../api/query.keys';
 
-export function useEnvController() {
+export type EnvironmentContext = {
+  readonly: boolean;
+  isLoading: boolean;
+  environment: IEnvironment | undefined;
+  setEnvironment: (environment: string) => void;
+};
+
+export const useEnvController = (): EnvironmentContext => {
   const queryClient = useQueryClient();
-  const { setToken, jwtPayload } = useContext(AuthContext);
+  const { setToken } = useContext(AuthContext);
   const [readonly, setReadonly] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
-    'myEnvironments',
+    QueryKeys.myEnvironments,
     getMyEnvironments
   );
   const { data: environment, isLoading: isLoadingCurrentEnvironment } = useQuery<IEnvironment>(
-    'currentEnvironment',
+    QueryKeys.currentEnvironment,
     getCurrentEnvironment
   );
 
   useEffect(() => {
-    if (environment) {
-      setReadonly(environment.name === 'Production');
+    if (!environment) {
+      return;
     }
+    setReadonly(environment.name === 'Production');
   }, [environment]);
 
   async function setEnvironment(environmentName: string) {
@@ -36,11 +45,14 @@ export function useEnvController() {
     }
 
     setIsLoading(true);
-
     const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
-    setToken(tokenResponse.token);
     setIsLoading(false);
+    if (!tokenResponse.token) {
+      return;
+    }
+    setToken(tokenResponse.token);
 
+    // Why do we refetch all queries here?
     await queryClient.refetchQueries();
   }
 
@@ -48,5 +60,6 @@ export function useEnvController() {
     environment,
     readonly,
     setEnvironment,
+    isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
   };
-}
+};
