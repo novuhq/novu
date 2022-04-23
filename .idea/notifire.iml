@@ -17,8 +17,6 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/node/build" />
       <excludeFolder url="file://$MODULE_DIR$/apps/web/storybook-static" />
       <excludeFolder url="file://$MODULE_DIR$/providers/emailjs/build" />
-      <excludeFolder url="file://$MODULE_DIR$/packages/bell/.storybook" />
-      <excludeFolder url="file://$MODULE_DIR$/packages/bell/build" />
       <excludeFolder url="file://$MODULE_DIR$/packages/cli/dist" />
       <excludeFolder url="file://$MODULE_DIR$/packages/stateless/build" />
       <excludeFolder url="file://$MODULE_DIR$/libs/sdk/dist" />
@@ -42,6 +40,8 @@
       <excludeFolder url="file://$MODULE_DIR$/providers/telnyx/build" />
       <excludeFolder url="file://$MODULE_DIR$/providers/twilio/build" />
       <excludeFolder url="file://$MODULE_DIR$/packages/react/storybook-static" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/notification-center/.storybook" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/notification-center/build" />
       <excludePattern pattern="dist" />
       <excludePattern pattern="build" />
     </content>

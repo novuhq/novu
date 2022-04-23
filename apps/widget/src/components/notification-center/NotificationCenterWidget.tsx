@@ -1,4 +1,4 @@
-import { NotificationCenter, NovuProvider } from '@novu/bell';
+import { NotificationCenter, NovuProvider } from '../../../../../packages/notification-center';
 import { IMessage, IOrganizationEntity } from '@novu/shared';
 import React, { useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
