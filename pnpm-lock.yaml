@@ -455,7 +455,7 @@ importers:
       '@mantine/hooks': ^4.1.0
       '@novu/dal': ^0.4.0-alpha.8
       '@novu/embed': ^0.4.0-alpha.5
-      '@novu/notification-center': ^0.4.0-alpha.3
+      '@novu/notification-center': 0.4.0-alpha.3
       '@novu/shared': ^0.4.0-alpha.7
       '@novu/testing': ^0.4.0-alpha.8
       '@testing-library/jest-dom': ^5.11.4
