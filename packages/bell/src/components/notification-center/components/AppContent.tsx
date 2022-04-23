@@ -6,7 +6,6 @@ import { colors } from '../../../shared/config/colors';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { Layout } from './layout/Layout';
 import { Main } from './Main';
-import * as WebFont from 'webfontloader';
 import { useApi } from '../../../hooks/use-api.hook';
 import { ThemeContext } from '../../../store/novu-theme.context';
 
@@ -34,14 +33,6 @@ export function AppContent() {
       direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
   };
-
-  useEffect(() => {
-    WebFont.load({
-      google: {
-        families: [theme.fontFamily],
-      },
-    });
-  }, [theme.fontFamily]);
 
   return (
     <ThemeProvider theme={theme}>
