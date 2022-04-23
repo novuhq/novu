@@ -11,14 +11,12 @@ export function NotificationsList({
   hasNextPage,
   onNotificationClicked,
 }: {
-  notifications: IMessage[][] | never;
+  notifications: IMessage[] | never;
   onFetch: () => void;
   hasNextPage: boolean;
   onNotificationClicked: (notification: IMessage) => void;
 }) {
-  const totalCount = notifications.reduce((history, messages) => {
-    return history + messages.length;
-  }, 0);
+  const totalCount = notifications?.length;
 
   return (
     <ListWrapper data-test-id="notifications-scroll-area">
@@ -30,10 +28,10 @@ export function NotificationsList({
         loader={<Loader />}
         endMessage={false}
       >
-        {notifications.map((page) => {
-          return page.map((notification) => (
+        {notifications.map((notification) => {
+          return (
             <NotificationListItem key={notification._id} notification={notification} onClick={onNotificationClicked} />
-          ));
+          );
         })}
       </InfiniteScroll>
     </ListWrapper>

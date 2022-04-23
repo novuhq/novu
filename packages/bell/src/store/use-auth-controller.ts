@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { ApiContext, IApiContext } from './api.context';
-import { useApi } from '../hooks/use-api';
+import { useApi } from '../hooks/use-api.hook';
 
 export function getToken(): string {
   return localStorage.getItem('widget_user_auth_token') as string;

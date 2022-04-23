@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { colors } from '../../shared/config/colors';
 import { Bell as BellIcon, GradientDot } from '../../shared/icons';
 import { ActionIcon } from '@mantine/core';
-import { NovuContext } from '../../store/novu-provider.context';
 import styled from 'styled-components';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ColorScheme } from '../../index';
@@ -16,11 +15,6 @@ export interface INotificationBellProps {
 
 export function NotificationBell(props: INotificationBellProps) {
   const { unseenCount } = useContext(UnseenCountContext);
-  const { bellLoading } = useContext(NovuContext);
-
-  if (bellLoading) {
-    bellLoading(false);
-  }
 
   return (
     <ActionIcon variant="transparent">

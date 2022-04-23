@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, IAuthContext } from '../../index';
+import { ColorScheme, IAuthContext, INovuProviderContext } from '../../index';
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
@@ -8,8 +8,10 @@ import { useSocket, useUnseenController } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
-import { useApi } from '../../hooks/use-api';
+import { useApi } from '../../hooks/use-api.hook';
 import { AuthProvider } from '../notification-center/components';
+import { useQuery } from 'react-query';
+import { IOrganizationEntity } from '@novu/shared';
 
 interface INovuProviderProps {
   children: React.ReactNode;
@@ -17,17 +19,17 @@ interface INovuProviderProps {
   subscriberId?: string;
   applicationIdentifier: string;
   colorScheme?: ColorScheme;
-  bellLoading?: (isLoading: boolean) => void;
   socketUrl?: string;
+  onLoad?: (data: { organization: IOrganizationEntity }) => void;
 }
 
+let api: ApiService;
 export function NovuProvider(props: INovuProviderProps) {
   const backendUrl = props.backendUrl ?? 'https://api.novu.co';
   const socketUrl = props.socketUrl ?? 'https://ws.novu.co';
-  const [api, setApi] = useState<ApiService>();
 
   useEffect(() => {
-    setApi(new ApiService(backendUrl));
+    if (!api) api = new ApiService(backendUrl);
   }, []);
 
   return (
@@ -37,8 +39,8 @@ export function NovuProvider(props: INovuProviderProps) {
         subscriberId: props.subscriberId,
         applicationIdentifier: props.applicationIdentifier,
         initialized: true,
-        bellLoading: props.bellLoading,
         socketUrl: socketUrl,
+        onLoad: props.onLoad,
       }}
     >
       <ApiContext.Provider value={{ api }}>
@@ -61,8 +63,9 @@ interface ISessionInitializationProps {
 }
 
 function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
-  const { api } = useApi();
-  const { setToken, setUser } = useContext<IAuthContext>(AuthContext);
+  const { api: apiService } = useApi();
+  const { setToken, setUser, isLoggedIn } = useContext<IAuthContext>(AuthContext);
+  const { onLoad } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
     if (props.subscriberId && props.applicationIdentifier) {
@@ -81,12 +84,18 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
       (window as any).parentIFrame.autoResize(true);
     }
 
-    const response = await api.initializeSession(payload.clientId, payload.data.$user_id);
+    const response = await apiService.initializeSession(payload.clientId, payload.data.$user_id);
 
     api.setAuthorizationToken(response.token);
 
     setUser(response.profile);
     setToken(response.token);
+
+    const organizationData = await api.getOrganization();
+
+    if (onLoad) {
+      onLoad({ organization: organizationData });
+    }
   }
 
   return children;

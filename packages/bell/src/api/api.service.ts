@@ -1,4 +1,5 @@
 import { HttpClient } from './http.client';
+import { IMessage } from '@novu/shared/src';
 
 export class ApiService {
   private httpClient: HttpClient;
@@ -19,7 +20,7 @@ export class ApiService {
     return await this.httpClient.post(`/widgets/messages/${messageId}/seen`, {});
   }
 
-  async getNotificationsList(page: number) {
+  async getNotificationsList(page: number): Promise<IMessage[]> {
     return await this.httpClient.get(`/widgets/notifications/feed?page=${page}`);
   }
 

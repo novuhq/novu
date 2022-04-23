@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { IAuthContext } from '../index';
 import { AuthContext } from '../store/auth.context';
-import { useApi } from './use-api';
+import { useApi } from './use-api.hook';
 
 export function useUnseenController() {
   const { api } = useApi();

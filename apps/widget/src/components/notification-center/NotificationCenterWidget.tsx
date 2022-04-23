@@ -12,7 +12,15 @@ interface INotificationCenterWidgetProps {
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
   const [userDataPayload, setUserDataPayload] = useState<{ $user_id: string }>();
-
+  /*
+  useEffect(() => {
+    WebFont.load({
+      google: {
+        families: [theme.fontFamily],
+      },
+    });
+  }, [theme.fontFamily]);
+  */
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = async (event: { data: any }) => {

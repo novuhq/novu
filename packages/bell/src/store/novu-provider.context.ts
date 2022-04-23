@@ -5,6 +5,6 @@ export const NovuContext = React.createContext<INovuProviderContext>({
   backendUrl: null,
   subscriberId: null,
   initialized: false,
-  bellLoading: (isLoading: boolean) => {},
   socketUrl: null,
+  onLoad: null,
 });

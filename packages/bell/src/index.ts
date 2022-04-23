@@ -1,6 +1,9 @@
-import { IMessage, ISubscriberJwt } from '@novu/shared';
+import { IMessage, ISubscriberJwt, IOrganizationEntity } from '@novu/shared';
 
 export * from './components';
+export * from './hooks/use-unseen-count.hook';
+export * from './hooks/use-socket.hook';
+export { IMessage } from '@novu/shared';
 
 export interface IAuthContext {
   setToken: (token: string) => void;
@@ -29,8 +32,8 @@ export interface IUserInfo {
 }
 
 export interface INotificationCenterContext {
-  sendUrlChange: (url: string) => void;
-  sendNotificationClick: (notification: IMessage) => void;
+  onUrlChange: (url: string) => void;
+  onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
   isLoading: boolean;
   header: () => JSX.Element;
@@ -42,8 +45,8 @@ export interface INovuProviderContext {
   subscriberId?: string;
   applicationIdentifier?: string;
   initialized: boolean;
-  bellLoading: (isLoading) => void;
   socketUrl?: string;
+  onLoad: (data: { organization: IOrganizationEntity }) => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';

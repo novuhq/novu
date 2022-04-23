@@ -26,8 +26,8 @@ export function NotificationCenter(props: INotificationCenterProps) {
       <QueryClientProvider client={queryClient}>
         <NotificationCenterContext.Provider
           value={{
-            sendUrlChange: props.onUrlChange,
-            sendNotificationClick: props.onNotificationClick,
+            onUrlChange: props.onUrlChange,
+            onNotificationClick: props.onNotificationClick,
             onUnseenCountChanged: props.onUnseenCountChanged,
             isLoading: !applicationIdentifier,
             header: props.header,

@@ -1,33 +1,26 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useInfiniteQuery, useMutation } from 'react-query';
 import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './NotificationsList';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
 import image from '../../../images/no-new-notifications.png';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
-import { useApi } from '../../../hooks/use-api';
+import { useApi } from '../../../hooks/use-api.hook';
+import { useNotifications } from '../../../hooks/use-notifications.hook';
 
 export function Main() {
   const { api } = useApi();
-  const { sendNotificationClick, sendUrlChange } = useContext(NotificationCenterContext);
+  const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
+  const {
+    markAsSeen: markNotificationAsSeen,
+    fetchNextPage,
+    refetch,
+    notifications: data,
+    fetching: isLoading,
+    hasNextPage,
+  } = useNotifications();
+
   const { unseenCount } = useContext(UnseenCountContext);
-  const [currentPage, setCurrentPage] = useState<number>(0);
-
-  const { isLoading, data, fetchNextPage, isFetchingNextPage, hasNextPage, isFetched, refetch, isFetching } =
-    useInfiniteQuery<IMessage[]>(
-      'notifications-feed',
-      async ({ pageParam = 0 }) => api.getNotificationsList(pageParam),
-      {
-        getNextPageParam: (lastPage) => {
-          return lastPage.length === 10 ? currentPage + 1 : undefined;
-        },
-      }
-    );
-
-  const { mutateAsync: markNotificationAsSeen } = useMutation<{ body: IMessage }, never, { messageId: string }>(
-    (params) => api.markMessageAsSeen(params.messageId)
-  );
 
   useEffect(() => {
     if (!isNaN(unseenCount)) {
@@ -36,22 +29,14 @@ export function Main() {
   }, [unseenCount]);
 
   async function fetchNext() {
-    if (isFetchingNextPage) return;
-
-    fetchNextPage({
-      pageParam: currentPage + 1,
-    });
-
-    setCurrentPage(currentPage + 1);
+    await fetchNextPage();
   }
 
   async function onNotificationClicked(notification: IMessage) {
-    await markNotificationAsSeen({
-      messageId: notification._id,
-    });
+    await markNotificationAsSeen(notification._id);
 
-    if (sendNotificationClick) {
-      sendNotificationClick(notification);
+    if (onNotificationClick) {
+      onNotificationClick(notification);
     }
     const hasCta = notification.cta?.type === ChannelCTATypeEnum.REDIRECT && notification.cta?.data?.url;
 
@@ -60,8 +45,8 @@ export function Main() {
       hasCta,
     });
 
-    if (hasCta && notification.cta?.data?.url && sendUrlChange) {
-      sendUrlChange(notification.cta.data.url);
+    if (hasCta && notification.cta?.data?.url && onUrlChange) {
+      onUrlChange(notification.cta.data.url);
     }
 
     refetch();
@@ -69,7 +54,7 @@ export function Main() {
 
   return (
     <MainWrapper data-test-id="main-wrapper">
-      {!isLoading && isFetched && !isFetching && data?.pages[0].length === 0 ? (
+      {!isLoading && data?.length === 0 ? (
         <div
           style={{
             textAlign: 'center',
@@ -84,9 +69,9 @@ export function Main() {
       ) : (
         <NotificationsList
           onNotificationClicked={onNotificationClicked}
-          notifications={data?.pages || []}
+          notifications={data || []}
           onFetch={fetchNext}
-          hasNextPage={!isFetched || (hasNextPage as boolean)}
+          hasNextPage={hasNextPage}
         />
       )}
     </MainWrapper>
