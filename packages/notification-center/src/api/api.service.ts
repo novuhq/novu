@@ -1,5 +1,5 @@
 import { HttpClient } from './http.client';
-import { IMessage } from '@novu/shared/src';
+import { IMessage } from '@novu/shared';
 
 export class ApiService {
   private httpClient: HttpClient;

@@ -1,4 +1,4 @@
-import { NotificationBell, NovuProvider, PopoverNotificationCenter } from '../../../../../packages/notification-center';
+import { NotificationBell, NovuProvider, PopoverNotificationCenter } from '@novu/notification-center';
 import { useEnvironment } from '../../api/hooks/use-environment';
 import { IUserEntity } from '@novu/shared';
 import { useMantineColorScheme } from '@mantine/core';

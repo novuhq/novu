@@ -5,7 +5,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "^4.1.0",
-    "@novu/bell": "0.4.0-alpha.3",
+    "@novu/notification-center": "0.4.0-alpha.3",
     "@mantine/hooks": "^4.1.0",
     "@novu/embed": "^0.4.0-alpha.5",
     "@novu/shared": "^0.4.0-alpha.7",
