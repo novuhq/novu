@@ -66,7 +66,7 @@ interface ISessionInitializationProps {
 
 function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
   const { api: apiService } = useApi();
-  const { setToken, setUser } = useContext<IAuthContext>(AuthContext);
+  const { applyToken, setUser } = useContext<IAuthContext>(AuthContext);
   const { onLoad } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
@@ -93,7 +93,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
     api.setAuthorizationToken(response.token);
 
     setUser(response.profile);
-    setToken(response.token);
+    applyToken(response.token);
 
     const organizationData = await api.getOrganization();
 

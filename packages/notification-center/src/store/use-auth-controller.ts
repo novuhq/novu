@@ -1,5 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
-import { ApiContext, IApiContext } from './api.context';
+import { useEffect, useState } from 'react';
 import { useApi } from '../hooks/use-api.hook';
 
 export function getToken(): string {
@@ -15,25 +14,37 @@ export function useAuthController() {
     const localToken = localStorage.getItem('widget_user_auth_token');
 
     if (localToken) {
-      setToken(localToken);
+      applyToken(localToken);
     }
   }, []);
 
   useEffect(() => {
     if (api && token) {
-      api.setAuthorizationToken(token);
+      applyToken(token);
     }
   }, [token, api]);
 
   const logout = () => {
-    setToken(null);
+    applyToken(null);
   };
+
+  function applyToken(newToken: string | null) {
+    if (newToken) {
+      setToken(newToken);
+      localStorage.setItem('widget_user_auth_token', newToken);
+      api.setAuthorizationToken(token);
+    } else {
+      setToken(newToken);
+      localStorage.removeItem('widget_user_auth_token');
+      api.disposeAuthorizationToken();
+    }
+  }
 
   return {
     isLoggedIn: !!token,
     user,
     setUser,
-    setToken,
+    applyToken,
     token,
     logout,
   };

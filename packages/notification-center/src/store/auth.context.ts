@@ -5,7 +5,7 @@ import { IAuthContext } from '../index';
 export const AuthContext = React.createContext<IAuthContext>({
   token: null,
   user: null,
-  setToken: (token: string) => {},
+  applyToken: (token: string | null) => {},
   setUser: (user: ISubscriberJwt) => {},
   isLoggedIn: null,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

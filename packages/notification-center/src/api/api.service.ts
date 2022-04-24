@@ -16,6 +16,12 @@ export class ApiService {
     this.isAuthenticated = true;
   }
 
+  disposeAuthorizationToken() {
+    this.httpClient.disposeAuthorizationToken();
+
+    this.isAuthenticated = false;
+  }
+
   async markMessageAsSeen(messageId: string): Promise<any> {
     return await this.httpClient.post(`/widgets/messages/${messageId}/seen`, {});
   }

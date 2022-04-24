@@ -6,7 +6,7 @@ export * from './hooks/use-socket.hook';
 export { IMessage } from '@novu/shared';
 
 export interface IAuthContext {
-  setToken: (token: string) => void;
+  applyToken: (token: string | null) => void;
   setUser: (profile: ISubscriberJwt) => void;
 
   token: string | null;

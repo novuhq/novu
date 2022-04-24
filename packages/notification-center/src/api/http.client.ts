@@ -13,6 +13,10 @@ export class HttpClient {
     this.axiosClient.defaults.headers.common.Authorization = `Bearer ${token}`;
   }
 
+  disposeAuthorizationToken() {
+    delete this.axiosClient.defaults.headers.common.Authorization;
+  }
+
   async get(url: string) {
     return await this.axiosClient.get(url).then((response) => response.data.data);
   }
