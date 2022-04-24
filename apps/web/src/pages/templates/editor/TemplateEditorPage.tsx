@@ -1,5 +1,5 @@
 import { FormProvider } from 'react-hook-form';
-import { Grid } from '@mantine/core';
+import { Grid, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
@@ -27,6 +27,7 @@ export default function TemplateEditorPage() {
   const [activePage, setActivePage] = useState<string>('Settings');
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { integrations, loading: isIntegrationsLoading } = useActiveIntegrations();
+  const { colorScheme } = useMantineColorScheme();
 
   const handleAddChannel = (tabKey) => {
     const foundChannel = channelButtons.find((item) => item === tabKey);
@@ -117,7 +118,7 @@ export default function TemplateEditorPage() {
           <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
             <Grid grow style={{ minHeight: 500 }}>
               <Grid.Col md={4} sm={6}>
-                <SideBarWrapper style={{ paddingRight: 50 }}>
+                <SideBarWrapper dark={colorScheme === 'dark'} style={{ paddingRight: 50 }}>
                   <TemplatesSideBar
                     activeTab={activePage}
                     toggleChannel={toggleChannel}
@@ -186,8 +187,8 @@ export default function TemplateEditorPage() {
   );
 }
 
-const SideBarWrapper = styled.div`
-  border-right: 1px solid ${colors.B20};
+const SideBarWrapper = styled.div<{ dark: boolean }>`
+  border-right: 1px solid ${({ dark }) => (dark ? colors.B20 : colors.BGLight)};
   height: 100%;
 `;
 
