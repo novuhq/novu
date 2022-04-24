@@ -26,12 +26,12 @@ let api: ApiService;
 export function NovuProvider(props: INovuProviderProps) {
   const backendUrl = props.backendUrl ?? 'https://api.novu.co';
   const socketUrl = props.socketUrl ?? 'https://ws.novu.co';
-  const [isSeasonInitialized, setIsSeasonInitialized] = useState(false);
+  const [isSessionInitialized, setIsSessionInitialized] = useState(false);
 
   if (!api) api = new ApiService(backendUrl);
 
   useEffect(() => {
-    if (api?.isAuthenticated) setIsSeasonInitialized(api?.isAuthenticated);
+    if (api?.isAuthenticated) setIsSessionInitialized(api?.isAuthenticated);
   }, [api?.isAuthenticated]);
 
   return (
@@ -40,7 +40,7 @@ export function NovuProvider(props: INovuProviderProps) {
         backendUrl: backendUrl,
         subscriberId: props.subscriberId,
         applicationIdentifier: props.applicationIdentifier,
-        initialized: isSeasonInitialized,
+        initialized: isSessionInitialized,
         socketUrl: socketUrl,
         onLoad: props.onLoad,
       }}
