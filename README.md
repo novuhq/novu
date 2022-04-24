@@ -80,64 +80,6 @@ await novu.trigger('<TRIGGER_NAME>',
 );
 ```
 
-# 📦 Stateless mode
-For simpler use cases, you can use the `@novu/stateless` library. This will require you to manage the templates content and providers registration. 
-
-## 📦 Install
-
-```bash
-npm install @novu/stateless
-```
-
-```bash
-yarn add @novu/stateless
-```
-
-## 🔨 Usage
-
-```ts
-import { NovuStateless, ChannelTypeEnum } from '@novu/stateless';
-import { SendgridEmailProvider } from '@novu/sendgrid';
-
-const novu = new NovuStateless();
-
-await novu.registerProvider(
-  new SendgridEmailProvider({
-    apiKey: process.env.SENDGRID_API_KEY,
-    from: 'sender@mail.com'
-  })
-);
-
-const passwordResetTemplate = await novu.registerTemplate({
-  id: 'password-reset',
-  messages: [
-    {
-      subject: 'Your password reset request',
-      channel: ChannelTypeEnum.EMAIL,
-      template: `
-          Hi {{firstName}}!
-          
-          To reset your password click <a href="{{resetLink}}">here.</a>
-          
-          {{#if organization}}
-            <img src="{{organization.logo}}" />
-          {{/if}}
-      `
-    },
-  ]
-});
-
-await novu.trigger('<REPLACE_WITH_EVENT_NAME>', {
-  $user_id: "<USER IDENTIFIER>",
-  $email: "test@email.com",
-  firstName: "John",
-  lastName: "Doe",
-  organization: {
-    logo: 'https://evilcorp.com/logo.png'
-  }
-});
-```
-
 ## Providers
 Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
