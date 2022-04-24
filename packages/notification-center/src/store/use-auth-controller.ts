@@ -32,7 +32,7 @@ export function useAuthController() {
     if (newToken) {
       setToken(newToken);
       localStorage.setItem('widget_user_auth_token', newToken);
-      api.setAuthorizationToken(token);
+      api.setAuthorizationToken(newToken);
     } else {
       setToken(newToken);
       localStorage.removeItem('widget_user_auth_token');
