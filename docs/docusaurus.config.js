@@ -21,6 +21,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         /** @type {import('@docusaurus/preset-classic').Options} */
         ({
           docs: {
+            sidebarCollapsed: false,
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
@@ -35,6 +36,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
+        autoCollapseSidebarCategories: false,
         colorMode: {
           respectPrefersColorScheme: true,
         },

@@ -7,6 +7,7 @@
           <resourceRoots>
             <path value="file://$PROJECT_DIR$/apps/web/public" />
             <path value="file://$PROJECT_DIR$/apps/widget/public" />
+            <path value="file://$PROJECT_DIR$/docs/static" />
           </resourceRoots>
         </entryData>
       </entry>
