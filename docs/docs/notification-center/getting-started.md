@@ -12,13 +12,13 @@ Novu provides you a set of API's and components to create rich customized notifi
 After creating your Novu Platform account and creating your first notification template it's time to connect the In-app channel to your application.
 
 ```
-npm install @novu/react-notifications
+npm install @novu/notification-center
 ```
 
 And in the appropriate place withing your app add the `PopoverNotificationCenter` component with the `NovuProvider`
 
 ```tsx
-import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/react-notifications';
+import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
 
 function Header() {
   return (

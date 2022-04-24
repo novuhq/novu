@@ -1,13 +1,13 @@
 # React Component
 
-Novu provides the `@novu/react-notifications` a react library that helps to add a fully functioning notification center  to your web application in minutes. Let's do a quick recap on how we can easily use it in your application:
+Novu provides the `@novu/notification-center` a react library that helps to add a fully functioning notification center  to your web application in minutes. Let's do a quick recap on how we can easily use it in your application:
 
 ```
-npm install @novu/react-notifications
+npm install @novu/notification-center
 ```
 
 ```tsx
-import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/react-notifications';
+import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
 
 function Header() {
   return (
