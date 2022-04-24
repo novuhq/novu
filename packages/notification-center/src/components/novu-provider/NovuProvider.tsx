@@ -10,7 +10,6 @@ import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
 import { useApi } from '../../hooks/use-api.hook';
 import { AuthProvider } from '../notification-center/components';
-import { useQuery } from 'react-query';
 import { IOrganizationEntity } from '@novu/shared';
 
 interface INovuProviderProps {
@@ -27,10 +26,13 @@ let api: ApiService;
 export function NovuProvider(props: INovuProviderProps) {
   const backendUrl = props.backendUrl ?? 'https://api.novu.co';
   const socketUrl = props.socketUrl ?? 'https://ws.novu.co';
+  const [isSeasonInitialized, setIsSeasonInitialized] = useState(false);
+
+  if (!api) api = new ApiService(backendUrl);
 
   useEffect(() => {
-    if (!api) api = new ApiService(backendUrl);
-  }, []);
+    if (api?.isAuthenticated) setIsSeasonInitialized(api?.isAuthenticated);
+  }, [api?.isAuthenticated]);
 
   return (
     <NovuContext.Provider
@@ -38,7 +40,7 @@ export function NovuProvider(props: INovuProviderProps) {
         backendUrl: backendUrl,
         subscriberId: props.subscriberId,
         applicationIdentifier: props.applicationIdentifier,
-        initialized: true,
+        initialized: isSeasonInitialized,
         socketUrl: socketUrl,
         onLoad: props.onLoad,
       }}
@@ -64,12 +66,14 @@ interface ISessionInitializationProps {
 
 function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
   const { api: apiService } = useApi();
-  const { setToken, setUser, isLoggedIn } = useContext<IAuthContext>(AuthContext);
+  const { setToken, setUser } = useContext<IAuthContext>(AuthContext);
   const { onLoad } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
     if (props.subscriberId && props.applicationIdentifier) {
-      (async () => {
+      (async (): Promise<void> => {
+        // eslint-disable-next-line no-console
+        console.log('useEffect before await initSession');
         await initSession({
           clientId: props.applicationIdentifier,
           data: { $user_id: props.subscriberId },
