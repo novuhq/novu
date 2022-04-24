@@ -1,8 +1,9 @@
-import { Navbar } from '@mantine/core';
-import { NavMenu, SegmentedControl } from '../../../design-system';
+import { Navbar, Popover, useMantineColorScheme } from '@mantine/core';
+import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
+import React, { useEffect, useState } from 'react';
 
 type Props = {};
 const menuItems = [
@@ -16,33 +17,74 @@ const menuItems = [
     label: 'Team Members',
     testId: 'side-nav-settings-organization',
   },
-];
-
-export function SideNav({}: Props) {
-  const { setEnvironment, isLoading, environment } = useEnvController();
-
-  const changesNavButton = {
+  {
     icon: <Repeat />,
     link: '/changes',
     label: 'Changes',
     testId: 'side-nav-changes-link',
     rightSide: <ChangesCountBadge />,
-  };
+  },
+];
+
+export function SideNav({}: Props) {
+  const { setEnvironment, isLoading, environment, readonly } = useEnvController();
+  const [opened, setOpened] = useState(readonly);
+  const { colorScheme } = useMantineColorScheme();
+  const dark = colorScheme === 'dark';
+
+  useEffect(() => {
+    setOpened(readonly);
+  }, [readonly]);
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
-        <SegmentedControl
-          loading={isLoading}
-          data={['Development', 'Production']}
-          defaultValue={environment?.name}
-          value={environment?.name}
-          onChange={async (value) => {
-            await setEnvironment(value);
+        <Popover
+          styles={{
+            inner: {
+              padding: '12px 20px 14px 15px',
+            },
+            arrow: {
+              backgroundColor: dark ? colors.B20 : colors.white,
+              height: '7px',
+              border: 'none',
+              margin: '0px',
+            },
+            body: {
+              backgroundColor: dark ? colors.B20 : colors.white,
+              position: 'relative',
+              color: dark ? colors.white : colors.B40,
+              border: 'none',
+              marginTop: '1px',
+            },
           }}
-          data-test-id="environment-switch"
-        />
-        <NavMenu menuItems={[...menuItems, changesNavButton]} />
+          withArrow
+          opened={opened}
+          onClose={() => setOpened(false)}
+          withCloseButton={true}
+          withinPortal={false}
+          transition="rotate-left"
+          transitionDuration={250}
+          placement="center"
+          position="right"
+          radius="md"
+          shadow={dark ? shadows.dark : shadows.medium}
+          target={
+            <SegmentedControl
+              loading={isLoading}
+              data={['Development', 'Production']}
+              defaultValue={environment?.name}
+              value={environment?.name}
+              onChange={async (value) => {
+                await setEnvironment(value);
+              }}
+              data-test-id="environment-switch"
+            />
+          }
+        >
+          {'To make changes you’ll need to go to development and promote the changes from there'}
+        </Popover>
+        <NavMenu menuItems={menuItems} />
       </Navbar.Section>
     </Navbar>
   );
