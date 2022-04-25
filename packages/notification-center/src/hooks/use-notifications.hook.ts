@@ -35,9 +35,9 @@ export function useNotifications() {
 
   async function fetchNextPage() {
     if (!hasNextPage) return;
-    setPage(page + 1);
-
-    await fetchPage(page);
+    const nextPage = page + 1;
+    await setPage(nextPage);
+    await fetchPage(nextPage);
   }
 
   async function markAsSeen(messageId: string) {
