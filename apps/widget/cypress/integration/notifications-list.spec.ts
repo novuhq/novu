@@ -1,4 +1,4 @@
-describe('Notifications List', function () {
+describe.skip('Notifications List', function () {
   beforeEach(function () {
     cy.initializeSession()
       .as('session')
