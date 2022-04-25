@@ -1,4 +1,4 @@
-describe.skip('Notifications List', function () {
+describe('Notifications List', function () {
   beforeEach(function () {
     cy.initializeSession()
       .as('session')
@@ -50,7 +50,7 @@ describe.skip('Notifications List', function () {
     cy.getByTestId('unseen-count-label').contains('9');
   });
 
-  it('should lazy-load notifications on scroll', function () {
+  it.skip('should lazy-load notifications on scroll', function () {
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
