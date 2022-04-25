@@ -14,6 +14,7 @@ import {
   OrganizationEntity,
   NotificationGroupEntity,
   EnvironmentRepository,
+  NotificationGroupRepository,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -26,6 +27,7 @@ import { IntegrationService } from './integration.service';
 export class UserSession {
   private userRepository = new UserRepository();
   private environmentRepository = new EnvironmentRepository();
+  private notificationGroupRepository = new NotificationGroupRepository();
 
   token: string;
 
@@ -116,6 +118,12 @@ export class UserSession {
           _userId: this.user._id,
         },
       ],
+    });
+
+    await this.notificationGroupRepository.create({
+      name: 'General',
+      _environmentId: this.environment._id,
+      _organizationId: this.organization._id,
     });
 
     return this.environment;
