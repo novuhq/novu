@@ -7,16 +7,12 @@ describe('App Branding', function () {
       .then((session: any) => {
         cy.wait(500);
 
-        return cy
-          .task('createNotifications', {
-            identifier: session.templates[0].triggers[0].identifier,
-            token: session.token,
-            userId: session.subscriber.$user_id,
-            count: 5,
-          })
-          .then(() => {
-            return cy.initializeWidget(session);
-          });
+        return cy.task('createNotifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          userId: session.subscriber.$user_id,
+          count: 5,
+        });
       });
   });
 
