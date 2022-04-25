@@ -57,11 +57,19 @@ describe('Notifications List', function () {
       userId: this.session.subscriber.$user_id,
       count: 20,
     });
+    cy.intercept('**/notifications/feed?page=0').as('firstPage');
+    cy.intercept('**/notifications/feed?page=1').as('secondPage');
+    cy.intercept('**/notifications/feed?page=2').as('thirdPage');
 
+    cy.wait('@firstPage');
     cy.getByTestId('notification-list-item').should('have.length', 10);
+
     cy.getByTestId('notifications-scroll-area').get('.infinite-scroll-component').scrollTo('bottom');
+    cy.wait('@secondPage');
     cy.getByTestId('notification-list-item').should('have.length', 20);
+
     cy.getByTestId('notifications-scroll-area').get('.infinite-scroll-component').scrollTo('bottom');
+    cy.wait('@thirdPage');
     cy.getByTestId('notification-list-item').should('have.length', 25);
   });
 
