@@ -1,3 +1,6 @@
+import { ChangeEntityTypeEnum } from '@novu/shared';
+export { ChangeEntityTypeEnum };
+
 export class ChangeEntity {
   _id?: string;
 
@@ -16,9 +19,4 @@ export class ChangeEntity {
   change: any;
 
   createdAt: string;
-}
-
-export enum ChangeEntityTypeEnum {
-  NOTIFICATION_TEMPLATE = 'NotificationTemplate',
-  MESSAGE_TEMPLATE = 'MessageTemplate',
 }

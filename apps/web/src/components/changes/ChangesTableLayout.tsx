@@ -7,11 +7,7 @@ import { Button, colors, Text } from '../../design-system';
 import { useMutation, useQueryClient } from 'react-query';
 import { promoteChange } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
-
-export enum ChangeEntityTypeEnum {
-  NOTIFICATION_TEMPLATE = 'NotificationTemplate',
-  MESSAGE_TEMPLATE = 'MessageTemplate',
-}
+import { ChangeEntityTypeEnum } from '@novu/shared';
 
 export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: boolean }) => {
   const queryClient = useQueryClient();
@@ -28,7 +24,7 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
     {
       accessor: 'change',
       Header: 'Change',
-      Cell: ({ type, change }: any) => (
+      Cell: ({ type, templateName, messageType }: any) => (
         <div>
           {type === ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Template Change</Text>
@@ -36,8 +32,12 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
           {type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Message Change</Text>
           )}
+          {type === ChangeEntityTypeEnum.NOTIFICATION_GROUP && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Notification Group Change</Text>
+          )}
           <Text rows={1} mt={5}>
-            {JSON.stringify(change)}
+            {templateName}
+            {messageType ? `, ${messageType}` : null}
           </Text>
         </div>
       ),

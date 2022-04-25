@@ -10,11 +10,13 @@ export class CreateChange {
   async execute(command: CreateChangeCommand) {
     const changes = await this.changeRepository.getEntityChanges(command.type, command.item._id);
 
-    const aggregatedItem = changes.reduce((prev, change) => {
-      diffApply(prev, change.change);
+    const aggregatedItem = changes
+      .filter((change) => change.enabled)
+      .reduce((prev, change) => {
+        diffApply(prev, change.change);
 
-      return prev;
-    }, {});
+        return prev;
+      }, {});
 
     const changePayload = diff(aggregatedItem, command.item);
 

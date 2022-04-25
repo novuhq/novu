@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { NotificationGroupRepository } from '../../../../../../../libs/dal/src/repositories/notification-group/notification-group.repository';
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -11,7 +12,8 @@ import {
 export class PromoteNotificationTemplateChange {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private messageTemplateRepository: MessageTemplateRepository
+    private messageTemplateRepository: MessageTemplateRepository,
+    private notificationGroupRepository: NotificationGroupRepository
   ) {}
 
   async execute(command: PromoteTypeChangeCommand) {
@@ -54,15 +56,31 @@ export class PromoteNotificationTemplateChange {
       );
     }
 
+    const notificationGroup = await this.notificationGroupRepository.findOne({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
+
+    if (!notificationGroup) {
+      throw new Error(
+        `Notification group for environment ${command.environmentId} and organization ${command.organizationId} does not exists`
+      );
+    }
+
     if (!item) {
       return this.notificationTemplateRepository.create({
         name: newItem.name,
         active: newItem.active,
+        draft: newItem.draft,
         description: newItem.description,
         tags: newItem.tags,
         triggers: newItem.triggers,
         steps,
         _parentId: command.item._id,
+        _creatorId: command.userId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _notificationGroupId: notificationGroup._id,
       });
     }
 
@@ -73,10 +91,12 @@ export class PromoteNotificationTemplateChange {
       {
         name: newItem.name,
         active: newItem.active,
+        draft: newItem.draft,
         description: newItem.description,
         tags: newItem.tags,
         triggers: newItem.triggers,
         steps,
+        _notificationGroupId: notificationGroup._id,
       }
     );
   }

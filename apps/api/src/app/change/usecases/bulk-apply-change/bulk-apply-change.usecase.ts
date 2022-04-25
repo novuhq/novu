@@ -21,19 +21,20 @@ export class BulkApplyChange {
       { sort: { createdAt: 1 } }
     );
 
-const results = [];
-for (const change in changes) {
-  const item = await this.applyChange.execute(
+    const results = [];
+    for (const change of changes) {
+      const item = await this.applyChange.execute(
         ApplyChangeCommand.create({
           changeId: change._id,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
-        });
-        
-        results.push(item);
-}
+        })
+      );
 
-return results
+      results.push(item);
+    }
+
+    return results;
   }
 }
