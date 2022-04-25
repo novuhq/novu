@@ -36,7 +36,7 @@ export function useNotifications() {
   async function fetchNextPage() {
     if (!hasNextPage) return;
     const nextPage = page + 1;
-    await setPage(nextPage);
+    setPage(nextPage);
     await fetchPage(nextPage);
   }
 

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './NotificationsList';
@@ -19,11 +19,11 @@ export function Main() {
     fetching: isLoading,
     hasNextPage,
   } = useNotifications();
-
+  const isFirstRender = useIsFirstRender();
   const { unseenCount } = useContext(UnseenCountContext);
 
   useEffect(() => {
-    if (!isNaN(unseenCount)) {
+    if (!isNaN(unseenCount) && !isFirstRender) {
       refetch();
     }
   }, [unseenCount]);
@@ -79,3 +79,12 @@ export function Main() {
 }
 
 const MainWrapper = styled.div``;
+
+export const useIsFirstRender = () => {
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    isFirstRenderRef.current = false;
+  }, []);
+
+  return isFirstRenderRef.current;
+};
