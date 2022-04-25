@@ -21,19 +21,19 @@ export class BulkApplyChange {
       { sort: { createdAt: 1 } }
     );
 
-    return changes.reduce(async (prev, change) => {
-      const list = await prev;
-      const item = await this.applyChange.execute(
+const results = [];
+for (const change in changes) {
+  const item = await this.applyChange.execute(
         ApplyChangeCommand.create({
           changeId: change._id,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
-        })
-      );
-      list.push(item);
+        });
+        
+        results.push(item);
+}
 
-      return list;
-    }, Promise.resolve([]));
+return results
   }
 }
