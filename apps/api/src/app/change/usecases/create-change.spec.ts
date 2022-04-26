@@ -68,8 +68,9 @@ describe('Create Change', function () {
         },
       })
     );
-    expect(change.change[0].op).to.eq('add');
-    expect(change.change[0].value).to.eq('test');
-    expect(change.change[0].path).to.eql(['name']);
+
+    expect(change.change[1].op).to.eq('add');
+    expect(change.change[1].value).to.eq('test');
+    expect(change.change[1].path).to.eql(['name']);
   });
 });

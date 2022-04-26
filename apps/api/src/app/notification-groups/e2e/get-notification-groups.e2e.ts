@@ -19,7 +19,7 @@ describe('Get Notification Groups - /notification-groups (GET)', async () => {
 
     const { body } = await session.testAgent.get(`/v1/notification-groups`);
 
-    expect(body.data.length).to.equal(2);
+    expect(body.data.length).to.equal(3);
     const group = body.data.find((i) => i.name === 'Test name');
 
     expect(group.name).to.equal(`Test name`);
