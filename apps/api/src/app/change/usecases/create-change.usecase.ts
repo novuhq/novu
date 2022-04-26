@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
-import { diff, diffApply } from '../utils';
+import { getDiff, applyDiff } from 'recursive-diff';
 import { CreateChangeCommand } from './create-change.command';
 
 @Injectable()
@@ -13,12 +13,16 @@ export class CreateChange {
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {
-        diffApply(prev, change.change);
-
-        return prev;
+        return applyDiff(prev, change.change);
       }, {});
 
-    const changePayload = diff(aggregatedItem, command.item);
+    const changePayload = getDiff(aggregatedItem, command.item, true).filter((item) => {
+      return !(item.path.includes('steps') && item.path.includes('_id')) && !item.path.includes('updatedAt');
+    });
+
+    if (changePayload.length === 0) {
+      return;
+    }
 
     const item = await this.changeRepository.create({
       _organizationId: command.organizationId,

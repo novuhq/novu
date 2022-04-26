@@ -10,7 +10,7 @@ export class CreateMessageTemplate {
   constructor(private messageTemplateRepository: MessageTemplateRepository, private createChange: CreateChange) {}
 
   async execute(command: CreateMessageTemplateCommand): Promise<MessageTemplateEntity> {
-    const item = await this.messageTemplateRepository.create({
+    let item = await this.messageTemplateRepository.create({
       cta: command.cta,
       name: command.name,
       content: command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content,
@@ -21,6 +21,8 @@ export class CreateMessageTemplate {
       _environmentId: command.environmentId,
       _creatorId: command.userId,
     });
+
+    item = await this.messageTemplateRepository.findById(item._id);
 
     await this.createChange.execute(
       CreateChangeCommand.create({

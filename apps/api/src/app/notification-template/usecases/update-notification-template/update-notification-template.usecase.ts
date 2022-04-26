@@ -131,7 +131,11 @@ export class UpdateNotificationTemplate {
       }
     );
 
-    const item = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const item = await this.notificationTemplateRepository.findOne({
+      _id: command.templateId,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
 
     await this.createChange.execute(
       CreateChangeCommand.create({
@@ -143,6 +147,6 @@ export class UpdateNotificationTemplate {
       })
     );
 
-    return item;
+    return await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
   }
 }

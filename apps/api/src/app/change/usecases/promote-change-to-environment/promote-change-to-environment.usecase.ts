@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChangeEntityTypeEnum, ChangeRepository, EnvironmentRepository } from '@novu/dal';
-import { diffApply } from '../../utils';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { PromoteNotificationTemplateChange } from '../promote-notification-template-change/promote-notification-template-change';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change /promote-notification-group-change';
+import { applyDiff } from 'recursive-diff';
 
 @Injectable()
 export class PromoteChangeToEnvironment {
@@ -22,9 +22,7 @@ export class PromoteChangeToEnvironment {
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {
-        diffApply(prev, change.change);
-
-        return prev;
+        return applyDiff(prev, change.change);
       }, {});
 
     const environment = await this.environmentRepository.findOne({

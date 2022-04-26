@@ -83,7 +83,11 @@ export class CreateNotificationTemplate {
       _notificationGroupId: command.notificationGroupId,
     });
 
-    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
+    const item = await this.notificationTemplateRepository.findOne({
+      _id: savedTemplate._id,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
 
     await this.createChange.execute(
       CreateChangeCommand.create({
@@ -95,6 +99,6 @@ export class CreateNotificationTemplate {
       })
     );
 
-    return item;
+    return await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
   }
 }
