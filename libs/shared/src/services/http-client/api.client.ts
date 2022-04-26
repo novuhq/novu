@@ -1,44 +1,27 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
-export const api = {
-  get(url: string) {
-    return axios
-      .get(`${url}`)
-      .then((response) => {
-        return response.data?.data;
-      })
-      .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
-        return Promise.reject(error?.response?.data || error?.response || error);
-      });
-  },
-  getFullResponse(url: string, params?: { [key: string]: string | string[] | number }) {
-    return axios
-      .get(`${url}`, {
-        params,
-      })
-      .then((response) => response.data)
-      .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
-        return Promise.reject(error?.response?.data || error?.response || error);
-      });
-  },
-  put(url: string, payload) {
-    return axios
-      .put(`${url}`, payload)
-      .then((response) => response.data?.data)
-      .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
-        return Promise.reject(error?.response?.data || error?.response || error);
-      });
-  },
-  post(url: string, payload) {
-    return axios
-      .post(`${url}`, payload)
-      .then((response) => response.data?.data)
-      .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
-        return Promise.reject(error?.response?.data || error?.response || error);
-      });
-  },
-};
+export class HttpClient {
+  private axiosClient: AxiosInstance;
+
+  constructor(private backendUrl: string) {
+    this.axiosClient = axios.create({
+      baseURL: backendUrl + '/v1',
+    });
+  }
+
+  setAuthorizationToken(token: string) {
+    this.axiosClient.defaults.headers.common.Authorization = `Bearer ${token}`;
+  }
+
+  disposeAuthorizationToken() {
+    delete this.axiosClient.defaults.headers.common.Authorization;
+  }
+
+  async get(url: string) {
+    return await this.axiosClient.get(url).then((response) => response.data.data);
+  }
+
+  async post(url: string, body = {}) {
+    return await this.axiosClient.post(url, body).then((response) => response.data.data);
+  }
+}
