@@ -10,7 +10,7 @@ describe('App Branding', function () {
         return cy.task('createNotifications', {
           identifier: session.templates[0].triggers[0].identifier,
           token: session.token,
-          userId: session.subscriber.userId,
+          subscriberId: session.subscriber.subscriberId,
           count: 5,
         });
       });

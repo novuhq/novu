@@ -31,7 +31,7 @@ export function useNovu() {
         APP_ID,
         { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge-selector' },
         {
-          userId: authContext.currentUser?._id,
+          subscriberId: authContext.currentUser?._id,
           lastName: authContext.currentUser?.lastName,
           firstName: authContext.currentUser?.firstName,
           email: authContext.currentUser?.email,

@@ -17,7 +17,7 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
       .post('/v1/widgets/session/initialize')
       .send({
         applicationIdentifier: session.environment.identifier,
-        userId: '12345',
+        subscriberId: '12345',
         firstName: 'Test',
         lastName: 'User',
         email: 'test@example.com',

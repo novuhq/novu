@@ -3,7 +3,7 @@ import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 export class SessionInitializeBodyDto {
   @IsString()
   @IsDefined()
-  userId: string;
+  subscriberId: string;
 
   @IsString()
   @IsDefined()

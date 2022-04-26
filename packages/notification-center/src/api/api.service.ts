@@ -29,10 +29,10 @@ export class ApiService {
     return await this.httpClient.get(`/widgets/notifications/feed?page=${page}`);
   }
 
-  async initializeSession(appId: string, userId: string) {
+  async initializeSession(appId: string, subscriberId: string) {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
-      userId: userId,
+      subscriberId: subscriberId,
     });
   }
 

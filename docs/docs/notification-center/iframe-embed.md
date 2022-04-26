@@ -15,7 +15,7 @@ You can find the embed code in the `Settings` page within the Admin Panel. It wi
     unseenBadgeSelector: '#unseen-badge', 
     bellSelector: '#notification-bell' 
   }, {
-    userId: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",
+    subscriberId: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",
     email: "<REPLACE_WITH_USER_EMAIL>",
     first_name: "<REPLACE_WITH_USER_NAME>",
     last_name: "<REPLACE_WITH_USER_LAST_NAME>",

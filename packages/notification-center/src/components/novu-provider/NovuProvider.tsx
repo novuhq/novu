@@ -74,19 +74,19 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
       (async (): Promise<void> => {
         await initSession({
           clientId: props.applicationIdentifier,
-          data: { userId: props.subscriberId },
+          data: { subscriberId: props.subscriberId },
         });
       })();
     }
   }, [props.subscriberId, props.applicationIdentifier]);
 
-  async function initSession(payload: { clientId: string; data: { userId: string } }) {
+  async function initSession(payload: { clientId: string; data: { subscriberId: string } }) {
     if ('parentIFrame' in window) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).parentIFrame.autoResize(true);
     }
 
-    const response = await apiService.initializeSession(payload.clientId, payload.data.userId);
+    const response = await apiService.initializeSession(payload.clientId, payload.data.subscriberId);
 
     api.setAuthorizationToken(response.token);
 
