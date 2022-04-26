@@ -13,7 +13,7 @@ interface INotificationCenterWidgetProps {
 }
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
-  const [userDataPayload, setUserDataPayload] = useState<{ $user_id: string }>();
+  const [userDataPayload, setUserDataPayload] = useState<{ userId: string }>();
   const [fontFamily, setFontFamily] = useState<string>('Lato');
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
         backendUrl={API_URL}
         socketUrl={WS_URL}
         applicationIdentifier={props.applicationIdentifier as string}
-        subscriberId={userDataPayload.$user_id}
+        subscriberId={userDataPayload.userId}
         onLoad={onLoad}
       >
         <NotificationCenter

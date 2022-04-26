@@ -32,7 +32,7 @@ export class ApiService {
   async initializeSession(appId: string, userId: string) {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
-      $user_id: userId,
+      userId: userId,
     });
   }
 

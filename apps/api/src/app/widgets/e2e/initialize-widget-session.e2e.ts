@@ -1,5 +1,4 @@
 import { UserSession } from '@novu/testing';
-import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 
 describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
@@ -15,11 +14,11 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
       .post('/v1/widgets/session/initialize')
       .send({
         applicationIdentifier: session.environment.identifier,
-        $user_id: '12345',
-        $first_name: 'Test',
-        $last_name: 'User',
-        $email: 'test@example.com',
-        $phone: '054777777',
+        userId: '12345',
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@example.com',
+        phone: '054777777',
       })
       .expect(201);
 
@@ -33,11 +32,11 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   it('should throw an error when an invalid environment Id passed', async function () {
     const { body } = await session.testAgent.post('/v1/widgets/session/initialize').send({
       applicationIdentifier: 'some-not-existing-id',
-      $user_id: '12345',
-      $first_name: 'Test',
-      $last_name: 'User',
-      $email: 'test@example.com',
-      $phone: '054777777',
+      userId: '12345',
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com',
+      phone: '054777777',
     });
 
     expect(body.message).to.contain('Please provide a valid app identifier');

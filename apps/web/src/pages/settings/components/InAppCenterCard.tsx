@@ -15,10 +15,10 @@ export const InAppCenterCard = () => {
   })(window, document, '${WIDGET_EMEBED_PATH}', 'novu', 'script');
 
   novu.init('${environment?.identifier}', '#notification-bell', {
-    $user_id: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",
-    $email: "<REPLACE_WITH_USER_EMAIL>",
-    $first_name: "<REPLACE_WITH_USER_NAME>",
-    $last_name: "<REPLACE_WITH_USER_LAST_NAME>",
+    userId: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",
+    email: "<REPLACE_WITH_USER_EMAIL>",
+    firstName: "<REPLACE_WITH_USER_NAME>",
+    lastName: "<REPLACE_WITH_USER_LAST_NAME>",
   });
 </script>`;
 

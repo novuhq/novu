@@ -19,10 +19,10 @@ Cypress.Commands.add('initializeShellSession', (userId, identifier, settings = {
     .window()
     .then((w) => {
       const subscriber = {
-        $user_id: userId,
-        $first_name: faker.name.firstName(),
-        $last_name: faker.name.lastName(),
-        $email: faker.internet.email(),
+        userId: userId,
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        email: faker.internet.email(),
       };
 
       w.novu.init(
@@ -78,8 +78,8 @@ Cypress.Commands.add('initializeWidget', (session, shell = false) => {
       .then(() => {
         return cy.window({ log: false }).then((w) => {
           const user = {
-            $user_id: session.userId,
-            $first_name: faker.name.firstName(),
+            userId: session.userId,
+            firstName: faker.name.firstName(),
             $last_name: faker.name.lastName(),
             $email: faker.internet.email(),
           };

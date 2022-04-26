@@ -3,7 +3,7 @@ import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 export class SessionInitializeBodyDto {
   @IsString()
   @IsDefined()
-  $user_id: string;
+  userId: string;
 
   @IsString()
   @IsDefined()
@@ -11,17 +11,17 @@ export class SessionInitializeBodyDto {
 
   @IsString()
   @IsOptional()
-  $first_name: string;
+  firstName: string;
 
   @IsString()
   @IsOptional()
-  $last_name: string;
+  lastName: string;
 
   @IsEmail()
   @IsOptional()
-  $email: string;
+  email: string;
 
   @IsString()
   @IsOptional()
-  $phone: string;
+  phone: string;
 }

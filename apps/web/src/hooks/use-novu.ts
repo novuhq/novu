@@ -31,10 +31,10 @@ export function useNovu() {
         APP_ID,
         { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge-selector' },
         {
-          $user_id: authContext.currentUser?._id,
-          $last_name: authContext.currentUser?.lastName,
-          $first_name: authContext.currentUser?.firstName,
-          $email: authContext.currentUser?.email,
+          userId: authContext.currentUser?._id,
+          lastName: authContext.currentUser?.lastName,
+          firstName: authContext.currentUser?.firstName,
+          email: authContext.currentUser?.email,
         }
       );
     }

@@ -8,7 +8,7 @@ describe.only('Shell Embed', function () {
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
-      userId: this.session.subscriber.$user_id,
+      userId: this.session.subscriber.userId,
       count: 5,
     });
 
@@ -53,7 +53,7 @@ describe.only('Shell Embed', function () {
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
-      userId: this.session.subscriber.$user_id,
+      userId: this.session.subscriber.userId,
       count: 5,
     });
     cy.get('#notification-bell .ntf-counter').should('be.visible');

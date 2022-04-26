@@ -9,7 +9,7 @@ describe('Notifications List', function () {
           .task('createNotifications', {
             identifier: session.templates[0].triggers[0].identifier,
             token: session.token,
-            userId: session.subscriber.$user_id,
+            userId: session.subscriber.userId,
             count: 5,
           })
           .then(() => {
@@ -34,7 +34,7 @@ describe('Notifications List', function () {
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
-      userId: this.session.subscriber.$user_id,
+      userId: this.session.subscriber.userId,
       count: 3,
     });
 
@@ -44,7 +44,7 @@ describe('Notifications List', function () {
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
-      userId: this.session.subscriber.$user_id,
+      userId: this.session.subscriber.userId,
       count: 1,
     });
     cy.getByTestId('unseen-count-label').contains('9');
@@ -54,7 +54,7 @@ describe('Notifications List', function () {
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
-      userId: this.session.subscriber.$user_id,
+      userId: this.session.subscriber.userId,
       count: 20,
     });
     cy.intercept('**/notifications/feed?page=0').as('firstPage');
