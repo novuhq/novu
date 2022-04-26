@@ -12,6 +12,7 @@ COPY libs/dal ./libs/dal
 COPY libs/embed ./libs/embed
 COPY libs/testing ./libs/testing
 COPY libs/shared ./libs/shared
+COPY packages/notification-center ./packages/notification-center
 
 COPY tsconfig.json .
 COPY tsconfig.base.json .
