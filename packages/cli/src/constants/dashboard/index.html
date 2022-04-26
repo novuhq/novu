@@ -405,9 +405,9 @@ function pulsateBell() {
   })(window, document, "REPLACE_WITH_embedPath", "novu", "script");
 
   novu.init('REPLACE_WITH_environmentId', { bellSelector: '#notification-bell', unseenBadgeSelector: '#unseen-badge' }, {
-    $user_id: 'REPLACE_WITH_subscriberId',
-    $first_name: 'REPLACE_WITH_firstName',
-    $last_name: 'REPLACE_WITH_lastName',
+    subscriberId: 'REPLACE_WITH_subscriberId',
+    firstName: 'REPLACE_WITH_firstName',
+    lastName: 'REPLACE_WITH_lastName',
   });
 
   var activeListener = false;

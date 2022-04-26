@@ -17,10 +17,10 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
       .post('/v1/widgets/session/initialize')
       .send({
         applicationIdentifier: session.environment.identifier,
-        $user_id: '12345',
-        $first_name: 'Test',
-        $last_name: 'User',
-        $email: 'test@example.com',
+        subscriberId: '12345',
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@example.com',
       })
       .expect(201);
   });

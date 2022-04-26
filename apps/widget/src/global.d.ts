@@ -7,4 +7,5 @@ declare interface Window {
   parentIFrame: {
     sendMessage: (payload: IMessagePayload) => void;
   };
+  _env_: any;
 }

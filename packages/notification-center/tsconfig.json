@@ -1,0 +1,16 @@
+{
+  "include": ["src"],
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "target": "es5",
+    "strict": true,
+    "typeRoots": ["./node_modules/@types"],
+    "jsx": "react",
+    "module": "ESNext",
+    "declarationDir": "types",
+    "sourceMap": true,
+    "outDir": "dist",
+    "emitDeclarationOnly": true,
+  }
+}

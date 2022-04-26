@@ -12,17 +12,17 @@ Cypress.Commands.add('openWidget', (settings = {}) => {
   return cy.get('#notification-bell').click();
 });
 
-Cypress.Commands.add('initializeShellSession', (userId, identifier, settings = {}) => {
+Cypress.Commands.add('initializeShellSession', (subscriberId, identifier, settings = {}) => {
   cy.visit('http://localhost:4700/cypress/test-shell', { log: false });
 
   return cy
     .window()
     .then((w) => {
       const subscriber = {
-        $user_id: userId,
-        $first_name: faker.name.firstName(),
-        $last_name: faker.name.lastName(),
-        $email: faker.internet.email(),
+        subscriberId: subscriberId,
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        email: faker.internet.email(),
       };
 
       w.novu.init(
@@ -57,11 +57,11 @@ Cypress.Commands.add('initializeSession', function (settings = {}) {
       cy.log('Session created');
       cy.log(`Organization id: ${session.organization._id}`);
       cy.log(`App id: ${session.environment.identifier}`);
-      cy.log(`Widget initialized: ${session.userId}`);
+      cy.log(`Widget initialized: ${session.subscriberId}`);
     })
     .then((session: any) => {
       return settings?.shell
-        ? cy.initializeShellSession(session.userId, session.environment.identifier).then((subscriber) => ({
+        ? cy.initializeShellSession(session.subscriberId, session.environment.identifier).then((subscriber) => ({
             ...session,
             subscriber,
           }))
@@ -78,8 +78,8 @@ Cypress.Commands.add('initializeWidget', (session, shell = false) => {
       .then(() => {
         return cy.window({ log: false }).then((w) => {
           const user = {
-            $user_id: session.userId,
-            $first_name: faker.name.firstName(),
+            subscriberId: session.subscriberId,
+            firstName: faker.name.firstName(),
             $last_name: faker.name.lastName(),
             $email: faker.internet.email(),
           };
@@ -105,10 +105,10 @@ Cypress.Commands.add('initializeWidget', (session, shell = false) => {
 
 Cypress.Commands.add('initializeOrganization', (settings = {}) => {
   return cy.task('getSession', settings, { log: false }).then((response: any) => {
-    const userId = faker.random.uuid();
+    const subscriberId = faker.datatype.uuid();
 
     return {
-      userId,
+      subscriberId,
       ...response,
     };
   });

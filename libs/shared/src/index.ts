@@ -10,4 +10,5 @@ export * from './entities/message-template';
 export * from './entities/log';
 export * from './consts';
 export * from './ui';
+export * from './services';
 //
