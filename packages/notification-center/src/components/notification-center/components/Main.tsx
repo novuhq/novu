@@ -82,6 +82,7 @@ const MainWrapper = styled.div``;
 
 export const useIsFirstRender = () => {
   const isFirstRenderRef = useRef(true);
+
   useEffect(() => {
     isFirstRenderRef.current = false;
   }, []);

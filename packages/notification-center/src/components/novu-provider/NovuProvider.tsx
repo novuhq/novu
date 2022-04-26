@@ -72,8 +72,6 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   useEffect(() => {
     if (props.subscriberId && props.applicationIdentifier) {
       (async (): Promise<void> => {
-        // eslint-disable-next-line no-console
-        console.log('useEffect before await initSession');
         await initSession({
           clientId: props.applicationIdentifier,
           data: { $user_id: props.subscriberId },
