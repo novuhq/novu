@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.4.0-alpha.9",
+  "version": "0.4.0-alpha.10",
   "description": "",
   "scripts": {
     "afterinstall": "pnpm build",
