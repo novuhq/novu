@@ -1,10 +1,4 @@
-import {
-  BuilderFieldOperator,
-  BuilderFieldType,
-  BuilderGroupValues,
-  ChannelCTATypeEnum,
-  ChannelTypeEnum,
-} from '@novu/shared';
+import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 
@@ -33,7 +27,7 @@ export class NotificationTemplateEntity {
 
   _notificationGroupId: string;
 
-  isDeleted?: boolean;
+  isDeleted?: boolean = false;
 
   readonly notificationGroup?: NotificationGroupEntity;
 }
