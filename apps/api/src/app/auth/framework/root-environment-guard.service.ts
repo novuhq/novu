@@ -22,10 +22,10 @@ export class RootEnvironmentGuard implements CanActivate {
     if (!user) return false;
     if (!user.environmentId) return false;
 
-    const environment = await this.authService.validateRootEnvironment(user);
+    const environment = await this.authService.isRootEnvironment(user);
 
     if (environment) {
-      throw new UnauthorizedException('Not allowed in Production environment');
+      throw new UnauthorizedException('This action is only allowed in Development environment');
     }
 
     return true;

@@ -240,11 +240,11 @@ export class AuthService {
     return this.jwtService.verify(jwt);
   }
 
-  async validateRootEnvironment(payload: IJwtPayload) {
+  async isRootEnvironment(payload: IJwtPayload): Promise<boolean> {
     const environment = await this.environmentRepository.findOne({
       _id: payload.environmentId,
     });
 
-    return environment._parentId;
+    return !!environment._parentId;
   }
 }
