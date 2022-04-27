@@ -29,6 +29,7 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     const items = await NotificationTemplate.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
+      _isDeleted: false,
     }).populate('notificationGroup');
 
     return this.mapEntities(items);

@@ -91,6 +91,7 @@ export class NotificationTemplateService {
       ],
       ...override,
       steps: templateSteps,
+      isDeleted: false,
     };
 
     const notificationTemplate = await this.notificationTemplateRepository.create(data);

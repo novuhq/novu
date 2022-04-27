@@ -78,6 +78,7 @@ export class CreateNotificationTemplate {
       steps: templateSteps,
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
+      isDeleted: false,
     });
 
     return await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
