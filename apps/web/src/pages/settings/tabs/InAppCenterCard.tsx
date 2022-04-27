@@ -1,9 +1,10 @@
 import React from 'react';
 import { Prism } from '@mantine/prism';
 import { colors, Text } from '../../../design-system';
-import Card from '../../../components/layout/components/Card';
 import { WIDGET_EMEBED_PATH } from '../../../config';
 import { useEnvironment } from '../../../api/hooks/use-environment';
+import { Security } from './components/Security';
+import styled from '@emotion/styled';
 
 export const InAppCenterCard = () => {
   const { environment } = useEnvironment();
@@ -23,26 +24,45 @@ export const InAppCenterCard = () => {
 </script>`;
 
   return (
-    <Card title="In-App Widget Embed Code">
-      <Text weight="bold">Copy this snippet to your code before the closing body tag.</Text>
-      <Text mt={5} mb={10} weight="bold">
+    <>
+      <StyledText weight="bold">In-App Widget Embed Code</StyledText>
+      <Description weight="bold">Copy this snippet to your code before the closing body tag.</Description>
+      <Description weight="bold">
         Change the #notification-bell selector with the appropriate bell css selector in your app layout.
-      </Text>
-      <Prism
-        styles={(theme) => ({
-          code: {
-            fontWeight: '400',
-            color: `${colors.B60} !important`,
-            backgroundColor: 'transparent !important',
-            border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
-            borderRadius: '7px',
-          },
-        })}
-        language="jsx"
-        data-test-id="embed-code-snippet"
-      >
-        {embedCode}
-      </Prism>
-    </Card>
+      </Description>
+      <PrismContainer>
+        <Prism
+          styles={(theme) => ({
+            code: {
+              fontWeight: '400',
+              color: `${colors.B60} !important`,
+              backgroundColor: 'transparent !important',
+              border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+              borderRadius: '7px',
+            },
+          })}
+          language="jsx"
+          data-test-id="embed-code-snippet"
+        >
+          {embedCode}
+        </Prism>
+      </PrismContainer>
+      <Security />
+    </>
   );
 };
+
+export const PrismContainer = styled.div`
+  padding: 25px 0 32px 0;
+`;
+
+export const StyledText = styled(Text)`
+  padding: 17px 0 13px 0;
+`;
+
+export const Description = styled(Text)`
+  padding-bottom: 6px;
+  color: ${colors.B60};
+
+  }
+`;

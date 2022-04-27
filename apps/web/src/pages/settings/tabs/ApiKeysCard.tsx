@@ -9,7 +9,7 @@ import { getApiKeys } from '../../../api/environment';
 
 export const ApiKeysCard = () => {
   const clipboard = useClipboard({ timeout: 1000 });
-  const { data: apiKeys, isLoading: isLoadingApiKeys } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
+  const { data: apiKeys } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
 
   return (
     <Card title="Api Keys">

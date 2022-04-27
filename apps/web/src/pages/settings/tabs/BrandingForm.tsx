@@ -69,7 +69,7 @@ export function BrandingForm({
 
     setImageLoading(true);
     const { signedUrl, path } = await getSignedUrlAction(mimeTypes[file.type]);
-    const response = await axios.put(signedUrl, file, {
+    await axios.put(signedUrl, file, {
       headers: {
         'Content-Type': file.type,
       },
