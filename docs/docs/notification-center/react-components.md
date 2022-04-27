@@ -41,3 +41,43 @@ To support dark mode in your application the notification center component can r
   </PopoverNotificationCenter>
 </NovuProvider>
 ```
+
+## Custom UI
+
+If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our react library.
+Let's see and example on how you can do that:
+
+```tsx
+import { NovuProvider, useNotifications } from '@novu/notification-center';
+
+function App() {
+  return (
+    <NovuProvider subscriberId={'USER_ID'} applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}>
+      <CustomNotificationCenter />
+    </NovuProvider>
+  );
+}
+
+function CustomNotificationCenter() {
+  const { 
+    notifications,
+    fetchNextPage,
+    hasNextPage,
+    fetching,
+    markAsSeen,
+    refetch
+  } = useNotifications();
+  
+  return (
+    <ul>
+      {notifications.map((notification) => {
+        return (
+          <li>
+            {notification.content}
+          </li>
+        )
+      })}
+    </ul>
+  );
+}
+```
