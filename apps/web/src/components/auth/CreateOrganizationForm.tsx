@@ -88,7 +88,7 @@ export function CreateOrganization({}: Props) {
           required: 'Please input your app name',
         })}
         required
-        label="Environment Name"
+        label="Organization Name"
         placeholder="What's the name of the app?"
         data-test-id="app-creation"
         mt={5}
