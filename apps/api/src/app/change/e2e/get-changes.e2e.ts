@@ -88,6 +88,7 @@ describe('Get changes', () => {
 
     const changes = await changeRepository.find({
       enabled: true,
+      _parentId: { $exists: false, $eq: null },
     });
 
     expect(data.length).to.eq(changes.length);

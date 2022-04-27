@@ -3,6 +3,7 @@ import { ChangeEntityTypeEnum, NotificationTemplateEntity, NotificationTemplateR
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { mongo } from 'mongoose';
 
 @Injectable()
 export class ChangeTemplateActiveStatus {
@@ -44,6 +45,7 @@ export class ChangeTemplateActiveStatus {
         userId: command.userId,
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item,
+        changeId: new mongo.ObjectID().toString(),
       })
     );
 

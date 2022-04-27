@@ -25,8 +25,6 @@ describe('Promote changes', () => {
       }
     );
 
-    console.log(changes);
-
     await changes.reduce(async (prev, change) => {
       await session.testAgent.post(`/v1/changes/${change._id}/apply`);
     }, Promise.resolve());
@@ -228,6 +226,7 @@ describe('Promote changes', () => {
     let {
       body: { data },
     } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    await applyChanges();
 
     const notificationTemplateId = data._id;
 
@@ -262,7 +261,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  field: 'firstName',
+                  field: 'secondName',
                   value: 'test value',
                   operator: 'EQUAL',
                 },
@@ -284,14 +283,10 @@ describe('Promote changes', () => {
 
     await applyChanges();
 
-    const prodVersion = await notificationTemplateRepository.findOne({
+    const prodVersion = await notificationTemplateRepository.find({
       _parentId: notificationTemplateId,
     });
 
-    expect(prodVersion.steps.length).to.eq(2);
+    expect(prodVersion[0].steps.length).to.eq(2);
   });
-
-  /**
-   * multiple changes add one and update one, remove one message
-   */
 });

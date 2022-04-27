@@ -1,5 +1,5 @@
 import { ChangeEntityTypeEnum } from '@novu/dal';
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 import { CommandHelper } from '../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../shared/commands/project.command';
@@ -19,4 +19,11 @@ export class CreateChangeCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsString()
   type: ChangeEntityTypeEnum;
+
+  @IsMongoId()
+  changeId: string;
+
+  @IsMongoId()
+  @IsOptional()
+  parentChangeId?: string;
 }

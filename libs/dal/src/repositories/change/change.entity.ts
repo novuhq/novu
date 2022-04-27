@@ -19,4 +19,6 @@ export class ChangeEntity {
   change: any;
 
   createdAt: string;
+
+  _parentId?: string;
 }

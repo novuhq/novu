@@ -16,6 +16,8 @@ import { UpdateMessageTemplateCommand } from '../../../message-template/usecases
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { mongo } from 'mongoose';
+import { ChangeRepository } from '../../../../../../../libs/dal/src/repositories/change/change.repository';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -23,7 +25,8 @@ export class UpdateNotificationTemplate {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
     private updateMessageTemplate: UpdateMessageTemplate,
-    private createChange: CreateChange
+    private createChange: CreateChange,
+    private changeRepository: ChangeRepository
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -45,6 +48,11 @@ export class UpdateNotificationTemplate {
     if (command.notificationGroupId) {
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
+
+    const parentChangeId: string = await this.changeRepository.getChangeId(
+      ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+      existingTemplate._id
+    );
 
     if (command.steps) {
       const contentService = new ContentService();
@@ -82,6 +90,7 @@ export class UpdateNotificationTemplate {
               contentType: message.contentType,
               cta: message.cta,
               subject: message.subject,
+              parentChangeId,
             })
           );
 
@@ -101,6 +110,7 @@ export class UpdateNotificationTemplate {
               userId: command.userId,
               cta: message.cta,
               subject: message.subject,
+              parentChangeId,
             })
           );
 
@@ -144,6 +154,7 @@ export class UpdateNotificationTemplate {
         userId: command.userId,
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item,
+        changeId: parentChangeId,
       })
     );
 
