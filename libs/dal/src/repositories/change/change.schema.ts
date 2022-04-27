@@ -28,6 +28,10 @@ const changeSchema = new Schema(
       ref: 'User',
       index: true,
     },
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Change',
+    },
   },
   { ...schemaOptions }
 );

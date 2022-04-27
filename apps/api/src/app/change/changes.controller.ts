@@ -69,7 +69,7 @@ export class ChangesController {
   }
 
   @Post('/:changeId/apply')
-  async applyDiff(@UserSession() user: IJwtPayload, @Param('changeId') changeId: string): Promise<ChangeEntity> {
+  async applyDiff(@UserSession() user: IJwtPayload, @Param('changeId') changeId: string): Promise<ChangeEntity[]> {
     return this.applyChange.execute(
       ApplyChangeCommand.create({
         changeId: changeId,

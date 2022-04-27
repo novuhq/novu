@@ -23,7 +23,16 @@ export function EmailMessageEditor({
 }) {
   const theme = useMantineTheme();
 
-  const [blocks, setBlocks] = useState<IEmailBlock[]>(value?.length ? value : []);
+  const [blocks, setBlocks] = useState<IEmailBlock[]>(
+    value?.length
+      ? value
+      : [
+          {
+            type: 'text',
+            content: '',
+          },
+        ]
+  );
 
   const [top, setTop] = useState<number>(0);
   const [controlBarVisible, setActionBarVisible] = useState<boolean>(false);

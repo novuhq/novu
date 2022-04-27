@@ -27,6 +27,7 @@ describe('Create Change', function () {
   it('should create a change', async function () {
     const result = await useCase.execute(
       CreateChangeCommand.create({
+        changeId: _id,
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
@@ -47,6 +48,7 @@ describe('Create Change', function () {
   it('should find diff for item', async function () {
     const oldChange = await useCase.execute(
       CreateChangeCommand.create({
+        changeId: _id,
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
@@ -58,6 +60,7 @@ describe('Create Change', function () {
     );
     const change = await useCase.execute(
       CreateChangeCommand.create({
+        changeId: _id,
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
@@ -70,7 +73,7 @@ describe('Create Change', function () {
     );
 
     expect(change.change[1].op).to.eq('add');
-    expect(change.change[1].value).to.eq('test');
+    expect(change.change[1].val).to.eq('test');
     expect(change.change[1].path).to.eql(['name']);
   });
 });
