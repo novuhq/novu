@@ -4,7 +4,7 @@ import { CreateMessageTemplateCommand } from './create-message-template.command'
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { mongo } from 'mongoose';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class CreateMessageTemplate {
@@ -33,7 +33,7 @@ export class CreateMessageTemplate {
         item,
         type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
         parentChangeId: command.parentChangeId,
-        changeId: new mongo.ObjectID().toString(),
+        changeId: MessageTemplateRepository.createObjectId(),
       })
     );
 

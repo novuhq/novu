@@ -3,7 +3,6 @@ import { NotificationGroupRepository, NotificationGroupEntity, ChangeEntityTypeE
 import { CreateNotificationGroupCommand } from './create-notification-group.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { mongo } from 'mongoose';
 
 @Injectable()
 export class CreateNotificationGroup {
@@ -34,7 +33,7 @@ export class CreateNotificationGroup {
         organizationId: command.organizationId,
         userId: command.userId,
         type: ChangeEntityTypeEnum.NOTIFICATION_GROUP,
-        changeId: new mongo.ObjectID().toString(),
+        changeId: NotificationGroupRepository.createObjectId(),
       })
     );
 

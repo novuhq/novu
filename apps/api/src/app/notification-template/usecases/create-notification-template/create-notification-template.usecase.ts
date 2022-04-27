@@ -9,7 +9,6 @@ import { CreateMessageTemplate } from '../../../message-template/usecases/create
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
-import { mongo } from 'mongoose';
 
 @Injectable()
 export class CreateNotificationTemplate {
@@ -47,7 +46,7 @@ export class CreateNotificationTemplate {
       }),
     };
 
-    const parentChangeId: string = new mongo.ObjectID().toString();
+    const parentChangeId: string = NotificationTemplateRepository.createObjectId();
     const templateSteps = [];
 
     for (const message of command.steps) {

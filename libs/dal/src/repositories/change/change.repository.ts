@@ -1,7 +1,7 @@
-import { mongo } from 'mongoose';
 import { BaseRepository } from '../base-repository';
 import { ChangeEntity, ChangeEntityTypeEnum } from './change.entity';
 import { Change } from './change.schema';
+import { Types } from 'mongoose';
 
 export class ChangeRepository extends BaseRepository<ChangeEntity> {
   constructor() {
@@ -32,7 +32,7 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
       return change._id;
     }
 
-    return new mongo.ObjectId().toString();
+    return BaseRepository.createObjectId();
   }
 
   public async getList(organizationId: string, environmentId: string, enabled: boolean) {
