@@ -103,5 +103,5 @@ const corsOptionsDelegate = function (req, callback) {
 };
 
 function isWidgetRoute(url: string) {
-  return url.startsWith('//v1/widgets');
+  return url.startsWith('/v1/widgets');
 }
