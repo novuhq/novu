@@ -18,10 +18,7 @@ export async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin:
-      process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'test'
-        ? '*'
-        : [process.env.FRONT_BASE_URL, process.env.WIDGET_BASE_URL],
+    origin: '*',
     preflightContinue: false,
     allowedHeaders: ['Content-Type', 'Authorization'],
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

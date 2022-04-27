@@ -46,14 +46,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app.use(Sentry.Handlers.tracingHandler());
   }
 
-  app.enableCors({
-    origin: ['dev', 'test', 'local'].includes(process.env.NODE_ENV)
-      ? '*'
-      : [process.env.FRONT_BASE_URL, process.env.WIDGET_BASE_URL],
-    preflightContinue: false,
-    allowedHeaders: ['Content-Type', 'Authorization', 'sentry-trace'],
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  });
+  app.enableCors(corsOptionsDelegate);
 
   app.setGlobalPrefix('v1');
 
@@ -91,4 +84,24 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
   return app;
+}
+
+const corsOptionsDelegate = function (req, callback) {
+  const corsOptions = {
+    origin: false as boolean | string | string[],
+    preflightContinue: false,
+    allowedHeaders: ['Content-Type', 'Authorization', 'sentry-trace'],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  };
+
+  if (['dev', 'test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url)) {
+    corsOptions.origin = '*';
+  } else {
+    corsOptions.origin = [process.env.FRONT_BASE_URL, process.env.WIDGET_BASE_URL];
+  }
+  callback(null, corsOptions);
+};
+
+function isWidgetRoute(url: string) {
+  return url.startsWith('//v1/widgets');
 }
