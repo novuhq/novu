@@ -287,7 +287,7 @@ importers:
       '@mantine/notifications': ^4.1.0
       '@mantine/prism': ^4.1.0
       '@novu/dal': ^0.4.0-alpha.10
-      '@novu/notification-center': ^0.4.0-alpha.10
+      '@novu/notification-center': ^0.4.0-alpha.11
       '@novu/shared': ^0.4.0-alpha.10
       '@novu/testing': ^0.4.0-alpha.10
       '@sentry/react': ^6.3.1
@@ -455,7 +455,7 @@ importers:
       '@mantine/hooks': ^4.1.0
       '@novu/dal': ^0.4.0-alpha.10
       '@novu/embed': ^0.4.0-alpha.9
-      '@novu/notification-center': ^0.4.0-alpha.10
+      '@novu/notification-center': ^0.4.0-alpha.11
       '@novu/shared': ^0.4.0-alpha.10
       '@novu/testing': ^0.4.0-alpha.10
       '@testing-library/jest-dom': ^5.11.4
