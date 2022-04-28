@@ -15,7 +15,16 @@ export class CreateChange {
         return applyDiff(prev, change.change);
       }, {});
 
-    const changePayload = getDiff(aggregatedItem, command.item, true);
+    const changePayload = getDiff(aggregatedItem, command.item, true).filter((item) => {
+      const isNotStepId = !(item.path.includes('steps') && item.path.includes('_id'));
+      const isNotUpdatedAt = !item.path.includes('updatedAt');
+
+      return isNotStepId && isNotUpdatedAt;
+    });
+
+    if (changePayload.length === 0) {
+      return;
+    }
 
     const change = await this.changeRepository.findOne({
       _id: command.changeId,

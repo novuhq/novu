@@ -31,7 +31,7 @@ export const useEnvController = (): EnvironmentContext => {
     if (!environment) {
       return;
     }
-    setReadonly(environment?._parentId === undefined);
+    setReadonly(environment?._parentId !== undefined);
   }, [environment]);
 
   async function setEnvironment(environmentName: string) {
