@@ -13,4 +13,12 @@ export class EnvironmentService {
 
     return project;
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getEnvironment(environmentId: any) {
+    const environment = await this.environmentRepository.findOne({
+      _id: environmentId,
+    });
+
+    return environment;
+  }
 }

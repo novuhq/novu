@@ -216,6 +216,19 @@ export class UserSession {
     return this.organization;
   }
 
+  async switchEnvironment(environmentId: string) {
+    const environmentService = new EnvironmentService();
+
+    const environment = await environmentService.getEnvironment(environmentId);
+
+    if (environment) {
+      this.environment = environment;
+      await this.testAgent.post(`/v1/auth/environments/${environmentId}/switch`);
+
+      await this.fetchJWT();
+    }
+  }
+
   async triggerEvent(triggerName: string, to: TriggerRecipientsType, payload = {}) {
     await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
