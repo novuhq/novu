@@ -9,21 +9,15 @@ export class CreateNotificationGroup {
   constructor(private notificationGroupRepository: NotificationGroupRepository, private createChange: CreateChange) {}
 
   async execute(command: CreateNotificationGroupCommand): Promise<NotificationGroupEntity> {
-    const groups = await this.notificationGroupRepository.findOne({
+    const group = await this.notificationGroupRepository.findOne({
       _organizationId: command.organizationId,
     });
-
-    let _parentId: string;
-
-    if (groups) {
-      _parentId = groups._id;
-    }
 
     const item = await this.notificationGroupRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       name: command.name,
-      _parentId,
+      _parentId: group?._id,
     });
 
     await this.createChange.execute(

@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { NotificationGroupRepository } from '../../../../../../../libs/dal/src/repositories/notification-group/notification-group.repository';
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   MessageTemplateRepository,
   NotificationStepEntity,
+  NotificationGroupRepository,
 } from '@novu/dal';
 
 @Injectable()
