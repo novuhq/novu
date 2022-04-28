@@ -5,9 +5,9 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   NotificationStepEntity,
-  ChangeEntityTypeEnum,
+  ChangeRepository,
 } from '@novu/dal';
-
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
@@ -16,8 +16,6 @@ import { UpdateMessageTemplateCommand } from '../../../message-template/usecases
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { mongo } from 'mongoose';
-import { ChangeRepository } from '../../../../../../../libs/dal/src/repositories/change/change.repository';
 
 @Injectable()
 export class UpdateNotificationTemplate {

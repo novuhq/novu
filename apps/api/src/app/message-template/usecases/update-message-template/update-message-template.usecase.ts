@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChangeEntityTypeEnum, ChangeRepository, MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
+import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ChangeEntityTypeEnum, NotificationTemplateRepository } from '@novu/dal';
+import { NotificationTemplateRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import slugify from 'slugify';
 import * as shortid from 'shortid';

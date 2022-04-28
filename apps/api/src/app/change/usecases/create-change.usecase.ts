@@ -15,13 +15,7 @@ export class CreateChange {
         return applyDiff(prev, change.change);
       }, {});
 
-    const changePayload = getDiff(aggregatedItem, command.item, true).filter((item) => {
-      return !(item.path.includes('steps') && item.path.includes('_id')) && !item.path.includes('updatedAt');
-    });
-
-    if (changePayload.length === 0) {
-      return;
-    }
+    const changePayload = getDiff(aggregatedItem, command.item, true);
 
     const change = await this.changeRepository.findOne({
       _id: command.changeId,

@@ -1,4 +1,4 @@
-import { ChangeEntityTypeEnum } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 import { CommandHelper } from '../../shared/commands/command.helper';

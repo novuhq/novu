@@ -2,6 +2,7 @@ export interface IEnvironment {
   _id?: string;
   name: string;
   _organizationId: string;
+  _parentId?: string;
   identifier: string;
   channels?: {
     email?: {

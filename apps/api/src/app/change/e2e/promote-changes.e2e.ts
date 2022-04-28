@@ -1,17 +1,20 @@
-import { ChangeRepository, NotificationTemplateRepository } from '@novu/dal';
+import {
+  ChangeRepository,
+  NotificationTemplateRepository,
+  MessageTemplateRepository,
+  NotificationGroupRepository,
+  EnvironmentRepository,
+} from '@novu/dal';
 import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { CreateNotificationTemplateDto } from '../../notification-template/dto/create-notification-template.dto';
 import { UpdateNotificationTemplateDto } from '../../notification-template/dto/update-notification-template.dto';
-import { MessageTemplateRepository } from '../../../../../../libs/dal/src/repositories/message-template/message-template.repository';
-import { NotificationGroupRepository } from '../../../../../../libs/dal/src/repositories/notification-group/notification-group.repository';
-import { EnvironmentRepository } from '../../../../../../libs/dal/src/repositories/environment/environment.repository';
 
 describe('Promote changes', () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
-  const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
+  const notificationTemplateRepository = new NotificationTemplateRepository();
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();

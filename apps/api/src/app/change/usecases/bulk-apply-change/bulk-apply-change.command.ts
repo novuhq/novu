@@ -1,4 +1,4 @@
-import { IsDefined, IsMongoId, IsArray } from 'class-validator';
+import { IsDefined, IsArray } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -8,7 +8,6 @@ export class BulkApplyChangeCommand extends EnvironmentWithUserCommand {
   }
 
   @IsDefined()
-  @IsMongoId()
   @IsArray()
   changeIds: string[];
 }

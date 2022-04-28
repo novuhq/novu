@@ -12,7 +12,7 @@ export class ApplyChange {
   ) {}
 
   async execute(command: ApplyChangeCommand): Promise<ChangeEntity[]> {
-    const change = await this.changeRepository.findOne({
+    const parentChange = await this.changeRepository.findOne({
       _id: command.changeId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -20,7 +20,7 @@ export class ApplyChange {
 
     const changes = await this.changeRepository.find(
       {
-        _parentId: change._id,
+        _parentId: parentChange._id,
       },
       '',
       {
@@ -28,13 +28,13 @@ export class ApplyChange {
       }
     );
 
-    return [...changes, change].reduce(async (prev, ce) => {
-      const list = await prev;
-      const item = await this.applyChange(ce, command);
-      list.push(item);
+    const items = [];
+    for (const change of [...changes, parentChange]) {
+      const item = await this.applyChange(change, command);
+      items.push(item);
+    }
 
-      return list;
-    }, Promise.resolve([]));
+    return items;
   }
 
   async applyChange(change, command: ApplyChangeCommand): Promise<ChangeEntity> {
