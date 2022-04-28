@@ -27,7 +27,11 @@ export class NotificationTemplateEntity {
 
   _notificationGroupId: string;
 
-  isDeleted?: boolean = false;
+  deleted: boolean;
+
+  deletedAt: string;
+
+  deletedBy: string;
 
   readonly notificationGroup?: NotificationGroupEntity;
 }

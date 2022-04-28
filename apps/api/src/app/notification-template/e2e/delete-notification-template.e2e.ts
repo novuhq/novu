@@ -1,9 +1,11 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { INotificationTemplate } from '@novu/shared';
+import { NotificationTemplateRepository } from '@novu/dal';
 
 describe('Delete notification template by id - /notification-templates/:templateId (DELETE)', async () => {
   let session: UserSession;
+  const notificationTemplateRepository = new NotificationTemplateRepository();
 
   before(async () => {
     session = new UserSession();
@@ -18,13 +20,15 @@ describe('Delete notification template by id - /notification-templates/:template
     );
     const template = await notificationTemplateService.createTemplate();
 
-    expect(template.isDeleted).to.equal(false);
+    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
 
-    const { body } = await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
-    const foundTemplate: INotificationTemplate = body.data;
+    const isDeleted = !(await notificationTemplateRepository.findOne({ _id: template._id }));
 
-    expect(foundTemplate._id).to.equal(template._id);
-    expect(foundTemplate.isDeleted).to.equal(true);
+    expect(isDeleted).to.equal(true);
+
+    const deletedIntegration = (await notificationTemplateRepository.findDeleted({ _id: template._id }))[0];
+
+    expect(deletedIntegration.deleted).to.equal(true);
   });
 
   it('should not display on listing notification templates', async function () {
@@ -35,19 +39,22 @@ describe('Delete notification template by id - /notification-templates/:template
     );
 
     const template1 = await notificationTemplateService.createTemplate();
-    const template2 = await notificationTemplateService.createTemplate();
-    const template3 = await notificationTemplateService.createTemplate();
+    await notificationTemplateService.createTemplate();
+    await notificationTemplateService.createTemplate();
 
     const { body: templates } = await session.testAgent.get(`/v1/notification-templates`);
     expect(templates.data.length).to.equal(3);
 
-    const { body } = await session.testAgent.delete(`/v1/notification-templates/${template1._id}`).send();
-    const foundTemplate: INotificationTemplate = body.data;
-
-    expect(foundTemplate._id).to.equal(template1._id);
-    expect(foundTemplate.isDeleted).to.equal(true);
+    await session.testAgent.delete(`/v1/notification-templates/${template1._id}`).send();
 
     const { body: templatesAfterDelete } = await session.testAgent.get(`/v1/notification-templates`);
     expect(templatesAfterDelete.data.length).to.equal(2);
+  });
+
+  it('should fail for non-existing notification template', async function () {
+    const dummyId = '012345678912';
+    const response = await session.testAgent.delete(`/v1/notification-templates/${dummyId}`).send();
+
+    expect(response.body.message).to.contains('Could not find notification template with id');
   });
 });

@@ -13,7 +13,6 @@ export interface INotificationTemplate {
   updatedAt?: string;
   steps: INotificationTemplateStep[];
   triggers: INotificationTrigger[];
-  isDeleted?: boolean;
 }
 
 export enum TriggerTypeEnum {

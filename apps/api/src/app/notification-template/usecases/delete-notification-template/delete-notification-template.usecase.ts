@@ -1,7 +1,8 @@
 // eslint-ignore max-len
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
+import { NotificationTemplateEntity, NotificationTemplateRepository, DalException } from '@novu/dal';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
 
@@ -10,24 +11,15 @@ export class DeleteNotificationTemplate {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
   async execute(command: GetNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
-    const existingTemplate = await this.notificationTemplateRepository.findById(
-      command.templateId,
-      command.organizationId
-    );
-    if (!existingTemplate) throw new NotFoundException(`Entity with id ${command.templateId} not found`);
-
-    await this.notificationTemplateRepository.update(
-      {
-        _id: command.templateId,
-        _organizationId: command.organizationId,
-      },
-      {
-        $set: {
-          isDeleted: true,
-        },
+    try {
+      await this.notificationTemplateRepository.delete({ _id: command.templateId });
+    } catch (e) {
+      if (e instanceof DalException) {
+        throw new ApiException(e.message);
       }
-    );
+      throw new ApiException('Could not find notification template with id ' + command.templateId);
+    }
 
-    return await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    return (await this.notificationTemplateRepository.findDeleted({ _id: command.templateId }))[0];
   }
 }

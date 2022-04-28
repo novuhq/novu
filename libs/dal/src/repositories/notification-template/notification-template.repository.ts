@@ -1,10 +1,15 @@
+import { Document, FilterQuery } from 'mongoose';
+import { SoftDeleteModel } from 'mongoose-delete';
 import { BaseRepository } from '../base-repository';
 import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateEntity } from './notification-template.entity';
+import { DalException } from '../../shared';
 
 export class NotificationTemplateRepository extends BaseRepository<NotificationTemplateEntity> {
+  private notifcationTemplate: SoftDeleteModel;
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
+    this.notifcationTemplate = NotificationTemplate;
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string) {
@@ -29,9 +34,20 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     const items = await NotificationTemplate.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
-      _isDeleted: false,
     }).populate('notificationGroup');
 
     return this.mapEntities(items);
+  }
+
+  async delete(query: FilterQuery<NotificationTemplateEntity & Document>) {
+    const item = await this.findOne({ _id: query._id });
+    if (!item) throw new DalException(`Could not find notification template with id ${query._id}`);
+    await this.notifcationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
+  }
+
+  async findDeleted(query: FilterQuery<NotificationTemplateEntity & Document>): Promise<NotificationTemplateEntity> {
+    const res = await this.notifcationTemplate.findDeleted(query);
+
+    return this.mapEntity(res);
   }
 }
