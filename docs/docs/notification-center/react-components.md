@@ -81,3 +81,39 @@ function CustomNotificationCenter() {
   );
 }
 ```
+
+## Realtime sockets
+
+Novu provides a real-time socket API for you to consume to get updates about new notifications added to the user's feed. To use the socket connection you can use the `useSocket` hook provided by the `@novu/notification-center` library. Let's see and example of that:
+
+```tsx
+import { NovuProvider, useSocket } from '@novu/notification-center';
+
+function App() {
+  return (
+    <NovuProvider subscriberId={'USER_ID'} applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}>
+      <CustomNotificationCenter />
+    </NovuProvider>
+  );
+}
+
+function CustomNotificationCenter() {
+  const { socket } = useSocket();
+  
+  useEffect(() => {
+    if (socket) {
+      socket.on('unseen_count_changed', (data) => {
+        console.log(data.unseenCount);
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('unseen_count_changed');
+      }
+    };
+  }, [socket]);
+  
+  return <></>;
+}
+```
