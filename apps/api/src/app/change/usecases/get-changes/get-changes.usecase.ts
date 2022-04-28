@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   ChangeEntity,
-  ChangeEntityTypeEnum,
   ChangeRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationTemplateRepository,
 } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { GetChangesCommand } from './get-changes.command';
 
 interface IViewEntity {
@@ -39,7 +39,7 @@ export class GetChanges {
 
     return await changes.reduce(async (prev, change) => {
       const list = await prev;
-      let item: any | IViewEntity = {};
+      let item: Record<string, unknown> | IViewEntity = {};
       if (change.type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE) {
         item = await this.getTemplateDataForMessageTemplate(change._entityId, command.environmentId);
       }
@@ -59,7 +59,10 @@ export class GetChanges {
     }, Promise.resolve([]));
   }
 
-  private async getTemplateDataForMessageTemplate(entityId: string, environmentId: string): Promise<IViewEntity | any> {
+  private async getTemplateDataForMessageTemplate(
+    entityId: string,
+    environmentId: string
+  ): Promise<IViewEntity | Record<string, unknown>> {
     const item = await this.notificationTemplateRepository.findOne({
       _environmentId: environmentId,
       'steps._templateId': entityId,
@@ -86,7 +89,7 @@ export class GetChanges {
   private async getTemplateDataForNotificationTemplate(
     entityId: string,
     environmentId: string
-  ): Promise<IViewEntity | any> {
+  ): Promise<IViewEntity | Record<string, unknown>> {
     const item = await this.notificationTemplateRepository.findOne({
       _environmentId: environmentId,
       _id: entityId,
@@ -107,7 +110,7 @@ export class GetChanges {
   private async getTemplateDataForNotificationGroup(
     entityId: string,
     environmentId: string
-  ): Promise<IViewEntity | any> {
+  ): Promise<IViewEntity | Record<string, unknown>> {
     const item = await this.notificationGroupRepository.findOne({
       _environmentId: environmentId,
       _id: entityId,

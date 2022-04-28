@@ -9,12 +9,13 @@ import {
   IEmailBlock,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
-import { useMutation } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { createTemplate, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
+import { QueryKeys } from '../../api/query.keys';
 
 export function useTemplateController(templateId: string) {
   const [activeChannels, setActiveChannels] = useState<{ [key: string]: boolean }>({
@@ -96,6 +97,7 @@ export function useTemplateController(templateId: string) {
   const [trigger, setTrigger] = useState<INotificationTrigger>();
   const [selectedMessageType, setSelectedMessageType] = useState<ChannelTypeEnum | null>(null);
   const { template, refetch, loading: loadingEditTemplate } = useTemplateFetcher(templateId);
+  const client = useQueryClient();
 
   const { isLoading, mutateAsync: createNotification } = useMutation<
     INotificationTemplate,
@@ -223,6 +225,7 @@ export function useTemplateController(templateId: string) {
 
         refetch();
 
+        await client.refetchQueries(QueryKeys.changesCount);
         showNotification({
           message: 'Template updated successfully',
           color: 'green',
@@ -234,6 +237,7 @@ export function useTemplateController(templateId: string) {
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
 
+        await client.refetchQueries(QueryKeys.changesCount);
         showNotification({
           message: 'Template saved successfully',
           color: 'green',

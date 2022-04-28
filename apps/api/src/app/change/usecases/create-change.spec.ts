@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { CreateChange } from './create-change.usecase';
 import { ChangeModule } from '../change.module';
 import { CreateChangeCommand } from './create-change.command';
-import { ChangeEntityTypeEnum } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { SharedModule } from '../../shared/shared.module';
 import { expect } from 'chai';
 

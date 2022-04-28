@@ -16,7 +16,10 @@ export class CreateChange {
       }, {});
 
     const changePayload = getDiff(aggregatedItem, command.item, true).filter((item) => {
-      return !(item.path.includes('steps') && item.path.includes('_id')) && !item.path.includes('updatedAt');
+      const isNotStepId = !(item.path.includes('steps') && item.path.includes('_id'));
+      const isNotUpdatedAt = !item.path.includes('updatedAt');
+
+      return isNotStepId && isNotUpdatedAt;
     });
 
     if (changePayload.length === 0) {

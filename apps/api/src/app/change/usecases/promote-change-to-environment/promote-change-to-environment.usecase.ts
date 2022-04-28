@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ChangeEntityTypeEnum, ChangeRepository, EnvironmentRepository } from '@novu/dal';
+import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { PromoteNotificationTemplateChange } from '../promote-notification-template-change/promote-notification-template-change';
@@ -45,6 +46,7 @@ export class PromoteChangeToEnvironment {
         break;
       case ChangeEntityTypeEnum.NOTIFICATION_GROUP:
         await this.promoteNotificationGroupChange.execute(typeCommand);
+        break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);
     }

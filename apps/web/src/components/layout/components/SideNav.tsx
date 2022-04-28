@@ -4,6 +4,7 @@ import { Activity, Bolt, Box, Settings, Team, Repeat } from '../../../design-sys
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
 import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 type Props = {};
 const menuItems = [
@@ -17,23 +18,29 @@ const menuItems = [
     label: 'Team Members',
     testId: 'side-nav-settings-organization',
   },
-  {
-    icon: <Repeat />,
-    link: '/changes',
-    label: 'Changes',
-    testId: 'side-nav-changes-link',
-    rightSide: <ChangesCountBadge />,
-  },
 ];
 
+const changesMenuItem = {
+  icon: <Repeat />,
+  link: '/changes',
+  label: 'Changes',
+  testId: 'side-nav-changes-link',
+  rightSide: <ChangesCountBadge />,
+};
+
 export function SideNav({}: Props) {
+  const navigate = useNavigate();
   const { setEnvironment, isLoading, environment, readonly } = useEnvController();
+  const location = useLocation();
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
 
   useEffect(() => {
     setOpened(readonly);
+    if (readonly && location.pathname === '/changes') {
+      navigate('/');
+    }
   }, [readonly]);
 
   return (
@@ -84,7 +91,7 @@ export function SideNav({}: Props) {
         >
           {'To make changes you’ll need to go to development and promote the changes from there'}
         </Popover>
-        <NavMenu menuItems={menuItems} />
+        <NavMenu menuItems={readonly ? menuItems : [...menuItems, changesMenuItem]} />
       </Navbar.Section>
     </Navbar>
   );

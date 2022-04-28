@@ -1,7 +1,7 @@
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { BaseRepository } from '../base-repository';
-import { ChangeEntity, ChangeEntityTypeEnum } from './change.entity';
+import { ChangeEntity } from './change.entity';
 import { Change } from './change.schema';
-import { Types } from 'mongoose';
 
 export class ChangeRepository extends BaseRepository<ChangeEntity> {
   constructor() {

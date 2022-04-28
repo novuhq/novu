@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { NotificationGroupRepository } from '../../../../../../../libs/dal/src/repositories/notification-group/notification-group.repository';
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   MessageTemplateRepository,
   NotificationStepEntity,
+  NotificationGroupRepository,
 } from '@novu/dal';
 
 @Injectable()
@@ -59,6 +59,7 @@ export class PromoteNotificationTemplateChange {
     const notificationGroup = await this.notificationGroupRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      _parentId: newItem._notificationGroupId,
     });
 
     if (!notificationGroup) {

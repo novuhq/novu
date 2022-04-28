@@ -1,6 +1,6 @@
 import { AppShell } from '@mantine/core';
 import * as Sentry from '@sentry/react';
-import { useLocation, Outlet, useParams } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useNovu } from '../../hooks/use-novu';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { HeaderNav } from './components/HeaderNav';
@@ -8,9 +8,6 @@ import { SideNav } from './components/SideNav';
 import { colors } from '../../design-system';
 
 export function AppLayout() {
-  const location = useLocation();
-  const { templateId = '' } = useParams<{ templateId: string }>();
-
   useNovu();
 
   return (

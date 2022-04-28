@@ -25,6 +25,7 @@ import { ChangeTemplateActiveStatus } from './usecases/change-template-active-st
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { ChangeTemplateStatusDto } from './dto/change-template-status.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -86,6 +87,7 @@ export class NotificationTemplateController {
   }
 
   @Post('')
+  @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(@UserSession() user: IJwtPayload, @Body() body: CreateNotificationTemplateDto) {
     return this.createNotificationTemplateUsecase.execute(
@@ -105,6 +107,7 @@ export class NotificationTemplateController {
   }
 
   @Put('/:templateId/status')
+  @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
   changeActiveStatus(
     @UserSession() user: IJwtPayload,

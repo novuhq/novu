@@ -31,7 +31,7 @@ export const useEnvController = (): EnvironmentContext => {
     if (!environment) {
       return;
     }
-    setReadonly(environment.name === 'Production');
+    setReadonly(environment?._parentId !== undefined);
   }, [environment]);
 
   async function setEnvironment(environmentName: string) {
@@ -52,7 +52,6 @@ export const useEnvController = (): EnvironmentContext => {
     }
     setToken(tokenResponse.token);
 
-    // Why do we refetch all queries here?
     await queryClient.refetchQueries();
   }
 
