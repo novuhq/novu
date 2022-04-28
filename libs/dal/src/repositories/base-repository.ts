@@ -1,12 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToClass } from 'class-transformer';
-import { Document, FilterQuery, Model } from 'mongoose';
+import { Document, FilterQuery, Model, Types } from 'mongoose';
 
 export class BaseRepository<T> {
   public _model: Model<any & Document>;
 
   constructor(protected MongooseModel: Model<any & Document>, protected entity: ClassConstructor<T>) {
     this._model = MongooseModel;
+  }
+
+  public static createObjectId() {
+    return new Types.ObjectId().toString();
   }
 
   async count(query: FilterQuery<T & Document>): Promise<number> {

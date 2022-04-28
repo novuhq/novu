@@ -45,6 +45,7 @@ export class PromoteChangeToEnvironment {
         break;
       case ChangeEntityTypeEnum.NOTIFICATION_GROUP:
         await this.promoteNotificationGroupChange.execute(typeCommand);
+        break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);
     }

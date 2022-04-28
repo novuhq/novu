@@ -5,12 +5,16 @@ import { expect } from 'chai';
 import { CreateNotificationTemplateDto } from '../../notification-template/dto/create-notification-template.dto';
 import { UpdateNotificationTemplateDto } from '../../notification-template/dto/update-notification-template.dto';
 import { MessageTemplateRepository } from '../../../../../../libs/dal/src/repositories/message-template/message-template.repository';
+import { NotificationGroupRepository } from '../../../../../../libs/dal/src/repositories/notification-group/notification-group.repository';
+import { EnvironmentRepository } from '../../../../../../libs/dal/src/repositories/environment/environment.repository';
 
 describe('Promote changes', () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
+  const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
+  const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
 
   const applyChanges = async () => {
     const changes = await changeRepository.find(
@@ -33,6 +37,70 @@ describe('Promote changes', () => {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+  });
+
+  it('should set correct notification group for notification template', async () => {
+    const prodEnv = await environmentRepository.findOne({
+      _parentId: session.environment._id,
+    });
+
+    const parentGroup = await notificationGroupRepository.create({
+      name: 'test',
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    const prodGroup = await notificationGroupRepository.create({
+      name: 'test',
+      _environmentId: prodEnv._id,
+      _organizationId: session.organization._id,
+      _parentId: parentGroup._id,
+    });
+
+    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: parentGroup._id,
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email subject',
+          type: ChannelTypeEnum.EMAIL,
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'firstName',
+                  value: 'test value',
+                  operator: 'EQUAL',
+                },
+              ],
+            },
+          ],
+          content: [
+            {
+              type: 'text',
+              content: 'This is a sample text block',
+            },
+          ],
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const notificationTemplateId = body.data._id;
+
+    await applyChanges();
+
+    const prodVersion = await notificationTemplateRepository.findOne({
+      _parentId: notificationTemplateId,
+    });
+
+    expect(prodVersion._notificationGroupId).to.eq(prodGroup._id);
   });
 
   it('delete message', async () => {
