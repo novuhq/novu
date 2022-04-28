@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   ChangeEntity,
-  ChangeEntityTypeEnum,
   ChangeRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationTemplateRepository,
 } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { GetChangesCommand } from './get-changes.command';
 
 interface IViewEntity {

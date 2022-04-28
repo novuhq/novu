@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationGroupRepository, NotificationGroupEntity, ChangeEntityTypeEnum } from '@novu/dal';
+import { NotificationGroupRepository, NotificationGroupEntity } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateNotificationGroupCommand } from './create-notification-group.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';

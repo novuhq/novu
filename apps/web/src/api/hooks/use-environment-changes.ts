@@ -9,7 +9,7 @@ export function useEnvironmentChanges() {
     data: changes,
     isLoading: isLoadingChanges,
     refetch: refetchChanges,
-  } = useQuery([QueryKeys.currentUnpromotedChanges, environment], getUnpromotedChanges, {});
+  } = useQuery([QueryKeys.currentUnpromotedChanges, environment?._id], getUnpromotedChanges, {});
 
   const {
     data: history,
