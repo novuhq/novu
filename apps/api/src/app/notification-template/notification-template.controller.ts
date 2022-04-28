@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Delete,
   Param,
   Post,
   Put,
@@ -19,6 +20,7 @@ import { CreateNotificationTemplateDto } from './dto/create-notification-templat
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
+import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
 import { UpdateNotificationTemplateCommand } from './usecases/update-notification-template/update-notification-template.command';
 import { UpdateNotificationTemplateDto } from './dto/update-notification-template.dto';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
@@ -35,6 +37,7 @@ export class NotificationTemplateController {
     private createNotificationTemplateUsecase: CreateNotificationTemplate,
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
+    private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
     private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
   ) {}
 
@@ -68,6 +71,19 @@ export class NotificationTemplateController {
         description: body.description,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+      })
+    );
+  }
+
+  @Delete('/:templateId')
+  @Roles(MemberRoleEnum.ADMIN)
+  deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string) {
+    return this.deleteTemplateByIdUsecase.execute(
+      GetNotificationTemplateCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        templateId,
       })
     );
   }

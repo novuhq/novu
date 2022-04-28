@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
+import * as mongooseDelete from 'mongoose-delete';
 import { schemaOptions } from '../schema-default.options';
 import { NotificationTemplateEntity } from './notification-template.entity';
 
@@ -38,7 +39,6 @@ const notificationTemplateSchema = new Schema(
         ],
       },
     ],
-
     steps: [
       {
         filters: [
@@ -97,6 +97,8 @@ notificationTemplateSchema.index({
   _organizationId: 1,
   'triggers.identifier': 1,
 });
+
+notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 interface INotificationTemplateDocument extends NotificationTemplateEntity, Document {
   _id: never;
