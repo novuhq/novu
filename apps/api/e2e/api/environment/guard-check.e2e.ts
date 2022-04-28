@@ -21,19 +21,18 @@ describe('Environment - Check Root Environment Guard', async () => {
     };
 
     const { body: envsBody } = await session.testAgent.get('/v1/environments');
-
     const envs = envsBody.data;
 
-    for (const env of envs) {
-      await session.switchEnvironment(env._id);
-      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
-      if (env._parentId) {
-        expect(body.message).to.contain('This action is only allowed in Develo');
-        expect(body.statusCode).to.eq(401);
-      } else {
-        expect(body.data).to.be.ok;
-      }
-    }
+    const devEnvironment = envs.find((i) => i.name === 'Development');
+    await session.switchEnvironment(devEnvironment._id);
+    const { body: devBody } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    expect(devBody.data).to.be.ok;
+
+    const prodEnvironment = envs.find((i) => !!i._parentId);
+    await session.switchEnvironment(prodEnvironment._id);
+    const { body: prodBody } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    expect(prodBody.message).to.contain('This action is only allowed in Development');
+    expect(prodBody.statusCode).to.eq(401);
 
     const allCreatedNotifications = await notificationTemplateRepository.find({
       _organizationId: session.organization._id,
