@@ -18,7 +18,7 @@ export class ApplyChange {
       _organizationId: command.organizationId,
     });
 
-    let changes = await this.changeRepository.find(
+    const changes = await this.changeRepository.find(
       {
         _parentId: parentChange._id,
       },
