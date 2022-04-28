@@ -14,9 +14,6 @@ export class DeleteNotificationTemplate {
     try {
       await this.notificationTemplateRepository.delete({ _id: command.templateId });
     } catch (e) {
-      if (e instanceof DalException) {
-        throw new ApiException(e.message);
-      }
       throw new ApiException('Could not find notification template with id ' + command.templateId);
     }
 
