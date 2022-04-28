@@ -25,7 +25,7 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
       accessor: 'change',
       Header: 'Change',
       Cell: ({ type, templateName, messageType }: any) => (
-        <div>
+        <div data-test-id="change-text">
           {type === ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Template Change</Text>
           )}
@@ -67,6 +67,7 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
           <div style={{ textAlign: 'right' }}>
             <Button
               variant="outline"
+              data-test-id="promote-btn"
               onClick={() => {
                 mutate(_id);
               }}
@@ -82,7 +83,7 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
   ];
 
   return (
-    <Table loading={loading} data={changes || []} columns={columns}>
+    <Table data-test-id="changes-table" loading={loading} data={changes || []} columns={columns}>
       {' '}
     </Table>
   );
