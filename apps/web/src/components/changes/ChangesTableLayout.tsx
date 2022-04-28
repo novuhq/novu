@@ -25,7 +25,7 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
       accessor: 'change',
       Header: 'Change',
       Cell: ({ type, templateName, messageType }: any) => (
-        <div data-test-id="change-text">
+        <div data-test-id="change-type">
           {type === ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Template Change</Text>
           )}
@@ -35,7 +35,7 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
           {type === ChangeEntityTypeEnum.NOTIFICATION_GROUP && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Notification Group Change</Text>
           )}
-          <Text rows={1} mt={5}>
+          <Text data-test-id="change-content" rows={1} mt={5}>
             {templateName}
             {messageType ? `, ${messageType}` : null}
           </Text>

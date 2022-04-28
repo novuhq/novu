@@ -3,51 +3,51 @@ describe('Changes Screen', function () {
     cy.initializeSession().as('session');
   });
 
-  it('should display notification templates list only in Development', function () {
-    cy.visit('/templates');
-    const templates = this.session.templates;
+  it('should display changes to promote ', function () {
+    createNotification();
 
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', templates.length);
+    cy.visit('/changes');
+    cy.getByTestId('changes-table').find('tbody tr').should('have.length', 1);
+
+    promoteNotification();
+    createNotification();
 
     switchEnvironment('Production');
+    cy.visit('/templates');
 
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 0);
+    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 1);
   });
 
-  it.only('fields should be disabled in Production', function () {
+  it('fields should be disabled in Production', function () {
     createNotification();
     promoteNotification();
 
     switchEnvironment('Production');
     cy.location('pathname').should('equal', '/templates');
 
-    cy.getByTestId('create-template-btn').should('be.disabled');
+    cy.getByTestId('create-template-btn').get('button').should('be.disabled');
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
   });
 
-  it.skip('badge', function () {
-    cy.visit('/templates');
-    const templates = this.session.templates;
+  it('should show correct count of pending changes and update real time', function () {
+    createNotification();
+    cy.getByTestId('side-nav-changes-count').contains('1');
 
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', templates.length);
+    createNotification();
+    cy.getByTestId('side-nav-changes-count').contains('2');
 
-    switchEnvironment('Production');
-
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 0);
+    promoteNotification();
+    cy.getByTestId('side-nav-changes-count').contains('1');
   });
 
-  it.skip('text change', function () {
-    cy.visit('/templates');
-    const templates = this.session.templates;
-
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', templates.length);
-
-    switchEnvironment('Production');
-
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 0);
+  it('should show correct type and description of change', function () {
+    createNotification();
+    cy.visit('/changes');
+    cy.getByTestId('change-type').contains('Template Change');
+    cy.getByTestId('change-content').contains('Test Notification Title');
   });
 
-  it.skip('history', function () {
+  it('should show history of changes', function () {
     createNotification();
     promoteNotification();
 
@@ -59,12 +59,11 @@ describe('Changes Screen', function () {
     cy.getByTestId('promote-btn').should('be.disabled');
   });
 
-  it('promote all btn', function () {
+  it('should promote all changes with promote all btn', function () {
     createNotification();
     createNotification();
 
     cy.visit('/changes');
-
     cy.getByTestId('changes-table').find('tbody tr').should('have.length', 2);
 
     cy.getByTestId('promote-all-btn').click({ force: true });
@@ -73,25 +72,9 @@ describe('Changes Screen', function () {
     cy.getByTestId('changes-table').find('tbody tr').should('have.length', 0);
 
     switchEnvironment('Production');
-    cy.visit('/templates');
 
+    cy.visit('/templates');
     cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 2);
-  });
-
-  it.skip('should display changes to promote ', function () {
-    createNotification();
-
-    cy.visit('/changes');
-
-    cy.getByTestId('changes-table').find('tbody tr').should('have.length', 1);
-
-    cy.getByTestId('promote-btn').click({ force: true });
-    cy.wait(500);
-
-    switchEnvironment('Production');
-    cy.visit('/templates');
-
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 1);
   });
 });
 
@@ -111,11 +94,12 @@ function createNotification() {
   cy.getByTestId('emailSubject').type('this is email subject');
 
   cy.getByTestId('submit-btn').click();
+  cy.getByTestId('trigger-snippet-btn').click();
   cy.wait(500);
 }
 
 function promoteNotification() {
   cy.visit('/changes');
-  cy.getByTestId('promote-btn').click({ force: true });
+  cy.getByTestId('promote-btn').eq(0).click({ force: true });
   cy.wait(500);
 }
