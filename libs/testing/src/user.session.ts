@@ -120,10 +120,19 @@ export class UserSession {
       ],
     });
 
+    let parentGroup;
+    if (parentId) {
+      parentGroup = await this.notificationGroupRepository.findOne({
+        _environmentId: parentId,
+        _organizationId: this.organization._id,
+      });
+    }
+
     await this.notificationGroupRepository.create({
       name: 'General',
       _environmentId: this.environment._id,
       _organizationId: this.organization._id,
+      _parentId: parentGroup?._id,
     });
 
     return this.environment;

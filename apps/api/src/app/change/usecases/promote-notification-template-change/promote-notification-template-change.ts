@@ -59,6 +59,7 @@ export class PromoteNotificationTemplateChange {
     const notificationGroup = await this.notificationGroupRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      _parentId: newItem._notificationGroupId,
     });
 
     if (!notificationGroup) {
