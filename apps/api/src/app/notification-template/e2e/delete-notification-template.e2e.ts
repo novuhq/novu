@@ -52,7 +52,7 @@ describe('Delete notification template by id - /notification-templates/:template
   });
 
   it('should fail for non-existing notification template', async function () {
-    const dummyId = '012345678912';
+    const dummyId = '5f6651112efc19f33b34fc39';
     const response = await session.testAgent.delete(`/v1/notification-templates/${dummyId}`).send();
 
     expect(response.body.message).to.contains('Could not find notification template with id');
