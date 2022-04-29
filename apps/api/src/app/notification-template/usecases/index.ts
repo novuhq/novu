@@ -3,6 +3,7 @@ import { UpdateNotificationTemplate } from './update-notification-template/updat
 import { GetNotificationTemplates } from './get-notification-templates/get-notification-templates.usecase';
 import { CreateNotificationTemplate } from './create-notification-template';
 import { GetNotificationTemplate } from './get-notification-template/get-notification-template.usecase';
+import { DeleteNotificationTemplate } from './delete-notification-template/delete-notification-template.usecase';
 
 export const USE_CASES = [
   //
@@ -11,4 +12,5 @@ export const USE_CASES = [
   GetNotificationTemplates,
   CreateNotificationTemplate,
   GetNotificationTemplate,
+  DeleteNotificationTemplate,
 ];
