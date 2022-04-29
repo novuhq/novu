@@ -62,14 +62,14 @@ export async function run(): Promise<void> {
         return current.name !== prod.name ? current : prev;
       }, environments[0]);
 
-      prod._parentId = dev._id;
-
       await environmentRepository.update(
         {
           _id: prod._id,
         },
         {
-          $set: prod,
+          $set: {
+            _parentId: dev._id,
+          },
         }
       );
     }
