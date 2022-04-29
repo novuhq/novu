@@ -19,7 +19,7 @@
     "@mantine/hooks": "^4.1.0",
     "@mantine/notifications": "^4.1.0",
     "@mantine/prism": "^4.1.0",
-    "@novu/shared": "^0.4.0-alpha.7",
+    "@novu/shared": "workspace:^0.4.0-alpha.7",
     "@sentry/react": "^6.3.1",
     "@sentry/tracing": "^6.3.1",
     "@storybook/addon-docs": "^6.4.19",
