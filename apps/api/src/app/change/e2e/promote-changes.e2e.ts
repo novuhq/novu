@@ -404,4 +404,54 @@ describe('Promote changes', () => {
 
     expect(data).to.eq(1);
   });
+
+  it('should count delete change', async () => {
+    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: session.notificationGroups[0]._id,
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email subject',
+          type: ChannelTypeEnum.EMAIL,
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'firstName',
+                  value: 'test value',
+                  operator: 'EQUAL',
+                },
+              ],
+            },
+          ],
+          content: [
+            {
+              type: 'text',
+              content: 'This is a sample text block',
+            },
+          ],
+        },
+      ],
+    };
+
+    const {
+      body: { data },
+    } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const notificationTemplateId = data._id;
+    await applyChanges();
+
+    await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`);
+
+    const {
+      body: { data: count },
+    } = await session.testAgent.get('/v1/changes/count');
+
+    expect(count).to.eq(1);
+  });
 });

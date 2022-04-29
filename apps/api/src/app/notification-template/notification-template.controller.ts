@@ -77,6 +77,7 @@ export class NotificationTemplateController {
   }
 
   @Delete('/:templateId')
+  @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
   deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string) {
     return this.deleteTemplateByIdUsecase.execute(
