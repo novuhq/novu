@@ -27,6 +27,10 @@ const environmentSchema = new Schema(
         },
       },
     ],
+    encrypted: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

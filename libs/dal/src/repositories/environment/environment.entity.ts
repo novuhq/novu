@@ -14,5 +14,7 @@ export class EnvironmentEntity {
 
   apiKeys: IApiKey[];
 
+  encrypted: boolean;
+
   _parentId: string;
 }
