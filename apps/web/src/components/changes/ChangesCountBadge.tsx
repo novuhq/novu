@@ -7,6 +7,8 @@ export const ChangesCountBadge = () => {
   const { data: changesCount = 0 } = useQuery<number>(QueryKeys.changesCount, getChangesCount);
 
   return changesCount ? (
-    <NotificationBadge data-test-id="side-nav-changes-count">{changesCount}</NotificationBadge>
+    <NotificationBadge>
+      <div data-test-id="side-nav-changes-count">{changesCount}</div>
+    </NotificationBadge>
   ) : null;
 };

@@ -44,6 +44,7 @@ export function PromoteChangesPage() {
         actions={
           <Button
             disabled={changes.length === 0}
+            data-test-id="promote-all-btn"
             loading={isLoading}
             onClick={() => {
               mutate(changes.map((change) => change._id));
