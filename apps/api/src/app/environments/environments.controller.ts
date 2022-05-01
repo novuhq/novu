@@ -20,9 +20,9 @@ import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environmen
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { UpdateEncryptionCommand } from './usecases/update-encryption/update-encryption.command';
-import { UpdateEncryptionBodyDto } from './dto/update-encryption.dto';
-import { UpdateEncryption } from './usecases/update-encryption/update-encryption.usecase';
+import { UpdateWidgetSettingsDto } from './dto/update-widget-settings.dto';
+import { UpdateWidgetSettings } from './usecases/update-widget-settings/update-widget-settings.usecase';
+import { UpdateWidgetSettingsCommand } from './usecases/update-widget-settings/update-widget-settings.command';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -33,7 +33,7 @@ export class EnvironmentsController {
     private getApiKeysUsecase: GetApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
-    private updateEncryptionUsecase: UpdateEncryption
+    private updateWidgetSettingsUsecase: UpdateWidgetSettings
   ) {}
 
   @Get('/me')
@@ -82,14 +82,14 @@ export class EnvironmentsController {
     return await this.getApiKeysUsecase.execute(command);
   }
 
-  @Put('/encrypt')
-  async updateEncryption(@UserSession() user: IJwtPayload, @Body() body: UpdateEncryptionBodyDto) {
-    const command = UpdateEncryptionCommand.create({
+  @Put('/widget/settings')
+  async updateWidgetSettings(@UserSession() user: IJwtPayload, @Body() body: UpdateWidgetSettingsDto) {
+    const command = UpdateWidgetSettingsCommand.create({
       organizationId: user.organizationId,
       environmentId: user.environmentId,
-      encrypted: body.encrypted,
+      widget: body.widget,
     });
 
-    return await this.updateEncryptionUsecase.execute(command);
+    return await this.updateWidgetSettingsUsecase.execute(command);
   }
 }

@@ -14,13 +14,13 @@ describe('Update Environment encryption - /environments/encryption (POST)', asyn
   });
 
   it('should set environment encryption from false to true', async () => {
-    await session.testAgent.put('/v1/environments/encrypt').send({
-      encrypted: true,
+    await session.testAgent.put('/v1/environments/widget/settings').send({
+      widget: { notificationCenterEncryption: true },
     });
 
     const updatedEnvironment = await environmentRepository.findById(session.environment._id);
 
-    expect(session.environment.encrypted).to.eq(false);
-    expect(updatedEnvironment.encrypted).to.eq(true);
+    expect(session.environment.widget.notificationCenterEncryption).to.eq(false);
+    expect(updatedEnvironment.widget.notificationCenterEncryption).to.eq(true);
   });
 });
