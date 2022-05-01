@@ -1,4 +1,13 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Post,
+  Put,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { EnvironmentEntity } from '@novu/dal';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -11,6 +20,9 @@ import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environmen
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UpdateEncryptionCommand } from './usecases/update-encryption/update-encryption.command';
+import { UpdateEncryptionBodyDto } from './dto/update-encryption.dto';
+import { UpdateEncryption } from './usecases/update-encryption/update-encryption.usecase';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -20,7 +32,8 @@ export class EnvironmentsController {
     private createEnvironmentUsecase: CreateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
-    private getMyEnvironmentsUsecase: GetMyEnvironments
+    private getMyEnvironmentsUsecase: GetMyEnvironments,
+    private updateEncryptionUsecase: UpdateEncryption
   ) {}
 
   @Get('/me')
@@ -67,5 +80,16 @@ export class EnvironmentsController {
     });
 
     return await this.getApiKeysUsecase.execute(command);
+  }
+
+  @Put('/encrypt')
+  async updateEncryption(@UserSession() user: IJwtPayload, @Body() body: UpdateEncryptionBodyDto) {
+    const command = UpdateEncryptionCommand.create({
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+      encrypted: body.encrypted,
+    });
+
+    return await this.updateEncryptionUsecase.execute(command);
   }
 }
