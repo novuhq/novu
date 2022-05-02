@@ -280,6 +280,32 @@ describe('Notifications Creator', function () {
     cy.getByTestId('emailSelector').click();
     cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
   });
+
+  it('should redirect to dev env for edit template', async function () {
+    cy.intercept('POST', '*/notification-templates').as('createTemplate');
+    cy.visit('/templates/create');
+
+    fillBasicNotificationDetails();
+    cy.getByTestId('submit-btn').click();
+
+    cy.wait('@createTemplate').then((res) => {
+      cy.getByTestId('trigger-snippet-btn').click();
+
+      cy.visit('/changes');
+      cy.getByTestId('promote-btn').eq(0).click({ force: true });
+      cy.wait(500);
+
+      cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
+      cy.wait(500);
+      cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
+
+      cy.location('pathname').should('not.equal', `/templates/edit/${res.response?.body.data._id}`);
+
+      cy.getByTestId('environment-switch').find(`input[value="Development"]`).click({ force: true });
+      cy.wait(500);
+      cy.location('pathname').should('equal', `/templates/edit/${res.response?.body.data._id}`);
+    });
+  });
 });
 
 function addChannel(channel: 'inApp' | 'email' | 'sms') {
