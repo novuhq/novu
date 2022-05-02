@@ -1,12 +1,13 @@
 import React from 'react';
-import { ActionIcon } from '@mantine/core';
+import { ActionIcon, InputWrapper } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useQuery } from 'react-query';
-import { Input, Text, Tooltip, colors } from '../../../design-system';
+import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';
 import { useEnvironment } from '../../../api/hooks/use-environment';
 import styled from 'styled-components';
+import { inputStyles } from '../../../design-system/config/inputs.styles';
 
 export const ApiKeysCard = () => {
   const clipboard = useClipboard({ timeout: 1000 });
@@ -19,50 +20,45 @@ export const ApiKeysCard = () => {
   return (
     <>
       <ParamContainer>
-        <SmallTitle weight="bold">Api Key</SmallTitle>
-        <Description>Use this api key to interact with the novu api</Description>
-        <Input
-          readOnly
-          type={'password'}
-          rightSection={
-            <Tooltip id-test={'Tooltip'} label={clipboard.copied ? 'Copied!' : 'Copy Key'}>
-              <ActionIcon variant="transparent" onClick={() => clipboard.copy(apiKey)}>
-                {clipboard.copied ? <Check /> : <Copy />}
-              </ActionIcon>
-            </Tooltip>
-          }
-          value={apiKey}
-          data-test-id="api-key-container"
-        />
+        <InputWrapper label="Api Key" description="Use this api key to interact with the novu api" styles={inputStyles}>
+          <Input
+            readOnly
+            type={'password'}
+            rightSection={
+              <Tooltip data-test-id={'Tooltip'} label={clipboard.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon variant="transparent" onClick={() => clipboard.copy(apiKey)}>
+                  {clipboard.copied ? <Check /> : <Copy />}
+                </ActionIcon>
+              </Tooltip>
+            }
+            value={apiKey}
+            data-test-id="api-key-container"
+          />
+        </InputWrapper>
       </ParamContainer>
       <ParamContainer>
-        <SmallTitle weight="bold">Application Identifier</SmallTitle>
-        <Description>A public key identifier that can be exposed to the client applications</Description>
-        <Input
-          readOnly
-          rightSection={
-            <Tooltip label={clipboard.copied ? 'Copied!' : 'Copy Key'}>
-              <ActionIcon variant="transparent" onClick={() => clipboard.copy(environmentIdentifier)}>
-                {clipboard.copied ? <Check /> : <Copy />}
-              </ActionIcon>
-            </Tooltip>
-          }
-          value={environmentIdentifier}
-          data-test-id="api-identifier"
-        />
+        <InputWrapper
+          label="Application Identifier"
+          description="A public key identifier that can be exposed to the client applications"
+          styles={inputStyles}
+        >
+          <Input
+            readOnly
+            rightSection={
+              <Tooltip label={clipboard.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon variant="transparent" onClick={() => clipboard.copy(environmentIdentifier)}>
+                  {clipboard.copied ? <Check /> : <Copy />}
+                </ActionIcon>
+              </Tooltip>
+            }
+            value={environmentIdentifier}
+            data-test-id="api-identifier"
+          />
+        </InputWrapper>
       </ParamContainer>
     </>
   );
 };
-
-const SmallTitle = styled(Text)`
-  padding-bottom: 4px;
-`;
-
-const Description = styled(Text)`
-  padding-bottom: 6px;
-  color: ${colors.B40};
-`;
 
 const ParamContainer = styled.div`
   max-width: 600px;
