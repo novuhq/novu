@@ -8,9 +8,7 @@ describe('Update Environment encryption - /environments/encryption (POST)', asyn
 
   before(async () => {
     session = new UserSession();
-    await session.initialize({
-      noEnvironment: true,
-    });
+    await session.initialize();
   });
 
   it('should set environment encryption from false to true', async () => {
