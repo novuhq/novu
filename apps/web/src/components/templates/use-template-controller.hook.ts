@@ -69,7 +69,7 @@ export function useTemplateController(templateId: string) {
     setValue,
     control,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = methods;
 
   const {
@@ -348,6 +348,7 @@ export function useTemplateController(templateId: string) {
     removeEmailMessage,
     errors,
     smsFields,
+    isDirty,
   };
 }
 
