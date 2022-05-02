@@ -3,6 +3,7 @@ import { IMessage, ISubscriberJwt, IOrganizationEntity } from '@novu/shared';
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
 export * from './hooks/use-socket.hook';
+export * from './hooks/use-notifications.hook';
 export { IMessage } from '@novu/shared';
 
 export interface IAuthContext {

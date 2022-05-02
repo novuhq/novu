@@ -6,10 +6,15 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { AuthService } from '../../services/auth.service';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class Login {
-  constructor(private userRepository: UserRepository, private authService: AuthService) {}
+  constructor(
+    private userRepository: UserRepository,
+    private authService: AuthService,
+    private analyticsService: AnalyticsService
+  ) {}
 
   async execute(command: LoginCommand) {
     const email = normalizeEmail(command.email);
@@ -19,6 +24,8 @@ export class Login {
 
     const isMatching = await bcrypt.compare(command.password, user.password);
     if (!isMatching) throw new ApiException('Wrong credentials provided');
+
+    this.analyticsService.upsertUser(user, user._id);
 
     return {
       token: await this.authService.generateUserToken(user),
