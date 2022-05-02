@@ -164,7 +164,7 @@ export function EmailMessageEditor({
           backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
           ...(readonly
             ? {
-                backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B60,
+                backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
                 color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
                 opacity: 0.6,
               }

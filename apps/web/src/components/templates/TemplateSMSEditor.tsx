@@ -83,8 +83,8 @@ const TextAreaStyles = (theme) => {
       fontSize: '12px',
     },
     disabled: {
-      backgroundColor: `${dark ? colors.B20 : colors.B60} !important`,
-      borderColor: `${dark ? colors.B30 : colors.B80} !important`,
+      backgroundColor: `${dark ? colors.B20 : colors.B98} !important`,
+      borderColor: `${dark ? colors.B30 : colors.BGLight} !important`,
       color: `${secondaryColor} !important`,
       '&::placeholder': {
         color: `${secondaryColor} !important`,
