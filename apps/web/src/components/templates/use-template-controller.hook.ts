@@ -11,7 +11,7 @@ import {
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useFormState } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { createTemplate, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
@@ -23,6 +23,7 @@ export function useTemplateController(templateId: string) {
     [ChannelTypeEnum.EMAIL]: false,
     [ChannelTypeEnum.SMS]: false,
   });
+
   const methods = useForm<IForm>({
     resolver: async (data) => {
       const errors: any = {};
@@ -110,6 +111,10 @@ export function useTemplateController(templateId: string) {
     { error: string; message: string; statusCode: number },
     { id: string; data: Partial<IUpdateNotificationTemplate> }
   >(({ id, data }) => updateTemplate(id, data));
+
+  useEffect(() => {
+    setValue('activeChannels', activeChannels);
+  }, [activeChannels]);
 
   useEffect(() => {
     if (template && template.steps) {
@@ -367,6 +372,7 @@ export interface ITemplateMessage {
 }
 
 export interface IForm {
+  activeChannels?: { [key: string]: boolean };
   notificationGroup: string;
   name: string;
   description: string;
