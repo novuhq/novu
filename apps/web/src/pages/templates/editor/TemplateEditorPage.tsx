@@ -81,7 +81,7 @@ export default function TemplateEditorPage() {
 
   useEffect(() => {
     if (environment && template) {
-      if (environment._id !== (template as any)._environmentId) {
+      if (environment._id !== template._environmentId && template._parentId) {
         navigate(`/templates/edit/${template._parentId}`);
       }
     }

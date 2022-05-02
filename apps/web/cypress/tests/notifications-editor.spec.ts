@@ -281,7 +281,7 @@ describe('Notifications Creator', function () {
     cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
   });
 
-  it.only('should redirect to dev env for edit template', async function () {
+  it('should redirect to dev env for edit template', async function () {
     cy.intercept('POST', '*/notification-templates').as('createTemplate');
     cy.visit('/templates/create');
 
