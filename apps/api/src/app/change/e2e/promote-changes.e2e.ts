@@ -10,6 +10,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { CreateNotificationTemplateDto } from '../../notification-template/dto/create-notification-template.dto';
 import { UpdateNotificationTemplateDto } from '../../notification-template/dto/update-notification-template.dto';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 
 describe('Promote changes', () => {
   let session: UserSession;
@@ -453,5 +454,50 @@ describe('Promote changes', () => {
     } = await session.testAgent.get('/v1/changes/count');
 
     expect(count).to.eq(1);
+  });
+
+  it('should promote notification group if it is not alredy promoted', async () => {
+    const {
+      body: { data: group },
+    } = await session.testAgent.post(`/v1/notification-groups`).send({
+      name: 'Test name',
+    });
+
+    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: group._id,
+      steps: [],
+    };
+
+    const {
+      body: { data },
+    } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const notificationTemplateId = data._id;
+    const changes = await changeRepository.find(
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        enabled: false,
+        _entityId: notificationTemplateId,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+      },
+      '',
+      {
+        sort: { createdAt: 1 },
+      }
+    );
+
+    await changes.reduce(async (prev, change) => {
+      await session.testAgent.post(`/v1/changes/${change._id}/apply`);
+    }, Promise.resolve());
+
+    const count = await changeRepository.count({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      enabled: false,
+    });
+    expect(count).to.eq(0);
   });
 });
