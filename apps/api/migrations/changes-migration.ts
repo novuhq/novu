@@ -96,7 +96,7 @@ export async function run(): Promise<void> {
     let change;
     console.log(`Found ${groups.length} notification groups`);
     for (const group of groups) {
-      const found = notificationGroupRepository.findOne({
+      const found = await notificationGroupRepository.findOne({
         _parentId: group._id,
       });
       if (!found) {
@@ -133,7 +133,7 @@ export async function run(): Promise<void> {
     });
     console.log(`Found ${messageTemplates.length} message templates`);
     for (const messageTemplate of messageTemplates) {
-      const found = messageTemplateRepository.findOne({
+      const found = await messageTemplateRepository.findOne({
         _parentId: messageTemplate._id,
       });
       if (!found) {
@@ -170,7 +170,7 @@ export async function run(): Promise<void> {
     });
     console.log(`Found ${notificationTemplates.length} notification templates`);
     for (const notificationTemplate of notificationTemplates) {
-      const found = notificationTemplateRepository.findOne({
+      const found = await notificationTemplateRepository.findOne({
         _parentId: notificationTemplate._id,
       });
       if (!found) {
