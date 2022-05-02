@@ -5,6 +5,8 @@ import { WIDGET_EMEBED_PATH } from '../../../config';
 import { useEnvironment } from '../../../api/hooks/use-environment';
 import { Security } from './components/Security';
 import styled from '@emotion/styled';
+import { InputWrapper } from '@mantine/core';
+import { inputStyles } from '../../../design-system/config/inputs.styles';
 
 export const InAppCenterCard = () => {
   const { environment } = useEnvironment();
@@ -25,32 +27,39 @@ export const InAppCenterCard = () => {
 
   return (
     <>
-      <StyledText weight="bold">In-App Widget Embed Code</StyledText>
-      <Description weight="bold">Copy this snippet to your code before the closing body tag.</Description>
-      <Description weight="bold">
-        Change the #notification-bell selector with the appropriate bell css selector in your app layout.
-      </Description>
-      <PrismContainer>
-        <Prism
-          styles={(theme) => ({
-            code: {
-              fontWeight: '400',
-              color: `${colors.B60} !important`,
-              backgroundColor: 'transparent !important',
-              border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
-              borderRadius: '7px',
-            },
-          })}
-          language="jsx"
-          data-test-id="embed-code-snippet"
-        >
-          {embedCode}
-        </Prism>
-      </PrismContainer>
+      <InputWrapper label={'In-App Widget Embed Code'} description={<DescriptionText />} styles={inputStyles}>
+        <PrismContainer>
+          <Prism
+            styles={(theme) => ({
+              code: {
+                fontWeight: '400',
+                color: `${colors.B60} !important`,
+                backgroundColor: 'transparent !important',
+                border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+                borderRadius: '7px',
+              },
+            })}
+            language="jsx"
+            data-test-id="embed-code-snippet"
+          >
+            {embedCode}
+          </Prism>
+        </PrismContainer>
+      </InputWrapper>
       <Security />
     </>
   );
 };
+
+function DescriptionText() {
+  return (
+    <div>
+      Copy this snippet to your code before the closing body tag.
+      <br />
+      Change the #notification-bell selector with the appropriate bell css selector in your app layout.
+    </div>
+  );
+}
 
 export const PrismContainer = styled.div`
   padding: 25px 0 32px 0;
@@ -58,11 +67,4 @@ export const PrismContainer = styled.div`
 
 export const StyledText = styled(Text)`
   padding: 17px 0 13px 0;
-`;
-
-export const Description = styled(Text)`
-  padding-bottom: 6px;
-  color: ${colors.B60};
-
-  }
 `;
