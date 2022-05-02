@@ -72,6 +72,7 @@ export function BrandingForm({
     const response = await axios.put(signedUrl, file, {
       headers: {
         'Content-Type': file.type,
+        Authorization: undefined,
       },
       transformRequest: [
         (data, headers) => {

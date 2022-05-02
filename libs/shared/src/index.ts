@@ -11,4 +11,5 @@ export * from './entities/log';
 export * from './entities/change';
 export * from './consts';
 export * from './ui';
+export * from './services';
 //

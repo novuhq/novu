@@ -4,20 +4,6 @@ export interface IEnvironment {
   _organizationId: string;
   _parentId?: string;
   identifier: string;
-  channels?: {
-    email?: {
-      senderEmail: string;
-      senderName: string;
-    };
-
-    sms?: {
-      twillio: {
-        authToken: string;
-        accountSid: string;
-        phoneNumber: string;
-      };
-    };
-  };
 
   branding?: {
     color: string;

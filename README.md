@@ -1,13 +1,14 @@
 
 <div align="center">
   
-  ![Logo Dark](https://user-images.githubusercontent.com/8872447/161003447-dab96279-a832-41a9-8a69-24967fdd64cd.png#gh-light-mode-only)
+  ![Logo Dark](https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png#gh-dark-mode-only)
+
   
 </div>
 
 <div align="center">
   
-  ![Logo Light](https://user-images.githubusercontent.com/8872447/161003750-0c71e956-7448-4876-a446-876fdb7017af.png#gh-dark-mode-only)
+  ![Logo Light](https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png#gh-light-mode-only)
   
 </div>
 
@@ -22,6 +23,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     <br />
     <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
     <br />
+
   <br/>
     <a href="https://github.com/novuhq/novu/issues">Report Bug</a>
     ·
@@ -29,7 +31,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
   <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a>
     ·
-    <a href="https://blog.novu.co/">Read our blog</a>
+    <a href="https://github.com/orgs/novuhq/projects/2">Roadmap</a>
   </p>
   
 ## ⭐️ Why
@@ -78,64 +80,6 @@ await novu.trigger('<TRIGGER_NAME>',
     },
   }
 );
-```
-
-# 📦 Stateless mode
-For simpler use cases, you can use the `@novu/stateless` library. This will require you to manage the templates content and providers registration. 
-
-## 📦 Install
-
-```bash
-npm install @novu/stateless
-```
-
-```bash
-yarn add @novu/stateless
-```
-
-## 🔨 Usage
-
-```ts
-import { NovuStateless, ChannelTypeEnum } from '@novu/stateless';
-import { SendgridEmailProvider } from '@novu/sendgrid';
-
-const novu = new NovuStateless();
-
-await novu.registerProvider(
-  new SendgridEmailProvider({
-    apiKey: process.env.SENDGRID_API_KEY,
-    from: 'sender@mail.com'
-  })
-);
-
-const passwordResetTemplate = await novu.registerTemplate({
-  id: 'password-reset',
-  messages: [
-    {
-      subject: 'Your password reset request',
-      channel: ChannelTypeEnum.EMAIL,
-      template: `
-          Hi {{firstName}}!
-          
-          To reset your password click <a href="{{resetLink}}">here.</a>
-          
-          {{#if organization}}
-            <img src="{{organization.logo}}" />
-          {{/if}}
-      `
-    },
-  ]
-});
-
-await novu.trigger('<REPLACE_WITH_EVENT_NAME>', {
-  $user_id: "<USER IDENTIFIER>",
-  $email: "test@email.com",
-  firstName: "John",
-  lastName: "Doe",
-  organization: {
-    logo: 'https://evilcorp.com/logo.png'
-  }
-});
 ```
 
 ## Providers

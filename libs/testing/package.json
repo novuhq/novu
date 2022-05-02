@@ -1,6 +1,6 @@
 {
   "name": "@novu/testing",
-  "version": "0.4.0-alpha.8",
+  "version": "0.4.0-alpha.10",
   "description": "",
   "private": true,
   "scripts": {
@@ -20,9 +20,9 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.4.0-alpha.8",
+    "@novu/dal": "^0.4.0-alpha.10",
     "@novu/node": "^0.4.0-alpha.7",
-    "@novu/shared": "workspace:^0.4.0-alpha.7",
+    "@novu/shared": "^0.4.0-alpha.10",
     "JSONStream": "^1.3.5",
     "async": "^3.2.0",
     "axios": "0.25.0",
