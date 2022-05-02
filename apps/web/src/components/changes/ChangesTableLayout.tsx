@@ -8,17 +8,29 @@ import { useMutation, useQueryClient } from 'react-query';
 import { promoteChange } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { useEffect } from 'react';
+import { showNotification } from '@mantine/notifications';
 
 export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: boolean }) => {
   const queryClient = useQueryClient();
   const { colorScheme } = useMantineColorScheme();
-  const { mutate, isLoading } = useMutation(promoteChange, {
+  const { mutate, isLoading, error } = useMutation(promoteChange, {
     onSuccess: () => {
       queryClient.refetchQueries([QueryKeys.currentUnpromotedChanges]);
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
       queryClient.refetchQueries([QueryKeys.changesCount]);
     },
   });
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+    showNotification({
+      message: (error as Error).message,
+      color: 'red',
+    });
+  }, [error]);
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
