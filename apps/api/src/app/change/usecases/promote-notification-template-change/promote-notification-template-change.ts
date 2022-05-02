@@ -1,5 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { ApplyChange } from '../apply-change/apply-change.usecase';
+import { ChangeRepository } from '@novu/dal';
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -7,13 +9,17 @@ import {
   NotificationStepEntity,
   NotificationGroupRepository,
 } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ApplyChangeCommand } from '../apply-change/apply-change.command';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
-    private notificationGroupRepository: NotificationGroupRepository
+    private notificationGroupRepository: NotificationGroupRepository,
+    @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
+    private changeRepository: ChangeRepository
   ) {}
 
   async execute(command: PromoteTypeChangeCommand) {
@@ -56,16 +62,33 @@ export class PromoteNotificationTemplateChange {
       );
     }
 
-    const notificationGroup = await this.notificationGroupRepository.findOne({
+    let notificationGroup = await this.notificationGroupRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _parentId: newItem._notificationGroupId,
     });
 
     if (!notificationGroup) {
-      throw new Error(
-        `Notification group for environment ${command.environmentId} and organization ${command.organizationId} does not exists`
+      const changes = await this.changeRepository.getEntityChanges(
+        ChangeEntityTypeEnum.NOTIFICATION_GROUP,
+        newItem._notificationGroupId
       );
+
+      for (const change of changes) {
+        await this.applyChange.execute(
+          ApplyChangeCommand.create({
+            changeId: change._id,
+            environmentId: change._environmentId,
+            organizationId: change._organizationId,
+            userId: command.userId,
+          })
+        );
+      }
+      notificationGroup = await this.notificationGroupRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _parentId: newItem._notificationGroupId,
+      });
     }
 
     if (!item) {
