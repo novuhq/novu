@@ -6,6 +6,8 @@ export interface INotificationTemplate {
   name: string;
   description?: string;
   _notificationGroupId: string;
+  _parentId?: string;
+  _environmentId: string;
   tags: string[];
   draft: boolean;
   active: boolean;

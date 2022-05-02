@@ -2,7 +2,7 @@ import { FormProvider } from 'react-hook-form';
 import { Grid, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
@@ -23,7 +23,8 @@ import { useEnvController } from '../../../store/use-env-controller';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
-  const { readonly } = useEnvController();
+  const navigate = useNavigate();
+  const { readonly, environment } = useEnvController();
   const [activePage, setActivePage] = useState<string>('Settings');
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { integrations, loading: isIntegrationsLoading } = useActiveIntegrations();
@@ -77,6 +78,14 @@ export default function TemplateEditorPage() {
       }
     }
   }, [template]);
+
+  useEffect(() => {
+    if (environment && template) {
+      if (environment._id !== (template as any)._environmentId) {
+        navigate(`/templates/edit/${template._parentId}`);
+      }
+    }
+  }, [environment, template]);
 
   if (isLoading) return null;
 
