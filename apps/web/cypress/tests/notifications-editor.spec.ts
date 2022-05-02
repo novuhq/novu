@@ -191,8 +191,8 @@ describe('Notifications Creator', function () {
 
   it('should validate form inputs', function () {
     cy.visit('/templates/create');
+    cy.getByTestId('description').type('this is a notification template description');
     cy.getByTestId('submit-btn').click();
-
     cy.getByTestId('title').should('have.class', 'mantine-TextInput-invalid');
     addChannel('inApp');
 
