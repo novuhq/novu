@@ -2,8 +2,8 @@ FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
-RUN npm i pnpm -g --loglevel notice --force
-RUN npm i pm2 -g
+RUN npm i pnpm@6.32.11 -g --loglevel notice --force
+RUN pnpm i pm2 -g
 
 COPY package.json .
 
