@@ -48,7 +48,7 @@ export function InAppEditorBlock({
   }
 
   return (
-    <InAppWidgetPreview readonly>
+    <InAppWidgetPreview readonly={readonly}>
       <div style={{ position: 'relative' }}>
         <div
           ref={ref}
