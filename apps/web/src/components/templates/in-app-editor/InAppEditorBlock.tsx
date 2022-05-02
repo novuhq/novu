@@ -48,7 +48,7 @@ export function InAppEditorBlock({
   }
 
   return (
-    <InAppWidgetPreview>
+    <InAppWidgetPreview readonly={readonly}>
       <div style={{ position: 'relative' }}>
         <div
           ref={ref}
@@ -66,7 +66,7 @@ export function InAppEditorBlock({
             backgroundColor: 'transparent',
             ...(readonly
               ? {
-                  backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B60,
+                  backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
                   color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
                   opacity: 0.6,
                 }
