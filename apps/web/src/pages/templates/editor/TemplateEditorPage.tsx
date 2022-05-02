@@ -59,6 +59,7 @@ export default function TemplateEditorPage() {
     smsFields,
     methods,
     removeEmailMessage,
+    isDirty,
   } = useTemplateController(templateId);
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
@@ -106,7 +107,7 @@ export default function TemplateEditorPage() {
                     mr={20}
                     data-test-id="submit-btn"
                     loading={isLoading || isUpdateLoading}
-                    disabled={readonly || loadingEditTemplate || isLoading}
+                    disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
                     submit
                   >
                     {editMode ? 'Update' : 'Create'}
