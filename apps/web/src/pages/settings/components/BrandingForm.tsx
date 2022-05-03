@@ -78,7 +78,7 @@ export function BrandingForm({
         (data, headers) => {
           if (headers) {
             // eslint-disable-next-line
-            delete headers.common.Authorization;
+            delete headers.Authorization;
           }
 
           return data;
