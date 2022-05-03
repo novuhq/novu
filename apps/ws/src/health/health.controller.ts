@@ -14,8 +14,6 @@ export class HealthController {
   @Get()
   @HealthCheck()
   async healthCheck() {
-    console.log('Requesting health-check');
-
     const result = await this.healthCheckService.check([
       async () => {
         return {
@@ -26,7 +24,6 @@ export class HealthController {
         };
       },
     ]);
-    console.log(result);
 
     return result;
   }
