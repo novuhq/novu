@@ -1,17 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
+import { colors } from '../../../design-system';
+import { useMantineTheme } from '@mantine/core';
 
 export function InAppEditorBlock({
   contentPlaceholder,
   onChange,
   value,
+  readonly,
 }: {
   contentPlaceholder: string;
   value: string;
   onChange: (data: string) => void;
+  readonly: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const theme = useMantineTheme();
   const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!value);
   const [content, setContent] = useState<string>(value);
 
@@ -43,12 +48,12 @@ export function InAppEditorBlock({
   }
 
   return (
-    <InAppWidgetPreview>
+    <InAppWidgetPreview readonly={readonly}>
       <div style={{ position: 'relative' }}>
         <div
           ref={ref}
           data-test-id="in-app-editor-content-input"
-          contentEditable
+          contentEditable={!readonly}
           dangerouslySetInnerHTML={{
             __html: content,
           }}
@@ -59,6 +64,13 @@ export function InAppEditorBlock({
             width: '100%',
             outline: 'none',
             backgroundColor: 'transparent',
+            ...(readonly
+              ? {
+                  backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
+                  color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
+                  opacity: 0.6,
+                }
+              : {}),
           }}
         />
         <PlaceHolder show={visiblePlaceholder}>{contentPlaceholder}</PlaceHolder>

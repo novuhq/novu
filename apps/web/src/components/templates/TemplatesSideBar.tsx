@@ -19,6 +19,7 @@ export function TemplatesSideBar({
   toggleChannel,
   channelButtons,
   showTriggerSection = false,
+  readonly = false,
   showErrors,
 }: {
   activeChannels: { [p: string]: boolean };
@@ -27,6 +28,7 @@ export function TemplatesSideBar({
   toggleChannel: (channel: ChannelTypeEnum, active: boolean) => void;
   channelButtons: string[];
   showTriggerSection: boolean;
+  readonly: boolean;
   showErrors: boolean;
 }) {
   const {
@@ -75,6 +77,7 @@ export function TemplatesSideBar({
           changeTab={changeTab}
           switchButton={(checked) => toggleChannel(link.tabKey, checked)}
           checked={activeChannels[link.tabKey]}
+          readonly={readonly}
           key={link.tabKey}
         />
       )
@@ -103,15 +106,17 @@ export function TemplatesSideBar({
         </Text>
         <div>
           {links}
-          <TemplateButton
-            tabKey="Add"
-            changeTab={changeTab}
-            testId="add-channel"
-            Icon={PlusGradient}
-            active={activeTab === 'Add'}
-            description="Add a new channel to this template"
-            label="Add Channel"
-          />
+          {!readonly && (
+            <TemplateButton
+              tabKey="Add"
+              changeTab={changeTab}
+              testId="add-channel"
+              Icon={PlusGradient}
+              active={activeTab === 'Add'}
+              description="Add a new channel to this template"
+              label="Add Channel"
+            />
+          )}
         </div>
       </NavSection>
       {showTriggerSection && (

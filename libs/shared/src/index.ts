@@ -8,6 +8,7 @@ export * from './types/builder/builder.types';
 export * from './entities/notification';
 export * from './entities/message-template';
 export * from './entities/log';
+export * from './entities/change';
 export * from './consts';
 export * from './ui';
 export * from './services';

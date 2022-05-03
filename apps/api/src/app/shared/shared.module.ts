@@ -13,6 +13,7 @@ import {
   MemberRepository,
   LogRepository,
   IntegrationRepository,
+  ChangeRepository,
 } from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { MailService } from './services/mail/mail.service';
@@ -32,6 +33,7 @@ const DAL_MODELS = [
   MemberRepository,
   LogRepository,
   IntegrationRepository,
+  ChangeRepository,
 ];
 
 const dalService = new DalService();
