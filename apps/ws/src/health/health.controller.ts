@@ -15,13 +15,16 @@ export class HealthController {
   @HealthCheck()
   healthCheck() {
     return this.healthCheckService.check([
-      async () => {
-        return {
-          db: {
-            status: this.dalService.connection.readyState === 1 ? 'up' : 'down',
-          },
-        };
-      },
+      /*
+       *   async () => {
+       * return {
+       *   db: {
+       *    status: this.dalService.connection.readyState === 1 ? 'up' : 'down',
+       *  },
+       *};
+       *   },
+       *
+       */
       async () => {
         return {
           apiVersion: {
