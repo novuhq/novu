@@ -15,14 +15,16 @@ export class HealthController {
   @HealthCheck()
   healthCheck() {
     return this.healthCheckService.check([
-      async () => {
-        return {
-          db: {
-            status: this.dalService.connection.readyState === 1 ? 'up' : 'down',
-          },
-        };
-      },
-      async () => this.healthIndicator.pingCheck('dns', 'https://google.com'),
+      /*
+       *   async () => {
+       * return {
+       *   db: {
+       *    status: this.dalService.connection.readyState === 1 ? 'up' : 'down',
+       *  },
+       *};
+       *   },
+       *
+       */
       async () => {
         return {
           apiVersion: {

@@ -14,6 +14,7 @@ import {
   OrganizationEntity,
   NotificationGroupEntity,
   EnvironmentRepository,
+  NotificationGroupRepository,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -26,6 +27,7 @@ import { IntegrationService } from './integration.service';
 export class UserSession {
   private userRepository = new UserRepository();
   private environmentRepository = new EnvironmentRepository();
+  private notificationGroupRepository = new NotificationGroupRepository();
 
   token: string;
 
@@ -67,8 +69,10 @@ export class UserSession {
 
     if (!options.noOrganization) {
       if (!options?.noEnvironment) {
-        await this.createEnvironment('Development');
-        await this.createEnvironment('Production', this.environment._parentId);
+        const environment = await this.createEnvironment('Development');
+        await this.createEnvironment('Production', this.environment._id);
+        this.environment = environment;
+        this.apiKey = this.environment.apiKeys[0].key;
 
         await this.createIntegration();
       }
@@ -103,7 +107,6 @@ export class UserSession {
   }
 
   async createEnvironment(name = 'Test environment', parentId: string = undefined) {
-    const key = uuid();
     this.environment = await this.environmentRepository.create({
       name,
       identifier: uuid(),
@@ -111,13 +114,26 @@ export class UserSession {
       _organizationId: this.organization._id,
       apiKeys: [
         {
-          key: key,
+          key: uuid(),
           _userId: this.user._id,
         },
       ],
     });
 
-    this.apiKey = key;
+    let parentGroup;
+    if (parentId) {
+      parentGroup = await this.notificationGroupRepository.findOne({
+        _environmentId: parentId,
+        _organizationId: this.organization._id,
+      });
+    }
+
+    await this.notificationGroupRepository.create({
+      name: 'General',
+      _environmentId: this.environment._id,
+      _organizationId: this.organization._id,
+      _parentId: parentGroup?._id,
+    });
 
     return this.environment;
   }
@@ -197,11 +213,20 @@ export class UserSession {
     this.organization = await organizationService.createOrganization();
     await organizationService.addMember(this.organization._id, this.user._id);
 
-    if (!this.environment) {
-      await this.createEnvironment();
-    }
-
     return this.organization;
+  }
+
+  async switchEnvironment(environmentId: string) {
+    const environmentService = new EnvironmentService();
+
+    const environment = await environmentService.getEnvironment(environmentId);
+
+    if (environment) {
+      this.environment = environment;
+      await this.testAgent.post(`/v1/auth/environments/${environmentId}/switch`);
+
+      await this.fetchJWT();
+    }
   }
 
   async triggerEvent(triggerName: string, to: TriggerRecipientsType, payload = {}) {

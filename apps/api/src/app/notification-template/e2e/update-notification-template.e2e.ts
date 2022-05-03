@@ -1,9 +1,11 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { ChannelTypeEnum, INotificationTemplate, IUpdateNotificationTemplate } from '@novu/shared';
+import { ChangeRepository } from '@novu/dal';
 
 describe('Update notification template by id - /notification-templates/:templateId (PUT)', async () => {
   let session: UserSession;
+  const changeRepository: ChangeRepository = new ChangeRepository();
 
   before(async () => {
     session = new UserSession();
@@ -34,6 +36,11 @@ describe('Update notification template by id - /notification-templates/:template
     expect(foundTemplate.description).to.equal(template.description);
     expect(foundTemplate.steps.length).to.equal(1);
     expect(foundTemplate.steps[0].template.content).to.equal(update.steps[0].content);
+
+    const change = await changeRepository.findOne({
+      _entityId: foundTemplate._id,
+    });
+    expect(change._entityId).to.eq(foundTemplate._id);
   });
 
   it('should generate new variables on update', async function () {

@@ -8,7 +8,8 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto } from '@novu/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto, IEmailBlock } from '@novu/shared';
+import { MessageFilter } from './create-notification-template.dto';
 
 export class ChannelCTADto {
   @IsEnum(ChannelCTATypeEnum)
@@ -20,17 +21,34 @@ export class ChannelCTADto {
 }
 
 export class NotificationStepDto {
-  @IsDefined()
+  @IsOptional()
   @IsEnum(ChannelTypeEnum)
   type: ChannelTypeEnum;
 
-  @IsString()
   @IsDefined()
-  content: string;
+  content: string | IEmailBlock[];
 
-  @IsDefined()
+  @IsOptional()
+  contentType?: 'editor' | 'customHtml';
+
+  @IsOptional()
   @ValidateNested()
   cta: ChannelCTADto;
+
+  @IsOptional()
+  name?: string;
+
+  @IsOptional()
+  subject?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested()
+  filters?: MessageFilter[];
+
+  @IsMongoId()
+  @IsOptional()
+  _id?: string;
 }
 
 export class UpdateNotificationTemplateDto implements ICreateNotificationTemplateDto {
@@ -55,4 +73,6 @@ export class UpdateNotificationTemplateDto implements ICreateNotificationTemplat
   @IsOptional()
   @IsMongoId()
   notificationGroupId: string;
+
+  active?: boolean;
 }

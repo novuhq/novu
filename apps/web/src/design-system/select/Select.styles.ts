@@ -1,10 +1,13 @@
 import { createStyles, MantineTheme } from '@mantine/core';
+import { colors } from '../config';
 
-export default createStyles((theme: MantineTheme) => {
+export default createStyles((theme: MantineTheme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
+  const rightSection = getRef('rightSection');
 
   return {
     rightSection: {
+      ref: rightSection,
       color: `${dark ? theme.white : theme.colors.gray[8]} !important`,
       pointerEvents: 'none',
       marginRight: '2.5px',
@@ -42,6 +45,11 @@ export default createStyles((theme: MantineTheme) => {
     },
     hovered: {
       backgroundColor: dark ? theme.colors.dark[5] : theme.colors.gray[2],
+    },
+    disabled: {
+      [`& + .${rightSection}`]: {
+        color: `${colors.B70} !important`,
+      },
     },
   };
 });

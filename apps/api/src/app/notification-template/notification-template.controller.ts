@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Delete,
   Param,
   Post,
   Put,
@@ -19,12 +20,14 @@ import { CreateNotificationTemplateDto } from './dto/create-notification-templat
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
+import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
 import { UpdateNotificationTemplateCommand } from './usecases/update-notification-template/update-notification-template.command';
 import { UpdateNotificationTemplateDto } from './dto/update-notification-template.dto';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { ChangeTemplateStatusDto } from './dto/change-template-status.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -35,6 +38,7 @@ export class NotificationTemplateController {
     private createNotificationTemplateUsecase: CreateNotificationTemplate,
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
+    private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
     private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
   ) {}
 
@@ -52,12 +56,12 @@ export class NotificationTemplateController {
 
   @Put('/:templateId')
   @Roles(MemberRoleEnum.ADMIN)
-  updateTemplateById(
+  async updateTemplateById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string,
     @Body() body: UpdateNotificationTemplateDto
   ) {
-    return this.updateTemplateByIdUsecase.execute(
+    return await this.updateTemplateByIdUsecase.execute(
       UpdateNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -68,6 +72,20 @@ export class NotificationTemplateController {
         description: body.description,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+      })
+    );
+  }
+
+  @Delete('/:templateId')
+  @UseGuards(RootEnvironmentGuard)
+  @Roles(MemberRoleEnum.ADMIN)
+  deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string) {
+    return this.deleteTemplateByIdUsecase.execute(
+      GetNotificationTemplateCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        templateId,
       })
     );
   }
@@ -86,6 +104,7 @@ export class NotificationTemplateController {
   }
 
   @Post('')
+  @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(@UserSession() user: IJwtPayload, @Body() body: CreateNotificationTemplateDto) {
     return this.createNotificationTemplateUsecase.execute(
@@ -105,6 +124,7 @@ export class NotificationTemplateController {
   }
 
   @Put('/:templateId/status')
+  @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
   changeActiveStatus(
     @UserSession() user: IJwtPayload,

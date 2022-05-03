@@ -1,11 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
+import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
+import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { CreateChange } from '../../../change/usecases/create-change.usecase';
 
 @Injectable()
 export class UpdateMessageTemplate {
-  constructor(private messageTemplateRepository: MessageTemplateRepository) {}
+  constructor(
+    private messageTemplateRepository: MessageTemplateRepository,
+    private createChange: CreateChange,
+    private changeRepository: ChangeRepository
+  ) {}
 
   async execute(command: UpdateMessageTemplateCommand): Promise<MessageTemplateEntity> {
     const existingTemplate = await this.messageTemplateRepository.findById(command.templateId);
@@ -47,6 +54,22 @@ export class UpdateMessageTemplate {
       }
     );
 
-    return await this.messageTemplateRepository.findById(command.templateId);
+    const item = await this.messageTemplateRepository.findById(command.templateId);
+
+    const changeId = await this.changeRepository.getChangeId(ChangeEntityTypeEnum.MESSAGE_TEMPLATE, item._id);
+
+    await this.createChange.execute(
+      CreateChangeCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        item,
+        type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+        parentChangeId: command.parentChangeId,
+        changeId,
+      })
+    );
+
+    return item;
   }
 }

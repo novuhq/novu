@@ -18,6 +18,7 @@ export { TextAlignment } from './general/TextAlignment';
 export { CheckCircle } from './general/CheckCircle';
 export { Box } from './general/Box';
 export { CheckCircleOutlined } from './general/CheckCircleOutlined';
+export { Repeat } from './general/Repeat';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';

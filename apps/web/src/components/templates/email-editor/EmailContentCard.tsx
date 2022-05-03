@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export function EmailContentCard({
   index,
@@ -19,6 +20,7 @@ export function EmailContentCard({
   organization: IOrganizationEntity | undefined;
   isIntegrationActive: boolean;
 }) {
+  const { readonly } = useEnvController();
   const {
     control,
     formState: { errors },
@@ -53,6 +55,7 @@ export function EmailContentCard({
                 branding={organization?.branding}
                 onChange={field.onChange}
                 value={field.value as IEmailBlock[]}
+                readonly={readonly}
               />
             );
           }}
@@ -86,6 +89,7 @@ export function EmailContentCard({
               mb={40}
               error={errors[`emailMessages.${index}.template.subject`]}
               label="Subject line"
+              disabled={readonly}
               value={field.value}
               placeholder="Type the email subject..."
               data-test-id="emailSubject"

@@ -15,6 +15,8 @@ export class MessageTemplateEntity {
 
   contentType?: 'editor' | 'customHtml';
 
+  active?: boolean;
+
   subject?: string;
 
   name?: string;
@@ -25,6 +27,8 @@ export class MessageTemplateEntity {
       url?: string;
     };
   };
+
+  _parentId?: string;
 }
 
 export class IEmailBlock {
