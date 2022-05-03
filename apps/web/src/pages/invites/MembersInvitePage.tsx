@@ -66,7 +66,7 @@ export function MembersInvitePage() {
           return (
             <MemberRowWrapper key={member._id}>
               <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={member.user?.profilePicture} radius="xl">
-                {capitalize(member.user?.firstName || '')} {capitalize(member.user?.lastName || '')}
+                {capitalize((member.user?.firstName || '')[0])} {capitalize((member.user?.lastName || '')[0])}
               </Avatar>
               <Group direction="column" spacing={5}>
                 <Text className={classes.heading}>
