@@ -33,9 +33,9 @@ describe('Promote changes', () => {
       }
     );
 
-    await changes.reduce(async (prev, change) => {
+    for (const change of changes) {
       await session.testAgent.post(`/v1/changes/${change._id}/apply`);
-    }, Promise.resolve());
+    }
   };
 
   beforeEach(async () => {
@@ -175,6 +175,7 @@ describe('Promote changes', () => {
     };
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    await applyChanges();
 
     const notificationTemplateId = body.data._id;
 
