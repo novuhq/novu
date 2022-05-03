@@ -66,12 +66,14 @@ export function MembersInvitePage() {
           return (
             <MemberRowWrapper key={member._id}>
               <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={member.user?.profilePicture} radius="xl">
-                {capitalize(member.user?.firstName[0])} {capitalize(member.user?.lastName[0])}
+                {capitalize(member.user?.firstName || '')} {capitalize(member.user?.lastName || '')}
               </Avatar>
               <Group direction="column" spacing={5}>
                 <Text className={classes.heading}>
                   {member.user
-                    ? `${capitalize(member.user?.firstName as string)} ${capitalize(member.user?.lastName as string)}`
+                    ? `${capitalize((member.user?.firstName || '') as string)} ${capitalize(
+                        (member.user?.lastName || '') as string
+                      )}`
                     : member.invite.email}
                 </Text>
                 <Text className={classes.subHeading}>{member.user?.email ? member?.user.email : null}</Text>
