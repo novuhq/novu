@@ -23,6 +23,7 @@ import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN } from './config/index';
+import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -135,6 +136,14 @@ function App() {
                       </RequiredAuth>
                     }
                   />
+                  <Route
+                    path="/changes"
+                    element={
+                      <RequiredAuth>
+                        <PromoteChangesPage />
+                      </RequiredAuth>
+                    }
+                  />
                 </Route>
               </Routes>
             </ThemeHandlerComponent>
@@ -175,7 +184,7 @@ function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
 }
 
 function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
-  const { token, setToken, user, organization, logout } = useAuthController();
+  const { token, setToken, user, organization, logout, jwtPayload } = useAuthController();
 
   return (
     <AuthContext.Provider
@@ -185,6 +194,7 @@ function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
         token,
         logout,
         setToken,
+        jwtPayload,
       }}
     >
       {children}

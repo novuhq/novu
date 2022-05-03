@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
@@ -7,12 +8,15 @@ import { CreateNotificationTemplateCommand } from './create-notification-templat
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
+import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { CreateChange } from '../../../change/usecases/create-change.usecase';
 
 @Injectable()
 export class CreateNotificationTemplate {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private createMessageTemplate: CreateMessageTemplate
+    private createMessageTemplate: CreateMessageTemplate,
+    private createChange: CreateChange
   ) {}
 
   async execute(command: CreateNotificationTemplateCommand) {
@@ -43,6 +47,7 @@ export class CreateNotificationTemplate {
       }),
     };
 
+    const parentChangeId: string = NotificationTemplateRepository.createObjectId();
     const templateSteps = [];
 
     for (const message of command.steps) {
@@ -57,6 +62,7 @@ export class CreateNotificationTemplate {
           userId: command.userId,
           cta: message.cta,
           subject: message.subject,
+          parentChangeId,
         })
       );
 
@@ -79,6 +85,23 @@ export class CreateNotificationTemplate {
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
     });
+
+    const item = await this.notificationTemplateRepository.findOne({
+      _id: savedTemplate._id,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    await this.createChange.execute(
+      CreateChangeCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+        item,
+        changeId: parentChangeId,
+      })
+    );
 
     return await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
   }

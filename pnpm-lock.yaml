@@ -120,7 +120,7 @@ importers:
       '@novu/sendgrid': ^0.4.0-alpha.8
       '@novu/sendinblue': ^0.4.0-alpha.8
       '@novu/ses': ^0.4.0-alpha.8
-      '@novu/shared': ^0.4.0-alpha.10
+      '@novu/shared': workspace:^0.4.0-alpha.10
       '@novu/sms77': ^0.4.0-alpha.8
       '@novu/sns': ^0.4.0-alpha.8
       '@novu/stateless': ^0.4.0-alpha.8
@@ -166,6 +166,7 @@ importers:
       passport: ^0.4.1
       passport-github2: ^0.1.12
       passport-jwt: ^4.0.0
+      recursive-diff: ^1.0.8
       reflect-metadata: ^0.1.13
       rxjs: ^6.5.5
       sanitize-html: ^2.4.0
@@ -236,6 +237,7 @@ importers:
       passport: 0.4.1
       passport-github2: 0.1.12
       passport-jwt: 4.0.0
+      recursive-diff: 1.0.8
       reflect-metadata: 0.1.13
       rxjs: 6.6.7
       sanitize-html: 2.7.0
@@ -456,7 +458,7 @@ importers:
       '@novu/dal': ^0.4.0-alpha.10
       '@novu/embed': ^0.4.0-alpha.9
       '@novu/notification-center': ^0.4.0-alpha.11
-      '@novu/shared': ^0.4.0-alpha.10
+      '@novu/shared': workspace:^0.4.0-alpha.10
       '@novu/testing': ^0.4.0-alpha.10
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
@@ -38913,6 +38915,10 @@ packages:
     engines: {node: '>= 0.10'}
     dependencies:
       resolve: 1.22.0
+
+  /recursive-diff/1.0.8:
+    resolution: {integrity: sha512-WfUcVao/HRsZZjI96PjcefTZ87rsxrgryIlWJB2UrHs4v3kFFzvMOm801a1WoqG+IAsLKJPsGlvubR74EDqGWQ==}
+    dev: false
 
   /recursive-readdir/2.2.2:
     resolution: {integrity: sha512-nRCcW9Sj7NuZwa2XvH9co8NPeXUBhZP7CRKJtU+cS6PW9FpCIFoI5ib0NT1ZrbNuPoRy0ylyCaUL8Gih4LSyFg==}

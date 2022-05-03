@@ -15,6 +15,7 @@ interface ITemplateButtonProps {
   tabKey: string;
   testId?: string;
   checked?: boolean;
+  readonly?: boolean;
   switchButton?: (boolean) => void;
   changeTab: (string) => void;
   errors?: boolean | string;
@@ -28,6 +29,7 @@ export function TemplateButton({
   action = false,
   switchButton,
   checked = false,
+  readonly = false,
   label,
   Icon,
   testId,
@@ -64,7 +66,9 @@ export function TemplateButton({
           </LeftContainerWrapper>
 
           <ActionWrapper>
-            {action && <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />}
+            {action && !readonly && (
+              <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
+            )}
           </ActionWrapper>
         </ButtonWrapper>
 

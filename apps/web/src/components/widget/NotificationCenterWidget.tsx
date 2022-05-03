@@ -1,12 +1,12 @@
 import { NotificationBell, NovuProvider, PopoverNotificationCenter } from '@novu/notification-center';
-import { useEnvironment } from '../../api/hooks/use-environment';
 import { IUserEntity } from '@novu/shared';
 import { useMantineColorScheme } from '@mantine/core';
 import React from 'react';
 import { API_ROOT, WS_URL } from '../../config';
+import { useEnvController } from '../../store/use-env-controller';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
-  const { environment } = useEnvironment();
+  const { environment } = useEnvController();
   const { colorScheme } = useMantineColorScheme();
 
   function handlerOnUrlChange(url: string) {

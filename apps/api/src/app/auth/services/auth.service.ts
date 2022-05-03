@@ -239,4 +239,12 @@ export class AuthService {
   async verifyJwt(jwt: string) {
     return this.jwtService.verify(jwt);
   }
+
+  async isRootEnvironment(payload: IJwtPayload): Promise<boolean> {
+    const environment = await this.environmentRepository.findOne({
+      _id: payload.environmentId,
+    });
+
+    return !!environment._parentId;
+  }
 }

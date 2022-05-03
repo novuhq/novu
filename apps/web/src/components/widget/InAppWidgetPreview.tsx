@@ -4,7 +4,7 @@ import moment from 'moment';
 import { colors, shadows, Text, Title } from '../../design-system';
 /* eslint-disable max-len */
 
-export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
+export function InAppWidgetPreview({ readonly, children }: { readonly: boolean; children: JSX.Element }) {
   const theme = useMantineTheme();
 
   return (
@@ -41,6 +41,13 @@ export function InAppWidgetPreview({ children }: { children: JSX.Element }) {
             borderRadius: '7px',
             backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
             boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
+            ...(readonly
+              ? {
+                  backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
+                  color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
+                  opacity: 0.6,
+                }
+              : {}),
           }}
         >
           <Group position="apart">

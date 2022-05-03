@@ -4,7 +4,7 @@ import { Group } from '@mantine/core';
 import useStyles from './NavMenu.styles';
 
 interface INavMenuProps {
-  menuItems: { icon: ReactNode; label: string; link: string; testId?: string }[];
+  menuItems: { icon: ReactNode; label: string; link: string; testId?: string; rightSide?: ReactNode }[];
 }
 
 export function NavMenu({ menuItems }: INavMenuProps) {
@@ -12,7 +12,7 @@ export function NavMenu({ menuItems }: INavMenuProps) {
 
   return (
     <div>
-      {menuItems.map(({ icon, link, label, testId }) => (
+      {menuItems.map(({ icon, link, label, testId, rightSide }) => (
         <NavLink
           key={link}
           to={link}
@@ -23,6 +23,7 @@ export function NavMenu({ menuItems }: INavMenuProps) {
             <div className={classes.linkIcon}>{icon}</div>
             <div className={classes.linkLabel}>{label}</div>
           </Group>
+          <div>{rightSide}</div>
         </NavLink>
       ))}
     </div>

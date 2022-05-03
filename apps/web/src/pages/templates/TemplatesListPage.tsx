@@ -11,8 +11,10 @@ import { Tag, Button, Table, colors, Text } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system/tooltip/Tooltip';
 import { Data } from '../../design-system/table/Table';
+import { useEnvController } from '../../store/use-env-controller';
 
 function NotificationList() {
+  const { readonly } = useEnvController();
   const { templates, loading: isLoading } = useTemplates();
   const theme = useMantineTheme();
   const navigate = useNavigate();
@@ -87,7 +89,9 @@ function NotificationList() {
         title="Notification Template"
         actions={
           <Link to="/templates/create" data-test-id="create-template-btn">
-            <Button icon={<PlusCircle />}>New</Button>
+            <Button disabled={readonly} icon={<PlusCircle />}>
+              New
+            </Button>
           </Link>
         }
       />

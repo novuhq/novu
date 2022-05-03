@@ -6,4 +6,6 @@ export class NotificationGroupEntity {
   _environmentId: string;
 
   _organizationId: string;
+
+  _parentId?: string;
 }

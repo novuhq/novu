@@ -1,21 +1,30 @@
 // eslint-ignore max-len
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository, NotificationStepEntity } from '@novu/dal';
-
+import {
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  NotificationStepEntity,
+  ChangeRepository,
+} from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
 import { UpdateMessageTemplateCommand } from '../../../message-template/usecases/update-message-template/update-message-template.command';
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
+import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 
 @Injectable()
 export class UpdateNotificationTemplate {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
-    private updateMessageTemplate: UpdateMessageTemplate
+    private updateMessageTemplate: UpdateMessageTemplate,
+    private createChange: CreateChange,
+    private changeRepository: ChangeRepository
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -37,6 +46,11 @@ export class UpdateNotificationTemplate {
     if (command.notificationGroupId) {
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
+
+    const parentChangeId: string = await this.changeRepository.getChangeId(
+      ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+      existingTemplate._id
+    );
 
     if (command.steps) {
       const contentService = new ContentService();
@@ -74,6 +88,7 @@ export class UpdateNotificationTemplate {
               contentType: message.contentType,
               cta: message.cta,
               subject: message.subject,
+              parentChangeId,
             })
           );
 
@@ -93,6 +108,7 @@ export class UpdateNotificationTemplate {
               userId: command.userId,
               cta: message.cta,
               subject: message.subject,
+              parentChangeId,
             })
           );
 
@@ -121,6 +137,23 @@ export class UpdateNotificationTemplate {
       {
         $set: updatePayload,
       }
+    );
+
+    const item = await this.notificationTemplateRepository.findOne({
+      _id: command.templateId,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    await this.createChange.execute(
+      CreateChangeCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+        item,
+        changeId: parentChangeId,
+      })
     );
 
     return await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);

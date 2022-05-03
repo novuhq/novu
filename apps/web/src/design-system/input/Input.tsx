@@ -9,6 +9,7 @@ interface IInputProps extends SpacingProps {
   placeholder?: string;
   required?: boolean;
   readOnly?: boolean;
+  disabled?: boolean;
   value?: string;
   description?: string;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -21,7 +22,7 @@ interface IInputProps extends SpacingProps {
  *
  */
 export const Input = React.forwardRef<HTMLInputElement, IInputProps>(
-  ({ value, rightSection, onChange, readOnly = false, type, ...props }: IInputProps, ref) => {
+  ({ value, rightSection, onChange, readOnly = false, disabled = false, type, ...props }: IInputProps, ref) => {
     const defaultDesign = { radius: 'md', size: 'md', styles: inputStyles, type: 'text' } as TextInputProps;
 
     return (
@@ -32,6 +33,7 @@ export const Input = React.forwardRef<HTMLInputElement, IInputProps>(
         onChange={onChange}
         autoComplete="off"
         readOnly={readOnly}
+        disabled={disabled}
         value={value}
         type={type}
         {...props}

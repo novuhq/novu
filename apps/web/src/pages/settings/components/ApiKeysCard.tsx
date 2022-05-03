@@ -5,14 +5,14 @@ import { useQuery } from 'react-query';
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';
-import { useEnvironment } from '../../../api/hooks/use-environment';
 import styled from 'styled-components';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export const ApiKeysCard = () => {
   const clipboard = useClipboard({ timeout: 1000 });
   const { data: apiKeys } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
-  const { environment } = useEnvironment();
+  const { environment } = useEnvController();
 
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';

@@ -9,12 +9,13 @@ import {
   IEmailBlock,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
-import { useMutation } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useFormState } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { createTemplate, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
+import { QueryKeys } from '../../api/query.keys';
 
 export function useTemplateController(templateId: string) {
   const [activeChannels, setActiveChannels] = useState<{ [key: string]: boolean }>({
@@ -22,6 +23,7 @@ export function useTemplateController(templateId: string) {
     [ChannelTypeEnum.EMAIL]: false,
     [ChannelTypeEnum.SMS]: false,
   });
+
   const methods = useForm<IForm>({
     resolver: async (data) => {
       const errors: any = {};
@@ -68,7 +70,7 @@ export function useTemplateController(templateId: string) {
     setValue,
     control,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = methods;
 
   const {
@@ -96,6 +98,7 @@ export function useTemplateController(templateId: string) {
   const [trigger, setTrigger] = useState<INotificationTrigger>();
   const [selectedMessageType, setSelectedMessageType] = useState<ChannelTypeEnum | null>(null);
   const { template, refetch, loading: loadingEditTemplate } = useTemplateFetcher(templateId);
+  const client = useQueryClient();
 
   const { isLoading, mutateAsync: createNotification } = useMutation<
     INotificationTemplate,
@@ -110,7 +113,11 @@ export function useTemplateController(templateId: string) {
   >(({ id, data }) => updateTemplate(id, data));
 
   useEffect(() => {
-    if (template) {
+    setValue('activeChannels', activeChannels);
+  }, [activeChannels]);
+
+  useEffect(() => {
+    if (template && template.steps) {
       const inAppChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.IN_APP);
       const emailChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.EMAIL);
       const smsChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.SMS);
@@ -223,6 +230,7 @@ export function useTemplateController(templateId: string) {
 
         refetch();
 
+        await client.refetchQueries(QueryKeys.changesCount);
         showNotification({
           message: 'Template updated successfully',
           color: 'green',
@@ -234,6 +242,7 @@ export function useTemplateController(templateId: string) {
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
 
+        await client.refetchQueries(QueryKeys.changesCount);
         showNotification({
           message: 'Template saved successfully',
           color: 'green',
@@ -344,6 +353,7 @@ export function useTemplateController(templateId: string) {
     removeEmailMessage,
     errors,
     smsFields,
+    isDirty,
   };
 }
 
@@ -362,6 +372,7 @@ export interface ITemplateMessage {
 }
 
 export interface IForm {
+  activeChannels?: { [key: string]: boolean };
   notificationGroup: string;
   name: string;
   description: string;

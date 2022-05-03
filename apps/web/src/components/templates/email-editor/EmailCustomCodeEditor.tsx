@@ -2,10 +2,12 @@ import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-handlebars';
 import 'ace-builds/src-noconflict/theme-monokai';
 import { Card } from '@mantine/core';
-import React from 'react';
 import { colors } from '../../../design-system';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export function EmailCustomCodeEditor({ onChange, value }: { onChange?: (string) => void; value?: string }) {
+  const { readonly } = useEnvController();
+
   return (
     <Card withBorder sx={styledCard}>
       <AceEditor
@@ -27,6 +29,7 @@ export function EmailCustomCodeEditor({ onChange, value }: { onChange?: (string)
           enableSnippets: true,
           showLineNumbers: true,
           tabSize: 1,
+          readOnly: readonly,
         }}
       />
     </Card>
