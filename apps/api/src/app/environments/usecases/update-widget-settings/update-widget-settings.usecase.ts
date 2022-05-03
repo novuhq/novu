@@ -15,10 +15,10 @@ export class UpdateWidgetSettings {
       throw new ApiException(`Environment id: ${command.environmentId} not found`);
     }
 
-    const updateWidgetSettings: Partial<IWidgetSettings> = {};
+    const updateWidgetSetting: Partial<IWidgetSettings> = {};
 
     if (command.widget.notificationCenterEncryption != null) {
-      updateWidgetSettings.notificationCenterEncryption = command.widget.notificationCenterEncryption;
+      updateWidgetSetting['widget.notificationCenterEncryption'] = command.widget.notificationCenterEncryption;
     }
 
     await this.environmentRepository.update(
@@ -26,7 +26,7 @@ export class UpdateWidgetSettings {
         _organizationId: command.organizationId,
         _id: command.environmentId,
       },
-      { $set: { widget: updateWidgetSettings } }
+      { $set: updateWidgetSetting }
     );
 
     return await this.environmentRepository.findOne({
