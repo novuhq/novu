@@ -16,8 +16,12 @@ export const Security = () => {
       <Title>Security</Title>
       <InputWrapper label="Enable HMAC encryption" description={<DescriptionText />} styles={inputStyles}>
         <RowDiv>
-          <Switch checked={isHmacEnabled} data-test-id="is_active_id" onChange={handlerSwitchChange} />
-          <StyledText>{isHmacEnabled ? 'Enabled' : 'Disabled'}</StyledText>
+          <Switch
+            checked={isHmacEnabled}
+            data-test-id="is_active_id"
+            onChange={handlerSwitchChange}
+            label={isHmacEnabled ? 'Enabled' : 'Disabled'}
+          />
         </RowDiv>
       </InputWrapper>
 
@@ -55,11 +59,6 @@ const Title = styled(Text)`
 
 const InlineDiv = styled.div`
   max-width: 400px;
-`;
-
-const StyledText = styled(Text)`
-  display: flex;
-  align-items: center;
 `;
 
 const RowDiv = styled.div`
