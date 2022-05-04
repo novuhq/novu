@@ -1,37 +1,18 @@
 import { Navbar, Popover, useMantineColorScheme } from '@mantine/core';
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team, Repeat ,CheckCircleOutlined} from '../../../design-system/icons';
+import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../../store/authContext';
 
 type Props = {};
-const menuItems = [
-  { icon: <CheckCircleOutlined />, link: '/quickstart', label: 'Getting Started', testId: 'side-nav-quickstart-link' },
-  { icon: <Bolt />, link: '/templates', label: 'Notifications', testId: 'side-nav-templates-link' },
-  { icon: <Activity />, link: '/activities', label: 'Activity Feed', testId: 'side-nav-activities-link' },
-  { icon: <Box />, link: '/integrations', label: 'Integration Store', testId: 'side-nav-integrations-link' },
-  { icon: <Settings />, link: '/settings', label: 'Settings', testId: 'side-nav-settings-link' },
-  {
-    icon: <Team />,
-    link: '/team',
-    label: 'Team Members',
-    testId: 'side-nav-settings-organization',
-  },
-];
-
-const changesMenuItem = {
-  icon: <Repeat />,
-  link: '/changes',
-  label: 'Changes',
-  testId: 'side-nav-changes-link',
-  rightSide: <ChangesCountBadge />,
-};
 
 export function SideNav({}: Props) {
   const navigate = useNavigate();
   const { setEnvironment, isLoading, environment, readonly } = useEnvController();
+  const { currentUser } = useContext(AuthContext);
   const location = useLocation();
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
@@ -43,6 +24,34 @@ export function SideNav({}: Props) {
       navigate('/');
     }
   }, [readonly]);
+
+  const menuItems = [
+    {
+      condition: !readonly && currentUser?.onBoarding,
+      icon: <CheckCircleOutlined />,
+      link: '/quickstart',
+      label: 'Getting Started',
+      testId: 'side-nav-quickstart-link',
+    },
+    { icon: <Bolt />, link: '/templates', label: 'Notifications', testId: 'side-nav-templates-link' },
+    { icon: <Activity />, link: '/activities', label: 'Activity Feed', testId: 'side-nav-activities-link' },
+    { icon: <Box />, link: '/integrations', label: 'Integration Store', testId: 'side-nav-integrations-link' },
+    { icon: <Settings />, link: '/settings', label: 'Settings', testId: 'side-nav-settings-link' },
+    {
+      icon: <Team />,
+      link: '/team',
+      label: 'Team Members',
+      testId: 'side-nav-settings-organization',
+    },
+    {
+      icon: <Repeat />,
+      link: '/changes',
+      label: 'Changes',
+      testId: 'side-nav-changes-link',
+      rightSide: <ChangesCountBadge />,
+      condition: !readonly,
+    },
+  ];
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
@@ -92,7 +101,7 @@ export function SideNav({}: Props) {
         >
           {'To make changes you’ll need to go to development and promote the changes from there'}
         </Popover>
-        <NavMenu menuItems={readonly ? menuItems : [...menuItems, changesMenuItem]} />
+        <NavMenu menuItems={menuItems} />
       </Navbar.Section>
     </Navbar>
   );
