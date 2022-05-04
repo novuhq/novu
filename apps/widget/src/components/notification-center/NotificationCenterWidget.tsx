@@ -13,7 +13,7 @@ interface INotificationCenterWidgetProps {
 }
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
-  const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string }>();
+  const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; hmacHash: string }>();
   const [fontFamily, setFontFamily] = useState<string>('Lato');
 
   useEffect(() => {
@@ -57,6 +57,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
         applicationIdentifier={props.applicationIdentifier as string}
         subscriberId={userDataPayload.subscriberId}
         onLoad={onLoad}
+        hmacHash={userDataPayload.hmacHash}
       >
         <NotificationCenter
           colorScheme="light"
