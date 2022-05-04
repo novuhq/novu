@@ -13,18 +13,8 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
-  healthCheck() {
-    return this.healthCheckService.check([
-      /*
-       *   async () => {
-       * return {
-       *   db: {
-       *    status: this.dalService.connection.readyState === 1 ? 'up' : 'down',
-       *  },
-       *};
-       *   },
-       *
-       */
+  async healthCheck() {
+    const result = await this.healthCheckService.check([
       async () => {
         return {
           apiVersion: {
@@ -34,5 +24,7 @@ export class HealthController {
         };
       },
     ]);
+
+    return result;
   }
 }
