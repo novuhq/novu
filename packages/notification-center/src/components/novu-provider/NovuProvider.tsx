@@ -20,7 +20,7 @@ interface INovuProviderProps {
   colorScheme?: ColorScheme;
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
-  hmacHash: string;
+  hmacHash?: string;
 }
 
 let api: ApiService;
