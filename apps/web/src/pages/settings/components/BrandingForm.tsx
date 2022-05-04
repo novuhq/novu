@@ -72,11 +72,12 @@ export function BrandingForm({
     const response = await axios.put(signedUrl, file, {
       headers: {
         'Content-Type': file.type,
-        Authorization: undefined,
       },
       transformRequest: [
         (data, headers) => {
           if (headers) {
+            // eslint-disable-next-line
+            delete headers.Authorization;
             // eslint-disable-next-line
             delete headers.common.Authorization;
           }
