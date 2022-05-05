@@ -1524,7 +1524,7 @@ importers:
   providers/ringcentral:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': 0.3.6-alpha.0
+      '@novu/stateless': workspace:^0.4.0-alpha.8
       '@ringcentral/sdk': ^4.7.2
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
@@ -1542,15 +1542,15 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/node': 0.3.6-alpha.0
+      '@novu/stateless': link:../../packages/stateless
       '@ringcentral/sdk': 4.7.2
-      dotenv: 8.6.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.1
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0
+      dotenv: 8.6.0
       gh-pages: 3.2.3
       jest: 27.5.1_ts-node@9.1.1
       npm-run-all: 4.1.5
@@ -11238,18 +11238,6 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.13.0
-
-  /@novu/node/0.3.6-alpha.0:
-    resolution: {integrity: sha512-L4PlGICDxpQ4hBc7fR6aow3lqTEoPuZMQf1KFRvAGxRRueQ9OGEFijqhEExBpo36x7wdawXIdnbZ+AzB2w2afQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      axios: 0.26.1
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
 
   /@npmcli/fs/1.1.1:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}
