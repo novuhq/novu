@@ -46,7 +46,7 @@ class Novu {
   init = (
     clientId: string,
     selectorOrOptions: string | IOptions,
-    data: { subscriberId: string; lastName: string; firstName: string; email: string; hmacHash?: string }
+    data: { subscriberId: string; lastName: string; firstName: string; email: string; subscriberHash?: string }
   ) => {
     const _scope = this;
     if (typeof selectorOrOptions === 'string') {

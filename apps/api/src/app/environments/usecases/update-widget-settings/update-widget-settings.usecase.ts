@@ -17,8 +17,8 @@ export class UpdateWidgetSettings {
 
     const updateWidgetSetting: Partial<IWidgetSettings> = {};
 
-    if (command.widget.notificationCenterEncryption != null) {
-      updateWidgetSetting['widget.notificationCenterEncryption'] = command.widget.notificationCenterEncryption;
+    if (command.notificationCenterEncryption != null) {
+      updateWidgetSetting['widget.notificationCenterEncryption'] = command.notificationCenterEncryption;
     }
 
     await this.environmentRepository.update(

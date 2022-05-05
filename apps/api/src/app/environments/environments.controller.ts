@@ -87,7 +87,7 @@ export class EnvironmentsController {
     const command = UpdateWidgetSettingsCommand.create({
       organizationId: user.organizationId,
       environmentId: user.environmentId,
-      widget: body.widget,
+      notificationCenterEncryption: body.notificationCenterEncryption,
     });
 
     return await this.updateWidgetSettingsUsecase.execute(command);

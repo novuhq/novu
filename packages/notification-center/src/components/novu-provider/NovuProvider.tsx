@@ -20,7 +20,7 @@ interface INovuProviderProps {
   colorScheme?: ColorScheme;
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
-  hmacHash?: string;
+  subscriberHash?: string;
 }
 
 let api: ApiService;
@@ -45,7 +45,7 @@ export function NovuProvider(props: INovuProviderProps) {
         initialized: isSessionInitialized,
         socketUrl: socketUrl,
         onLoad: props.onLoad,
-        hmacHash: props.hmacHash,
+        subscriberHash: props.subscriberHash,
       }}
     >
       <ApiContext.Provider value={{ api }}>
@@ -70,7 +70,7 @@ interface ISessionInitializationProps {
 function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
   const { api: apiService } = useApi();
   const { applyToken, setUser } = useContext<IAuthContext>(AuthContext);
-  const { onLoad, hmacHash } = useContext<INovuProviderContext>(NovuContext);
+  const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
     if (props.subscriberId && props.applicationIdentifier) {
@@ -78,19 +78,19 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
         await initSession({
           clientId: props.applicationIdentifier,
           data: { subscriberId: props.subscriberId },
-          hmacHash,
+          subscriberHash,
         });
       })();
     }
   }, [props.subscriberId, props.applicationIdentifier]);
 
-  async function initSession(payload: { clientId: string; data: { subscriberId: string }; hmacHash: string }) {
+  async function initSession(payload: { clientId: string; data: { subscriberId: string }; subscriberHash: string }) {
     if ('parentIFrame' in window) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).parentIFrame.autoResize(true);
     }
 
-    const response = await apiService.initializeSession(payload.clientId, payload.data.subscriberId, hmacHash);
+    const response = await apiService.initializeSession(payload.clientId, payload.data.subscriberId, subscriberHash);
 
     api.setAuthorizationToken(response.token);
 

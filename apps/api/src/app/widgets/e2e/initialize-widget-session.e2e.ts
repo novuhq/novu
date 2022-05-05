@@ -57,7 +57,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(response.status).to.equal(201);
   });
 
-  it('should fail the test with valid subscriber id or secret key hash', async function () {
+  it('should fail the test with invalid subscriber id or invalid secret key', async function () {
     try {
       const validSubscriberId = '12345';
       const validSecretKey = session.environment.apiKeys[0].key;
