@@ -63,14 +63,13 @@ Cypress.Commands.add('initializeSession', function (settings = {}) {
     })
     .then((session: any) => {
       let encryptedHmacHash: string | undefined = undefined;
+
       if (settings.hmacEncryption) {
         cy.task('enableEnvironmentHmac', {
           environment: session.environment,
         });
 
-        encryptedHmacHash = createHmac('sha256', session.environment.apiKeys[0].key)
-          .update(session.subscriberId)
-          .digest('hex');
+        encryptedHmacHash = createHmacHash(session);
       }
 
       return settings?.shell
@@ -135,3 +134,7 @@ Cypress.Commands.add('forceVisit', (url: string) => {
     return win.open(url, '_self');
   });
 });
+
+function createHmacHash(session: any) {
+  return createHmac('sha256', session.environment.apiKeys[0].key).update(session.subscriberId).digest('hex');
+}
