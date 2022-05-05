@@ -24,7 +24,7 @@ Cypress.Commands.add('initializeShellSession', (subscriberId, identifier, encryp
         firstName: faker.name.firstName(),
         lastName: faker.name.lastName(),
         email: faker.internet.email(),
-        hmacHash: encryptedHmacHash,
+        subscriberHash: encryptedHmacHash,
       };
 
       w.novu.init(
@@ -96,7 +96,7 @@ Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash }) => {
             firstName: faker.name.firstName(),
             lastName: faker.name.lastName(),
             email: faker.internet.email(),
-            hmacHash: encryptedHmacHash,
+            subscriberHash: encryptedHmacHash,
           };
 
           w.initHandler({
