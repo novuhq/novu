@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
-import { extractMatchingMessages } from '../extract-matching-messages';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
+import { matchMessageWithFilters } from './message-filter.matcher';
 
 @Injectable()
 export class TriggerEvent {
@@ -42,11 +42,6 @@ export class TriggerEvent {
       return this.logTemplateNotActive(command, template);
     }
 
-    const { smsMessages, inAppChannelMessages, emailChannelMessages } = extractMatchingMessages(
-      template.steps,
-      command.payload
-    );
-
     for (const subscriberToTrigger of command.to) {
       await this.processSubscriber.execute(
         ProcessSubscriberCommand.create({
@@ -57,14 +52,16 @@ export class TriggerEvent {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.organizationId,
+          templateId: template._id,
         })
       );
     }
 
+    const steps = matchMessageWithFilters(template.steps, command.payload);
     this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
-      smsChannel: !!smsMessages?.length,
-      emailChannel: !!emailChannelMessages?.length,
-      inAppChannel: !!inAppChannelMessages?.length,
+      smsChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.SMS)?.length,
+      emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
+      inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
     });
 
     if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
