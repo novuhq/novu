@@ -36,7 +36,6 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
-        autoCollapseSidebarCategories: false,
         colorMode: {
           respectPrefersColorScheme: true,
         },
@@ -68,33 +67,33 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           ],
         },
         footer: {
-          style: 'dark',
           links: [
             {
-              title: 'Documentation',
               items: [
                 {
                   label: 'Documentation',
                   to: '/docs/overview/introduction',
                 },
-              ],
-            },
-            {
-              title: 'Community',
-              items: [
                 {
-                  label: 'GitHub',
-                  href: 'https://github.com/novuhq/novu',
+                  label: 'Providers',
+                  href: 'https://github.com/novuhq/novu/tree/main/providers',
                 },
                 {
-                  label: 'Discord',
+                  label: 'Contact Us',
                   href: 'https://discord.gg/9wcGSf22PM',
                 },
               ],
             },
             {
-              title: 'More',
               items: [
+                {
+                  label: 'Discord',
+                  href: 'https://discord.gg/9wcGSf22PM',
+                },
+                {
+                  label: 'Twitter',
+                  href: 'https://twitter.com/novuhq',
+                },
                 {
                   label: 'GitHub',
                   href: 'https://github.com/novuhq/novu',
