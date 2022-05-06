@@ -239,16 +239,27 @@ export class TriggerEvent {
       transactionId: command.transactionId,
     });
 
+    const contentService = new ContentService();
+    const messageVariables = contentService.buildMessageVariables(command, subscriberPayload);
+
     if (smsMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.SMS)) {
-      await this.sendSmsMessage(smsMessages, command, notification, subscriber, template);
+      await this.sendSmsMessage(smsMessages, command, notification, subscriber, template, messageVariables);
     }
 
     if (inAppChannelMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.IN_APP)) {
-      await this.sendInAppMessage(inAppChannelMessages, command, notification, subscriber, template);
+      await this.sendInAppMessage(inAppChannelMessages, command, notification, subscriber, template, messageVariables);
     }
 
     if (emailChannelMessages.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.EMAIL)) {
-      await this.sendEmailMessage(emailChannelMessages, command, notification, subscriber, template, organization);
+      await this.sendEmailMessage(
+        emailChannelMessages,
+        command,
+        notification,
+        subscriber,
+        template,
+        organization,
+        messageVariables
+      );
     }
 
     await this.createLogUsecase.execute(
@@ -288,14 +299,15 @@ export class TriggerEvent {
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
-    template: NotificationTemplateEntity
+    template: NotificationTemplateEntity,
+    messageVariables: { [key: string]: string }
   ) {
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
     });
     const smsChannel = smsMessages[0];
     const contentService = new ContentService();
-    const content = contentService.replaceVariables(smsChannel.template.content as string, command.payload);
+    const content = contentService.replaceVariables(smsChannel.template.content as string, messageVariables);
     const phone = command.payload.phone || subscriber.phone;
 
     const message = await this.messageRepository.create({
@@ -410,7 +422,8 @@ export class TriggerEvent {
     command: TriggerEventCommand,
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
-    template: NotificationTemplateEntity
+    template: NotificationTemplateEntity,
+    messageVariables: { [key: string]: string }
   ) {
     Sentry.addBreadcrumb({
       message: 'Sending In App',
@@ -419,11 +432,11 @@ export class TriggerEvent {
 
     const contentService = new ContentService();
 
-    const content = contentService.replaceVariables(inAppChannel.template.content as string, command.payload);
+    const content = contentService.replaceVariables(inAppChannel.template.content as string, messageVariables);
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = contentService.replaceVariables(
         inAppChannel.template.cta?.data?.url,
-        command.payload
+        messageVariables
       );
     }
 
@@ -481,7 +494,8 @@ export class TriggerEvent {
     notification: NotificationEntity,
     subscriber: SubscriberEntity,
     template: NotificationTemplateEntity,
-    organization: OrganizationEntity
+    organization: OrganizationEntity,
+    messageVariables: { [key: string]: string }
   ) {
     const email = command.payload.email || subscriber.email;
 
@@ -498,8 +512,8 @@ export class TriggerEvent {
       for (const block of content) {
         const contentService = new ContentService();
 
-        block.content = contentService.replaceVariables(block.content, command.payload);
-        block.url = contentService.replaceVariables(block.url, command.payload);
+        block.content = contentService.replaceVariables(block.content, messageVariables);
+        block.url = contentService.replaceVariables(block.url, messageVariables);
       }
     } else {
       content = emailChannel.template.content;
@@ -519,7 +533,7 @@ export class TriggerEvent {
     });
 
     const contentService = new ContentService();
-    const subject = contentService.replaceVariables(emailChannel.template.subject, command.payload);
+    const subject = contentService.replaceVariables(emailChannel.template.subject, messageVariables);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -532,7 +546,7 @@ export class TriggerEvent {
             color: organization.branding?.color || '#f47373',
           },
           blocks: isEditorMode ? content : [],
-          ...command.payload,
+          ...messageVariables,
         },
       })
     );
