@@ -11,8 +11,6 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import axios from 'axios';
-import { stub } from 'sinon';
-import { SmsService } from '../../shared/services/sms/sms.service';
 import { ISubscribersDefine } from '@novu/node';
 
 const axiosInstance = axios.create();
@@ -334,5 +332,120 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     expect(message.status).to.equal('error');
     expect(message.errorText).to.contains('Currently 3rd-party packages test are not support on test env');
+  });
+
+  it('should trigger In-App notification with subscriber data', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.IN_APP,
+          content: 'Hello {{subscriber.userName}}, Welcome to {{organizationName}}' as string,
+        },
+      ],
+    });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [{ subscriberId: subscriber.subscriberId, userName: 'Will Smith' }],
+        payload: {
+          organizationName: 'Umbrella Corp',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const message = await messageRepository._model.findOne({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.IN_APP,
+    });
+
+    expect(message._doc.content).to.equal('Hello Will Smith, Welcome to Umbrella Corp');
+  });
+
+  it('should trigger SMS notification with subscriber data', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello {{subscriber.userName}}, Welcome to {{organizationName}}' as string,
+        },
+      ],
+    });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [{ subscriberId: subscriber.subscriberId, userName: 'Will Smith' }],
+        payload: {
+          organizationName: 'Umbrella Corp',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const message = await messageRepository._model.findOne({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.SMS,
+    });
+
+    expect(message._doc.content).to.equal('Hello Will Smith, Welcome to Umbrella Corp');
+  });
+
+  it('should trigger E-Mail notification with subscriber data', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email subject',
+          type: ChannelTypeEnum.EMAIL,
+          content: [
+            {
+              type: 'text',
+              content: 'Hello {{subscriber.userName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [{ subscriberId: subscriber.subscriberId, userName: 'Will Smith' }],
+        payload: {
+          organizationName: 'Umbrella Corp',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const message = await messageRepository._model.findOne({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.EMAIL,
+    });
+
+    expect(message._doc.content[0].content).to.equal('Hello Will Smith, Welcome to Umbrella Corp');
   });
 });
