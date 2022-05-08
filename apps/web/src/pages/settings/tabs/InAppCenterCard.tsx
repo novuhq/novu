@@ -2,14 +2,14 @@ import React from 'react';
 import { Prism } from '@mantine/prism';
 import { colors, Text } from '../../../design-system';
 import { WIDGET_EMEBED_PATH } from '../../../config';
-import { useEnvironment } from '../../../api/hooks/use-environment';
+import { useEnvController } from '../../../store/use-env-controller';
 import { Security } from './components/Security';
 import styled from '@emotion/styled';
 import { InputWrapper } from '@mantine/core';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 
 export const InAppCenterCard = () => {
-  const { environment } = useEnvironment();
+  const { environment } = useEnvController();
   const embedCode = `<script>
   (function(n,o,t,i,f) {
     n[i] = {}, m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
