@@ -68,13 +68,13 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
             description="To start sending notifications you need to create your a template with some channels"
           />
           {!templateCreated ? (
-            <Button mt={20} onClick={() => navigate('/templates/create')}>
+            <Button data-test-id="create-template-btn" mt={20} onClick={() => navigate('/templates/create')}>
               Create Now
             </Button>
           ) : (
             <Center mt={20} inline>
               <CheckCircle color={colors.success} />
-              <Text ml={7} color={colors.success}>
+              <Text data-test-id="template-created" ml={7} color={colors.success}>
                 Created
               </Text>
             </Center>
@@ -89,7 +89,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
           />
           <Grid mt={20}>
             <TriggerCard
-              name="node"
+              name={`node-${theme.colorScheme === 'dark' ? 'dark' : 'light'}`}
               title="Node.js"
               exist={true}
               onClick={() => setShowTriggerExample((prev) => !prev)}

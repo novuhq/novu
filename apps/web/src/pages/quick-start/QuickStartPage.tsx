@@ -4,7 +4,7 @@ import PageMeta from '../../components/layout/components/PageMeta';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { colors, Text, Title } from '../../design-system';
 import React from 'react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from 'react-query';
 import { updateUserOnBoarding } from '../../api/user';
 import { IUserEntity } from '@novu/shared';
 import { OnboardingSteps } from './components/OnboardingSteps';
@@ -16,11 +16,11 @@ function QuickStart() {
   const { mutateAsync: updateOnBoardingStatus } = useMutation<
     IUserEntity,
     { error: string; message: string; statusCode: number },
-    { onBoarding: boolean }
-  >(({ onBoarding }) => updateUserOnBoarding(onBoarding));
+    { showOnBoarding: boolean }
+  >(({ showOnBoarding }) => updateUserOnBoarding(showOnBoarding));
 
   async function disableOnboarding() {
-    await updateOnBoardingStatus({ onBoarding: false });
+    await updateOnBoardingStatus({ showOnBoarding: false });
   }
 
   async function onDismissOnboarding() {
@@ -47,7 +47,9 @@ function QuickStart() {
       </div>
       <Center>
         <Text my={40} color={colors.B60}>
-          <div onClick={onDismissOnboarding}>Don't show onboarding guide</div>
+          <div onClick={onDismissOnboarding} data-test-id="dismiss-onboarding-btn">
+            Don't show onboarding guide
+          </div>
         </Text>
       </Center>
     </PageContainer>

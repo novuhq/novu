@@ -27,7 +27,7 @@ export function SideNav({}: Props) {
 
   const menuItems = [
     {
-      condition: !readonly && currentUser?.onBoarding,
+      condition: !readonly && currentUser?.showOnBoarding,
       icon: <CheckCircleOutlined />,
       link: '/quickstart',
       label: 'Getting Started',

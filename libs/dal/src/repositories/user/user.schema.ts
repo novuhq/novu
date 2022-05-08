@@ -11,7 +11,7 @@ const userSchema = new Schema(
     profilePicture: Schema.Types.String,
     resetToken: Schema.Types.String,
     resetTokenDate: Schema.Types.Date,
-    onBoarding: Schema.Types.Boolean,
+    showOnBoarding: Schema.Types.Boolean,
     tokens: [
       {
         providerId: Schema.Types.String,

@@ -9,5 +9,5 @@ export class UpdateOnBoardingCommand extends AuthenticatedCommand {
 
   @IsBoolean()
   @IsOptional()
-  onBoarding?: boolean;
+  showOnBoarding?: boolean;
 }

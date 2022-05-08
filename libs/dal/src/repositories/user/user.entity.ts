@@ -32,5 +32,5 @@ export class UserEntity {
 
   createdAt: string;
 
-  onBoarding?: boolean;
+  showOnBoarding?: boolean;
 }

@@ -28,11 +28,11 @@ export class UsersController {
   }
 
   @Put('/onboarding')
-  async updateOnBoarding(@UserSession() user: IJwtPayload, @Body() body: { onBoarding: boolean }) {
+  async updateOnBoarding(@UserSession() user: IJwtPayload, @Body() body: { showOnBoarding: boolean }) {
     return await this.updateOnBoardingUsecase.execute(
       UpdateOnBoardingCommand.create({
         userId: user._id,
-        onBoarding: body.onBoarding,
+        showOnBoarding: body.showOnBoarding,
       })
     );
   }
