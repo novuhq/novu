@@ -10,15 +10,10 @@ export class Novu extends EventEmitter {
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
-
-    const backendUrl = config?.backendUrl
-      ? config?.backendUrl
-      : 'https://api.novu.co/v1';
-
     this.apiKey = apiKey;
 
     this.http = axios.create({
-      baseURL: backendUrl,
+      baseURL: this.buildBackendUrl(config),
       headers: {
         Authorization: `ApiKey ${this.apiKey}`,
       },
@@ -35,5 +30,17 @@ export class Novu extends EventEmitter {
         ...data?.payload,
       },
     });
+  }
+
+  private buildBackendUrl(config: INovuConfiguration) {
+    const novuVersion = 'v1';
+
+    if (!config?.backendUrl) {
+      return `https://api.novu.co/${novuVersion}`;
+    }
+
+    return config?.backendUrl.includes('novu.co/v')
+      ? config?.backendUrl
+      : config?.backendUrl + `/${novuVersion}`;
   }
 }
