@@ -13,7 +13,7 @@ export class UpdateOnBoardingUsecase {
       },
       {
         $set: {
-          showOnBoarding: command.onBoarding,
+          showOnBoarding: command.showOnBoarding,
         },
       }
     );
