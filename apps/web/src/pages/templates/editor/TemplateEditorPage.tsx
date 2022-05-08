@@ -1,8 +1,8 @@
 import { FormProvider } from 'react-hook-form';
-import { Container, Grid, Group } from '@mantine/core';
+import { Grid, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
@@ -14,17 +14,21 @@ import { TemplateTriggerModal } from '../../../components/templates/TemplateTrig
 import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
 import { AddChannelsPage } from './AddChannelsPage';
-import { Button, colors, Select, Switch } from '../../../design-system';
+import { Button, colors, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { useStatusChangeControllerHook } from '../../../components/templates/use-status-change-controller.hook';
+import { useEnvController } from '../../../store/use-env-controller';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
+  const navigate = useNavigate();
+  const { readonly, environment } = useEnvController();
   const [activePage, setActivePage] = useState<string>('Settings');
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { integrations, loading: isIntegrationsLoading } = useActiveIntegrations();
+  const { colorScheme } = useMantineColorScheme();
 
   const handleAddChannel = (tabKey) => {
     const foundChannel = channelButtons.find((item) => item === tabKey);
@@ -56,6 +60,7 @@ export default function TemplateEditorPage() {
     smsFields,
     methods,
     removeEmailMessage,
+    isDirty,
   } = useTemplateController(templateId);
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
@@ -75,6 +80,14 @@ export default function TemplateEditorPage() {
     }
   }, [template]);
 
+  useEffect(() => {
+    if (environment && template) {
+      if (environment._id !== template._environmentId && template._parentId) {
+        navigate(`/templates/edit/${template._parentId}`);
+      }
+    }
+  }, [environment, template]);
+
   if (isLoading) return null;
 
   return (
@@ -91,6 +104,7 @@ export default function TemplateEditorPage() {
                     <Switch
                       label={isTemplateActive ? 'Enabled' : 'Disabled'}
                       loading={isStatusChangeLoading}
+                      disabled={readonly}
                       data-test-id="active-toggle-switch"
                       onChange={(e) => changeActiveStatus(e.target.checked)}
                       checked={isTemplateActive || false}
@@ -102,7 +116,7 @@ export default function TemplateEditorPage() {
                     mr={20}
                     data-test-id="submit-btn"
                     loading={isLoading || isUpdateLoading}
-                    disabled={loadingEditTemplate || isLoading}
+                    disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
                     submit
                   >
                     {editMode ? 'Update' : 'Create'}
@@ -114,11 +128,12 @@ export default function TemplateEditorPage() {
           <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
             <Grid grow style={{ minHeight: 500 }}>
               <Grid.Col md={4} sm={6}>
-                <SideBarWrapper style={{ paddingRight: 50 }}>
+                <SideBarWrapper dark={colorScheme === 'dark'} style={{ paddingRight: 50 }}>
                   <TemplatesSideBar
                     activeTab={activePage}
                     toggleChannel={toggleChannel}
                     changeTab={setActivePage}
+                    readonly={readonly}
                     activeChannels={activeChannels}
                     channelButtons={channelButtons}
                     showTriggerSection={!!template && !!trigger}
@@ -182,8 +197,8 @@ export default function TemplateEditorPage() {
   );
 }
 
-const SideBarWrapper = styled.div`
-  border-right: 1px solid ${colors.B20};
+const SideBarWrapper = styled.div<{ dark: boolean }>`
+  border-right: 1px solid ${({ dark }) => (dark ? colors.B20 : colors.BGLight)};
   height: 100%;
 `;
 

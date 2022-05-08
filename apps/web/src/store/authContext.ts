@@ -1,5 +1,5 @@
 import React from 'react';
-import { IOrganizationEntity, IUserEntity } from '@novu/shared';
+import { IOrganizationEntity, IUserEntity, IJwtPayload } from '@novu/shared';
 
 export type UserContext = {
   token: string | null;
@@ -7,6 +7,7 @@ export type UserContext = {
   currentOrganization: IOrganizationEntity | undefined;
   setToken: (token: string) => void;
   logout: () => void;
+  jwtPayload?: IJwtPayload;
 };
 
 export const AuthContext = React.createContext<UserContext>({
@@ -15,4 +16,5 @@ export const AuthContext = React.createContext<UserContext>({
   setToken: undefined as any,
   logout: undefined as any,
   currentOrganization: undefined as any,
+  jwtPayload: undefined,
 });

@@ -21,4 +21,12 @@ export class EnvironmentService {
       { $set: { 'widget.notificationCenterEncryption': true } }
     );
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getEnvironment(environmentId: any) {
+    const environment = await this.environmentRepository.findOne({
+      _id: environmentId,
+    });
+
+    return environment;
+  }
 }

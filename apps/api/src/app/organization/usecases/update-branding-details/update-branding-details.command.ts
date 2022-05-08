@@ -11,6 +11,7 @@ export class UpdateBrandingDetailsCommand extends AuthenticatedCommand {
   public readonly id: string;
 
   @IsUrl({ require_tld: false })
+  @IsOptional()
   logo: string;
 
   @IsOptional()

@@ -2,7 +2,7 @@ FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
-RUN npm i pnpm -g --loglevel notice --force
+RUN npm i pnpm@6.32.11 -g --loglevel notice --force
 
 COPY package.json .
 
@@ -12,6 +12,7 @@ COPY libs/dal ./libs/dal
 COPY libs/embed ./libs/embed
 COPY libs/testing ./libs/testing
 COPY libs/shared ./libs/shared
+COPY packages/notification-center ./packages/notification-center
 
 COPY tsconfig.json .
 COPY tsconfig.base.json .

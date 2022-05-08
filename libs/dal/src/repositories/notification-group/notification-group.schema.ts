@@ -17,6 +17,10 @@ const NotificationGroupSchema = new Schema(
       ref: 'Environment',
       index: true,
     },
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'NotificationGroup',
+    },
   },
   schemaOptions
 );

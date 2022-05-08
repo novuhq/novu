@@ -5,9 +5,11 @@ import { Grid } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
 import { Input, Select } from '../../design-system';
+import { useEnvController } from '../../store/use-env-controller';
 
 export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) => {
   const queryClient = useQueryClient();
+  const { readonly } = useEnvController();
   const {
     formState: { errors },
     setValue,
@@ -61,6 +63,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
             <Input
               {...field}
               data-test-id="title"
+              disabled={readonly}
               value={field.value || ''}
               error={errors.name}
               label="Notification Name"
@@ -77,6 +80,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
               mt={35}
               {...field}
               value={field.value || ''}
+              disabled={readonly}
               data-test-id="description"
               description="Write an internal description of when and how this notification will be used."
               label="Notification Description"
@@ -97,6 +101,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
                   label="Notification Group"
                   data-test-id="groupSelector"
                   loading={loadingGroups || loadingCreateGroup}
+                  disabled={readonly}
                   creatable
                   searchable
                   description="Categorize notifications into groups for unified settings control"

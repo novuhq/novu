@@ -14,10 +14,12 @@ export function EmailMessageEditor({
   onChange,
   value,
   branding,
+  readonly,
 }: {
   onChange?: (blocks: IEmailBlock[]) => void;
   value?: IEmailBlock[];
   branding: { color: string; logo: string } | undefined;
+  readonly: boolean;
 }) {
   const theme = useMantineTheme();
 
@@ -160,6 +162,13 @@ export function EmailMessageEditor({
           borderRadius: '7px',
           padding: '30px',
           backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+          ...(readonly
+            ? {
+                backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
+                color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
+                opacity: 0.6,
+              }
+            : {}),
         }}
         onMouseEnter={() => setActionBarVisible(true)}
         onMouseLeave={() => setActionBarVisible(false)}
@@ -212,7 +221,7 @@ export function EmailMessageEditor({
             );
           })}
         </div>
-        {controlBarVisible && (
+        {controlBarVisible && !readonly && (
           <div>
             <ControlBar top={top} onBlockAdd={onBlockAdd} />
           </div>

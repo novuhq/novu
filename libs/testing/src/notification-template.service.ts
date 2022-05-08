@@ -72,7 +72,7 @@ export class NotificationTemplateService {
       });
     }
 
-    const data: NotificationTemplateEntity = {
+    const data = {
       _notificationGroupId: groups[0]._id,
       _environmentId: this.environmentId,
       name: faker.name.title(),
@@ -93,7 +93,9 @@ export class NotificationTemplateService {
       steps: templateSteps,
     };
 
-    const notificationTemplate = await this.notificationTemplateRepository.create(data);
+    const notificationTemplate = await this.notificationTemplateRepository.create(
+      data as Partial<NotificationTemplateEntity>
+    );
 
     return await this.notificationTemplateRepository.findById(
       notificationTemplate._id,

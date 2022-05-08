@@ -16,4 +16,6 @@ export const colors = {
   error: '#E54545',
   vertical: 'linear-gradient(0deg,#FF512F 0%,#DD2476 100%)',
   horizontal: 'linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)',
+  disabled: 'linear-gradient(90deg, #F5C4D8 0%, #FFCBC1 100%)',
+  darkDisabled: 'linear-gradient(90deg, #58203E 0%, #612E29 100%)',
 };

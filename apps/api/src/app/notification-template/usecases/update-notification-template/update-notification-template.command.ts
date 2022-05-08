@@ -8,11 +8,10 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
-import { IEmailBlock } from '@novu/dal';
+import { ChannelCTATypeEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { MessageFilter } from '../create-notification-template';
+import { NotificationStepDto } from '../../dto/update-notification-template.dto';
 
 export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: UpdateNotificationTemplateCommand) {
@@ -54,35 +53,4 @@ export class ChannelCTADto {
   data: {
     url: string;
   };
-}
-
-export class NotificationStepDto {
-  @IsOptional()
-  @IsEnum(ChannelTypeEnum)
-  type: ChannelTypeEnum;
-
-  @IsDefined()
-  content: string | IEmailBlock[];
-
-  @IsOptional()
-  contentType?: 'editor' | 'customHtml';
-
-  @IsOptional()
-  @ValidateNested()
-  cta: ChannelCTADto;
-
-  @IsOptional()
-  name?: string;
-
-  @IsOptional()
-  subject?: string;
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested()
-  filters?: MessageFilter[];
-
-  @IsMongoId()
-  @IsOptional()
-  _id?: string;
 }

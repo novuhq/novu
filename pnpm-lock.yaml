@@ -108,7 +108,7 @@ importers:
       '@nestjs/terminus': ^7.1.0
       '@nestjs/testing': ^7.4.2
       '@nestjsx/crud': ^4.6.2
-      '@novu/dal': ^0.4.0-alpha.9
+      '@novu/dal': ^0.4.0-alpha.10
       '@novu/emailjs': ^0.4.0-alpha.8
       '@novu/mailgun': ^0.4.0-alpha.8
       '@novu/mailjet': ^0.4.0-alpha.8
@@ -120,12 +120,12 @@ importers:
       '@novu/sendgrid': ^0.4.0-alpha.8
       '@novu/sendinblue': ^0.4.0-alpha.8
       '@novu/ses': ^0.4.0-alpha.8
-      '@novu/shared': ^0.4.0-alpha.9
+      '@novu/shared': workspace:^0.4.0-alpha.10
       '@novu/sms77': ^0.4.0-alpha.8
       '@novu/sns': ^0.4.0-alpha.8
       '@novu/stateless': ^0.4.0-alpha.8
       '@novu/telnyx': ^0.4.0-alpha.8
-      '@novu/testing': ^0.4.0-alpha.9
+      '@novu/testing': ^0.4.0-alpha.10
       '@novu/twilio': ^0.4.0-alpha.8
       '@sendgrid/mail': ^7.6.0
       '@sentry/node': ^6.1.0
@@ -166,6 +166,7 @@ importers:
       passport: ^0.4.1
       passport-github2: ^0.1.12
       passport-jwt: ^4.0.0
+      recursive-diff: ^1.0.8
       reflect-metadata: ^0.1.13
       rxjs: ^6.5.5
       sanitize-html: ^2.4.0
@@ -236,6 +237,7 @@ importers:
       passport: 0.4.1
       passport-github2: 0.1.12
       passport-jwt: 4.0.0
+      recursive-diff: 1.0.8
       reflect-metadata: 0.1.13
       rxjs: 6.6.7
       sanitize-html: 2.7.0
@@ -286,10 +288,10 @@ importers:
       '@mantine/hooks': ^4.1.0
       '@mantine/notifications': ^4.1.0
       '@mantine/prism': ^4.1.0
-      '@novu/dal': ^0.4.0-alpha.9
-      '@novu/notification-center': ^0.4.0-alpha.9
-      '@novu/shared': ^0.4.0-alpha.9
-      '@novu/testing': ^0.4.0-alpha.9
+      '@novu/dal': ^0.4.0-alpha.10
+      '@novu/notification-center': ^0.4.0-alpha.11
+      '@novu/shared': ^0.4.0-alpha.10
+      '@novu/testing': ^0.4.0-alpha.10
       '@sentry/react': ^6.3.1
       '@sentry/tracing': ^6.3.1
       '@storybook/addon-actions': ^6.4.14
@@ -453,11 +455,11 @@ importers:
       '@faker-js/faker': ^6.0.0
       '@mantine/core': ^4.1.0
       '@mantine/hooks': ^4.1.0
-      '@novu/dal': ^0.4.0-alpha.9
+      '@novu/dal': ^0.4.0-alpha.10
       '@novu/embed': ^0.4.0-alpha.9
-      '@novu/notification-center': ^0.4.0-alpha.9
-      '@novu/shared': ^0.4.0-alpha.9
-      '@novu/testing': ^0.4.0-alpha.9
+      '@novu/notification-center': ^0.4.0-alpha.11
+      '@novu/shared': workspace:^0.4.0-alpha.10
+      '@novu/testing': ^0.4.0-alpha.10
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
@@ -567,9 +569,9 @@ importers:
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
       '@nestjs/websockets': ^7.6.17
-      '@novu/dal': ^0.4.0-alpha.9
-      '@novu/shared': ^0.4.0-alpha.9
-      '@novu/testing': ^0.4.0-alpha.9
+      '@novu/dal': ^0.4.0-alpha.10
+      '@novu/shared': ^0.4.0-alpha.10
+      '@novu/testing': ^0.4.0-alpha.10
       '@sentry/node': ^6.3.3
       '@types/express': ^4.17.8
       '@types/jest': ^27.0.2
@@ -686,7 +688,7 @@ importers:
       '@aws-sdk/client-s3': ^3.14.0
       '@aws-sdk/s3-request-presigner': ^3.14.0
       '@faker-js/faker': ^6.0.0
-      '@novu/shared': ^0.4.0-alpha.9
+      '@novu/shared': ^0.4.0-alpha.10
       '@octokit/graphql': ^4.3.1
       '@sendgrid/mail': ^7.4.2
       '@types/async': ^3.2.1
@@ -869,9 +871,9 @@ importers:
   libs/testing:
     specifiers:
       '@faker-js/faker': ^6.0.0
-      '@novu/dal': ^0.4.0-alpha.9
+      '@novu/dal': ^0.4.0-alpha.10
       '@novu/node': ^0.4.0-alpha.7
-      '@novu/shared': ^0.4.0-alpha.9
+      '@novu/shared': ^0.4.0-alpha.10
       '@types/async': ^3.2.1
       '@types/bluebird': ^3.5.30
       '@types/node': ^14.6.0
@@ -929,7 +931,7 @@ importers:
 
   packages/cli:
     specifiers:
-      '@novu/shared': ^0.4.0-alpha.9
+      '@novu/shared': ^0.4.0-alpha.10
       '@types/configstore': ^5.0.1
       '@types/inquirer': ^8.2.0
       axios: ^0.25.0
@@ -1049,7 +1051,7 @@ importers:
       '@babel/core': ^7.17.8
       '@mantine/core': ^4.1.0
       '@mantine/hooks': ^4.1.3
-      '@novu/shared': ^0.4.0-alpha.9
+      '@novu/shared': ^0.4.0-alpha.10
       '@rollup/plugin-commonjs': ^21.0.1
       '@rollup/plugin-image': ^2.1.1
       '@rollup/plugin-node-resolve': ^13.1.3
@@ -20704,6 +20706,12 @@ packages:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
+  /brace-expansion/2.0.1:
+    resolution: {integrity: sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==}
+    dependencies:
+      balanced-match: 1.0.2
+    dev: true
+
   /braces/1.8.5:
     resolution: {integrity: sha1-uneWLhLf+WnWt2cR6RS3N4V79qc=}
     engines: {node: '>=0.10.0'}
@@ -23449,7 +23457,7 @@ packages:
   /cypress-intellij-reporter/0.0.6:
     resolution: {integrity: sha512-KDxeWKKAAGekhg1xmGToSsHDWgogM1hUYakAL4yjKQr9gSI2iyRxcrKlq1/jG4omCbUEY+AZGiiwyKOscY9+Gg==}
     dependencies:
-      mocha: 9.2.2
+      mocha: 10.0.0
     dev: true
 
   /cypress-localstorage-commands/1.7.0_cypress@9.5.3:
@@ -23702,19 +23710,6 @@ packages:
 
   /debug/4.3.1_supports-color@8.1.1:
     resolution: {integrity: sha512-doEwdvm4PCeK4K3RQN2ZC2BYUBaxwLARCqZmMjtF8a51J2Rb0xpVloFRnCODwqjpwnAoao4pelN8l3RJdv3gRQ==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-    dependencies:
-      ms: 2.1.2
-      supports-color: 8.1.1
-    dev: true
-
-  /debug/4.3.3_supports-color@8.1.1:
-    resolution: {integrity: sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -32690,11 +32685,11 @@ packages:
     dependencies:
       brace-expansion: 1.1.11
 
-  /minimatch/4.2.1:
-    resolution: {integrity: sha512-9Uq1ChtSZO+Mxa/CL1eGizn2vRn3MlLgzhT0Iz8zaY8NdvxvB0d5QdPFmCKf7JKA9Lerx5vRrnwO03jsSfGG9g==}
+  /minimatch/5.0.1:
+    resolution: {integrity: sha512-nLDxIFRyhDblz3qMuq+SoRZED4+miJ/G+tdDrjkkkRnjAsBexeGpgjLEQ0blJy7rHhR2b93rhQY4SvyWu9v03g==}
     engines: {node: '>=10'}
     dependencies:
-      brace-expansion: 1.1.11
+      brace-expansion: 2.0.1
     dev: true
 
   /minimist-options/3.0.2:
@@ -32839,6 +32834,35 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  /mocha/10.0.0:
+    resolution: {integrity: sha512-0Wl+elVUD43Y0BqPZBzZt8Tnkw9CMUdNYnUsTfOM1vuhJVZL+kiesFYsqwBkEEuEixaiPe5ZQdqDgX2jddhmoA==}
+    engines: {node: '>= 14.0.0'}
+    hasBin: true
+    dependencies:
+      '@ungap/promise-all-settled': 1.1.2
+      ansi-colors: 4.1.1
+      browser-stdout: 1.3.1
+      chokidar: 3.5.3
+      debug: 4.3.4_supports-color@8.1.1
+      diff: 5.0.0
+      escape-string-regexp: 4.0.0
+      find-up: 5.0.0
+      glob: 7.2.0
+      he: 1.2.0
+      js-yaml: 4.1.0
+      log-symbols: 4.1.0
+      minimatch: 5.0.1
+      ms: 2.1.3
+      nanoid: 3.3.3
+      serialize-javascript: 6.0.0
+      strip-json-comments: 3.1.1
+      supports-color: 8.1.1
+      workerpool: 6.2.1
+      yargs: 16.2.0
+      yargs-parser: 20.2.4
+      yargs-unparser: 2.0.0
+    dev: true
+
   /mocha/8.4.0:
     resolution: {integrity: sha512-hJaO0mwDXmZS4ghXsvPVriOhsxQ7ofcpQdm8dE+jISUOKopitvnXFQmpRR7jd2K6VBG6E26gU3IAbXXGIbu4sQ==}
     engines: {node: '>= 10.12.0'}
@@ -32866,37 +32890,6 @@ packages:
       which: 2.0.2
       wide-align: 1.1.3
       workerpool: 6.1.0
-      yargs: 16.2.0
-      yargs-parser: 20.2.4
-      yargs-unparser: 2.0.0
-    dev: true
-
-  /mocha/9.2.2:
-    resolution: {integrity: sha512-L6XC3EdwT6YrIk0yXpavvLkn8h+EU+Y5UcCHKECyMbdUIxyMuZj4bX4U9e1nvnvUUvQVsV2VHQr5zLdcUkhW/g==}
-    engines: {node: '>= 12.0.0'}
-    hasBin: true
-    dependencies:
-      '@ungap/promise-all-settled': 1.1.2
-      ansi-colors: 4.1.1
-      browser-stdout: 1.3.1
-      chokidar: 3.5.3
-      debug: 4.3.3_supports-color@8.1.1
-      diff: 5.0.0
-      escape-string-regexp: 4.0.0
-      find-up: 5.0.0
-      glob: 7.2.0
-      growl: 1.10.5
-      he: 1.2.0
-      js-yaml: 4.1.0
-      log-symbols: 4.1.0
-      minimatch: 4.2.1
-      ms: 2.1.3
-      nanoid: 3.3.1
-      serialize-javascript: 6.0.0
-      strip-json-comments: 3.1.1
-      supports-color: 8.1.1
-      which: 2.0.2
-      workerpool: 6.2.0
       yargs: 16.2.0
       yargs-parser: 20.2.4
       yargs-unparser: 2.0.0
@@ -33195,16 +33188,16 @@ packages:
     hasBin: true
     dev: true
 
-  /nanoid/3.3.1:
-    resolution: {integrity: sha512-n6Vs/3KGyxPQd6uO0eH4Bv0ojGSUvuLlIHtC3Y0kEO23YRge8H9x1GCzLn28YX0H66pMkxuaeESFq4tKISKwdw==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-    dev: true
-
   /nanoid/3.3.2:
     resolution: {integrity: sha512-CuHBogktKwpm5g2sRgv83jEy2ijFzBwMoYA60orPDR7ynsLijJDqgsi4RDGj3OJpy3Ieb+LYwiRmIOGyytgITA==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+
+  /nanoid/3.3.3:
+    resolution: {integrity: sha512-p1sjXuopFs0xg+fPASzQ28agW1oHD7xDsd9Xkf3T15H3c/cifrFHVwrh74PdoklAPi+i7MdRsE47vm2r6JoB+w==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+    dev: true
 
   /nanomatch/1.2.13:
     resolution: {integrity: sha512-fpoe2T0RbHwBTBUOftAfBPaDEi06ufaUai0mE6Yn1kacc3SnTErfb/h+X94VXzI64rKFHYImXSvdwGGCmwOqCA==}
@@ -38769,6 +38762,10 @@ packages:
     engines: {node: '>= 0.10'}
     dependencies:
       resolve: 1.22.0
+
+  /recursive-diff/1.0.8:
+    resolution: {integrity: sha512-WfUcVao/HRsZZjI96PjcefTZ87rsxrgryIlWJB2UrHs4v3kFFzvMOm801a1WoqG+IAsLKJPsGlvubR74EDqGWQ==}
+    dev: false
 
   /recursive-readdir/2.2.2:
     resolution: {integrity: sha512-nRCcW9Sj7NuZwa2XvH9co8NPeXUBhZP7CRKJtU+cS6PW9FpCIFoI5ib0NT1ZrbNuPoRy0ylyCaUL8Gih4LSyFg==}
@@ -44826,8 +44823,8 @@ packages:
     resolution: {integrity: sha512-toV7q9rWNYha963Pl/qyeZ6wG+3nnsyvolaNUS8+R5Wtw6qJPTxIlOP1ZSvcGhEJw+l3HMMmtiNo9Gl61G4GVg==}
     dev: true
 
-  /workerpool/6.2.0:
-    resolution: {integrity: sha512-Rsk5qQHJ9eowMH28Jwhe8HEbmdYDX4lwoMWshiCXugjtHqMD9ZbiqSDLxcsfdqsETPzVUtX5s1Z5kStiIM6l4A==}
+  /workerpool/6.2.1:
+    resolution: {integrity: sha512-ILEIE97kDZvF9Wb9f6h5aXK4swSlKGUcOEGiIYb2OOu/IrDU9iwj0fD//SsA6E5ibwJxpEvhullJY4Sl4GcpAw==}
     dev: true
 
   /wrap-ansi/2.1.0:
