@@ -1,23 +1,19 @@
 import { EventEmitter } from 'events';
 import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
-import {
-  TriggerRecipientsType,
-  ITriggerPayloadOptions,
-} from './subscribers/subscriber.interface';
+import { ITriggerPayloadOptions } from './subscribers/subscriber.interface';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
   private readonly http: AxiosInstance;
   readonly subscribers: Subscribers;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, config?: INovuConfiguration) {
     super();
-
     this.apiKey = apiKey;
 
     this.http = axios.create({
-      baseURL: 'https://api.novu.co/v1',
+      baseURL: this.buildBackendUrl(config),
       headers: {
         Authorization: `ApiKey ${this.apiKey}`,
       },
@@ -34,5 +30,17 @@ export class Novu extends EventEmitter {
         ...data?.payload,
       },
     });
+  }
+
+  private buildBackendUrl(config: INovuConfiguration) {
+    const novuVersion = 'v1';
+
+    if (!config?.backendUrl) {
+      return `https://api.novu.co/${novuVersion}`;
+    }
+
+    return config?.backendUrl.includes('novu.co/v')
+      ? config?.backendUrl
+      : config?.backendUrl + `/${novuVersion}`;
   }
 }
