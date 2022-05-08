@@ -335,78 +335,55 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should trigger In-App notification with subscriber data', async function () {
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: ChannelTypeEnum.IN_APP,
-          content: 'Hello {{subscriber.userName}}, Welcome to {{organizationName}}' as string,
-        },
-      ],
-    });
+    const newSubscriberIdInAppNotification = 'new-subscriberId-in-app-notification';
+    const channelType = ChannelTypeEnum.IN_APP;
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [{ subscriberId: subscriber.subscriberId, userName: 'Will Smith' }],
-        payload: {
-          organizationName: 'Umbrella Corp',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
+    template = await createTemplate(session, channelType);
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
     );
 
-    const message = await messageRepository._model.findOne({
+    const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.IN_APP,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
     });
 
-    expect(message._doc.content).to.equal('Hello Will Smith, Welcome to Umbrella Corp');
+    expect(message.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
   });
 
   it('should trigger SMS notification with subscriber data', async function () {
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: ChannelTypeEnum.SMS,
-          content: 'Hello {{subscriber.userName}}, Welcome to {{organizationName}}' as string,
-        },
-      ],
-    });
+    const newSubscriberIdInAppNotification = 'new-subscriberId-sms-notification';
+    const channelType = ChannelTypeEnum.SMS;
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [{ subscriberId: subscriber.subscriberId, userName: 'Will Smith' }],
-        payload: {
-          organizationName: 'Umbrella Corp',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
+    template = await createTemplate(session, channelType);
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
     );
 
-    const message = await messageRepository._model.findOne({
+    const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.SMS,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
     });
 
-    expect(message._doc.content).to.equal('Hello Will Smith, Welcome to Umbrella Corp');
+    expect(message.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
   });
 
   it('should trigger E-Mail notification with subscriber data', async function () {
+    const newSubscriberIdInAppNotification = 'new-subscriberId-E-Mail-notification';
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    template = await createTemplate(session, channelType);
+
     template = await session.createTemplate({
       steps: [
         {
@@ -416,36 +393,57 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           content: [
             {
               type: 'text',
-              content: 'Hello {{subscriber.userName}}, Welcome to {{organizationName}}' as string,
+              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
         },
       ],
     });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [{ subscriberId: subscriber.subscriberId, userName: 'Will Smith' }],
-        payload: {
-          organizationName: 'Umbrella Corp',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
+    await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
     );
 
-    const message = await messageRepository._model.findOne({
+    const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.EMAIL,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
     });
 
-    expect(message._doc.content[0].content).to.equal('Hello Will Smith, Welcome to Umbrella Corp');
+    const block = message.content[0] as IEmailBlock;
+
+    expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
   });
 });
+
+async function createTemplate(session, channelType) {
+  return await session.createTemplate({
+    steps: [
+      {
+        type: channelType,
+        content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+      },
+    ],
+  });
+}
+
+async function sendTrigger(session, template, newSubscriberIdInAppNotification: string) {
+  await axiosInstance.post(
+    `${session.serverUrl}/v1/events/trigger`,
+    {
+      name: template.triggers[0].identifier,
+      to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],
+      payload: {
+        organizationName: 'Umbrella Corp',
+      },
+    },
+    {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    }
+  );
+}

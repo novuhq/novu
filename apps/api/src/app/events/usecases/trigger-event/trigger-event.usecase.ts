@@ -240,7 +240,7 @@ export class TriggerEvent {
     });
 
     const contentService = new ContentService();
-    const messageVariables = contentService.buildMessageVariables(command, subscriberPayload);
+    const messageVariables = contentService.buildMessageVariables(command, subscriber);
 
     if (smsMessages?.length && this.shouldSendChannel(channelsToSend, ChannelTypeEnum.SMS)) {
       await this.sendSmsMessage(smsMessages, command, notification, subscriber, template, messageVariables);

@@ -87,17 +87,24 @@ export class ContentService {
     return content.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
   }
 
-  buildMessageVariables(command: TriggerEventCommand, subscriberPayload) {
+  buildMessageVariables(command: TriggerEventCommand, subscriberPayload): { [key: string]: any } {
     const messageVariables: { [key: string]: any } = { ...command.payload };
-    this.combineObjects(messageVariables, subscriberPayload, 'subscriber');
 
-    return messageVariables;
+    return this.combineObjects(messageVariables, subscriberPayload, 'subscriber');
   }
 
-  combineObjects(messageVariables: { [p: string]: any }, subscriberPayload, subscriberString = '') {
+  private combineObjects(
+    messageVariables: { [key: string]: any },
+    subscriberPayload,
+    subscriberString = ''
+  ): { [key: string]: any } {
+    const newMessageVariables: { [key: string]: any } = { ...messageVariables };
+
     Object.keys(subscriberPayload).map(function (key) {
       const newKey = subscriberString === '' ? key : `${subscriberString}.${key}`;
-      messageVariables[newKey] = subscriberPayload[key];
+      newMessageVariables[newKey] = subscriberPayload[key];
     });
+
+    return newMessageVariables;
   }
 }
