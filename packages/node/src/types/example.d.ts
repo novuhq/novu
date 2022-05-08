@@ -1,3 +1,0 @@
-interface INovuConfiguration {
-  backendUrl?: string;
-}

@@ -3,6 +3,10 @@ import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
 import { ITriggerPayloadOptions } from './subscribers/subscriber.interface';
 
+export interface INovuConfiguration {
+  backendUrl?: string;
+}
+
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
   private readonly http: AxiosInstance;
