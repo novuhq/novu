@@ -120,7 +120,7 @@ importers:
       '@novu/sendgrid': ^0.4.0-alpha.8
       '@novu/sendinblue': ^0.4.0-alpha.8
       '@novu/ses': ^0.4.0-alpha.8
-      '@novu/shared': workspace:^0.4.0-alpha.10
+      '@novu/shared': ^0.4.0-alpha.10
       '@novu/sms77': ^0.4.0-alpha.8
       '@novu/sns': ^0.4.0-alpha.8
       '@novu/stateless': ^0.4.0-alpha.8
@@ -458,7 +458,7 @@ importers:
       '@novu/dal': ^0.4.0-alpha.10
       '@novu/embed': ^0.4.0-alpha.9
       '@novu/notification-center': ^0.4.0-alpha.11
-      '@novu/shared': workspace:^0.4.0-alpha.10
+      '@novu/shared': ^0.4.0-alpha.10
       '@novu/testing': ^0.4.0-alpha.10
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
