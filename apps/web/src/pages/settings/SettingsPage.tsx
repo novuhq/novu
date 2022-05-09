@@ -6,22 +6,19 @@ import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
-import { BrandingForm } from './components/BrandingForm';
-import { ApiKeysCard } from './components/ApiKeysCard';
-import { InAppCenterCard } from './components/InAppCenterCard';
 import { useQuery } from 'react-query';
 import { getCurrentOrganization } from '../../api/organization';
+import { BrandingForm, ApiKeysCard, InAppCenterCard } from './tabs';
 
 export function SettingsPage() {
   const location = useLocation();
 
   const [activeTab, setActiveTab] = useState(0);
 
-  const {
-    data: organization,
-    isLoading: isLoadingOrganization,
-    refetch,
-  } = useQuery<IOrganizationEntity>('/v1/organizations/me', getCurrentOrganization);
+  const { data: organization, isLoading: isLoadingOrganization } = useQuery<IOrganizationEntity>(
+    '/v1/organizations/me',
+    getCurrentOrganization
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);

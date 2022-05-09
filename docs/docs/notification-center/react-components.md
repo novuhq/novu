@@ -117,3 +117,32 @@ function CustomNotificationCenter() {
   return <></>;
 }
 ```
+
+## HMAC Encryption
+
+When Novu's user adds the notification center to his application he is required to pass a `subscriberId` which identifies the user's end-customer, and the application Identifier which is acted as a public key to communicate with the notification feed API.
+
+A malicious actor can access the user feed by accessing the API and passing another `subscriberId` using the public application identifier.
+
+HMAC encryption will make sure that a `subscriberId` is encrypted using the secret API key, and those will prevent malicious actors from impersonating users.
+
+### Enabling HMAC Encryption
+
+In order to enable Hash-Based Message Authentication Codes, you need to visit the admin panel in-app settings page and enable HMAC encryption for your environment.
+
+Next step would be to generate an HMAC encrypted subscriberId on your backend:
+
+```ts
+import { createHmac } from 'crypto';
+
+const hmacHash = createHmac('sha256', process.env.NOVU_API_KEY)
+  .update(subscriberId)
+  .digest('hex');
+```
+
+Then pass the created HMAC to your client side application forward it to the component:
+
+```tsx
+<NovuProvider subscriberId={'PLAIN_TEXT_ID'} subscriberHash={'HASHED_SUBSCRIBER_ID'} applicationIdentifier={'APP_ID'}>
+</NovuProvider>
+```

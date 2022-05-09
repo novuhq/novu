@@ -27,6 +27,13 @@ const environmentSchema = new Schema(
         },
       },
     ],
+    widget: {
+      notificationCenterEncryption: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
+    },
+
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

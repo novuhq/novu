@@ -48,6 +48,7 @@ export interface INovuProviderContext {
   initialized: boolean;
   socketUrl?: string;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
+  subscriberHash: string;
 }
 
 export declare type ColorScheme = 'light' | 'dark';
