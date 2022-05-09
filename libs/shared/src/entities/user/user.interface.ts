@@ -5,6 +5,7 @@ export interface IUserEntity {
   email: string;
   profilePicture: string;
   createdAt: string;
+  showOnBoarding?: boolean;
 }
 
 export interface IJwtPayload {
