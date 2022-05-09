@@ -1,4 +1,5 @@
 import { ChannelTypeEnum, IMessageTemplate } from '@novu/shared';
+import { TriggerEventCommand } from '../../events/usecases/trigger-event';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {
@@ -84,5 +85,26 @@ export class ContentService {
 
   private escapeForRegExp(content: string) {
     return content.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+  }
+
+  buildMessageVariables(command: TriggerEventCommand, subscriberPayload): { [key: string]: any } {
+    const messageVariables: { [key: string]: any } = { ...command.payload };
+
+    return this.combineObjects(messageVariables, subscriberPayload, 'subscriber');
+  }
+
+  private combineObjects(
+    messageVariables: { [key: string]: any },
+    subscriberPayload,
+    subscriberString = ''
+  ): { [key: string]: any } {
+    const newMessageVariables: { [key: string]: any } = { ...messageVariables };
+
+    Object.keys(subscriberPayload).map(function (key) {
+      const newKey = subscriberString === '' ? key : `${subscriberString}.${key}`;
+      newMessageVariables[newKey] = subscriberPayload[key];
+    });
+
+    return newMessageVariables;
   }
 }
