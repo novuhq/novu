@@ -30,12 +30,34 @@ function Column({ column }) {
   );
 }
 
+function SideColumn() {
+  return (
+    <div className="col footer__col">
+      <a
+        className="footer__button"
+        href="https://github.com/novuhq/novu"
+        target="_blank"
+        rel="noopener"
+      >
+        Star us on Github
+      </a>
+      <div className="footer__design">
+        Design made by{' '}
+        <a href="https://pixelpoint.io/" target="_blank" rel="noopener">
+          Pixel Point
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function FooterLinksMultiColumn({ columns }) {
   return (
     <div className="row footer__links">
       {columns.map((column, i) => (
         <Column key={i} column={column} />
       ))}
+      <SideColumn />
     </div>
   );
 }

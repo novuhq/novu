@@ -1,0 +1,23 @@
+@font-face {
+  font-family: 'Brother-1816';
+  src: url('/static/fonts/brother-1816-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: fallback;
+}
+
+@font-face {
+  font-family: 'Brother-1816';
+  src: url('/static/fonts/brother-1816-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: fallback;
+}
+
+@font-face {
+  font-family: 'Brother-1816';
+  src: url('/static/fonts/brother-1816-light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: fallback;
+}

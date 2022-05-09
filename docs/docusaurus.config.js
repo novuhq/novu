@@ -49,20 +49,16 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           },
           items: [
             {
-              type: 'doc',
-              docId: 'overview/introduction',
+              href: 'https://github.com/novuhq/novu',
+              className: 'navbar-item-github',
+              label: 'GitHub',
               position: 'left',
-              label: 'Documentation',
             },
             {
               href: 'https://discord.gg/9wcGSf22PM',
               className: 'navbar-item-discord',
-              position: 'right',
-            },
-            {
-              href: 'https://github.com/novuhq/novu',
-              className: 'navbar-item-github',
-              position: 'right',
+              label: 'Community',
+              position: 'left',
             },
           ],
         },
@@ -110,7 +106,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               ],
             },
           ],
-          copyright: `Copyright © ${new Date().getFullYear()} Novu.`,
+          copyright: `©${new Date().getFullYear()} Novu`,
         },
         prism: {
           theme: lightCodeTheme,
