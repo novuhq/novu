@@ -5,6 +5,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ContentTemplatesModule } from '../../content-templates.module';
 import { CompileTemplate } from './compile-template.usecase';
 import { CompileTemplateCommand } from './compile-template.command';
+import { functionsIn } from 'lodash';
 
 describe('Compile Template', function () {
   let useCase: CompileTemplate;
@@ -60,6 +61,34 @@ describe('Compile Template', function () {
         },
       })
     );
+
+    it('should allow the user to specify handlebars helpers'), async function () {
+      const result = await useCase.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          data: {
+            branding: {
+              color: '#e7e7e7e9',
+            },
+            message: 'hello world'
+          },
+          customTemplate: '<div>{{titlecase message}}</div>'
+        })
+      )
+    };
+
+    Handlebars.registerHelper('titlecase', function(string) {
+      string.trim().toLowerCase().replace(/\w\S*/g, (w) => (w.replace(/^\w/,
+      (c) => c.toUpperCase())));
+    });
+
+    Handlebars.registerHelper('allLower', function(string) {
+      string.toLowerCase();
+    });
+
+    Handlebars.registerHelper('allcaps', function(string) {
+      string.toUpperCase();
+    });
 
     expect(result).to.contain('Hello TESTTTT content');
     expect(result).to.not.contain('{{#each blocks}}');
