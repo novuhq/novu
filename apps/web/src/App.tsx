@@ -177,7 +177,7 @@ function RequiredAuth({ children }: any) {
 
   if (!getToken()) {
     return <Navigate to="/auth/login" replace />;
-  } else if (!jwtHasKey('organizationId')) {
+  } else if (!jwtHasKey('organizationId') || !jwtHasKey('environmentId')) {
     return <Navigate to="/auth/application" replace />;
   } else {
     return children;
