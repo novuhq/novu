@@ -61,6 +61,7 @@ export default function TemplateEditorPage() {
     methods,
     removeEmailMessage,
     isDirty,
+    setIsDirty,
   } = useTemplateController(templateId);
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
@@ -130,6 +131,7 @@ export default function TemplateEditorPage() {
               <Grid.Col md={4} sm={6}>
                 <SideBarWrapper dark={colorScheme === 'dark'} style={{ paddingRight: 50 }}>
                   <TemplatesSideBar
+                    setIsDirty={setIsDirty}
                     activeTab={activePage}
                     toggleChannel={toggleChannel}
                     changeTab={setActivePage}

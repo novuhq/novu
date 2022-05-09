@@ -24,6 +24,8 @@ export function useTemplateController(templateId: string) {
     [ChannelTypeEnum.SMS]: false,
   });
 
+  const [isDirty, setIsDirty] = useState(false);
+
   const methods = useForm<IForm>({
     resolver: async (data) => {
       const errors: any = {};
@@ -70,7 +72,7 @@ export function useTemplateController(templateId: string) {
     setValue,
     control,
     watch,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty: isDirtyForm },
   } = methods;
 
   const {
@@ -353,7 +355,8 @@ export function useTemplateController(templateId: string) {
     removeEmailMessage,
     errors,
     smsFields,
-    isDirty,
+    setIsDirty,
+    isDirty: isDirtyForm || isDirty,
   };
 }
 
