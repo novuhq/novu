@@ -14,7 +14,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
     favicon: 'img/favicon-gradient.png',
     organizationName: 'novuhq', // Usually your GitHub org/user name.
     projectName: 'novu', // Usually your repo name.
-
+    plugins: ['docusaurus-plugin-sass'],
     presets: [
       [
         '@docusaurus/preset-classic',
@@ -27,7 +27,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
           },
           theme: {
-            customCss: require.resolve('./src/css/custom.css'),
+            customCss: require.resolve('./src/css/custom.scss'),
           },
         }),
       ],
@@ -42,8 +42,8 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
         navbar: {
           logo: {
             alt: 'Novu Logo',
-            src: 'img/logo-formerly-light-bg.svg',
-            srcDark: 'img/logo-formerly-dark-bg.svg',
+            src: 'img/logo-light-bg.svg',
+            srcDark: 'img/logo-dark-bg.svg',
             width: 100,
             height: 100,
           },
@@ -67,6 +67,15 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
           ],
         },
         footer: {
+          style: 'dark',
+          logo: {
+            alt: 'Novu',
+            src: 'img/logo-light-bg.svg',
+            srcDark: 'img/logo-dark-bg.svg',
+            href: '/',
+            width: 102,
+            height: 32,
+          },
           links: [
             {
               items: [

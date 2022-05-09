@@ -1,7 +1,7 @@
 import React from 'react';
 import LinkItem from '@theme/Footer/LinkItem';
 
-function ColumnLinkItem({item}) {
+function ColumnLinkItem({ item }) {
   return item.html ? (
     <li
       className="footer__item" // Developer provided the HTML, so assume it's safe.
@@ -17,7 +17,7 @@ function ColumnLinkItem({item}) {
   );
 }
 
-function Column({column}) {
+function Column({ column }) {
   return (
     <div className="col footer__col">
       <div className="footer__title">{column.title}</div>
@@ -30,7 +30,7 @@ function Column({column}) {
   );
 }
 
-export default function FooterLinksMultiColumn({columns}) {
+export default function FooterLinksMultiColumn({ columns }) {
   return (
     <div className="row footer__links">
       {columns.map((column, i) => (

@@ -12,7 +12,6 @@ Let's deep dive into the building blocks of Novu's OCL approach.
 
 Templates are the blueprints for all notifications in Novu. They provide the base configurations for each message. A message is tied to a specific channel, for which a content template is provided, code rules and filters, priorities, and other metadata that will affect the delivery of a specific message.
 
-
 ## Environments
 
 This is the context in which all of your subscriber and templates exist. This will usually map to your own environments, so any new changes your are making will first be in the Development environment and once tested, you can use our merging changes tool to promote them to production.
@@ -35,8 +34,8 @@ The responsibility of each provider is to send the notification to the end-recip
 
 ## Subscribers
 
-Are the recipients of notifications, a subscriber will contain the delivery details such as: Email address, phone number, push tokens and etc... 
-Populating a subscriber with data can be done using our server side SDK. Read more about it [here](/docs/platform/subscribers).  
+Are the recipients of notifications, a subscriber will contain the delivery details such as: Email address, phone number, push tokens and etc...
+Populating a subscriber with data can be done using our server side SDK. Read more about it [here](/docs/platform/subscribers).
 
 ## Trigger
 
@@ -50,4 +49,4 @@ This is the unit that is responsible for reading the configurations of the templ
 
 ## Template and Integration Stores
 
-Responsible for storing the configurations of all the providers and templates during the runtime of the API. 
+Responsible for storing the configurations of all the providers and templates during the runtime of the API.
