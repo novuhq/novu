@@ -72,8 +72,8 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     hmacHash = createHmac('sha256', invalidSecretKey).update(validSubscriberId).digest('hex');
     const responseInvalidSecretKey = await initWidgetSession(validSubscriberId, session, hmacHash);
 
-    expect(responseInvalidSubscriberId.status).to.be('401');
-    expect(responseInvalidSecretKey.status).to.be('401');
+    expect(responseInvalidSubscriberId.body.message).to.contain('Please provide a valid HMAC hash');
+    expect(responseInvalidSecretKey.body.message).to.contain('Please provide a valid HMAC hash');
   });
 });
 
