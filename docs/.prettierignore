@@ -1,3 +1,6 @@
 # Ignore artifacts:
 build
-coverage
+package.json
+yarn.lock
+*.md
+.docusaurus

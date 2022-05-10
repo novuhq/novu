@@ -5,48 +5,33 @@ You can find the embed code in the `Settings` page within the Admin Panel. It wi
 
 ```html
 <script>
-  (function (n, o, t, i, f) {
-    (n[i] = {}), (m = ['init']);
-    n[i]._c = [];
-    m.forEach(
-      (me) =>
-        (n[i][me] = function () {
-          n[i]._c.push([me, arguments]);
-        })
-    );
-    var elt = o.createElement(f);
-    elt.type = 'text/javascript';
-    elt.async = true;
-    elt.src = t;
-    var before = o.getElementsByTagName(f)[0];
-    before.parentNode.insertBefore(elt, before);
+  (function(n,o,t,i,f) {
+    n[i] = {}, m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
+    var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
+    var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
   })(window, document, 'https://embed.novu.co/embed.umd.min.js', 'novu', 'script');
 
-  novu.init(
-    '<REPLACE_APPLICATION_ID>',
-    {
-      unseenBadgeSelector: '#unseen-badge',
-      bellSelector: '#notification-bell',
-    },
-    {
-      subscriberId: '<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>',
-      email: '<REPLACE_WITH_USER_EMAIL>',
-      first_name: '<REPLACE_WITH_USER_NAME>',
-      last_name: '<REPLACE_WITH_USER_LAST_NAME>',
-    }
-  );
+  novu.init('<REPLACE_APPLICATION_ID>', { 
+    unseenBadgeSelector: '#unseen-badge', 
+    bellSelector: '#notification-bell' 
+  }, {
+    subscriberId: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",
+    email: "<REPLACE_WITH_USER_EMAIL>",
+    first_name: "<REPLACE_WITH_USER_NAME>",
+    last_name: "<REPLACE_WITH_USER_LAST_NAME>",
+  });
 </script>
 ```
 
 Replace the selectors for the bell icon and the unseen badge withing your code. Let's take a look at this example code:
 
 ```html
-<nav>
-  <div id="notification-bell">
-    <i class="fa fa-bell"></i>
-    <span id="unseen-badge"></span>
-  </div>
-</nav>
+  <nav>
+    <div id="notification-bell">
+      <i class="fa fa-bell"></i>
+      <span id="unseen-badge"></span>
+    </div>
+  </nav>
 ```
 
 ## Customizing the dropdown position
@@ -55,19 +40,15 @@ Optionally the embed init script receives a position object, you can use it to s
 
 ```html
 <script>
-  novu.init(
-    '<REPLACE_APPLICATION_ID>',
-    {
-      unseenBadgeSelector: '#unseen-badge',
-      bellSelector: '#notification-bell',
-      position: {
-        top: '50px',
-        left: '100px',
-      },
-    },
-    {
-      ...subscriberProps,
+  novu.init('<REPLACE_APPLICATION_ID>', {
+    unseenBadgeSelector: '#unseen-badge',
+    bellSelector: '#notification-bell',
+    position: {
+      top: '50px',
+      left: '100px'
     }
-  );
+  }, {
+    ...subscriberProps
+  });
 </script>
 ```

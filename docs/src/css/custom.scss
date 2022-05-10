@@ -6,6 +6,7 @@
 
 /* You can override the default Infima variables here. */
 @import 'fonts';
+@import 'variables';
 @import 'dark';
 @import 'light';
 
@@ -21,6 +22,14 @@
   --ifm-color-primary-lightest: #ffbfb9;
   --ifm-footer-link-color: #ffffff;
   --ifm-code-font-size: 95%;
+  --ifm-line-height-base: 1.5;
+  --doc-sidebar-width: 340px !important;
+  --ifm-menu-link-padding-vertical: 8px;
+  --ifm-menu-link-padding-horizontal: 20px;
+}
+
+body {
+  font-weight: var(--ifm-font-weight-light);
 }
 
 .docusaurus-highlight-code-line {
@@ -28,10 +37,6 @@
   display: block;
   margin: 0 calc(-1 * var(--ifm-pre-padding));
   padding: 0 var(--ifm-pre-padding);
-}
-
-.navbar {
-  border-bottom: 1px solid #262626;
 }
 
 .navbar__item {
@@ -45,17 +50,85 @@
 
 .navbar-item-discord:before,
 .navbar-item-github:before {
+  display: flex;
   align-items: center;
   background-position: 50%;
   background-repeat: no-repeat;
-  height: 16px;
   margin-right: 0.5rem;
-  width: 16px;
   content: '';
+  justify-items: center;
+  margin-right: 0.5rem;
 }
 
-.navbar-item-discord:hover {
-  opacity: 0.6;
+.navbar-item-discord:before {
+  width: 27px;
+  height: 20px;
+}
+
+.navbar-item-github:before {
+  width: 20px;
+  height: 20px;
+}
+
+nav.menu {
+  padding: 10px 10px 10px 16px;
+
+  .menu__link {
+    line-height: 1.375;
+  }
+
+  .menu__list-item {
+    position: relative;
+    > .menu__list {
+      font-weight: 300;
+      font-size: 14px;
+      padding-left: 0;
+    }
+  }
+
+  .menu__link--sublist-caret:after {
+    display: none;
+  }
+
+  .menu__link--sublist-caret::before {
+    top: 16px;
+    position: absolute;
+    left: 0;
+    content: '';
+    background-repeat: no-repeat;
+    width: 10px;
+    height: 7px;
+    background-size: 10px 7px;
+    transition: transform var(--ifm-transition-fast) linear;
+  }
+
+  .menu__list-item--collapsed .menu__link--sublist::before {
+    transform: rotateZ(-90deg);
+  }
+}
+
+.table-of-contents__link {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.375;
+
+  ~ ul .table-of-contents__link  {
+    font-weight: 300;
+  }
+}
+
+.pagination-nav__link {
+  border: none;
+  padding-left: 0;
+  padding-right: 0;
+
+  .pagination-nav__sublabel {
+    margin-bottom: 8px;
+  }
+
+  .pagination-nav__label {
+    font-weight: 500;
+  }
 }
 
 .footer {
@@ -79,6 +152,11 @@
     margin-right: 80px;
     width: auto;
     max-width: max-content;
+
+    .footer__link-item {
+      text-decoration: none;
+      font-weight: 400;
+    }
   }
 
   .footer__col:last-child {
@@ -93,6 +171,8 @@
       align-items: center;
       padding: 7px 20px 7px 12px;
       text-transform: uppercase;
+      font-size: 12px;
+      text-decoration: none;
       color: inherit;
       font-weight: 500;
       border-radius: 4px;
@@ -114,17 +194,21 @@
   }
 
   .footer__copyright {
-    color: #999999;
+    color: $color-gray-8;
+    font-size: 14px;
+    font-weight: 400;
   }
 
   .footer__design {
-    color: #999999;
+    color: $color-gray-8;
+    font-size: 14px;
+    font-weight: 400;
 
     a {
       color: inherit;
       text-decoration: none;
       &:hover {
-        color: #00d5ff;
+        color: $color-primary-blue;
         transition: color 0.2s;
       }
     }

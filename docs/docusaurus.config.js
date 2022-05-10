@@ -25,6 +25,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
+            breadcrumbs: false,
           },
           theme: {
             customCss: require.resolve('./src/css/custom.scss'),
@@ -106,7 +107,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               ],
             },
           ],
-          copyright: `©${new Date().getFullYear()} Novu`,
+          copyright: `© ${new Date().getFullYear()} Novu`,
         },
         prism: {
           theme: lightCodeTheme,
