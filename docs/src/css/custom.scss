@@ -29,7 +29,13 @@
 }
 
 body {
-  font-weight: var(--ifm-font-weight-light);
+  font-weight: var(--ifm-font-weight-normal);
+}
+
+article,
+.pagination-nav {
+  max-width: 860px;
+  margin: 0 auto;
 }
 
 .docusaurus-highlight-code-line {
@@ -128,6 +134,26 @@ nav.menu {
 
   .pagination-nav__label {
     font-weight: 500;
+  }
+
+  &.pagination-nav__link--next .pagination-nav__label::after,
+  &.pagination-nav__link--prev .pagination-nav__label::before {
+    width: 16px;
+    height: 12px;
+    display: inline-block;
+    content: '';
+    background-repeat: no-repeat;
+  }
+
+  &.pagination-nav__link--next .pagination-nav__label::after {
+    background-image: url('/img/arrow.svg');
+    transform: rotateZ(180deg);
+    margin-left: 8px;
+  }
+
+   &.pagination-nav__link--prev .pagination-nav__label::before {
+    background-image: url('/img/arrow.svg');
+    margin-right: 8px;
   }
 }
 
