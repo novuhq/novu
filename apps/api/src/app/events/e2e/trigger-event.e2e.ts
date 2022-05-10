@@ -11,8 +11,6 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import axios from 'axios';
-import { stub } from 'sinon';
-import { SmsService } from '../../shared/services/sms/sms.service';
 import { ISubscribersDefine } from '@novu/node';
 
 const axiosInstance = axios.create();
@@ -339,4 +337,117 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(message.status).to.equal('error');
     expect(message.errorText).to.contains('Currently 3rd-party packages test are not support on test env');
   });
+
+  it('should trigger In-App notification with subscriber data', async function () {
+    const newSubscriberIdInAppNotification = 'new-subscriberId-in-app-notification';
+    const channelType = ChannelTypeEnum.IN_APP;
+
+    template = await createTemplate(session, channelType);
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    expect(message.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
+  });
+
+  it('should trigger SMS notification with subscriber data', async function () {
+    const newSubscriberIdInAppNotification = 'new-subscriberId-sms-notification';
+    const channelType = ChannelTypeEnum.SMS;
+
+    template = await createTemplate(session, channelType);
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    expect(message.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
+  });
+
+  it('should trigger E-Mail notification with subscriber data', async function () {
+    const newSubscriberIdInAppNotification = 'new-subscriberId-E-Mail-notification';
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    template = await createTemplate(session, channelType);
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email subject',
+          type: ChannelTypeEnum.EMAIL,
+          content: [
+            {
+              type: 'text',
+              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    const block = message.content[0] as IEmailBlock;
+
+    expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
+  });
 });
+
+async function createTemplate(session, channelType) {
+  return await session.createTemplate({
+    steps: [
+      {
+        type: channelType,
+        content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+      },
+    ],
+  });
+}
+
+async function sendTrigger(session, template, newSubscriberIdInAppNotification: string) {
+  await axiosInstance.post(
+    `${session.serverUrl}/v1/events/trigger`,
+    {
+      name: template.triggers[0].identifier,
+      to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],
+      payload: {
+        organizationName: 'Umbrella Corp',
+      },
+    },
+    {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    }
+  );
+}

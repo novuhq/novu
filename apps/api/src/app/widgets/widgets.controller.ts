@@ -36,6 +36,7 @@ export class WidgetsController {
         firstName: body.firstName,
         lastName: body.lastName,
         phone: body.phone,
+        hmacHash: body.hmacHash,
       })
     );
   }

@@ -25,4 +25,8 @@ export class InitializeSessionCommand {
   @IsString()
   @IsOptional()
   phone?: string;
+
+  @IsString()
+  @IsOptional()
+  hmacHash?: string;
 }

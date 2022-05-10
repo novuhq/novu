@@ -7,4 +7,5 @@ export const NovuContext = React.createContext<INovuProviderContext>({
   initialized: false,
   socketUrl: null,
   onLoad: null,
+  subscriberHash: null,
 });
