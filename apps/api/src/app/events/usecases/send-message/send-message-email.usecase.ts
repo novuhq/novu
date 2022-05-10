@@ -54,7 +54,7 @@ export class SendMessageEmail extends SendMessageType {
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
-    const content: string | IEmailBlock[] = this.getContent(isEditorMode, emailChannel, command);
+    const content: string | IEmailBlock[] = this.getContent(isEditorMode, emailChannel, command, subscriber);
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationID,
@@ -70,7 +70,8 @@ export class SendMessageEmail extends SendMessageType {
     });
 
     const contentService = new ContentService();
-    const subject = contentService.replaceVariables(emailChannel.template.subject, command.payload);
+    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
+    const subject = contentService.replaceVariables(emailChannel.template.subject, messageVariables);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -191,14 +192,19 @@ export class SendMessageEmail extends SendMessageType {
     }
   }
 
-  private getContent(isEditorMode, emailChannel, command: SendMessageCommand): string | IEmailBlock[] {
+  private getContent(
+    isEditorMode,
+    emailChannel,
+    command: SendMessageCommand,
+    subscriber: SubscriberEntity
+  ): string | IEmailBlock[] {
     if (isEditorMode) {
+      const contentService = new ContentService();
+      const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
       const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
       for (const block of content) {
-        const contentService = new ContentService();
-
-        block.content = contentService.replaceVariables(block.content, command.payload);
-        block.url = contentService.replaceVariables(block.url, command.payload);
+        block.content = contentService.replaceVariables(block.content, messageVariables);
+        block.url = contentService.replaceVariables(block.url, messageVariables);
       }
 
       return content;

@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository, NotificationStepEntity, NotificationRepository } from '@novu/dal';
+import {
+  MessageRepository,
+  NotificationStepEntity,
+  NotificationRepository,
+  SubscriberRepository,
+  SubscriberEntity,
+} from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { ContentService } from '../../../shared/helpers/content.service';
@@ -15,7 +21,8 @@ export class SendMessageInApp extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     private queueService: QueueService,
-    protected createLogUsecase: CreateLog
+    protected createLogUsecase: CreateLog,
+    private subscriberRepository: SubscriberRepository
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -25,10 +32,15 @@ export class SendMessageInApp extends SendMessageType {
       message: 'Sending In App',
     });
     const notification = await this.notificationRepository.findById(command.notificationID);
+    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
+      _environmentId: command.environmentId,
+      _id: command.subscriberId,
+    });
     const inAppChannel: NotificationStepEntity = command.step;
     const contentService = new ContentService();
 
-    const content = contentService.replaceVariables(inAppChannel.template.content as string, command.payload);
+    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
+    const content = contentService.replaceVariables(inAppChannel.template.content as string, messageVariables);
 
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = contentService.replaceVariables(

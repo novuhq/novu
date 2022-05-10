@@ -339,7 +339,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should trigger In-App notification with subscriber data', async function () {
-    const newSubscriberIdInAppNotification = 'new-subscriberId-in-app-notification';
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
     const channelType = ChannelTypeEnum.IN_APP;
 
     template = await createTemplate(session, channelType);
@@ -361,7 +361,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should trigger SMS notification with subscriber data', async function () {
-    const newSubscriberIdInAppNotification = 'new-subscriberId-sms-notification';
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
     const channelType = ChannelTypeEnum.SMS;
 
     template = await createTemplate(session, channelType);
@@ -383,7 +383,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should trigger E-Mail notification with subscriber data', async function () {
-    const newSubscriberIdInAppNotification = 'new-subscriberId-E-Mail-notification';
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
     const channelType = ChannelTypeEnum.EMAIL;
 
     template = await createTemplate(session, channelType);

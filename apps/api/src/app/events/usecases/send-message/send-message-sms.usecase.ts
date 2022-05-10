@@ -43,7 +43,8 @@ export class SendMessageSms extends SendMessageType {
       _id: command.subscriberId,
     });
     const contentService = new ContentService();
-    const content = contentService.replaceVariables(smsChannel.template.content as string, command.payload);
+    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
+    const content = contentService.replaceVariables(smsChannel.template.content as string, messageVariables);
     const phone = command.payload.phone || subscriber.phone;
 
     const message: MessageEntity = await this.messageRepository.create({
