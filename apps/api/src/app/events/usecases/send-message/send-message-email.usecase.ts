@@ -42,10 +42,10 @@ export class SendMessageEmail extends SendMessageType {
   public async execute(command: SendMessageCommand) {
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationID);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      notification._subscriberId
-    );
+    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
+      _environmentId: command.environmentId,
+      _id: command.subscriberId,
+    });
     const organization = await this.organizationRepository.findById(command.organizationId);
     const email = command.payload.email || subscriber.email;
 
@@ -60,7 +60,7 @@ export class SendMessageEmail extends SendMessageType {
       _notificationId: command.notificationID,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: notification._subscriberId,
+      _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
       content,
@@ -178,7 +178,7 @@ export class SendMessageEmail extends SendMessageType {
           messageId: message._id,
           text: 'Error while sending email with provider',
           userId: command.userId,
-          subscriberId: notification._subscriberId,
+          subscriberId: command.subscriberId,
           code: LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
           templateId: notification._templateId,
           raw: {

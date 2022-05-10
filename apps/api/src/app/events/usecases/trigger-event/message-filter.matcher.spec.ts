@@ -1,12 +1,11 @@
 import { BuilderFieldOperator, ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { MessageEntity, StepFilter, NotificationStepEntity } from '@novu/dal';
+import { NotificationStepEntity } from '@novu/dal';
 import { matchMessageWithFilters } from './message-filter.matcher';
 
 describe('Message filter matcher', function () {
   it('should filter correct message by the filter value', function () {
     const matchedMessage = matchMessageWithFilters(
-      ChannelTypeEnum.EMAIL,
       [
         messageWrapper('Correct Match', 'OR', [
           {
@@ -32,42 +31,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage[0].template.name).to.equal('Correct Match');
   });
 
-  it('should filter correct message by the channel', function () {
-    const matchedMessage = matchMessageWithFilters(
-      ChannelTypeEnum.EMAIL,
-      [
-        messageWrapper('Correct Match', 'OR', [
-          {
-            operator: 'EQUAL',
-            value: 'firstVar',
-            field: 'varField',
-          },
-        ]),
-        messageWrapper(
-          'Bad Match',
-          'OR',
-          [
-            {
-              operator: 'EQUAL',
-              value: 'firstVar',
-              field: 'varField',
-            },
-          ],
-          ChannelTypeEnum.IN_APP
-        ),
-      ],
-      {
-        varField: 'firstVar',
-      }
-    );
-
-    expect(matchedMessage.length).to.equal(1);
-    expect(matchedMessage[0].template.name).to.equal('Correct Match');
-  });
-
   it('should handle multiple message matches', function () {
     const matchedMessage = matchMessageWithFilters(
-      ChannelTypeEnum.EMAIL,
       [
         messageWrapper('Correct Match', 'OR', [
           {
@@ -96,7 +61,6 @@ describe('Message filter matcher', function () {
 
   it('should match a message for AND filter group', function () {
     const matchedMessage = matchMessageWithFilters(
-      ChannelTypeEnum.EMAIL,
       [
         messageWrapper('Correct Match', 'AND', [
           {
@@ -123,7 +87,6 @@ describe('Message filter matcher', function () {
 
   it('should not match AND group for single bad item', function () {
     const matchedMessage = matchMessageWithFilters(
-      ChannelTypeEnum.EMAIL,
       [
         messageWrapper('Title', 'AND', [
           {
@@ -149,7 +112,6 @@ describe('Message filter matcher', function () {
 
   it('should match a NOT_EQUAL for EQUAL var', function () {
     const matchedMessage = matchMessageWithFilters(
-      ChannelTypeEnum.EMAIL,
       [
         messageWrapper('Correct Match', 'AND', [
           {
@@ -176,7 +138,6 @@ describe('Message filter matcher', function () {
 
   it('should fall thru for no filters item', function () {
     const matchedMessage = matchMessageWithFilters(
-      ChannelTypeEnum.EMAIL,
       [
         messageWrapper('Correct Match', 'AND', [
           {

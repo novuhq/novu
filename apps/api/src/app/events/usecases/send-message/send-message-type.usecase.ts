@@ -29,7 +29,7 @@ export abstract class SendMessageType {
         notificationId: notification._id,
         text: errorMessage,
         userId: command.userId,
-        subscriberId: notification._subscriberId,
+        subscriberId: command.subscriberId,
         code: logCodeEnum,
         templateId: notification._templateId,
       })

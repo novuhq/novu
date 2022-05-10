@@ -1,7 +1,6 @@
 import { IsDefined, IsString, IsUUID } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { ISubscribersDefine } from '@novu/node';
 import { NotificationStepEntity } from '@novu/dal';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
@@ -25,4 +24,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   notificationID;
+
+  @IsDefined()
+  subscriberId: string;
 }

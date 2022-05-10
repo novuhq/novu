@@ -41,7 +41,7 @@ export class SendMessageInApp extends SendMessageType {
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: notification._subscriberId,
+      _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
@@ -52,7 +52,7 @@ export class SendMessageInApp extends SendMessageType {
 
     const count = await this.messageRepository.getUnseenCount(
       command.environmentId,
-      notification._subscriberId,
+      command.subscriberId,
       ChannelTypeEnum.IN_APP
     );
 
@@ -66,7 +66,7 @@ export class SendMessageInApp extends SendMessageType {
         messageId: message._id,
         text: 'In App message created',
         userId: command.userId,
-        subscriberId: notification._subscriberId,
+        subscriberId: command.subscriberId,
         code: LogCodeEnum.IN_APP_MESSAGE_CREATED,
         templateId: notification._templateId,
         raw: {
@@ -78,7 +78,7 @@ export class SendMessageInApp extends SendMessageType {
 
     await this.queueService.wsSocketQueue.add({
       event: 'unseen_count_changed',
-      userId: notification._subscriberId,
+      userId: command.subscriberId,
       payload: {
         unseenCount: count,
       },

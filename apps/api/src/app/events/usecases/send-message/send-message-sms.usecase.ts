@@ -38,10 +38,10 @@ export class SendMessageSms extends SendMessageType {
     });
     const smsChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationID);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      notification._subscriberId
-    );
+    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
+      _environmentId: command.environmentId,
+      _id: command.subscriberId,
+    });
     const contentService = new ContentService();
     const content = contentService.replaceVariables(smsChannel.template.content as string, command.payload);
     const phone = command.payload.phone || subscriber.phone;
@@ -50,7 +50,7 @@ export class SendMessageSms extends SendMessageType {
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: notification._subscriberId,
+      _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: smsChannel.template._id,
       channel: ChannelTypeEnum.SMS,
@@ -90,7 +90,7 @@ export class SendMessageSms extends SendMessageType {
           organizationId: command.organizationId,
           text: 'Subscriber does not have active phone',
           userId: command.userId,
-          subscriberId: notification._subscriberId,
+          subscriberId: command.subscriberId,
           code: LogCodeEnum.SUBSCRIBER_MISSING_PHONE,
           templateId: notification._templateId,
           raw: {

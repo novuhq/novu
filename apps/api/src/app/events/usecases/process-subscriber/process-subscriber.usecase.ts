@@ -8,6 +8,7 @@ import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
+import { SubscriberEntity } from '../../../../../../../libs/dal/src/repositories/subscriber/subscriber.entity';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -24,8 +25,10 @@ export class ProcessSubscriber {
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
 
     let notification;
+    let subscriber: SubscriberEntity;
     try {
-      notification = await this.createNotification(command, template._id);
+      subscriber = await this.getSubscriber(command, template._id);
+      notification = await this.createNotification(command, template._id, subscriber.subscriberId);
     } catch (e) {
       return {
         status: 'subscriber_not_found',
@@ -44,6 +47,7 @@ export class ProcessSubscriber {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
+          subscriberId: subscriber._id,
         })
       );
     }
@@ -57,7 +61,7 @@ export class ProcessSubscriber {
         notificationId: notification._id,
         text: 'Request processed',
         userId: command.userId,
-        subscriberId: notification._subscriberId,
+        subscriberId: subscriber._id,
         code: LogCodeEnum.TRIGGER_PROCESSED,
         templateId: notification._templateId,
       })
@@ -68,18 +72,18 @@ export class ProcessSubscriber {
     };
   }
 
-  private async getSubscriber(command: ProcessSubscriberCommand, templateId: string): Promise<string> {
+  private async getSubscriber(command: ProcessSubscriberCommand, templateId: string): Promise<SubscriberEntity> {
     const subscriberPayload = command.to;
-    const countSubscriber = await this.subscriberRepository.count({
+    const subscriber = await this.subscriberRepository.findOne({
       _environmentId: command.environmentId,
       subscriberId: subscriberPayload.subscriberId,
     });
 
-    if (countSubscriber > 0) {
-      return subscriberPayload.subscriberId;
+    if (subscriber) {
+      return subscriber;
     }
     if (subscriberPayload.email || subscriberPayload.phone) {
-      const subscriber = await this.createSubscriberUsecase.execute(
+      return await this.createSubscriberUsecase.execute(
         CreateSubscriberCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -90,8 +94,6 @@ export class ProcessSubscriber {
           phone: subscriberPayload.phone,
         })
       );
-
-      return subscriber.subscriberId;
     }
     await this.createLogUsecase.execute(
       CreateLogCommand.create({
@@ -114,9 +116,7 @@ export class ProcessSubscriber {
     throw new Error('subscriber_not_found');
   }
 
-  private async createNotification(command: ProcessSubscriberCommand, templateId: string) {
-    const subscriberId = await this.getSubscriber(command, templateId);
-
+  private async createNotification(command: ProcessSubscriberCommand, templateId: string, subscriberId: string) {
     return await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
