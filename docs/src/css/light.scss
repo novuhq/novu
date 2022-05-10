@@ -34,6 +34,10 @@ html[data-theme='light'] {
 
   .table-of-contents__link {
     color: $color-gray-4;
+
+     &--active {
+      color: $color-primary-blue;
+    }
   }
 
   .footer {
