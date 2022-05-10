@@ -8,6 +8,10 @@ Handlebars.registerHelper('equals', function (arg1, arg2, options) {
   return arg1 == arg2 ? options.fn(this) : options.inverse(this);
 });
 
+Handlebars.registerHelper('pluralize', function (number, single, plural) {
+  return number === 1 ? single : plural;
+});
+
 const cache = new Map();
 
 @Injectable()
