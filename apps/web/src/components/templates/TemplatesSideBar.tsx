@@ -104,6 +104,16 @@ export function TemplatesSideBar({
           label="Notification Settings"
           errors={showErrors && (errors.name || errors.notificationGroup)}
         />
+        <TemplateButton
+          tabKey="Workflow"
+          changeTab={changeTab}
+          Icon={BellGradient}
+          testId="workflowButton"
+          active={activeTab === 'Workflow'}
+          description="Configure cross-channel notification settings"
+          label="Workflow Editor"
+          errors={showErrors && (errors.name || errors.notificationGroup)}
+        />
       </NavSection>
       <NavSection>
         <Text mt={10} mb={20} color={textColor}>
