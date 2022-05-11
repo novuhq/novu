@@ -14,12 +14,6 @@
   --ifm-font-family-monospace: 'Brother-1816';
   --ifm-font-family-base: 'Brother-1816';
   --ifm-color-primary: #00d5ff;
-  --ifm-color-primary-dark: #e0655a;
-  --ifm-color-primary-darker: #c2574e;
-  --ifm-color-primary-darkest: #91332a;
-  --ifm-color-primary-light: #fa8176;
-  --ifm-color-primary-lighter: #fd9187;
-  --ifm-color-primary-lightest: #ffbfb9;
   --ifm-footer-link-color: #ffffff;
   --ifm-code-font-size: 95%;
   --ifm-line-height-base: 1.5;
@@ -29,7 +23,8 @@
 }
 
 body {
-  font-weight: var(--ifm-font-weight-normal);
+  font-weight: var(--ifm-font-weight-light);
+  font-size: 18px;
 }
 
 article,
@@ -110,6 +105,25 @@ nav.menu {
 
   .menu__list-item--collapsed .menu__link--sublist::before {
     transform: rotateZ(-90deg);
+  }
+}
+
+.theme-edit-this-page {
+  position: relative;
+  padding-left: 28px;
+  font-size: 14px;
+
+  &::before {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    content: '';
+    width: 20px;
+    height: 20px;
+  }
+  svg {
+    display: none;
   }
 }
 
