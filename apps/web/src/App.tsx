@@ -26,6 +26,7 @@ import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN } from './config/index';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
+import QuickStartPage from './pages/quick-start/QuickStartPage';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -103,6 +104,14 @@ function App() {
                     element={
                       <RequiredAuth>
                         <NotificationList />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/quickstart"
+                    element={
+                      <RequiredAuth>
+                        <QuickStartPage />
                       </RequiredAuth>
                     }
                   />

@@ -24,14 +24,20 @@ declare namespace Cypress {
 
     initializeOrganization(): Chainable<Response>;
 
-    initializeShellSession(userId: string, identifier: string): Chainable<Response>;
+    initializeShellSession(userId: string, identifier: string, encryptedHmacHash?: string): Chainable<Response>;
 
-    initializeWidget(session: any, shell?: boolean): Chainable<Response>;
+    initializeWidget(session: any, shell?: boolean, encryptedHmacHash?: string): Chainable<Response>;
     /**
      * Logs-in user by using API request
      */
-    initializeSession(settings?: { noEnvironment?: boolean; shell?: boolean }): Chainable<Response>;
+    initializeSession(settings?: {
+      noEnvironment?: boolean;
+      shell?: boolean;
+      hmacEncryption?: boolean;
+    }): Chainable<Response>;
 
     logout(): Chainable<Response>;
+
+    forceVisit(url: string): Chainable<Response>;
   }
 }

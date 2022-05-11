@@ -10,7 +10,8 @@
 // ***********************************************************
 
 import { DalService } from '@novu/dal';
-import { UserSession, NotificationTemplateService, NotificationsService } from '@novu/testing';
+import { UserSession, NotificationTemplateService, NotificationsService, EnvironmentService } from '@novu/testing';
+import { EnvironmentEntity } from '@novu/dal';
 
 /**
  * @type {Cypress.PluginConfig}
@@ -91,6 +92,14 @@ module.exports = (on, config) => {
         templates,
         session,
       };
+    },
+    async enableEnvironmentHmac({
+      environment,
+    }: {
+      environment: EnvironmentEntity;
+    }): Promise<{ matched: number; modified: number }> {
+      const service = new EnvironmentService();
+      return await service.enableEnvironmentHmac(environment);
     },
   });
 };

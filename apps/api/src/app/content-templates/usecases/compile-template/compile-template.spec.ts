@@ -39,6 +39,24 @@ describe('Compile Template', function () {
     expect(result).to.equal('<div>Test Name</div>');
   });
 
+  it('should render pluralisation in html', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        data: {
+          branding: {
+            color: '#e7e7e7e9',
+          },
+          dog_count: 1,
+          sausage_count: 2,
+        },
+        customTemplate: '<div>{{dog_count}} {{pluralize dog_count "dog" "dogs"}} and {{sausage_count}} {{pluralize sausage_count "sausage" "sausages"}} for {{pluralize dog_count "him" "them"}}</div>',
+      })
+    );
+
+    expect(result).to.equal('<div>1 dog and 2 sausages for him</div>');
+  });
+
   it('should compile basic template successfully', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({

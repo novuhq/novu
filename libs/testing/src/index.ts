@@ -4,3 +4,4 @@ export * from './subscribers.service';
 export * from './notifications.service';
 export * from './test-server.service';
 export * from './integration.service';
+export * from './environment.service';

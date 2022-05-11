@@ -1,4 +1,4 @@
-describe.only('Shell Embed', function () {
+describe('Shell Embed', function () {
   beforeEach(function () {
     cy.initializeSession({ shell: true }).as('session');
     cy.wait(1000);

@@ -1,5 +1,6 @@
 import { ClassConstructor, plainToClass } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import * as Sentry from '@sentry/node';
 import { BadRequestException, flatten } from '@nestjs/common';
 
 export class CommandHelper {
@@ -13,6 +14,11 @@ export class CommandHelper {
     const errors = validateSync(convertedObject);
     if (errors?.length) {
       const mappedErrors = flatten(errors.map((item) => Object.values(item.constraints)));
+
+      Sentry.addBreadcrumb({
+        category: 'CommandHelper',
+        data: mappedErrors,
+      });
 
       throw new BadRequestException(mappedErrors);
     }
