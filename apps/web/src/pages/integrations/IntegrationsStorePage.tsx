@@ -33,30 +33,7 @@ export function IntegrationsStore() {
 
   useEffect(() => {
     if (integrations) {
-      const initializedProviders: IIntegratedProvider[] = providers.map((providerItem) => {
-        const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
-
-        const mappedCredentials = cloneDeep(providerItem.credentials);
-        if (integration?.credentials) {
-          mappedCredentials.forEach((credential) => {
-            // eslint-disable-next-line no-param-reassign
-            credential.value = integration.credentials[credential.key]?.toString();
-          });
-        }
-
-        return {
-          providerId: providerItem.id,
-          integrationId: integration?._id ? integration._id : '',
-          displayName: providerItem.displayName,
-          channel: providerItem.channel,
-          credentials: integration?.credentials ? mappedCredentials : providerItem.credentials,
-          docReference: providerItem.docReference,
-          comingSoon: !!providerItem.comingSoon,
-          active: integration?.active ?? true,
-          connected: !!integration,
-          logoFileName: providerItem.logoFileName,
-        };
-      });
+      const initializedProviders = initializeProviders(integrations);
 
       setEmailProviders(
         sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL))
@@ -127,4 +104,31 @@ export interface IIntegratedProvider {
   active: boolean;
   connected: boolean;
   logoFileName: ILogoFileName;
+}
+
+function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProvider[] {
+  return providers.map((providerItem) => {
+    const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
+
+    const mappedCredentials = cloneDeep(providerItem.credentials);
+    if (integration?.credentials) {
+      mappedCredentials.forEach((credential) => {
+        // eslint-disable-next-line no-param-reassign
+        credential.value = integration.credentials[credential.key]?.toString();
+      });
+    }
+
+    return {
+      providerId: providerItem.id,
+      integrationId: integration?._id ? integration._id : '',
+      displayName: providerItem.displayName,
+      channel: providerItem.channel,
+      credentials: integration?.credentials ? mappedCredentials : providerItem.credentials,
+      docReference: providerItem.docReference,
+      comingSoon: !!providerItem.comingSoon,
+      active: integration?.active ?? true,
+      connected: !!integration,
+      logoFileName: providerItem.logoFileName,
+    };
+  });
 }
