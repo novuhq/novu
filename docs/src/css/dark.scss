@@ -9,11 +9,11 @@ html[data-theme='dark'] {
   }
 
   .navbar-item-github:before {
-    background-image: url("/img/github-white.svg");
+    background-image: url('/img/github-white.svg');
   }
 
   .navbar-item-discord:before {
-    background-image: url("/img/discord-white.svg");
+    background-image: url('/img/discord-white.svg');
   }
 
   .menu {
@@ -22,9 +22,13 @@ html[data-theme='dark'] {
 
     .menu__link {
       color: $color-white;
+
+      &--active {
+        color: $color-primary-blue;
+      }
     }
 
-    .menu__link--sublist-caret::before { 
+    .menu__link--sublist-caret::before {
       background: url('/img/chevron-white.svg');
     }
   }
@@ -33,7 +37,7 @@ html[data-theme='dark'] {
     color: $color-white;
 
     &::before {
-      background-image: url("/img/github-white.svg");
+      background-image: url('/img/github-white.svg');
     }
   }
 
@@ -65,7 +69,7 @@ html[data-theme='dark'] {
       .footer__button {
         border: 1px solid $color-gray-5;
         &::before {
-          background-image: url("/img/github-white.svg");
+          background-image: url('/img/github-white.svg');
         }
       }
     }

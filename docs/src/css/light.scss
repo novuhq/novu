@@ -13,11 +13,11 @@ html[data-theme='light'] {
   }
 
   .navbar-item-github:before {
-    background-image: url("/img/github-black.svg");
+    background-image: url('/img/github-black.svg');
   }
 
   .navbar-item-discord:before {
-    background-image: url("/img/discord-black.svg");
+    background-image: url('/img/discord-black.svg');
   }
 
   .menu {
@@ -27,7 +27,7 @@ html[data-theme='light'] {
       color: $color-gray-4;
     }
 
-    .menu__link--sublist-caret::before { 
+    .menu__link--sublist-caret::before {
       background: url('/img/chevron-black.svg');
     }
   }
@@ -36,14 +36,14 @@ html[data-theme='light'] {
     color: $color-black;
 
     &::before {
-      background-image: url("/img/github-black.svg");
+      background-image: url('/img/github-black.svg');
     }
   }
 
   .table-of-contents__link {
     color: $color-gray-4;
 
-     &--active {
+    &--active {
       color: $color-primary-blue;
     }
   }
@@ -69,7 +69,7 @@ html[data-theme='light'] {
       .footer__button {
         border: 1px solid $color-gray-5;
         &::before {
-          background-image: url("/img/github-black.svg");
+          background-image: url('/img/github-black.svg');
         }
       }
     }
