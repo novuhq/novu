@@ -45,7 +45,7 @@ export class SendMessageInApp extends SendMessageType {
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = contentService.replaceVariables(
         inAppChannel.template.cta?.data?.url,
-        command.payload
+        messageVariables
       );
     }
 

@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationRepository, SubscriberRepository, NotificationTemplateRepository } from '@novu/dal';
+import {
+  NotificationRepository,
+  SubscriberRepository,
+  NotificationTemplateRepository,
+  SubscriberEntity,
+} from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -8,7 +13,6 @@ import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
-import { SubscriberEntity } from '../../../../../../../libs/dal/src/repositories/subscriber/subscriber.entity';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -42,7 +46,7 @@ export class ProcessSubscriber {
           identifier: command.identifier,
           payload: command.payload,
           step,
-          transactionId: command.identifier,
+          transactionId: command.transactionId,
           notificationID: notification._id,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
