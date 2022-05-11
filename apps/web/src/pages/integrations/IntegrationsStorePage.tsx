@@ -9,11 +9,13 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
 import { ConnectIntegrationForm } from './components/ConnectIntegrationForm';
 import { useIntegrations } from '../../api/hooks';
+import { IntegrationEntity } from '@novu/dal';
 
 export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
   const [emailProviders, setEmailProviders] = useState<IIntegratedProvider[]>([]);
   const [smsProvider, setSmsProvider] = useState<IIntegratedProvider[]>([]);
+  const [directProvider, setDirectProvider] = useState<IIntegratedProvider[]>([]);
   const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
@@ -40,6 +42,10 @@ export function IntegrationsStore() {
       );
       setSmsProvider(
         sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS))
+      );
+
+      setDirectProvider(
+        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.DIRECT))
       );
     }
   }, [integrations]);
@@ -70,6 +76,7 @@ export function IntegrationsStore() {
           <ContentWrapper>
             <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
             <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={directProvider} title="Direct" onProviderClick={handlerVisible} />
           </ContentWrapper>
         </PageContainer>
       ) : null}
