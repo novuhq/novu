@@ -1,4 +1,4 @@
-import { Navbar, useMantineTheme } from '@mantine/core';
+import { useMantineTheme } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
@@ -102,7 +102,7 @@ export function TemplatesSideBar({
           active={activeTab === 'Settings'}
           description="Configure cross-channel notification settings"
           label="Notification Settings"
-          errors={showErrors && errors.name}
+          errors={showErrors && (errors.name || errors.notificationGroup)}
         />
       </NavSection>
       <NavSection>
