@@ -11,12 +11,16 @@ export class QueueNextJob {
     private workflowQueueService: WorkflowQueueService
   ) {}
 
-  public async execute(command: QueueNextJobCommand): Promise<JobEntity> {
+  public async execute(command: QueueNextJobCommand): Promise<JobEntity | undefined> {
     const job = await this.jobRepository.findOne({
       _environmentId: command.environmentId,
-      _organizationId: command.environmentId,
+      _organizationId: command.organizationId,
       _parentId: command.parentId,
     });
+
+    if (!job) {
+      return;
+    }
 
     await this.workflowQueueService.addJob(job);
 

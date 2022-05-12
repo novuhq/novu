@@ -15,8 +15,8 @@ export class WorkflowQueueService {
       host: process.env.REDIS_HOST,
     },
   };
-  private queue: Queue;
-  private worker: Worker;
+  public readonly queue: Queue;
+  public readonly worker: Worker;
   @Inject()
   private sendMessage: SendMessage;
   @Inject()
@@ -30,6 +30,7 @@ export class WorkflowQueueService {
         return await this.work(data);
       },
       {
+        ...this.bullConfig,
         concurrency: 5000,
       }
     );
@@ -59,7 +60,10 @@ export class WorkflowQueueService {
     );
   }
 
-  public async addJob(data: JobEntity) {
+  public async addJob(data: JobEntity | undefined) {
+    if (!data) {
+      return;
+    }
     if (data.delay) {
       await this.queue.add(data._id, data, { delay: data.delay });
 

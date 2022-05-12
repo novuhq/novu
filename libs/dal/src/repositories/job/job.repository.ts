@@ -23,7 +23,9 @@ export class JobRepository extends BaseRepository<JobEntity> {
         return job;
       });
 
-    await this.createMany(jobs);
+    for (const job of jobs) {
+      await this.create(job);
+    }
 
     return jobs[0];
   }
