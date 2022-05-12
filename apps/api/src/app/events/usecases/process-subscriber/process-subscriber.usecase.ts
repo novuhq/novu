@@ -11,8 +11,7 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
-import { SendMessage } from '../send-message/send-message.usecase';
-import { SendMessageCommand } from '../send-message/send-message.command';
+import { JobEntity } from '../../../../../../../libs/dal/src/repositories/job/job.entity';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -21,38 +20,20 @@ export class ProcessSubscriber {
     private notificationRepository: NotificationRepository,
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
-    private notificationTemplateRepository: NotificationTemplateRepository,
-    private sendMessage: SendMessage
+    private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
-  public async execute(command: ProcessSubscriberCommand) {
+  public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
 
     const subscriber: SubscriberEntity = await this.getSubscriber(command, template._id);
     if (subscriber === null) {
-      return {
-        status: 'subscriber_not_found',
-      };
+      return [];
     }
 
     const notification = await this.createNotification(command, template._id, subscriber.subscriberId);
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
-    for (const step of steps) {
-      await this.sendMessage.execute(
-        SendMessageCommand.create({
-          identifier: command.identifier,
-          payload: command.payload,
-          step,
-          transactionId: command.transactionId,
-          notificationID: notification._id,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          subscriberId: subscriber._id,
-        })
-      );
-    }
 
     await this.createLogUsecase.execute(
       CreateLogCommand.create({
@@ -69,9 +50,19 @@ export class ProcessSubscriber {
       })
     );
 
-    return {
-      status: 'success',
-    };
+    return steps.map((step) => {
+      return {
+        identifier: command.identifier,
+        payload: command.payload,
+        step,
+        _transactionId: command.transactionId,
+        _notificationID: notification._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _userId: command.userId,
+        _subscriberId: subscriber._id,
+      };
+    });
   }
 
   private async getSubscriber(command: ProcessSubscriberCommand, templateId: string): Promise<SubscriberEntity> {

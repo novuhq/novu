@@ -9,6 +9,9 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
 import { matchMessageWithFilters } from './message-filter.matcher';
+import { JobEntity } from '../../../../../../../libs/dal/src/repositories/job/job.entity';
+import { JobRepository } from '../../../../../../../libs/dal/src/repositories/job/job.repository';
+import { WorkflowQueueService } from '../../services/workflow.queue.service';
 
 @Injectable()
 export class TriggerEvent {
@@ -16,7 +19,9 @@ export class TriggerEvent {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createLogUsecase: CreateLog,
     private analyticsService: AnalyticsService,
-    private processSubscriber: ProcessSubscriber
+    private processSubscriber: ProcessSubscriber,
+    private jobRepository: JobRepository,
+    private workflowQueueService: WorkflowQueueService
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -42,18 +47,22 @@ export class TriggerEvent {
       return this.logTemplateNotActive(command, template);
     }
 
+    const jobs: JobEntity[][] = [];
+
     for (const subscriberToTrigger of command.to) {
-      await this.processSubscriber.execute(
-        ProcessSubscriberCommand.create({
-          identifier: command.identifier,
-          payload: command.payload,
-          to: subscriberToTrigger,
-          transactionId: command.transactionId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.organizationId,
-          templateId: template._id,
-        })
+      jobs.push(
+        await this.processSubscriber.execute(
+          ProcessSubscriberCommand.create({
+            identifier: command.identifier,
+            payload: command.payload,
+            to: subscriberToTrigger,
+            transactionId: command.transactionId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.organizationId,
+            templateId: template._id,
+          })
+        )
       );
     }
 
@@ -63,6 +72,11 @@ export class TriggerEvent {
       emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
       inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
     });
+
+    for (const job of jobs) {
+      const firstJob = await this.jobRepository.storeJobs(job);
+      await this.workflowQueueService.addJob(firstJob);
+    }
 
     if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
       return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
