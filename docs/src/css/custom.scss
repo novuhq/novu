@@ -158,6 +158,20 @@ nav.menu {
   }
 }
 
+.navbar-sidebar {
+
+  .menu__list {
+    .menu__link.menu__link--sublist {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .menu__link {
+      font-size: 14px;
+      font-weight: 400;
+    }
+  }
+}
+
 .theme-edit-this-page {
   position: relative;
   padding-left: 28px;
