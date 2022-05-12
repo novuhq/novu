@@ -20,6 +20,14 @@ html[data-theme='dark'] {
     background-image: url('/img/discord-white.svg');
   }
 
+  .navbar-sidebar {
+    background-color: $color-black;
+
+    &__brand {
+      border-bottom: 1px solid $color-gray-3;
+    }
+  }
+
   .menu {
     background-color: $color-gray-1;
     border-right: 1px solid $color-gray-3;
