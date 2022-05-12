@@ -1,6 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobEntity } from '../../../../../../../libs/dal/src/repositories/job/job.entity';
-import { JobRepository } from '../../../../../../../libs/dal/src/repositories/job/job.repository';
+import { JobEntity, JobRepository } from '@novu/dal';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { QueueNextJobCommand } from './queue-next-job.command';
 

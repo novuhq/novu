@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Queue, Worker, QueueBaseOptions } from 'bullmq';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
-import { JobEntity } from '../../../../../../libs/dal/src/repositories/job/job.entity';
 import { SendMessageCommand } from '../usecases/send-message/send-message.command';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
+import { JobEntity } from '@novu/dal';
 
 @Injectable()
 export class WorkflowQueueService {

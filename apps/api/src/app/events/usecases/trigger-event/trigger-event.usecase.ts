@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { TriggerEventCommand } from './trigger-event.command';
@@ -9,8 +9,6 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
 import { matchMessageWithFilters } from './message-filter.matcher';
-import { JobEntity } from '../../../../../../../libs/dal/src/repositories/job/job.entity';
-import { JobRepository } from '../../../../../../../libs/dal/src/repositories/job/job.repository';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 
 @Injectable()

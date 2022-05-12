@@ -4,6 +4,7 @@ import {
   SubscriberRepository,
   NotificationTemplateRepository,
   SubscriberEntity,
+  JobEntity,
 } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -11,7 +12,6 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
-import { JobEntity } from '../../../../../../../libs/dal/src/repositories/job/job.entity';
 
 @Injectable()
 export class ProcessSubscriber {
