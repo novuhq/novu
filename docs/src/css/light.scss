@@ -39,6 +39,14 @@ html[data-theme='light'] {
   .theme-edit-this-page {
     color: $color-black;
 
+    &:hover {
+      color: $color-primary-blue;
+    }
+
+    &:active {
+      color: $color-gray-9;
+    }
+
     &::before {
       background-image: url('/img/github-black.svg');
     }

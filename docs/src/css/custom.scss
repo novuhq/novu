@@ -40,6 +40,10 @@ article,
 article {
   margin-top: 48px;
 
+  @media (max-width: 1279px) {
+    margin-top: 30px;
+  }
+
   @media (max-width: 996px) {
     margin-top: 0;
   }
@@ -158,6 +162,11 @@ nav.menu {
   position: relative;
   padding-left: 28px;
   font-size: 14px;
+  transition: color 0.2s;
+
+  &:hover {
+    text-decoration: none;
+  }
 
   &::before {
     position: absolute;
@@ -177,8 +186,16 @@ nav.menu {
   padding-top: 0;
   margin-top: 80px;
 
+  @media (max-width: 1279px) {
+    margin-top: 60px;
+  }
+
   @media (max-width: 996px) {
     margin-top: 0;
+  }
+
+  > li {
+    margin-left: 0;
   }
 
   &__left-border {
@@ -232,6 +249,11 @@ nav.menu {
 }
 
 .footer {
+  @media (max-width: 996px) {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
   .container {
     display: flex;
     flex-direction: row-reverse;
@@ -255,6 +277,10 @@ nav.menu {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+
+    @media (max-width: 996px) {
+      margin-bottom: 10px;
+    }
   }
 
   .footer__col:not(:last-child) {
@@ -263,7 +289,7 @@ nav.menu {
     max-width: max-content;
 
     @media (max-width: 996px) {
-      margin-bottom: 0;
+      margin-top: 0;
       margin-bottom: 15px;
     }
 
@@ -281,7 +307,7 @@ nav.menu {
     align-items: flex-end;
 
     @media (max-width: 996px) {
-      margin-top: 36px;
+      margin-top: 15px;
       align-items: flex-start;
       margin-bottom: 0;
     }
@@ -296,6 +322,11 @@ nav.menu {
       color: inherit;
       font-weight: 500;
       border-radius: 4px;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #333333;
+      }
 
       &::before {
         align-items: center;
@@ -313,6 +344,12 @@ nav.menu {
   .footer__links {
     margin-bottom: 0;
     flex-wrap: wrap;
+
+    .footer__link-item {
+      @media (max-width: 996px) {
+        font-size: 16px;
+      }
+    }
   }
 
   .footer__break {

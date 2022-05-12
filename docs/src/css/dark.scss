@@ -40,6 +40,14 @@ html[data-theme='dark'] {
   .theme-edit-this-page {
     color: $color-white;
 
+    &:hover {
+      color: $color-primary-blue;
+    }
+
+    &:active {
+      color: $color-gray-9;
+    }
+
     &::before {
       background-image: url('/img/github-white.svg');
     }
