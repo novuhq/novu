@@ -117,9 +117,9 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Discord
 - [ ] Mattermost
 
-#### 📱 In-App (Coming Soon...)
-- [ ] Novu
-- [ ] MagicBell
+#### 📱 In-App
+- [x] [Novu](https://docs.novu.co/docs/notification-center/getting-started)
+- [ ] MagicBell 
 
 #### Other (Coming Soon...)
 - [ ] PagerDuty
