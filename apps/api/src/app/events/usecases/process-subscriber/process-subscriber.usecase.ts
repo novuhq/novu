@@ -28,16 +28,14 @@ export class ProcessSubscriber {
   public async execute(command: ProcessSubscriberCommand) {
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
 
-    let notification;
-    let subscriber: SubscriberEntity;
-    try {
-      subscriber = await this.getSubscriber(command, template._id);
-      notification = await this.createNotification(command, template._id, subscriber.subscriberId);
-    } catch (e) {
+    const subscriber: SubscriberEntity = await this.getSubscriber(command, template._id);
+    if (subscriber === null) {
       return {
         status: 'subscriber_not_found',
       };
     }
+
+    const notification = await this.createNotification(command, template._id, subscriber.subscriberId);
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
     for (const step of steps) {
@@ -116,8 +114,7 @@ export class ProcessSubscriber {
         },
       })
     );
-
-    throw new Error('subscriber_not_found');
+    return null;
   }
 
   private async createNotification(command: ProcessSubscriberCommand, templateId: string, subscriberId: string) {
