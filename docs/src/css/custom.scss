@@ -20,6 +20,10 @@
   --doc-sidebar-width: 340px !important;
   --ifm-menu-link-padding-vertical: 8px;
   --ifm-menu-link-padding-horizontal: 20px;
+
+  @media (max-width: 1279px) {
+    --doc-sidebar-width: 300px !important;
+  }
 }
 
 body {
@@ -31,6 +35,26 @@ article,
 .pagination-nav {
   max-width: 860px;
   margin: 0 auto;
+}
+
+article {
+  margin-top: 48px;
+
+  @media (max-width: 996px) {
+    margin-top: 0;
+  }
+}
+
+pre code span,
+code {
+  font-family: 'IBM Plex Mono';
+}
+
+code {
+  color: $color-secondary-purple;
+  padding: 1px 6px;
+  border: none;
+  border-radius: 2px;
 }
 
 .docusaurus-highlight-code-line {
@@ -149,18 +173,27 @@ nav.menu {
   }
 }
 
-.table-of-contents__left-border {
-  border-left: none;
-  padding-left: 0;
-}
+.table-of-contents {
+  padding-top: 0;
+  margin-top: 80px;
 
-.table-of-contents__link {
+  @media (max-width: 996px) {
+    margin-top: 0;
+  }
+
+  &__left-border {
+    border-left: none;
+    padding-left: 0;
+  }
+
+  &__link {
   font-weight: 400;
   font-size: 14px;
   line-height: 1.375;
 
   ~ ul .table-of-contents__link {
-    font-weight: 300;
+      font-weight: 300;
+    }
   }
 }
 

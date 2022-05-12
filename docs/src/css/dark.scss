@@ -3,6 +3,10 @@ html[data-theme='dark'] {
   --ifm-hover-overlay: rgba(0, 213, 255, 0.1);
   --ifm-font-color-base: #e6e6e6;
 
+  code:not([class]) {
+    background-color: $color-gray-2;
+  }
+
   .navbar {
     background-color: #000;
     border-bottom: 1px solid $color-gray-3;

@@ -21,3 +21,11 @@
   font-style: normal;
   font-display: fallback;
 }
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/static/fonts/ibm-plex-mono-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: fallback;
+}
