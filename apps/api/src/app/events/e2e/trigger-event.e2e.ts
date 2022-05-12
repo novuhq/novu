@@ -86,7 +86,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should create a subscriber based on event', async function () {
-    const subscriberId = 'new-test-if-id';
+    const subscriberId = SubscriberRepository.createObjectId();
     const payload: ISubscribersDefine = {
       subscriberId,
       firstName: 'Test Name',
@@ -120,13 +120,14 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should override subscriber email based on event data', async function () {
+    const subscriberId = SubscriberRepository.createObjectId();
     const { data: body } = await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
       {
         name: template.triggers[0].identifier,
         to: [
           { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
-          { subscriberId: '1234', email: 'gg@ff.com' },
+          { subscriberId: subscriberId, email: 'gg@ff.com' },
         ],
         payload: {
           email: 'new-test-email@gmail.com',
@@ -146,7 +147,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       subscriber._id,
       ChannelTypeEnum.EMAIL
     );
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '1234');
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
     const messages2 = await messageRepository.findBySubscriberChannel(
       session.environment._id,
