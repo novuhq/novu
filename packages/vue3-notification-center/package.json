@@ -1,0 +1,50 @@
+{
+  "name": "@novu/vue3-notification-center",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "serve": "vite preview",
+    "storybook": "start-storybook -p 6006",
+    "build:storybook": "build-storybook",
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
+    "format": "prettier .  --write"
+  },
+  "dependencies": {
+    "vue": "^3.2.16"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@mdx-js/react": "^1.6.21",
+    "@storybook/addon-a11y": "^6.4.19",
+    "@storybook/addon-actions": "^6.4.19",
+    "@storybook/addon-essentials": "^6.4.19",
+    "@storybook/addon-links": "^6.4.19",
+    "@storybook/builder-vite": "^0.1.33",
+    "@storybook/vue3": "^6.4.19",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "@vitejs/plugin-vue": "^2.2.2",
+    "@vue/eslint-config-prettier": "^7.0.0",
+    "@vue/eslint-config-typescript": "^10.0.0",
+    "babel-loader": "^8.2.3",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-functional": "^3.7.2",
+    "eslint-plugin-markdown": "^2.2.1",
+    "eslint-plugin-prettier": "4.0.0",
+    "eslint-plugin-storybook": "^0.5.7",
+    "eslint-plugin-vue": "^8.0.1",
+    "gh-pages": "^3.2.3",
+    "prettier": "^2.5.0",
+    "react": "^17.0.1",
+    "sass": "^1.44.0",
+    "storybook-dark-mode": "^1.0.9",
+    "typescript": "^4.5.5",
+    "vite": "^2.8.4",
+    "vite-plugin-eslint": "^1.3.0",
+    "vue-loader": "^16.8.3",
+    "vue-tsc": "^0.31.4"
+  }
+}

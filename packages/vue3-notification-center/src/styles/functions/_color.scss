@@ -1,0 +1,11 @@
+@use "@/styles/colors" as *;
+
+@function color($keys...) {
+  $value: $colors;
+
+  @each $key in $keys {
+    $value: map-get($value, $key);
+  }
+
+  @return $value;
+}

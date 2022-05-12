@@ -1,0 +1,21 @@
+@use "@/styles/functions/color" as *;
+
+* {
+  box-sizing: border-box;
+}
+
+body,
+html {
+  width: 100%;
+}
+
+body {
+  min-height: 100%;
+  font-family: Overpass, Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: color(cta, primary);
+}
