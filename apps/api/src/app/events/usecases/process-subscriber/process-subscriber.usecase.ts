@@ -61,6 +61,7 @@ export class ProcessSubscriber {
         _organizationId: command.organizationId,
         _userId: command.userId,
         _subscriberId: subscriber._id,
+        status: 'pending',
       };
     });
   }

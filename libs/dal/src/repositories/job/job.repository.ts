@@ -1,5 +1,5 @@
 import { BaseRepository } from '../base-repository';
-import { JobEntity } from './job.entity';
+import { JobEntity, JobStatus } from './job.entity';
 import { Job } from './Job.schema';
 
 export class JobRepository extends BaseRepository<JobEntity> {
@@ -31,5 +31,18 @@ export class JobRepository extends BaseRepository<JobEntity> {
     }
 
     return stored[0];
+  }
+
+  public async updateStatus(jobId: string, status: JobStatus) {
+    await this.update(
+      {
+        _id: jobId,
+      },
+      {
+        $set: {
+          status,
+        },
+      }
+    );
   }
 }

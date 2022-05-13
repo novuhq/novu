@@ -1,5 +1,7 @@
 import { NotificationStepEntity } from '../notification-template';
 
+export type JobStatus = 'pending' | 'queued' | 'running' | 'completed' | 'failed';
+
 export class JobEntity {
   _id?: string;
   identifier: string;
@@ -13,4 +15,5 @@ export class JobEntity {
   _userId: string;
   delay?: number;
   _parentId?: string;
+  status: JobStatus;
 }

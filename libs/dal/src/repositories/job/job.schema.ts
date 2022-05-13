@@ -8,6 +8,10 @@ const jobSchema = new Schema(
     identifier: {
       type: Schema.Types.String,
     },
+    status: {
+      type: Schema.Types.String,
+      default: 'pending',
+    },
     payload: {
       type: Schema.Types.Mixed,
     },

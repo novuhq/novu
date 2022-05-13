@@ -4,7 +4,7 @@ import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { SendMessageCommand } from '../usecases/send-message/send-message.command';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
-import { JobEntity } from '@novu/dal';
+import { JobEntity, JobRepository } from '@novu/dal';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -21,12 +21,15 @@ export class WorkflowQueueService {
   private sendMessage: SendMessage;
   @Inject()
   private queueNextJob: QueueNextJob;
+  private jobRepository: JobRepository;
 
   constructor() {
     this.queue = new Queue('standard', this.bullConfig);
     this.worker = new Worker(
       'standard',
       async ({ data }: { data: JobEntity }) => {
+        await this.jobRepository.updateStatus(data._id, 'running');
+
         return await this.work(data);
       },
       {
@@ -34,11 +37,11 @@ export class WorkflowQueueService {
         concurrency: 5000,
       }
     );
-    this.worker.on('error', (e) => {
-      console.log(e);
+    this.worker.on('completed', async (job) => {
+      await this.jobRepository.updateStatus(job.data._id, 'completed');
     });
-    this.worker.on('failed', (job, e) => {
-      console.log(e);
+    this.worker.on('failed', async (job, e) => {
+      await this.jobRepository.updateStatus(job.data._id, 'failed');
     });
   }
 
@@ -70,6 +73,7 @@ export class WorkflowQueueService {
     if (!data) {
       return;
     }
+    await this.jobRepository.updateStatus(data._id, 'queued');
     if (data.delay) {
       await this.queue.add(data._id, data, { delay: data.delay });
 
