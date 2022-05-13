@@ -21,6 +21,7 @@ export class WorkflowQueueService {
   private sendMessage: SendMessage;
   @Inject()
   private queueNextJob: QueueNextJob;
+  @Inject()
   private jobRepository: JobRepository;
 
   constructor() {

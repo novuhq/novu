@@ -292,6 +292,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
+    await session.sleep(5000);
+
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
