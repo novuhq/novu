@@ -10,7 +10,7 @@ A novu subscribers contains the following data points:
 - **Contact information** - Things like e-mail, phone number, push tokens and etc... They will be used when a multi-channel template will be configured. Managing all communication credentials will reduce the amount of data you need to pass when triggering a notification.
 
 ## Creating a subscriber
-When you want to send a notification to a specific recipient in the Novu platform, you must first create him with our server SDK.
+When you want to send a notification to a specific recipient in the Novu platform, you must first create a subscriber using our server SDK.
 
 ```typescript
 import { Novu } from '@novu/node'
@@ -29,10 +29,10 @@ await novu.subscribers.identify(user.id, {
 Novu will create a subscriber if one does not exist, and will update existing subscribers based on the identify payload. You can call this function during registration or signup to make sure the subscriber data is up to date.
 ### Subscriber identifier
 This is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal id you application uses for a specific users. 
-Using an identifier like email might cause issues locating a specific subscriber once he changes his mail address.
+Using an identifier like email might cause issues locating a specific subscriber once they change their email address.
 
 ### Updating subscriber data
-In some cases you want to access subscribers to update a specific field or data attribute. For example when a user changes his email address or personal details.
+In some cases you want to access subscribers to update a specific field or data attribute. For example when user changes their email address or personal details.
 
 ```typescript
 import { Novu } from '@novu/node'
@@ -45,7 +45,7 @@ await novu.subscribers.update(user.id, {
 ```
 
 ### Removing a subscriber
-To remove a subscriber and stop him from receiving communication, you call the remove API to delete the subscriber.
+To remove a subscriber and stop it from receiving communication, you call the remove API to delete the subscriber.
 
 ```typescript
 import { Novu } from '@novu/node'
