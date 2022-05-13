@@ -142,7 +142,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.sleep(5000);
+    await session.awaitRunningJobs();
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -181,7 +181,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.sleep(5000);
+    await session.awaitRunningJobs();
 
     const notifications = await notificationRepository.findBySubscriberId(
       session.environment._id,
@@ -253,7 +253,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.sleep(5000);
+    await session.awaitRunningJobs();
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -292,7 +292,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.sleep(5000);
+    await session.awaitRunningJobs();
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -339,7 +339,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.sleep(5000);
+    await session.awaitRunningJobs();
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -359,7 +359,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.sleep(5000);
+    await session.awaitRunningJobs();
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -383,7 +383,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.sleep(5000);
+    await session.awaitRunningJobs();
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -423,7 +423,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.sleep(5000);
+    await session.awaitRunningJobs();
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,

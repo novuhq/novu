@@ -59,7 +59,7 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
       }
     );
 
-    await session.sleep(7000);
+    await session.awaitRunningJobs();
 
     const {
       body: { data },
