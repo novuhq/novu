@@ -50,13 +50,13 @@ export class ProcessSubscriber {
       })
     );
 
-    return steps.map((step) => {
+    return steps.map((step): JobEntity => {
       return {
         identifier: command.identifier,
         payload: command.payload,
         step,
-        _transactionId: command.transactionId,
-        _notificationID: notification._id,
+        transactionId: command.transactionId,
+        _notificationId: notification._id,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _userId: command.userId,

@@ -23,10 +23,13 @@ export class JobRepository extends BaseRepository<JobEntity> {
         return job;
       });
 
+    const stored = [];
+
     for (const job of jobs) {
-      await this.create(job);
+      const created = await this.create(job);
+      stored.push(created);
     }
 
-    return jobs[0];
+    return stored[0];
   }
 }

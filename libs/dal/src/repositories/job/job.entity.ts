@@ -5,8 +5,8 @@ export class JobEntity {
   identifier: string;
   payload: any;
   step: NotificationStepEntity;
-  _transactionId: string;
-  _notificationID: string;
+  transactionId: string;
+  _notificationId: string;
   _subscriberId: string;
   _environmentId: string;
   _organizationId: string;

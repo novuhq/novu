@@ -34,16 +34,22 @@ export class WorkflowQueueService {
         concurrency: 5000,
       }
     );
+    this.worker.on('error', (e) => {
+      console.log(e);
+    });
+    this.worker.on('failed', (job, e) => {
+      console.log(e);
+    });
   }
 
   private async work(job: JobEntity) {
     await this.sendMessage.execute(
       SendMessageCommand.create({
         identifier: job.identifier,
-        payload: job.payload,
+        payload: job.payload ? job.payload : {},
         step: job.step,
-        transactionId: job._transactionId,
-        notificationID: job._notificationID,
+        transactionId: job.transactionId,
+        notificationID: job._notificationId,
         environmentId: job._environmentId,
         organizationId: job._organizationId,
         userId: job._userId,
