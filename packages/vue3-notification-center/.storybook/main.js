@@ -1,5 +1,4 @@
 const { loadConfigFromFile, mergeConfig } = require("vite");
-const eslintPlugin = require("vite-plugin-eslint").default;
 const path = require("path");
 
 module.exports = {
@@ -31,7 +30,8 @@ module.exports = {
 
     return mergeConfig(previousConfig, {
       ...config,
-      plugins: [eslintPlugin()],
+      plugins: [],
+      dedupe: ["@storybook/client-api"],
     });
   },
 };
