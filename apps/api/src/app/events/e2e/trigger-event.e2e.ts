@@ -142,6 +142,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
+    await session.sleep(5000);
+
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
       subscriber._id,
@@ -178,6 +180,9 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
+
+    await session.sleep(5000);
+
     const notifications = await notificationRepository.findBySubscriberId(
       session.environment._id,
       subscriber.subscriberId
@@ -247,6 +252,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
+
+    await session.sleep(5000);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -329,6 +336,9 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
+
+    await session.sleep(5000);
+
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
@@ -346,6 +356,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await createTemplate(session, channelType);
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    await session.sleep(5000);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -368,6 +380,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await createTemplate(session, channelType);
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    await session.sleep(5000);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -406,6 +420,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
+
+    await session.sleep(5000);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,

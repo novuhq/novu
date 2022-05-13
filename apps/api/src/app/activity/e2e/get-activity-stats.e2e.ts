@@ -59,6 +59,8 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
       }
     );
 
+    await session.sleep();
+
     const {
       body: { data },
     } = await session.testAgent.get('/v1/activity/stats');

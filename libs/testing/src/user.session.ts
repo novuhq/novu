@@ -237,4 +237,12 @@ export class UserSession {
       payload,
     });
   }
+
+  public async sleep(ms = 2000) {
+    return new Promise((resolve) => {
+      setTimeout(async () => {
+        resolve(undefined);
+      }, ms);
+    });
+  }
 }
