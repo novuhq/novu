@@ -1,6 +1,6 @@
 import { BaseRepository } from '../base-repository';
 import { JobEntity, JobStatus } from './job.entity';
-import { Job } from './Job.schema';
+import { Job } from './job.schema';
 
 export class JobRepository extends BaseRepository<JobEntity> {
   constructor() {
