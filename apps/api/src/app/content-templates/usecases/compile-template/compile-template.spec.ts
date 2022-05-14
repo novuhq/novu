@@ -62,38 +62,29 @@ describe('Compile Template', function () {
       })
     );
 
-    it('should allow the user to specify handlebars helpers'), async function () {
-      const result = await useCase.execute(
-        CompileTemplateCommand.create({
-          templateId: 'custom',
-          data: {
-            branding: {
-              color: '#e7e7e7e9',
+    it('should allow the user to specify handlebars helpers'),
+      async function () {
+        const result = await useCase.execute(
+          CompileTemplateCommand.create({
+            templateId: 'custom',
+            data: {
+              branding: {
+                color: '#e7e7e7e9',
+              },
+              message: 'hello world',
             },
-            message: 'hello world'
-          },
-          customTemplate: '<div>{{titlecase message}}</div>'
-        })
-      )
-    };
-
-    Handlebars.registerHelper('titlecase', function(string) {
-      string.trim().toLowerCase().replace(/\w\S*/g, (w) => (w.replace(/^\w/,
-      (c) => c.toUpperCase())));
-    });
-
-    Handlebars.registerHelper('allLower', function(string) {
-      string.toLowerCase();
-    });
-
-    Handlebars.registerHelper('allcaps', function(string) {
-      string.toUpperCase();
-    });
+            customTemplate: '<div>{{titlecase message}}</div>',
+          })
+        );
+      };
 
     expect(result).to.contain('Hello TESTTTT content');
     expect(result).to.not.contain('{{#each blocks}}');
     expect(result).to.not.contains('ff6f61');
     expect(result).to.contain('#e7e7e7e9');
     expect(result).to.contain('Button content of text');
+    expect(result).to.contain('{{titlecase message}}');
+    expect(result).to.contain('{{lowercase message}}');
+    expect(result).to.contain('{{uppercase message}}');
   });
 });

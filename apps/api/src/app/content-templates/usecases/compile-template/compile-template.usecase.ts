@@ -8,6 +8,21 @@ Handlebars.registerHelper('equals', function (arg1, arg2, options) {
   return arg1 == arg2 ? options.fn(this) : options.inverse(this);
 });
 
+Handlebars.registerHelper('titlecase', function (string) {
+  return string
+    .split(' ')
+    .map((letter) => letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase())
+    .join('');
+});
+
+Handlebars.registerHelper('lowercase', function (string) {
+  return string.toLowerCase();
+});
+
+Handlebars.registerHelper('uppercase', function (string) {
+  return string.toUpperCase();
+});
+
 const cache = new Map();
 
 @Injectable()
