@@ -27,4 +27,6 @@ export enum CredentialsKeyEnum {
   From = 'from',
   // eslint-disable-next-line @typescript-eslint/naming-convention
   SenderName = 'senderName',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ApplicationId = 'applicationId',
 }
