@@ -143,7 +143,7 @@ function CustomNotificationCenter() {
 
 ## HMAC Encryption
 
-When Novu's user adds the notification center to his application he is required to pass a `subscriberId` which identifies the user's end-customer, and the application Identifier which is acted as a public key to communicate with the notification feed API.
+When Novu's user adds the notification center to their application they are required to pass a `subscriberId` which identifies the user's end-customer, and the application Identifier which is acted as a public key to communicate with the notification feed API.
 
 A malicious actor can access the user feed by accessing the API and passing another `subscriberId` using the public application identifier.
 
