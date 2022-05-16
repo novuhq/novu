@@ -202,7 +202,7 @@ export default function TemplateEditorPage() {
               </div>
             </>
           )}
-          {activePage === 'Workflow' && <WorkflowEditorPage />}
+          {activePage === 'Workflow' && <WorkflowEditorPage changeTab={setActivePage} />}
         </form>
       </FormProvider>
     </PageContainer>
