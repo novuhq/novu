@@ -31,4 +31,6 @@ export class UserEntity {
   password?: string;
 
   createdAt: string;
+
+  showOnBoarding?: boolean;
 }

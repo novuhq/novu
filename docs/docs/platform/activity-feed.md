@@ -7,7 +7,7 @@ This can be used to monitor activity and discover potential issues with a specif
 
 ## Viewing a specific subscriber activity
 
-To use a subscriber activity feed you can filter the feed by using the subscriberId or his email. This will show only the relevant data for this particular subscriber.
+To use a subscriber activity feed you can filter the feed by using the subscriberId or email. This will show only the relevant data for this particular subscriber. 
 
 You can hover over the status icon to get additional information in case there was an error during delivery.
 

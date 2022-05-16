@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
+import decode from 'jwt-decode';
+import { IJwtPayload } from '@novu/shared';
 import { AuthContext } from './store/authContext';
 import { applyToken, getToken, getTokenPayload, useAuthController } from './store/use-auth-controller';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -24,6 +26,7 @@ import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN } from './config/index';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
+import QuickStartPage from './pages/quick-start/QuickStartPage';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -105,6 +108,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/quickstart"
+                    element={
+                      <RequiredAuth>
+                        <QuickStartPage />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
                     path="/activities"
                     element={
                       <RequiredAuth>
@@ -154,6 +165,15 @@ function App() {
   );
 }
 
+function jwtHasKey(key: string) {
+  const token = getToken();
+
+  if (!token) return false;
+  const jwt = decode<IJwtPayload>(token);
+
+  return jwt && jwt[key];
+}
+
 function RequiredAuth({ children }: any) {
   const { logout } = useContext(AuthContext);
 
@@ -164,7 +184,13 @@ function RequiredAuth({ children }: any) {
     window.location.reload();
   }
 
-  return getToken() ? children : <Navigate to="/auth/login" replace />;
+  if (!getToken()) {
+    return <Navigate to="/auth/login" replace />;
+  } else if (!jwtHasKey('organizationId') || !jwtHasKey('environmentId')) {
+    return <Navigate to="/auth/application" replace />;
+  } else {
+    return children;
+  }
 }
 
 function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {

@@ -11,6 +11,7 @@ export type EnvironmentContext = {
   isLoading: boolean;
   environment: IEnvironment | undefined;
   setEnvironment: (environment: string) => void;
+  refetchEnvironment: () => void;
 };
 
 export const useEnvController = (): EnvironmentContext => {
@@ -22,10 +23,11 @@ export const useEnvController = (): EnvironmentContext => {
     QueryKeys.myEnvironments,
     getMyEnvironments
   );
-  const { data: environment, isLoading: isLoadingCurrentEnvironment } = useQuery<IEnvironment>(
-    QueryKeys.currentEnvironment,
-    getCurrentEnvironment
-  );
+  const {
+    data: environment,
+    isLoading: isLoadingCurrentEnvironment,
+    refetch: refetchEnvironment,
+  } = useQuery<IEnvironment>(QueryKeys.currentEnvironment, getCurrentEnvironment);
 
   useEffect(() => {
     if (!environment) {
@@ -56,6 +58,7 @@ export const useEnvController = (): EnvironmentContext => {
   }
 
   return {
+    refetchEnvironment,
     environment,
     readonly,
     setEnvironment,

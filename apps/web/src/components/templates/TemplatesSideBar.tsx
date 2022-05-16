@@ -1,4 +1,4 @@
-import { Navbar, useMantineTheme } from '@mantine/core';
+import { useMantineTheme } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
@@ -17,6 +17,7 @@ export function TemplatesSideBar({
   activeTab,
   changeTab,
   toggleChannel,
+  setIsDirty,
   channelButtons,
   showTriggerSection = false,
   readonly = false,
@@ -25,6 +26,7 @@ export function TemplatesSideBar({
   activeChannels: { [p: string]: boolean };
   activeTab: string;
   changeTab: (string) => void;
+  setIsDirty: (isDirty: boolean) => void;
   toggleChannel: (channel: ChannelTypeEnum, active: boolean) => void;
   channelButtons: string[];
   showTriggerSection: boolean;
@@ -75,7 +77,10 @@ export function TemplatesSideBar({
           {...link}
           active={link.tabKey === activeTab}
           changeTab={changeTab}
-          switchButton={(checked) => toggleChannel(link.tabKey, checked)}
+          switchButton={(checked) => {
+            setIsDirty(true);
+            toggleChannel(link.tabKey, checked);
+          }}
           checked={activeChannels[link.tabKey]}
           readonly={readonly}
           key={link.tabKey}
@@ -97,7 +102,7 @@ export function TemplatesSideBar({
           active={activeTab === 'Settings'}
           description="Configure cross-channel notification settings"
           label="Notification Settings"
-          errors={showErrors && errors.name}
+          errors={showErrors && (errors.name || errors.notificationGroup)}
         />
       </NavSection>
       <NavSection>

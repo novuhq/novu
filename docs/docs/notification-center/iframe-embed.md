@@ -52,3 +52,33 @@ Optionally the embed init script receives a position object, you can use it to s
   });
 </script>
 ```
+
+### Enabling HMAC Encryption
+
+In order to enable Hash-Based Message Authentication Codes, you need to visit the admin panel in-app settings page and enable HMAC encryption for your environment.
+
+Next step would be to generate an HMAC encrypted subscriberId on your backend:
+
+```ts
+import { createHmac } from 'crypto';
+
+const hmacHash = createHmac('sha256', process.env.NOVU_API_KEY)
+  .update(subscriberId)
+  .digest('hex');
+```
+
+Then pass the created HMAC to your client side application forward it to the embed initialization script:
+
+```ts
+novu.init('<REPLACE_APPLICATION_ID>', {
+  unseenBadgeSelector: '#unseen-badge',
+  bellSelector: '#notification-bell',
+  position: {
+    top: '50px',
+    left: '100px'
+  }
+}, {
+  subscriberId: 'REPLACE_WITH_PLAIN_VALUE',
+  subscriberHash: 'REPLACE_WITH_HASHED_VALUE' 
+})
+```

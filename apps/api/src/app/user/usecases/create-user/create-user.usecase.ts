@@ -13,6 +13,7 @@ export class CreateUser {
     user.firstName = data.firstName ? data.firstName.toLowerCase() : null;
     user.lastName = data.lastName ? data.lastName.toLowerCase() : data.lastName;
     user.profilePicture = data.picture;
+    user.showOnBoarding = true;
     user.tokens = [
       {
         providerId: data.auth.profileId,

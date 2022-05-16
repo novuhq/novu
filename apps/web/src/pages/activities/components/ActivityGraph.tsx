@@ -10,6 +10,7 @@ import { IActivityGraphStats } from '../interfaces';
 import { MessageContainer } from './MessageContainer';
 import { ActivityGraphGlobalStyles } from './ActivityGraphGlobalStyles';
 import { getOptions, getChartData } from '../services';
+import * as cloneDeep from 'lodash.clonedeep';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -60,7 +61,9 @@ const Wrapper = styled.div`
 `;
 
 function fillDateGaps(data: IActivityGraphStats[]): IActivityGraphStats[] {
-  return data.reduce(
+  const containsCurrentDate = unshiftCurrentDay(data);
+
+  return containsCurrentDate.reduce(
     (
       newArray: IActivityGraphStats[],
       currentModel: IActivityGraphStats,
@@ -90,4 +93,16 @@ function fillDateGaps(data: IActivityGraphStats[]): IActivityGraphStats[] {
     },
     []
   );
+}
+
+function unshiftCurrentDay(data: IActivityGraphStats[]): IActivityGraphStats[] {
+  const currentDate = moment().format('YYYY-MM-DD');
+  const isContainsCurrentDate = moment(data[0]._id).isSame(currentDate, 'day');
+
+  if (isContainsCurrentDate) return data;
+
+  const clonedDate = cloneDeep(data);
+  clonedDate.unshift({ _id: currentDate, count: 0 });
+
+  return clonedDate;
 }

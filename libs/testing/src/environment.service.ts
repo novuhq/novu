@@ -1,17 +1,25 @@
 import { faker } from '@faker-js/faker';
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
 
 export class EnvironmentService {
   private environmentRepository = new EnvironmentRepository();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async createEnvironment(organizationId: any) {
-    const project = await this.environmentRepository.create({
+    return await this.environmentRepository.create({
       name: faker.name.title(),
       _organizationId: organizationId,
     });
+  }
 
-    return project;
+  async enableEnvironmentHmac(environment: EnvironmentEntity) {
+    return await this.environmentRepository.update(
+      {
+        _organizationId: environment._organizationId,
+        _id: environment._id,
+      },
+      { $set: { 'widget.notificationCenterEncryption': true } }
+    );
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async getEnvironment(environmentId: any) {

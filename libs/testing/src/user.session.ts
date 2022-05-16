@@ -59,6 +59,7 @@ export class UserSession {
       email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
+      showOnBoarding: true,
     });
 
     if (!options.noOrganization) {

@@ -4,6 +4,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { InitializeSessionCommand } from './initialize-session.command';
+import { createHmac } from 'crypto';
 
 @Injectable()
 export class InitializeSession {
@@ -21,6 +22,10 @@ export class InitializeSession {
 
     if (!environment) {
       throw new ApiException('Please provide a valid app identifier');
+    }
+
+    if (environment.widget.notificationCenterEncryption) {
+      validateNotificationCenterEncryption(environment, command);
     }
 
     const commandos = CreateSubscriberCommand.create({
@@ -44,5 +49,13 @@ export class InitializeSession {
         phone: subscriber.phone,
       },
     };
+  }
+}
+
+function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
+  const hmacHash = createHmac('sha256', environment.apiKeys[0].key).update(command.subscriberId).digest('hex');
+
+  if (hmacHash !== command.hmacHash) {
+    throw new ApiException('Please provide a valid HMAC hash');
   }
 }
