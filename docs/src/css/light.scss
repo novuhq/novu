@@ -86,6 +86,11 @@ html[data-theme='light'] {
     .footer__col {
       .footer__button {
         border: 1px solid $color-gray-5;
+
+        &:hover {
+          color: $color-primary-blue;
+        }
+
         &::before {
           background-image: url('/img/github-black.svg');
         }

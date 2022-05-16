@@ -338,11 +338,8 @@ nav.menu {
       color: inherit;
       font-weight: 500;
       border-radius: 4px;
-      transition: background-color 0.2s;
-
-      &:hover {
-        background-color: #333333;
-      }
+      transition-property: background-color, color;
+      transition-duration: 0.2s;
 
       &::before {
         align-items: center;

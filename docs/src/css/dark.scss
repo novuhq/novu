@@ -88,6 +88,11 @@ html[data-theme='dark'] {
     .footer__col {
       .footer__button {
         border: 1px solid $color-gray-5;
+
+        &:hover {
+          background-color: #333333;
+        }
+        
         &::before {
           background-image: url('/img/github-white.svg');
         }
