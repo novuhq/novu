@@ -95,7 +95,9 @@ const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
 };
 
 function isConnected(provider: IIntegratedProvider) {
-  return provider.credentials.some((cred) => {
+  if (!provider.credentials.length) return false;
+
+  return provider.credentials?.some((cred) => {
     return cred.value;
   });
 }
