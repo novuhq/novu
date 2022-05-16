@@ -45,7 +45,7 @@ await novu.subscribers.update(user.id, {
 ```
 
 ### Removing a subscriber
-To remove a subscriber and stop it from receiving communication, you call the remove API to delete the subscriber.
+To remove and stop a subscriber from receiving communication, you call the remove API to delete the subscriber.
 
 ```typescript
 import { Novu } from '@novu/node'
