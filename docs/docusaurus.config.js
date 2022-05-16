@@ -42,7 +42,6 @@ const codeTheme = require('./src/utils/prism');
           },
         },
         colorMode: {
-          disableSwitch: true,
           respectPrefersColorScheme: true,
         },
         navbar: {

@@ -1,0 +1,15 @@
+.markdown {
+  h1,
+  h1:first-child {
+    font-size: 40px;
+  }
+
+  > h2 {
+    font-size: 30px;
+  }
+
+  > h3 {
+    font-size: 24px;
+    font-weight: 400;
+  }
+}

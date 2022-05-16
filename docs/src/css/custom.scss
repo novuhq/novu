@@ -9,6 +9,7 @@
 @import 'variables';
 @import 'dark';
 @import 'light';
+@import 'markdown';
 
 :root {
   --ifm-font-family-monospace: 'Brother-1816';
@@ -20,6 +21,7 @@
   --doc-sidebar-width: 340px !important;
   --ifm-menu-link-padding-vertical: 8px;
   --ifm-menu-link-padding-horizontal: 20px;
+  --ifm-heading-font-weight: 500;
 
   @media (max-width: 1279px) {
     --doc-sidebar-width: 300px !important;
@@ -27,7 +29,7 @@
 }
 
 body {
-  font-weight: var(--ifm-font-weight-light);
+  font-weight: 350;
   font-size: 18px;
 }
 
@@ -131,7 +133,7 @@ nav.menu {
   .menu__list-item {
     position: relative;
     > .menu__list {
-      font-weight: 300;
+      font-weight: 350;
       font-size: 14px;
       padding-left: 0;
     }
@@ -223,7 +225,7 @@ nav.menu {
   line-height: 1.375;
 
   ~ ul .table-of-contents__link {
-      font-weight: 300;
+      font-weight: 350;
     }
   }
 }
