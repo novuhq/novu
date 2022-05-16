@@ -8,6 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 import { SubscribersModule } from '../subscribers/subscribers.module';
 import { LogsModule } from '../logs/logs.module';
 import { ContentTemplatesModule } from '../content-templates/content-templates.module';
+import { WorkflowQueueService } from './services/workflow.queue.service';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { ContentTemplatesModule } from '../content-templates/content-templates.m
     ContentTemplatesModule,
   ],
   controllers: [EventsController],
-  providers: [...USE_CASES],
+  providers: [...USE_CASES, WorkflowQueueService],
 })
 export class EventsModule {}

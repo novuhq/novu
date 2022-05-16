@@ -13,4 +13,5 @@ export * from './repositories/member';
 export * from './repositories/log';
 export * from './repositories/integration';
 export * from './repositories/change';
+export * from './repositories/job';
 export * from './shared/exceptions';
