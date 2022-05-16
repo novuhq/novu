@@ -1,5 +1,5 @@
 import { BaseRepository } from '../base-repository';
-import { JobEntity, JobStatus } from './job.entity';
+import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
 
 export class JobRepository extends BaseRepository<JobEntity> {
@@ -8,32 +8,20 @@ export class JobRepository extends BaseRepository<JobEntity> {
   }
 
   public async storeJobs(jobs: JobEntity[]): Promise<JobEntity> {
-    jobs = jobs
-      .map((job: JobEntity) => {
-        job._id = JobRepository.createObjectId();
-
-        return job;
-      })
-      .map((job: JobEntity, index: number, list: JobEntity[]) => {
-        if (index === 0) {
-          return job;
-        }
-        job._parentId = list[index - 1]._id;
-
-        return job;
-      });
-
     const stored = [];
+    for (let index = 0; index < jobs.length; index++) {
+      if (index > 0) {
+        jobs[index]._parentId = stored[index - 1]._id;
+      }
 
-    for (const job of jobs) {
-      const created = await this.create(job);
+      const created = await this.create(jobs[index]);
       stored.push(created);
     }
 
     return stored[0];
   }
 
-  public async updateStatus(jobId: string, status: JobStatus) {
+  public async updateStatus(jobId: string, status: JobStatusEnum) {
     await this.update(
       {
         _id: jobId,

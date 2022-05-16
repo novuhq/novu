@@ -5,6 +5,7 @@ import {
   NotificationTemplateRepository,
   SubscriberEntity,
   JobEntity,
+  JobStatusEnum,
 } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -61,7 +62,7 @@ export class ProcessSubscriber {
         _organizationId: command.organizationId,
         _userId: command.userId,
         _subscriberId: subscriber._id,
-        status: 'pending',
+        status: JobStatusEnum.PENDING,
       };
     });
   }

@@ -16,6 +16,7 @@ import {
   EnvironmentRepository,
   NotificationGroupRepository,
   JobRepository,
+  JobStatusEnum,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -248,7 +249,7 @@ export class UserSession {
     do {
       runningJobs = await this.jobRepository.count({
         status: {
-          $in: ['pending', 'queued', 'running'],
+          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
         },
       });
       timedOut = timeout < +new Date() - startTime;
