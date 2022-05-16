@@ -4,7 +4,6 @@ import { Button, colors, TemplateButton, DragButton, Text, Title } from '../../.
 import { Center, createStyles, Grid } from '@mantine/core';
 import { ArrowLeft, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import React from 'react';
-import { Background } from '../../../components/workflow/Background';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { ChannelTypeEnum } from '@novu/shared';
 
