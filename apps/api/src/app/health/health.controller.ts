@@ -22,7 +22,6 @@ export class HealthController {
           },
         };
       },
-      async () => this.healthIndicator.pingCheck('dns', 'https://google.com'),
       async () => {
         return {
           apiVersion: {

@@ -9,6 +9,7 @@ import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
 import { NavigateValidatorModal } from '../NavigateValidatorModal';
+import { useIsMounted } from '../../../hooks/use-is-mounted';
 
 export function EmailMessageEditor({
   onChange,
@@ -34,15 +35,17 @@ export function EmailMessageEditor({
         ]
   );
 
+  const isMounted = useIsMounted();
+
   const [top, setTop] = useState<number>(0);
   const [controlBarVisible, setActionBarVisible] = useState<boolean>(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
-    if (onChange) {
+    if (onChange && isMounted) {
       onChange(blocks);
     }
-  }, [blocks]);
+  }, [blocks, isMounted]);
 
   function onBlockStyleChanged(blockIndex: number, styles: { textDirection: 'rtl' | 'ltr' }) {
     blocks[blockIndex].styles = {
