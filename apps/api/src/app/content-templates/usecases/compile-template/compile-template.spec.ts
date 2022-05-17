@@ -75,6 +75,8 @@ describe('Compile Template', function () {
           customTemplate: '<div>{{titlecase message}} and {{lowercase message}} and {{uppercase message}}</div>',
         })
       );
+
+      expect(result).to.equal('<div>Hello World and hello world and HELLO WORLD</div>');
     });
 
     expect(result).to.contain('Hello TESTTTT content');
@@ -82,6 +84,5 @@ describe('Compile Template', function () {
     expect(result).to.not.contains('ff6f61');
     expect(result).to.contain('#e7e7e7e9');
     expect(result).to.contain('Button content of text');
-    expect(result).to.equal('<div>Hello World and hello world and HELLO WORLD</div>');
   });
 });
