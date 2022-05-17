@@ -1,6 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import { Handle, Position } from 'react-flow-renderer';
-import { ChannelButton, TemplateButton } from '../../design-system';
+import { ChannelButton, colors, TemplateButton } from '../../design-system';
 import { MobileGradient } from '../../design-system/icons';
 
 interface NodeData {
@@ -16,14 +16,6 @@ export default memo(({ data, selected }: { data: NodeData; selected: boolean }) 
 
   return (
     <div style={{ pointerEvents: 'none' }}>
-      <Handle
-        type="target"
-        position={Position.Top}
-        onConnect={(params) => {
-          // eslint-disable-next-line no-console
-          console.log('handle onConnect', params);
-        }}
-      />
       <ChannelButton
         Icon={data.Icon}
         description={data.description}
@@ -33,8 +25,18 @@ export default memo(({ data, selected }: { data: NodeData; selected: boolean }) 
         changeTab={() => {}}
       />
       <Handle
+        type="target"
+        position={Position.Top}
+        style={{ background: 'transparent', border: `1px solid ${colors.B40}` }}
+        onConnect={(params) => {
+          // eslint-disable-next-line no-console
+          console.log('handle onConnect', params);
+        }}
+      />
+      <Handle
         type="source"
         position={Position.Bottom}
+        style={{ background: 'transparent', border: `1px solid ${colors.B40}` }}
         onConnect={(params) => {
           // eslint-disable-next-line no-console
           console.log('handle onConnect', params);

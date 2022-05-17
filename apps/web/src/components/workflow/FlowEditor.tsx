@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -33,7 +33,7 @@ const initialNodes: Node[] = [
     data: {
       label: 'Trigger',
     },
-    position: { x: 250, y: 5 },
+    position: { x: 0, y: 0 },
     // style: { width: '300px', height: '75px' },
   },
 ];
@@ -43,6 +43,7 @@ const getId = () => `dndnode_${id++}`;
 
 export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
   const { colorScheme } = useMantineColorScheme();
+  const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
@@ -53,48 +54,62 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
     // eslint-disable-next-line no-console
-    console.log('bla', event);
+    // console.log('bla', event);
   }, []);
 
-  const onDrop = useCallback((event) => {
-    event.preventDefault();
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
 
-    const type = event.dataTransfer.getData('application/reactflow');
-    // const data = event.dataTransfer.getData('application/data');
-    const parentId = event.target.dataset.id;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
 
-    // console.log(event);
+      const type = event.dataTransfer.getData('application/reactflow');
+      // const data = event.dataTransfer.getData('application/data');
+      const parentId = event.target.dataset.id;
 
-    // console.log(channels.filter((channel) => channel.channelType === type));
+      console.log(event);
 
-    if (typeof type === 'undefined' || !type || typeof parentId === 'undefined') {
-      return;
-    }
+      // console.log(channels.filter((channel) => channel.channelType === type));
 
-    const newId = getId();
-    const newNode = {
-      id: newId,
-      type: 'channelNode',
-      position: { x: 10, y: 90 },
-      parentNode: parentId,
-      data: { ...channels.filter((channel) => channel.channelType === type)[0] },
-    };
+      if (typeof type === 'undefined' || !type || typeof parentId === 'undefined') {
+        return;
+      }
 
-    const newEdge = {
-      id: `e-${parentId}-${newId}`,
-      source: parentId,
-      target: newId,
-      type: 'smoothstep',
-    };
+      const position = reactFlowInstance?.project({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
 
-    setNodes((nds) => nds.concat(newNode));
-    setEdges((eds) => addEdge(newEdge, eds));
-  }, []);
+      console.log(reactFlowInstance?.getZoom());
+
+      const newId = getId();
+      const newNode = {
+        id: newId,
+        type: 'channelNode',
+        position: { x: -100, y: 75 },
+        parentNode: parentId,
+        data: { ...channels.filter((channel) => channel.channelType === type)[0] },
+      };
+
+      const newEdge = {
+        id: `e-${parentId}-${newId}`,
+        source: parentId,
+        target: newId,
+        type: 'smoothstep',
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+      setEdges((eds) => addEdge(newEdge, eds));
+    },
+    [reactFlowInstance]
+  );
 
   return (
     <Wrapper>
-      <div style={{ height: '500px', width: 'inherit' }}>
-        <ReactFlowProvider>
+      <ReactFlowProvider>
+        <div style={{ height: '500px', width: 'inherit' }} ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -107,15 +122,18 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
             preventScrolling={true}
             onDrop={onDrop}
             onDragOver={onDragOver}
-            fitView
+            fitView={true}
+            maxZoom={1}
+            defaultZoom={0.5}
+            snapToGrid={true}
           >
             <div style={{ position: 'absolute', width: '100%', zIndex: 4 }}>
               <WorkflowPageHeader title="Workflow Editor" onGoBack={onGoBack} actions={<Button>Save</Button>} />
             </div>
             <Background size={1} gap={10} color={colorScheme === 'dark' ? colors.BGDark : colors.BGLight} />
           </ReactFlow>
-        </ReactFlowProvider>
-      </div>
+        </div>
+      </ReactFlowProvider>
     </Wrapper>
   );
 }
@@ -130,13 +148,5 @@ const Wrapper = styled.div`
     width: 200px;
     height: 75px;
     cursor: pointer;
-  }
-
-  .mantine-MultiSelect-input {
-    min-height: 50px;
-
-    input {
-      height: 100%;
-    }
   }
 `;

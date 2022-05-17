@@ -60,7 +60,11 @@ const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
                 </Text>
               </NavSection>
               {channels.map((channel) => (
-                <NavSection onDragStart={(event) => onDragStart(event, channel.channelType)} draggable>
+                <NavSection
+                  key={channel.tabKey}
+                  onDragStart={(event) => onDragStart(event, channel.channelType)}
+                  draggable
+                >
                   <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
                 </NavSection>
               ))}
@@ -83,7 +87,9 @@ const StyledNav = styled.div`
   padding: 15px 20px;
 `;
 
-const NavSection = styled.div``;
+const NavSection = styled.div`
+  padding-bottom: 20px;
+`;
 
 /*
  * const DragButton = styled(TemplateButton)`
