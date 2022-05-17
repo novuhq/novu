@@ -12,10 +12,10 @@ import ReactFlow, {
 } from 'react-flow-renderer';
 import ChannelNode from './ChannelNode';
 import PageHeader from '../layout/components/PageHeader';
-import { Button, colors, Text } from '../../design-system';
+import { Button, colors, TemplateButton, Text } from '../../design-system';
 import { Aside, Center, useMantineColorScheme } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MobileGradient } from '../../design-system/icons';
+import { ArrowLeft, MobileGradient, TapeGradient } from '../../design-system/icons';
 import styled from '@emotion/styled';
 import WorkflowPageHeader from './WorkflowPageHeader';
 import TriggerNode from './TriggerNode';
@@ -30,7 +30,9 @@ const initialNodes: Node[] = [
   {
     id: '1',
     type: 'triggerNode',
-    data: { label: 'Trigger' },
+    data: {
+      label: 'Trigger',
+    },
     position: { x: 250, y: 5 },
     // style: { width: '300px', height: '75px' },
   },
@@ -50,7 +52,8 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-    // console.log(event);
+    // eslint-disable-next-line no-console
+    console.log('bla', event);
   }, []);
 
   const onDrop = useCallback((event) => {
@@ -59,7 +62,9 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
     const type = event.dataTransfer.getData('application/reactflow');
     // const data = event.dataTransfer.getData('application/data');
     const parentId = event.target.dataset.id;
-    console.log(event);
+
+    // console.log(event);
+
     // console.log(channels.filter((channel) => channel.channelType === type));
 
     if (typeof type === 'undefined' || !type || typeof parentId === 'undefined') {
@@ -71,18 +76,19 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
       id: newId,
       type: 'channelNode',
       position: { x: 10, y: 90 },
-      parent: event.target.dataset.id,
+      parentNode: parentId,
       data: { ...channels.filter((channel) => channel.channelType === type)[0] },
     };
 
+    const newEdge = {
+      id: `e-${parentId}-${newId}`,
+      source: parentId,
+      target: newId,
+      type: 'smoothstep',
+    };
+
     setNodes((nds) => nds.concat(newNode));
-    setEdges([
-      {
-        id: 'e1',
-        source: event.target.dataset.id,
-        target: newId,
-      },
-    ]);
+    setEdges((eds) => addEdge(newEdge, eds));
   }, []);
 
   return (
@@ -123,6 +129,7 @@ const Wrapper = styled.div`
   .react-flow__node {
     width: 200px;
     height: 75px;
+    cursor: pointer;
   }
 
   .mantine-MultiSelect-input {

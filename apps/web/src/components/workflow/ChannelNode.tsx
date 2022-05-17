@@ -1,6 +1,6 @@
 import React, { memo, useEffect } from 'react';
 import { Handle, Position } from 'react-flow-renderer';
-import { TemplateButton } from '../../design-system';
+import { ChannelButton, TemplateButton } from '../../design-system';
 import { MobileGradient } from '../../design-system/icons';
 
 interface NodeData {
@@ -10,11 +10,12 @@ interface NodeData {
 }
 export default memo(({ data, selected }: { data: NodeData; selected: boolean }) => {
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.log('selected', selected);
   }, [selected]);
 
   return (
-    <>
+    <div style={{ pointerEvents: 'none' }}>
       <Handle
         type="target"
         position={Position.Top}
@@ -23,7 +24,7 @@ export default memo(({ data, selected }: { data: NodeData; selected: boolean }) 
           console.log('handle onConnect', params);
         }}
       />
-      <TemplateButton
+      <ChannelButton
         Icon={data.Icon}
         description={data.description}
         label={data.label}
@@ -39,6 +40,6 @@ export default memo(({ data, selected }: { data: NodeData; selected: boolean }) 
           console.log('handle onConnect', params);
         }}
       />
-    </>
+    </div>
   );
 });

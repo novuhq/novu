@@ -59,9 +59,6 @@ export function ChannelButton({
               <Text {...disabledColor} weight="bold">
                 {label}
               </Text>
-              <Text mt={3} color={colors.B60} {...disabledColor}>
-                {description}
-              </Text>
             </StyledContentWrapper>
           </LeftContainerWrapper>
 
