@@ -53,8 +53,6 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-    // eslint-disable-next-line no-console
-    // console.log('bla', event);
   }, []);
 
   const onDrop = useCallback(
@@ -88,7 +86,7 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
       const newNode = {
         id: newId,
         type: 'channelNode',
-        position: { x: -100, y: 75 },
+        position: { x: -200, y: 100 },
         parentNode: parentId,
         data: { ...channels.filter((channel) => channel.channelType === type)[0] },
       };
