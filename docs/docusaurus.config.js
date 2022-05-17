@@ -36,6 +36,11 @@ const codeTheme = require('./src/utils/prism');
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
+        algolia: {
+          appId: 'KP6AAG0HM6',
+          apiKey: '607caef96e2cec3e128239b90da832be',
+          indexName: 'dev_novu',
+        },
         docs: {
           sidebar: {
             autoCollapseCategories: true,
