@@ -5,9 +5,10 @@ import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
 import { UpdateSubscriber } from './update-subscriber.usecase';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
+import { DirectIntegrationId, ISubscriberChannel } from '@novu/shared';
 
 describe('Update Subscriber', function () {
-  let useCase: UpdateSubscriber;
+  let updateUsecase: UpdateSubscriber;
   let session: UserSession;
   const subscriberRepository = new SubscriberRepository();
   beforeEach(async () => {
@@ -19,13 +20,13 @@ describe('Update Subscriber', function () {
     session = new UserSession();
     await session.initialize();
 
-    useCase = moduleRef.get<UpdateSubscriber>(UpdateSubscriber);
+    updateUsecase = moduleRef.get<UpdateSubscriber>(UpdateSubscriber);
   });
 
   it('should update subscribers name', async function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
-    await useCase.execute(
+    await updateUsecase.execute(
       UpdateSubscriberCommand.create({
         organizationId: subscriber._organizationId,
         subscriberId: subscriber.subscriberId,
@@ -38,5 +39,27 @@ describe('Update Subscriber', function () {
     expect(updatedSubscriber.lastName).to.equal('Test Last Name');
     expect(updatedSubscriber.firstName).to.equal(subscriber.firstName);
     expect(updatedSubscriber.email).to.equal(subscriber.email);
+  });
+
+  it('should subscribers channel credentials', async function () {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    const subscriber = await subscriberService.createSubscriber();
+
+    const subscriberChannel: ISubscriberChannel = {
+      integrationId: DirectIntegrationId.Slack,
+      credentials: { accessToken: 'super-secret-123', channelId: '#general' },
+    };
+    await updateUsecase.execute(
+      UpdateSubscriberCommand.create({
+        organizationId: subscriber._organizationId,
+        subscriberId: subscriber.subscriberId,
+        environmentId: session.environment._id,
+        channel: subscriberChannel,
+      })
+    );
+
+    const updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+    expect(updatedSubscriber.channel.credentials.channelId).to.equal(subscriberChannel.credentials.channelId);
+    expect(updatedSubscriber.channel.credentials.accessToken).to.equal(subscriberChannel.credentials.accessToken);
   });
 });
