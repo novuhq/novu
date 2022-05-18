@@ -176,6 +176,19 @@ nav.menu {
     padding-right: 16px;
   }
 
+  &__item:first-child {
+    .menu__list {
+      .menu__list-item {
+        > .menu__link {
+          @media (max-width: 996px) {
+            padding-left: 0;
+            padding-right: 0;
+          }
+        }
+      }
+    }
+  }
+
   .menu__list {
     .menu__link.menu__link--sublist {
       font-size: 16px;
