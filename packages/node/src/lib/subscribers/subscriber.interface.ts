@@ -1,3 +1,16 @@
+import { IChannelCredentials } from '@novu/shared';
+
+export interface ISubscribers {
+  identify(subscriberId: string, data: ISubscriberPayload);
+  update(subscriberId: string, data: ISubscriberPayload);
+  delete(subscriberId: string);
+  setCredentials(
+    subscriberId: string,
+    integrationId: string,
+    credentials: IChannelCredentials
+  );
+}
+
 export interface ISubscriberPayload {
   firstName?: string;
   lastName?: string;
