@@ -45,7 +45,7 @@ export class ProcessSubscriber {
           payload: command.payload,
           step,
           transactionId: command.transactionId,
-          notificationID: notification._id,
+          notificationId: notification._id,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
