@@ -4,18 +4,13 @@ import ReactFlow, {
   addEdge,
   useNodesState,
   useEdgesState,
-  NodeTypes,
-  Controls,
   Node,
   Background,
   ReactFlowInstance,
 } from 'react-flow-renderer';
 import ChannelNode from './ChannelNode';
-import PageHeader from '../layout/components/PageHeader';
-import { Button, colors, TemplateButton, Text } from '../../design-system';
-import { Aside, Center, useMantineColorScheme } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MobileGradient, TapeGradient } from '../../design-system/icons';
+import { Button, colors } from '../../design-system';
+import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import WorkflowPageHeader from './WorkflowPageHeader';
 import TriggerNode from './TriggerNode';
@@ -33,15 +28,14 @@ const initialNodes: Node[] = [
     data: {
       label: 'Trigger',
     },
-    position: { x: 0, y: 0 },
-    // style: { width: '300px', height: '75px' },
+    position: { x: 250, y: 100 },
   },
 ];
 
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
-export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
+export function FlowEditor({ onGoBack, changeTab }: { onGoBack: () => void; changeTab: (string) => void }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -64,12 +58,7 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
       const reactFlowBounds = reactFlowWrapper?.current?.getBoundingClientRect();
 
       const type = event.dataTransfer.getData('application/reactflow');
-      // const data = event.dataTransfer.getData('application/data');
       const parentId = event.target.dataset.id;
-
-      console.log(event);
-
-      // console.log(channels.filter((channel) => channel.channelType === type));
 
       if (typeof type === 'undefined' || !type || typeof parentId === 'undefined') {
         return;
@@ -80,15 +69,13 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
         y: event.clientY - reactFlowBounds.top,
       });
 
-      console.log(reactFlowInstance?.getZoom());
-
       const newId = getId();
       const newNode = {
         id: newId,
         type: 'channelNode',
         position: { x: -200, y: 100 },
         parentNode: parentId,
-        data: { ...channels.filter((channel) => channel.channelType === type)[0] },
+        data: { ...channels.filter((channel) => channel.channelType === type)[0], changeTab },
       };
 
       const newEdge = {
@@ -122,7 +109,7 @@ export function FlowEditor({ onGoBack }: { onGoBack: () => void }) {
             onDragOver={onDragOver}
             fitView={true}
             maxZoom={1}
-            defaultZoom={0.5}
+            minZoom={1}
             snapToGrid={true}
           >
             <div style={{ position: 'absolute', width: '100%', zIndex: 4 }}>

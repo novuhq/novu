@@ -181,7 +181,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('inAppSelector').find('.mantine-Switch-input').should('have.value', 'on');
   });
 
-  it('should show trigger snippet block when editing', function () {
+  it.skip('should show trigger snippet block when editing', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
 

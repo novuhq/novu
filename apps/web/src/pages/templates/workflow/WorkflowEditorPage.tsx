@@ -1,11 +1,11 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
-import { Button, colors, TemplateButton, DragButton, Text, Title } from '../../../design-system';
-import { Center, createStyles, Grid } from '@mantine/core';
-import { ArrowLeft, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
-import React from 'react';
-import PageHeader from '../../../components/layout/components/PageHeader';
+import { Button, colors, DragButton, Text, Title } from '../../../design-system';
+import { ActionIcon, Grid } from '@mantine/core';
+import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
+import React, { useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Close } from '../../../design-system/icons/actions/Close';
 
 export const channels = [
   {
@@ -35,6 +35,7 @@ export const channels = [
 ];
 
 const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
+  const [show, setShow] = useState(true);
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
@@ -48,27 +49,45 @@ const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
     <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
       <Grid grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
-          <FlowEditor onGoBack={goBackHandler} />
+          <FlowEditor changeTab={changeTab} onGoBack={goBackHandler} />
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={true}>
-            <StyledNav>
-              <NavSection>
-                <Title size={2}>Steps to add</Title>
-                <Text color={colors.B60} mt={10}>
-                  You can drag and drop new steps to the flow
-                </Text>
-              </NavSection>
-              {channels.map((channel) => (
-                <NavSection
-                  key={channel.tabKey}
-                  onDragStart={(event) => onDragStart(event, channel.channelType)}
-                  draggable
-                >
-                  <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
+            {show ? (
+              <StyledNav>
+                <NavSection>
+                  <ButtonWrapper>
+                    <Title size={2}>Email Properties</Title>
+                    <ActionIcon variant="transparent" onClick={() => setShow(false)}>
+                      <Close />
+                    </ActionIcon>
+                  </ButtonWrapper>
                 </NavSection>
-              ))}
-            </StyledNav>
+                <NavSection>
+                  <Button variant="outline" fullWidth onClick={() => changeTab(ChannelTypeEnum.EMAIL)}>
+                    Edit Template
+                  </Button>
+                </NavSection>
+              </StyledNav>
+            ) : (
+              <StyledNav>
+                <NavSection>
+                  <Title size={2}>Steps to add</Title>
+                  <Text color={colors.B60} mt={10}>
+                    You can drag and drop new steps to the flow
+                  </Text>
+                </NavSection>
+                {channels.map((channel) => (
+                  <NavSection
+                    key={channel.tabKey}
+                    onDragStart={(event) => onDragStart(event, channel.channelType)}
+                    draggable
+                  >
+                    <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
+                  </NavSection>
+                ))}
+              </StyledNav>
+            )}
           </SideBarWrapper>
         </Grid.Col>
       </Grid>
@@ -91,9 +110,7 @@ const NavSection = styled.div`
   padding-bottom: 20px;
 `;
 
-/*
- * const DragButton = styled(TemplateButton)`
- *   border: 1px dashed ${colors.B30} !important;
- *   border-radius: 7px;
- * `;
- */
+const ButtonWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
