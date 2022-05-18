@@ -44,7 +44,7 @@ const codeTheme = require('./src/utils/prism');
         },
         docs: {
           sidebar: {
-            autoCollapseCategories: true,
+            autoCollapseCategories: false,
           },
         },
         colorMode: {
