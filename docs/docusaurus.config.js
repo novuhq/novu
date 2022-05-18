@@ -10,7 +10,7 @@ const codeTheme = require('./src/utils/prism');
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
-    favicon: 'img/favicon-gradient.png',
+    favicon: 'img/favicon.ico',
     organizationName: 'novuhq', // Usually your GitHub org/user name.
     projectName: 'novu', // Usually your repo name.
     plugins: ['docusaurus-plugin-sass'],
