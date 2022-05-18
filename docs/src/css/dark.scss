@@ -34,8 +34,8 @@ html[data-theme='dark'] {
 
     .menu__link {
       color: $color-white;
-
-      &--active {
+    
+      &--active:not(.menu__link--sublist) {
         color: $color-primary-blue;
       }
     }

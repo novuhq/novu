@@ -35,6 +35,10 @@ html[data-theme='light'] {
 
     .menu__link {
       color: $color-gray-4;
+      
+      &--active:not(.menu__link--sublist) {
+        color: $color-primary-blue;
+      }
     }
 
     .menu__link--sublist-caret::before {
