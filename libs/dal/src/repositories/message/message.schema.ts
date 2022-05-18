@@ -42,6 +42,7 @@ const messageSchema = new Schema(
     channel: Schema.Types.String,
     content: Schema.Types.Mixed,
     phone: Schema.Types.String,
+    directChannelId: Schema.Types.String,
     seen: {
       type: Schema.Types.Boolean,
       default: false,
