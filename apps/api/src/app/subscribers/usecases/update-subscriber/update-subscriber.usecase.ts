@@ -38,6 +38,22 @@ export class UpdateSubscriber {
       updatePayload.avatar = command.avatar;
     }
 
+    if (command.channel != null) {
+      if (command.channel.integrationId != null) {
+        updatePayload['channel.integrationId'] = command.channel.integrationId;
+      }
+
+      if (command.channel.credentials != null) {
+        if (command.channel.credentials.channelId != null) {
+          updatePayload['channel.credentials.channelId'] = command.channel.credentials.channelId;
+        }
+
+        if (command.channel.credentials.accessToken != null) {
+          updatePayload['channel.credentials.accessToken'] = command.channel.credentials.accessToken;
+        }
+      }
+    }
+
     await this.subscriberRepository.update(
       {
         _id: foundSubscriber,
