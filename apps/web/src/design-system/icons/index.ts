@@ -31,6 +31,7 @@ export { Invite } from './actions/Invite';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';
+export { ArrowLeft } from './arrows/ArrowLeft';
 
 export { BellGradient } from './gradient/BellGradient';
 export { MailGradient } from './gradient/MailGradient';

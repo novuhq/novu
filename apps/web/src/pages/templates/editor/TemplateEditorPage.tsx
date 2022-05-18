@@ -20,6 +20,7 @@ import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEdit
 import { useActiveIntegrations } from '../../../api/hooks';
 import { useStatusChangeControllerHook } from '../../../components/templates/use-status-change-controller.hook';
 import { useEnvController } from '../../../store/use-env-controller';
+import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -96,103 +97,112 @@ export default function TemplateEditorPage() {
       <PageMeta title={editMode ? template?.name : 'Create Template'} />
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
-          <PageHeader
-            title={editMode ? 'Edit Template' : 'Create new template'}
-            actions={
-              <Grid align="center" gutter={50}>
-                {editMode && (
-                  <Grid.Col span={6}>
-                    <Switch
-                      label={isTemplateActive ? 'Enabled' : 'Disabled'}
-                      loading={isStatusChangeLoading}
-                      disabled={readonly}
-                      data-test-id="active-toggle-switch"
-                      onChange={(e) => changeActiveStatus(e.target.checked)}
-                      checked={isTemplateActive || false}
-                    />
+          {activePage !== 'Workflow' && (
+            <>
+              <PageHeader
+                title={editMode ? 'Edit Template' : 'Create new template'}
+                actions={
+                  <Grid align="center" gutter={50}>
+                    {editMode && (
+                      <Grid.Col span={6}>
+                        <Switch
+                          label={isTemplateActive ? 'Enabled' : 'Disabled'}
+                          loading={isStatusChangeLoading}
+                          disabled={readonly}
+                          data-test-id="active-toggle-switch"
+                          onChange={(e) => changeActiveStatus(e.target.checked)}
+                          checked={isTemplateActive || false}
+                        />
+                      </Grid.Col>
+                    )}
+                    <Grid.Col span={6}>
+                      <Button
+                        mr={20}
+                        data-test-id="submit-btn"
+                        loading={isLoading || isUpdateLoading}
+                        disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
+                        submit
+                      >
+                        {editMode ? 'Update' : 'Create'}
+                      </Button>
+                    </Grid.Col>
+                  </Grid>
+                }
+              />
+              <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
+                <Grid grow style={{ minHeight: 500 }}>
+                  <Grid.Col md={4} sm={6}>
+                    <SideBarWrapper dark={colorScheme === 'dark'} style={{ paddingRight: 50 }}>
+                      <TemplatesSideBar
+                        setIsDirty={setIsDirty}
+                        activeTab={activePage}
+                        toggleChannel={toggleChannel}
+                        changeTab={setActivePage}
+                        readonly={readonly}
+                        activeChannels={activeChannels}
+                        channelButtons={channelButtons}
+                        showTriggerSection={!!template && !!trigger}
+                        showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
+                      />
+                    </SideBarWrapper>
                   </Grid.Col>
-                )}
-                <Grid.Col span={6}>
-                  <Button
-                    mr={20}
-                    data-test-id="submit-btn"
-                    loading={isLoading || isUpdateLoading}
-                    disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
-                    submit
-                  >
-                    {editMode ? 'Update' : 'Create'}
-                  </Button>
-                </Grid.Col>
-              </Grid>
-            }
-          />
-          <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
-            <Grid grow style={{ minHeight: 500 }}>
-              <Grid.Col md={4} sm={6}>
-                <SideBarWrapper dark={colorScheme === 'dark'} style={{ paddingRight: 50 }}>
-                  <TemplatesSideBar
-                    setIsDirty={setIsDirty}
-                    activeTab={activePage}
-                    toggleChannel={toggleChannel}
-                    changeTab={setActivePage}
-                    readonly={readonly}
-                    activeChannels={activeChannels}
-                    channelButtons={channelButtons}
-                    showTriggerSection={!!template && !!trigger}
-                    showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
-                  />
-                </SideBarWrapper>
-              </Grid.Col>
-              <Grid.Col md={8} sm={6}>
-                <div style={{ paddingLeft: 23 }}>
-                  {activePage === 'Settings' && <NotificationSettingsForm editMode={editMode} />}
-                  {activePage === 'Add' && (
-                    <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
-                  )}
-                  {!loadingEditTemplate && !isIntegrationsLoading ? (
-                    <div>
-                      {activePage === 'sms' &&
-                        smsFields.map((message, index) => {
-                          return (
-                            <TemplateSMSEditor
-                              key={index}
-                              control={control}
-                              index={index}
-                              errors={errors}
+                  <Grid.Col md={8} sm={6}>
+                    <div style={{ paddingLeft: 23 }}>
+                      {activePage === 'Settings' && <NotificationSettingsForm editMode={editMode} />}
+                      {activePage === 'Add' && (
+                        <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
+                      )}
+                      {!loadingEditTemplate && !isIntegrationsLoading ? (
+                        <div>
+                          {activePage === 'sms' &&
+                            smsFields.map((message, index) => {
+                              return (
+                                <TemplateSMSEditor
+                                  key={index}
+                                  control={control}
+                                  index={index}
+                                  errors={errors}
+                                  isIntegrationActive={
+                                    !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)
+                                  }
+                                />
+                              );
+                            })}
+                          {activePage === 'email' && (
+                            <EmailMessagesCards
+                              variables={trigger?.variables || []}
+                              onRemoveTab={removeEmailMessage}
+                              emailMessagesFields={emailMessagesFields}
                               isIntegrationActive={
-                                !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)
+                                !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)
                               }
                             />
-                          );
-                        })}
-                      {activePage === 'email' && (
-                        <EmailMessagesCards
-                          variables={trigger?.variables || []}
-                          onRemoveTab={removeEmailMessage}
-                          emailMessagesFields={emailMessagesFields}
-                          isIntegrationActive={
-                            !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)
-                          }
+                          )}
+                          {activePage === 'in_app' &&
+                            inAppFields.map((message, index) => {
+                              return (
+                                <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />
+                              );
+                            })}
+                        </div>
+                      ) : null}
+                      {template && trigger && activePage === 'TriggerSnippet' && (
+                        <TriggerSnippetTabs trigger={trigger} />
+                      )}
+                      {trigger && (
+                        <TemplateTriggerModal
+                          trigger={trigger}
+                          onDismiss={onTriggerModalDismiss}
+                          isVisible={isEmbedModalVisible}
                         />
                       )}
-                      {activePage === 'in_app' &&
-                        inAppFields.map((message, index) => {
-                          return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
-                        })}
                     </div>
-                  ) : null}
-                  {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
-                  {trigger && (
-                    <TemplateTriggerModal
-                      trigger={trigger}
-                      onDismiss={onTriggerModalDismiss}
-                      isVisible={isEmbedModalVisible}
-                    />
-                  )}
-                </div>
-              </Grid.Col>
-            </Grid>
-          </div>
+                  </Grid.Col>
+                </Grid>
+              </div>
+            </>
+          )}
+          {activePage === 'Workflow' && <WorkflowEditorPage changeTab={setActivePage} />}
         </form>
       </FormProvider>
     </PageContainer>
