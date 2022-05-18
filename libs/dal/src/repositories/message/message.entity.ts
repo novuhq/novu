@@ -37,6 +37,8 @@ export class MessageEntity {
 
   phone?: string;
 
+  directChannelId?: string;
+
   lastSeenDate: string;
 
   cta: {
