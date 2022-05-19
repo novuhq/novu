@@ -1530,7 +1530,6 @@ importers:
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
-      dotenv: ^8.2.0
       gh-pages: ^3.1.0
       jest: ^27.1.0
       npm-run-all: ^4.1.5
@@ -1550,7 +1549,6 @@ importers:
       codecov: 3.8.3
       cspell: 4.2.8
       cz-conventional-changelog: 3.3.0
-      dotenv: 8.6.0
       gh-pages: 3.2.3
       jest: 27.5.1_ts-node@9.1.1
       npm-run-all: 4.1.5
@@ -1558,9 +1556,9 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.2
       standard-version: 9.3.2
-      ts-jest: 27.1.4_60149d457e34ffba7d4e845dde6a1263
-      ts-node: 9.1.1_typescript@4.6.2
-      typedoc: 0.19.2_typescript@4.6.2
+      ts-jest: 27.1.4_@types+jest@27.4.1+jest@27.5.1
+      ts-node: 9.1.1
+      typedoc: 0.19.2
 
   providers/sendgrid:
     specifiers:
@@ -30019,7 +30017,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 9.1.1_typescript@4.6.2
+      ts-node: 9.1.1
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -42509,6 +42507,39 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.4_@types+jest@27.4.1+jest@27.5.1:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.5
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.4_ac171f3d9f636bd8b4c3e7aa384f840e:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -42708,6 +42739,21 @@ packages:
       mkdirp: 0.5.6
       source-map-support: 0.5.21
       yn: 2.0.0
+    dev: true
+
+  /ts-node/9.1.1:
+    resolution: {integrity: sha512-hPlt7ZACERQGf03M253ytLY3dHbGNGrAq9qIHWUY9XHYl1z7wYngSr3OQ5xmui8o2AaxsONxIzjafLUiWBo1Fg==}
+    engines: {node: '>=10.0.0'}
+    hasBin: true
+    peerDependencies:
+      typescript: '>=2.7'
+    dependencies:
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      source-map-support: 0.5.21
+      yn: 3.1.1
     dev: true
 
   /ts-node/9.1.1_typescript@4.0.5:
@@ -43001,6 +43047,26 @@ packages:
   /typedoc-default-themes/0.11.4:
     resolution: {integrity: sha512-Y4Lf+qIb9NTydrexlazAM46SSLrmrQRqWiD52593g53SsmUFioAsMWt8m834J6qsp+7wHRjxCXSZeiiW5cMUdw==}
     engines: {node: '>= 8'}
+    dev: true
+
+  /typedoc/0.19.2:
+    resolution: {integrity: sha512-oDEg1BLEzi1qvgdQXc658EYgJ5qJLVSeZ0hQ57Eq4JXy6Vj2VX4RVo18qYxRWz75ifAaYuYNBUCnbhjd37TfOg==}
+    engines: {node: '>= 10.0.0'}
+    hasBin: true
+    peerDependencies:
+      typescript: 3.9.x || 4.0.x
+    dependencies:
+      fs-extra: 9.1.0
+      handlebars: 4.7.7
+      highlight.js: 10.7.3
+      lodash: 4.17.21
+      lunr: 2.3.9
+      marked: 1.2.9
+      minimatch: 3.1.2
+      progress: 2.0.3
+      semver: 7.3.5
+      shelljs: 0.8.5
+      typedoc-default-themes: 0.11.4
     dev: true
 
   /typedoc/0.19.2_typescript@4.1.3:

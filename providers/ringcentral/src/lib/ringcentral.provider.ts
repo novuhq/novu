@@ -5,7 +5,6 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 
-import '../config';
 import { SDK as RingCentralSDK } from '@ringcentral/sdk';
 import Platform from '@ringcentral/sdk/lib/platform/Platform';
 
@@ -19,35 +18,61 @@ export class RingCentralSmsProvider implements ISmsProvider {
     private config: {
       username: string;
       password: string;
-      from: string;
+      server: string;
+      clientId: string;
+      clientSecret: string;
+      extension?: string;
     }
   ) {
-    this.rcsdk = new RingCentralSDK({ server: process.env.RC_SERVER_URL, clientSecret: process.env.RC_CLIENT_SECRET, clientId: process.env.RC_CLIENT_ID });
+    this.rcsdk = new RingCentralSDK({
+      server: config.server,
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+    });
     this.platform = this.rcsdk.platform();
+  }
+
+  async login(): Promise<boolean> {
+    const isLoggedIn = await this.platform.loggedIn();
+    if (isLoggedIn) return true;
+
+    return await new Promise(async (resolve, reject) => {
+      const result = await this.platform
+        .login({
+          username: this.config.username,
+          password: this.config.password,
+          extension: this.config.extension,
+        })
+        .then((response) => response.json())
+        .catch((error) => {
+          console.log(error);
+        });
+      console.log('Logging in to RingCentral', result);
+
+      this.platform.on(this.platform.events.loginSuccess, function (e) {
+        resolve(e);
+      });
+      this.platform.on(this.platform.events.loginError, function (e) {
+        reject(e);
+      });
+    })
+      .then(() => true)
+      .catch(() => false);
   }
 
   async sendMessage(
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
     const isLoggedIn = await this.platform.loggedIn();
-    if (!isLoggedIn) {
-      await new Promise((resolve, reject) => {
+    if (!isLoggedIn) return;
 
-        this.platform.login({ username: this.config.username, password: this.config.password, extension: process.env.RC_EXTENSION_ID });
-        this.platform.on(this.platform.events.loginSuccess, function(e) {
-          resolve(e);
-        });
-        this.platform.on(this.platform.events.loginError, function(e) {
-          throw new Error(e.message);
-        })
-      });
-    }
-
-    const result = await this.platform.post('/account/~/extension/~/sms', {
-      text: options.content,
-      to: [ { phoneNumber: options.to }],
-      from: { phoneNumber: this.config.from },
-    }).then(response => response.json());
+    const result = await this.platform
+      .post('/account/~/extension/~/sms', {
+        text: options.content,
+        to: [{ phoneNumber: options.to }],
+        from: { phoneNumber: this.config.username },
+      })
+      .then((response) => response.json());
 
     return {
       id: result.id,
