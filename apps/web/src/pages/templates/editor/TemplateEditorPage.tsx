@@ -13,7 +13,6 @@ import { useTemplateController } from '../../../components/templates/use-templat
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
-import { AddChannelsPage } from './AddChannelsPage';
 import { Button, colors, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
@@ -37,6 +36,8 @@ export default function TemplateEditorPage() {
     if (!foundChannel) {
       changeSelectedMessage(tabKey);
       setChannelButtons((prev) => [...prev, tabKey]);
+      setActivePage(tabKey);
+    } else {
       setActivePage(tabKey);
     }
   };
@@ -90,6 +91,10 @@ export default function TemplateEditorPage() {
       }
     }
   }, [environment, template]);
+
+  const goBackHandler = () => {
+    setActivePage('Workflow');
+  };
 
   if (isLoading) return null;
 
@@ -167,12 +172,30 @@ export default function TemplateEditorPage() {
               </div>
             </>
           )}
-          {activePage === 'Workflow' && <WorkflowEditorPage changeTab={setActivePage} />}
+          {activePage === 'Workflow' && (
+            <WorkflowEditorPage
+              handleAddChannel={handleAddChannel}
+              channelButtons={channelButtons}
+              changeTab={setActivePage}
+            />
+          )}
           {!loadingEditTemplate && !isIntegrationsLoading ? (
             <div>
               {activePage === 'sms' && (
                 <>
-                  <WorkflowPageHeader title="Edit SMS Template" onGoBack={() => setActivePage('Workflow')} />
+                  <WorkflowPageHeader
+                    title="Edit SMS Template"
+                    onGoBack={goBackHandler}
+                    actions={
+                      <Button
+                        loading={isLoading || isUpdateLoading}
+                        disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
+                        onClick={() => changeSelectedMessage(ChannelTypeEnum.SMS)}
+                      >
+                        Save
+                      </Button>
+                    }
+                  />
                   {smsFields.map((message, index) => {
                     return (
                       <TemplateSMSEditor
@@ -190,7 +213,19 @@ export default function TemplateEditorPage() {
               )}
               {activePage === 'email' && (
                 <>
-                  <WorkflowPageHeader title="Edit Email Template" onGoBack={() => setActivePage('Workflow')} />
+                  <WorkflowPageHeader
+                    title="Edit Email Template"
+                    onGoBack={goBackHandler}
+                    actions={
+                      <Button
+                        loading={isLoading || isUpdateLoading}
+                        disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
+                        onClick={() => goBackHandler()}
+                      >
+                        Save
+                      </Button>
+                    }
+                  />
                   <EmailMessagesCards
                     variables={trigger?.variables || []}
                     onRemoveTab={removeEmailMessage}
@@ -203,7 +238,19 @@ export default function TemplateEditorPage() {
               )}
               {activePage === 'in_app' && (
                 <>
-                  <WorkflowPageHeader title="Edit Notification Template" onGoBack={() => setActivePage('Workflow')} />
+                  <WorkflowPageHeader
+                    title="Edit Notification Template"
+                    onGoBack={goBackHandler}
+                    actions={
+                      <Button
+                        loading={isLoading || isUpdateLoading}
+                        disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
+                        onClick={() => changeSelectedMessage(ChannelTypeEnum.IN_APP)}
+                      >
+                        Save
+                      </Button>
+                    }
+                  />
                   {inAppFields.map((message, index) => {
                     return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
                   })}
@@ -220,10 +267,4 @@ export default function TemplateEditorPage() {
 const SideBarWrapper = styled.div<{ dark: boolean }>`
   border-right: 1px solid ${({ dark }) => (dark ? colors.B20 : colors.BGLight)};
   height: 100%;
-`;
-
-const EditorContentWrapper = styled.div`
-  margin-top: 20px;
-  display: flex;
-  width: 100%;
 `;

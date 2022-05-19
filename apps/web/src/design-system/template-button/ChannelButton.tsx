@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UnstyledButton, Group, Popover } from '@mantine/core';
+import { UnstyledButton, Popover } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
@@ -8,7 +8,6 @@ import { colors } from '../config';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
-  description: string;
   label: string;
   active?: boolean;
   action?: boolean;
@@ -17,15 +16,12 @@ interface ITemplateButtonProps {
   checked?: boolean;
   readonly?: boolean;
   switchButton?: (boolean) => void;
-  changeTab: (string) => void;
+  changeTab?: (string) => void;
   errors?: boolean | string;
 }
 
 export function ChannelButton({
-  description,
   active,
-  changeTab,
-  tabKey,
   action = false,
   switchButton,
   checked = false,
@@ -46,7 +42,6 @@ export function ChannelButton({
       <Button
         onMouseEnter={() => setPopoverOpened(true)}
         onMouseLeave={() => setPopoverOpened(false)}
-        onClick={() => !active && changeTab(tabKey)}
         data-test-id={testId}
         className={cx(classes.button, { [classes.active]: active })}
       >
@@ -155,8 +150,6 @@ const ButtonWrapper = styled.div`
 const StyledContentWrapper = styled.div`
   padding-right: 10px;
 `;
-
-const StyledGroup = styled(Group)``;
 
 const Button = styled(UnstyledButton)`
   position: relative;
