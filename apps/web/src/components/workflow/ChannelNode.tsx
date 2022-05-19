@@ -1,5 +1,5 @@
 import React, { memo, useEffect } from 'react';
-import { Handle, Position } from 'react-flow-renderer';
+import { Handle, Position, useNodesState } from 'react-flow-renderer';
 import { ChannelButton, colors } from '../../design-system';
 
 interface NodeData {
@@ -8,6 +8,7 @@ interface NodeData {
   label: string;
   tabKey: string;
   changeTab: (string) => void;
+  index: number;
 }
 export default memo(({ data, selected }: { data: NodeData; selected: boolean }) => {
   useEffect(() => {
@@ -28,12 +29,14 @@ export default memo(({ data, selected }: { data: NodeData; selected: boolean }) 
       />
       <Handle
         type="target"
-        position={Position.Top}
+        id="b"
+        position={data.index % 2 === 0 ? Position.Left : Position.Right}
         style={{ background: 'transparent', border: `1px solid ${colors.B40}` }}
         onConnect={(params) => {}}
       />
       <Handle
         type="source"
+        id="a"
         position={Position.Bottom}
         style={{ background: 'transparent', border: `1px solid ${colors.B40}` }}
         onConnect={(params) => {}}

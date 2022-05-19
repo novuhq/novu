@@ -73,14 +73,16 @@ export function FlowEditor({ onGoBack, changeTab }: { onGoBack: () => void; chan
       const newNode = {
         id: newId,
         type: 'channelNode',
-        position: { x: -200, y: 100 },
+        position: { x: nodes.length % 2 === 0 ? 200 : -200, y: 100 },
         parentNode: parentId,
-        data: { ...channels.filter((channel) => channel.channelType === type)[0], changeTab },
+        data: { ...channels.filter((channel) => channel.channelType === type)[0], changeTab, index: nodes.length },
       };
 
       const newEdge = {
         id: `e-${parentId}-${newId}`,
         source: parentId,
+        sourceHandle: 'a',
+        targetHandle: 'b',
         target: newId,
         type: 'smoothstep',
       };
@@ -88,7 +90,7 @@ export function FlowEditor({ onGoBack, changeTab }: { onGoBack: () => void; chan
       setNodes((nds) => nds.concat(newNode));
       setEdges((eds) => addEdge(newEdge, eds));
     },
-    [reactFlowInstance]
+    [reactFlowInstance, nodes]
   );
 
   return (

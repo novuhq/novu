@@ -23,8 +23,9 @@ export default memo(({ id, selected }: { id: string; selected: boolean }) => {
 
       <Handle
         type="source"
+        id="a"
         style={{ background: 'transparent', border: `1px solid ${colors.B40}` }}
-        position={Position.Left}
+        position={Position.Bottom}
         onConnect={(params) => {
           // eslint-disable-next-line no-console
           console.log('handle onConnect', params);
