@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { Button, colors, DragButton, Text, Title } from '../../../design-system';
 import { ActionIcon, Grid } from '@mantine/core';
 import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
 
@@ -35,11 +35,20 @@ export const channels = [
 ];
 
 const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
+  const [selected, setSelected] = useState('');
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
+
+  useEffect(() => {
+    if (selected === '') {
+      setShow(false);
+    } else {
+      setShow(true);
+    }
+  }, [selected]);
 
   const goBackHandler = () => {
     changeTab('Settings');
@@ -49,7 +58,7 @@ const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
     <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
       <Grid grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
-          <FlowEditor changeTab={changeTab} onGoBack={goBackHandler} />
+          <FlowEditor setSelected={setSelected} changeTab={changeTab} onGoBack={goBackHandler} />
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={true}>
@@ -57,14 +66,14 @@ const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
               <StyledNav>
                 <NavSection>
                   <ButtonWrapper>
-                    <Title size={2}>Email Properties</Title>
-                    <ActionIcon variant="transparent" onClick={() => setShow(false)}>
+                    <Title size={2}>{selected} Properties</Title>
+                    <ActionIcon variant="transparent" onClick={() => setSelected('')}>
                       <Close />
                     </ActionIcon>
                   </ButtonWrapper>
                 </NavSection>
                 <NavSection>
-                  <Button variant="outline" fullWidth onClick={() => changeTab(ChannelTypeEnum.EMAIL)}>
+                  <Button variant="outline" fullWidth onClick={() => changeTab(selected)}>
                     Edit Template
                   </Button>
                 </NavSection>

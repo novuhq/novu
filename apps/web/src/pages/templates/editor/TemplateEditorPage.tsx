@@ -21,6 +21,7 @@ import { useActiveIntegrations } from '../../../api/hooks';
 import { useStatusChangeControllerHook } from '../../../components/templates/use-status-change-controller.hook';
 import { useEnvController } from '../../../store/use-env-controller';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
+import WorkflowPageHeader from '../../../components/workflow/WorkflowPageHeader';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -97,7 +98,7 @@ export default function TemplateEditorPage() {
       <PageMeta title={editMode ? template?.name : 'Create Template'} />
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
-          {activePage !== 'Workflow' && (
+          {(activePage === 'Settings' || activePage === 'TriggerSnippet') && (
             <>
               <PageHeader
                 title={editMode ? 'Edit Template' : 'Create new template'}
@@ -149,43 +150,7 @@ export default function TemplateEditorPage() {
                   <Grid.Col md={8} sm={6}>
                     <div style={{ paddingLeft: 23 }}>
                       {activePage === 'Settings' && <NotificationSettingsForm editMode={editMode} />}
-                      {activePage === 'Add' && (
-                        <AddChannelsPage channelButtons={channelButtons} handleAddChannel={handleAddChannel} />
-                      )}
-                      {!loadingEditTemplate && !isIntegrationsLoading ? (
-                        <div>
-                          {activePage === 'sms' &&
-                            smsFields.map((message, index) => {
-                              return (
-                                <TemplateSMSEditor
-                                  key={index}
-                                  control={control}
-                                  index={index}
-                                  errors={errors}
-                                  isIntegrationActive={
-                                    !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)
-                                  }
-                                />
-                              );
-                            })}
-                          {activePage === 'email' && (
-                            <EmailMessagesCards
-                              variables={trigger?.variables || []}
-                              onRemoveTab={removeEmailMessage}
-                              emailMessagesFields={emailMessagesFields}
-                              isIntegrationActive={
-                                !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)
-                              }
-                            />
-                          )}
-                          {activePage === 'in_app' &&
-                            inAppFields.map((message, index) => {
-                              return (
-                                <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />
-                              );
-                            })}
-                        </div>
-                      ) : null}
+
                       {template && trigger && activePage === 'TriggerSnippet' && (
                         <TriggerSnippetTabs trigger={trigger} />
                       )}
@@ -203,6 +168,49 @@ export default function TemplateEditorPage() {
             </>
           )}
           {activePage === 'Workflow' && <WorkflowEditorPage changeTab={setActivePage} />}
+          {!loadingEditTemplate && !isIntegrationsLoading ? (
+            <div>
+              {activePage === 'sms' && (
+                <>
+                  <WorkflowPageHeader title="Edit SMS Template" onGoBack={() => setActivePage('Workflow')} />
+                  {smsFields.map((message, index) => {
+                    return (
+                      <TemplateSMSEditor
+                        key={index}
+                        control={control}
+                        index={index}
+                        errors={errors}
+                        isIntegrationActive={
+                          !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)
+                        }
+                      />
+                    );
+                  })}
+                </>
+              )}
+              {activePage === 'email' && (
+                <>
+                  <WorkflowPageHeader title="Edit Email Template" onGoBack={() => setActivePage('Workflow')} />
+                  <EmailMessagesCards
+                    variables={trigger?.variables || []}
+                    onRemoveTab={removeEmailMessage}
+                    emailMessagesFields={emailMessagesFields}
+                    isIntegrationActive={
+                      !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)
+                    }
+                  />
+                </>
+              )}
+              {activePage === 'in_app' && (
+                <>
+                  <WorkflowPageHeader title="Edit Notification Template" onGoBack={() => setActivePage('Workflow')} />
+                  {inAppFields.map((message, index) => {
+                    return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
+                  })}
+                </>
+              )}
+            </div>
+          ) : null}
         </form>
       </FormProvider>
     </PageContainer>

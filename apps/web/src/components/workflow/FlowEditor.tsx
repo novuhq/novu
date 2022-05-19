@@ -35,7 +35,15 @@ const initialNodes: Node[] = [
 let id = 0;
 const getId = () => `dndnode_${id++}`;
 
-export function FlowEditor({ onGoBack, changeTab }: { onGoBack: () => void; changeTab: (string) => void }) {
+export function FlowEditor({
+  onGoBack,
+  changeTab,
+  setSelected,
+}: {
+  setSelected: (string) => void;
+  onGoBack: () => void;
+  changeTab: (string) => void;
+}) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -111,6 +119,9 @@ export function FlowEditor({ onGoBack, changeTab }: { onGoBack: () => void; chan
             onDragOver={onDragOver}
             fitView={true}
             maxZoom={1}
+            onNodeClick={(event, node) => {
+              setSelected(node.data.tabKey);
+            }}
             minZoom={1}
             snapToGrid={true}
           >
