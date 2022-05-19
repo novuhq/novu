@@ -9,6 +9,7 @@ import ReactFlow, {
   ReactFlowInstance,
   useUpdateNodeInternals,
   getOutgoers,
+  ReactFlowProps,
 } from 'react-flow-renderer';
 import ChannelNode from './ChannelNode';
 import { Button, colors } from '../../design-system';
@@ -133,11 +134,11 @@ export function FlowEditor({
         sourceHandle: 'a',
         targetHandle: 'b',
         target: newId,
-        type: 'smoothstep',
+        curvature: 7,
       };
 
       setEdges((eds) => addEdge(newEdge, eds));
-      updateNodeInternals(newId);
+      // updateNodeInternals(newId);
       reactFlowInstance?.fitBounds({ x: 0, y: 0, width: 500, height: 500 });
     },
     [reactFlowInstance, nodes, edges]
@@ -146,7 +147,7 @@ export function FlowEditor({
   const updateNode = useCallback(() => updateNodeInternals('dndnode_0'), [updateNodeInternals]);
 
   return (
-    <Wrapper>
+    <Wrapper dark={colorScheme === 'dark'}>
       <div style={{ height: '500px', width: 'inherit' }} ref={reactFlowWrapper}>
         <ReactFlow
           nodes={nodes}
@@ -155,16 +156,10 @@ export function FlowEditor({
           onEdgesChange={onEdgesChange}
           onInit={setReactFlowInstance}
           nodeTypes={nodeTypes}
-          zoomOnScroll={false}
-          preventScrolling={true}
-          nodesConnectable={false}
-          nodesDraggable={false}
           onDrop={onDrop}
           onDragOver={onDragOver}
-          fitView={true}
           onNodeClick={onNodeClick}
-          minZoom={1}
-          snapToGrid={false}
+          {...reactFlowDefaultProps}
         >
           <div style={{ position: 'absolute', width: '100%', zIndex: 4 }}>
             <WorkflowPageHeader title="Workflow Editor" onGoBack={onGoBack} actions={<Button>Save</Button>} />
@@ -183,7 +178,7 @@ export function FlowEditor({
 
 export default FlowEditor;
 
-const Wrapper = styled.div`
+const Wrapper = styled.div<{ dark: boolean }>`
   .react-flow__node {
     width: 200px;
     height: 75px;
@@ -194,11 +189,15 @@ const Wrapper = styled.div`
   }
   .react-flow__handle {
     background: transparent;
-    border: 1px solid ${colors.B40};
+    border: 1px solid ${({ dark }) => (dark ? colors.B40 : colors.B80)};
   }
   .react-flow__attribution {
     background: transparent;
     opacity: 0.5;
+  }
+  .react-flow__edge-path {
+    stroke: ${({ dark }) => (dark ? colors.B40 : colors.B80)};
+    border-radius: 10px;
   }
   .react-flow__node.selected {
     .react-flow__handle {
@@ -207,3 +206,17 @@ const Wrapper = styled.div`
     }
   }
 `;
+
+const reactFlowDefaultProps: ReactFlowProps = {
+  defaultEdgeOptions: {
+    type: 'smoothstep',
+    style: { border: `1px dash red !important` },
+  },
+  zoomOnScroll: false,
+  preventScrolling: true,
+  nodesConnectable: false,
+  nodesDraggable: false,
+  fitView: true,
+  minZoom: 1,
+  maxZoom: 1,
+};

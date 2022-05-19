@@ -1,7 +1,7 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
 import { Button, colors, DragButton, Text, Title } from '../../../design-system';
-import { ActionIcon, Grid, Stack } from '@mantine/core';
+import { ActionIcon, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import React, { useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
@@ -17,6 +17,7 @@ const WorkflowEditorPage = ({
   changeTab: (string) => void;
   handleAddChannel: (string) => void;
 }) => {
+  const { colorScheme } = useMantineColorScheme();
   const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
@@ -41,7 +42,7 @@ const WorkflowEditorPage = ({
           </ReactFlowProvider>
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
-          <SideBarWrapper dark={true}>
+          <SideBarWrapper dark={colorScheme === 'dark'}>
             {selectedChannel ? (
               <StyledNav>
                 <NavSection>
