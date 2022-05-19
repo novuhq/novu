@@ -1,46 +1,24 @@
-import React, { memo, useEffect } from 'react';
-import { Handle, Position, useNodesState } from 'react-flow-renderer';
-import { ChannelButton, colors } from '../../design-system';
+import React, { memo, useCallback } from 'react';
+import { Handle, Position, useStore } from 'react-flow-renderer';
+import { ChannelButton } from '../../design-system';
 
 interface NodeData {
   Icon: React.FC<any>;
   description: string;
   label: string;
   tabKey: string;
-  changeTab: (string) => void;
   index: number;
 }
-export default memo(({ data, selected }: { data: NodeData; selected: boolean }) => {
-  useEffect(() => {
-    if (selected) {
-      // data.changeTab(data.tabKey);
-    }
-  }, [selected]);
+
+export default memo(({ data, selected, id }: { data: NodeData; selected: boolean; id: string }) => {
+  const targetNode = useStore(useCallback((store) => store.nodeInternals.get(id), [id]));
+  const noChildStyle = typeof targetNode?.isParent === 'undefined' ? { border: 'none', background: 'transparent' } : {};
 
   return (
     <div style={{ pointerEvents: 'none' }}>
-      <ChannelButton
-        Icon={data.Icon}
-        description={data.description}
-        label={data.label}
-        active={selected}
-        tabKey={data.tabKey}
-        changeTab={data.changeTab}
-      />
-      <Handle
-        type="target"
-        id="b"
-        position={data.index % 2 === 0 ? Position.Left : Position.Right}
-        style={{ background: 'transparent', border: `1px solid ${colors.B40}` }}
-        onConnect={(params) => {}}
-      />
-      <Handle
-        type="source"
-        id="a"
-        position={Position.Bottom}
-        style={{ background: 'transparent', border: `1px solid ${colors.B40}` }}
-        onConnect={(params) => {}}
-      />
+      <ChannelButton Icon={data.Icon} label={data.label} active={selected} />
+      <Handle type="target" id="b" position={data.index % 2 === 0 ? Position.Left : Position.Right} />
+      <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>
   );
 });

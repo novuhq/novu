@@ -2,42 +2,11 @@ import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
 import { Button, colors, DragButton, Text, Title } from '../../../design-system';
 import { ActionIcon, Grid, Stack } from '@mantine/core';
-import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import React, { useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { ReactFlowProvider } from 'react-flow-renderer';
-
-export const channels = [
-  {
-    tabKey: ChannelTypeEnum.IN_APP,
-    label: 'In-App',
-    description: 'Send notifications to the in-app notification center',
-    Icon: MobileGradient,
-    testId: 'inAppSelector',
-    channelType: ChannelTypeEnum.IN_APP,
-  },
-  {
-    tabKey: ChannelTypeEnum.EMAIL,
-    label: 'Email',
-    description: 'Send using one of our email integrations',
-    Icon: MailGradient,
-    testId: 'emailSelector',
-    channelType: ChannelTypeEnum.EMAIL,
-  },
-  {
-    tabKey: ChannelTypeEnum.SMS,
-    label: 'SMS',
-    description: "Send an SMS directly to the user's phone",
-    Icon: SmsGradient,
-    testId: 'smsSelector',
-    channelType: ChannelTypeEnum.SMS,
-  },
-];
-
-export const getChannel = (channelKey: string) => {
-  return channels.find((channel) => channel.tabKey === channelKey);
-};
+import { channels, getChannel } from '../shared/channels';
 
 const WorkflowEditorPage = ({
   channelButtons,

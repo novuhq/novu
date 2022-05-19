@@ -11,7 +11,6 @@ interface ITemplateButtonProps {
   label: string;
   active?: boolean;
   action?: boolean;
-  tabKey: string;
   testId?: string;
   checked?: boolean;
   readonly?: boolean;

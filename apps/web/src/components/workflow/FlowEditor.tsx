@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactFlow, {
-  ReactFlowProvider,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -10,7 +9,6 @@ import ReactFlow, {
   ReactFlowInstance,
   useUpdateNodeInternals,
   getOutgoers,
-  applyEdgeChanges,
 } from 'react-flow-renderer';
 import ChannelNode from './ChannelNode';
 import { Button, colors } from '../../design-system';
@@ -18,7 +16,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import WorkflowPageHeader from './WorkflowPageHeader';
 import TriggerNode from './TriggerNode';
-import { channels, getChannel } from '../../pages/templates/workflow/WorkflowEditorPage';
+import { getChannel } from '../../pages/templates/shared/channels';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -197,16 +195,6 @@ const Wrapper = styled.div`
   .react-flow__handle {
     background: transparent;
     border: 1px solid ${colors.B40};
-  }
-  .react-flow__connection {
-    .react-flow__edge-path {
-      color: red;
-      background: red;
-    }
-    .react-flow__edge {
-      color: red;
-      background: red;
-    }
   }
   .react-flow__attribution {
     background: transparent;
