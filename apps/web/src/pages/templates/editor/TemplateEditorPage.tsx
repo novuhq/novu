@@ -13,7 +13,6 @@ import { useTemplateController } from '../../../components/templates/use-templat
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { TemplateInAppEditor } from '../../../components/templates/in-app-editor/TemplateInAppEditor';
 import { TriggerSnippetTabs } from '../../../components/templates/TriggerSnippetTabs';
-import { AddChannelsPage } from './AddChannelsPage';
 import { Button, colors, Switch } from '../../../design-system';
 import { EmailMessagesCards } from '../../../components/templates/email-editor/EmailMessagesCards';
 import { TemplateSMSEditor } from '../../../components/templates/TemplateSMSEditor';
@@ -22,11 +21,13 @@ import { useStatusChangeControllerHook } from '../../../components/templates/use
 import { useEnvController } from '../../../store/use-env-controller';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import WorkflowPageHeader from '../../../components/workflow/WorkflowPageHeader';
+import { EditorPreviewSwitch } from '../../../components/templates/EditorPreviewSwitch';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const { readonly, environment } = useEnvController();
+  const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const [activePage, setActivePage] = useState<string>('Settings');
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { integrations, loading: isIntegrationsLoading } = useActiveIntegrations();
@@ -172,7 +173,9 @@ export default function TemplateEditorPage() {
             <div>
               {activePage === 'sms' && (
                 <>
-                  <WorkflowPageHeader title="Edit SMS Template" onGoBack={() => setActivePage('Workflow')} />
+                  <WorkflowPageHeader title="Edit SMS Template" onGoBack={() => setActivePage('Workflow')}>
+                    <EditorPreviewSwitch view={view} setView={setView} />
+                  </WorkflowPageHeader>
                   {smsFields.map((message, index) => {
                     return (
                       <TemplateSMSEditor
@@ -190,7 +193,9 @@ export default function TemplateEditorPage() {
               )}
               {activePage === 'email' && (
                 <>
-                  <WorkflowPageHeader title="Edit Email Template" onGoBack={() => setActivePage('Workflow')} />
+                  <WorkflowPageHeader title="Edit Email Template" onGoBack={() => setActivePage('Workflow')}>
+                    <EditorPreviewSwitch view={view} setView={setView} />
+                  </WorkflowPageHeader>
                   <EmailMessagesCards
                     variables={trigger?.variables || []}
                     onRemoveTab={removeEmailMessage}
@@ -203,7 +208,9 @@ export default function TemplateEditorPage() {
               )}
               {activePage === 'in_app' && (
                 <>
-                  <WorkflowPageHeader title="Edit Notification Template" onGoBack={() => setActivePage('Workflow')} />
+                  <WorkflowPageHeader title="Edit Notification Template" onGoBack={() => setActivePage('Workflow')}>
+                    <EditorPreviewSwitch view={view} setView={setView} />
+                  </WorkflowPageHeader>
                   {inAppFields.map((message, index) => {
                     return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
                   })}
