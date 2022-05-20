@@ -1,54 +1,28 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
 import { Button, colors, DragButton, Text, Title } from '../../../design-system';
-import { ActionIcon, Grid } from '@mantine/core';
-import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
-import React, { useEffect, useState } from 'react';
+import { ActionIcon, Grid, Stack, useMantineColorScheme } from '@mantine/core';
+import React, { useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
+import { ReactFlowProvider } from 'react-flow-renderer';
+import { channels, getChannel } from '../shared/channels';
 
-export const channels = [
-  {
-    tabKey: ChannelTypeEnum.IN_APP,
-    label: 'In-App',
-    description: 'Send notifications to the in-app notification center',
-    Icon: MobileGradient,
-    testId: 'inAppSelector',
-    channelType: ChannelTypeEnum.IN_APP,
-  },
-  {
-    tabKey: ChannelTypeEnum.EMAIL,
-    label: 'Email',
-    description: 'Send using one of our email integrations',
-    Icon: MailGradient,
-    testId: 'emailSelector',
-    channelType: ChannelTypeEnum.EMAIL,
-  },
-  {
-    tabKey: ChannelTypeEnum.SMS,
-    label: 'SMS',
-    description: "Send an SMS directly to the user's phone",
-    Icon: SmsGradient,
-    testId: 'smsSelector',
-    channelType: ChannelTypeEnum.SMS,
-  },
-];
-
-const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
-  const [show, setShow] = useState(false);
-  const [selected, setSelected] = useState('');
+const WorkflowEditorPage = ({
+  channelButtons,
+  changeTab,
+  handleAddChannel,
+}: {
+  channelButtons: string[];
+  changeTab: (string) => void;
+  handleAddChannel: (string) => void;
+}) => {
+  const { colorScheme } = useMantineColorScheme();
+  const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
-
-  useEffect(() => {
-    if (selected === '') {
-      setShow(false);
-    } else {
-      setShow(true);
-    }
-  }, [selected]);
 
   const goBackHandler = () => {
     changeTab('Settings');
@@ -58,22 +32,29 @@ const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
     <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
       <Grid grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
-          <FlowEditor setSelected={setSelected} changeTab={changeTab} onGoBack={goBackHandler} />
+          <ReactFlowProvider>
+            <FlowEditor
+              channelButtons={channelButtons}
+              setSelected={setSelectedChannel}
+              changeTab={changeTab}
+              onGoBack={goBackHandler}
+            />
+          </ReactFlowProvider>
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
-          <SideBarWrapper dark={true}>
-            {show ? (
+          <SideBarWrapper dark={colorScheme === 'dark'}>
+            {selectedChannel ? (
               <StyledNav>
                 <NavSection>
                   <ButtonWrapper>
-                    <Title size={2}>{selected} Properties</Title>
-                    <ActionIcon variant="transparent" onClick={() => setSelected('')}>
+                    <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
+                    <ActionIcon variant="transparent" onClick={() => setSelectedChannel(null)}>
                       <Close />
                     </ActionIcon>
                   </ButtonWrapper>
                 </NavSection>
                 <NavSection>
-                  <Button variant="outline" fullWidth onClick={() => changeTab(selected)}>
+                  <Button variant="outline" fullWidth onClick={() => handleAddChannel(selectedChannel)}>
                     Edit Template
                   </Button>
                 </NavSection>
@@ -86,15 +67,17 @@ const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
                     You can drag and drop new steps to the flow
                   </Text>
                 </NavSection>
-                {channels.map((channel) => (
-                  <NavSection
-                    key={channel.tabKey}
-                    onDragStart={(event) => onDragStart(event, channel.channelType)}
-                    draggable
-                  >
-                    <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
-                  </NavSection>
-                ))}
+                <Stack>
+                  {channels.map((channel) => (
+                    <div
+                      key={channel.tabKey}
+                      onDragStart={(event) => onDragStart(event, channel.channelType)}
+                      draggable
+                    >
+                      <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
+                    </div>
+                  ))}
+                </Stack>
               </StyledNav>
             )}
           </SideBarWrapper>

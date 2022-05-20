@@ -39,6 +39,8 @@ export default function TemplateEditorPage() {
       changeSelectedMessage(tabKey);
       setChannelButtons((prev) => [...prev, tabKey]);
       setActivePage(tabKey);
+    } else {
+      setActivePage(tabKey);
     }
   };
 
@@ -91,6 +93,10 @@ export default function TemplateEditorPage() {
       }
     }
   }, [environment, template]);
+
+  const goBackHandler = () => {
+    setActivePage('Workflow');
+  };
 
   if (isLoading) return null;
 
@@ -168,12 +174,31 @@ export default function TemplateEditorPage() {
               </div>
             </>
           )}
-          {activePage === 'Workflow' && <WorkflowEditorPage changeTab={setActivePage} />}
+          {activePage === 'Workflow' && (
+            <WorkflowEditorPage
+              handleAddChannel={handleAddChannel}
+              channelButtons={channelButtons}
+              changeTab={setActivePage}
+            />
+          )}
           {!loadingEditTemplate && !isIntegrationsLoading ? (
             <div>
               {activePage === 'sms' && (
                 <>
-                  <WorkflowPageHeader title="Edit SMS Template" onGoBack={() => setActivePage('Workflow')}>
+                  <WorkflowPageHeader
+                    title="Edit SMS Template"
+                    onGoBack={goBackHandler}
+                    actions={
+                      <Button
+                        loading={isLoading || isUpdateLoading}
+                        disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
+                        onClick={() => changeSelectedMessage(ChannelTypeEnum.SMS)}
+                      >
+                        Save
+                      </Button>
+                    }
+                  >
+                    {' '}
                     <EditorPreviewSwitch view={view} setView={setView} />
                   </WorkflowPageHeader>
                   {smsFields.map((message, index) => {
@@ -193,7 +218,20 @@ export default function TemplateEditorPage() {
               )}
               {activePage === 'email' && (
                 <>
-                  <WorkflowPageHeader title="Edit Email Template" onGoBack={() => setActivePage('Workflow')}>
+                  <WorkflowPageHeader
+                    title="Edit Email Template"
+                    onGoBack={goBackHandler}
+                    actions={
+                      <Button
+                        loading={isLoading || isUpdateLoading}
+                        disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
+                        onClick={() => goBackHandler()}
+                      >
+                        Save
+                      </Button>
+                    }
+                  >
+                    {' '}
                     <EditorPreviewSwitch view={view} setView={setView} />
                   </WorkflowPageHeader>
                   <EmailMessagesCards
@@ -208,7 +246,19 @@ export default function TemplateEditorPage() {
               )}
               {activePage === 'in_app' && (
                 <>
-                  <WorkflowPageHeader title="Edit Notification Template" onGoBack={() => setActivePage('Workflow')}>
+                  <WorkflowPageHeader
+                    title="Edit Notification Template"
+                    onGoBack={goBackHandler}
+                    actions={
+                      <Button
+                        loading={isLoading || isUpdateLoading}
+                        disabled={readonly || loadingEditTemplate || isLoading || !isDirty}
+                        onClick={() => changeSelectedMessage(ChannelTypeEnum.IN_APP)}
+                      >
+                        Save
+                      </Button>
+                    }
+                  >
                     <EditorPreviewSwitch view={view} setView={setView} />
                   </WorkflowPageHeader>
                   {inAppFields.map((message, index) => {
@@ -227,10 +277,4 @@ export default function TemplateEditorPage() {
 const SideBarWrapper = styled.div<{ dark: boolean }>`
   border-right: 1px solid ${({ dark }) => (dark ? colors.B20 : colors.BGLight)};
   height: 100%;
-`;
-
-const EditorContentWrapper = styled.div`
-  margin-top: 20px;
-  display: flex;
-  width: 100%;
 `;
