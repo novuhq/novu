@@ -12,10 +12,6 @@ html[data-theme='light'] {
     box-shadow: none;
   }
 
-  .navbar-item-github:hover {
-    opacity: 0.6;
-  }
-
   .navbar-item-github:before {
     background-image: url('/img/github-black.svg');
   }

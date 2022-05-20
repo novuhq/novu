@@ -42,12 +42,6 @@ function SideColumn() {
         Star us on Github
       </a>
       <div className="footer__copyright-mobile">© {new Date().getFullYear()} Novu</div>
-      <div className="footer__design">
-        Design made by{' '}
-        <a href="https://pixelpoint.io/" target="_blank" rel="noopener">
-          Pixel Point
-        </a>
-      </div>
     </div>
   );
 }

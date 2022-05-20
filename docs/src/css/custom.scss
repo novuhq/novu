@@ -19,14 +19,9 @@
   --ifm-footer-link-color: #ffffff;
   --ifm-code-font-size: 95%;
   --ifm-line-height-base: 1.5;
-  --doc-sidebar-width: 340px !important;
   --ifm-menu-link-padding-vertical: 8px;
   --ifm-menu-link-padding-horizontal: 20px;
   --ifm-heading-font-weight: 500;
-
-  @media (max-width: 1279px) {
-    --doc-sidebar-width: 300px !important;
-  }
 }
 
 body {
@@ -78,6 +73,9 @@ code {
 .navbar__item {
   display: flex;
   align-items: center;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
 
   @media (max-width: 996px) {
     display: none;
@@ -366,6 +364,7 @@ nav.menu {
     .footer__link-item {
       text-decoration: none;
       font-weight: 400;
+      font-size: 16px;
     }
   }
 
@@ -450,21 +449,6 @@ nav.menu {
       display: block;
       margin-top: 36px;
       margin-bottom: 10px;
-    }
-  }
-
-  .footer__design {
-    color: $color-gray-8;
-    font-size: 14px;
-    font-weight: 400;
-
-    a {
-      color: inherit;
-      text-decoration: none;
-      &:hover {
-        color: $color-primary-blue;
-        transition: color 0.2s;
-      }
     }
   }
 }
