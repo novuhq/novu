@@ -126,7 +126,12 @@ nav.menu {
   padding: 10px 10px 10px 16px;
 
   .menu__link {
+    font-size: 16px;
     line-height: 1.375;
+
+    &:not(.menu__link--sublist) {
+      font-size: 14px;
+    }
 
     svg {
       display: none;
@@ -172,6 +177,8 @@ nav.menu {
     width: calc(100% + 2rem);
     padding-left: 16px;
     padding-right: 16px;
+    font-weight: 500;
+    font-size: 16px;
   }
 
   &__item:first-child {
@@ -224,6 +231,10 @@ nav.menu {
       }
     }
   }
+}
+
+.clean-btn {
+  font-size: 16px !important;
 }
 
 .theme-edit-this-page {
