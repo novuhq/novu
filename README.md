@@ -90,7 +90,7 @@ Using the Novu API and admin panel you can easily add real-time notification cen
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/8872447/168039257-c5c2cb46-8fc9-4e57-ae6c-319e62429d93.png">
   
-  Read more about how to add a notification center your app with the Novu API [here](https://docs.novu.co/docs/notification-center/getting-started)
+  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/docs/notification-center/getting-started)
 
 </div>
 
