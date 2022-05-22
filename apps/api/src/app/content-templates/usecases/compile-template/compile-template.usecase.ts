@@ -15,12 +15,16 @@ Handlebars.registerHelper('titlecase', function (string) {
     .join('');
 });
 
+Handlebars.registerHelper('uppercase', function (string) {
+  return string.toUpperCase();
+});
+
 Handlebars.registerHelper('lowercase', function (string) {
   return string.toLowerCase();
 });
 
-Handlebars.registerHelper('uppercase', function (string) {
-  return string.toUpperCase();
+Handlebars.registerHelper('pluralize', function (number, single, plural) {
+  return number === 1 ? single : plural;
 });
 
 const cache = new Map();

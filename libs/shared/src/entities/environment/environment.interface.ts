@@ -4,6 +4,7 @@ export interface IEnvironment {
   _organizationId: string;
   _parentId?: string;
   identifier: string;
+  widget: IWidgetSettings;
 
   branding?: {
     color: string;
@@ -13,4 +14,8 @@ export interface IEnvironment {
     contentBackground: string;
     direction: 'ltr' | 'rtl';
   };
+}
+
+export interface IWidgetSettings {
+  notificationCenterEncryption: boolean;
 }

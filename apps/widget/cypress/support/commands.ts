@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import { createHmac } from 'crypto';
 
 Cypress.Commands.add('getByTestId', (selector, ...args) => {
   return cy.get(`[data-test-id=${selector}]`, ...args);
@@ -12,7 +13,7 @@ Cypress.Commands.add('openWidget', (settings = {}) => {
   return cy.get('#notification-bell').click();
 });
 
-Cypress.Commands.add('initializeShellSession', (subscriberId, identifier, settings = {}) => {
+Cypress.Commands.add('initializeShellSession', (subscriberId, identifier, encryptedHmacHash) => {
   cy.visit('http://localhost:4700/cypress/test-shell', { log: false });
 
   return cy
@@ -23,6 +24,7 @@ Cypress.Commands.add('initializeShellSession', (subscriberId, identifier, settin
         firstName: faker.name.firstName(),
         lastName: faker.name.lastName(),
         email: faker.internet.email(),
+        subscriberHash: encryptedHmacHash,
       };
 
       w.novu.init(
@@ -60,16 +62,28 @@ Cypress.Commands.add('initializeSession', function (settings = {}) {
       cy.log(`Widget initialized: ${session.subscriberId}`);
     })
     .then((session: any) => {
+      let encryptedHmacHash: string | undefined = undefined;
+
+      if (settings.hmacEncryption) {
+        cy.task('enableEnvironmentHmac', {
+          environment: session.environment,
+        });
+
+        encryptedHmacHash = createHmacHash(session);
+      }
+
       return settings?.shell
-        ? cy.initializeShellSession(session.subscriberId, session.environment.identifier).then((subscriber) => ({
-            ...session,
-            subscriber,
-          }))
-        : cy.initializeWidget(session, settings?.shell);
+        ? cy
+            .initializeShellSession(session.subscriberId, session.environment.identifier, encryptedHmacHash)
+            .then((subscriber) => ({
+              ...session,
+              subscriber,
+            }))
+        : cy.initializeWidget({ session: session, encryptedHmacHash: encryptedHmacHash });
     });
 });
 
-Cypress.Commands.add('initializeWidget', (session, shell = false) => {
+Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash }) => {
   const URL = `/${session.environment.identifier}`;
   return cy.visit(URL, { log: false }).then(() =>
     cy
@@ -80,8 +94,9 @@ Cypress.Commands.add('initializeWidget', (session, shell = false) => {
           const user = {
             subscriberId: session.subscriberId,
             firstName: faker.name.firstName(),
-            $last_name: faker.name.lastName(),
-            $email: faker.internet.email(),
+            lastName: faker.name.lastName(),
+            email: faker.internet.email(),
+            subscriberHash: encryptedHmacHash,
           };
 
           w.initHandler({
@@ -113,3 +128,13 @@ Cypress.Commands.add('initializeOrganization', (settings = {}) => {
     };
   });
 });
+
+Cypress.Commands.add('forceVisit', (url: string) => {
+  cy.window().then((win) => {
+    return win.open(url, '_self');
+  });
+});
+
+function createHmacHash(session: any) {
+  return createHmac('sha256', session.environment.apiKeys[0].key).update(session.subscriberId).digest('hex');
+}

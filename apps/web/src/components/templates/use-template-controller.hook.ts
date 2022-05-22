@@ -11,7 +11,7 @@ import {
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
-import { useFieldArray, useForm, useFormState } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { createTemplate, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
@@ -32,6 +32,10 @@ export function useTemplateController(templateId: string) {
       let values = data;
       if (!data.name) {
         errors.name = 'Required field name';
+      }
+
+      if (!data.notificationGroup) {
+        errors.notificationGroup = 'Required field notification group';
       }
 
       if (activeChannels[ChannelTypeEnum.IN_APP]) {

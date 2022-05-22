@@ -24,4 +24,8 @@ export class SessionInitializeBodyDto {
   @IsString()
   @IsOptional()
   phone: string;
+
+  @IsString()
+  @IsOptional()
+  hmacHash?: string;
 }

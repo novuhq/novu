@@ -3,6 +3,10 @@ export interface IApiKey {
   _userId: string;
 }
 
+export interface IWidgetSettings {
+  notificationCenterEncryption: boolean;
+}
+
 export class EnvironmentEntity {
   _id?: string;
 
@@ -13,6 +17,8 @@ export class EnvironmentEntity {
   identifier: string;
 
   apiKeys: IApiKey[];
+
+  widget: IWidgetSettings;
 
   _parentId: string;
 }

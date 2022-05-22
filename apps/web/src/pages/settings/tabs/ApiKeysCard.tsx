@@ -10,7 +10,8 @@ import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
 
 export const ApiKeysCard = () => {
-  const clipboard = useClipboard({ timeout: 1000 });
+  const clipboardApiKey = useClipboard({ timeout: 1000 });
+  const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
   const { data: apiKeys } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
   const { environment } = useEnvController();
 
@@ -25,9 +26,9 @@ export const ApiKeysCard = () => {
             readOnly
             type={'password'}
             rightSection={
-              <Tooltip data-test-id={'Tooltip'} label={clipboard.copied ? 'Copied!' : 'Copy Key'}>
-                <ActionIcon variant="transparent" onClick={() => clipboard.copy(apiKey)}>
-                  {clipboard.copied ? <Check /> : <Copy />}
+              <Tooltip data-test-id={'Tooltip'} label={clipboardApiKey.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon variant="transparent" onClick={() => clipboardApiKey.copy(apiKey)}>
+                  {clipboardApiKey.copied ? <Check /> : <Copy />}
                 </ActionIcon>
               </Tooltip>
             }
@@ -45,9 +46,12 @@ export const ApiKeysCard = () => {
           <Input
             readOnly
             rightSection={
-              <Tooltip label={clipboard.copied ? 'Copied!' : 'Copy Key'}>
-                <ActionIcon variant="transparent" onClick={() => clipboard.copy(environmentIdentifier)}>
-                  {clipboard.copied ? <Check /> : <Copy />}
+              <Tooltip label={clipboardEnvironmentIdentifier.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon
+                  variant="transparent"
+                  onClick={() => clipboardEnvironmentIdentifier.copy(environmentIdentifier)}
+                >
+                  {clipboardEnvironmentIdentifier.copied ? <Check /> : <Copy />}
                 </ActionIcon>
               </Tooltip>
             }
