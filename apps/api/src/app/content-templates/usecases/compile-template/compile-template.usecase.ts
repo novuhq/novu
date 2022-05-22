@@ -12,7 +12,7 @@ Handlebars.registerHelper('titlecase', function (string) {
   return string
     .split(' ')
     .map((letter) => letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase())
-    .join('');
+    .join(' ');
 });
 
 Handlebars.registerHelper('uppercase', function (string) {
