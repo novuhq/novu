@@ -6,4 +6,4 @@ packages:
   - 'libs/*'
   - 'docs'
   # exclude packages that are inside test directories
-  - '!**/test/**'
+  - '!**/test/**'.

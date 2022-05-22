@@ -55,7 +55,8 @@
     "jest": "27.0.6",
     "less": "^4.1.0",
     "less-loader": "4.1.0",
-    "start-server-and-test": "1.11.6"
+    "start-server-and-test": "1.11.6",
+    "typescript": "4.6.2"
   },
   "scripts": {
     "start": "craco start",

@@ -37,7 +37,7 @@
     "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env"
   },
   "devDependencies": {
-    "@auto-it/jira": "^10.36.5",
+    "@octokit/core": "^3.6.0",
     "@auto-it/npm": "^10.36.5",
     "@auto-it/released": "^10.36.5",
     "@commitlint/cli": "13.2.1",
