@@ -16,7 +16,7 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "baseUrl": "./",
-    "types": ["vite/client", "@intlify/vite-plugin-vue-i18n/client"],
+    "types": ["vite/client"],
     "paths": {
       "@/*": ["src/*"]
     },
