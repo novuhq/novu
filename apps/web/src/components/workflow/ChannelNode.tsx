@@ -17,7 +17,7 @@ export default memo(({ data, selected, id }: { data: NodeData; selected: boolean
   return (
     <div style={{ pointerEvents: 'none' }}>
       <ChannelButton Icon={data.Icon} label={data.label} active={selected} />
-      <Handle type="target" id="b" position={data.index % 2 === 0 ? Position.Left : Position.Right} />
+      <Handle type="target" id="b" position={Position.Top} />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>
   );

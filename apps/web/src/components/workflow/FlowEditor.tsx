@@ -63,7 +63,7 @@ export function FlowEditor({
         const newNode = {
           id: newId,
           type: 'channelNode',
-          position: { x: nodes.length % 2 === 0 ? 200 : -200, y: 100 },
+          position: { x: 0, y: 120 },
           parentNode: parentId,
           data: { ...getChannel(type), index: nodes.length },
         };
@@ -106,8 +106,11 @@ export function FlowEditor({
       }
 
       const parentNode = reactFlowInstance?.getNode(parentId);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+
+      if (typeof parentNode === 'undefined') {
+        return;
+      }
+
       const childNode = getOutgoers(parentNode, nodes, edges);
       if (childNode.length) {
         return;
@@ -117,7 +120,7 @@ export function FlowEditor({
       const newNode = {
         id: newId,
         type: 'channelNode',
-        position: { x: nodes.length % 2 === 0 ? 200 : -200, y: 100 },
+        position: { x: 0, y: 120 },
         parentNode: parentId,
         data: {
           ...getChannel(type),
