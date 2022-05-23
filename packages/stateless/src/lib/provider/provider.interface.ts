@@ -27,6 +27,7 @@ export interface ISmsOptions {
 export interface IDirectOptions {
   channelId: string;
   content: string;
+  accessToken: string;
 }
 
 export interface ISendMessageSuccessResponse {
@@ -48,6 +49,5 @@ export interface ISmsProvider extends IProvider {
 
 export interface IDirectProvider extends IProvider {
   sendMessage(options: IDirectOptions): Promise<ISendMessageSuccessResponse>;
-  setSubscriberCredentials(credentials);
   channelType: ChannelTypeEnum.DIRECT;
 }

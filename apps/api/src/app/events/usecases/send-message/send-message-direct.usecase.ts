@@ -135,11 +135,10 @@ export class SendMessageDirect extends SendMessageType {
     try {
       const directHandler = this.directFactory.getHandler(integration);
 
-      directHandler.setSubscriberCredentials(directChannel.credentials);
-
       await directHandler.send({
         channelId: directChannelId,
         content,
+        accessToken: directChannel.credentials.accessToken,
       });
     } catch (e) {
       await this.createLogUsecase.execute(

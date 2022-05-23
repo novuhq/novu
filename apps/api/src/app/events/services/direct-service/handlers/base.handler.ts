@@ -13,8 +13,6 @@ export abstract class BaseDirectHandler implements IDirectHandler {
 
   abstract buildProvider(credentials);
 
-  abstract setSubscriberCredentials(credentials);
-
   async send(directContent: IDirectOptions) {
     if (process.env.NODE_ENV === 'test') {
       return null;

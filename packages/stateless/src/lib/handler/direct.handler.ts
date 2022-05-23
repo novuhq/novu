@@ -22,6 +22,7 @@ export class DirectHandler {
     return await this.provider.sendMessage({
       channelId: data.$channel_id,
       content,
+      accessToken: data.$access_token,
     });
   }
 }
