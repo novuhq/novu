@@ -1,14 +1,10 @@
-import { ChannelTypeEnum } from '@novu/shared';
 import { NotificationStepEntity } from '@novu/dal';
 
 export function matchMessageWithFilters(
-  channel: ChannelTypeEnum,
   steps: NotificationStepEntity[],
   payloadVariables: { [key: string]: string | string[] | { [key: string]: string } }
 ): NotificationStepEntity[] {
   return steps.filter((message) => {
-    const channelIsMatching = message.template.type === channel;
-
     if (message.filters?.length) {
       const foundFilter = message.filters.find((filter) => {
         if (filter.type === 'GROUP') {
@@ -18,10 +14,10 @@ export function matchMessageWithFilters(
         return false;
       });
 
-      return channelIsMatching && foundFilter;
+      return foundFilter;
     }
 
-    return channelIsMatching;
+    return true;
   });
 }
 

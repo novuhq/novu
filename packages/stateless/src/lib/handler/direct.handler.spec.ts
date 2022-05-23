@@ -8,6 +8,7 @@ test('send direct should call the provider method correctly', async () => {
     channelType: ChannelTypeEnum.DIRECT,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    setSubscriberCredentials: () => '123',
   };
 
   const spy = jest.spyOn(provider, 'sendMessage');
@@ -40,6 +41,7 @@ test('send direct should template method correctly', async () => {
     channelType: ChannelTypeEnum.DIRECT,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    setSubscriberCredentials: () => '123',
   };
 
   const spyTemplateFunction = jest
