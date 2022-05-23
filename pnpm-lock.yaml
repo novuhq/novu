@@ -121,6 +121,7 @@ importers:
       '@novu/sendinblue': ^0.4.0-alpha.8
       '@novu/ses': ^0.4.0-alpha.8
       '@novu/shared': ^0.4.0-alpha.12
+      '@novu/slack': ^0.4.0-alpha.8
       '@novu/sms77': ^0.4.0-alpha.8
       '@novu/sns': ^0.4.0-alpha.8
       '@novu/stateless': ^0.4.0-alpha.8
@@ -204,6 +205,7 @@ importers:
       '@novu/sendinblue': link:../../providers/sendinblue
       '@novu/ses': link:../../providers/ses
       '@novu/shared': link:../../libs/shared
+      '@novu/slack': link:../../providers/slack
       '@novu/sms77': link:../../providers/sms77
       '@novu/sns': link:../../providers/sns
       '@novu/stateless': link:../../packages/stateless
@@ -1645,6 +1647,47 @@ importers:
       ts-node: 9.1.1_typescript@4.6.3
       typedoc: 0.19.2_typescript@4.6.3
       typescript: 4.6.3
+
+  providers/slack:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@novu/node': 0.3.6-alpha.0
+      '@novu/stateless': workspace:^0.4.0-alpha.8
+      '@types/jest': ^27.0.1
+      axios: ^0.27.2
+      codecov: ^3.5.0
+      cspell: ^4.1.0
+      cz-conventional-changelog: ^3.3.0
+      gh-pages: ^3.1.0
+      jest: ^27.1.0
+      npm-run-all: ^4.1.5
+      nyc: ^15.1.0
+      open-cli: ^6.0.1
+      prettier: ^2.1.1
+      standard-version: ^9.0.0
+      ts-jest: ^27.0.5
+      ts-node: ^9.0.0
+      typedoc: ^0.19.0
+    dependencies:
+      '@novu/node': 0.3.6-alpha.0
+      '@novu/stateless': link:../../packages/stateless
+      axios: 0.27.2
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.4.1
+      codecov: 3.8.3
+      cspell: 4.2.8
+      cz-conventional-changelog: 3.3.0
+      gh-pages: 3.2.3
+      jest: 27.5.1_ts-node@9.1.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      open-cli: 6.0.1
+      prettier: 2.6.2
+      standard-version: 9.3.2
+      ts-jest: 27.1.4_60149d457e34ffba7d4e845dde6a1263
+      ts-node: 9.1.1_typescript@4.6.2
+      typedoc: 0.19.2_typescript@4.6.2
 
   providers/sms77:
     specifiers:
@@ -9644,7 +9687,7 @@ packages:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 14.18.12
+      '@types/node': 17.0.23
       '@types/yargs': 16.0.4
       chalk: 4.1.2
 
@@ -11199,6 +11242,18 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.13.0
+
+  /@novu/node/0.3.6-alpha.0:
+    resolution: {integrity: sha512-L4PlGICDxpQ4hBc7fR6aow3lqTEoPuZMQf1KFRvAGxRRueQ9OGEFijqhEExBpo36x7wdawXIdnbZ+AzB2w2afQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      axios: 0.26.1
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    transitivePeerDependencies:
+      - debug
+    dev: false
 
   /@npmcli/fs/1.1.1:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}
@@ -18699,7 +18754,7 @@ packages:
     dev: false
 
   /add-stream/1.0.0:
-    resolution: {integrity: sha1-anmQQ3ynNtXhKI25K9MmbV9csqo=}
+    resolution: {integrity: sha512-qQLMr+8o0WC4FZGQTcJiKBVC59JylcPSrTtk6usvmIDFUOCKegapy1VHQwRbFMOFyb/inzUVqHs+eMYKDM1YeQ==}
     dev: true
 
   /address/1.1.2:
@@ -18941,7 +18996,7 @@ packages:
     dev: false
 
   /ansi-regex/2.1.1:
-    resolution: {integrity: sha1-w7M6te42DYbg5ijwRorn7yfWVN8=}
+    resolution: {integrity: sha512-TIGnTpdo+E3+pCyAluZvtED5p5wCqLdezCyhPZzKPcxvFplEt4i+W7OONCKgeZFT3+y5NZZfOOS/Bdcanm1MYA==}
     engines: {node: '>=0.10.0'}
 
   /ansi-regex/3.0.1:
@@ -18963,7 +19018,7 @@ packages:
     dev: false
 
   /ansi-styles/2.2.1:
-    resolution: {integrity: sha1-tDLdM1i2NM914eRmQ2gkBTPB3b4=}
+    resolution: {integrity: sha512-kmCevFghRiWM7HB5zTPULl4r9bVFSWjz62MhqizDGUrq2NWuNMQyuv4tHHoKJHs69M/MF64lEcHdYIocrdWQYA==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -19508,7 +19563,7 @@ packages:
     dev: false
 
   /archy/1.0.0:
-    resolution: {integrity: sha1-+cjBN1fMHde8N5rHeyxipcKGjEA=}
+    resolution: {integrity: sha512-Xg+9RwCg/0p32teKdGMPTPnVXKD0w3DfHnFTficozsAgsvq2XenPJq/MYpzzQ/v8zrOyJn6Ds39VA4JIDwFfqw==}
     dev: true
 
   /are-we-there-yet/1.1.7:
@@ -19615,7 +19670,7 @@ packages:
     dev: false
 
   /array-ify/1.0.0:
-    resolution: {integrity: sha1-nlKHYrSpBmrRY6aWKjZEGOlibs4=}
+    resolution: {integrity: sha512-c5AMf34bKdvPhQ7tBGhqkgKNUzMr4WUs+WDtC2ZUGOUncbxKMTvqxYctiseW3+L4bA8ec+GcZ6/A/FW4m8ukng==}
     dev: true
 
   /array-includes/3.1.4:
@@ -19637,7 +19692,7 @@ packages:
     dev: false
 
   /array-union/1.0.2:
-    resolution: {integrity: sha1-mjRBDk9OPaI96jdb5b5w8kd47Dk=}
+    resolution: {integrity: sha512-Dxr6QJj/RdU/hCaBjOfxW+q6lyuVE6JFWIrAUpuOOhoJJoQ99cUn3igRaHVB5P9WrgFVN0FfArM3x0cueOU8ng==}
     engines: {node: '>=0.10.0'}
     dependencies:
       array-uniq: 1.0.3
@@ -19647,7 +19702,7 @@ packages:
     engines: {node: '>=8'}
 
   /array-uniq/1.0.3:
-    resolution: {integrity: sha1-r2rId6Jcx/dOBYiUdThY39sk/bY=}
+    resolution: {integrity: sha512-MNha4BWQ6JbwhFhj03YK552f7cb3AzoE8SzeljgChvL1dl3IcvggXVz1DilzySZkCja+CXuZbdW7yATchWn8/Q==}
     engines: {node: '>=0.10.0'}
 
   /array-unique/0.2.1:
@@ -19690,7 +19745,7 @@ packages:
     dev: false
 
   /arrify/1.0.1:
-    resolution: {integrity: sha1-iYUI2iIm84DfkEcoRWhJwVAaSw0=}
+    resolution: {integrity: sha512-3CYzex9M9FGQjCGMGyi6/31c8GJbgb0qGyrx5HWxPd0aCwh4cB2YjMb2Xf9UuoogrMrlO9cTqnB5rI5GHZTcUA==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -19787,7 +19842,7 @@ packages:
     resolution: {integrity: sha512-spZRyzKL5l5BZQrr/6m/SqFdBN0q3OCI0f9rjfBzCMBIP4p75P620rR3gTmaksNOhmzgdxcaxdNfMy6anrbM0g==}
 
   /asynckit/0.4.0:
-    resolution: {integrity: sha1-x57Zf380y48robyXkLzDZkdLS3k=}
+    resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
   /at-least-node/1.0.0:
     resolution: {integrity: sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==}
@@ -19943,6 +19998,15 @@ packages:
       follow-redirects: 1.14.9
     transitivePeerDependencies:
       - debug
+
+  /axios/0.27.2:
+    resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
+    dependencies:
+      follow-redirects: 1.14.9
+      form-data: 4.0.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
 
   /axobject-query/2.2.0:
     resolution: {integrity: sha512-Td525n+iPOOyUQIeBfcASuG6uJsDOITl7Mds5gFyerkWiX7qhUTdYUBlSgNMyVqtSJqwpt1kXGLdUt6SykLMRA==}
@@ -21206,12 +21270,12 @@ packages:
     dev: true
 
   /camelcase/2.1.1:
-    resolution: {integrity: sha1-fB0W1nmhu+WcoCys7PsBHiAfWh8=}
+    resolution: {integrity: sha512-DLIsRzJVBQu72meAKPkWQOLcujdXT32hwdfnkI1frSiSRMK1MofjKHf+MEx0SB6fjEFXL8fBDv1dKymBlOp4Qw==}
     engines: {node: '>=0.10.0'}
     dev: true
 
   /camelcase/4.1.0:
-    resolution: {integrity: sha1-1UVjW+HjPFQmScaRc+Xeas+uNN0=}
+    resolution: {integrity: sha512-FxAv7HpHrXbh3aPo4o2qxHay2lkLY3x5Mw3KeE4KQE8ysVfziWeRZDwcjauvwBSGEC/nXUPzZy8zeh4HokqOnw==}
     engines: {node: '>=4'}
     dev: true
 
@@ -21287,7 +21351,7 @@ packages:
     dev: true
 
   /chalk/1.1.3:
-    resolution: {integrity: sha1-qBFcVeSnAv5NFQq9OHKCKn4J/Jg=}
+    resolution: {integrity: sha512-U3lRVLMSlsCfjqYPbLyVv11M9CPW4I728d6TCKMAOJueEeB9/8o+eSsMnxPJD+Q+K909sdESg7C+tIkoH6on1A==}
     engines: {node: '>=0.10.0'}
     dependencies:
       ansi-styles: 2.2.1
@@ -30621,7 +30685,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 14.18.12
+      '@types/node': 17.0.23
       chalk: 4.1.2
       ci-info: 3.3.0
       graceful-fs: 4.2.9
@@ -40847,6 +40911,7 @@ packages:
   /standard-version/9.3.2:
     resolution: {integrity: sha512-u1rfKP4o4ew7Yjbfycv80aNMN2feTiqseAhUhrrx2XtdQGmu7gucpziXe68Z4YfHVqlxVEzo4aUA0Iu3VQOTgQ==}
     engines: {node: '>=10'}
+    deprecated: standard-version is deprecated. If you're a GitHub user, I recommend https://github.com/googleapis/release-please as an alternative.
     hasBin: true
     dependencies:
       chalk: 2.4.2
@@ -42377,7 +42442,7 @@ packages:
       '@types/jest': 27.4.0
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
+      jest: 27.5.1_ts-node@7.0.1
       jest-util: 27.5.1
       json5: 2.2.1
       lodash.memoize: 4.1.2
