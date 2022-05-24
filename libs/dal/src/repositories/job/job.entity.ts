@@ -22,4 +22,5 @@ export class JobEntity {
   delay?: number;
   _parentId?: string;
   status: JobStatusEnum;
+  error?: any;
 }

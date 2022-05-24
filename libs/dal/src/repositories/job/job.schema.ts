@@ -54,6 +54,9 @@ const jobSchema = new Schema(
       ref: 'Job',
       index: true,
     },
+    error: {
+      type: Schema.Types.Mixed,
+    },
   },
   schemaOptions
 );

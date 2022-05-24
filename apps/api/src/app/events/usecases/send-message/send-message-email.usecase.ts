@@ -41,7 +41,7 @@ export class SendMessageEmail extends SendMessageType {
 
   public async execute(command: SendMessageCommand) {
     const emailChannel: NotificationStepEntity = command.step;
-    const notification = await this.notificationRepository.findById(command.notificationID);
+    const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
       _environmentId: command.environmentId,
       _id: command.subscriberId,
@@ -57,7 +57,7 @@ export class SendMessageEmail extends SendMessageType {
     const content: string | IEmailBlock[] = this.getContent(isEditorMode, emailChannel, command, subscriber);
 
     const message: MessageEntity = await this.messageRepository.create({
-      _notificationId: command.notificationID,
+      _notificationId: command.notificationId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command.subscriberId,
