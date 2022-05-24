@@ -61,6 +61,9 @@ const notificationTemplateSchema = new Schema(
           type: Schema.Types.ObjectId,
           ref: 'MessageTemplate',
         },
+        _parentId: {
+          type: Schema.Types.ObjectId,
+        },
       },
     ],
     _environmentId: {

@@ -73,8 +73,10 @@ export class UpdateNotificationTemplate {
       });
 
       const templateMessages: NotificationStepEntity[] = [];
+      let parentStepId: string | null = null;
 
       for (const message of steps) {
+        const stepId = NotificationTemplateRepository.createObjectId();
         if (message._id) {
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
@@ -93,8 +95,10 @@ export class UpdateNotificationTemplate {
           );
 
           templateMessages.push({
+            _id: stepId,
             _templateId: template._id,
             filters: message.filters,
+            _parentId: parentStepId,
           });
         } else {
           const template = await this.createMessageTemplate.execute(
@@ -113,10 +117,13 @@ export class UpdateNotificationTemplate {
           );
 
           templateMessages.push({
+            _id: stepId,
             _templateId: template._id,
             filters: message.filters,
+            _parentId: parentStepId,
           });
         }
+        parentStepId = stepId;
       }
       updatePayload.steps = templateMessages;
     }

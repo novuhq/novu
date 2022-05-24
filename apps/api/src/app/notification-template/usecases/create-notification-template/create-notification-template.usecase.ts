@@ -49,6 +49,7 @@ export class CreateNotificationTemplate {
 
     const parentChangeId: string = NotificationTemplateRepository.createObjectId();
     const templateSteps = [];
+    let parentStepId: string | null = null;
 
     for (const message of command.steps) {
       const template = await this.createMessageTemplate.execute(
@@ -66,10 +67,14 @@ export class CreateNotificationTemplate {
         })
       );
 
+      const stepId = NotificationTemplateRepository.createObjectId();
       templateSteps.push({
+        _id: stepId,
         _templateId: template._id,
         filters: message.filters,
+        _parentId: parentStepId,
       });
+      parentStepId = stepId;
     }
 
     const savedTemplate = await this.notificationTemplateRepository.create({
