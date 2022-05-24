@@ -1,26 +1,27 @@
 import { Injectable } from '@nestjs/common';
+import { SendMessageType } from './send-message-type.usecase';
+import { DirectFactory } from '../../services/direct-service/direct.factory';
+import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { SendMessageCommand } from './send-message.command';
+import * as Sentry from '@sentry/node';
 import {
   IntegrationRepository,
-  MessageRepository,
-  NotificationStepEntity,
   NotificationRepository,
+  NotificationStepEntity,
   SubscriberEntity,
   SubscriberRepository,
-  NotificationEntity,
+  MessageRepository,
   MessageEntity,
+  IDirectChannel,
+  NotificationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
-import * as Sentry from '@sentry/node';
 import { ContentService } from '../../../shared/helpers/content.service';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
-import { SmsFactory } from '../../services/sms-service/sms.factory';
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
-export class SendMessageSms extends SendMessageType {
-  private smsFactory = new SmsFactory();
+export class SendMessageDirect extends SendMessageType {
+  private directFactory = new DirectFactory();
 
   constructor(
     private subscriberRepository: SubscriberRepository,
@@ -34,9 +35,9 @@ export class SendMessageSms extends SendMessageType {
 
   public async execute(command: SendMessageCommand) {
     Sentry.addBreadcrumb({
-      message: 'Sending SMS',
+      message: 'Sending Direct',
     });
-    const smsChannel: NotificationStepEntity = command.step;
+    const directChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
       _environmentId: command.environmentId,
@@ -44,8 +45,8 @@ export class SendMessageSms extends SendMessageType {
     });
     const contentService = new ContentService();
     const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
-    const content = contentService.replaceVariables(smsChannel.template.content as string, messageVariables);
-    const phone = command.payload.phone || subscriber.phone;
+    const content = contentService.replaceVariables(directChannel.template.content as string, messageVariables);
+    const directChannelId = command.payload.channelId || subscriber.channel.credentials.channelId;
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
@@ -53,46 +54,47 @@ export class SendMessageSms extends SendMessageType {
       _organizationId: command.organizationId,
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
-      _messageTemplateId: smsChannel.template._id,
+      _messageTemplateId: directChannel.template._id,
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
-      phone,
+      directChannelId,
       content,
     });
 
     const integration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.SMS,
+      providerId: subscriber.channel.integrationId,
+      channel: ChannelTypeEnum.DIRECT,
       active: true,
     });
 
-    if (phone && integration) {
-      await this.sendMessage(phone, integration, content, message, command, notification);
+    if (directChannelId && integration) {
+      await this.sendMessage(directChannelId, integration, content, message, command, notification, subscriber.channel);
 
       return;
     }
 
-    await this.sendErrors(phone, integration, message, command, notification);
+    await this.sendErrors(directChannelId, integration, message, command, notification);
   }
 
   private async sendErrors(
-    phone,
+    directChannelId,
     integration,
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity
   ) {
-    if (!phone) {
+    if (!directChannelId) {
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
-          text: 'Subscriber does not have active phone',
+          text: 'Subscriber does not have active direct channel Id',
           userId: command.userId,
           subscriberId: command.subscriberId,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_PHONE,
+          code: LogCodeEnum.SUBSCRIBER_MISSING_DIRECT_CHANNEL_ID,
           templateId: notification._templateId,
           raw: {
             payload: command.payload,
@@ -104,50 +106,40 @@ export class SendMessageSms extends SendMessageType {
         message._id,
         'warning',
         null,
-        'no_subscriber_phone',
-        'Subscriber does not have active phone'
+        'no_subscriber_direct_channel_id',
+        'Subscriber does not have active direct channel id'
       );
     }
     if (!integration) {
       await this.sendErrorStatus(
         message,
         'warning',
-        'sms_missing_integration_error',
-        'Subscriber does not have an active sms integration',
+        'direct_missing_integration_error',
+        'Subscriber does not have an active direct integration',
         command,
         notification,
         LogCodeEnum.MISSING_SMS_INTEGRATION
       );
     }
-    if (!integration?.credentials?.from) {
-      await this.sendErrorStatus(
-        message,
-        'warning',
-        'no_integration_from_phone',
-        'Integration does not have from phone configured',
-        command,
-        notification,
-        LogCodeEnum.MISSING_SMS_PROVIDER
-      );
-    }
   }
 
   private async sendMessage(
-    phone,
+    directChannelId,
     integration,
     content,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    directChannel: IDirectChannel
   ) {
     try {
-      const smsHandler = this.smsFactory.getHandler(integration);
+      const directHandler = this.directFactory.getHandler(integration);
 
-      await smsHandler.send({
-        to: phone,
-        from: integration.credentials.from,
+      directHandler.setSubscriberCredentials(directChannel.credentials);
+
+      await directHandler.send({
+        channelId: directChannelId,
         content,
-        attachments: null,
       });
     } catch (e) {
       await this.createLogUsecase.execute(
@@ -156,9 +148,9 @@ export class SendMessageSms extends SendMessageType {
           status: LogStatusEnum.ERROR,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
-          text: e.message || e.name || 'Un-expect SMS provider error',
+          text: e.message || e.name || 'Un-expect DIRECT provider error',
           userId: command.userId,
-          code: LogCodeEnum.SMS_ERROR,
+          code: LogCodeEnum.DIRECT_ERROR,
           templateId: notification._templateId,
           raw: {
             payload: command.payload,
@@ -171,8 +163,8 @@ export class SendMessageSms extends SendMessageType {
         message._id,
         'error',
         e,
-        'unexpected_sms_error',
-        e.message || e.name || 'Un-expect SMS provider error'
+        'unexpected_direct_error',
+        e.message || e.name || 'Un-expect DIRECT provider error'
       );
     }
   }

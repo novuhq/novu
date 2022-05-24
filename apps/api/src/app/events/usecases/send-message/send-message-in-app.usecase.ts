@@ -31,7 +31,7 @@ export class SendMessageInApp extends SendMessageType {
     Sentry.addBreadcrumb({
       message: 'Sending In App',
     });
-    const notification = await this.notificationRepository.findById(command.notificationID);
+    const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
       _environmentId: command.environmentId,
       _id: command.subscriberId,

@@ -4,6 +4,7 @@ import { SendMessage } from './send-message/send-message.usecase';
 import { SendMessageSms } from './send-message/send-message-sms.usecase';
 import { SendMessageEmail } from './send-message/send-message-email.usecase';
 import { SendMessageInApp } from './send-message/send-message-in-app.usecase';
+import { SendMessageDirect } from './send-message/send-message-direct.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -12,4 +13,5 @@ export const USE_CASES = [
   SendMessageSms,
   SendMessageEmail,
   SendMessageInApp,
+  SendMessageDirect,
 ];
