@@ -12,8 +12,5 @@
   },
   "cSpell.words": [
     "mantine"
-  ],
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  ]
 }
