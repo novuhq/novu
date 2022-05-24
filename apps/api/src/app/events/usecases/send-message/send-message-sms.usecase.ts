@@ -37,7 +37,7 @@ export class SendMessageSms extends SendMessageType {
       message: 'Sending SMS',
     });
     const smsChannel: NotificationStepEntity = command.step;
-    const notification = await this.notificationRepository.findById(command.notificationID);
+    const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
       _environmentId: command.environmentId,
       _id: command.subscriberId,

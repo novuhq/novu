@@ -33,4 +33,17 @@ export class JobRepository extends BaseRepository<JobEntity> {
       }
     );
   }
+
+  public async setError(jobId: string, error: Error) {
+    await this.update(
+      {
+        _id: jobId,
+      },
+      {
+        $set: {
+          error,
+        },
+      }
+    );
+  }
 }
