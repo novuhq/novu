@@ -5,7 +5,6 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ContentTemplatesModule } from '../../content-templates.module';
 import { CompileTemplate } from './compile-template.usecase';
 import { CompileTemplateCommand } from './compile-template.command';
-import { functionsIn } from 'lodash';
 
 describe('Compile Template', function () {
   let useCase: CompileTemplate;
