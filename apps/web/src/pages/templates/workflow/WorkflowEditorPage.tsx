@@ -1,7 +1,7 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
-import { Button, colors, DragButton, Text, Title } from '../../../design-system';
-import { ActionIcon, Grid, Stack, useMantineColorScheme } from '@mantine/core';
+import { Button, colors, DragButton, Switch, Text, Title } from '../../../design-system';
+import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme, Group } from '@mantine/core';
 import React, { useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
@@ -12,10 +12,14 @@ const WorkflowEditorPage = ({
   channelButtons,
   changeTab,
   handleAddChannel,
+  activeChannels,
+  toggleChannel,
 }: {
   channelButtons: string[];
   changeTab: (string) => void;
   handleAddChannel: (string) => void;
+  activeChannels: { [p: string]: boolean };
+  toggleChannel: (channel: ChannelTypeEnum, active: boolean) => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
@@ -33,12 +37,7 @@ const WorkflowEditorPage = ({
       <Grid grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
           <ReactFlowProvider>
-            <FlowEditor
-              channelButtons={channelButtons}
-              setSelected={setSelectedChannel}
-              changeTab={changeTab}
-              onGoBack={goBackHandler}
-            />
+            <FlowEditor channelButtons={channelButtons} setSelected={setSelectedChannel} onGoBack={goBackHandler} />
           </ReactFlowProvider>
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
@@ -54,9 +53,17 @@ const WorkflowEditorPage = ({
                   </ButtonWrapper>
                 </NavSection>
                 <NavSection>
-                  <Button variant="outline" fullWidth onClick={() => handleAddChannel(selectedChannel)}>
+                  <Button mt={10} variant="outline" fullWidth onClick={() => handleAddChannel(selectedChannel)}>
                     Edit Template
                   </Button>
+                  <Divider my={30} />
+                  <StyledSwitch
+                    label={'Step is Active'}
+                    checked={activeChannels[selectedChannel]}
+                    onChange={(event) => {
+                      toggleChannel(selectedChannel, event.target.checked);
+                    }}
+                  />
                 </NavSection>
               </StyledNav>
             ) : (
@@ -96,10 +103,15 @@ const SideBarWrapper = styled.div<{ dark: boolean }>`
 
 const StyledNav = styled.div`
   padding: 15px 20px;
+  height: 100%;
 `;
 
 const NavSection = styled.div`
   padding-bottom: 20px;
+`;
+
+const StyledSwitch = styled(Switch)`
+  max-width: 150px !important;
 `;
 
 const ButtonWrapper = styled.div`

@@ -10,6 +10,7 @@ import ReactFlow, {
   useUpdateNodeInternals,
   getOutgoers,
   ReactFlowProps,
+  useViewport,
 } from 'react-flow-renderer';
 import ChannelNode from './ChannelNode';
 import { Button, colors } from '../../design-system';
@@ -46,7 +47,6 @@ export function FlowEditor({
   setSelected: (string) => void;
   onGoBack: () => void;
   channelButtons: string[];
-  changeTab: (string) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
@@ -54,6 +54,7 @@ export function FlowEditor({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
+  const { x: xPos, y: yPos, zoom } = useViewport();
 
   useEffect(() => {
     if (channelButtons.length) {
@@ -218,8 +219,16 @@ const reactFlowDefaultProps: ReactFlowProps = {
   zoomOnScroll: false,
   preventScrolling: true,
   nodesConnectable: false,
-  nodesDraggable: false,
+  nodesDraggable: true,
   fitView: true,
+  translateExtent: [
+    [-100, -100],
+    [100, 100],
+  ],
+  nodeExtent: [
+    [0, 0],
+    [100, 100],
+  ],
   minZoom: 1,
   maxZoom: 1,
 };

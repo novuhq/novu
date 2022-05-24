@@ -178,7 +178,9 @@ export default function TemplateEditorPage() {
             <WorkflowEditorPage
               handleAddChannel={handleAddChannel}
               channelButtons={channelButtons}
+              toggleChannel={toggleChannel}
               changeTab={setActivePage}
+              activeChannels={activeChannels}
             />
           )}
           {!loadingEditTemplate && !isIntegrationsLoading ? (
@@ -198,7 +200,6 @@ export default function TemplateEditorPage() {
                       </Button>
                     }
                   >
-                    {' '}
                     <EditorPreviewSwitch view={view} setView={setView} />
                   </WorkflowPageHeader>
                   {smsFields.map((message, index) => {
@@ -231,7 +232,6 @@ export default function TemplateEditorPage() {
                       </Button>
                     }
                   >
-                    {' '}
                     <EditorPreviewSwitch view={view} setView={setView} />
                   </WorkflowPageHeader>
                   <EmailMessagesCards
