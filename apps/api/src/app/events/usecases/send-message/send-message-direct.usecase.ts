@@ -46,7 +46,20 @@ export class SendMessageDirect extends SendMessageType {
     const contentService = new ContentService();
     const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
     const content = contentService.replaceVariables(directChannel.template.content as string, messageVariables);
-    const directChannelId = command.payload.channelId || subscriber.channel.credentials.channelId;
+
+    for (const channel of subscriber.channels) {
+      await this.sendChannelMessage(command, channel, notification, directChannel, content);
+    }
+  }
+
+  private async sendChannelMessage(
+    command: SendMessageCommand,
+    subscriberChannel,
+    notification,
+    directChannel,
+    content: string
+  ) {
+    const directChannelId = command.payload.channelId || subscriberChannel.credentials.channelId;
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
@@ -63,13 +76,13 @@ export class SendMessageDirect extends SendMessageType {
 
     const integration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
-      providerId: subscriber.channel.integrationId,
+      providerId: subscriberChannel.integrationId,
       channel: ChannelTypeEnum.DIRECT,
       active: true,
     });
 
     if (directChannelId && integration) {
-      await this.sendMessage(directChannelId, integration, content, message, command, notification, subscriber.channel);
+      await this.sendMessage(directChannelId, integration, content, message, command, notification, subscriberChannel);
 
       return;
     }

@@ -20,13 +20,17 @@ const subscriberSchema = new Schema(
     lastName: Schema.Types.String,
     phone: Schema.Types.String,
     subscriberId: Schema.Types.String,
-    channel: {
-      integrationId: Schema.Types.String,
-      credentials: {
-        channelId: Schema.Types.String,
-        accessToken: Schema.Types.String,
+    channels: [
+      {
+        _id: false,
+        _integrationId: Schema.Types.String,
+        integrationId: Schema.Types.String,
+        credentials: {
+          channelId: Schema.Types.String,
+          accessToken: Schema.Types.String,
+        },
       },
-    },
+    ],
     email: Schema.Types.String,
     avatar: Schema.Types.String,
   },

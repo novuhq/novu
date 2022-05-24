@@ -19,10 +19,12 @@ export class SubscriberEntity {
 
   _environmentId: string;
 
-  channel?: IDirectChannel;
+  channels?: IDirectChannel[];
 }
 
 export class IDirectChannel {
+  _integrationId: string;
+
   integrationId: DirectIntegrationId;
 
   credentials: IChannelCredentials;

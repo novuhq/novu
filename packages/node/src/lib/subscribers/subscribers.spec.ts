@@ -77,7 +77,7 @@ describe('test use of novus node package - Subscribers class', () => {
 
     expect(mockedAxios.put).toHaveBeenCalled();
     expect(mockedAxios.put).toHaveBeenCalledWith(
-      `/subscribers/test-update-subscriber`,
+      `/subscribers/test-update-subscriber/channels`,
       {
         channel: {
           integrationId: 'slack',

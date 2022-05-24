@@ -24,7 +24,28 @@ export class IntegrationService {
       credentials: { accountSid: 'AC123', token: '123', from: 'me' },
       active: true,
     };
-
     await this.integrationRepository.create(smsPayload);
+
+    const directSlackPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'slack',
+      channel: ChannelTypeEnum.DIRECT,
+      credentials: { applicationId: 'secret_123' },
+      active: true,
+    };
+
+    await this.integrationRepository.create(directSlackPayload);
+
+    const directDiscordPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'discord',
+      channel: ChannelTypeEnum.DIRECT,
+      credentials: { applicationId: 'secret_123' },
+      active: true,
+    };
+
+    await this.integrationRepository.create(directDiscordPayload);
   }
 }

@@ -16,7 +16,13 @@ export class SubscribersService {
       _environmentId: this._environmentId,
       _organizationId: this._organizationId,
       subscriberId: SubscriberRepository.createObjectId(),
-      channel: { integrationId: DirectIntegrationId.Slack, credentials: { accessToken: '123', channelId: '#general' } },
+      channels: [
+        {
+          _integrationId: 'integrationId_slack',
+          integrationId: DirectIntegrationId.Slack,
+          credentials: { accessToken: '123', channelId: '#general' },
+        },
+      ],
     });
   }
 }

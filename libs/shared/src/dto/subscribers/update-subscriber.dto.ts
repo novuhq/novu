@@ -27,3 +27,9 @@ export class IChannelCredentials {
 
   accessToken: string;
 }
+
+export interface IUpdateSubscriberChannelDto {
+  integrationId: DirectIntegrationId;
+
+  credentials: IChannelCredentials;
+}

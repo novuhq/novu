@@ -26,8 +26,8 @@ export class Subscribers implements ISubscribers {
     subscriberId: string,
     integrationId: string,
     credentials: IChannelCredentials
-  ): Promise<any> {
-    return await this.http.put(`/subscribers/${subscriberId}`, {
+  ) {
+    return await this.http.put(`/subscribers/${subscriberId}/channels`, {
       channel: {
         integrationId,
         credentials: {
