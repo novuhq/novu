@@ -1,3 +1,5 @@
+import { DirectIntegrationId } from '@novu/shared';
+
 export class SubscriberEntity {
   _id?: string;
 
@@ -16,4 +18,18 @@ export class SubscriberEntity {
   _organizationId: string;
 
   _environmentId: string;
+
+  channel?: IDirectChannel;
+}
+
+export class IDirectChannel {
+  integrationId: DirectIntegrationId;
+
+  credentials: IChannelCredentials;
+}
+
+export class IChannelCredentials {
+  channelId: string;
+
+  accessToken: string;
 }

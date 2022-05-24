@@ -1,10 +1,11 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
 import { slackConfig } from '../provider-credentials';
+import { DirectIntegrationId } from '../provider.enum';
 
 export const directProviders: IProviderConfig[] = [
   {
-    id: 'slack',
+    id: DirectIntegrationId.Slack,
     displayName: 'Slack',
     channel: ChannelTypeEnum.DIRECT,
     credentials: slackConfig,
@@ -12,7 +13,7 @@ export const directProviders: IProviderConfig[] = [
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },
   {
-    id: 'discord',
+    id: DirectIntegrationId.Discord,
     displayName: 'Discord',
     channel: ChannelTypeEnum.DIRECT,
     credentials: {} as IConfigCredentials[],

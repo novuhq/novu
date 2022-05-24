@@ -30,3 +30,11 @@ export enum CredentialsKeyEnum {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   ApplicationId = 'applicationId',
 }
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum DirectIntegrationId {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  Slack = 'slack',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  Discord = 'discord',
+}

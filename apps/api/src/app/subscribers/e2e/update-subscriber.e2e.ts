@@ -54,4 +54,46 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
     expect(createdSubscriber.email).to.equal('changed@mail.com');
     expect(createdSubscriber.phone).to.equal('+972523333333');
   });
+
+  it('should update an existing subscriber credentials', async function () {
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/subscribers`,
+      {
+        subscriberId: '123',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@doe.com',
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const response = await axiosInstance.put(
+      `${session.serverUrl}/v1/subscribers/123`,
+      {
+        subscriberId: '123',
+        channel: {
+          integrationId: 'slack',
+          credentials: { accessToken: 'secret_token', channelId: '#general' },
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    const { data: body } = response;
+
+    expect(body.data).to.be.ok;
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
+
+    expect(createdSubscriber.channel.integrationId).to.equal('slack');
+    expect(createdSubscriber.channel.credentials.channelId).to.equal('#general');
+    expect(createdSubscriber.channel.credentials.accessToken).to.equal('secret_token');
+  });
 });
