@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import {
   ChannelCTATypeEnum,
   ChannelTypeEnum,
   ICreateNotificationTemplateDto,
   INotificationTemplate,
   IUpdateNotificationTemplate,
-  INotificationTrigger,
   IEmailBlock,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
@@ -16,15 +15,27 @@ import * as Sentry from '@sentry/react';
 import { createTemplate, updateTemplate } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
 import { QueryKeys } from '../../api/query.keys';
+import { useTemplateEditor } from './TemplateEditorProvider';
 
 export function useTemplateController(templateId: string) {
-  const [activeChannels, setActiveChannels] = useState<{ [key: string]: boolean }>({
-    [ChannelTypeEnum.IN_APP]: false,
-    [ChannelTypeEnum.EMAIL]: false,
-    [ChannelTypeEnum.SMS]: false,
-  });
+  const {
+    isDirty,
+    setIsDirty,
+    editMode,
+    setEditMode,
+    isEmbedModalVisible,
+    setIsEmbedModalVisible,
+    trigger,
+    setTrigger,
+    selectedMessageType,
+    setSelectedMessageType,
+    activeChannels,
+    setActiveChannels,
+  } = useTemplateEditor();
 
-  const [isDirty, setIsDirty] = useState(false);
+  useEffect(() => {
+    setEditMode(!!templateId);
+  }, []);
 
   const methods = useForm<IForm>({
     resolver: async (data) => {
@@ -99,10 +110,6 @@ export function useTemplateController(templateId: string) {
   });
 
   const navigate = useNavigate();
-  const [editMode, setEditMode] = useState<boolean>(!!templateId);
-  const [isEmbedModalVisible, setIsEmbedModalVisible] = useState<boolean>(false);
-  const [trigger, setTrigger] = useState<INotificationTrigger>();
-  const [selectedMessageType, setSelectedMessageType] = useState<ChannelTypeEnum | null>(null);
   const { template, refetch, loading: loadingEditTemplate } = useTemplateFetcher(templateId);
   const client = useQueryClient();
 
