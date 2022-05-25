@@ -1,5 +1,3 @@
-import { ChannelTypeEnum, INotificationTemplate } from '@novu/shared';
-
 describe('Notifications Creator', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
@@ -186,7 +184,7 @@ describe('Notifications Creator', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.getByTestId('"triggerCodeSelector"').click({ force: true });
-    cy.getByTestId('trigger-code-snippet').contains('test-event');
+    cy.getByTestId('trigger-code-snippet').contains('firstName');
   });
 
   it('should validate form inputs', function () {
