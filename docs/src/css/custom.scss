@@ -397,13 +397,11 @@ nav.menu {
   }
 
   &.pagination-nav__link--next .pagination-nav__label::after {
-    background-image: url('/img/arrow.svg');
     transform: rotateZ(180deg);
     margin-left: 8px;
   }
 
   &.pagination-nav__link--prev .pagination-nav__label::before {
-    background-image: url('/img/arrow.svg');
     margin-right: 8px;
   }
 }

@@ -89,6 +89,13 @@ html[data-theme='dark'] {
     background-color: rgba(0, 0, 0, 0.3);
   }
 
+  .pagination-nav__link {
+    &.pagination-nav__link--next .pagination-nav__label::after,
+    &.pagination-nav__link--prev .pagination-nav__label::before {
+      background-image: url('/img/arrow.svg');
+    }
+  }
+
   .footer {
     border-top: 1px solid $color-gray-3;
     background-color: $color-gray-1;
