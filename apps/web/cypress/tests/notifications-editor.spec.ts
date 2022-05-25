@@ -184,7 +184,7 @@ describe('Notifications Creator', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.getByTestId('"triggerCodeSelector"').click({ force: true });
-    cy.getByTestId('trigger-code-snippet').contains('firstName');
+    cy.getByTestId('trigger-code-snippet').contains('test-event');
   });
 
   it('should validate form inputs', function () {
