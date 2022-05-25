@@ -22,6 +22,8 @@
   --ifm-menu-link-padding-vertical: 8px;
   --ifm-menu-link-padding-horizontal: 20px;
   --ifm-heading-font-weight: 500;
+  --ifm-toc-padding-vertical: 16px;
+  --ifm-navbar-padding-vertical: 12px;
 }
 
 body {
@@ -29,13 +31,41 @@ body {
   font-size: 18px;
 }
 
-.container {
-  max-width: 100%;
+main {
+  .container {
+    max-width: 100%;
+    padding: 0 !important;
+
+    @media (max-width: 996px) {
+      padding-top: 20px !important;
+    }
+    .row {
+      margin: 0;
+
+      .col.col--3 {
+        padding: 0;
+        padding-left: 40px;
+
+        .theme-doc-toc-desktop {
+          height: 100%;
+        }
+      }
+    }
+  }
+}
+
+.main-wrapper {
+  max-width: $container-width;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 article,
 .pagination-nav {
-  max-width: 860px;
+  max-width: 796px;
   margin: 0 auto;
 }
 
@@ -68,6 +98,22 @@ code {
   display: block;
   margin: 0 calc(-1 * var(--ifm-pre-padding));
   padding: 0 var(--ifm-pre-padding);
+}
+
+.navbar {
+  padding-left: 0;
+  padding-right: 0;
+  height: 65px;
+
+  .navbar__inner {
+    position: relative;
+    max-width: $container-width;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
 }
 
 .navbar__item {
@@ -123,7 +169,16 @@ code {
 }
 
 nav.menu {
-  padding: 10px 10px 10px 16px;
+  padding: 0;
+  margin-right: 40px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   .menu__link {
     font-size: 16px;
@@ -237,6 +292,13 @@ nav.menu {
   font-size: 16px !important;
 }
 
+.theme-doc-footer-edit-meta-row {
+  .col {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 .theme-edit-this-page {
   position: relative;
   padding-left: 28px;
@@ -262,15 +324,28 @@ nav.menu {
 }
 
 .table-of-contents {
+  position: relative;
   padding-top: 0;
-  margin-top: 80px;
+  padding-top: 40px;
 
-  @media (max-width: 1279px) {
-    margin-top: 60px;
+  &::before {
+    position: absolute;
+    width: 16px;
+    height: 11px;
+    background-repeat: no-repeat;
+    content: '';
+    top: 24px;
+    left: 0;
   }
 
-  @media (max-width: 996px) {
-    margin-top: 0;
+  &::after {
+    font-weight: 400;
+    font-size: 12px;
+    position: absolute;
+    top: 20px;
+    left: 26px;
+    content: 'Contents';
+    text-transform: uppercase;
   }
 
   > li {
@@ -293,10 +368,16 @@ nav.menu {
   }
 }
 
+.pagination-nav {
+  border-top: 1px dashed $color-gray-4;
+  padding-top: 32px;
+  margin-top: 32px !important;
+  margin-bottom: 64px;
+}
+
 .pagination-nav__link {
   border: none;
-  padding-left: 0;
-  padding-right: 0;
+  padding: 0;
 
   .pagination-nav__sublabel {
     margin-bottom: 8px;
@@ -337,6 +418,13 @@ nav.menu {
     display: flex;
     flex-direction: row-reverse;
     justify-content: space-between;
+    max-width: $container-width;
+    padding-left: 16px;
+    padding-right: 16px;
+
+    @media (max-width: 996px) {
+      max-width: $container-width;
+    }
 
     @media (max-width: 996px) {
       flex-direction: column-reverse;

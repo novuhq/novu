@@ -60,16 +60,20 @@ const codeTheme = require('./src/utils/prism');
           },
           items: [
             {
+              type: 'search',
+              position: 'left',
+            },
+            {
               href: 'https://github.com/novuhq/novu',
               className: 'navbar-item-github',
               label: 'GitHub',
-              position: 'left',
+              position: 'right',
             },
             {
               href: 'https://discord.gg/9wcGSf22PM',
               className: 'navbar-item-discord',
               label: 'Community',
-              position: 'left',
+              position: 'right',
             },
           ],
         },

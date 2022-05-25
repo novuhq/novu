@@ -1,14 +1,25 @@
 html[data-theme='dark'] {
-  --ifm-background-color: #000000;
+  --ifm-background-color: #0D0D0D;
   --ifm-hover-overlay: rgba(0, 213, 255, 0.1);
   --ifm-font-color-base: #e6e6e6;
+  --ifm-toc-border-color: #262626;
+
+  main {
+    .container {
+      .row {
+        .col.col--3 {
+          border-left: 1px solid $color-gray-3;
+        }
+      }
+    }
+  }
 
   code:not([class]) {
     background-color: $color-gray-2;
   }
 
   .navbar {
-    background-color: #000;
+    background-color: $color-gray-1;
     border-bottom: 1px solid $color-gray-3;
   }
 
@@ -21,7 +32,7 @@ html[data-theme='dark'] {
   }
 
   .navbar-sidebar {
-    background-color: $color-black;
+    background-color: $color-gray-1;
 
     &__brand {
       border-bottom: 1px solid $color-gray-3;
@@ -30,7 +41,6 @@ html[data-theme='dark'] {
 
   .menu {
     background-color: $color-gray-1;
-    border-right: 1px solid $color-gray-3;
 
     .menu__link {
       color: $color-white;
@@ -61,11 +71,17 @@ html[data-theme='dark'] {
     }
   }
 
-  .table-of-contents__link {
-    color: $color-gray-10;
+  .table-of-contents {
+    &::before {
+      background-image: url('/img/contents-white.svg');
+    }
 
-    &--active {
-      color: $color-primary-blue;
+    &__link {
+      color: $color-gray-10;
+  
+      &--active {
+        color: $color-primary-blue;
+      }
     }
   }
 
@@ -75,7 +91,7 @@ html[data-theme='dark'] {
 
   .footer {
     border-top: 1px solid $color-gray-3;
-    background-color: $color-black;
+    background-color: $color-gray-1;
 
     &.footer--dark {
       --ifm-footer-link-color: #fff;
@@ -98,5 +114,9 @@ html[data-theme='dark'] {
         }
       }
     }
+  }
+
+  .pagination-nav {
+    border-top: 1px dashed $color-gray-4;
   }
 }
