@@ -27,6 +27,7 @@ import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN } from './config/index';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import QuickStartPage from './pages/quick-start/QuickStartPage';
+import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -87,7 +88,9 @@ function App() {
                     path="/templates/create"
                     element={
                       <RequiredAuth>
-                        <TemplateEditorPage />
+                        <TemplateEditorProvider>
+                          <TemplateEditorPage />
+                        </TemplateEditorProvider>
                       </RequiredAuth>
                     }
                   />
@@ -95,7 +98,9 @@ function App() {
                     path="/templates/edit/:templateId"
                     element={
                       <RequiredAuth>
-                        <TemplateEditorPage />
+                        <TemplateEditorProvider>
+                          <TemplateEditorPage />
+                        </TemplateEditorProvider>
                       </RequiredAuth>
                     }
                   />

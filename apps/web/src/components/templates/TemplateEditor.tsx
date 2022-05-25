@@ -7,23 +7,22 @@ import { EditorPreviewSwitch } from './EditorPreviewSwitch';
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
 import { TemplateSMSEditor } from './TemplateSMSEditor';
+import { useTemplateController } from './use-template-controller.hook';
 
-export const TemplateEditor = ({
-  activePage,
-  goBackHandler,
-  disableSave,
-  loading,
-  changeSelectedMessage,
-  trigger,
-  control,
-  emailMessagesFields,
-  inAppFields,
-  errors,
-  smsFields,
-  removeEmailMessage,
-}) => {
+export const TemplateEditor = ({ activePage, goBackHandler, disableSave, loading, templateId }) => {
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const { integrations } = useActiveIntegrations();
+
+  const {
+    changeSelectedMessage,
+    trigger,
+    control,
+    emailMessagesFields,
+    inAppFields,
+    errors,
+    smsFields,
+    removeEmailMessage,
+  } = useTemplateController(templateId);
 
   return (
     <div>

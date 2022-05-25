@@ -34,25 +34,16 @@ export default function TemplateEditorPage() {
     editMode,
     template,
     changeSelectedMessage,
-    isEmbedModalVisible,
-    trigger,
     isLoading,
     isUpdateLoading,
     onSubmit,
     loadingEditTemplate,
     activeChannels,
     toggleChannel,
-    onTriggerModalDismiss,
     handleSubmit,
-    control,
-    emailMessagesFields,
-    inAppFields,
     errors,
-    smsFields,
     methods,
-    removeEmailMessage,
     isDirty,
-    setIsDirty,
   } = useTemplateController(templateId);
 
   useEffect(() => {
@@ -90,18 +81,11 @@ export default function TemplateEditorPage() {
             <TemplateSettings
               loading={isLoading || isUpdateLoading}
               disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
-              editMode={editMode}
-              setIsDirty={setIsDirty}
               activePage={activePage}
-              toggleChannel={toggleChannel}
               setActivePage={setActivePage}
-              activeChannels={activeChannels}
               channelButtons={channelButtons}
-              template={template}
-              trigger={trigger}
               showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
-              onTriggerModalDismiss={onTriggerModalDismiss}
-              isEmbedModalVisible={isEmbedModalVisible}
+              templateId={templateId}
             />
           )}
           {activePage === 'Workflow' && (
@@ -119,14 +103,7 @@ export default function TemplateEditorPage() {
               goBackHandler={goBackHandler}
               disableSave={readonly || loadingEditTemplate || isLoading || !isDirty}
               loading={isLoading || isUpdateLoading}
-              changeSelectedMessage={changeSelectedMessage}
-              trigger={trigger}
-              control={control}
-              emailMessagesFields={emailMessagesFields}
-              inAppFields={inAppFields}
-              errors={errors}
-              smsFields={smsFields}
-              removeEmailMessage={removeEmailMessage}
+              templateId={templateId}
             />
           ) : null}
         </form>

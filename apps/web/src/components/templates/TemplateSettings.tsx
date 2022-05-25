@@ -8,28 +8,33 @@ import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import styled from '@emotion/styled';
 import PageHeader from '../layout/components/PageHeader';
 import { useStatusChangeControllerHook } from './use-status-change-controller.hook';
+import { useTemplateController } from './use-template-controller.hook';
 
 export const TemplateSettings = ({
   loading,
   disableSubmit,
-  editMode,
-  setIsDirty,
   activePage,
-  toggleChannel,
   setActivePage,
-  activeChannels,
   channelButtons,
-  template,
-  trigger,
   showErrors,
-  onTriggerModalDismiss,
-  isEmbedModalVisible,
+  templateId,
 }) => {
   const { readonly } = useEnvController();
   const { colorScheme } = useMantineColorScheme();
 
+  const {
+    editMode,
+    template,
+    isEmbedModalVisible,
+    trigger,
+    activeChannels,
+    toggleChannel,
+    onTriggerModalDismiss,
+    setIsDirty,
+  } = useTemplateController(templateId);
+
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
-    template?._id,
+    templateId,
     template
   );
 
