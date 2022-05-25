@@ -9,7 +9,7 @@ export function useUnseenController() {
   const [unseenCount, setUnseenCount] = useState<number>(0);
 
   useEffect(() => {
-    if (!token || !api?.isAuthenticated) return null;
+    if (!token || !api?.isAuthenticated) return;
 
     (async () => {
       const { count } = await api.getUnseenCount();
