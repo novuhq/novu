@@ -1,5 +1,5 @@
 {
-  "extends": ["@commitlint/config-conventional",git add -A],
+  "extends": ["@commitlint/config-conventional"],
   "rules": {
     "subject-case": [
       2,
