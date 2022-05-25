@@ -4,6 +4,7 @@ html[data-theme='light'] {
   --ifm-font-color-base: #000000;
   --ifm-toc-border-color: #E6E6E6;
   --ifm-link-color: #0055FF;
+  --ifm-menu-color-background-active: rgba(227, 0, 189, 0.08);
 
   main {
     .container {
@@ -53,7 +54,7 @@ html[data-theme='light'] {
       
       &--active:not(.menu__link--sublist) {
         color: $color-secondary-purple;
-        background-color:  rgba(227, 0, 189, 0.08);
+        background-color: rgba(227, 0, 189, 0.08);
       }
     }
 
