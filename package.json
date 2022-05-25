@@ -8,6 +8,7 @@
     "prepare": "husky install",
     "publish": "lerna publish from-package",
     "setup:project": "npx pnpm@6.32.3 i && node scripts/setup-env-files.js && npx pnpm build",
+    "commit": "cz",
     "nx": "nx",
     "generate:provider": "npx hygen provider new",
     "lint": "nx run-many --target=lint --all",
