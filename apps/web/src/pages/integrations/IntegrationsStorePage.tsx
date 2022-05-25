@@ -119,9 +119,10 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
   return providers.map((providerItem) => {
     const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
 
-    const mappedCredentials = cloneDeep(providerItem.credentials);
-    if (integration?.credentials) {
-      mappedCredentials.forEach((credential) => {
+    const clonedCredentials = cloneDeep(providerItem.credentials);
+
+    if (integration?.credentials && Object.keys(clonedCredentials).length !== 0) {
+      clonedCredentials.forEach((credential) => {
         // eslint-disable-next-line no-param-reassign
         credential.value = integration.credentials[credential.key]?.toString();
       });
@@ -132,7 +133,7 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       integrationId: integration?._id ? integration._id : '',
       displayName: providerItem.displayName,
       channel: providerItem.channel,
-      credentials: integration?.credentials ? mappedCredentials : providerItem.credentials,
+      credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
       docReference: providerItem.docReference,
       comingSoon: !!providerItem.comingSoon,
       active: integration?.active ?? true,
