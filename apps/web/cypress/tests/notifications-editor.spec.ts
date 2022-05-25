@@ -5,7 +5,7 @@ describe('Notifications Creator', function () {
     cy.initializeSession().as('session');
   });
 
-  it('should not reset data when switching channel types', function () {
+  it.skip('should not reset data when switching channel types', function () {
     cy.visit('/templates/create');
     cy.getByTestId('add-channel').click({ force: true });
     cy.getByTestId('inAppAddChannel').click({ force: true });
@@ -27,7 +27,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('emailSubject').should('have.value', 'this is email subject');
   });
 
-  it('should create in-app notification', function () {
+  it.skip('should create in-app notification', function () {
     cy.visit('/templates/create');
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
@@ -65,7 +65,7 @@ describe('Notifications Creator', function () {
     cy.location('pathname').should('equal', '/templates');
   });
 
-  it('should create email notification', function () {
+  it.skip('should create email notification', function () {
     cy.visit('/templates/create');
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
@@ -109,7 +109,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('customVariable:');
   });
 
-  it('should create and edit group id', function () {
+  it.skip('should create and edit group id', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
 
@@ -129,7 +129,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
   });
 
-  it('should edit notification', function () {
+  it.skip('should edit notification', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.getByTestId('title').should('have.value', template.name);
@@ -152,7 +152,7 @@ describe('Notifications Creator', function () {
     });
   });
 
-  it('should update notification active status', function () {
+  it.skip('should update notification active status', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.getByTestId('active-toggle-switch').get('label').contains('Enabled');
@@ -163,7 +163,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('active-toggle-switch').get('label').contains('Disabled');
   });
 
-  it('should toggle active states of channels', function () {
+  it.skip('should toggle active states of channels', function () {
     cy.visit('/templates/create');
     // Enable email from button click
     cy.getByTestId('add-channel').click({ force: true });
@@ -189,7 +189,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('trigger-code-snippet').contains('test-event');
   });
 
-  it('should validate form inputs', function () {
+  it.skip('should validate form inputs', function () {
     cy.visit('/templates/create');
     cy.getByTestId('description').type('this is a notification template description');
     cy.getByTestId('submit-btn').click();
@@ -201,7 +201,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('settingsButton').getByTestId('error-circle').should('be.visible');
   });
 
-  it('should allow uploading a logo from email editor', function () {
+  it.skip('should allow uploading a logo from email editor', function () {
     cy.intercept(/.*organizations\/me.*/, (r) => {
       r.continue((res) => {
         if (res.body) {
@@ -220,14 +220,14 @@ describe('Notifications Creator', function () {
     cy.location('pathname').should('equal', '/settings');
   });
 
-  it('should show the brand logo on main page', function () {
+  it.skip('should show the brand logo on main page', function () {
     cy.visit('/templates/create');
     addChannel('email');
 
     cy.getByTestId('email-editor').getByTestId('brand-logo').should('have.attr', 'src', 'https://novu.co/img/logo.png');
   });
 
-  it('should support RTL text content', function () {
+  it.skip('should support RTL text content', function () {
     cy.visit('/templates/create');
     addChannel('email');
 
@@ -237,7 +237,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('editable-text-content').should('have.css', 'direction', 'rtl');
   });
 
-  it('should create an SMS channel message', function () {
+  it.skip('should create an SMS channel message', function () {
     cy.visit('/templates/create');
 
     fillBasicNotificationDetails('Test SMS Notification Title');
@@ -262,7 +262,7 @@ describe('Notifications Creator', function () {
     cy.location('pathname').should('equal', '/templates');
   });
 
-  it('should save HTML template email', function () {
+  it.skip('should save HTML template email', function () {
     cy.visit('/templates/create');
 
     fillBasicNotificationDetails('Custom Code HTML Notification Title');
@@ -281,7 +281,7 @@ describe('Notifications Creator', function () {
     cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
   });
 
-  it('should redirect to dev env for edit template', async function () {
+  it.skip('should redirect to dev env for edit template', async function () {
     cy.intercept('POST', '*/notification-templates').as('createTemplate');
     cy.visit('/templates/create');
 

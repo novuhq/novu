@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { UnstyledButton, Group, Popover } from '@mantine/core';
+import React from 'react';
+import { UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
-import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
 
@@ -10,17 +9,14 @@ interface IDragButtonProps {
   Icon: React.FC<any>;
   description: string;
   label: string;
-  tabKey?: string;
-  testId?: string;
-  readonly?: boolean;
 }
 
-export function DragButton({ description, tabKey, readonly = false, label, Icon, testId }: IDragButtonProps) {
-  const { cx, classes, theme } = useStyles();
+export function DragButton({ description, label, Icon }: IDragButtonProps) {
+  const { cx, classes } = useStyles();
 
   return (
     <>
-      <Button data-test-id={testId} className={cx(classes.button, { [classes.active]: false })}>
+      <Button className={cx(classes.button, { [classes.active]: false })}>
         <ButtonWrapper>
           <LeftContainerWrapper>
             <IconWrapper className={classes.linkIcon}>
@@ -69,6 +65,7 @@ const StyledContentWrapper = styled.div`
 const Button = styled(UnstyledButton)`
   position: relative;
   border: 1px dashed ${colors.B30} !important;
+  margin-bottom: 0;
 
   @media screen and (max-width: 1400px) {
     padding: 0 5px;
