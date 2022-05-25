@@ -6,7 +6,10 @@
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/novuhq/novu",
+  "repository": {
+    "url": "https://github.com/novuhq/novu",
+    "directory": "packages/nest"
+  },
   "license": "MIT",
   "keywords": [],
   "scripts": {
