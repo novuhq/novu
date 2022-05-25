@@ -6,6 +6,7 @@
       "always",
       [
         "build",
+        "try",
         "chore",
         "ci",
         "docs",
