@@ -7,8 +7,9 @@ importers:
       '@auto-it/jira': ^10.36.5
       '@auto-it/npm': ^10.36.5
       '@auto-it/released': ^10.36.5
-      '@commitlint/cli': 13.2.1
+      '@commitlint/cli': ^7.1.2
       '@commitlint/config-angular': ^13.2.0
+      '@commitlint/config-conventional': ^7.1.2
       '@hewmen/serverless-plugin-typescript': ^1.1.17
       '@nrwl/cli': 13.8.5
       '@nrwl/nx-cloud': ^13.2.1
@@ -36,7 +37,7 @@ importers:
       eslint-plugin-promise: ^4.3.1
       eslint-plugin-react: ^7.29.4
       eslint-plugin-react-hooks: ^4.4.0
-      husky: ^4.3.8
+      husky: ^8.0.1
       hygen: ^6.2.0
       jira-prepare-commit-msg: 1.5.2
       lerna: ^3.22.1
@@ -51,8 +52,9 @@ importers:
       '@auto-it/jira': 10.36.5_typescript@4.6.2
       '@auto-it/npm': 10.36.5_typescript@4.6.2
       '@auto-it/released': 10.36.5_typescript@4.6.2
-      '@commitlint/cli': 13.2.1
+      '@commitlint/cli': 7.6.1
       '@commitlint/config-angular': 13.2.0
+      '@commitlint/config-conventional': 7.6.0
       '@hewmen/serverless-plugin-typescript': 1.1.17
       '@nrwl/cli': 13.8.5
       '@nrwl/nx-cloud': 13.2.1
@@ -80,7 +82,7 @@ importers:
       eslint-plugin-promise: 4.3.1
       eslint-plugin-react: 7.29.4_eslint@7.32.0
       eslint-plugin-react-hooks: 4.4.0_eslint@7.32.0
-      husky: 4.3.8
+      husky: 8.0.1
       hygen: 6.2.0_d37e176331f0481457bd1f7cc05bf8df
       jira-prepare-commit-msg: 1.5.2
       lerna: 3.22.1
@@ -192,24 +194,24 @@ importers:
       '@nestjs/terminus': 7.2.0_b3355eaaab723e52e70bfca874d5ccb9
       '@nestjsx/crud': 4.6.2_d71f9d2eeeee42f14b4376bfe86f6f42
       '@novu/dal': link:../../libs/dal
-      '@novu/emailjs': link:../../providers/emailjs
-      '@novu/mailgun': link:../../providers/mailgun
-      '@novu/mailjet': link:../../providers/mailjet
-      '@novu/mandrill': link:../../providers/mandrill
-      '@novu/node': link:../../packages/node
-      '@novu/nodemailer': link:../../providers/nodemailer
-      '@novu/plivo': link:../../providers/plivo
-      '@novu/postmark': link:../../providers/postmark
-      '@novu/sendgrid': link:../../providers/sendgrid
-      '@novu/sendinblue': link:../../providers/sendinblue
-      '@novu/ses': link:../../providers/ses
-      '@novu/shared': link:../../libs/shared
-      '@novu/sms77': link:../../providers/sms77
-      '@novu/sns': link:../../providers/sns
-      '@novu/stateless': link:../../packages/stateless
-      '@novu/telnyx': link:../../providers/telnyx
+      '@novu/emailjs': 0.4.0
+      '@novu/mailgun': 0.4.0
+      '@novu/mailjet': 0.4.0
+      '@novu/mandrill': 0.4.0
+      '@novu/node': 0.4.0
+      '@novu/nodemailer': 0.4.0
+      '@novu/plivo': 0.4.0
+      '@novu/postmark': 0.4.0
+      '@novu/sendgrid': 0.4.0
+      '@novu/sendinblue': 0.4.0
+      '@novu/ses': 0.4.0
+      '@novu/shared': 0.4.0
+      '@novu/sms77': 0.4.0
+      '@novu/sns': 0.4.0
+      '@novu/stateless': 0.4.0
+      '@novu/telnyx': 0.4.0
       '@novu/testing': link:../../libs/testing
-      '@novu/twilio': link:../../providers/twilio
+      '@novu/twilio': 0.4.0
       '@sendgrid/mail': 7.6.2
       '@sentry/node': 6.19.3
       '@sentry/tracing': 6.19.3
@@ -373,8 +375,8 @@ importers:
       '@mantine/hooks': 4.1.0_react@17.0.2
       '@mantine/notifications': 4.1.0_93293bbf002a99ad91ad3839d1e8e057
       '@mantine/prism': 4.1.0_93293bbf002a99ad91ad3839d1e8e057
-      '@novu/notification-center': link:../../packages/notification-center
-      '@novu/shared': link:../../libs/shared
+      '@novu/notification-center': 0.4.0_b5d7bf22a7b46dd4876f0e926ab0c987
+      '@novu/shared': 0.4.0
       '@sentry/react': 6.19.3_react@17.0.2
       '@sentry/tracing': 6.19.3
       '@storybook/addon-docs': 6.4.19_4c915f8f28805f77f785ebb9e46e1088
@@ -506,8 +508,8 @@ importers:
       '@mantine/core': 4.1.0_02d449accd6af5de518c8e0232941003
       '@mantine/hooks': 4.1.0_react@17.0.2
       '@novu/embed': link:../../libs/embed
-      '@novu/notification-center': link:../../packages/notification-center
-      '@novu/shared': link:../../libs/shared
+      '@novu/notification-center': 0.4.0_363bbc5b3b2ec1146a689992546b4fa7
+      '@novu/shared': 0.4.0
       '@testing-library/jest-dom': 5.16.3
       '@testing-library/react': 11.2.7_react-dom@17.0.2+react@17.0.2
       '@testing-library/user-event': 12.8.3
@@ -610,7 +612,7 @@ importers:
       '@nestjs/terminus': 7.2.0_b3355eaaab723e52e70bfca874d5ccb9
       '@nestjs/websockets': 7.6.18_b3355eaaab723e52e70bfca874d5ccb9
       '@novu/dal': link:../../libs/dal
-      '@novu/shared': link:../../libs/shared
+      '@novu/shared': 0.4.0
       '@novu/testing': link:../../libs/testing
       '@sentry/node': 6.19.3
       bull: 4.8.1
@@ -731,7 +733,7 @@ importers:
       '@aws-sdk/client-s3': 3.58.0
       '@aws-sdk/s3-request-presigner': 3.58.0
       '@faker-js/faker': 6.1.1
-      '@novu/shared': link:../shared
+      '@novu/shared': 0.4.0
       '@octokit/graphql': 4.8.0
       '@sendgrid/mail': 7.6.2
       agenda: 4.2.1
@@ -901,8 +903,8 @@ importers:
     dependencies:
       '@faker-js/faker': 6.1.1
       '@novu/dal': link:../dal
-      '@novu/node': link:../../packages/node
-      '@novu/shared': link:../shared
+      '@novu/node': 0.4.0
+      '@novu/shared': 0.4.0
       async: 3.2.3
       axios: 0.25.0
       class-transformer: 0.5.1
@@ -960,7 +962,7 @@ importers:
       ora: 5.4.1
       ts-node: 10.7.0_c102720f6450b26bef39f1c77b6d5775
     devDependencies:
-      '@novu/shared': link:../../libs/shared
+      '@novu/shared': 0.4.0
       '@types/configstore': 5.0.1
       '@types/inquirer': 8.2.1
       nodemon: 2.0.15
@@ -987,7 +989,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@nestjs/common': 8.4.3
-      '@novu/stateless': link:../stateless
+      '@novu/stateless': 0.4.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1085,7 +1087,7 @@ importers:
     dependencies:
       '@mantine/core': 4.1.0_4d192729acfe05446ba0990b0215f509
       '@mantine/hooks': 4.1.4
-      '@novu/shared': link:../../libs/shared
+      '@novu/shared': 0.4.0
       acorn-jsx: 5.3.2
       axios: 0.26.1
       chroma-js: 2.4.2
@@ -1180,7 +1182,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       emailjs: 3.8.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1219,7 +1221,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       mailersend: 1.3.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1260,7 +1262,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       form-data: 4.0.0
       mailgun.js: 3.7.3
       nock: 13.2.4
@@ -1302,7 +1304,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       node-mailjet: 3.3.7
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1344,7 +1346,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@mailchimp/mailchimp_transactional': 1.0.47
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1383,7 +1385,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       '@vonage/server-sdk': 2.10.11
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1423,7 +1425,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       nodemailer: 6.7.3
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1463,7 +1465,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       plivo: 4.29.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1502,7 +1504,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       postmark: 2.9.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1541,7 +1543,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       '@sendgrid/mail': 7.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1581,7 +1583,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       '@sendinblue/client': 3.1.0
       '@types/request': 2.48.8
     devDependencies:
@@ -1624,7 +1626,7 @@ importers:
       typescript: ^4.4.3
     dependencies:
       '@aws-sdk/client-ses': 3.48.0
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       emailjs: 3.7.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1665,7 +1667,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       node-fetch: 2.6.7
       sms77-client: 2.17.0_node-fetch@2.6.7
     devDependencies:
@@ -1706,7 +1708,7 @@ importers:
       typedoc: ^0.19.0
     dependencies:
       '@aws-sdk/client-sns': 3.58.0
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/jest': 27.4.0
@@ -1744,7 +1746,7 @@ importers:
       ts-node: ^9.0.0
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       telnyx: 1.23.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -1783,7 +1785,7 @@ importers:
       twilio: ^3.67.2
       typedoc: ^0.19.0
     dependencies:
-      '@novu/stateless': link:../../packages/stateless
+      '@novu/stateless': 0.4.0
       twilio: 3.76.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -7066,22 +7068,6 @@ packages:
     engines: {node: '>=0.1.90'}
     dev: true
 
-  /@commitlint/cli/13.2.1:
-    resolution: {integrity: sha512-JGzYk2ay5JkRS5w+FLQzr0u/Kih52ds4HPpa3vnwVOQN8Q+S1VYr8Nk/6kRm6uNYsAcC1nejtuDxRdLcLh/9TA==}
-    engines: {node: '>=v12'}
-    hasBin: true
-    dependencies:
-      '@commitlint/format': 13.2.0
-      '@commitlint/lint': 13.2.0
-      '@commitlint/load': 13.2.1
-      '@commitlint/read': 13.2.0
-      '@commitlint/types': 13.2.0
-      lodash: 4.17.21
-      resolve-from: 5.0.0
-      resolve-global: 1.0.0
-      yargs: 17.4.0
-    dev: true
-
   /@commitlint/cli/7.6.1:
     resolution: {integrity: sha512-HEJwQ/aK0AOcAwn77ZKbb/GZhlGxBSPhtVp07uoJFVqM12l2Ia2JHA+MTpfHCFdVahKyYGREZgxde6LyKyG8aQ==}
     engines: {node: '>=4'}
@@ -7125,24 +7111,11 @@ packages:
     dev: true
     optional: true
 
-  /@commitlint/ensure/13.2.0:
-    resolution: {integrity: sha512-rqhT62RehdLTRBu8OrPHnRCCd/7RmHEE4TiTlT4BLlr5ls5jlZhecOQWJ8np872uCNirrJ5NFjnjYYdbkNoW9Q==}
-    engines: {node: '>=v12'}
-    dependencies:
-      '@commitlint/types': 13.2.0
-      lodash: 4.17.21
-    dev: true
-
   /@commitlint/ensure/7.6.0:
     resolution: {integrity: sha512-pSUrNud5L/8y+cLWo3LEa8Ce4bAAR33xMderFUhuNPHj7TwpNS7L4ROMnhL4ZlCYRazCRDlnPaJLPikMoWThfA==}
     engines: {node: '>=4'}
     dependencies:
       lodash: 4.17.11
-    dev: true
-
-  /@commitlint/execute-rule/13.2.0:
-    resolution: {integrity: sha512-6nPwpN0hwTYmsH3WM4hCdN+NrMopgRIuQ0aqZa+jnwMoS/g6ljliQNYfL+m5WO306BaIu1W3yYpbW5aI8gEr0g==}
-    engines: {node: '>=v12'}
     dev: true
 
   /@commitlint/execute-rule/16.2.1:
@@ -7158,14 +7131,6 @@ packages:
       babel-runtime: 6.26.0
     dev: true
 
-  /@commitlint/format/13.2.0:
-    resolution: {integrity: sha512-yNBQJe6YFhM1pJAta4LvzQxccSKof6axJH7ALYjuhQqfT8AKlad7Y/2SuJ07ioyreNIqwOTuF2UfU8yJ7JzEIQ==}
-    engines: {node: '>=v12'}
-    dependencies:
-      '@commitlint/types': 13.2.0
-      chalk: 4.1.2
-    dev: true
-
   /@commitlint/format/7.6.1:
     resolution: {integrity: sha512-Ldzf5N2Sr9RQqvlYwaQn4vz1WOZ7byYinspC/WCrbfcETGy28j7QE4OueZU6nNB9TjwwEorKm13uy7tDWPR7dg==}
     engines: {node: '>=4'}
@@ -7174,29 +7139,11 @@ packages:
       chalk: 2.4.2
     dev: true
 
-  /@commitlint/is-ignored/13.2.0:
-    resolution: {integrity: sha512-onnx4WctHFPPkHGFFAZBIWRSaNwuhixIIfbwPhcZ6IewwQX5n4jpjwM1GokA7vhlOnQ57W7AavbKUGjzIVtnRQ==}
-    engines: {node: '>=v12'}
-    dependencies:
-      '@commitlint/types': 13.2.0
-      semver: 7.3.5
-    dev: true
-
   /@commitlint/is-ignored/7.6.0:
     resolution: {integrity: sha512-By/mLNhz+6Rtix9+Kyof1gdKiELchAnQHpdeKIHIOe9sjbvd3HqDoFHh/mGMMRnGIPMZOX5TO8Fqy3A/2HqlTw==}
     engines: {node: '>=4'}
     dependencies:
       semver: 6.0.0
-    dev: true
-
-  /@commitlint/lint/13.2.0:
-    resolution: {integrity: sha512-5XYkh0e9ehHjA7BxAHFpjPgr1qqbFY8OFG1wpBiAhycbYBtJnQmculA2wcwqTM40YCUBqEvWFdq86jTG8fbkMw==}
-    engines: {node: '>=v12'}
-    dependencies:
-      '@commitlint/is-ignored': 13.2.0
-      '@commitlint/parse': 13.2.0
-      '@commitlint/rules': 13.2.0
-      '@commitlint/types': 13.2.0
     dev: true
 
   /@commitlint/lint/7.6.0:
@@ -7208,21 +7155,6 @@ packages:
       '@commitlint/rules': 7.6.0
       babel-runtime: 6.26.0
       lodash: 4.17.11
-    dev: true
-
-  /@commitlint/load/13.2.1:
-    resolution: {integrity: sha512-qlaJkj0hfa9gtWRfCfbgFBTK3GYQRmjZhba4l9mUu4wV9lEZ4ICFlrLtd/8kaLXf/8xbrPhkAPkVFOAqM0YwUQ==}
-    engines: {node: '>=v12'}
-    dependencies:
-      '@commitlint/execute-rule': 13.2.0
-      '@commitlint/resolve-extends': 13.2.0
-      '@commitlint/types': 13.2.0
-      '@endemolshinegroup/cosmiconfig-typescript-loader': 3.0.2_ec5c0ebd3030a0a5109338876648df1b
-      chalk: 4.1.2
-      cosmiconfig: 7.0.1
-      lodash: 4.17.21
-      resolve-from: 5.0.0
-      typescript: 4.6.3
     dev: true
 
   /@commitlint/load/16.2.3:
@@ -7259,23 +7191,9 @@ packages:
       resolve-from: 5.0.0
     dev: true
 
-  /@commitlint/message/13.2.0:
-    resolution: {integrity: sha512-+LlErJj2F2AC86xJb33VJIvSt25xqSF1I0b0GApSgoUtQBeJhx4SxIj1BLvGcLVmbRmbgTzAFq/QylwLId7EhA==}
-    engines: {node: '>=v12'}
-    dev: true
-
   /@commitlint/message/7.6.0:
     resolution: {integrity: sha512-PtP4jhBYGXLaQQC5jel+RQczG2tS3Cy6rRxQioUfCUaEg/LV029ao/KcL1kHEBJ8hSW/SUmnvDaD9Y6nozLQMA==}
     engines: {node: '>=4'}
-    dev: true
-
-  /@commitlint/parse/13.2.0:
-    resolution: {integrity: sha512-AtfKSQJQADbDhW+kuC5PxOyBANsYCuuJlZRZ2PYslOz2rvWwZ93zt+nKjM4g7C9ETbz0uq4r7/EoOsTJ2nJqfQ==}
-    engines: {node: '>=v12'}
-    dependencies:
-      '@commitlint/types': 13.2.0
-      conventional-changelog-angular: 5.0.13
-      conventional-commits-parser: 3.2.4
     dev: true
 
   /@commitlint/parse/7.6.0:
@@ -7287,16 +7205,6 @@ packages:
       lodash: 4.17.21
     dev: true
 
-  /@commitlint/read/13.2.0:
-    resolution: {integrity: sha512-7db5e1Bn3re6hQN0SqygTMF/QX6/MQauoJn3wJiUHE93lvwO6aFQxT3qAlYeyBPwfWsmDz/uSH454jtrSsv3Uw==}
-    engines: {node: '>=v12'}
-    dependencies:
-      '@commitlint/top-level': 13.2.0
-      '@commitlint/types': 13.2.0
-      fs-extra: 10.0.1
-      git-raw-commits: 2.0.11
-    dev: true
-
   /@commitlint/read/7.6.0:
     resolution: {integrity: sha512-OyligtK/e4xnQklrQqTcSMM27eNhq+LqXfoeVouuPx059oDEw9wZYNN4HGzyxs4Pb6GdMpzRHLdeMQ24M+AiYw==}
     engines: {node: '>=4'}
@@ -7305,16 +7213,6 @@ packages:
       '@marionebl/sander': 0.6.1
       babel-runtime: 6.26.0
       git-raw-commits: 1.3.6
-    dev: true
-
-  /@commitlint/resolve-extends/13.2.0:
-    resolution: {integrity: sha512-HLCMkqMKtvl1yYLZ1Pm0UpFvd0kYjsm1meLOGZ7VkOd9G/XX+Fr1S2G5AT2zeiDw7WUVYK8lGVMNa319bnV+aw==}
-    engines: {node: '>=v12'}
-    dependencies:
-      import-fresh: 3.3.0
-      lodash: 4.17.21
-      resolve-from: 5.0.0
-      resolve-global: 1.0.0
     dev: true
 
   /@commitlint/resolve-extends/16.2.1:
@@ -7341,17 +7239,6 @@ packages:
       resolve-global: 1.0.0
     dev: true
 
-  /@commitlint/rules/13.2.0:
-    resolution: {integrity: sha512-O3A9S7blOzvHfzrJrUQe9JxdtGy154ol/GXHwvd8WfMJ10y5ryBB4b6+0YZ1XhItWzrEASOfOKbD++EdLV90dQ==}
-    engines: {node: '>=v12'}
-    dependencies:
-      '@commitlint/ensure': 13.2.0
-      '@commitlint/message': 13.2.0
-      '@commitlint/to-lines': 13.2.0
-      '@commitlint/types': 13.2.0
-      execa: 5.1.1
-    dev: true
-
   /@commitlint/rules/7.6.0:
     resolution: {integrity: sha512-shLJdMUwdVeE5UgOE8E+c+PFS7+0FFGfheMa3s6ZK+xX8pTUxseXZu9iCF4mwF+WWkVk518xPuNLvmYE96salQ==}
     engines: {node: '>=4'}
@@ -7362,21 +7249,9 @@ packages:
       babel-runtime: 6.26.0
     dev: true
 
-  /@commitlint/to-lines/13.2.0:
-    resolution: {integrity: sha512-ZfWZix2y/CzewReCrj5g0nKOEfj5HW9eBMDrqjJJMPApve00CWv0tYrFCGXuGlv244lW4uvWJt6J/0HLRWsfyg==}
-    engines: {node: '>=v12'}
-    dev: true
-
   /@commitlint/to-lines/7.6.0:
     resolution: {integrity: sha512-L/Vl5ThRuBHnSNZBtc+p2LCs2ayxWodC+I/X3NKUywSmr6kKpJJCFqHHHqPu+yXwGUPwqCMQhogIGLuv9TtWWw==}
     engines: {node: '>=4'}
-    dev: true
-
-  /@commitlint/top-level/13.2.0:
-    resolution: {integrity: sha512-knBvWYbIq6VV6VPHrVeDsxDiJq4Zq6cv5NIYU3iesKAsmK2KlLfsZPa+Ig96Y4AqAPU3zNJwjHxYkz9qxdBbfA==}
-    engines: {node: '>=v12'}
-    dependencies:
-      find-up: 5.0.0
     dev: true
 
   /@commitlint/top-level/7.6.0:
@@ -7384,13 +7259,6 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       find-up: 2.1.0
-    dev: true
-
-  /@commitlint/types/13.2.0:
-    resolution: {integrity: sha512-RRVHEqmk1qn/dIaSQhvuca6k/6Z54G+r/KyimZ8gnAFielGiGUpsFRhIY3qhd5rXClVxDaa3nlcyTWckSccotQ==}
-    engines: {node: '>=v12'}
-    dependencies:
-      chalk: 4.1.2
     dev: true
 
   /@commitlint/types/16.2.1:
@@ -8815,21 +8683,6 @@ packages:
       - typescript
     dev: true
 
-  /@endemolshinegroup/cosmiconfig-typescript-loader/3.0.2_ec5c0ebd3030a0a5109338876648df1b:
-    resolution: {integrity: sha512-QRVtqJuS1mcT56oHpVegkKBlgtWjXw/gHNWO3eL9oyB5Sc7HBoc2OLG/nYpVfT/Jejvo3NUrD0Udk7XgoyDKkA==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      cosmiconfig: '>=6'
-    dependencies:
-      cosmiconfig: 7.0.1
-      lodash.get: 4.4.2
-      make-error: 1.3.6
-      ts-node: 9.1.1_typescript@4.6.3
-      tslib: 2.3.1
-    transitivePeerDependencies:
-      - typescript
-    dev: true
-
   /@eslint/eslintrc/0.4.3:
     resolution: {integrity: sha512-J6KFFz5QCYUJq3pf0mjEcCJVERbzv71PUIDczuh9JkwGEzced6CO5ADLHB1rbf/+oPBtoPfMYNOpGDzCANlbXw==}
     engines: {node: ^10.12.0 || >=12.0.0}
@@ -9642,7 +9495,7 @@ packages:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 14.18.12
+      '@types/node': 17.0.23
       '@types/yargs': 16.0.4
       chalk: 4.1.2
 
@@ -10409,6 +10262,27 @@ packages:
       - '@types/react'
     dev: false
 
+  /@mantine/core/4.1.0_31204a92367c53f8fb2ad5ad5fab4ae4:
+    resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
+    peerDependencies:
+      '@mantine/hooks': 4.1.0
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      '@mantine/hooks': 4.1.4_react@17.0.2
+      '@mantine/styles': 4.1.0_b5d7bf22a7b46dd4876f0e926ab0c987
+      '@popperjs/core': 2.11.4
+      '@radix-ui/react-scroll-area': 0.1.4_react@17.0.2
+      clsx: 1.1.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      react-popper: 2.2.5_2e9dd80dbd4df675244d857293d4c5b0
+      react-textarea-autosize: 8.3.3_03a98942b76c57740a9573edba2d1cc1
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/react'
+    dev: false
+
   /@mantine/core/4.1.0_4d192729acfe05446ba0990b0215f509:
     resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
     peerDependencies:
@@ -10423,6 +10297,27 @@ packages:
       clsx: 1.1.1
       react-popper: 2.2.5_@popperjs+core@2.11.4
       react-textarea-autosize: 8.3.3_@types+react@17.0.43
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/react'
+    dev: false
+
+  /@mantine/core/4.1.0_f7b2f94195fb65e4b6a7b6c8cda7d03b:
+    resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
+    peerDependencies:
+      '@mantine/hooks': 4.1.0
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      '@mantine/hooks': 4.1.4_react@17.0.2
+      '@mantine/styles': 4.1.0_363bbc5b3b2ec1146a689992546b4fa7
+      '@popperjs/core': 2.11.4
+      '@radix-ui/react-scroll-area': 0.1.4_react@17.0.2
+      clsx: 1.1.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      react-popper: 2.2.5_2e9dd80dbd4df675244d857293d4c5b0
+      react-textarea-autosize: 8.3.3_18ce5b4fa2aac98ae1c6ad949e4591be
     transitivePeerDependencies:
       - '@babel/core'
       - '@types/react'
@@ -10455,6 +10350,14 @@ packages:
     resolution: {integrity: sha512-1pcajF7gaSY0sUp9klqt7Y/gPIfTnHamkuefd8UctHMNBP25QdValAT1XGYfmHKIXeljZi7ow6O6dhsK9C8X2A==}
     peerDependencies:
       react: '>=16.8.0'
+    dev: false
+
+  /@mantine/hooks/4.1.4_react@17.0.2:
+    resolution: {integrity: sha512-1pcajF7gaSY0sUp9klqt7Y/gPIfTnHamkuefd8UctHMNBP25QdValAT1XGYfmHKIXeljZi7ow6O6dhsK9C8X2A==}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 17.0.2
     dev: false
 
   /@mantine/notifications/4.1.0_93293bbf002a99ad91ad3839d1e8e057:
@@ -10563,7 +10466,7 @@ packages:
     dev: false
 
   /@marionebl/sander/0.6.1:
-    resolution: {integrity: sha1-GViWWHTyS8Ub5Ih1/rUNZC/EH3s=}
+    resolution: {integrity: sha512-7f3zZddAk92G1opoX/glbDO6YbrzmMAJAw0RJAcvunnV7sR4L9llyBUAABptKoF1Jf37UQ1QTJy5p2H4J4rBNA==}
     dependencies:
       graceful-fs: 4.2.9
       mkdirp: 0.5.6
@@ -11197,6 +11100,255 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.13.0
+
+  /@novu/emailjs/0.4.0:
+    resolution: {integrity: sha512-lGIezGpDAEMRkZ5HgZMcWgMMAmkVXFUA/wq0pVc3NG+sOd23sbniWdsz5NzdcZkeEOMqPZ3/6Oj8Kh95ZaW+yQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      emailjs: 3.8.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/mailgun/0.4.0:
+    resolution: {integrity: sha512-zM9NQn5qHVxZmpfUq36BcUa06cHjKST3foF5R7NUSCy6DMsE47kZ7bw/zbp8L5HCq/7IoIIN34KewDe5AYPBbA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      form-data: 4.0.0
+      mailgun.js: 3.7.3
+      nock: 13.2.4
+    transitivePeerDependencies:
+      - debug
+      - domexception
+      - supports-color
+    dev: false
+
+  /@novu/mailjet/0.4.0:
+    resolution: {integrity: sha512-aBBN02Vu9+/XR7p8z6ygJLG2zOzGfRb41CyMHPS3WhAWlT8bQNZZsDpIadquDVmo1jY5a+fAppZipnwvZB/DEA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      node-mailjet: 3.3.7
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
+  /@novu/mandrill/0.4.0:
+    resolution: {integrity: sha512-ZzC6E2MZ4GRKGEWQxRqQGNjzjEE3P0vPFBIAPI2yeJREpSrK2fR0lDQK8eYJk5JisMynnIDnSb8rWhYQnLVomw==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@mailchimp/mailchimp_transactional': 1.0.47
+      '@novu/stateless': 0.4.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/node/0.4.0:
+    resolution: {integrity: sha512-Ph0JKTs1GjcxoIHWaeY83Rx/hBkwaIbJnEcHWQ1ndVLpOGIZ2IhbOdzXGzJI+q5EhVAcTd9rLNKOdI9PxYNeqQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      axios: 0.26.1
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/nodemailer/0.4.0:
+    resolution: {integrity: sha512-U76fbRQNkhdpyRRXJxqWlHiDC9odH595xOl+zt9w3hwlSIje5/hJba5az+d6bkCy/F/7VWCVqK82Z7Uk1Yp4Hg==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      nodemailer: 6.7.3
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/notification-center/0.4.0_363bbc5b3b2ec1146a689992546b4fa7:
+    resolution: {integrity: sha512-AMDu3G1kyZIUN124gSno2IsgwjYXKiRax9A/KivlPJ1ZlcYQQ6Ale5NspCWkWDCIqct2qexRk4midO7pv7rYsQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      '@mantine/core': 4.1.0_f7b2f94195fb65e4b6a7b6c8cda7d03b
+      '@mantine/hooks': 4.1.4_react@17.0.2
+      '@novu/shared': 0.4.0
+      acorn-jsx: 5.3.2
+      axios: 0.26.1
+      chroma-js: 2.4.2
+      moment: 2.29.1
+      react: 17.0.2
+      react-infinite-scroll-component: 6.1.0_react@17.0.2
+      react-query: 3.34.19_react-dom@17.0.2+react@17.0.2
+      rollup-plugin-node-externals: 4.0.0
+      socket.io-client: 2.3.1
+      styled-components: 5.3.5_react-dom@17.0.2+react@17.0.2
+      webfontloader: 1.6.28
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/react'
+      - acorn
+      - debug
+      - react-dom
+      - react-is
+      - react-native
+      - rollup
+      - supports-color
+    dev: false
+
+  /@novu/notification-center/0.4.0_b5d7bf22a7b46dd4876f0e926ab0c987:
+    resolution: {integrity: sha512-AMDu3G1kyZIUN124gSno2IsgwjYXKiRax9A/KivlPJ1ZlcYQQ6Ale5NspCWkWDCIqct2qexRk4midO7pv7rYsQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      '@mantine/core': 4.1.0_31204a92367c53f8fb2ad5ad5fab4ae4
+      '@mantine/hooks': 4.1.4_react@17.0.2
+      '@novu/shared': 0.4.0
+      acorn-jsx: 5.3.2
+      axios: 0.26.1
+      chroma-js: 2.4.2
+      moment: 2.29.1
+      react: 17.0.2
+      react-infinite-scroll-component: 6.1.0_react@17.0.2
+      react-query: 3.34.19_react-dom@17.0.2+react@17.0.2
+      rollup-plugin-node-externals: 4.0.0
+      socket.io-client: 2.3.1
+      styled-components: 5.3.5_react-dom@17.0.2+react@17.0.2
+      webfontloader: 1.6.28
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/react'
+      - acorn
+      - debug
+      - react-dom
+      - react-is
+      - react-native
+      - rollup
+      - supports-color
+    dev: false
+
+  /@novu/plivo/0.4.0:
+    resolution: {integrity: sha512-s4R4KIcohyGDDB6MSyfjF9b1j3fRUVP/VmWywvlFJ60tveBKFpMmKqwOzADYvj0pz+NNj9o6M/fIbZMWU4x7rg==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      plivo: 4.29.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
+  /@novu/postmark/0.4.0:
+    resolution: {integrity: sha512-ZeR0BfLxAT+lpHCP1JB3Ip1gPiIPn9368yoXOjFpCGbVC1QhmvOe4MYiOyQIRFsd4Cf+qaIGq4La3PhXr44Tng==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      postmark: 2.9.5
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/sendgrid/0.4.0:
+    resolution: {integrity: sha512-4PAdBxqPQH8k7U5J+dH/iWu0SACrwTYA0U9AMXtcdEVO/9lc/obWX2jjiuDIAh+2Gpsd+CH6KE9oAhutFo6E7A==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      '@sendgrid/mail': 7.6.2
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/sendinblue/0.4.0:
+    resolution: {integrity: sha512-Wjrh32wAixSaCs/4guB5z9FtlTiArwBBH4FWKCKr6N5WfuksQJQKRc2u7VQZ5/eg9s4L0MjWvi1w+imK1YDVCw==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      '@sendinblue/client': 3.1.0
+      '@types/request': 2.48.8
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/ses/0.4.0:
+    resolution: {integrity: sha512-2xf4a/3arbxgBC6fqPpR2Pggni36G4nYjgmzwLrFqcnjDwQAE6HcRLbuoX7Gnd7NJ7Iyr8FpM24iTyD5WqyFgw==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@aws-sdk/client-ses': 3.48.0
+      '@novu/stateless': 0.4.0
+      emailjs: 3.7.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/shared/0.4.0:
+    resolution: {integrity: sha512-fKLU1o9Cu1AXAYpj9wFZEsGtIn31oWAVhHOffnpmPXtnmUmL53yIyhQeRTl1IUSKg4legjC0BgyxXn4E/MJefQ==}
+    dependencies:
+      axios: 0.26.1
+      class-transformer: 0.5.1
+      class-validator: 0.9.1
+      mixpanel: 0.13.0
+      typescript: 4.1.3
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  /@novu/sms77/0.4.0:
+    resolution: {integrity: sha512-G0xsAWR+B3WUeDuognZGOXmCTalJzohgbrfzm3LQmTb9xa1ip8HaFn7n5L0/8Jrhz8E+Ysxdf52i1BQwVL5ozA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      node-fetch: 2.6.7
+      sms77-client: 2.17.0_node-fetch@2.6.7
+    transitivePeerDependencies:
+      - debug
+      - encoding
+    dev: false
+
+  /@novu/sns/0.4.0:
+    resolution: {integrity: sha512-yg0iA5/C2RWyurWCozGc71O7QkOWaDyDoAY9jiUdJZeIE7ehP2wReBYsfpz4hmhwdNK0ZcmIoIdVCSvtlrzJfA==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@aws-sdk/client-sns': 3.58.0
+      '@novu/stateless': 0.4.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/stateless/0.4.0:
+    resolution: {integrity: sha512-el6tq/l1O8vjoB9z4htBYnpicNxyo2pNnqtgdzyoR/uqCRhV0Gua9Hvn5UVoK46WBLrAH+3Xu24xVAGaoHZjYw==}
+    engines: {node: '>=10'}
+    dependencies:
+      axios: 0.26.1
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/telnyx/0.4.0:
+    resolution: {integrity: sha512-0UZxJnAPsjxyXxqF8F2mCxp+6DZEUHaYPU7R515wX2o+lFG/1MAy+6QhLwlMZgtKdMXa+NIkRrFnJWSptLu9Dg==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      telnyx: 1.23.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@novu/twilio/0.4.0:
+    resolution: {integrity: sha512-PlxQP6PL2MUCqfc/4ZHsUZXNWxO4Wjjiu9oBuAYo3YW0TTZOjPv/04uWIIf8ActfQXFphoX7r0PLCiV+CuZrmQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      '@novu/stateless': 0.4.0
+      twilio: 3.76.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@npmcli/fs/1.1.1:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}
@@ -18912,7 +19064,7 @@ packages:
     engines: {node: '>=6'}
 
   /ansi-escapes/1.4.0:
-    resolution: {integrity: sha1-06ioOzGapneTZisT52HHkRQiMG4=}
+    resolution: {integrity: sha512-wiXutNjDUlNEDWHcYH3jtZUhd3c4/VojassD8zHdHCY13xbZy2XbW+NKQwA0tWGBVzDA9qEzYwfoSsWmviidhw==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -18939,7 +19091,7 @@ packages:
     dev: false
 
   /ansi-regex/2.1.1:
-    resolution: {integrity: sha1-w7M6te42DYbg5ijwRorn7yfWVN8=}
+    resolution: {integrity: sha512-TIGnTpdo+E3+pCyAluZvtED5p5wCqLdezCyhPZzKPcxvFplEt4i+W7OONCKgeZFT3+y5NZZfOOS/Bdcanm1MYA==}
     engines: {node: '>=0.10.0'}
 
   /ansi-regex/3.0.1:
@@ -18961,7 +19113,7 @@ packages:
     dev: false
 
   /ansi-styles/2.2.1:
-    resolution: {integrity: sha1-tDLdM1i2NM914eRmQ2gkBTPB3b4=}
+    resolution: {integrity: sha512-kmCevFghRiWM7HB5zTPULl4r9bVFSWjz62MhqizDGUrq2NWuNMQyuv4tHHoKJHs69M/MF64lEcHdYIocrdWQYA==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -19597,7 +19749,7 @@ packages:
     dev: true
 
   /array-find-index/1.0.2:
-    resolution: {integrity: sha1-3wEKoSh+Fku9pvlyOwqWoexBh6E=}
+    resolution: {integrity: sha512-M1HQyIXcBGtVywBt8WVdim+lrNaK7VHp99Qt5pSNziXznKHViIBbXWtfRTpEFpF/c4FdfxNAsCCwPp5phBYJtw==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -19613,7 +19765,7 @@ packages:
     dev: false
 
   /array-ify/1.0.0:
-    resolution: {integrity: sha1-nlKHYrSpBmrRY6aWKjZEGOlibs4=}
+    resolution: {integrity: sha512-c5AMf34bKdvPhQ7tBGhqkgKNUzMr4WUs+WDtC2ZUGOUncbxKMTvqxYctiseW3+L4bA8ec+GcZ6/A/FW4m8ukng==}
     dev: true
 
   /array-includes/3.1.4:
@@ -19688,7 +19840,7 @@ packages:
     dev: false
 
   /arrify/1.0.1:
-    resolution: {integrity: sha1-iYUI2iIm84DfkEcoRWhJwVAaSw0=}
+    resolution: {integrity: sha512-3CYzex9M9FGQjCGMGyi6/31c8GJbgb0qGyrx5HWxPd0aCwh4cB2YjMb2Xf9UuoogrMrlO9cTqnB5rI5GHZTcUA==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -20713,7 +20865,7 @@ packages:
     dev: true
 
   /braces/1.8.5:
-    resolution: {integrity: sha1-uneWLhLf+WnWt2cR6RS3N4V79qc=}
+    resolution: {integrity: sha512-xU7bpz2ytJl1bH9cgIurjpg/n8Gohy9GTw81heDYLJQ4RU60dlyJsa+atVF2pI0yMMvKxI9HkKwjePCj5XI1hw==}
     engines: {node: '>=0.10.0'}
     dependencies:
       expand-range: 1.8.2
@@ -21141,19 +21293,19 @@ packages:
     resolution: {integrity: sha1-JtII6onje1y95gJQoV8DHBak1ms=}
 
   /caller-callsite/2.0.0:
-    resolution: {integrity: sha1-hH4PzgoiN1CpoCfFSzNzGtMVQTQ=}
+    resolution: {integrity: sha512-JuG3qI4QOftFsZyOn1qq87fq5grLIyk1JYd5lJmdA+fG7aQ9pA/i3JIJGcO3q0MrRcHlOt1U+ZeHW8Dq9axALQ==}
     engines: {node: '>=4'}
     dependencies:
       callsites: 2.0.0
 
   /caller-path/2.0.0:
-    resolution: {integrity: sha1-Ro+DBE42mrIBD6xfBs7uFbsssfQ=}
+    resolution: {integrity: sha512-MCL3sf6nCSXOwCTzvPKhN18TU7AHTvdtam8DAogxcrJ8Rjfbbg7Lgng64H9Iy+vUV6VGFClN/TyxBkAebLRR4A==}
     engines: {node: '>=4'}
     dependencies:
       caller-callsite: 2.0.0
 
   /callsites/2.0.0:
-    resolution: {integrity: sha1-BuuE8A7qQT2oav/vrL/7Ngk7PFA=}
+    resolution: {integrity: sha512-ksWePWBloaWPxJYQ8TL0JHvtci6G5QTKwQ95RcWAa/lzoAKuAOflGdAK92hpHXjkwb8zLxoLNUoNYZgVsaJzvQ==}
     engines: {node: '>=4'}
 
   /callsites/3.1.0:
@@ -21178,7 +21330,7 @@ packages:
     engines: {node: '>= 6'}
 
   /camelcase-keys/2.1.0:
-    resolution: {integrity: sha1-MIvur/3ygRkFHvodkyITyRuPkuc=}
+    resolution: {integrity: sha512-bA/Z/DERHKqoEOrp+qeGKw1QlvEQkGZSc0XaY6VnTxZr+Kv1G5zFwttpjv8qxZ/sBPT4nthwZaAcsAZTJlSKXQ==}
     engines: {node: '>=0.10.0'}
     dependencies:
       camelcase: 2.1.1
@@ -21186,7 +21338,7 @@ packages:
     dev: true
 
   /camelcase-keys/4.2.0:
-    resolution: {integrity: sha1-oqpfsa9oh1glnDLBQUJteJI7m3c=}
+    resolution: {integrity: sha512-Ej37YKYbFUI8QiYlvj9YHb6/Z60dZyPJW0Cs8sFilMbd2lP0bw3ylAq9yJkK4lcTA2dID5fG8LjmJYbO7kWb7Q==}
     engines: {node: '>=4'}
     dependencies:
       camelcase: 4.1.0
@@ -21204,12 +21356,12 @@ packages:
     dev: true
 
   /camelcase/2.1.1:
-    resolution: {integrity: sha1-fB0W1nmhu+WcoCys7PsBHiAfWh8=}
+    resolution: {integrity: sha512-DLIsRzJVBQu72meAKPkWQOLcujdXT32hwdfnkI1frSiSRMK1MofjKHf+MEx0SB6fjEFXL8fBDv1dKymBlOp4Qw==}
     engines: {node: '>=0.10.0'}
     dev: true
 
   /camelcase/4.1.0:
-    resolution: {integrity: sha1-1UVjW+HjPFQmScaRc+Xeas+uNN0=}
+    resolution: {integrity: sha512-FxAv7HpHrXbh3aPo4o2qxHay2lkLY3x5Mw3KeE4KQE8ysVfziWeRZDwcjauvwBSGEC/nXUPzZy8zeh4HokqOnw==}
     engines: {node: '>=4'}
     dev: true
 
@@ -21285,7 +21437,7 @@ packages:
     dev: true
 
   /chalk/1.1.3:
-    resolution: {integrity: sha1-qBFcVeSnAv5NFQq9OHKCKn4J/Jg=}
+    resolution: {integrity: sha512-U3lRVLMSlsCfjqYPbLyVv11M9CPW4I728d6TCKMAOJueEeB9/8o+eSsMnxPJD+Q+K909sdESg7C+tIkoH6on1A==}
     engines: {node: '>=0.10.0'}
     dependencies:
       ansi-styles: 2.2.1
@@ -21543,7 +21695,6 @@ packages:
 
   /class-transformer/0.5.1:
     resolution: {integrity: sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw==}
-    dev: false
 
   /class-utils/0.3.6:
     resolution: {integrity: sha512-qOhPa/Fj7s6TY8H8esGu5QNpMMQxz79h+urzrNYN6mn+9BnxlDGf5QZ+XeCDsxSjPqsSR56XOZOJmpeurnLMeg==}
@@ -21568,7 +21719,6 @@ packages:
     dependencies:
       google-libphonenumber: 3.2.27
       validator: 10.4.0
-    dev: false
 
   /classnames/2.3.1:
     resolution: {integrity: sha512-OlQdbZ7gLfGarSqxesMesDa5uz7KFbID8Kpq/SxIoNGDqY8lSYs0D+hhtBXhcdB3rcbXArFr7vlHheLk1voeNA==}
@@ -21600,7 +21750,7 @@ packages:
     engines: {node: '>=6'}
 
   /cli-cursor/1.0.2:
-    resolution: {integrity: sha1-ZNo/fValRBLll5S9Ytw1KV6PKYc=}
+    resolution: {integrity: sha512-25tABq090YNKkF6JH7lcwO0zFJTRke4Jcq9iX2nr/Sz0Cjjv4gckmwlW6Ty/aoyFd6z3ysR2hMGC2GFugmBo6A==}
     engines: {node: '>=0.10.0'}
     dependencies:
       restore-cursor: 1.0.1
@@ -22009,10 +22159,6 @@ packages:
     dependencies:
       array-ify: 1.0.0
       dot-prop: 5.3.0
-    dev: true
-
-  /compare-versions/3.6.0:
-    resolution: {integrity: sha512-W6Af2Iw1z4CB7q4uU4hv646dW9GQuBM+YpC0UvUCWSD8w90SJjp+ujJuXaEMtAXBtSqGfMPuFOVn4/+FlaqfBA==}
     dev: true
 
   /component-bind/1.0.0:
@@ -26422,13 +26568,6 @@ packages:
       semver-regex: 2.0.0
     dev: true
 
-  /find-versions/4.0.0:
-    resolution: {integrity: sha512-wgpWy002tA+wgmO27buH/9KzyEOQnKsG/R0yrcjPT9BOFm0zRBVQbZ95nRGXWMywS8YR5knRbpohio0bcJABxQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      semver-regex: 3.1.3
-    dev: true
-
   /find-webpack/2.2.1:
     resolution: {integrity: sha512-OdDtn2AzQvu3l9U1TS5ALc7uTVcLK/yv3fhjo+Pz7yuv4hG3ANKnbkKnPIPZ5ofd9mpYe6wRf5g5H4X9Lx48vQ==}
     dependencies:
@@ -27578,7 +27717,6 @@ packages:
   /google-libphonenumber/3.2.27:
     resolution: {integrity: sha512-et3QlrfWemNPhyUfXZmJG8TfzitfAN71ygNI15+B35zNge/7vyZxkpDsc13oninkf8RAtN2kNEzvMr4L1n3vfQ==}
     engines: {node: '>=0.10'}
-    dev: false
 
   /google-p12-pem/3.1.3:
     resolution: {integrity: sha512-MC0jISvzymxePDVembypNefkAQp+DRP7dBE+zNUPaIjEspIlYg0++OrsNr248V9tPbz6iqtZ7rX1hxWA5B8qBQ==}
@@ -28455,22 +28593,10 @@ packages:
       slash: 2.0.0
     dev: true
 
-  /husky/4.3.8:
-    resolution: {integrity: sha512-LCqqsB0PzJQ/AlCgfrfzRe3e3+NvmefAdKQhRYpxS4u6clblBoDdzzvHi8fmxKRzvMxPY/1WZWzomPZww0Anow==}
-    engines: {node: '>=10'}
+  /husky/8.0.1:
+    resolution: {integrity: sha512-xs7/chUH/CKdOCs7Zy0Aev9e/dKOMZf3K1Az1nar3tzlv0jfqnYtu235bstsWTmXOR0EfINrPa97yy4Lz6RiKw==}
+    engines: {node: '>=14'}
     hasBin: true
-    requiresBuild: true
-    dependencies:
-      chalk: 4.1.2
-      ci-info: 2.0.0
-      compare-versions: 3.6.0
-      cosmiconfig: 7.0.1
-      find-versions: 4.0.0
-      opencollective-postinstall: 2.0.3
-      pkg-dir: 5.0.0
-      please-upgrade-node: 3.2.0
-      slash: 3.0.0
-      which-pm-runs: 1.1.0
     dev: true
 
   /hygen/6.2.0_d37e176331f0481457bd1f7cc05bf8df:
@@ -30619,7 +30745,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 14.18.12
+      '@types/node': 17.0.23
       chalk: 4.1.2
       ci-info: 3.3.0
       graceful-fs: 4.2.9
@@ -32813,7 +32939,6 @@ packages:
       https-proxy-agent: 5.0.0
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /mkdirp-promise/5.0.1:
     resolution: {integrity: sha1-6bj2jlUsaKnBcTuEiD96HdA5uKE=}
@@ -34188,11 +34313,6 @@ packages:
       define-lazy-prop: 2.0.0
       is-docker: 2.2.1
       is-wsl: 2.2.0
-
-  /opencollective-postinstall/2.0.3:
-    resolution: {integrity: sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==}
-    hasBin: true
-    dev: true
 
   /opener/1.5.2:
     resolution: {integrity: sha512-ur5UIdyw5Y7yEj9wLzhqXiy6GZ3Mwx0yGI+5sMn2r0N0v3cKJvUmFH5yPP+WXh9e0xfyzyJX95D8l088DNFj7A==}
@@ -39480,6 +39600,15 @@ packages:
       rollup-pluginutils: 2.8.2
     dev: true
 
+  /rollup-plugin-node-externals/4.0.0:
+    resolution: {integrity: sha512-7L0lqN+AEJqS13x240F5zyArHn2tNpHC7Ju8vtS893DkutIU89k5v3A7jhnOqLvOXAzjm9Ha7UZdwHOPyqiPDQ==}
+    engines: {node: '>=14.0.0', rollup: '>=2.60.0'}
+    peerDependencies:
+      rollup: ^2.60.0
+    dependencies:
+      find-up: 5.0.0
+    dev: false
+
   /rollup-plugin-node-externals/4.0.0_rollup@2.70.1:
     resolution: {integrity: sha512-7L0lqN+AEJqS13x240F5zyArHn2tNpHC7Ju8vtS893DkutIU89k5v3A7jhnOqLvOXAzjm9Ha7UZdwHOPyqiPDQ==}
     engines: {node: '>=14.0.0', rollup: '>=2.60.0'}
@@ -39941,11 +40070,6 @@ packages:
   /semver-regex/2.0.0:
     resolution: {integrity: sha512-mUdIBBvdn0PLOeP3TEkMH7HHeUP3GjsXCwKarjv/kGmUFOYg1VqEemKhoQpWMu6X2I8kHeuVdGibLGkVK+/5Qw==}
     engines: {node: '>=6'}
-    dev: true
-
-  /semver-regex/3.1.3:
-    resolution: {integrity: sha512-Aqi54Mk9uYTjVexLnR67rTyBusmwd04cLkHy9hNvk3+G3nT2Oyg7E0l4XVbOaNwIvQ3hHeYxGcyEy+mKreyBFQ==}
-    engines: {node: '>=8'}
     dev: true
 
   /semver/5.7.1:
@@ -43691,7 +43815,6 @@ packages:
   /validator/10.4.0:
     resolution: {integrity: sha512-Q/wBy3LB1uOyssgNlXSRmaf22NxjvDNZM2MtIQ4jaEOAB61xsh1TQxsq1CgzUMBV1lDrVMogIh8GjG1DYW0zLg==}
     engines: {node: '>= 0.10'}
-    dev: false
 
   /validator/13.0.0:
     resolution: {integrity: sha512-anYx5fURbgF04lQV18nEQWZ/3wHGnxiKdG4aL8J+jEDsm98n/sU/bey+tYk6tnGJzm7ioh5FoqrAiQ6m03IgaA==}
@@ -44400,11 +44523,6 @@ packages:
 
   /which-module/2.0.0:
     resolution: {integrity: sha1-2e8H3Od7mQK4o6j6SzHD4/fm6Ho=}
-
-  /which-pm-runs/1.1.0:
-    resolution: {integrity: sha512-n1brCuqClxfFfq/Rb0ICg9giSZqCS+pLtccdag6C2HyufBrh3fBOiy9nb6ggRMvWOVH5GrdJskj5iGTZNxd7SA==}
-    engines: {node: '>=4'}
-    dev: true
 
   /which-typed-array/1.1.7:
     resolution: {integrity: sha512-vjxaB4nfDqwKI0ws7wZpxIlde1XrLX5uB0ZjpfshgmapJMD7jJWhZI+yToJTqaFByF0eNBcYxbjmCzoRP7CfEw==}
@@ -45216,19 +45334,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 20.2.9
-
-  /yargs/17.4.0:
-    resolution: {integrity: sha512-WJudfrk81yWFSOkZYpAZx4Nt7V4xp7S/uJkX0CnxovMCt1wCE8LNftPpNuF9X/u9gN5nsD7ycYtRcDf2pL3UiA==}
-    engines: {node: '>=12'}
-    dependencies:
-      cliui: 7.0.4
-      escalade: 3.1.1
-      get-caller-file: 2.0.5
-      require-directory: 2.1.1
-      string-width: 4.2.3
-      y18n: 5.0.8
-      yargs-parser: 21.0.1
-    dev: true
 
   /yauzl/2.10.0:
     resolution: {integrity: sha1-x+sXyT4RLLEIb6bY5R+wZnt5pfk=}
