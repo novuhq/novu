@@ -67,7 +67,7 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 await novu.trigger('<TRIGGER_NAME>',
   {
     to: {
-      subscriberId: '<UUNIQUE_IDENTIFIER>',
+      subscriberId: '<UNIQUE_IDENTIFIER>',
       email: 'john@doemail.com',
       firstName: 'John',
       lastName: 'Doe',
