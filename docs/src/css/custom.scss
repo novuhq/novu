@@ -115,6 +115,11 @@ code {
 }
 
 .theme-code-block {
+  &:hover {
+    .clean-btn {
+      opacity: 1;
+    }
+  }
   .clean-btn {
     font-size: 16px !important;
     background-color: $color-black;
