@@ -88,6 +88,12 @@ article {
   }
 }
 
+a {
+  text-decoration: underline 1px transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s;
+}
+
 pre code span,
 code {
   font-family: 'IBM Plex Mono';
@@ -413,36 +419,44 @@ nav.menu {
   padding-top: 32px;
   margin-top: 32px !important;
   margin-bottom: 64px;
-}
 
-.pagination-nav__link {
-  border: none;
-  padding: 0;
+  &__link {
+    border: none;
+    padding: 0;
 
-  .pagination-nav__sublabel {
-    margin-bottom: 8px;
-  }
-
-  .pagination-nav__label {
-    font-weight: 500;
-  }
-
-  &.pagination-nav__link--next .pagination-nav__label::after,
-  &.pagination-nav__link--prev .pagination-nav__label::before {
-    width: 16px;
-    height: 12px;
-    display: inline-block;
-    content: '';
-    background-repeat: no-repeat;
-  }
-
-  &.pagination-nav__link--next .pagination-nav__label::after {
-    transform: rotateZ(180deg);
-    margin-left: 8px;
-  }
-
-  &.pagination-nav__link--prev .pagination-nav__label::before {
-    margin-right: 8px;
+    &:hover {
+      .pagination-nav__label {
+        text-underline-offset: 4px;
+      }
+    }
+  
+    .pagination-nav__sublabel {
+      margin-bottom: 8px;
+    }
+  
+    .pagination-nav__label {
+      text-decoration: underline 1px transparent;
+      transition: text-decoration-color 0.2s;
+      font-weight: 500;
+    }
+  
+    &.pagination-nav__link--next .pagination-nav__label::after,
+    &.pagination-nav__link--prev .pagination-nav__label::before {
+      width: 16px;
+      height: 12px;
+      display: inline-block;
+      content: '';
+      background-repeat: no-repeat;
+    }
+  
+    &.pagination-nav__link--next .pagination-nav__label::after {
+      transform: rotateZ(180deg);
+      margin-left: 8px;
+    }
+  
+    &.pagination-nav__link--prev .pagination-nav__label::before {
+      margin-right: 8px;
+    }
   }
 }
 

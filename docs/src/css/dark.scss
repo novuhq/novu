@@ -17,6 +17,10 @@ html[data-theme='dark'] {
     }
   }
 
+  a:hover {
+    text-decoration-color: $color-primary-blue;
+  }
+
   ul, ol {
     > li::marker {
       color: $color-primary-blue;
@@ -103,6 +107,12 @@ html[data-theme='dark'] {
   }
 
   .pagination-nav__link {
+    &:hover {
+      .pagination-nav__label {
+        text-decoration-color: $color-primary-blue;
+      }
+    }
+
     &.pagination-nav__link--next .pagination-nav__label::after,
     &.pagination-nav__link--prev .pagination-nav__label::before {
       background-image: url('/img/arrow.svg');

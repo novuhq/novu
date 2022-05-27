@@ -23,6 +23,10 @@ html[data-theme='light'] {
     }
   }
 
+  a:hover {
+    text-decoration-color: $color-secondary-blue;
+  }
+
   .navbar {
     border-bottom: 1px solid $color-gray-10;
     box-shadow: none;
@@ -104,7 +108,16 @@ html[data-theme='light'] {
     }
   }
 
+  .pagination-nav {
+    border-top: 1px dashed $color-gray-9;
+  }
+
   .pagination-nav__link {
+    &:hover {
+      .pagination-nav__label {
+        text-decoration-color: $color-secondary-blue;
+      }
+    }
     &.pagination-nav__link--next .pagination-nav__label::after,
     &.pagination-nav__link--prev .pagination-nav__label::before {
       background-image: url('/img/arrow-blue.svg');
@@ -141,9 +154,5 @@ html[data-theme='light'] {
         }
       }
     }
-  }
-
-  .pagination-nav {
-    border-top: 1px dashed $color-gray-9;
   }
 }
