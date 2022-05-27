@@ -1,0 +1,165 @@
+.navbar {
+  padding-left: 0;
+  padding-right: 0;
+  height: 65px;
+
+  &__inner {
+    position: relative;
+    max-width: $container-width;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1;
+  
+   @include mobile-screen {
+      display: none;
+    }
+  
+    svg {
+      display: none;
+    }
+  }
+
+  &-item-discord:before,
+  &-item-github:before {
+    display: flex;
+    align-items: center;
+    background-position: 50%;
+    background-repeat: no-repeat;
+    margin-right: 0.5rem;
+    content: '';
+    justify-items: center;
+    margin-right: 0.5rem;
+    background-size: contain;
+  }
+
+  &-item-discord:before {
+    width: 27px;
+    height: 20px;
+  }
+
+  &-item-github:before {
+    width: 20px;
+    height: 20px;
+  
+    @include mobile-screen {
+      width: 27px;
+      height: 27px;
+    }
+  }
+
+  &-sidebar {
+    &__back {
+      margin-left: -16px;
+      width: calc(100% + 2rem);
+      padding-left: 16px;
+      padding-right: 16px;
+      font-weight: 500;
+      font-size: 16px;
+    }
+  
+    &__item:first-child {
+      .menu__list {
+        .menu__list-item {
+          > .menu__link {
+           @include mobile-screen {
+              padding-left: 0;
+              padding-right: 0;
+            }
+          }
+        }
+      }
+    }
+  
+    .menu__list {
+      .menu__link.menu__link--sublist {
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .menu__link {
+        font-size: 14px;
+        font-weight: 350;
+      }
+    }
+  
+    &__item.menu {
+      padding-left: 16px;
+      padding-right: 16px;
+  
+      .menu__list {
+        padding-left: 0;
+      }
+  
+      .menu__link {
+        &--sublist-caret:after {
+          display: none;
+        }
+  
+        &--sublist-caret::before {
+          top: 16px;
+          position: absolute;
+          left: 0;
+          content: '';
+          background-repeat: no-repeat;
+          width: 10px;
+          height: 7px;
+          background-size: 10px 7px;
+          transition: transform var(--ifm-transition-fast) linear;
+        }
+      }
+    }
+  }
+}
+
+html[data-theme='dark'] {
+  .navbar {
+    background-color: $color-gray-1;
+    border-bottom: 1px solid $color-gray-3;
+
+    &-item-github:before {
+      background-image: url('/img/github-white.svg');
+    }
+
+    &-item-discord:before {
+      background-image: url('/img/discord-white.svg');
+    }
+
+    &-sidebar {
+      background-color: $color-gray-1;
+  
+      &__brand {
+        border-bottom: 1px solid $color-gray-3;
+      }
+    }
+  }
+}
+
+html[data-theme='light'] {
+  .navbar {
+    border-bottom: 1px solid $color-gray-10;
+    box-shadow: none;
+
+    &-item-github:before {
+      background-image: url('/img/github-black.svg');
+    }
+
+    &-item-discord:before {
+      background-image: url('/img/discord-black.svg');
+    }
+
+    &-sidebar {
+      &__brand {
+        border-bottom: 1px solid $color-gray-10;
+      }
+    }
+  }
+}
