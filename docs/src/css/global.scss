@@ -183,7 +183,7 @@ html[data-theme='dark'] {
     }
   }
 
-  a:hover:not([class]) {
+  a:not([class]):hover {
     text-decoration-color: $color-primary-blue;
   }
 
@@ -239,7 +239,7 @@ html[data-theme='light'] {
     }
   }
 
-  a:hovera:not([class]) {
+  a:not([class]):hover {
     text-decoration-color: $color-secondary-blue;
   }
 
