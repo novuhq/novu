@@ -55,8 +55,10 @@ const codeTheme = require('./src/utils/prism');
             alt: 'Novu Logo',
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
-            width: 100,
-            height: 100,
+            href: 'https://novu.co/',
+            target: '_self',
+            width: 102,
+            height: 32,
           },
           items: [
             {
@@ -83,7 +85,7 @@ const codeTheme = require('./src/utils/prism');
             alt: 'Novu',
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
-            href: '/',
+            href: 'https://novu.co/',
             width: 102,
             height: 32,
           },
