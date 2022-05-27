@@ -114,6 +114,13 @@ code {
   }
 }
 
+.theme-code-block {
+  .clean-btn {
+    font-size: 16px !important;
+    background-color: $color-black;
+  }
+}
+
 .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.1);
   display: block;
@@ -307,10 +314,6 @@ nav.menu {
       }
     }
   }
-}
-
-.clean-btn {
-  font-size: 16px !important;
 }
 
 .theme-doc-footer-edit-meta-row {
