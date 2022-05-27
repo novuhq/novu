@@ -7,6 +7,7 @@
 /* You can override the default Infima variables here. */
 @import 'fonts';
 @import 'variables';
+@import 'media-queries';
 @import 'dark';
 @import 'light';
 @import 'search';
@@ -17,7 +18,7 @@
   --ifm-font-family-base: 'Brother-1816';
   --ifm-color-primary: #00d5ff;
   --ifm-footer-link-color: #ffffff;
-  --ifm-code-font-size: 95%;
+  --ifm-code-font-size: 16px;
   --ifm-line-height-base: 1.5;
   --ifm-menu-link-padding-vertical: 8px;
   --ifm-menu-link-padding-horizontal: 20px;
@@ -36,11 +37,18 @@ main {
     max-width: 100%;
     padding: 0 !important;
 
-    @media (max-width: 996px) {
+   @include mobile-screen {
       padding-top: 20px !important;
     }
     .row {
       margin: 0;
+
+      > .col {
+        @include mobile-screen {
+          padding-left: 0;
+          padding-right: 0;
+        }
+      }
 
       .col.col--3 {
         padding: 0;
@@ -72,11 +80,11 @@ article,
 article {
   margin-top: 48px;
 
-  @media (max-width: 1279px) {
+ @include tablet-screen {
     margin-top: 30px;
   }
 
-  @media (max-width: 996px) {
+ @include mobile-screen {
     margin-top: 0;
   }
 }
@@ -86,11 +94,24 @@ code {
   font-family: 'IBM Plex Mono';
 }
 
+pre code:not([class]) {
+  display: initial;
+}
+
 code {
   color: $color-secondary-purple;
   padding: 1px 6px;
   border: none;
   border-radius: 2px;
+
+  &:not([class]) {
+    background-color: rgba(227, 0, 189, 0.1);
+    line-height: 1.5;
+    font-weight: normal;
+    display: inline-block;
+    margin-top: -2px;
+    font-size: 14px;
+  }
 }
 
 .docusaurus-highlight-code-line {
@@ -123,7 +144,7 @@ code {
   font-size: 14px;
   line-height: 1;
 
-  @media (max-width: 996px) {
+ @include mobile-screen {
     display: none;
   }
 
@@ -162,7 +183,7 @@ code {
 }
 
 .navbar-item-github::before {
-  @media (max-width: 996px) {
+ @include mobile-screen {
     width: 27px;
     height: 27px;
   }
@@ -240,7 +261,7 @@ nav.menu {
     .menu__list {
       .menu__list-item {
         > .menu__link {
-          @media (max-width: 996px) {
+         @include mobile-screen {
             padding-left: 0;
             padding-right: 0;
           }
@@ -328,6 +349,13 @@ nav.menu {
   padding-top: 0;
   padding-top: 40px;
 
+  &::before,
+  &::after {
+    @include mobile-screen {
+      display: none;
+    }
+  }
+
   &::before {
     position: absolute;
     width: 16px;
@@ -407,7 +435,7 @@ nav.menu {
 }
 
 .footer {
-  @media (max-width: 996px) {
+ @include mobile-screen {
     padding-top: 40px;
     padding-bottom: 40px;
   }
@@ -420,11 +448,11 @@ nav.menu {
     padding-left: 16px;
     padding-right: 16px;
 
-    @media (max-width: 996px) {
+   @include mobile-screen {
       max-width: $container-width;
     }
 
-    @media (max-width: 996px) {
+   @include mobile-screen {
       flex-direction: column-reverse;
       align-items: flex-start;
     }
@@ -443,7 +471,7 @@ nav.menu {
     flex-direction: column;
     justify-content: space-between;
 
-    @media (max-width: 996px) {
+   @include mobile-screen {
       margin-bottom: 10px;
     }
   }
@@ -453,7 +481,7 @@ nav.menu {
     width: auto;
     max-width: max-content;
 
-    @media (max-width: 996px) {
+   @include mobile-screen {
       margin-top: 0;
       margin-bottom: 15px;
     }
@@ -472,7 +500,7 @@ nav.menu {
     justify-content: space-between;
     align-items: flex-end;
 
-    @media (max-width: 996px) {
+   @include mobile-screen {
       margin-top: 15px;
       align-items: flex-start;
       margin-bottom: 0;
@@ -509,14 +537,14 @@ nav.menu {
     flex-wrap: wrap;
 
     .footer__link-item {
-      @media (max-width: 996px) {
+     @include mobile-screen {
         font-size: 16px;
       }
     }
   }
 
   .footer__break {
-    @media (max-width: 996px) {
+   @include mobile-screen {
       flex-basis: 100%;
       height: 0;
     }
@@ -535,14 +563,14 @@ nav.menu {
   }
 
   .footer__copyright {
-    @media (max-width: 996px) {
+   @include mobile-screen {
       display: none;
     }
   }
 
   .footer__copyright-mobile {
     display: none;
-    @media (max-width: 996px) {
+   @include mobile-screen {
       display: block;
       margin-top: 36px;
       margin-bottom: 10px;

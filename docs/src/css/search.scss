@@ -9,7 +9,7 @@
     width: 100%;
     border-radius: 6px;
 
-    @media (max-width: 996px) {
+   @include mobile-screen {
       position: static;
       transform: translate(0);
     }
@@ -28,6 +28,25 @@
       top: auto;
       box-shadow: none;
       padding-bottom: 0;
+    }
+  }
+
+  &.DocSearch-Container {
+    .DocSearch-Form {
+      @include mobile-screen {
+        height: 40px;
+      }
+    }
+
+    .DocSearch-Cancel {
+      font-size: 16px;
+    }
+
+    .DocSearch-Input {
+      @include mobile-screen {
+        font-size: 16px;
+        line-height: 1;
+      }
     }
   }
 }

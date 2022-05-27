@@ -14,10 +14,6 @@ html[data-theme='dark'] {
     }
   }
 
-  code:not([class]) {
-    background-color: $color-gray-2;
-  }
-
   .navbar {
     background-color: $color-gray-1;
     border-bottom: 1px solid $color-gray-3;
