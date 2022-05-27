@@ -119,7 +119,7 @@ code {
 .theme-code-block {
   &:hover {
     .clean-btn {
-      opacity: 1;
+      opacity: 1 !important;
       color: $color-gray-9;
     }
   }
