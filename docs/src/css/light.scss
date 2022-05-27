@@ -16,6 +16,12 @@ html[data-theme='light'] {
     }
   }
 
+  ul, ol {
+    > li::marker {
+      color: $color-secondary-blue;
+    }
+  }
+
   .navbar {
     border-bottom: 1px solid $color-gray-10;
     box-shadow: none;

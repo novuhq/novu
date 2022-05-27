@@ -15,6 +15,12 @@ html[data-theme='dark'] {
     }
   }
 
+  ul, ol {
+    > li::marker {
+      color: $color-primary-blue;
+    }
+  }
+
   .navbar {
     background-color: $color-gray-1;
     border-bottom: 1px solid $color-gray-3;
