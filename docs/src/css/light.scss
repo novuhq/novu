@@ -4,6 +4,7 @@ html[data-theme='light'] {
   --ifm-font-color-base: #000000;
   --ifm-toc-border-color: #E6E6E6;
   --ifm-link-color: #0055FF;
+  --ifm-color-primary: #0055FF;
   --ifm-menu-color-background-active: rgba(227, 0, 189, 0.08);
 
   main {
@@ -54,6 +55,10 @@ html[data-theme='light'] {
     .menu__link {
       color: $color-gray-4;
       
+      &.menu__link--sublist {
+        color: $color-black;
+      }
+      
       &--active:not(.menu__link--sublist) {
         color: $color-secondary-purple;
         background-color: rgba(227, 0, 189, 0.08);
@@ -86,6 +91,10 @@ html[data-theme='light'] {
       background-image: url('/img/contents-black.svg');
     }
 
+    &::after {
+      color: $color-black;
+    }
+
     &__link {
       color: $color-gray-4;
   
@@ -115,16 +124,16 @@ html[data-theme='light'] {
       color: $color-black;
 
       &:hover {
-        color: $color-primary-blue;
+        color: $color-secondary-blue;
       }
     }
 
     .footer__col {
       .footer__button {
-        border: 1px solid $color-gray-5;
+        border: 1px solid $color-gray-9;
 
         &:hover {
-          color: $color-primary-blue;
+          color: $color-secondary-blue;
         }
 
         &::before {

@@ -16,7 +16,6 @@
 :root {
   --ifm-font-family-monospace: 'Brother-1816';
   --ifm-font-family-base: 'Brother-1816';
-  --ifm-color-primary: #00d5ff;
   --ifm-footer-link-color: #ffffff;
   --ifm-code-font-size: 16px;
   --ifm-line-height-base: 1.5;
@@ -118,11 +117,16 @@ code {
   &:hover {
     .clean-btn {
       opacity: 1;
+      color: $color-gray-9;
     }
   }
   .clean-btn {
     font-size: 16px !important;
     background-color: $color-black;
+
+    :hover {
+      color: $color-gray-10;
+    }
   }
 }
 
@@ -215,7 +219,7 @@ nav.menu {
 
   .menu__link {
     font-size: 16px;
-    line-height: 1.375;
+    line-height: 1.25;
 
     &:not(.menu__link--sublist) {
       font-size: 14px;
@@ -229,7 +233,7 @@ nav.menu {
   .menu__list-item {
     position: relative;
     > .menu__list {
-      font-weight: 350;
+      font-weight: 400;
       font-size: 14px;
       padding-left: 0;
     }
@@ -396,7 +400,7 @@ nav.menu {
   &__link {
   font-weight: 400;
   font-size: 14px;
-  line-height: 1.375;
+  line-height: 1.25;
 
   ~ ul .table-of-contents__link {
       font-weight: 350;

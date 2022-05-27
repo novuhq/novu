@@ -4,6 +4,8 @@ html[data-theme='dark'] {
   --ifm-font-color-base: #e6e6e6;
   --ifm-toc-border-color: #262626;
   --ifm-heading-color: #ffffff;
+  --ifm-color-primary: #00d5ff;
+  --ifm-link-color: #00d5ff;
 
   main {
     .container {
@@ -46,7 +48,11 @@ html[data-theme='dark'] {
     background-color: $color-gray-1;
 
     .menu__link {
-      color: $color-white;
+      color: $color-gray-10;
+
+      &.menu__link--sublist {
+        color: $color-white;
+      }
     
       &--active:not(.menu__link--sublist) {
         color: $color-primary-blue;
@@ -77,6 +83,10 @@ html[data-theme='dark'] {
   .table-of-contents {
     &::before {
       background-image: url('/img/contents-white.svg');
+    }
+
+    &::after {
+      color: $color-white;
     }
 
     &__link {
