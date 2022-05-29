@@ -72,7 +72,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
     );
 
     const response = await axiosInstance.put(
-      `${session.serverUrl}/v1/subscribers/123/channels`,
+      `${session.serverUrl}/v1/subscribers/123/credentials`,
       {
         subscriberId: '123',
         integrationId: 'slack',
@@ -90,9 +90,9 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
     expect(body.data).to.be.ok;
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
 
-    const subscriberChannel = createdSubscriber.channels.find((channel) => channel.integrationId === 'slack');
+    const subscriberChannel = createdSubscriber.channels.find((channel) => channel.providerId === 'slack');
 
-    expect(subscriberChannel.integrationId).to.equal('slack');
+    expect(subscriberChannel.providerId).to.equal('slack');
     expect(subscriberChannel.credentials.channelId).to.equal('#general');
     expect(subscriberChannel.credentials.accessToken).to.equal('secret_token');
   });

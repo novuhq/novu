@@ -56,12 +56,11 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
-        channel: body.channel,
       })
     );
   }
 
-  @Put('/:subscriberId/channels')
+  @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   async updateSubscriberChannel(
@@ -74,7 +73,7 @@ export class SubscribersController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
-        integrationId: body.integrationId,
+        providerId: body.providerId,
         credentials: body.credentials,
       })
     );

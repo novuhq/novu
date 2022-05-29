@@ -23,5 +23,5 @@ export class UpdateSubscriberBodyDto implements IUpdateSubscriberDto {
   avatar?: string;
 
   @IsOptional()
-  channel?: ISubscriberChannel;
+  channel: ISubscriberChannel;
 }

@@ -15,6 +15,8 @@ export class SlackProvider implements IDirectProvider {
   constructor(
     private config: {
       applicationId: string;
+      clientID: string;
+      secretKey: string;
     }
   ) {}
 

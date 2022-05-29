@@ -1,4 +1,4 @@
-import { DirectIntegrationId } from '../../consts';
+import { DirectProviderIdEnum } from '../../consts';
 
 export interface IUpdateSubscriberDto {
   subscriberId?: string;
@@ -12,24 +12,22 @@ export interface IUpdateSubscriberDto {
   phone?: string;
 
   avatar?: string;
-
-  channel?: ISubscriberChannel;
 }
 
 export class ISubscriberChannel {
-  integrationId: DirectIntegrationId;
+  providerId: DirectProviderIdEnum;
 
   credentials: IChannelCredentials;
 }
 
 export class IChannelCredentials {
-  channelId: string;
+  channelId?: string;
 
-  accessToken: string;
+  accessToken?: string;
 }
 
 export interface IUpdateSubscriberChannelDto {
-  integrationId: DirectIntegrationId;
+  providerId: DirectProviderIdEnum;
 
   credentials: IChannelCredentials;
 }

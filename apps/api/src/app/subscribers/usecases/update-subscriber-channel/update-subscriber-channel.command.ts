@@ -1,17 +1,16 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { DirectIntegrationId, ISubscriberChannel, IChannelCredentials } from '@novu/shared';
-// import { ChannelIdentifier } from '@novu/dal';
+import { DirectProviderIdEnum, ISubscriberChannel, IChannelCredentials } from '@novu/shared';
 
 export class IChannelCredentialsCommand implements IChannelCredentials {
   @IsString()
   @IsOptional()
-  channelId: string;
+  channelId?: string;
 
   @IsString()
   @IsOptional()
-  accessToken: string;
+  accessToken?: string;
 }
 
 export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements ISubscriberChannel {
@@ -21,7 +20,8 @@ export class UpdateSubscriberChannelCommand extends EnvironmentCommand implement
   @IsString()
   subscriberId: string;
 
-  integrationId: DirectIntegrationId;
+  providerId: DirectProviderIdEnum;
 
+  @ValidateNested()
   credentials: IChannelCredentialsCommand;
 }

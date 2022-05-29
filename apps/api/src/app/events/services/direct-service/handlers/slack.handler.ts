@@ -11,7 +11,9 @@ export class SlackHandler extends BaseDirectHandler {
   buildProvider(credentials: ICredentials) {
     const config: {
       applicationId: string;
-    } = { applicationId: credentials.applicationId };
+      clientId: string;
+      secretKey: string;
+    } = { applicationId: credentials.applicationId, clientId: credentials.clientId, secretKey: credentials.secretKey };
 
     this.provider = new SlackProvider(config);
   }

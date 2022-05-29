@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IDirectChannel, SubscriberRepository, IntegrationRepository } from '@novu/dal';
+import { IChannelSettings, SubscriberRepository, IntegrationRepository } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 
@@ -22,17 +22,17 @@ export class UpdateSubscriberChannel {
 
     const foundIntegration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
-      providerId: command.integrationId,
+      providerId: command.providerId,
       active: true,
     });
 
     if (!foundIntegration) {
       throw new ApiException(
-        `Subscribers environment (${command.environmentId}) do not have active ${command.integrationId} integration.`
+        `Subscribers environment (${command.environmentId}) do not have active ${command.providerId} integration.`
       );
     }
 
-    const updatePayload: Partial<IDirectChannel> = {};
+    const updatePayload: Partial<IChannelSettings> = {};
 
     if (command.credentials != null) {
       if (command.credentials.channelId != null) {
@@ -45,19 +45,19 @@ export class UpdateSubscriberChannel {
     }
 
     const existingChannel = foundSubscriber?.channels?.find(
-      (subscriberChannel) => subscriberChannel.integrationId === command.integrationId
+      (subscriberChannel) => subscriberChannel.providerId === command.providerId
     );
 
     if (existingChannel) {
-      const newChannel = Object.assign(existingChannel, updatePayload);
+      const mergedChannel = Object.assign(existingChannel, updatePayload);
 
       await this.subscriberRepository.update(
         { _id: foundSubscriber, 'channels._integrationId': existingChannel._integrationId },
-        { $set: { 'channels.$': newChannel } }
+        { $set: { 'channels.$': mergedChannel } }
       );
     } else {
       updatePayload._integrationId = foundIntegration._id;
-      updatePayload.integrationId = command.integrationId;
+      updatePayload.providerId = command.providerId;
 
       await this.subscriberRepository.update(
         { _id: foundSubscriber },
@@ -69,9 +69,6 @@ export class UpdateSubscriberChannel {
       );
     }
 
-    return {
-      ...foundSubscriber,
-      ...updatePayload,
-    };
+    return await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
   }
 }

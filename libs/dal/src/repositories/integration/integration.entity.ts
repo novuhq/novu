@@ -16,6 +16,7 @@ export interface ICredentials {
   from?: string;
   senderName?: string;
   applicationId?: string;
+  clientId?: string;
 }
 
 export class IntegrationEntity {

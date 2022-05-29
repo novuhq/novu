@@ -13,7 +13,6 @@ import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
-import { ISubscribersDefine } from '@novu/node';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -85,7 +84,7 @@ export class ProcessSubscriber {
     if (subscriber) {
       return subscriber;
     }
-    if (this.canCreateSubscriber(subscriberPayload)) {
+    if (subscriberPayload.subscriberId) {
       return await this.createSubscriberUsecase.execute(
         CreateSubscriberCommand.create({
           environmentId: command.environmentId,
@@ -117,10 +116,6 @@ export class ProcessSubscriber {
     );
 
     return null;
-  }
-
-  private canCreateSubscriber(subscriberPayload: ISubscribersDefine) {
-    return subscriberPayload.email || subscriberPayload.phone;
   }
 
   private async createNotification(

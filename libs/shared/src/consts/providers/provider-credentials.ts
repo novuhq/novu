@@ -23,14 +23,6 @@ const smsConfigBase: IConfigCredentials[] = [
   },
 ];
 
-const directConfigBase: IConfigCredentials[] = [
-  {
-    key: CredentialsKeyEnum.ApplicationId,
-    displayName: 'Application Id',
-    type: 'string',
-  },
-];
-
 export const mailJsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -240,4 +232,20 @@ export const twilioConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-export const slackConfig: IConfigCredentials[] = [...directConfigBase];
+export const slackConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Id',
+    type: 'string',
+  },
+];

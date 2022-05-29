@@ -27,7 +27,7 @@ export class Subscribers implements ISubscribers {
     integrationId: string,
     credentials: IChannelCredentials
   ) {
-    return await this.http.put(`/subscribers/${subscriberId}/channels`, {
+    return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       channel: {
         integrationId,
         credentials: {

@@ -12,12 +12,13 @@ import {
   SubscriberRepository,
   MessageRepository,
   MessageEntity,
-  IDirectChannel,
+  IChannelSettings,
   NotificationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
+import { DirectProviderIdEnum } from '@novu/dal';
 
 @Injectable()
 export class SendMessageDirect extends SendMessageType {
@@ -47,7 +48,11 @@ export class SendMessageDirect extends SendMessageType {
     const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
     const content = contentService.replaceVariables(directChannel.template.content as string, messageVariables);
 
-    for (const channel of subscriber.channels) {
+    const directChannels = subscriber.channels.filter((chan) =>
+      Object.values(DirectProviderIdEnum).includes(chan.providerId)
+    );
+
+    for (const channel of directChannels) {
       await this.sendChannelMessage(command, channel, notification, directChannel, content);
     }
   }
@@ -143,7 +148,7 @@ export class SendMessageDirect extends SendMessageType {
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity,
-    directChannel: IDirectChannel
+    directChannel: IChannelSettings
   ) {
     try {
       const directHandler = this.directFactory.getHandler(integration);

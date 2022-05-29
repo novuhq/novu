@@ -22,9 +22,8 @@ const subscriberSchema = new Schema(
     subscriberId: Schema.Types.String,
     channels: [
       {
-        _id: false,
         _integrationId: Schema.Types.String,
-        integrationId: Schema.Types.String,
+        providerId: Schema.Types.String,
         credentials: {
           channelId: Schema.Types.String,
           accessToken: Schema.Types.String,
