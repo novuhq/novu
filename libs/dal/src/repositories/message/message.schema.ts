@@ -43,6 +43,7 @@ const messageSchema = new Schema(
     content: Schema.Types.Mixed,
     phone: Schema.Types.String,
     directChannelId: Schema.Types.String,
+    providerId: Schema.Types.String,
     seen: {
       type: Schema.Types.Boolean,
       default: false,

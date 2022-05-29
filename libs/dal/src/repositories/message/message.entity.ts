@@ -39,6 +39,8 @@ export class MessageEntity {
 
   directChannelId?: string;
 
+  providerId?: string;
+
   lastSeenDate: string;
 
   cta: {

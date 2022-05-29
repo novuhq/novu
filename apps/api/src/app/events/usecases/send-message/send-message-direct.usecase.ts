@@ -76,6 +76,7 @@ export class SendMessageDirect extends SendMessageType {
       transactionId: command.transactionId,
       directChannelId,
       content,
+      providerId: subscriberChannel.providerId,
     });
 
     const integration = await this.integrationRepository.findOne({
