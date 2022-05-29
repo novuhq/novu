@@ -15,7 +15,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { IEmailOptions } from '@novu/stateless';
+import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { TriggerEventCommand } from './trigger-event.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -533,11 +533,22 @@ export class TriggerEvent {
       active: true,
     });
 
+    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
+      (attachment) =>
+        <IAttachmentOptions>{
+          file: Buffer.from(attachment.file),
+          mime: attachment.mime,
+          name: attachment.name,
+          channels: attachment.channels,
+        }
+    );
+
     const mailData: IEmailOptions = {
       to: email,
       subject,
       html,
       from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      attachments,
     };
 
     if (email && integration) {
