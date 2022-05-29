@@ -15,10 +15,9 @@ import {
   IChannelSettings,
   NotificationEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, DirectProviderIdEnum } from '@novu/shared';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
-import { DirectProviderIdEnum } from '@novu/dal';
 
 @Injectable()
 export class SendMessageDirect extends SendMessageType {
