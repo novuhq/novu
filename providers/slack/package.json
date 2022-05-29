@@ -1,6 +1,6 @@
 {
   "name": "@novu/slack",
-  "version": "0.4.0-alpha.8",
+  "version": "0.4.1",
   "description": "A slack wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",

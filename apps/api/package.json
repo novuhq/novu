@@ -51,6 +51,7 @@
     "@novu/telnyx": "^0.4.1",
     "@novu/testing": "^0.4.1",
     "@novu/twilio": "^0.4.1",
+    "@novu/slack": "^0.4.1",
     "@sendgrid/mail": "^7.6.0",
     "@sentry/node": "^6.1.0",
     "@sentry/tracing": "^6.3.6",
