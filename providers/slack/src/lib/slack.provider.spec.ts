@@ -3,7 +3,7 @@ import { SlackProvider } from './slack.provider';
 test('should trigger Slack correctly', async () => {
   const provider = new SlackProvider({
     applicationId: 'applicationId_123',
-    clientID: 'clientID_123',
+    clientId: 'clientID_123',
     secretKey: 'secretKey_123',
   });
   const spy = jest
