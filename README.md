@@ -42,7 +42,7 @@ Building a notification system is hard, at first it seems like just sending an e
 - 🌈 Single API for all messaging providers (Email, SMS, Push, Direct)
 - 💅 Easily manage notification over multiple channels
 - 🚀 Equipped with a CMS for advanced layouts and design management
-- 🛡 Built-in protection for missing variables
+- 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
 - 📦 Embeddable notification center with real-time updates
 - 🛡 Debug and analyze multi channel messages in a single dashboard
