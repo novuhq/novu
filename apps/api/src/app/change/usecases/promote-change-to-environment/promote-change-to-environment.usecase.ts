@@ -5,7 +5,7 @@ import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environme
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { PromoteNotificationTemplateChange } from '../promote-notification-template-change/promote-notification-template-change';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
-import { PromoteNotificationGroupChange } from '../promote-notification-group-change /promote-notification-group-change';
+import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
 import { applyDiff } from 'recursive-diff';
 
 @Injectable()

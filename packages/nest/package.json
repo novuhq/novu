@@ -1,12 +1,15 @@
 {
   "name": "@novu/nest",
-  "version": "0.4.0-alpha.8",
+  "version": "0.4.1",
   "description": "A nestjs wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": "https://github.com/novuhq/novu",
+  "repository": {
+    "url": "https://github.com/novuhq/novu",
+    "directory": "packages/nest"
+  },
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -32,7 +35,7 @@
   },
   "dependencies": {
     "@nestjs/common": "^8.2.0",
-    "@novu/stateless": "^0.4.0-alpha.8"
+    "@novu/stateless": "^0.4.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
