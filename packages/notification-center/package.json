@@ -4,6 +4,7 @@
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
+    "start": "npm run build:watch",
     "build": "rollup -c",
     "build:watch": "rollup -c -w",
     "storybook": "start-storybook -p 6006",
