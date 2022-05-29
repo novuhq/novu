@@ -75,7 +75,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
       `${session.serverUrl}/v1/subscribers/123/credentials`,
       {
         subscriberId: '123',
-        integrationId: 'slack',
+        providerId: 'slack',
         credentials: { accessToken: 'secret_token', channelId: '#general' },
       },
       {
