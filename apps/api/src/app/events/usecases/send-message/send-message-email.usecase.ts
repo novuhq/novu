@@ -56,6 +56,12 @@ export class SendMessageEmail extends SendMessageType {
 
     const content: string | IEmailBlock[] = this.getContent(isEditorMode, emailChannel, command, subscriber);
 
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+    });
+
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
       _environmentId: command.environmentId,
@@ -67,6 +73,7 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
+      providerId: integration.providerId,
     });
 
     const contentService = new ContentService();
@@ -88,12 +95,6 @@ export class SendMessageEmail extends SendMessageType {
         },
       })
     );
-
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.EMAIL,
-      active: true,
-    });
 
     const mailData: IEmailOptions = {
       to: email,

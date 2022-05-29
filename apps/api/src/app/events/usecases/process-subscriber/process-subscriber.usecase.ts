@@ -13,8 +13,6 @@ import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
-import { NotificationStepEntity } from '@novu/dal';
-import { ISubscribersDefine } from '@novu/node';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -30,14 +28,14 @@ export class ProcessSubscriber {
   public async execute(command: ProcessSubscriberCommand) {
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
 
-    const subscriber: SubscriberEntity = await this.getSubscriber(command, template._id, template.steps);
+    const subscriber: SubscriberEntity = await this.getSubscriber(command, template._id);
     if (subscriber === null) {
       return {
         status: 'subscriber_not_found',
       };
     }
 
-    const notification = await this.createNotification(command, template._id, subscriber.subscriberId);
+    const notification = await this.createNotification(command, template._id, subscriber);
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
     for (const step of steps) {
@@ -76,11 +74,7 @@ export class ProcessSubscriber {
     };
   }
 
-  private async getSubscriber(
-    command: ProcessSubscriberCommand,
-    templateId: string,
-    steps: NotificationStepEntity[]
-  ): Promise<SubscriberEntity> {
+  private async getSubscriber(command: ProcessSubscriberCommand, templateId: string): Promise<SubscriberEntity> {
     const subscriberPayload = command.to;
     const subscriber = await this.subscriberRepository.findOne({
       _environmentId: command.environmentId,
@@ -90,7 +84,7 @@ export class ProcessSubscriber {
     if (subscriber) {
       return subscriber;
     }
-    if (this.canCreateSubscriber(subscriberPayload, steps)) {
+    if (subscriberPayload.subscriberId) {
       return await this.createSubscriberUsecase.execute(
         CreateSubscriberCommand.create({
           environmentId: command.environmentId,
@@ -124,31 +118,15 @@ export class ProcessSubscriber {
     return null;
   }
 
-  private canCreateSubscriber(subscriberPayload: ISubscribersDefine, steps: NotificationStepEntity[]) {
-    /*
-     * const canCreateAsEmailSubscriber =
-     *   subscriberPayload.email && steps.some((step) => step.template.type === ChannelTypeEnum.EMAIL);
-     * const canCreateAsSmsSubscriber =
-     *   subscriberPayload.phone && steps.some((step) => step.template.type === ChannelTypeEnum.SMS);
-     * const canCreateAsInAppSubscriber = steps.some((step) => step.template.type === ChannelTypeEnum.IN_APP);
-     * const canCreateAsDirectSubscriber = steps.some((step) => step.template.type === ChannelTypeEnum.DIRECT);
-     *
-     * return (
-     *   canCreateAsEmailSubscriber ||
-     *   canCreateAsSmsSubscriber ||
-     *   canCreateAsInAppSubscriber ||
-     *   canCreateAsDirectSubscriber
-     * );
-     */
-
-    return true;
-  }
-
-  private async createNotification(command: ProcessSubscriberCommand, templateId: string, subscriberId: string) {
+  private async createNotification(
+    command: ProcessSubscriberCommand,
+    templateId: string,
+    subscriber: SubscriberEntity
+  ) {
     return await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: subscriberId,
+      _subscriberId: subscriber._id,
       _templateId: templateId,
       transactionId: command.transactionId,
     });

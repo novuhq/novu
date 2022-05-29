@@ -9,14 +9,14 @@ export class Subscribers implements ISubscribers {
     this.http = http;
   }
 
-  async identify(subscriberId: string, data: ISubscriberPayload): Promise<any> {
+  async identify(subscriberId: string, data: ISubscriberPayload) {
     return await this.http.post(`/subscribers`, {
       subscriberId,
       ...data,
     });
   }
 
-  async update(subscriberId: string, data: ISubscriberPayload): Promise<any> {
+  async update(subscriberId: string, data: ISubscriberPayload) {
     return await this.http.put(`/subscribers/${subscriberId}`, {
       ...data,
     });
@@ -26,8 +26,8 @@ export class Subscribers implements ISubscribers {
     subscriberId: string,
     integrationId: string,
     credentials: IChannelCredentials
-  ): Promise<any> {
-    return await this.http.put(`/subscribers/${subscriberId}`, {
+  ) {
+    return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       channel: {
         integrationId,
         credentials: {
@@ -37,7 +37,7 @@ export class Subscribers implements ISubscribers {
     });
   }
 
-  async delete(subscriberId: string): Promise<any> {
+  async delete(subscriberId: string) {
     return await this.http.delete(`/subscribers/${subscriberId}`);
   }
 }

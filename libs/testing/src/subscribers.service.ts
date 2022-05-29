@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { SubscriberRepository } from '@novu/dal';
-import { DirectIntegrationId } from '@novu/shared';
+import { DirectProviderIdEnum } from '@novu/shared';
 
 export class SubscribersService {
   private subscriberRepository = new SubscriberRepository();
@@ -16,7 +16,13 @@ export class SubscribersService {
       _environmentId: this._environmentId,
       _organizationId: this._organizationId,
       subscriberId: SubscriberRepository.createObjectId(),
-      channel: { integrationId: DirectIntegrationId.Slack, credentials: { accessToken: '123', channelId: '#general' } },
+      channels: [
+        {
+          _integrationId: 'integrationId_slack',
+          providerId: DirectProviderIdEnum.Slack,
+          credentials: { accessToken: '123', channelId: '#general' },
+        },
+      ],
     });
   }
 }

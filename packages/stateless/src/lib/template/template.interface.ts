@@ -31,6 +31,7 @@ export interface ITriggerPayload {
   $user_id: string;
   $theme_id?: string;
   $channel_id?: string;
+  $access_token?: string;
   $attachments?: IAttachmentOptions[];
   [key: string]:
     | string

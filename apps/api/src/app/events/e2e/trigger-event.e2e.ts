@@ -178,10 +178,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
-    const notifications = await notificationRepository.findBySubscriberId(
-      session.environment._id,
-      subscriber.subscriberId
-    );
+    const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
     expect(notifications.length).to.equal(1);
 

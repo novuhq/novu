@@ -12,10 +12,10 @@ import {
   SubscriberRepository,
   MessageRepository,
   MessageEntity,
-  IDirectChannel,
+  IChannelSettings,
   NotificationEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, DirectProviderIdEnum } from '@novu/shared';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 
@@ -46,7 +46,24 @@ export class SendMessageDirect extends SendMessageType {
     const contentService = new ContentService();
     const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
     const content = contentService.replaceVariables(directChannel.template.content as string, messageVariables);
-    const directChannelId = command.payload.channelId || subscriber.channel.credentials.channelId;
+
+    const directChannels = subscriber.channels.filter((chan) =>
+      Object.values(DirectProviderIdEnum).includes(chan.providerId)
+    );
+
+    for (const channel of directChannels) {
+      await this.sendChannelMessage(command, channel, notification, directChannel, content);
+    }
+  }
+
+  private async sendChannelMessage(
+    command: SendMessageCommand,
+    subscriberChannel,
+    notification,
+    directChannel,
+    content: string
+  ) {
+    const directChannelId = command.payload.channelId || subscriberChannel.credentials.channelId;
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
@@ -59,17 +76,18 @@ export class SendMessageDirect extends SendMessageType {
       transactionId: command.transactionId,
       directChannelId,
       content,
+      providerId: subscriberChannel.providerId,
     });
 
     const integration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
-      providerId: subscriber.channel.integrationId,
+      providerId: subscriberChannel.providerId,
       channel: ChannelTypeEnum.DIRECT,
       active: true,
     });
 
     if (directChannelId && integration) {
-      await this.sendMessage(directChannelId, integration, content, message, command, notification, subscriber.channel);
+      await this.sendMessage(directChannelId, integration, content, message, command, notification, subscriberChannel);
 
       return;
     }
@@ -130,16 +148,15 @@ export class SendMessageDirect extends SendMessageType {
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity,
-    directChannel: IDirectChannel
+    directChannel: IChannelSettings
   ) {
     try {
       const directHandler = this.directFactory.getHandler(integration);
 
-      directHandler.setSubscriberCredentials(directChannel.credentials);
-
       await directHandler.send({
         channelId: directChannelId,
         content,
+        accessToken: directChannel.credentials.accessToken,
       });
     } catch (e) {
       await this.createLogUsecase.execute(

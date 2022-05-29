@@ -1,5 +1,3 @@
-import { ChannelTypeEnum, INotificationTemplate } from '@novu/shared';
-
 describe('Notifications Creator', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
