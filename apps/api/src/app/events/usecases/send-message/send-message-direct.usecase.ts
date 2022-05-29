@@ -80,7 +80,7 @@ export class SendMessageDirect extends SendMessageType {
 
     const integration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
-      providerId: subscriberChannel.integrationId,
+      providerId: subscriberChannel.providerId,
       channel: ChannelTypeEnum.DIRECT,
       active: true,
     });

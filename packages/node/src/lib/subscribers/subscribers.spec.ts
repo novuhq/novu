@@ -80,7 +80,7 @@ describe('test use of novus node package - Subscribers class', () => {
       `/subscribers/test-update-subscriber/credentials`,
       {
         channel: {
-          integrationId: 'slack',
+          providerId: 'slack',
           credentials: {
             accessToken: 'super-secret-123',
             channelId: '#general',
