@@ -5,7 +5,7 @@
 import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
-import { IFRAME_URL } from './shared/resources';
+import { API_URL, IFRAME_URL } from './shared/resources';
 import { SHOW_WIDGET } from './shared/eventTypes';
 
 const WEASL_WRAPPER_ID = 'novu-container';
@@ -13,6 +13,8 @@ const IFRAME_ID = 'novu-iframe-element';
 
 class Novu {
   public clientId: string | unknown;
+
+  private backendUrl: string;
 
   private debugMode: boolean;
 
@@ -45,6 +47,7 @@ class Novu {
 
   init = (
     clientId: string,
+    backendUrl: string,
     selectorOrOptions: string | IOptions,
     data: { subscriberId: string; lastName: string; firstName: string; email: string; subscriberHash?: string }
   ) => {
@@ -58,6 +61,7 @@ class Novu {
     }
 
     this.clientId = clientId;
+    this.backendUrl = backendUrl;
     this.initializeIframe(clientId, data);
     this.mountIframe();
     const button = document.querySelector(this.selector) as HTMLButtonElement;
@@ -181,7 +185,7 @@ class Novu {
     this.domainAllowed = false;
   };
 
-  initializeIframe = (clientId: string, options: any) => {
+  initializeIframe = (clientId: string, backendUrl: string, options: any) => {
     if (!document.getElementById(IFRAME_ID)) {
       const iframe = document.createElement('iframe');
       iframe.onload = () => {
@@ -246,6 +250,7 @@ class Novu {
             type: EventTypes.INIT_IFRAME,
             value: {
               clientId: this.clientId,
+              backendUrl: this.backendUrl,
               topHost: window.location.host,
               data: options,
             },
@@ -254,7 +259,7 @@ class Novu {
         );
       };
 
-      iframe.src = `${IFRAME_URL}/${clientId}`;
+      iframe.src = `${IFRAME_URL}/${clientId}/${backendUrl}`;
       iframe.id = IFRAME_ID;
       iframe.style.border = 'none';
       (iframe as any).crossorigin = 'anonymous';
