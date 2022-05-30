@@ -194,41 +194,17 @@ export class TriggerEvent {
     );
 
     if (!subscriber) {
-      if (subscriberPayload.email || subscriberPayload.phone) {
-        subscriber = await this.createSubscriberUsecase.execute(
-          CreateSubscriberCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            subscriberId: subscriberPayload.subscriberId,
-            email: subscriberPayload.email,
-            firstName: subscriberPayload.firstName,
-            lastName: subscriberPayload.lastName,
-            phone: subscriberPayload.phone,
-          })
-        );
-      } else {
-        await this.createLogUsecase.execute(
-          CreateLogCommand.create({
-            transactionId: command.transactionId,
-            status: LogStatusEnum.ERROR,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            text: 'Subscriber not found',
-            userId: command.userId,
-            code: LogCodeEnum.SUBSCRIBER_NOT_FOUND,
-            templateId: template._id,
-            raw: {
-              payload: command.payload,
-              subscriber: subscriberPayload,
-              triggerIdentifier: command.identifier,
-            },
-          })
-        );
-
-        return {
-          status: 'subscriber_not_found',
-        };
-      }
+      subscriber = await this.createSubscriberUsecase.execute(
+        CreateSubscriberCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: subscriberPayload.subscriberId,
+          email: subscriberPayload.email,
+          firstName: subscriberPayload.firstName,
+          lastName: subscriberPayload.lastName,
+          phone: subscriberPayload.phone,
+        })
+      );
     }
 
     const notification = await this.notificationRepository.create({
