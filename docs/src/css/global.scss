@@ -78,6 +78,10 @@ article {
   }
 }
 
+img {
+  border-radius: 4px;
+}
+
 a:not([class]) {
   text-decoration: underline 1px rgba(0, 0, 0, 0);
   text-underline-offset: 3px;
@@ -247,7 +251,7 @@ html[data-theme='light'] {
     color: $color-black;
 
     &:hover {
-      color: $color-primary-blue;
+      color: $color-secondary-blue;
     }
 
     &:active {
