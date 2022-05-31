@@ -289,7 +289,7 @@ importers:
       '@mantine/notifications': ^4.1.0
       '@mantine/prism': ^4.1.0
       '@novu/dal': ^0.4.1
-      '@novu/notification-center': ^0.4.1
+      '@novu/notification-center': ^0.4.2
       '@novu/shared': ^0.4.1
       '@novu/testing': ^0.4.1
       '@sentry/react': ^6.3.1
@@ -457,7 +457,7 @@ importers:
       '@mantine/hooks': ^4.1.0
       '@novu/dal': ^0.4.1
       '@novu/embed': ^0.4.1
-      '@novu/notification-center': ^0.4.1
+      '@novu/notification-center': ^0.4.2
       '@novu/shared': ^0.4.1
       '@novu/testing': ^0.4.1
       '@testing-library/jest-dom': ^5.11.4
@@ -31117,7 +31117,7 @@ packages:
     dev: false
 
   /kind-of/2.0.1:
-    resolution: {integrity: sha1-AY7HpM5+OobLkUG+UZ0kyPqpgbU=}
+    resolution: {integrity: sha512-0u8i1NZ/mg0b+W3MGGw5I7+6Eib2nx72S/QvXa0hYjEkjTknYmEYQJwGu3mLC0BrhtJjtQafTkyRUQ75Kx0LVg==}
     engines: {node: '>=0.10.0'}
     dependencies:
       is-buffer: 1.1.6
@@ -31608,22 +31608,22 @@ packages:
     dev: false
 
   /lodash._arraycopy/3.0.0:
-    resolution: {integrity: sha1-due3wfH7klRzdIeKVi7Qaj5Q9uE=}
+    resolution: {integrity: sha512-RHShTDnPKP7aWxlvXKiDT6IX2jCs6YZLCtNhOru/OX2Q/tzX295vVBK5oX1ECtN+2r86S0Ogy8ykP1sgCZAN0A==}
     dev: true
 
   /lodash._arrayeach/3.0.0:
-    resolution: {integrity: sha1-urFWsqkNPxu9XGU0AzSeXlkz754=}
+    resolution: {integrity: sha512-Mn7HidOVcl3mkQtbPsuKR0Fj0N6Q6DQB77CtYncZcJc0bx5qv2q4Gl6a0LC1AN+GSxpnBDNnK3CKEm9XNA4zqQ==}
     dev: true
 
   /lodash._baseassign/3.2.0:
-    resolution: {integrity: sha1-jDigmVAPIVrQnlnxci/QxSv+Ck4=}
+    resolution: {integrity: sha512-t3N26QR2IdSN+gqSy9Ds9pBu/J1EAFEshKlUHpJG3rvyJOYgcELIxcIeKKfZk7sjOz11cFfzJRsyFry/JyabJQ==}
     dependencies:
       lodash._basecopy: 3.0.1
       lodash.keys: 3.1.2
     dev: true
 
   /lodash._baseclone/3.3.0:
-    resolution: {integrity: sha1-MDUZv2OT/n5C802LYw73eU41Qrc=}
+    resolution: {integrity: sha512-1K0dntf2dFQ5my0WoGKkduewR6+pTNaqX03kvs45y7G5bzl4B3kTR4hDfJIc2aCQDeLyQHhS280tc814m1QC1Q==}
     dependencies:
       lodash._arraycopy: 3.0.0
       lodash._arrayeach: 3.0.0
@@ -31634,19 +31634,19 @@ packages:
     dev: true
 
   /lodash._basecopy/3.0.1:
-    resolution: {integrity: sha1-jaDmqHbPNEwK2KVIghEd08XHyjY=}
+    resolution: {integrity: sha512-rFR6Vpm4HeCK1WPGvjZSJ+7yik8d8PVUdCJx5rT2pogG4Ve/2ZS7kfmO5l5T2o5V2mqlNIfSF5MZlr1+xOoYQQ==}
     dev: true
 
   /lodash._basefor/3.0.3:
-    resolution: {integrity: sha1-dVC06SGO8J+tJDQ7YSAhx5tMIMI=}
+    resolution: {integrity: sha512-6bc3b8grkpMgDcVJv9JYZAk/mHgcqMljzm7OsbmcE2FGUMmmLQTPHlh/dFqR8LA0GQ7z4K67JSotVKu5058v1A==}
     dev: true
 
   /lodash._bindcallback/3.0.1:
-    resolution: {integrity: sha1-5THCdkTPi1epnhftlbNcdIeJOS4=}
+    resolution: {integrity: sha512-2wlI0JRAGX8WEf4Gm1p/mv/SZ+jLijpj0jyaE/AXeuQphzCgD8ZQW4oSpoN8JAopujOFGU3KMuq7qfHBWlGpjQ==}
     dev: true
 
   /lodash._createassigner/3.1.1:
-    resolution: {integrity: sha1-g4pbri/aymOsIt7o4Z+k5taXCxE=}
+    resolution: {integrity: sha512-LziVL7IDnJjQeeV95Wvhw6G28Z8Q6da87LWKOPWmzBLv4u6FAT/x5v00pyGW0u38UoogNF2JnD3bGgZZDaNEBw==}
     dependencies:
       lodash._bindcallback: 3.0.1
       lodash._isiterateecall: 3.0.9
@@ -31654,11 +31654,11 @@ packages:
     dev: true
 
   /lodash._getnative/3.9.1:
-    resolution: {integrity: sha1-VwvH3t5G1hzc3mh9ZdPuy6o6r/U=}
+    resolution: {integrity: sha512-RrL9VxMEPyDMHOd9uFbvMe8X55X16/cGM5IgOKgRElQZutpX89iS6vwl64duTV1/16w5JY7tuFNXqoekmh1EmA==}
     dev: true
 
   /lodash._isiterateecall/3.0.9:
-    resolution: {integrity: sha1-UgOte6Ql+uhCRg5pbbnPPmqsBXw=}
+    resolution: {integrity: sha512-De+ZbrMu6eThFti/CSzhRvTKMgQToLxbij58LMfM8JnYDNSOjkjTCIaa8ixglOeGh2nyPlakbt5bJWJ7gvpYlQ==}
     dev: true
 
   /lodash._reinterpolate/3.0.0:
@@ -31683,7 +31683,7 @@ packages:
     dev: true
 
   /lodash.clonedeep/3.0.2:
-    resolution: {integrity: sha1-oKHkDYKl6on/WxR7hETtY9koJ9s=}
+    resolution: {integrity: sha512-I8MpGh5z+6OixDAAb21teLSZDmqVPjlq02Q7ZFrbn2xnQHYYuJf6on/94SWpF/p0s3p/cEv/53ro4AhDOfCR0g==}
     dependencies:
       lodash._baseclone: 3.3.0
       lodash._bindcallback: 3.0.1
@@ -31741,7 +31741,7 @@ packages:
     resolution: {integrity: sha1-L1c9hcaiQon/AGY7SRwdM4/zRYo=}
 
   /lodash.isarray/3.0.4:
-    resolution: {integrity: sha1-eeTriMNqgSKvhvhEqpvNhRtfu1U=}
+    resolution: {integrity: sha512-JwObCrNJuT0Nnbuecmqr5DgtuBppuCvGD9lxjFpAzwnVtdGoDQ1zig+5W8k5/6Gcn0gZ3936HDAlGd28i7sOGQ==}
     dev: true
 
   /lodash.isboolean/3.0.3:
@@ -31762,7 +31762,7 @@ packages:
     resolution: {integrity: sha1-POdoEMWSjQM1IwGsKHMX8RwLH/w=}
 
   /lodash.isplainobject/3.2.0:
-    resolution: {integrity: sha1-moI4rhayAEMpYM1zRlEtASP79MU=}
+    resolution: {integrity: sha512-P4wZnho5curNqeEq/x292Pb57e1v+woR7DJ84DURelKB46lby8aDEGVobSaYtzHdQBWQrJSdxcCwjlGOvvdIyg==}
     dependencies:
       lodash._basefor: 3.0.3
       lodash.isarguments: 3.1.0
@@ -31776,11 +31776,11 @@ packages:
     resolution: {integrity: sha1-1SfftUVuynzJu5XV2ur4i6VKVFE=}
 
   /lodash.istypedarray/3.0.6:
-    resolution: {integrity: sha1-yaR3SYYHUB2OhJTSg7h8OSgc72I=}
+    resolution: {integrity: sha512-lGWJ6N8AA3KSv+ZZxlTdn4f6A7kMfpJboeyvbFdE7IU9YAgweODqmOgdUHOA+c6lVWeVLysdaxciFXi+foVsWw==}
     dev: true
 
   /lodash.keys/3.1.2:
-    resolution: {integrity: sha1-TbwEcrFWvlCgsoaFXRvQsMZWCYo=}
+    resolution: {integrity: sha512-CuBsapFjcubOGMn3VD+24HOAPxM79tH+V6ivJL3CHYjtrawauDJHUk//Yew9Hvc6e9rbCrURGk8z6PC+8WJBfQ==}
     dependencies:
       lodash._getnative: 3.9.1
       lodash.isarguments: 3.1.0
@@ -31788,7 +31788,7 @@ packages:
     dev: true
 
   /lodash.keysin/3.0.8:
-    resolution: {integrity: sha1-IsRJPrvtsUJ5YqVLRFssinZ/tH8=}
+    resolution: {integrity: sha512-YDB/5xkL3fBKFMDaC+cfGV00pbiJ6XoJIfRmBhv7aR6wWtbCW6IzkiWnTfkiHTF6ALD7ff83dAtB3OEaSoyQPg==}
     dependencies:
       lodash.isarguments: 3.1.0
       lodash.isarray: 3.0.4
@@ -31801,7 +31801,7 @@ packages:
     resolution: {integrity: sha1-vMbEmkKihA7Zl/Mj6tpezRguC/4=}
 
   /lodash.merge/3.3.2:
-    resolution: {integrity: sha1-DZDZPtY3sYeEN7s+IWASYNev6ZQ=}
+    resolution: {integrity: sha512-ZgGZpRhWLjivGUbjtApZR4HyLv/UAyoYqESVYkK4aLBJVHRrbFpG+GNnE9JPijliME4LkKM0SFI/WyOiBiv1+w==}
     dependencies:
       lodash._arraycopy: 3.0.0
       lodash._arrayeach: 3.0.0
@@ -31835,7 +31835,7 @@ packages:
     dev: false
 
   /lodash.restparam/3.6.1:
-    resolution: {integrity: sha1-k2pOMJ7zMKdkXtQUWYbIWuWyCAU=}
+    resolution: {integrity: sha512-L4/arjjuq4noiUJpt3yS6KIKDtJwNe2fIYgMqyYYKoeIfV1iEqvPwhCx23o+R9dzouGihDAPN1dTIRWa7zk8tw==}
     dev: true
 
   /lodash.set/4.3.2:
@@ -31864,7 +31864,7 @@ packages:
     dev: true
 
   /lodash.toplainobject/3.0.0:
-    resolution: {integrity: sha1-KHkK2ULSk9eKpmOgfs9/UsoEGY0=}
+    resolution: {integrity: sha512-wMI0Ju1bvSmnBS3EcRRH/3zDnZOPpDtMtNDzbbNMKuTrEpALsf+sPyMeogmv63Y11qZQO7H1xFzohIEGRMjPYA==}
     dependencies:
       lodash._basecopy: 3.0.1
       lodash.keysin: 3.0.8
@@ -31934,7 +31934,7 @@ packages:
       is-unicode-supported: 0.1.0
 
   /log-update/1.0.2:
-    resolution: {integrity: sha1-GZKfZMQJPS0ucHWh2tivWcKWuNE=}
+    resolution: {integrity: sha512-4vSow8gbiGnwdDNrpy1dyNaXWKSCIPop0EHdE8GrnngHoJujM3QhvHUN/igsYCgPoHo7pFOezlJ61Hlln0KHyA==}
     engines: {node: '>=0.10.0'}
     dependencies:
       ansi-escapes: 1.4.0
@@ -33144,7 +33144,7 @@ packages:
     dev: true
 
   /multispinner/0.2.1:
-    resolution: {integrity: sha1-wcwQDPxAxpe4oSw6JegVmOzMKfQ=}
+    resolution: {integrity: sha512-SdI5XhdMs3IRJiPmaYBlyoMzz+/wIWdsIPNIDWVHMhVxmxqLaOppLDsvzvuR2xUAOxQq1sbJEI231gB1zABwjw==}
     dependencies:
       chalk: 1.1.3
       figures: 1.7.0
