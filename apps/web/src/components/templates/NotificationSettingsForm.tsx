@@ -67,7 +67,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
               value={field.value || ''}
               error={errors.name}
               label="Notification Name"
-              description="This is will be used to identify the notification in the app."
+              description="This will be used to identify the notification in the app."
               placeholder="Notification name goes here..."
             />
           )}
