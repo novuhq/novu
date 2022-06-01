@@ -10,6 +10,7 @@ import { useEnvController } from '../../../store/use-env-controller';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';
+import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -77,10 +78,13 @@ export default function TemplateEditorPage() {
       <PageMeta title={editMode ? template?.name : 'Create Template'} />
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
+          <TemplatePageHeader
+            loading={isLoading || isUpdateLoading}
+            disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+            templateId={templateId}
+          />
           {(activePage === 'Settings' || activePage === 'TriggerSnippet') && (
             <TemplateSettings
-              loading={isLoading || isUpdateLoading}
-              disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
               activePage={activePage}
               setActivePage={setActivePage}
               channelButtons={channelButtons}
