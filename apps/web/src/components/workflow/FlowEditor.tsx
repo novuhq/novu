@@ -191,6 +191,7 @@ export function FlowEditor({
 export default FlowEditor;
 
 const Wrapper = styled.div<{ dark: boolean }>`
+  background: ${({ dark }) => (dark ? colors.B15 : colors.B98)};
   .react-flow__node {
     width: 200px;
     height: 75px;
@@ -210,6 +211,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
   .react-flow__edge-path {
     stroke: ${({ dark }) => (dark ? colors.B40 : colors.B80)};
     border-radius: 10px;
+    stroke-dasharray: 5;
   }
   .react-flow__node.selected {
     .react-flow__handle {

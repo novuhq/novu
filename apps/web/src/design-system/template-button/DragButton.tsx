@@ -12,11 +12,16 @@ interface IDragButtonProps {
 }
 
 export function DragButton({ description, label, Icon }: IDragButtonProps) {
-  const { cx, classes } = useStyles();
+  const { cx, classes, theme } = useStyles();
 
   return (
     <>
-      <Button className={cx(classes.button, { [classes.active]: false })}>
+      <Button
+        sx={{
+          background: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
+        }}
+        className={cx(classes.button, { [classes.active]: false })}
+      >
         <ButtonWrapper>
           <LeftContainerWrapper>
             <IconWrapper className={classes.linkIcon}>
@@ -64,7 +69,7 @@ const StyledContentWrapper = styled.div`
 
 const Button = styled(UnstyledButton)`
   position: relative;
-  border: 1px dashed ${colors.B30} !important;
+  border: 1px dashed ${colors.B80} !important;
   margin-bottom: 0;
 
   @media screen and (max-width: 1400px) {

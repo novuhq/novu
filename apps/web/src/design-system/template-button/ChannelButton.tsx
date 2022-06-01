@@ -43,12 +43,13 @@ export function ChannelButton({
         onMouseLeave={() => setPopoverOpened(false)}
         data-test-id={testId}
         className={cx(classes.button, { [classes.active]: active })}
+        sx={{
+          backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
+        }}
       >
         <ButtonWrapper>
           <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>
-              <Icon {...disabledProp} />
-            </IconWrapper>
+            <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
             <StyledContentWrapper>
               <Text {...disabledColor} weight="bold">
                 {label}
