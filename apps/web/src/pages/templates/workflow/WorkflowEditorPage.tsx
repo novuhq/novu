@@ -97,7 +97,7 @@ const WorkflowEditorPage = ({
 export default WorkflowEditorPage;
 
 const SideBarWrapper = styled.div<{ dark: boolean }>`
-  background-color: ${({ dark }) => (dark ? colors.B17 : colors.BGLight)};
+  background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)};
   height: 100%;
 `;
 

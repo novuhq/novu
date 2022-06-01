@@ -2,6 +2,10 @@ import { SegmentedControl } from '@mantine/core';
 import { colors } from '../../design-system';
 
 export const EditorPreviewSwitch = ({ view, setView }) => {
+  if (true) {
+    return null;
+  }
+
   return (
     <SegmentedControl
       styles={{
