@@ -10,7 +10,9 @@ import ReactFlow, {
   useUpdateNodeInternals,
   getOutgoers,
   ReactFlowProps,
+  Controls,
   useViewport,
+  useReactFlow,
 } from 'react-flow-renderer';
 import ChannelNode from './ChannelNode';
 import { Button, colors } from '../../design-system';
@@ -55,6 +57,11 @@ export function FlowEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { x: xPos, y: yPos, zoom } = useViewport();
+  const { setViewport, zoomIn, zoomOut, getViewport } = useReactFlow();
+
+  useEffect(() => {
+    setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 800 });
+  }, [reactFlowInstance]);
 
   useEffect(() => {
     if (channelButtons.length) {
@@ -168,6 +175,7 @@ export function FlowEditor({
           <div style={{ position: 'absolute', width: '100%', zIndex: 4 }}>
             <WorkflowPageHeader title="Workflow Editor" onGoBack={onGoBack} actions={<Button>Save</Button>} />
           </div>
+          <Controls />
           <Background
             size={1}
             gap={10}
@@ -209,6 +217,19 @@ const Wrapper = styled.div<{ dark: boolean }>`
       border: none;
     }
   }
+
+  .react-flow__controls {
+    box-shadow: none;
+  }
+
+  .react-flow__controls-button {
+    background: transparent;
+    border: none;
+
+    svg {
+      fill: ${({ dark }) => (dark ? colors.B40 : colors.B80)};
+    }
+  }
 `;
 
 const reactFlowDefaultProps: ReactFlowProps = {
@@ -221,14 +242,15 @@ const reactFlowDefaultProps: ReactFlowProps = {
   nodesConnectable: false,
   nodesDraggable: true,
   fitView: true,
-  translateExtent: [
-    [-100, -100],
-    [100, 100],
-  ],
   nodeExtent: [
     [0, 0],
-    [100, 100],
+    [700, 400],
   ],
-  minZoom: 1,
-  maxZoom: 1,
+  translateExtent: [
+    [0, 0],
+    [700, 400],
+  ],
+  minZoom: 0.5,
+  maxZoom: 1.5,
+  defaultZoom: 0.5,
 };
