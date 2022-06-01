@@ -91,6 +91,16 @@ img {
   border-radius: 4px;
 }
 
+h2:first-of-type {
+  padding-top: 40px;
+  margin-top: 40px;
+
+  @include mobile-screen {
+    padding-top: 25px;
+    margin-top: 25px;
+  }
+}
+
 a:not([class]) {
   text-decoration: underline 1px rgba(0, 0, 0, 0);
   text-underline-offset: 3px;
@@ -196,6 +206,10 @@ html[data-theme='dark'] {
     }
   }
 
+  h2:first-of-type {
+    border-top: 1px dashed $color-gray-4;
+  }
+
   a:not([class]):hover {
     text-decoration-color: $color-primary-blue;
   }
@@ -250,6 +264,10 @@ html[data-theme='light'] {
     > li::marker {
       color: $color-secondary-blue;
     }
+  }
+
+  h2:first-of-type {
+    border-top: 1px dashed $color-gray-9;
   }
 
   a:not([class]):hover {
