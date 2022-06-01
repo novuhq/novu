@@ -1,3 +1,9 @@
+:root {
+  @include tablet-screen {
+    --doc-sidebar-width: 280px !important;
+  }
+}
+
 .menu__link {
   svg {
     display: none;
@@ -11,6 +17,10 @@ nav.menu {
   padding-bottom: 20px;
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+
+  @include tablet-screen {
+    margin-right: 20px;
+  }
 
   &::-webkit-scrollbar {
     display: none;

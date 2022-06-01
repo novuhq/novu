@@ -3,6 +3,7 @@
     @content;
   }
 }
+
 @mixin mobile-screen {
   @media only screen and (max-width: 996px) {
     @content;

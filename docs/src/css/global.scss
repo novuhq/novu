@@ -28,6 +28,11 @@ main {
       margin: 0;
 
       > .col {
+        @include tablet-screen {
+          max-width: 100% !important;
+          padding-right: 0;
+        }
+
         @include mobile-screen {
           padding-left: 0;
           padding-right: 0;
@@ -37,6 +42,10 @@ main {
       .col.col--3 {
         padding: 0;
         padding-left: 40px;
+
+        @include tablet-screen {
+          display: none;
+        }
 
         .theme-doc-toc-desktop {
           height: 100%;
