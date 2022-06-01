@@ -82,6 +82,8 @@ export default function TemplateEditorPage() {
             loading={isLoading || isUpdateLoading}
             disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
             templateId={templateId}
+            setActivePage={setActivePage}
+            activePage={activePage}
           />
           {(activePage === 'Settings' || activePage === 'TriggerSnippet') && (
             <TemplateSettings
@@ -97,14 +99,12 @@ export default function TemplateEditorPage() {
               handleAddChannel={handleAddChannel}
               channelButtons={channelButtons}
               toggleChannel={toggleChannel}
-              changeTab={setActivePage}
               activeChannels={activeChannels}
             />
           )}
           {!loadingEditTemplate && !isIntegrationsLoading ? (
             <TemplateEditor
               activePage={activePage}
-              goBackHandler={goBackHandler}
               disableSave={readonly || loadingEditTemplate || isLoading || !isDirty}
               loading={isLoading || isUpdateLoading}
               templateId={templateId}
