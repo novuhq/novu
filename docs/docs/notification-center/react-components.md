@@ -20,6 +20,29 @@ function Header() {
 }
 ```
 
+## Use your own backend and socket url
+By default, Novu's hosted services of api and socket are used. Should you want, you could override them and configure your own. 
+
+```tsx
+import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
+
+function Header() {
+  return (
+    <NovuProvider
+        backendUrl={'YOUR_BACKEND_URL'}
+        socketUrl={'YOUR_SOCKET_URL'}
+        subscriberId={'USER_ID'}
+        applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}
+      >
+      <PopoverNotificationCenter>
+        {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
+      </PopoverNotificationCenter>
+    </NovuProvider>
+  );
+}
+```
+
+
 ## Implementing custom bell icon
 It is common that you might have a special set of icons you use within your application and you will want to replace the default: `NotificationBell` coming from our library. 
 
@@ -120,7 +143,7 @@ function CustomNotificationCenter() {
 
 ## HMAC Encryption
 
-When Novu's user adds the notification center to his application he is required to pass a `subscriberId` which identifies the user's end-customer, and the application Identifier which is acted as a public key to communicate with the notification feed API.
+When Novu's user adds the notification center to their application they are required to pass a `subscriberId` which identifies the user's end-customer, and the application Identifier which is acted as a public key to communicate with the notification feed API.
 
 A malicious actor can access the user feed by accessing the API and passing another `subscriberId` using the public application identifier.
 
