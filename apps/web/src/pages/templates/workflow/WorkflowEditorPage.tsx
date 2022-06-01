@@ -47,9 +47,14 @@ const WorkflowEditorPage = ({
                   </ButtonWrapper>
                 </NavSection>
                 <NavSection>
-                  <Button mt={10} variant="outline" fullWidth onClick={() => handleAddChannel(selectedChannel)}>
+                  <EditTemplateButton
+                    mt={10}
+                    variant="outline"
+                    fullWidth
+                    onClick={() => handleAddChannel(selectedChannel)}
+                  >
                     Edit Template
-                  </Button>
+                  </EditTemplateButton>
                   <Divider my={30} />
                   <StyledSwitch
                     label={'Step is Active'}
@@ -111,4 +116,8 @@ const StyledSwitch = styled(Switch)`
 const ButtonWrapper = styled.div`
   display: flex;
   justify-content: space-between;
+`;
+
+const EditTemplateButton = styled(Button)`
+  background-color: transparent;
 `;
