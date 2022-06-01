@@ -48,7 +48,7 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActi
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When truthy={activePage !== 'Settings'}>
+          <When truthy={activePage !== 'Settings' && activePage !== 'TriggerSnippet'}>
             <Center
               mt={10}
               onClick={() => {
