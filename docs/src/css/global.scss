@@ -91,13 +91,13 @@ img {
   border-radius: 4px;
 }
 
-h2:first-of-type {
+h2 {
   padding-top: 40px;
   margin-top: 40px;
 
   @include mobile-screen {
-    padding-top: 25px;
-    margin-top: 25px;
+    padding-top: 25px !important;
+    margin-top: 25px !important;
   }
 }
 
@@ -206,7 +206,7 @@ html[data-theme='dark'] {
     }
   }
 
-  h2:first-of-type {
+  h2 {
     border-top: 1px dashed $color-gray-4;
   }
 
@@ -266,7 +266,7 @@ html[data-theme='light'] {
     }
   }
 
-  h2:first-of-type {
+  h2 {
     border-top: 1px dashed $color-gray-9;
   }
 
