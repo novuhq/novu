@@ -30,8 +30,7 @@ export interface ITriggerPayload {
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
-  $channel_id?: string;
-  $access_token?: string;
+  $webhookUrl?: string;
   $attachments?: IAttachmentOptions[];
   [key: string]:
     | string

@@ -76,7 +76,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
       {
         subscriberId: '123',
         providerId: 'slack',
-        credentials: { accessToken: 'secret_token', channelId: '#general' },
+        credentials: { webhookUrl: 'webhookUrlNew' },
       },
       {
         headers: {
@@ -93,7 +93,6 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
     const subscriberChannel = createdSubscriber.channels.find((channel) => channel.providerId === 'slack');
 
     expect(subscriberChannel.providerId).to.equal('slack');
-    expect(subscriberChannel.credentials.channelId).to.equal('#general');
-    expect(subscriberChannel.credentials.accessToken).to.equal('secret_token');
+    expect(subscriberChannel.credentials.webhookUrl).to.equal('webhookUrlNew');
   });
 });

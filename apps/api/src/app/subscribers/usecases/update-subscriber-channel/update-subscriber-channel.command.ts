@@ -6,11 +6,7 @@ import { DirectProviderIdEnum, ISubscriberChannel, IChannelCredentials } from '@
 export class IChannelCredentialsCommand implements IChannelCredentials {
   @IsString()
   @IsOptional()
-  channelId?: string;
-
-  @IsString()
-  @IsOptional()
-  accessToken?: string;
+  webhookUrl: string;
 }
 
 export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements ISubscriberChannel {

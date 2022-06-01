@@ -25,8 +25,7 @@ const subscriberSchema = new Schema(
         _integrationId: Schema.Types.String,
         providerId: Schema.Types.String,
         credentials: {
-          channelId: Schema.Types.String,
-          accessToken: Schema.Types.String,
+          webhookUrl: Schema.Types.String,
         },
       },
     ],

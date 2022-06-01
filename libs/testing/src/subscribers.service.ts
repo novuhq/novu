@@ -20,7 +20,7 @@ export class SubscribersService {
         {
           _integrationId: 'integrationId_slack',
           providerId: DirectProviderIdEnum.Slack,
-          credentials: { accessToken: '123', channelId: '#general' },
+          credentials: { webhookUrl: 'webhookUrl' },
         },
       ],
     });

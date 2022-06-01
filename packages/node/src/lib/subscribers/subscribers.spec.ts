@@ -65,8 +65,7 @@ describe('test use of novus node package - Subscribers class', () => {
     mockedAxios.put.mockResolvedValue({});
 
     const credentials = {
-      accessToken: 'super-secret-123',
-      channelId: '#general',
+      webhookUrl: 'webhookUrl',
     };
 
     await novu.subscribers.setCredentials(
@@ -82,8 +81,7 @@ describe('test use of novus node package - Subscribers class', () => {
         channel: {
           providerId: 'slack',
           credentials: {
-            accessToken: 'super-secret-123',
-            channelId: '#general',
+            webhookUrl: 'webhookUrl',
           },
         },
       }

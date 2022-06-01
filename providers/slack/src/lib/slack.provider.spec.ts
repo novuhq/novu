@@ -18,15 +18,13 @@ test('should trigger Slack correctly', async () => {
     });
 
   await provider.sendMessage({
-    channelId: 'slack',
-    accessToken: 'apiKey',
+    webhookUrl: 'webhookUrl',
     content: 'direct message',
   });
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    channelId: 'slack',
-    accessToken: 'apiKey',
+    webhookUrl: 'webhookUrl',
     content: 'direct message',
   });
 });

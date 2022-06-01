@@ -12,7 +12,6 @@ import {
   SubscriberRepository,
   MessageRepository,
   MessageEntity,
-  IChannelSettings,
   NotificationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, DirectProviderIdEnum } from '@novu/shared';
@@ -63,7 +62,7 @@ export class SendMessageDirect extends SendMessageType {
     directChannel,
     content: string
   ) {
-    const directChannelId = command.payload.channelId || subscriberChannel.credentials.channelId;
+    const directWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials.webhookUrl;
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
@@ -74,7 +73,7 @@ export class SendMessageDirect extends SendMessageType {
       _messageTemplateId: directChannel.template._id,
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
-      directChannelId,
+      directWebhookUrl,
       content,
       providerId: subscriberChannel.providerId,
     });
@@ -86,23 +85,23 @@ export class SendMessageDirect extends SendMessageType {
       active: true,
     });
 
-    if (directChannelId && integration) {
-      await this.sendMessage(directChannelId, integration, content, message, command, notification, subscriberChannel);
+    if (directWebhookUrl && integration) {
+      await this.sendMessage(directWebhookUrl, integration, content, message, command, notification);
 
       return;
     }
 
-    await this.sendErrors(directChannelId, integration, message, command, notification);
+    await this.sendErrors(directWebhookUrl, integration, message, command, notification);
   }
 
   private async sendErrors(
-    directChannelId,
+    directWebhookUrl,
     integration,
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity
   ) {
-    if (!directChannelId) {
+    if (!directWebhookUrl) {
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
@@ -142,21 +141,19 @@ export class SendMessageDirect extends SendMessageType {
   }
 
   private async sendMessage(
-    directChannelId,
+    directWebhookUrl,
     integration,
     content,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity,
-    directChannel: IChannelSettings
+    notification: NotificationEntity
   ) {
     try {
       const directHandler = this.directFactory.getHandler(integration);
 
       await directHandler.send({
-        channelId: directChannelId,
+        webhookUrl: directWebhookUrl,
         content,
-        accessToken: directChannel.credentials.accessToken,
       });
     } catch (e) {
       await this.createLogUsecase.execute(

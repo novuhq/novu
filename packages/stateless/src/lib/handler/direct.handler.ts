@@ -13,16 +13,15 @@ export class DirectHandler {
       content = await this.message.template(data);
     }
 
-    if (!data.$channel_id) {
+    if (!data.$wehookUrl) {
       throw new Error(
-        '$channel_id is missing in trigger payload. To send an a direct message you must specify a $channel_id property.'
+        'webhookUrl is missing in trigger payload. To send an a direct message you must specify a webhookUrl property.'
       );
     }
 
     return await this.provider.sendMessage({
-      channelId: data.$channel_id,
+      webhookUrl: data.$webhookUrl as string,
       content,
-      accessToken: data.$access_token,
     });
   }
 }

@@ -25,9 +25,8 @@ export interface ISmsOptions {
 }
 
 export interface IDirectOptions {
-  channelId: string;
+  webhookUrl: string;
   content: string;
-  accessToken: string;
 }
 
 export interface ISendMessageSuccessResponse {

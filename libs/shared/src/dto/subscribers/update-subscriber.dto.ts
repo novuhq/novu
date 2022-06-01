@@ -21,9 +21,7 @@ export class ISubscriberChannel {
 }
 
 export class IChannelCredentials {
-  channelId?: string;
-
-  accessToken?: string;
+  webhookUrl: string;
 }
 
 export interface IUpdateSubscriberChannelDto {

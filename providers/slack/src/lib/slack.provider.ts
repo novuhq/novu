@@ -9,7 +9,6 @@ import axios from 'axios';
 export class SlackProvider implements IDirectProvider {
   channelType = ChannelTypeEnum.DIRECT as ChannelTypeEnum.DIRECT;
   public id = 'slack';
-  private urlPostMessage = 'https://slack.com/api/chat.postMessage';
   private axiosInstance = axios.create();
 
   constructor(
@@ -23,14 +22,9 @@ export class SlackProvider implements IDirectProvider {
   async sendMessage(
     data: IDirectOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const response = await this.axiosInstance.post(
-      this.urlPostMessage,
-      {
-        channel: data.channelId,
-        text: data.content,
-      },
-      { headers: { authorization: `Bearer ${data.accessToken}` } }
-    );
+    const response = await this.axiosInstance.post(data.webhookUrl, {
+      text: data.content,
+    });
 
     return {
       id: response.headers['x-slack-req-id'],

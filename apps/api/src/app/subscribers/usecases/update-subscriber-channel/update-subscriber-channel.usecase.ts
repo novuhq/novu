@@ -31,44 +31,62 @@ export class UpdateSubscriberChannel {
         `Subscribers environment (${command.environmentId}) do not have active ${command.providerId} integration.`
       );
     }
-
-    const updatePayload: Partial<IChannelSettings> = {};
-
-    if (command.credentials != null) {
-      if (command.credentials.channelId != null) {
-        updatePayload[`credentials.channelId`] = command.credentials.channelId;
-      }
-
-      if (command.credentials.accessToken != null) {
-        updatePayload[`credentials.accessToken`] = command.credentials.accessToken;
-      }
-    }
+    const updatePayload = this.createUpdatePayload(command);
 
     const existingChannel = foundSubscriber?.channels?.find(
       (subscriberChannel) => subscriberChannel.providerId === command.providerId
     );
 
     if (existingChannel) {
-      const mergedChannel = Object.assign(existingChannel, updatePayload);
-
-      await this.subscriberRepository.update(
-        { _id: foundSubscriber, 'channels._integrationId': existingChannel._integrationId },
-        { $set: { 'channels.$': mergedChannel } }
-      );
+      await this.updateExistingSubscriberChannel(existingChannel, updatePayload, foundSubscriber);
     } else {
-      updatePayload._integrationId = foundIntegration._id;
-      updatePayload.providerId = command.providerId;
-
-      await this.subscriberRepository.update(
-        { _id: foundSubscriber },
-        {
-          $push: {
-            channels: updatePayload,
-          },
-        }
-      );
+      await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
 
     return await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+  }
+
+  private async addChannelToSubscriber(
+    updatePayload: Partial<IChannelSettings>,
+    foundIntegration,
+    command: UpdateSubscriberChannelCommand,
+    foundSubscriber
+  ) {
+    updatePayload._integrationId = foundIntegration._id;
+    updatePayload.providerId = command.providerId;
+
+    await this.subscriberRepository.update(
+      { _id: foundSubscriber },
+      {
+        $push: {
+          channels: updatePayload,
+        },
+      }
+    );
+  }
+
+  private async updateExistingSubscriberChannel(
+    existingChannel,
+    updatePayload: Partial<IChannelSettings>,
+    foundSubscriber
+  ) {
+    const mergedChannel = Object.assign(existingChannel, updatePayload);
+
+    await this.subscriberRepository.update(
+      { _id: foundSubscriber, 'channels._integrationId': existingChannel._integrationId },
+      { $set: { 'channels.$': mergedChannel } }
+    );
+  }
+
+  private createUpdatePayload(command: UpdateSubscriberChannelCommand) {
+    const updatePayload: Partial<IChannelSettings> = {};
+
+    if (command.credentials != null) {
+      if (command.credentials.webhookUrl != null) {
+        updatePayload[`credentials.webhookUrl`] = command.credentials.webhookUrl;
+      }
+    }
+
+    return updatePayload;
   }
 }

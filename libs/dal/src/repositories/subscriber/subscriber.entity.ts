@@ -31,7 +31,5 @@ export class IChannelSettings {
 }
 
 export class IChannelCredentials {
-  channelId?: string;
-
-  accessToken?: string;
+  webhookUrl: string;
 }
