@@ -25,7 +25,7 @@ export interface ISmsOptions {
 }
 
 export interface IDirectOptions {
-  channelId: string;
+  webhookUrl: string;
   content: string;
 }
 
@@ -48,6 +48,5 @@ export interface ISmsProvider extends IProvider {
 
 export interface IDirectProvider extends IProvider {
   sendMessage(options: IDirectOptions): Promise<ISendMessageSuccessResponse>;
-
   channelType: ChannelTypeEnum.DIRECT;
 }

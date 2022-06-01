@@ -5,6 +5,7 @@ import { SendMessageSms } from './send-message/send-message-sms.usecase';
 import { SendMessageEmail } from './send-message/send-message-email.usecase';
 import { SendMessageInApp } from './send-message/send-message-in-app.usecase';
 import { QueueNextJob } from './queue-next-job/queue-next-job.usecase';
+import { SendMessageDirect } from './send-message/send-message-direct.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -13,5 +14,6 @@ export const USE_CASES = [
   SendMessageSms,
   SendMessageEmail,
   SendMessageInApp,
+  SendMessageDirect,
   QueueNextJob,
 ];

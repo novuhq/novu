@@ -32,9 +32,24 @@ export class ProcessSubscriber {
       return [];
     }
 
-    const notification = await this.createNotification(command, template._id, subscriber.subscriberId);
+    const notification = await this.createNotification(command, template._id, subscriber);
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
+    for (const step of steps) {
+      await this.sendMessage.execute(
+        SendMessageCommand.create({
+          identifier: command.identifier,
+          payload: command.payload,
+          step,
+          transactionId: command.transactionId,
+          notificationId: notification._id,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          subscriberId: subscriber._id,
+        })
+      );
+    }
 
     await this.createLogUsecase.execute(
       CreateLogCommand.create({
@@ -77,7 +92,7 @@ export class ProcessSubscriber {
     if (subscriber) {
       return subscriber;
     }
-    if (subscriberPayload.email || subscriberPayload.phone) {
+    if (subscriberPayload.subscriberId) {
       return await this.createSubscriberUsecase.execute(
         CreateSubscriberCommand.create({
           environmentId: command.environmentId,
@@ -111,11 +126,15 @@ export class ProcessSubscriber {
     return null;
   }
 
-  private async createNotification(command: ProcessSubscriberCommand, templateId: string, subscriberId: string) {
+  private async createNotification(
+    command: ProcessSubscriberCommand,
+    templateId: string,
+    subscriber: SubscriberEntity
+  ) {
     return await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: subscriberId,
+      _subscriberId: subscriber._id,
       _templateId: templateId,
       transactionId: command.transactionId,
     });

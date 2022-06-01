@@ -60,6 +60,7 @@ export class SendMessageInApp extends SendMessageType {
       cta: inAppChannel.template.cta,
       transactionId: command.transactionId,
       content,
+      providerId: 'novu',
     });
 
     const count = await this.messageRepository.getUnseenCount(

@@ -9,11 +9,13 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
 import { ConnectIntegrationForm } from './components/ConnectIntegrationForm';
 import { useIntegrations } from '../../api/hooks';
+import { IntegrationEntity } from '@novu/dal';
 
 export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
   const [emailProviders, setEmailProviders] = useState<IIntegratedProvider[]>([]);
   const [smsProvider, setSmsProvider] = useState<IIntegratedProvider[]>([]);
+  const [directProvider, setDirectProvider] = useState<IIntegratedProvider[]>([]);
   const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
@@ -33,36 +35,17 @@ export function IntegrationsStore() {
 
   useEffect(() => {
     if (integrations) {
-      const initializedProviders: IIntegratedProvider[] = providers.map((providerItem) => {
-        const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
-
-        const mappedCredentials = cloneDeep(providerItem.credentials);
-        if (integration?.credentials) {
-          mappedCredentials.forEach((credential) => {
-            // eslint-disable-next-line no-param-reassign
-            credential.value = integration.credentials[credential.key]?.toString();
-          });
-        }
-
-        return {
-          providerId: providerItem.id,
-          integrationId: integration?._id ? integration._id : '',
-          displayName: providerItem.displayName,
-          channel: providerItem.channel,
-          credentials: integration?.credentials ? mappedCredentials : providerItem.credentials,
-          docReference: providerItem.docReference,
-          comingSoon: !!providerItem.comingSoon,
-          active: integration?.active ?? true,
-          connected: !!integration,
-          logoFileName: providerItem.logoFileName,
-        };
-      });
+      const initializedProviders = initializeProviders(integrations);
 
       setEmailProviders(
         sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL))
       );
       setSmsProvider(
         sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS))
+      );
+
+      setDirectProvider(
+        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.DIRECT))
       );
     }
   }, [integrations]);
@@ -93,6 +76,7 @@ export function IntegrationsStore() {
           <ContentWrapper>
             <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
             <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={directProvider} title="Direct" onProviderClick={handlerVisible} />
           </ContentWrapper>
         </PageContainer>
       ) : null}
@@ -111,7 +95,9 @@ const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
 };
 
 function isConnected(provider: IIntegratedProvider) {
-  return provider.credentials.some((cred) => {
+  if (!provider.credentials.length) return false;
+
+  return provider.credentials?.some((cred) => {
     return cred.value;
   });
 }
@@ -127,4 +113,32 @@ export interface IIntegratedProvider {
   active: boolean;
   connected: boolean;
   logoFileName: ILogoFileName;
+}
+
+function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProvider[] {
+  return providers.map((providerItem) => {
+    const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
+
+    const clonedCredentials = cloneDeep(providerItem.credentials);
+
+    if (integration?.credentials && Object.keys(clonedCredentials).length !== 0) {
+      clonedCredentials.forEach((credential) => {
+        // eslint-disable-next-line no-param-reassign
+        credential.value = integration.credentials[credential.key]?.toString();
+      });
+    }
+
+    return {
+      providerId: providerItem.id,
+      integrationId: integration?._id ? integration._id : '',
+      displayName: providerItem.displayName,
+      channel: providerItem.channel,
+      credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
+      docReference: providerItem.docReference,
+      comingSoon: !!providerItem.comingSoon,
+      active: integration?.active ?? true,
+      connected: !!integration,
+      logoFileName: providerItem.logoFileName,
+    };
+  });
 }

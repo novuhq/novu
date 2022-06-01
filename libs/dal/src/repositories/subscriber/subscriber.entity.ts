@@ -1,3 +1,5 @@
+import { DirectProviderIdEnum } from '@novu/shared';
+
 export class SubscriberEntity {
   _id?: string;
 
@@ -16,4 +18,18 @@ export class SubscriberEntity {
   _organizationId: string;
 
   _environmentId: string;
+
+  channels?: IChannelSettings[];
+}
+
+export class IChannelSettings {
+  _integrationId: string;
+
+  providerId: DirectProviderIdEnum;
+
+  credentials: IChannelCredentials;
+}
+
+export class IChannelCredentials {
+  webhookUrl: string;
 }

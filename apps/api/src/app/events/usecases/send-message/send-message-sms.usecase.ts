@@ -47,6 +47,12 @@ export class SendMessageSms extends SendMessageType {
     const content = contentService.replaceVariables(smsChannel.template.content as string, messageVariables);
     const phone = command.payload.phone || subscriber.phone;
 
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      channel: ChannelTypeEnum.SMS,
+      active: true,
+    });
+
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
@@ -58,12 +64,7 @@ export class SendMessageSms extends SendMessageType {
       transactionId: command.transactionId,
       phone,
       content,
-    });
-
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.SMS,
-      active: true,
+      providerId: integration.providerId,
     });
 
     if (phone && integration) {

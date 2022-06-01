@@ -4,13 +4,15 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
+import { SendMessageDirect } from './send-message-direct.usecase';
 
 @Injectable()
 export class SendMessage {
   constructor(
     private sendMessageEmail: SendMessageEmail,
     private sendMessageSms: SendMessageSms,
-    private sendMessageInApp: SendMessageInApp
+    private sendMessageInApp: SendMessageInApp,
+    private sendMessageDirect: SendMessageDirect
   ) {}
 
   public async execute(command: SendMessageCommand) {
@@ -21,6 +23,8 @@ export class SendMessage {
         return await this.sendMessageInApp.execute(command);
       case ChannelTypeEnum.EMAIL:
         return await this.sendMessageEmail.execute(command);
+      case ChannelTypeEnum.DIRECT:
+        return await this.sendMessageDirect.execute(command);
     }
   }
 }

@@ -37,6 +37,10 @@ export class MessageEntity {
 
   phone?: string;
 
+  directWebhookUrl?: string;
+
+  providerId?: string;
+
   lastSeenDate: string;
 
   cta: {

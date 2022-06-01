@@ -5,7 +5,6 @@ import { ColumnWithStrictAccessor } from 'react-table';
 import moment from 'moment';
 import { Controller, useForm } from 'react-hook-form';
 import * as capitalize from 'lodash.capitalize';
-import { Badge } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useTemplates } from '../../api/hooks/use-templates';
 import { getActivityList } from '../../api/activity';
@@ -121,6 +120,16 @@ export function ActivitiesPage() {
         </>
       ),
     },
+    {
+      accessor: 'providerId',
+      Header: 'Provider',
+      Cell: ({ providerId }: any) => (
+        <Text data-test-id="provider-id" rows={1}>
+          {providerId ? capitalize(providerId) : ''}
+        </Text>
+      ),
+    },
+
     {
       accessor: 'createdAt',
       Header: 'Sent On',

@@ -1,6 +1,7 @@
 import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { ISubscriberChannel, IUpdateSubscriberDto } from '@novu/shared';
 
-export class UpdateSubscriberBodyDto {
+export class UpdateSubscriberBodyDto implements IUpdateSubscriberDto {
   @IsEmail()
   @IsOptional()
   email?: string;
@@ -20,4 +21,7 @@ export class UpdateSubscriberBodyDto {
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  @IsOptional()
+  channel: ISubscriberChannel;
 }
