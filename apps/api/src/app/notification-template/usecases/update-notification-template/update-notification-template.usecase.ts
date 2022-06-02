@@ -32,7 +32,7 @@ export class UpdateNotificationTemplate {
       command.templateId,
       command.organizationId
     );
-    if (!existingTemplate) throw new NotFoundException(`Entity with id ${command.templateId} not found`);
+    if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.templateId} not found`);
 
     const updatePayload: Partial<NotificationTemplateEntity> = {};
     if (command.name) {
@@ -76,7 +76,7 @@ export class UpdateNotificationTemplate {
       let parentStepId: string | null = null;
 
       for (const message of steps) {
-        const stepId = NotificationTemplateRepository.createObjectId();
+        let stepId = message._id;
         if (message._id) {
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
@@ -116,6 +116,7 @@ export class UpdateNotificationTemplate {
             })
           );
 
+          stepId = template._id;
           templateMessages.push({
             _id: stepId,
             _templateId: template._id,

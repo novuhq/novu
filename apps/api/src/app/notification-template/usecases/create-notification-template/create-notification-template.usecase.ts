@@ -67,7 +67,7 @@ export class CreateNotificationTemplate {
         })
       );
 
-      const stepId = NotificationTemplateRepository.createObjectId();
+      const stepId = template._id;
       templateSteps.push({
         _id: stepId,
         _templateId: template._id,
