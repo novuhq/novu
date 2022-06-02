@@ -4,7 +4,18 @@ tasks:
   - init: npm_config_yes=true pnpm setup:project
     command: mkdir -p /workspace/data && mongod --dbpath /workspace/data 
   - command: redis-server
-  - command: pnpm start
+  - name: Shared Library
+    command: cd libs/shared && pnpm start
+  - name: DAL
+    command: cd libs/dal && pnpm start
+  - name: TESTING LIB
+    command: cd libs/testing && pnpm start
+  - name: API
+    command: cd apps/api && pnpm start
+  - name: WS
+    command: cd apps/ws && pnpm start
+  - name: WEB
+    command: cd apps/web && pnpm start
 ports:
   - port: 4200
     onOpen: open-preview
