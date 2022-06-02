@@ -9,9 +9,9 @@ ports:
   - port: 4200
     onOpen: open-preview
   - port: 4500
-    onOpen: open-preview
+    onOpen: notify
   - port: 3000
-    onOpen: open-preview
+    onOpen: notify
 github:
   prebuilds:
     # enable for the master/default branch (defaults to true)
