@@ -15,10 +15,9 @@ import ReactFlow, {
   useReactFlow,
 } from 'react-flow-renderer';
 import ChannelNode from './ChannelNode';
-import { Button, colors } from '../../design-system';
+import { colors } from '../../design-system';
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import WorkflowPageHeader from './WorkflowPageHeader';
 import TriggerNode from './TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
 
@@ -42,12 +41,10 @@ let id = 0;
 const getId = () => `dndnode_${id++}`;
 
 export function FlowEditor({
-  onGoBack,
   setSelected,
   channelButtons,
 }: {
   setSelected: (string) => void;
-  onGoBack: () => void;
   channelButtons: string[];
 }) {
   const { colorScheme } = useMantineColorScheme();
@@ -172,9 +169,6 @@ export function FlowEditor({
           onNodeClick={onNodeClick}
           {...reactFlowDefaultProps}
         >
-          <div style={{ position: 'absolute', width: '100%', zIndex: 4 }}>
-            <WorkflowPageHeader title="Workflow Editor" onGoBack={onGoBack} actions={<Button>Save</Button>} />
-          </div>
           <Controls />
           <Background
             size={1}

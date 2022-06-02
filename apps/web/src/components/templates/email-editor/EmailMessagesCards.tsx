@@ -19,7 +19,7 @@ export function EmailMessagesCards({
   const { data: organization } = useQuery<IOrganizationEntity>('/v1/organizations/me', getCurrentOrganization);
 
   return (
-    <>
+    <div style={{ padding: '20px 25px' }}>
       {emailMessagesFields.map((message, index) => {
         return (
           <EmailContentCard
@@ -31,6 +31,6 @@ export function EmailMessagesCards({
           />
         );
       })}
-    </>
+    </div>
   );
 }

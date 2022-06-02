@@ -10,7 +10,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
 
   return (
     <>
-      <Container pl={0} pr={0} ml={0} sx={{ maxWidth: '400px', paddingLeft: '0px' }}>
+      <Container sx={{ maxWidth: '400px', paddingLeft: '0px', margin: '0 auto 15px auto' }}>
         <Group grow direction="column">
           <Controller
             name={`inAppMessages.${index}.template.cta.data.url` as any}
