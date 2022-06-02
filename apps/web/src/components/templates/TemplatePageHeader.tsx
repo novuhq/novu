@@ -2,36 +2,45 @@ import { Center, Container, Grid, Group } from '@mantine/core';
 import { useState } from 'react';
 import { Button, colors, Switch, Title, Text } from '../../design-system';
 import { ArrowLeft } from '../../design-system/icons';
+import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { useEnvController } from '../../store/use-env-controller';
 import { When } from '../utils/When';
 import { EditorPreviewSwitch } from './EditorPreviewSwitch';
 import { useStatusChangeControllerHook } from './use-status-change-controller.hook';
 import { useTemplateController } from './use-template-controller.hook';
 
-const Header = ({ activePage, editMode }) => {
-  if (activePage === 'Settings') {
+const Header = ({ activePage, editMode }: { editMode: boolean; activePage: ActivePageEnum }) => {
+  if (activePage === ActivePageEnum.Settings) {
     return <>{editMode ? 'Edit Template' : 'Create new template'}</>;
   }
-  if (activePage === 'Workflow') {
+  if (activePage === ActivePageEnum.Workflow) {
     return <>{'Workflow Editor'}</>;
   }
 
-  if (activePage === 'sms') {
+  if (activePage === ActivePageEnum.sms) {
     return <>{'Edit SMS Template'}</>;
   }
 
-  if (activePage === 'email') {
+  if (activePage === ActivePageEnum.email) {
     return <>{'Edit Email Template'}</>;
   }
 
-  if (activePage === 'in_app') {
+  if (activePage === ActivePageEnum.in_app) {
     return <>{'Edit Notification Template'}</>;
   }
 
   return <>{editMode ? 'Edit Template' : 'Create new template'}</>;
 };
 
-export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActivePage, activePage }) => {
+interface Props {
+  templateId: string;
+  loading: boolean;
+  disableSubmit: boolean;
+  setActivePage: any;
+  activePage: ActivePageEnum;
+}
+
+export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActivePage, activePage }: Props) => {
   const { editMode, template } = useTemplateController(templateId);
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const { readonly } = useEnvController();
@@ -48,11 +57,13 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActi
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When truthy={activePage !== 'Settings' && activePage !== 'TriggerSnippet'}>
+          <When truthy={activePage !== ActivePageEnum.Settings && activePage !== ActivePageEnum.TriggerSnippet}>
             <Center
               mt={10}
               onClick={() => {
-                setActivePage(activePage === 'Workflow' ? 'Settings' : 'Workflow');
+                setActivePage(
+                  activePage === ActivePageEnum.Workflow ? ActivePageEnum.Settings : ActivePageEnum.Workflow
+                );
               }}
               inline
               style={{ cursor: 'pointer' }}
