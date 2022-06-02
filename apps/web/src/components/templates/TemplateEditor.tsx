@@ -5,6 +5,7 @@ import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
 import { TemplateSMSEditor } from './TemplateSMSEditor';
 import { useTemplateController } from './use-template-controller.hook';
+import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 
 export const TemplateEditor = ({ activePage, disableSave, loading, templateId }) => {
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
@@ -23,7 +24,7 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
 
   return (
     <div>
-      {activePage === 'sms' && (
+      {activePage === ActivePageEnum.sms && (
         <>
           {smsFields.map((message, index) => {
             return (
@@ -38,7 +39,7 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
           })}
         </>
       )}
-      {activePage === 'email' && (
+      {activePage === ActivePageEnum.email && (
         <>
           <EmailMessagesCards
             variables={trigger?.variables || []}
@@ -48,7 +49,7 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
           />
         </>
       )}
-      {activePage === 'in_app' && (
+      {activePage === ActivePageEnum.in_app && (
         <>
           {inAppFields.map((message, index) => {
             return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;

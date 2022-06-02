@@ -12,11 +12,20 @@ import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 
+export enum ActivePageEnum {
+  Settings = 'Settings',
+  Workflow = 'Workflow',
+  sms = 'Sms',
+  email = 'Email',
+  in_app = 'in_app',
+  TriggerSnippet = 'TriggerSnippet',
+}
+
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const { readonly, environment } = useEnvController();
-  const [activePage, setActivePage] = useState<string>('Settings');
+  const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.Settings);
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
 
@@ -68,7 +77,7 @@ export default function TemplateEditorPage() {
   }, [environment, template]);
 
   const goBackHandler = () => {
-    setActivePage('Workflow');
+    setActivePage(ActivePageEnum.Workflow);
   };
 
   if (isLoading) return null;
@@ -85,7 +94,7 @@ export default function TemplateEditorPage() {
             setActivePage={setActivePage}
             activePage={activePage}
           />
-          {(activePage === 'Settings' || activePage === 'TriggerSnippet') && (
+          {(activePage === ActivePageEnum.Settings || activePage === ActivePageEnum.TriggerSnippet) && (
             <TemplateSettings
               activePage={activePage}
               setActivePage={setActivePage}
@@ -94,7 +103,7 @@ export default function TemplateEditorPage() {
               templateId={templateId}
             />
           )}
-          {activePage === 'Workflow' && (
+          {activePage === ActivePageEnum.Workflow && (
             <WorkflowEditorPage
               handleAddChannel={handleAddChannel}
               channelButtons={channelButtons}

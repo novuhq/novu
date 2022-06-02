@@ -7,6 +7,7 @@ import { TemplateTriggerModal } from './TemplateTriggerModal';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import styled from '@emotion/styled';
 import { useTemplateController } from './use-template-controller.hook';
+import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 
 export const TemplateSettings = ({ activePage, setActivePage, channelButtons, showErrors, templateId }) => {
   const { readonly } = useEnvController();
@@ -43,9 +44,11 @@ export const TemplateSettings = ({ activePage, setActivePage, channelButtons, sh
         </Grid.Col>
         <Grid.Col md={8} sm={6}>
           <div style={{ paddingLeft: 23 }}>
-            {activePage === 'Settings' && <NotificationSettingsForm editMode={editMode} />}
+            {activePage === ActivePageEnum.Settings && <NotificationSettingsForm editMode={editMode} />}
 
-            {template && trigger && activePage === 'TriggerSnippet' && <TriggerSnippetTabs trigger={trigger} />}
+            {template && trigger && activePage === ActivePageEnum.TriggerSnippet && (
+              <TriggerSnippetTabs trigger={trigger} />
+            )}
             {trigger && (
               <TemplateTriggerModal
                 trigger={trigger}
