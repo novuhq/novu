@@ -57,7 +57,7 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActi
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When truthy={activePage !== ActivePageEnum.Settings}>
+          <When truthy={activePage !== ActivePageEnum.Settings && activePage !== ActivePageEnum.TriggerSnippet}>
             <Center
               mt={10}
               onClick={() => {
