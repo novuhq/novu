@@ -1,7 +1,7 @@
 image:
   file: .gitpod.dockerfile
 tasks:
-  - init: pnpm install && pnpm build
+  - init: pnpm setup:project
     command: mkdir -p /workspace/data && mongod --dbpath /workspace/data 
   - command: redis-server
   - command: pnpm start
