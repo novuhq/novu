@@ -10,22 +10,22 @@ import { useStatusChangeControllerHook } from './use-status-change-controller.ho
 import { useTemplateController } from './use-template-controller.hook';
 
 const Header = ({ activePage, editMode }: { editMode: boolean; activePage: ActivePageEnum }) => {
-  if (activePage === ActivePageEnum.Settings) {
+  if (activePage === ActivePageEnum.SETTINGS) {
     return <>{editMode ? 'Edit Template' : 'Create new template'}</>;
   }
-  if (activePage === ActivePageEnum.Workflow) {
+  if (activePage === ActivePageEnum.WORKFLOW) {
     return <>{'Workflow Editor'}</>;
   }
 
-  if (activePage === ActivePageEnum.sms) {
+  if (activePage === ActivePageEnum.SMS) {
     return <>{'Edit SMS Template'}</>;
   }
 
-  if (activePage === ActivePageEnum.email) {
+  if (activePage === ActivePageEnum.EMAIL) {
     return <>{'Edit Email Template'}</>;
   }
 
-  if (activePage === ActivePageEnum.in_app) {
+  if (activePage === ActivePageEnum.IN_APP) {
     return <>{'Edit Notification Template'}</>;
   }
 
@@ -36,7 +36,7 @@ interface Props {
   templateId: string;
   loading: boolean;
   disableSubmit: boolean;
-  setActivePage: any;
+  setActivePage: (activePage: ActivePageEnum) => void;
   activePage: ActivePageEnum;
 }
 
@@ -57,12 +57,12 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActi
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When truthy={activePage !== ActivePageEnum.Settings}>
+          <When truthy={activePage !== ActivePageEnum.SETTINGS}>
             <Center
               mt={10}
               onClick={() => {
                 setActivePage(
-                  activePage === ActivePageEnum.Workflow ? ActivePageEnum.Settings : ActivePageEnum.Workflow
+                  activePage === ActivePageEnum.WORKFLOW ? ActivePageEnum.SETTINGS : ActivePageEnum.WORKFLOW
                 );
               }}
               inline

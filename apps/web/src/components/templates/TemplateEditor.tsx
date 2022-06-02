@@ -24,7 +24,7 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
 
   return (
     <div>
-      {activePage === ActivePageEnum.sms && (
+      {activePage === ActivePageEnum.SMS && (
         <>
           {smsFields.map((message, index) => {
             return (
@@ -39,7 +39,7 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
           })}
         </>
       )}
-      {activePage === ActivePageEnum.email && (
+      {activePage === ActivePageEnum.EMAIL && (
         <>
           <EmailMessagesCards
             variables={trigger?.variables || []}
@@ -49,7 +49,7 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
           />
         </>
       )}
-      {activePage === ActivePageEnum.in_app && (
+      {activePage === ActivePageEnum.IN_APP && (
         <>
           {inAppFields.map((message, index) => {
             return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;

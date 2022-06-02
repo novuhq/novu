@@ -13,19 +13,19 @@ import { TemplateSettings } from '../../../components/templates/TemplateSettings
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 
 export enum ActivePageEnum {
-  Settings = 'Settings',
-  Workflow = 'Workflow',
-  sms = 'Sms',
-  email = 'Email',
-  in_app = 'in_app',
-  TriggerSnippet = 'TriggerSnippet',
+  SETTINGS = 'Settings',
+  WORKFLOW = 'Workflow',
+  SMS = 'Sms',
+  EMAIL = 'Email',
+  IN_APP = 'in_app',
+  TRIGGER_SNIPPET = 'TriggerSnippet',
 }
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const { readonly, environment } = useEnvController();
-  const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.Settings);
+  const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
 
@@ -77,7 +77,7 @@ export default function TemplateEditorPage() {
   }, [environment, template]);
 
   const goBackHandler = () => {
-    setActivePage(ActivePageEnum.Workflow);
+    setActivePage(ActivePageEnum.WORKFLOW);
   };
 
   if (isLoading) return null;
@@ -94,7 +94,7 @@ export default function TemplateEditorPage() {
             setActivePage={setActivePage}
             activePage={activePage}
           />
-          {(activePage === ActivePageEnum.Settings || activePage === ActivePageEnum.TriggerSnippet) && (
+          {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
             <TemplateSettings
               activePage={activePage}
               setActivePage={setActivePage}
@@ -103,7 +103,7 @@ export default function TemplateEditorPage() {
               templateId={templateId}
             />
           )}
-          {activePage === ActivePageEnum.Workflow && (
+          {activePage === ActivePageEnum.WORKFLOW && (
             <WorkflowEditorPage
               handleAddChannel={handleAddChannel}
               channelButtons={channelButtons}

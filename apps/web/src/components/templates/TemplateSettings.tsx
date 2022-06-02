@@ -44,9 +44,9 @@ export const TemplateSettings = ({ activePage, setActivePage, channelButtons, sh
         </Grid.Col>
         <Grid.Col md={8} sm={6}>
           <div style={{ paddingLeft: 23 }}>
-            {activePage === ActivePageEnum.Settings && <NotificationSettingsForm editMode={editMode} />}
+            {activePage === ActivePageEnum.SETTINGS && <NotificationSettingsForm editMode={editMode} />}
 
-            {template && trigger && activePage === ActivePageEnum.TriggerSnippet && (
+            {template && trigger && activePage === ActivePageEnum.TRIGGER_SNIPPET && (
               <TriggerSnippetTabs trigger={trigger} />
             )}
             {trigger && (
