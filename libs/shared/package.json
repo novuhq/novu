@@ -3,6 +3,7 @@
   "version": "0.4.1",
   "description": "",
   "scripts": {
+    "start": "npm run start:dev",
     "afterinstall": "pnpm build",
     "build": "node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
