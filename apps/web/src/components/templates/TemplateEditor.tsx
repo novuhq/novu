@@ -25,7 +25,7 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
   return (
     <div>
       {activePage === ActivePageEnum.SMS && (
-        <>
+        <div style={{ padding: '20px 25px' }}>
           {smsFields.map((message, index) => {
             return (
               <TemplateSMSEditor
@@ -37,7 +37,7 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
               />
             );
           })}
-        </>
+        </div>
       )}
       {activePage === ActivePageEnum.EMAIL && (
         <>

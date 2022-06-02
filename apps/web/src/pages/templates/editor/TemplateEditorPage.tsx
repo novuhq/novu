@@ -98,7 +98,6 @@ export default function TemplateEditorPage() {
             <TemplateSettings
               activePage={activePage}
               setActivePage={setActivePage}
-              channelButtons={channelButtons}
               showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
               templateId={templateId}
             />
