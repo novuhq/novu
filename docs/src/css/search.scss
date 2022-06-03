@@ -61,6 +61,34 @@
   .DocSearch-Label {
     font-size: 12px;
   }
+
+  .DocSearch-Logo {
+    .DocSearch-Label {
+      position: relative;
+
+      &::after {
+        content: ' Algolia';
+      }
+
+      &::before {
+        position: absolute;
+        content: '';
+        top: 50%;
+        transform: translateY(-50%);
+        right: -24px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    svg {
+      position: relative;
+      width: 16px;
+      height: 16px;
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
 }
 
 [data-theme='light'] {
@@ -94,6 +122,14 @@
         box-shadow: none;
         color: $color-gray-4;
       } 
+    }
+
+    .DocSearch-Logo {
+      .DocSearch-Label {
+        &::before {
+          background-image: url('/img/algolia-black-logo.svg');
+        }
+      }
     }
   
     --docsearch-primary-color: #0055FF;
@@ -142,6 +178,14 @@
       border-radius: 3px;
       box-shadow: none;
       color: $color-gray-9;
+    }
+
+    .DocSearch-Logo {
+      .DocSearch-Label {
+        &::before {
+          background-image: url('/img/algolia-white-logo.svg');
+        }
+      }
     }
 
     --docsearch-primary-color: #00D5FF;
