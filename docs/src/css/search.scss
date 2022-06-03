@@ -133,8 +133,9 @@
     }
   
     --docsearch-primary-color: #0055FF;
-    --docsearch-text-color: #000000; 
-    --docsearch-muted-color: var(--ifm-color-secondary-darkest);
+    --docsearch-text-color: #000000;
+    --docsearch-highlight-color: #E6E6E6;
+    --docsearch-muted-color: #333333;
     --docsearch-container-background: rgba(94, 100, 112, 0.7);
     /* Modal */
     --docsearch-modal-background: #F5F5F5;
@@ -144,8 +145,8 @@
     --docsearch-searchbox-shadow: inset 0 0 0 1px var(--docsearch-primary-color);
     /* Hit */
     --docsearch-hit-color: var(--ifm-font-color-base);
-    --docsearch-hit-active-color: var(--ifm-color-white);
-    --docsearch-hit-background: var(--ifm-color-white);
+    --docsearch-hit-active-color: #000000;
+    --docsearch-hit-background: #FFFFFF;
     /* Footer */
     --docsearch-footer-background: var(--ifm-color-white);
   }
@@ -191,7 +192,8 @@
     --docsearch-primary-color: #00D5FF;
     --docsearch-text-color: #FFFFFF; 
     --docsearch-text-color: var(--ifm-font-color-base);
-    --docsearch-muted-color: var(--ifm-color-secondary-darkest);
+    --docsearch-highlight-color: #262626;
+    --docsearch-muted-color: #999999;
     --docsearch-container-background: rgba(13, 13, 13, 0.7);
     /* Modal */
     --docsearch-modal-background: #0d0d0d;
@@ -201,8 +203,8 @@
     --docsearch-searchbox-shadow: inset 0 0 0 1px var(--docsearch-primary-color);
     /* Hit */
     --docsearch-hit-color: var(--ifm-font-color-base);
-    --docsearch-hit-active-color: var(--ifm-color-white);
-    --docsearch-hit-background: var(--ifm-color-emphasis-100);
+    --docsearch-hit-active-color: #ffffff;
+    --docsearch-hit-background: #1A1A1A;
     /* Footer */
     --docsearch-footer-background: #1A1A1A;
     --docsearch-key-gradient: linear-gradient(
