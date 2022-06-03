@@ -58,6 +58,10 @@
   }
 
   &-sidebar {
+    &__brand {
+      box-shadow: none;
+    }
+    
     &__back {
       display: none;
     }
