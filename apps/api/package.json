@@ -59,6 +59,7 @@
     "agenda": "^4.2.1",
     "axios": "^0.24.0",
     "bcrypt": "^5.0.0",
+    "body-parser": "^1.20.0",
     "bull": "^4.2.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.12.2",
