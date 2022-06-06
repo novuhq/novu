@@ -6,6 +6,7 @@ import { INestApplication, ValidationPipe, Logger } from '@nestjs/common';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
+import * as bodyParser from 'body-parser';
 
 import * as Sentry from '@sentry/node';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
@@ -61,6 +62,9 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
+
+  app.use('/v1/events/trigger', bodyParser.json({ limit: '20mb' }));
+  app.use('/v1/events/trigger', bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
   app.use(compression());
 
