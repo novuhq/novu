@@ -8,7 +8,7 @@ import { ColorScheme } from '../../index';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
-  onNotificationClick?: (notification: IMessage) => void;
+  onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
