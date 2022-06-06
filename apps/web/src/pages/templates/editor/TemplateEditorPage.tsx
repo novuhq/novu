@@ -10,12 +10,22 @@ import { useEnvController } from '../../../store/use-env-controller';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';
+import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
+
+export enum ActivePageEnum {
+  SETTINGS = 'Settings',
+  WORKFLOW = 'Workflow',
+  SMS = 'Sms',
+  EMAIL = 'Email',
+  IN_APP = 'in_app',
+  TRIGGER_SNIPPET = 'TriggerSnippet',
+}
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const { readonly, environment } = useEnvController();
-  const [activePage, setActivePage] = useState<string>('Settings');
+  const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
   const [channelButtons, setChannelButtons] = useState<string[]>([]);
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
 
@@ -67,7 +77,7 @@ export default function TemplateEditorPage() {
   }, [environment, template]);
 
   const goBackHandler = () => {
-    setActivePage('Workflow');
+    setActivePage(ActivePageEnum.WORKFLOW);
   };
 
   if (isLoading) return null;
@@ -77,30 +87,32 @@ export default function TemplateEditorPage() {
       <PageMeta title={editMode ? template?.name : 'Create Template'} />
       <FormProvider {...methods}>
         <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
-          {(activePage === 'Settings' || activePage === 'TriggerSnippet') && (
+          <TemplatePageHeader
+            loading={isLoading || isUpdateLoading}
+            disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+            templateId={templateId}
+            setActivePage={setActivePage}
+            activePage={activePage}
+          />
+          {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
             <TemplateSettings
-              loading={isLoading || isUpdateLoading}
-              disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
               activePage={activePage}
               setActivePage={setActivePage}
-              channelButtons={channelButtons}
               showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
               templateId={templateId}
             />
           )}
-          {activePage === 'Workflow' && (
+          {activePage === ActivePageEnum.WORKFLOW && (
             <WorkflowEditorPage
               handleAddChannel={handleAddChannel}
               channelButtons={channelButtons}
               toggleChannel={toggleChannel}
-              changeTab={setActivePage}
               activeChannels={activeChannels}
             />
           )}
           {!loadingEditTemplate && !isIntegrationsLoading ? (
             <TemplateEditor
               activePage={activePage}
-              goBackHandler={goBackHandler}
               disableSave={readonly || loadingEditTemplate || isLoading || !isDirty}
               loading={isLoading || isUpdateLoading}
               templateId={templateId}
