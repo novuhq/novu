@@ -1,0 +1,50 @@
+.tabsWrapper {
+  overflow: auto;
+}
+
+.tabsList {
+  display: flex;
+  list-style: none;
+  align-items: center;
+  padding-left: 0;
+  border-bottom: 1px solid #333333;
+  padding-right: 16px;
+
+  &::after {
+    content: '';
+    flex: 0 0 16px;
+  }
+}
+
+.tabItem {
+  margin-top: 0 !important;
+  margin-bottom: 0
+}
+
+.tabButton {
+  background-color: transparent;
+  padding: 12px 18px;
+  border: none;
+  cursor: pointer;
+  color: #999999;
+  transition: color .2s;
+
+  &:hover {
+    color: #00D5FF;
+  }
+
+  &.tabActiveButton {
+    position: relative;
+    color: #00D5FF;
+
+    &::after {
+      position: absolute;
+      content: '';
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background-color: #00D5FF;
+    }
+  }
+}
