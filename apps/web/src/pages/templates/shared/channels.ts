@@ -26,6 +26,14 @@ export const channels = [
     testId: 'smsSelector',
     channelType: ChannelTypeEnum.SMS,
   },
+  {
+    tabKey: ChannelTypeEnum.DIRECT,
+    label: 'Direct',
+    description: 'Send an direct messages',
+    Icon: SmsGradient,
+    testId: 'directSelector',
+    channelType: ChannelTypeEnum.DIRECT,
+  },
 ];
 
 export const getChannel = (channelKey: string) => {

@@ -109,6 +109,11 @@ export function useTemplateController(templateId: string) {
     name: 'smsMessages',
   });
 
+  const { fields: directFields, append: addDirectAppField } = useFieldArray({
+    control,
+    name: 'directMessages',
+  });
+
   const navigate = useNavigate();
   const { template, refetch, loading: loadingEditTemplate } = useTemplateFetcher(templateId);
   const client = useQueryClient();
@@ -134,6 +139,7 @@ export function useTemplateController(templateId: string) {
       const inAppChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.IN_APP);
       const emailChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.EMAIL);
       const smsChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.SMS);
+      const directChannel = template.steps.filter((i) => i.template.type === ChannelTypeEnum.DIRECT);
 
       const formValues: IForm = {
         notificationGroup: template._notificationGroupId,
@@ -143,6 +149,7 @@ export function useTemplateController(templateId: string) {
         inAppMessages: [],
         emailMessages: [],
         smsMessages: [],
+        directMessages: [],
       };
 
       if (inAppChannel.length) {
@@ -164,6 +171,11 @@ export function useTemplateController(templateId: string) {
       if (smsChannel.length) {
         formValues.smsMessages = smsChannel;
         toggleChannel(ChannelTypeEnum.SMS, true);
+      }
+
+      if (directChannel.length) {
+        formValues.directMessages = directChannel;
+        toggleChannel(ChannelTypeEnum.DIRECT, true);
       }
 
       reset(formValues);
@@ -314,6 +326,10 @@ export function useTemplateController(templateId: string) {
     if (selectedMessageType === ChannelTypeEnum.IN_APP && inAppFields.length === 0) {
       addInAppField({ ...defaultFormValues.inAppMessages[0] });
     }
+
+    if (selectedMessageType === ChannelTypeEnum.DIRECT && directFields.length === 0) {
+      addDirectAppField({ ...defaultFormValues.directMessages[0] });
+    }
   }
 
   const onTriggerModalDismiss = () => {
@@ -357,15 +373,16 @@ export function useTemplateController(templateId: string) {
     onTriggerModalDismiss,
     register,
     control,
-    emailMessagesFields,
     handleSubmit,
-    inAppFields,
     watch,
     setValue,
     methods,
     removeEmailMessage,
     errors,
     smsFields,
+    emailMessagesFields,
+    inAppFields,
+    directFields,
     setIsDirty,
     isDirty: isDirtyForm || isDirty,
   };
@@ -394,6 +411,7 @@ export interface IForm {
   emailMessages: ITemplateMessage[];
   inAppMessages: ITemplateMessage[];
   smsMessages: ITemplateMessage[];
+  directMessages: ITemplateMessage[];
 }
 
 const defaultFormValues = {
@@ -430,5 +448,16 @@ const defaultFormValues = {
       },
       filters: [],
     },
-  ],
+  ] as ITemplateMessage[],
+  directMessages: [
+    {
+      template: {
+        _id: undefined,
+        contentType: undefined,
+        type: ChannelTypeEnum.DIRECT,
+        content: '',
+      },
+      filters: [],
+    },
+  ] as ITemplateMessage[],
 };

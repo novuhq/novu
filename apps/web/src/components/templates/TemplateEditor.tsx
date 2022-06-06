@@ -6,6 +6,7 @@ import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
 import { TemplateSMSEditor } from './TemplateSMSEditor';
 import { useTemplateController } from './use-template-controller.hook';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { TemplateDirectEditor } from './direct-editor/TemplateDirectEditor';
 
 export const TemplateEditor = ({ activePage, disableSave, loading, templateId }) => {
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
@@ -15,10 +16,11 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
     changeSelectedMessage,
     trigger,
     control,
+    smsFields,
     emailMessagesFields,
     inAppFields,
+    directFields,
     errors,
-    smsFields,
     removeEmailMessage,
   } = useTemplateController(templateId);
 
@@ -53,6 +55,23 @@ export const TemplateEditor = ({ activePage, disableSave, loading, templateId })
         <>
           {inAppFields.map((message, index) => {
             return <TemplateInAppEditor key={index} errors={errors} control={control} index={index} />;
+          })}
+        </>
+      )}
+      {activePage === ActivePageEnum.DIRECT && (
+        <>
+          {directFields.map((message, index) => {
+            return (
+              <TemplateDirectEditor
+                key={index}
+                errors={errors}
+                control={control}
+                index={index}
+                isIntegrationActive={
+                  !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.DIRECT)
+                }
+              />
+            );
           })}
         </>
       )}

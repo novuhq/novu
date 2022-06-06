@@ -18,6 +18,7 @@ export enum ActivePageEnum {
   SMS = 'Sms',
   EMAIL = 'Email',
   IN_APP = 'in_app',
+  DIRECT = 'direct',
   TRIGGER_SNIPPET = 'TriggerSnippet',
 }
 

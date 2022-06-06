@@ -1,0 +1,95 @@
+import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Textarea } from '@mantine/core';
+import { useEnvController } from '../../../store/use-env-controller';
+import { IForm } from '../use-template-controller.hook';
+import { LackIntegrationError } from '../LackIntegrationError';
+import { colors } from '../../../design-system';
+import { ChannelTypeEnum } from '@novu/shared';
+
+export function TemplateDirectEditor({
+  control,
+  index,
+  isIntegrationActive,
+}: {
+  control: Control<IForm>;
+  index: number;
+  errors: any;
+  isIntegrationActive: boolean;
+}) {
+  const { readonly } = useEnvController();
+  const {
+    formState: { errors },
+  } = useFormContext();
+
+  return (
+    <>
+      {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.DIRECT} /> : null}
+      <Controller
+        name={`directMessages.${index}.template.content` as any}
+        control={control}
+        render={({ field }) => (
+          <Textarea
+            styles={TextAreaStyles}
+            {...field}
+            data-test-id="directNotificationContent"
+            error={errors[`directMessages.${index}.template.content`]}
+            disabled={readonly}
+            minRows={4}
+            value={field.value || ''}
+            label="Direct message content"
+            placeholder="Add notification content here..."
+          />
+        )}
+      />
+    </>
+  );
+}
+
+const TextAreaStyles = (theme) => {
+  const dark = theme.colorScheme === 'dark';
+
+  const primaryColor = dark ? theme.white : theme.colors.gray[8];
+  const invalidColor = theme.colors.gradient[5];
+  const secondaryColor = dark ? theme.colors.dark[3] : theme.colors.gray[6];
+
+  return {
+    input: {
+      borderColor: dark ? theme.colors.dark[5] : theme.colors.gray[5],
+      backgroundColor: 'transparent',
+      color: primaryColor,
+      margin: '5px 0px',
+      '&:focus, &:focus-within': {
+        borderColor: theme.colors.gray[7],
+      },
+      '&::placeholder': {
+        color: secondaryColor,
+      },
+    },
+    label: {
+      color: primaryColor,
+      fontWeight: 700,
+      fontSize: '14px',
+      lineHeight: '17px',
+      margin: '5px 0px',
+    },
+    invalid: {
+      borderColor: invalidColor,
+      color: primaryColor,
+      '&::placeholder': {
+        color: secondaryColor,
+      },
+    },
+    error: {
+      color: `${invalidColor} !important`,
+      fontSize: '12px',
+    },
+    disabled: {
+      backgroundColor: `${dark ? colors.B20 : colors.B98} !important`,
+      borderColor: `${dark ? colors.B30 : colors.BGLight} !important`,
+      color: `${secondaryColor} !important`,
+      '&::placeholder': {
+        color: `${secondaryColor} !important`,
+      },
+    },
+  };
+};
