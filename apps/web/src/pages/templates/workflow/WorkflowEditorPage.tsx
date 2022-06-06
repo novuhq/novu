@@ -10,13 +10,11 @@ import { channels, getChannel } from '../shared/channels';
 
 const WorkflowEditorPage = ({
   channelButtons,
-  changeTab,
   handleAddChannel,
   activeChannels,
   toggleChannel,
 }: {
   channelButtons: string[];
-  changeTab: (string) => void;
   handleAddChannel: (string) => void;
   activeChannels: { [p: string]: boolean };
   toggleChannel: (channel: ChannelTypeEnum, active: boolean) => void;
@@ -28,16 +26,12 @@ const WorkflowEditorPage = ({
     event.dataTransfer.effectAllowed = 'move';
   };
 
-  const goBackHandler = () => {
-    changeTab('Settings');
-  };
-
   return (
-    <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
-      <Grid grow style={{ minHeight: 500 }}>
+    <div style={{ minHeight: 500 }}>
+      <Grid gutter={0} grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
           <ReactFlowProvider>
-            <FlowEditor channelButtons={channelButtons} setSelected={setSelectedChannel} onGoBack={goBackHandler} />
+            <FlowEditor channelButtons={channelButtons} setSelected={setSelectedChannel} />
           </ReactFlowProvider>
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
@@ -53,9 +47,14 @@ const WorkflowEditorPage = ({
                   </ButtonWrapper>
                 </NavSection>
                 <NavSection>
-                  <Button mt={10} variant="outline" fullWidth onClick={() => handleAddChannel(selectedChannel)}>
+                  <EditTemplateButton
+                    mt={10}
+                    variant="outline"
+                    fullWidth
+                    onClick={() => handleAddChannel(selectedChannel)}
+                  >
                     Edit Template
-                  </Button>
+                  </EditTemplateButton>
                   <Divider my={30} />
                   <StyledSwitch
                     label={'Step is Active'}
@@ -117,4 +116,8 @@ const StyledSwitch = styled(Switch)`
 const ButtonWrapper = styled.div`
   display: flex;
   justify-content: space-between;
+`;
+
+const EditTemplateButton = styled(Button)`
+  background-color: transparent;
 `;
