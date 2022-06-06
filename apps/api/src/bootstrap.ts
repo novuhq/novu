@@ -63,6 +63,9 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
 
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
+
   app.use('/v1/events/trigger', bodyParser.json({ limit: '20mb' }));
   app.use('/v1/events/trigger', bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
