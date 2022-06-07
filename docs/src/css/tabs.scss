@@ -32,7 +32,12 @@ html[data-theme='dark'] {
         background-color: $color-gray-4;
       }
 
+      &__item {
+        color: $color-gray-8;
+      }
+
       &__item--active {
+        color: $color-primary-blue;
         border-bottom: 1px solid $color-primary-blue;
       }
     }
@@ -46,7 +51,12 @@ html[data-theme='light'] {
         background-color: $color-gray-9;
       }
 
+      &__item {
+        color: $color-gray-6;
+      }
+
       &__item--active {
+        color: $color-secondary-blue;
         border-bottom: 1px solid $color-secondary-blue;
       }
     }
