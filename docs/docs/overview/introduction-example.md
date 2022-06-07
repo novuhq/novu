@@ -22,3 +22,7 @@ In this article, we’ll go over the benefits of planning for your webinar and t
 
 
 <CodeTabs items={codeItems}></CodeTabs>
+
+## Table view component
+
+In this article, we’ll go over the benefits of planning for your webinar and top actionable tips to get you moving forward with your webinar marketing strategy.

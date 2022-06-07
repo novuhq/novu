@@ -30,13 +30,10 @@
   padding: 12px 18px;
   border: none;
   cursor: pointer;
-  color: #999999;
   transition: color .2s;
   position: relative;
-
-  &:hover {
-    color: #00D5FF;
-  }
+  font-size: 16px;
+  font-weight: normal;
 
   &::after {
     position: absolute;
@@ -45,13 +42,55 @@
     left: 0;
     width: 100%;
     height: 1px;
-    background-color: #333333;
+  }
+}
+
+html[data-theme='dark'] {
+  .tabsList {
+    border-bottom: 1px solid #333333;
   }
 
-  &.tabActiveButton {
-    color: #00D5FF;
+  .tabButton {
+    color: #999999;
+
+    &.tabActiveButton {
+      color: #00D5FF;
+      &::after {
+        background-color: #00D5FF;
+      }
+    }
+
+    &:hover {
+      color: #00D5FF;
+    }
+
     &::after {
-      background-color: #00D5FF;
+      background-color: #333333;
+    }
+  }
+}
+
+html[data-theme='light'] {
+  .tabsList {
+    border-bottom: 1px solid #CCCCCC;
+  }
+
+  .tabButton {
+    color: #666666;
+
+    &.tabActiveButton {
+      color: #0055FF;
+      &::after {
+        background-color: #0055FF;
+      }
+    }
+
+    &:hover {
+      color: #0055FF;
+    }
+
+    &::after {
+      background-color: #CCCCCC;
     }
   }
 }
