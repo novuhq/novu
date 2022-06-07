@@ -38,7 +38,7 @@ html[data-theme='dark'] {
 
       &__item--active {
         color: $color-primary-blue;
-        border-bottom: 1px solid $color-primary-blue;
+        border-bottom: 2px solid $color-primary-blue;
       }
     }
   }
@@ -57,7 +57,7 @@ html[data-theme='light'] {
 
       &__item--active {
         color: $color-secondary-blue;
-        border-bottom: 1px solid $color-secondary-blue;
+        border-bottom: 2px solid $color-secondary-blue;
       }
     }
   }

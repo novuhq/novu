@@ -87,51 +87,6 @@ article {
   }
 }
 
-img {
-  border-radius: 4px;
-}
-
-h2 {
-  padding-top: 40px;
-  margin-top: 40px;
-
-  @include mobile-screen {
-    padding-top: 25px !important;
-    margin-top: 25px !important;
-  }
-}
-
-a:not([class]) {
-  text-decoration: underline 1px rgba(0, 0, 0, 0);
-  text-underline-offset: 3px;
-  transition: text-decoration-color 0.2s;
-}
-
-pre code span,
-code {
-  font-family: 'IBM Plex Mono';
-}
-
-pre code:not([class]) {
-  display: initial;
-}
-
-code {
-  color: $color-secondary-purple;
-  padding: 1px 6px;
-  border: none;
-  border-radius: 2px;
-
-  &:not([class]) {
-    background-color: rgba(227, 0, 189, 0.1);
-    line-height: 1.5;
-    font-weight: normal;
-    display: inline-block;
-    margin-top: -2px;
-    font-size: 14px;
-  }
-}
-
 .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.1);
   display: block;
@@ -206,20 +161,6 @@ html[data-theme='dark'] {
     }
   }
 
-  h2 {
-    border-top: 1px dashed $color-gray-4;
-  }
-
-  a:not([class]):hover {
-    text-decoration-color: $color-primary-blue;
-  }
-
-  ul, ol {
-    > li::marker {
-      color: $color-primary-blue;
-    }
-  }
-
   .theme-edit-this-page {
     color: $color-white;
 
@@ -258,20 +199,6 @@ html[data-theme='light'] {
         }
       }
     }
-  }
-
-  ul, ol {
-    > li::marker {
-      color: $color-secondary-blue;
-    }
-  }
-
-  h2 {
-    border-top: 1px dashed $color-gray-9;
-  }
-
-  a:not([class]):hover {
-    text-decoration-color: $color-secondary-blue;
   }
 
   .theme-edit-this-page {
