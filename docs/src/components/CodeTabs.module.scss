@@ -1,19 +1,23 @@
 .tabsWrapper {
-  overflow: auto;
+  overflow-y: hidden;
+  overflow-x: auto;
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+  &::-webkit-scrollbar {
+    width: 0px; /* For Chrome, Safari, and Opera */
+  }
 }
 
 .tabsList {
+  position: relative;
   display: flex;
   list-style: none;
   align-items: center;
+  justify-content: flex-start;
   padding-left: 0;
-  border-bottom: 1px solid #333333;
   padding-right: 16px;
-
-  &::after {
-    content: '';
-    flex: 0 0 16px;
-  }
+  padding-bottom: 0;
+  border-bottom: 1px solid #333333;
 }
 
 .tabItem {
@@ -28,22 +32,25 @@
   cursor: pointer;
   color: #999999;
   transition: color .2s;
+  position: relative;
 
   &:hover {
     color: #00D5FF;
   }
 
-  &.tabActiveButton {
-    position: relative;
-    color: #00D5FF;
+  &::after {
+    position: absolute;
+    content: '';
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: #333333;
+  }
 
+  &.tabActiveButton {
+    color: #00D5FF;
     &::after {
-      position: absolute;
-      content: '';
-      bottom: -1px;
-      left: 0;
-      width: 100%;
-      height: 1px;
       background-color: #00D5FF;
     }
   }
