@@ -6,7 +6,7 @@ export interface ISubscribers {
   delete(subscriberId: string);
   setCredentials(
     subscriberId: string,
-    integrationId: string,
+    providerId: string,
     credentials: IChannelCredentials
   );
 }

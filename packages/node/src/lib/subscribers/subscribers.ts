@@ -24,12 +24,12 @@ export class Subscribers implements ISubscribers {
 
   async setCredentials(
     subscriberId: string,
-    integrationId: string,
+    providerId: string,
     credentials: IChannelCredentials
   ) {
     return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       channel: {
-        integrationId,
+        providerId,
         credentials: {
           ...credentials,
         },
