@@ -15,6 +15,7 @@ export function useSocketController() {
     if (token && !socket) {
       socket = io(socketUrl, {
         reconnectionDelayMax: 10000,
+        transports: ['websocket'],
         query: {
           token: `${token}`,
         },
