@@ -22,7 +22,9 @@ To learn more about the novu mental mode visit our documentation site on this [l
 
 ### Project Structure
 Novu uses a monorepo approach to manage our multiple packages and their associated code.
-![https://s3.us-west-2.amazonaws.com/secure.notion-static.com/4245671a-ce3f-47df-93f2-dace8692f899/Mono-repo_Structure_%283%29.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20220529%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20220529T121252Z&X-Amz-Expires=86400&X-Amz-Signature=4f9df38e3a3c19bafb8bcb98220cef81fa973d7c3a8fc3cb5311d1a1c2745357&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Mono-repo%2520Structure%2520%283%29.jpg%22&x-id=GetObject](https://s3.us-west-2.amazonaws.com/secure.notion-static.com/4245671a-ce3f-47df-93f2-dace8692f899/Mono-repo_Structure_%283%29.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20220529%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20220529T121252Z&X-Amz-Expires=86400&X-Amz-Signature=4f9df38e3a3c19bafb8bcb98220cef81fa973d7c3a8fc3cb5311d1a1c2745357&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Mono-repo%2520Structure%2520%283%29.jpg%22&x-id=GetObject)
+
+![Mono-repo Structure (3)](https://user-images.githubusercontent.com/8872447/172360367-6c60d365-c77a-49bb-a2f2-85f9d7f4ddf2.jpeg)
+
 Read more about our monorepo structure [here](https://novuhq.notion.site/Monorepo-structure-b34ab7edac334e6f9a5fe457cae3c530).
 
 ## Run Novu locally
