@@ -21,4 +21,41 @@
   strong {
     font-weight: 500;
   }
+
+  table {
+    th,
+    td {
+      border: none
+    }
+
+    thead {
+      background-color: transparent;
+
+      th {
+        font-weight: 400;
+        text-align: left;
+      }
+
+      tr {
+        border-bottom: none;
+        border-top: none;
+      }
+    }
+
+    tr:nth-child(2n) {
+      background-color: transparent;
+    }
+  }
+}
+
+html[data-theme='dark'] {
+
+}
+
+html[data-theme='light'] {
+  table {
+    th {
+      color: $color-gray-6
+    }
+  }
 }
