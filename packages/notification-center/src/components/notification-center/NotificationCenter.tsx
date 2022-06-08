@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { IMessage } from '@novu/shared';
 
-import { NovuContext } from '../../store/novu-provider.context';
 import { NotificationCenterContext } from '../../store/notification-center.context';
 import { AppContent } from './components';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ColorScheme } from '../../index';
 import { ThemeContext } from '../../store/novu-theme.context';
+import { useNovuContext } from '../../hooks';
 
 export interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -19,7 +19,7 @@ export interface INotificationCenterProps {
 
 export function NotificationCenter(props: INotificationCenterProps) {
   const queryClient = new QueryClient();
-  const { applicationIdentifier } = useContext(NovuContext);
+  const { applicationIdentifier } = useNovuContext();
 
   return (
     <ThemeContext.Provider value={{ colorScheme: props.colorScheme }}>

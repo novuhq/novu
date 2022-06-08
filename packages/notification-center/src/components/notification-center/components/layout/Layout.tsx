@@ -5,11 +5,11 @@ import { FooterContainer as Footer } from './footer/FooterContainer';
 import { shadows } from '../../../../shared/config/shadows';
 import { colors } from '../../../../shared/config/colors';
 import React, { useContext } from 'react';
-import { NovuContext } from '../../../../store/novu-provider.context';
 import { ThemeContext } from '../../../../store/novu-theme.context';
+import { useNovuContext } from 'packages/notification-center/src/hooks';
 
 export function Layout({ children }: { children: JSX.Element }) {
-  const { initialized } = useContext(NovuContext);
+  const { initialized } = useNovuContext();
   const { colorScheme } = useContext(ThemeContext);
 
   return (
