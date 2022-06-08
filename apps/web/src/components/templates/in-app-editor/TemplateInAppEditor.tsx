@@ -13,7 +13,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
       <Container sx={{ maxWidth: '400px', paddingLeft: '0px', margin: '0 auto 15px auto' }}>
         <Group grow direction="column">
           <Controller
-            name={`inAppMessages.${index}.template.cta.data.url` as any}
+            name={`steps.${index}.template.cta.data.url` as any}
             control={control}
             render={({ field }) => (
               <Input
@@ -28,7 +28,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             )}
           />
           <Controller
-            name={`inAppMessages.${index}.template.content` as any}
+            name={`steps.${index}.template.content` as any}
             data-test-id="in-app-content-form-item"
             control={control}
             render={({ field }) => {

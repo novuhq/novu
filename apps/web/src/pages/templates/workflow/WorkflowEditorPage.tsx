@@ -1,38 +1,51 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
 import { Button, colors, DragButton, Switch, Text, Title } from '../../../design-system';
-import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme, Group } from '@mantine/core';
-import React, { useState } from 'react';
+import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
-import { ReactFlowProvider } from 'react-flow-renderer';
 import { channels, getChannel } from '../shared/channels';
+import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
+import { useWatch } from 'react-hook-form';
+
+const capitalize = (text: string) => {
+  if (typeof text !== 'string') return '';
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
 const WorkflowEditorPage = ({
-  channelButtons,
-  handleAddChannel,
-  activeChannels,
-  toggleChannel,
+  setActivePage,
+  templateId,
+  setActiveStep,
 }: {
-  channelButtons: string[];
-  handleAddChannel: (string) => void;
-  activeChannels: { [p: string]: boolean };
-  toggleChannel: (channel: ChannelTypeEnum, active: boolean) => void;
+  setActivePage: (string) => void;
+  setActiveStep: any;
+  templateId: string;
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
+  const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
+  const { addMessage, stepFields } = useTemplateController(templateId);
+
+  useEffect(() => {
+    if (selectedNode === null) {
+      return;
+    }
+    setSelectedChannel(selectedNode.data.tabKey);
+    setActiveStep(selectedNode.id);
+  }, [selectedNode]);
 
   return (
     <div style={{ minHeight: 500 }}>
       <Grid gutter={0} grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
-          <ReactFlowProvider>
-            <FlowEditor channelButtons={channelButtons} setSelected={setSelectedChannel} />
-          </ReactFlowProvider>
+          <FlowEditor steps={stepFields} addMessage={addMessage} setSelectedNode={setSelectedNode} />
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
@@ -51,18 +64,16 @@ const WorkflowEditorPage = ({
                     mt={10}
                     variant="outline"
                     fullWidth
-                    onClick={() => handleAddChannel(selectedChannel)}
+                    onClick={() =>
+                      setActivePage(
+                        selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
+                      )
+                    }
                   >
                     Edit Template
                   </EditTemplateButton>
                   <Divider my={30} />
-                  <StyledSwitch
-                    label={'Step is Active'}
-                    checked={activeChannels[selectedChannel]}
-                    onChange={(event) => {
-                      toggleChannel(selectedChannel, event.target.checked);
-                    }}
-                  />
+                  <StyledSwitch checked={selectedNode?.data.active} label={'Step is Active'} onChange={(event) => {}} />
                 </NavSection>
               </StyledNav>
             ) : (
