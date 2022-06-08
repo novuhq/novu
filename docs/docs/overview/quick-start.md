@@ -59,7 +59,7 @@ In the notification center preview you can type the content, you can select cont
 Custom variables using hbs syntax can be described to create the final message.
 In addition to the integration, any subscriber needs to set credentials in order to have proper authorization on the channel.
 
-The credentials is can be saved through @novu/node package:
+The credentials is can be saved through @novu/node package.
 
 
 
