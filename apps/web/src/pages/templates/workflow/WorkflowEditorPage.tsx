@@ -6,8 +6,7 @@ import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { channels, getChannel } from '../shared/channels';
-import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
-import { useWatch } from 'react-hook-form';
+import { useTemplateController, StepEntity } from '../../../components/templates/use-template-controller.hook';
 
 const capitalize = (text: string) => {
   if (typeof text !== 'string') return '';
@@ -26,26 +25,32 @@ const WorkflowEditorPage = ({
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
-  const [selectedNode, setSelectedNode] = useState<any | null>(null);
+  const [selectedStep, setSelectedStep] = useState<StepEntity | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string>('');
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
-  const { addMessage, stepFields } = useTemplateController(templateId);
+  const { addStep, stepFields, updateStep } = useTemplateController(templateId);
 
   useEffect(() => {
-    if (selectedNode === null) {
+    if (selectedNodeId.length === 0) {
       return;
     }
-    setSelectedChannel(selectedNode.data.tabKey);
-    setActiveStep(selectedNode.id);
-  }, [selectedNode]);
+    const step = stepFields.find((item) => item._id === selectedNodeId || item.id === selectedNodeId);
+    if (!step) {
+      return;
+    }
+    setSelectedStep(step);
+    setSelectedChannel(step.template.type);
+    setActiveStep(step._id || step.id);
+  }, [selectedNodeId]);
 
   return (
     <div style={{ minHeight: 500 }}>
       <Grid gutter={0} grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
-          <FlowEditor steps={stepFields} addMessage={addMessage} setSelectedNode={setSelectedNode} />
+          <FlowEditor steps={stepFields} addStep={addStep} setSelectedNodeId={setSelectedNodeId} />
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
@@ -73,7 +78,24 @@ const WorkflowEditorPage = ({
                     Edit Template
                   </EditTemplateButton>
                   <Divider my={30} />
-                  <StyledSwitch checked={selectedNode?.data.active} label={'Step is Active'} onChange={(event) => {}} />
+                  <StyledSwitch
+                    checked={selectedStep?.active}
+                    label={'Step is Active'}
+                    onChange={(event) => {
+                      if (!selectedStep) {
+                        return;
+                      }
+                      const step = {
+                        ...selectedStep,
+                        active: !selectedStep?.active,
+                      };
+                      const index = stepFields.findIndex((item) =>
+                        item._id === step?._id || item.id === step?.id ? step : item
+                      );
+                      updateStep(step, index);
+                      setSelectedStep(step);
+                    }}
+                  />
                 </NavSection>
               </StyledNav>
             ) : (

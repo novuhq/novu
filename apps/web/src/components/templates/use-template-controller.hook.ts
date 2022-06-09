@@ -143,7 +143,7 @@ export function useTemplateController(templateId: string) {
     navigate('/templates');
   };
 
-  function addMessage(channelType: ChannelTypeEnum, id: string) {
+  const addStep = (channelType: ChannelTypeEnum, id: string) => {
     steps.append({
       _id: id,
       template: {
@@ -155,10 +155,15 @@ export function useTemplateController(templateId: string) {
       },
       filters: [],
     });
-  }
+  };
+
+  const updateStep = (step: StepEntity, index: number) => {
+    steps.update(index, step);
+  };
 
   return {
-    addMessage,
+    updateStep,
+    addStep,
     editMode,
     template,
     onSubmit,
