@@ -38,17 +38,25 @@ function CardItem({ title, imageDark, imageLight }: cardItem) {
         colorMode === 'dark' ? styles.cardItemDark : styles.cardItemLight
       )}
     >
-      <ThemedImage
-        className={styles.cardImage}
-        alt={title}
-        sources={{
-          light: useBaseUrl(imageLight),
-          dark: useBaseUrl(imageDark),
-        }}
-        loading="eager"
-        width={198}
-        height={98}
-      />
+      <div className={styles.cardImageWrapper}>
+        <img
+          src={`data:image/svg+xml;charset=utf-8,%3Csvg height='98' width='198' xmlns='http://www.w3.org/2000/svg' version='1.1'%3E%3C/svg%3E`}
+          alt=""
+          aria-hidden
+        />
+        <ThemedImage
+          className={styles.cardImage}
+          alt={title}
+          sources={{
+            light: useBaseUrl(imageLight),
+            dark: useBaseUrl(imageDark),
+          }}
+          loading="eager"
+          width={198}
+          height={98}
+        />
+      </div>
+
       <span className={styles.cardTitle}>{title}</span>
     </div>
   );

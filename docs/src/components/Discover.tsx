@@ -5,7 +5,7 @@ import { useColorMode } from '@docusaurus/theme-common';
 import clsx from 'clsx';
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-
+import Link from '@docusaurus/Link';
 const discoverData = {
   Overview: {
     darkIcon: '/img/discover/view.svg',
@@ -36,8 +36,10 @@ const discoverData = {
 function Items({ items, className }) {
   return (
     <ul className={className}>
-      {items.map(({ label, docId }) => (
-        <li key={docId}>{label}</li>
+      {items.map(({ label, docId, href }) => (
+        <li key={docId}>
+          <Link href={href}>{label}</Link>
+        </li>
       ))}
     </ul>
   );

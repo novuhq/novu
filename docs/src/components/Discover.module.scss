@@ -65,7 +65,38 @@
     flex-basis: 0;
   }
 
-  > li:not(:last-child) {
-    margin-bottom: 12px;
+  > li {
+    &:not(:last-child) {
+      margin-bottom: 12px;
+    }
+
+    a {
+      color: inherit;
+
+      &:hover {
+        text-decoration-color: transparent !important;
+      }
+    }
+  }
+}
+
+html[data-theme='dark'] {
+  .discoverItems {
+    > li {
+      a:hover {
+        color: #00D5FF;
+      }
+    }
+  }
+}
+
+
+html[data-theme='light'] {
+  .discoverItems {
+    > li {
+      a:hover {
+        color: #0055FF;
+      }
+    }
   }
 }

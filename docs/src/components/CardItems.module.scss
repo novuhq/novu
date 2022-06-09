@@ -38,8 +38,16 @@
   }
 }
 
-.cardImage {
+.cardImageWrapper {
+  position: relative;
   margin-bottom: 18px;
+} 
+
+.cardImage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   max-width: 350px;
   width: 100%;
   height: auto;
@@ -55,7 +63,7 @@
   margin-top: auto;
 
   @media only screen and (max-width: 639px) {
-    font-size: 18px;
+    font-size: 16px;
     bottom: 20px;
   }
 }
