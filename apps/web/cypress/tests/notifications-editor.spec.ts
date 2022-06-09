@@ -5,6 +5,22 @@ describe('Notifications Creator', function () {
     cy.initializeSession().as('session');
   });
 
+  it('should drag and drop channel', function () {
+    const dataTransfer = new DataTransfer();
+
+    cy.visit('/templates/create');
+    cy.getByTestId('workflowButton').click({ force: true });
+
+    cy.wait(1000);
+    cy.getByTestId('check-inAppSelector').trigger('dragstart', { dataTransfer, force: true });
+
+    cy.get('.react-flow__node-triggerNode').trigger('drop', { dataTransfer, force: true });
+
+    cy.wait(1000);
+    cy.getByTestId('check-inAppSelector').trigger('dragstart', { dataTransfer, force: true });
+    cy.get('[data-id="dndnode_0"]').trigger('drop', { dataTransfer, force: true });
+  });
+
   it.skip('should not reset data when switching channel types', function () {
     cy.visit('/templates/create');
     cy.getByTestId('add-channel').click({ force: true });
