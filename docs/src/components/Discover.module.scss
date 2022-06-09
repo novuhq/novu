@@ -10,6 +10,10 @@
   &:not(:last-child) {
     margin-bottom: 28px;
   }
+
+  @media only screen and (max-width: 639px) {
+    flex-direction: column;
+  }
 }
 
 .discoverContent {
@@ -18,6 +22,12 @@
   justify-content: space-between;
   flex-basis: 430px;
   margin-right: 40px;
+
+  @media only screen and (max-width: 639px) {
+    flex-basis: 0;
+    flex-direction: column;
+    margin-right: 0;
+  }
 }
 
 .discoverIcon {
@@ -29,6 +39,10 @@
   align-items: center;
   border-radius: 3px;
   margin-right: 20px;
+
+  @media only screen and (max-width: 639px) {
+    margin-bottom: 20px;
+  }
 
   &.discoverIconDark {
     background: linear-gradient(180deg, #333333 0%, rgba(51, 51, 51, 0.6) 100%);
@@ -46,6 +60,10 @@
 
 .discoverItems {
   flex-basis: 290px;
+
+  @media only screen and (max-width: 639px) {
+    flex-basis: 0;
+  }
 
   > li:not(:last-child) {
     margin-bottom: 12px;
