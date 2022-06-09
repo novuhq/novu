@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum } from '@novu/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum, IEmailBlock } from '@novu/shared';
 import * as moment from 'moment';
-import { CreateNotificationTemplateDto } from '../dto/create-notification-template.dto';
+import { CreateNotificationTemplateDto } from '../dto';
 import { ChangeRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
@@ -24,9 +24,11 @@ describe('Create Notification template - /notification-templates (POST)', async 
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            type: ChannelTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -41,12 +43,6 @@ describe('Create Notification template - /notification-templates (POST)', async 
               ],
             },
           ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
-            },
-          ],
         },
       ],
     };
@@ -59,8 +55,10 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
     const message = template.steps[0];
 
-    expect(message.template.name).to.equal(`${testTemplate.steps[0].name}`);
-    expect(message.template.subject).to.equal(`${testTemplate.steps[0].subject}`);
+    const content = testTemplate.steps[0].template.content as IEmailBlock[];
+
+    expect(message.template.name).to.equal(`${testTemplate.steps[0].template.name}`);
+    expect(message.template.subject).to.equal(`${content[0].subject}`);
     expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
     expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
 
@@ -70,8 +68,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     expect(message.template.type).to.equal(ChannelTypeEnum.EMAIL);
     expect(template.tags[0]).to.equal('test-tag');
-    if (Array.isArray(message.template.content) && Array.isArray(testTemplate.steps[0].content)) {
-      expect(message.template.content[0].type).to.equal(testTemplate.steps[0].content[0].type);
+    if (Array.isArray(message.template.content) && Array.isArray(content)) {
+      expect(message.template.content[0].type).to.equal(content[0].type);
     } else {
       throw new Error('content must be an array');
     }
@@ -117,12 +115,15 @@ describe('Create Notification template - /notification-templates (POST)', async 
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          type: ChannelTypeEnum.IN_APP,
-          content: 'Test Template',
-          cta: {
-            type: ChannelCTATypeEnum.REDIRECT,
-            data: {
-              url: 'https://example.org/profile',
+          template: {
+            name: 'Message Name',
+            content: 'Test Template',
+            type: ChannelTypeEnum.IN_APP,
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'https://example.org/profile',
+              },
             },
           },
         },
@@ -143,8 +144,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     expect(template.steps.length).to.equal(1);
     expect(template.steps[0].template.type).to.equal(ChannelTypeEnum.IN_APP);
-    expect(template.steps[0].template.content).to.equal(testTemplate.steps[0].content);
-    expect(template.steps[0].template.cta.data.url).to.equal(testTemplate.steps[0].cta.data.url);
+    expect(template.steps[0].template.content).to.equal(testTemplate.steps[0].template.content);
+    expect(template.steps[0].template.cta.data.url).to.equal(testTemplate.steps[0].template.cta.data.url);
   });
 
   it('should create event trigger', async () => {
@@ -154,12 +155,15 @@ describe('Create Notification template - /notification-templates (POST)', async 
       description: 'This is a test description',
       steps: [
         {
-          type: ChannelTypeEnum.IN_APP,
-          content: 'Test Template {{name}} {{lastName}}',
-          cta: {
-            type: ChannelCTATypeEnum.REDIRECT,
-            data: {
-              url: 'https://example.org/profile',
+          template: {
+            name: 'Message Name',
+            content: 'Test Template {{name}} {{lastName}}',
+            type: ChannelTypeEnum.IN_APP,
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'https://example.org/profile',
+              },
             },
           },
         },

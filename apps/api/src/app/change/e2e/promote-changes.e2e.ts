@@ -5,12 +5,10 @@ import {
   NotificationGroupRepository,
   EnvironmentRepository,
 } from '@novu/dal';
-import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { CreateNotificationTemplateDto } from '../../notification-template/dto/create-notification-template.dto';
-import { UpdateNotificationTemplateDto } from '../../notification-template/dto/update-notification-template.dto';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto } from '../../notification-template/dto';
 
 describe('Promote changes', () => {
   let session: UserSession;
@@ -68,9 +66,11 @@ describe('Promote changes', () => {
       notificationGroupId: parentGroup._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            type: ChannelTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -83,12 +83,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },
@@ -115,9 +109,11 @@ describe('Promote changes', () => {
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            type: ChannelTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -130,12 +126,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },
@@ -197,9 +187,11 @@ describe('Promote changes', () => {
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            type: ChannelTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -212,12 +204,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },
@@ -241,10 +227,12 @@ describe('Promote changes', () => {
       steps: [
         {
           _id: step._templateId,
-          name: 'test',
-          type: step.template.type,
-          cta: step.template.cta,
-          content: step.template.content,
+          template: {
+            name: 'test',
+            type: step.template.type,
+            cta: step.template.cta,
+            content: step.template.content,
+          },
         },
       ],
     };
@@ -269,9 +257,11 @@ describe('Promote changes', () => {
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            type: ChannelTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -284,12 +274,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },
@@ -312,19 +296,23 @@ describe('Promote changes', () => {
       steps: [
         {
           _id: step._templateId,
-          name: step.template.name,
-          type: step.template.type,
-          cta: step.template.cta,
-          content: step.template.content,
+          template: {
+            name: 'Message Name',
+            content: step.template.content,
+            type: step.template.type,
+            cta: step.template.cta,
+          },
         },
         {
-          name: 'Message Name 2',
-          subject: 'Test email subject 2',
-          type: ChannelTypeEnum.EMAIL,
-          cta: {
-            type: ChannelCTATypeEnum.REDIRECT,
-            data: {
-              url: '',
+          template: {
+            name: 'Message Name',
+            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            type: step.template.type,
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: '',
+              },
             },
           },
           filters: [
@@ -339,12 +327,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },
@@ -371,9 +353,11 @@ describe('Promote changes', () => {
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            type: ChannelTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -386,12 +370,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },
@@ -415,9 +393,11 @@ describe('Promote changes', () => {
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            type: ChannelTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -430,12 +410,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },

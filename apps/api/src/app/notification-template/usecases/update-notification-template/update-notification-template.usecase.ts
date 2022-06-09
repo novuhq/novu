@@ -1,5 +1,4 @@
 // eslint-ignore max-len
-
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   NotificationTemplateEntity,
@@ -7,7 +6,7 @@ import {
   NotificationStepEntity,
   ChangeRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, IEmailBlock } from '@novu/shared';
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
@@ -75,19 +74,20 @@ export class UpdateNotificationTemplate {
       const templateMessages: NotificationStepEntity[] = [];
 
       for (const message of steps) {
+        const templateContext = message.template.content as IEmailBlock[];
         if (message._id) {
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
               templateId: message._id,
-              type: message.type,
-              name: message.name,
-              content: message.content,
+              type: message.template.type,
+              name: message.template.name,
+              content: message.template.content,
               organizationId: command.organizationId,
               environmentId: command.environmentId,
               userId: command.userId,
-              contentType: message.contentType,
-              cta: message.cta,
-              subject: message.subject,
+              contentType: message.template.contentType,
+              cta: message.template.cta,
+              subject: templateContext[0].subject,
               parentChangeId,
             })
           );
@@ -99,15 +99,15 @@ export class UpdateNotificationTemplate {
         } else {
           const template = await this.createMessageTemplate.execute(
             CreateMessageTemplateCommand.create({
-              type: message.type,
-              name: message.name,
-              content: message.content,
+              type: message.template.type,
+              name: message.template.name,
+              content: message.template.content,
               organizationId: command.organizationId,
               environmentId: command.environmentId,
-              contentType: message.contentType,
+              contentType: message.template.contentType,
               userId: command.userId,
-              cta: message.cta,
-              subject: message.subject,
+              cta: message.template.cta,
+              subject: templateContext[0].subject,
               parentChangeId,
             })
           );

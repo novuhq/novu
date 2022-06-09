@@ -1,5 +1,4 @@
 import {
-  ArrayNotEmpty,
   IsArray,
   IsBoolean,
   IsDefined,
@@ -9,16 +8,10 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import {
-  BuilderFieldOperator,
-  BuilderFieldType,
-  BuilderGroupValues,
-  ChannelCTATypeEnum,
-  ChannelTypeEnum,
-  IEmailBlock,
-} from '@novu/shared';
+import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, ChannelCTATypeEnum } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { MessageTemplateDto } from '../../dto';
 
 export class CreateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: CreateNotificationTemplateCommand) {
@@ -44,7 +37,7 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsDefined()
   @IsArray()
   @ValidateNested()
-  steps: NotificationStepDto[];
+  steps: NotificationStepCommand[];
 
   @IsBoolean()
   active: boolean;
@@ -53,35 +46,23 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
   draft: boolean;
 }
 
-export class ChannelCTADto {
+export class ChannelCTACommand {
   @IsEnum(ChannelCTATypeEnum)
   type: ChannelCTATypeEnum;
 
+  @ValidateNested()
   data: {
     url: string;
   };
 }
 
-export class NotificationStepDto {
-  @IsOptional()
-  @IsEnum(ChannelTypeEnum)
-  type: ChannelTypeEnum;
-
-  @IsDefined()
-  content: string | IEmailBlock[];
-
-  @IsOptional()
-  contentType?: 'editor' | 'customHtml';
-
-  @IsOptional()
+class NotificationStepCommand {
   @ValidateNested()
-  cta?: ChannelCTADto;
+  @IsOptional()
+  template?: MessageTemplateDto;
 
   @IsOptional()
   name?: string;
-
-  @IsOptional()
-  subject?: string;
 
   @IsOptional()
   @IsArray()
