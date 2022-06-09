@@ -9,7 +9,7 @@ import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
-import { API_ROOT } from '../../config';
+import { API_ROOT, GITHUB_AUTH_OPTION } from '../../config';
 import { showNotification } from '@mantine/notifications';
 
 type Props = {
@@ -84,22 +84,22 @@ export function SignUpForm({ token, email }: Props) {
 
   return (
     <>
-      {!token && (
-        <GithubButton
-          my={30}
-          component="a"
-          href={`${API_ROOT}/v1/auth/github`}
-          variant="white"
-          fullWidth
-          radius="md"
-          leftIcon={<Github />}
-          sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}
-        >
-          Sign Up with Github
-        </GithubButton>
-      )}
-      {!token && (
-        <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
+      {GITHUB_AUTH_OPTION && !token && (
+        <>
+          <GithubButton
+            my={30}
+            component="a"
+            href={`${API_ROOT}/v1/auth/github`}
+            variant="white"
+            fullWidth
+            radius="md"
+            leftIcon={<Github />}
+            sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}
+          >
+            Sign Up with Github
+          </GithubButton>
+          <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
+        </>
       )}
 
       <form name="login-form" onSubmit={handleSubmit(onSubmit)}>
