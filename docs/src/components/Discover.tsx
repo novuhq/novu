@@ -46,7 +46,7 @@ function Items({ items, className }) {
 export default function Discover() {
   const sidebar = useContext(SidebarContext);
   const sidebarItems = sidebar.filter((item) => item.docId !== 'home');
-  console.log(sidebarItems);
+
   const { colorMode } = useColorMode();
 
   return (
