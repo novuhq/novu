@@ -12,12 +12,12 @@ describe('Notifications Creator', function () {
     cy.getByTestId('workflowButton').click({ force: true });
 
     cy.wait(1000);
-    cy.getByTestId('check-inAppSelector').trigger('dragstart', { dataTransfer, force: true });
+    cy.getByTestId('inAppSelector').trigger('dragstart', { dataTransfer, force: true });
 
     cy.get('.react-flow__node-triggerNode').trigger('drop', { dataTransfer, force: true });
 
     cy.wait(1000);
-    cy.getByTestId('check-inAppSelector').trigger('dragstart', { dataTransfer, force: true });
+    cy.getByTestId('inAppSelector').trigger('dragstart', { dataTransfer, force: true });
     cy.get('[data-id="dndnode_0"]').trigger('drop', { dataTransfer, force: true });
   });
 
