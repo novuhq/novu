@@ -28,8 +28,6 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
       data={['Edit', 'Preview']}
       value={view}
       onChange={(value) => {
-        console.log(value);
-
         setView(value);
       }}
       defaultValue={view}
