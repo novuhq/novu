@@ -78,6 +78,8 @@ export function useTemplateController(templateId: string) {
         steps: [],
       };
 
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       formValues.steps = template.steps;
 
       reset(formValues);
@@ -179,7 +181,7 @@ export function useTemplateController(templateId: string) {
 }
 
 export interface StepEntity {
-  id: string;
+  id?: string;
   _id?: string;
 
   _templateId: string;
