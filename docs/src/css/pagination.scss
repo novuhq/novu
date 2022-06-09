@@ -74,3 +74,12 @@ html[data-theme='light'] {
     }
   }
 }
+
+// workaround to remove pagination styles on home page
+html.docs-doc-id-home {
+  .pagination-nav {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0 !important;
+  }
+}

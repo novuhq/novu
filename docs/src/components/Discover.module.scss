@@ -1,0 +1,53 @@
+.discoverWrapper {
+  margin-top: 56px;
+}
+
+.discoverInner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+
+  &:not(:last-child) {
+    margin-bottom: 28px;
+  }
+}
+
+.discoverContent {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-basis: 430px;
+  margin-right: 40px;
+}
+
+.discoverIcon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  margin-right: 20px;
+
+  &.discoverIconDark {
+    background: linear-gradient(180deg, #333333 0%, rgba(51, 51, 51, 0.6) 100%);
+  }
+
+  &.discoverIconLight {
+    background: linear-gradient(180deg, #F2F2F2 0%, rgba(242, 242, 242, 0.6) 100%);
+  }
+}
+
+.discoverTitle {
+  font-size: 20px;
+}
+
+
+.discoverItems {
+  flex-basis: 290px;
+
+  > li:not(:last-child) {
+    margin-bottom: 12px;
+  }
+}

@@ -17,6 +17,7 @@
   padding: 20px 20px 16px;
   margin-top: 0 !important;
   color: inherit;
+  align-items: center;
   flex: 1;
 
   &:not(:last-child) {
@@ -39,6 +40,9 @@
 
 .cardImage {
   margin-bottom: 18px;
+  max-width: 350px;
+  width: 100%;
+  height: auto;
 }
 
 .cardTitle {

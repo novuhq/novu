@@ -1,5 +1,6 @@
 ---
 title: Home
+slug: /
 sidebar_position: 1
 sidebar_class_name: menu-home
 pagination_prev: null
@@ -7,6 +8,7 @@ pagination_next: null
 custom_edit_url: null
 ---
 import CardItems from '@site/src/components/CardItems'
+import Discover from '@site/src/components/Discover'
 
 # Documentation
 
@@ -18,3 +20,5 @@ Novu is an open-source notification infrastructure built for the engineering tea
 <CardItems/>
 
 ## Discover Novu
+
+<Discover/>

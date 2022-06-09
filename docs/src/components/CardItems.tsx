@@ -45,6 +45,9 @@ function CardItem({ title, imageDark, imageLight }: cardItem) {
           light: useBaseUrl(imageLight),
           dark: useBaseUrl(imageDark),
         }}
+        loading="eager"
+        width={198}
+        height={98}
       />
       <span className={styles.cardTitle}>{title}</span>
     </div>
