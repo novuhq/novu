@@ -3,7 +3,11 @@ import { INovuProviderContext } from '../index';
 import { NovuContext } from '../store/novu-provider.context';
 import { useProviderCheck } from './use-check-provider.hook';
 
-export function useNovuContext() {
+/**
+ * custom hook for accessing NovuContext
+ * @returns INovuProviderContext
+ */
+export function useNovuContext(): INovuProviderContext {
   const novuContext = useContext<INovuProviderContext>(NovuContext);
   const context = useProviderCheck<INovuProviderContext>(novuContext);
 
