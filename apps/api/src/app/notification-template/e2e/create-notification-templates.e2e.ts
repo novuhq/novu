@@ -17,6 +17,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should create email template', async function () {
+    const defaultMessageIsActive = true;
+
     const testTemplate: Partial<CreateNotificationTemplateDto> = {
       name: 'test email template',
       description: 'This is a test description',
@@ -57,6 +59,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     const message = template.steps[0];
 
     expect(message.template.name).to.equal(`${testTemplate.steps[0].template.name}`);
+    expect(message.template.active).to.equal(defaultMessageIsActive);
     expect(message.template.subject).to.equal(`${testTemplate.steps[0].template.subject}`);
     expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
     expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
@@ -154,6 +157,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       description: 'This is a test description',
       steps: [
         {
+          active: false,
           template: {
             name: 'Message Name',
             content: 'Test Template {{name}} {{lastName}}',
@@ -175,6 +179,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     const template: INotificationTemplate = body.data;
 
+    expect(template.active).to.equal(false);
     expect(template.triggers.length).to.equal(1);
     expect(template.triggers[0].identifier).to.include('test');
     expect(template.triggers[0].type).to.equal(TriggerTypeEnum.EVENT);

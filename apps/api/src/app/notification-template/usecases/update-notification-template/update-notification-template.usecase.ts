@@ -94,6 +94,7 @@ export class UpdateNotificationTemplate {
           templateMessages.push({
             _templateId: template._id,
             filters: message.filters,
+            active: message.active,
           });
         } else {
           const template = await this.createMessageTemplate.execute(
@@ -114,6 +115,7 @@ export class UpdateNotificationTemplate {
           templateMessages.push({
             _templateId: template._id,
             filters: message.filters,
+            active: message.active,
           });
         }
       }
