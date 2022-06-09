@@ -1,0 +1,20 @@
+.button_item {
+  background: none;
+  border: none;
+}
+
+.ul {
+  list-style-type: none;
+  
+  padding-left: 0px;
+
+  global {
+    li::marker {
+    display: none;
+    }
+  }
+}
+
+.faq_item_discription {
+
+}
