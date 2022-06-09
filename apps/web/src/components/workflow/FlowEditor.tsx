@@ -42,12 +42,12 @@ const initialNodes: Node[] = [
 
 export function FlowEditor({
   steps,
-  setSelectedNode,
-  addMessage,
+  setSelectedNodeId,
+  addStep,
 }: {
   steps: StepEntity[];
-  setSelectedNode: (node: any) => void;
-  addMessage: (channelType: ChannelTypeEnum, id: string) => void;
+  setSelectedNodeId: (nodeId: string) => void;
+  addStep: (channelType: ChannelTypeEnum, id: string) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
@@ -93,7 +93,7 @@ export function FlowEditor({
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
-    setSelectedNode(node);
+    setSelectedNodeId(node.id);
   }, []);
 
   const onDragOver = useCallback((event) => {
@@ -142,7 +142,7 @@ export function FlowEditor({
         },
       };
 
-      addMessage(newNode.data.channelType, newId);
+      addStep(newNode.data.channelType, newId);
 
       setNodes((nds) => nds.concat(newNode));
       updateNodeInternals(newId);
