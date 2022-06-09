@@ -181,7 +181,7 @@ export function useTemplateController(templateId: string) {
 }
 
 export interface StepEntity {
-  id: string;
+  id?: string;
   _id?: string;
 
   _templateId: string;
