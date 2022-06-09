@@ -78,8 +78,6 @@ export function useTemplateController(templateId: string) {
         steps: [],
       };
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
       formValues.steps = template.steps;
 
       reset(formValues);

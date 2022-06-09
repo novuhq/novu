@@ -26,13 +26,10 @@ export const TemplateFormProvider = ({ children }) => {
     },
   });
 
-  const steps: any = useFieldArray({
+  const steps = useFieldArray({
     control: methods.control,
     name: 'steps',
   });
-
-  console.log(steps.fields);
-  console.log(methods.getValues('steps'));
 
   return (
     <FormProvider {...methods}>
