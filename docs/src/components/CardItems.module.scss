@@ -11,9 +11,10 @@
 }
 
 .cardItem {
-  position: relative;
   display: flex;
+  flex-direction: column;
   border-radius: 12px;
+  padding: 20px 20px 16px;
   margin-top: 0 !important;
   color: inherit;
   flex: 1;
@@ -26,22 +27,28 @@
       margin-bottom: 20px;
     }
   }
+
+  &.cardItemDark {
+    background: linear-gradient(180deg, #1A1A1A 0%, rgba(26, 26, 26, 0.7) 100%);
+  }
+
+  &.cardItemLight {
+    background: linear-gradient(180deg, #F2F2F2 0%, rgba(242, 242, 242, 0.6) 100%);
+  }
 }
 
 .cardImage {
-  border-radius: 12px !important;
-  width: 100%;
-} 
+  margin-bottom: 18px;
+}
 
 .cardTitle {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
   font-weight: 350;
   font-size: 14px;
   white-space: nowrap;
   line-height: 1;
+  justify-self: center;
+  align-self: center;
+  margin-top: auto;
 
   @media only screen and (max-width: 639px) {
     font-size: 18px;

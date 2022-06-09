@@ -29,8 +29,15 @@ const cardsItems: cardItem[] = [
 ];
 
 function CardItem({ title, imageDark, imageLight }: cardItem) {
+  const { colorMode } = useColorMode();
+
   return (
-    <a className={styles.cardItem} href="/">
+    <div
+      className={clsx(
+        styles.cardItem,
+        colorMode === 'dark' ? styles.cardItemDark : styles.cardItemLight
+      )}
+    >
       <ThemedImage
         className={styles.cardImage}
         alt={title}
@@ -40,7 +47,7 @@ function CardItem({ title, imageDark, imageLight }: cardItem) {
         }}
       />
       <span className={styles.cardTitle}>{title}</span>
-    </a>
+    </div>
   );
 }
 
