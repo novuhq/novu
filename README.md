@@ -32,6 +32,8 @@ The ultimate service for managing multi-channel notifications with a single API.
   <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a>
     ·
     <a href="https://github.com/orgs/novuhq/projects/2">Roadmap</a>
+    ·
+    <a href="https://twitter.com/novuhq">Twitter</a>
   </p>
   
 ## ⭐️ Why
@@ -136,6 +138,12 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### Other (Coming Soon...)
 - [ ] PagerDuty
+
+## 💻  Need Help?
+
+We are more than happy to help you. Don't worry if you are getting some errors or problems while working with the project. Or just want to discuss something related to the project.
+
+Just <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a> server and ask for help.
 
 ## 🔗 Links
 - [Home page](https://novu.co/)
