@@ -5,6 +5,8 @@ sidebar_position: 1
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+import FAQ from '@site/src/components/FAQ';
+
 # Introduction Example
 
 To create your free managed or docker based Novu environment use our CLI tool:
@@ -102,6 +104,25 @@ In this article, we’ll go over the benefits of planning for your webinar and t
 | `debug`  | `ROOKOUT_DEBUG`                | False         | Set to `true` to increase log level to debug |
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Consequat, dolor posuere sed ultrices viverra lorem at scelerisque ut. Praesent amet venenatis gravida proin ac risus. Id eget.
+
+## FAQ component
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Porttitor enim, tellus dolor eu. Aliquam metus, nibh pretium, egestas mauris. Imperdiet faucibus vivamus libero viverra.
+
+#### Lorem ipsum dolor sit amet, consectetur adipiscing elit?
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Adipiscing massa sed ultrices sed felis volutpat ac. Congue sit nibh sed ipsum, erat facilisis mauris. Amet, est urna facilisi tempus ut amet. Pharetra orci curabitur faucibus purus in nibh. Dolor, sodales malesuada nec vitae scelerisque leo convallis ac dictumst. Euismod.
+
+#### Lorem ipsum dolor sit amet?
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Adipiscing massa sed ultrices sed felis volutpat ac. Congue sit nibh sed ipsum, erat facilisis mauris. Amet, est urna facilisi tempus ut amet. Pharetra orci curabitur faucibus purus in nibh. Dolor, sodales malesuada nec vitae scelerisque leo convallis ac dictumst. Euismod.
+
+#### Lorem ipsum dolor sit amet?
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Adipiscing massa sed ultrices sed felis volutpat ac. Congue sit nibh sed ipsum, erat facilisis mauris. Amet, est urna facilisi tempus ut amet. Pharetra orci curabitur faucibus purus in nibh. Dolor, sodales malesuada nec vitae scelerisque leo convallis ac dictumst. Euismod.
+
+
+<FAQ />
 
 ## Callout component
 
