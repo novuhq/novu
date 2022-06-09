@@ -6,7 +6,7 @@ import {
   NotificationStepEntity,
   ChangeRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, IEmailBlock } from '@novu/shared';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
@@ -74,7 +74,6 @@ export class UpdateNotificationTemplate {
       const templateMessages: NotificationStepEntity[] = [];
 
       for (const message of steps) {
-        const templateContext = message.template.content as IEmailBlock[];
         if (message._id) {
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
@@ -87,7 +86,7 @@ export class UpdateNotificationTemplate {
               userId: command.userId,
               contentType: message.template.contentType,
               cta: message.template.cta,
-              subject: templateContext[0].subject,
+              subject: message.template.subject,
               parentChangeId,
             })
           );
@@ -107,7 +106,7 @@ export class UpdateNotificationTemplate {
               contentType: message.template.contentType,
               userId: command.userId,
               cta: message.template.cta,
-              subject: templateContext[0].subject,
+              subject: message.template.subject,
               parentChangeId,
             })
           );

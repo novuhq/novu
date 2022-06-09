@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, IEmailBlock, ChannelCTATypeEnum } from '@novu/shared';
-import { IsDefined, IsEnum, IsOptional, ValidateNested } from 'class-validator';
+import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 class ChannelCTADto {
   @IsEnum(ChannelCTATypeEnum)
@@ -27,5 +27,10 @@ export class MessageTemplateDto {
   cta?: ChannelCTADto;
 
   @IsOptional()
+  @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  subject?: string;
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, INotificationTrigger, TriggerTypeEnum, IEmailBlock } from '@novu/shared';
+import { ChangeEntityTypeEnum, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 import { CreateNotificationTemplateCommand } from './create-notification-template.command';
@@ -50,8 +50,6 @@ export class CreateNotificationTemplate {
     const templateSteps = [];
 
     for (const message of command.steps) {
-      const templateContext = message.template.content as IEmailBlock[];
-
       const template = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
           type: message.template.type,
@@ -62,7 +60,7 @@ export class CreateNotificationTemplate {
           environmentId: command.environmentId,
           userId: command.userId,
           cta: message.template.cta,
-          subject: templateContext[0].subject,
+          subject: message.template.subject,
           parentChangeId,
         })
       );

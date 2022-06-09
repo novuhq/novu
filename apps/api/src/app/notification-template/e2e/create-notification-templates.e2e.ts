@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum, IEmailBlock } from '@novu/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum } from '@novu/shared';
 import * as moment from 'moment';
 import { CreateNotificationTemplateDto } from '../dto';
 import { ChangeRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
@@ -26,7 +26,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: ChannelTypeEnum.EMAIL,
           },
           filters: [
@@ -55,10 +56,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
     const message = template.steps[0];
 
-    const content = testTemplate.steps[0].template.content as IEmailBlock[];
-
     expect(message.template.name).to.equal(`${testTemplate.steps[0].template.name}`);
-    expect(message.template.subject).to.equal(`${content[0].subject}`);
+    expect(message.template.subject).to.equal(`${testTemplate.steps[0].template.subject}`);
     expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
     expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
 
@@ -68,8 +67,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     expect(message.template.type).to.equal(ChannelTypeEnum.EMAIL);
     expect(template.tags[0]).to.equal('test-tag');
-    if (Array.isArray(message.template.content) && Array.isArray(content)) {
-      expect(message.template.content[0].type).to.equal(content[0].type);
+    if (Array.isArray(message.template.content) && Array.isArray(testTemplate.steps[0].template.content)) {
+      expect(message.template.content[0].type).to.equal(testTemplate.steps[0].template.content[0].type);
     } else {
       throw new Error('content must be an array');
     }

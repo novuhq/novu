@@ -40,7 +40,8 @@ describe('Get changes', () => {
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: ChannelTypeEnum.EMAIL,
           },
           filters: [

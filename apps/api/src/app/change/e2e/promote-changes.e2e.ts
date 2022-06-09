@@ -68,7 +68,8 @@ describe('Promote changes', () => {
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: ChannelTypeEnum.EMAIL,
           },
           filters: [
@@ -111,7 +112,8 @@ describe('Promote changes', () => {
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: ChannelTypeEnum.EMAIL,
           },
           filters: [
@@ -189,7 +191,8 @@ describe('Promote changes', () => {
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: ChannelTypeEnum.EMAIL,
           },
           filters: [
@@ -259,7 +262,8 @@ describe('Promote changes', () => {
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: ChannelTypeEnum.EMAIL,
           },
           filters: [
@@ -306,7 +310,8 @@ describe('Promote changes', () => {
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: step.template.type,
             cta: {
               type: ChannelCTATypeEnum.REDIRECT,
@@ -355,7 +360,8 @@ describe('Promote changes', () => {
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: ChannelTypeEnum.EMAIL,
           },
           filters: [
@@ -395,7 +401,8 @@ describe('Promote changes', () => {
         {
           template: {
             name: 'Message Name',
-            content: [{ subject: 'Test email subject', type: 'text', content: 'This is a sample text block' }],
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
             type: ChannelTypeEnum.EMAIL,
           },
           filters: [
