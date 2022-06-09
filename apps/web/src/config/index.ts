@@ -23,3 +23,5 @@ export const ENV = process.env.REACT_APP_ENVIRONMENT;
 export const APP_ID = process.env.REACT_APP_NOVU_APP_ID;
 
 export const WIDGET_EMEBED_PATH = process.env.REACT_APP_WIDGET_EMBED_PATH || 'http://localhost:4701/embed.umd.min.js';
+
+export const GITHUB_AUTH_OPTION = process.env.REACT_APP_GITHUB_AUTH_OPTION === 'show';
