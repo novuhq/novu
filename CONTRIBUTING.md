@@ -79,6 +79,16 @@ To open the cypress management windows to debug tests run:
 cd apps/web && npm run cypress:open
 ```
 
+#### Different ports used by the services the projects spins up
+
+- 3000 - API
+
+- 3002 - WebSocket service
+
+- 4200 - Web Management UI
+
+- 4500 - Iframe embed for notification center
+
 #### Testing providers
 To run tests against the providers folder you can use the "npm run test:providers" command. 
 
