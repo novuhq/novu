@@ -27,7 +27,7 @@ nav.menu {
   }
 
   .menu__link {
-    font-size: 16px;
+    font-size: 14px;
     line-height: 1.25;
 
     svg {
@@ -45,6 +45,14 @@ nav.menu {
 
   .menu__list-item {
     position: relative;
+
+    &-collapsible {
+      margin-top: 20px;
+    }
+
+    &.menu-home {
+      font-weight: 500;
+    }
     > .menu__list {
       font-weight: 400;
       font-size: 14px;
@@ -58,7 +66,7 @@ nav.menu {
     }
 
     &--sublist-caret::before {
-      top: 16px;
+      top: 14px;
       position: absolute;
       left: 0;
       content: '';
