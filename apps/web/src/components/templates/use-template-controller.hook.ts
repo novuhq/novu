@@ -157,12 +157,7 @@ export function useTemplateController(templateId: string) {
     });
   };
 
-  const updateStep = (step: StepEntity, index: number) => {
-    steps.update(index, step);
-  };
-
   return {
-    updateStep,
     addStep,
     editMode,
     template,
@@ -182,7 +177,6 @@ export function useTemplateController(templateId: string) {
     errors,
     setIsDirty,
     isDirty: isDirtyForm || isDirty,
-    stepFields: steps.fields as StepEntity[],
   };
 }
 

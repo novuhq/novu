@@ -31,6 +31,9 @@ export const TemplateFormProvider = ({ children }) => {
     name: 'steps',
   });
 
+  console.log(steps.fields);
+  console.log(methods.getValues('steps'));
+
   return (
     <FormProvider {...methods}>
       <FieldArrayProvider fieldArrays={{ steps }}>{children}</FieldArrayProvider>
