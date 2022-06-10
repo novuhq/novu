@@ -44,8 +44,8 @@
   font-size: 14px;
   line-height: 1.25;
 
-  ~ ul .table-of-contents__link {
-      font-weight: 350;
+    &--active {
+      color: inherit
     }
   }
 }
@@ -63,7 +63,7 @@ html[data-theme='dark'] {
     &__link {
       color: $color-white;
   
-      &--active {
+      &:hover {
         color: $color-primary-blue;
       }
     }
@@ -83,7 +83,7 @@ html[data-theme='light'] {
     &__link {
       color: $color-gray-4;
   
-      &--active {
+      &:hover {
         color: $color-secondary-purple;
       }
     }
