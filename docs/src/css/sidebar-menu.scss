@@ -10,6 +10,10 @@
   padding-left: 14px;
   padding-right: 14px;
 
+  &:hover {
+    background: transparent;
+  }
+
   &--sublist-caret {
 
     &::after {
@@ -73,12 +77,6 @@ nav.menu {
   &::-webkit-scrollbar {
     display: none;
   }
-
-  .menu__link:hover, 
-  .menu__caret:hover {
-    background: transparent !important;
-  }
-
  
   .menu__list-item-collapsible:hover {
     background-color: transparent;
@@ -96,11 +94,11 @@ nav.menu {
     .theme-doc-sidebar-item-category-level-1.menu__list-item {
       > .menu__list-item-collapsible,
       > .menu__list-item-collapsible > .menu__link {
+        &--active,
         &:hover {
           background-color: transparent !important;
           color: inherit;
         }
-
       }
     }
   }
@@ -112,7 +110,6 @@ html[data-theme='dark'] {
 
     .menu__link:hover, 
     .menu__caret:hover {
-      background: transparent !important;
       color: $color-primary-blue;
     }
 
