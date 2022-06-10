@@ -1,6 +1,5 @@
 ---
 sidebar_position: 1
-draft: true
 ---
 
 import Tabs from '@theme/Tabs';
@@ -19,7 +18,6 @@ After creating your cloud or self-hosted account the next steps to sending your 
 ## Code Snippet with Tabs
 
 In this article, we’ll go over the benefits of planning for your webinar and top actionable tips to get you moving forward with your webinar marketing strategy.
-
 
 <Tabs>
   <TabItem value="nodejs" label="Node.js" default>
@@ -95,11 +93,11 @@ In this article, we’ll go over the benefits of planning for your webinar and t
 | Argument | Environment Variable           | Default Value | Description |
 | -------- | ------------------------------ | ------------- | ----------- |
 | `token`  | `ROOKOUT_TOKEN`                | None          | The Rookout token for your organization. Should be left empty if you are using a Rookout ETL Controller |
-| `host `  | `ROOKOUT_CONTROLLER_HOST`      | None          | If you are using a Rookout ETL Controller, this is the hostname for it                                  |
+| `host`  | `ROOKOUT_CONTROLLER_HOST`      | None          | If you are using a Rookout ETL Controller, this is the hostname for it                                  |
 | `port`   | `ROOKOUT_CONTROLLER_PORT`      | None          | If you are using a Rookout ETL Controller, this is the port for it |
 | `debug`  | `ROOKOUT_DEBUG`                | False         | Set to `true` to increase log level to debug |
 | `token`  | `ROOKOUT_TOKEN`                | None          | The Rookout token for your organization. Should be left empty if you are using a Rookout ETL Controller |
-| `host `  | `ROOKOUT_CONTROLLER_HOST`      | None          | If you are using a Rookout ETL Controller, this is the hostname for it                                  |
+| `host`  | `ROOKOUT_CONTROLLER_HOST`      | None          | If you are using a Rookout ETL Controller, this is the hostname for it                                  |
 | `port`   | `ROOKOUT_CONTROLLER_PORT`      | None          | If you are using a Rookout ETL Controller, this is the port for it |
 | `debug`  | `ROOKOUT_DEBUG`                | False         | Set to `true` to increase log level to debug |
 
@@ -107,7 +105,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Consequat, dolor posuer
 
 ## Callout component
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fermentum ridiculus aliquam, cras lectus egestas ac. Fermentum laoreet vulputate egestas mattis neque eget. Lectus lorem ac blandit lacus scelerisque eget. Risus ipsum urna suspendisse eros at. Varius sem sit sagittis mauris. Hendrerit accumsan varius tincidunt fermentum. Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis. 
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fermentum ridiculus aliquam, cras lectus egestas ac. Fermentum laoreet vulputate egestas mattis neque eget. Lectus lorem ac blandit lacus scelerisque eget. Risus ipsum urna suspendisse eros at. Varius sem sit sagittis mauris. Hendrerit accumsan varius tincidunt fermentum. Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis.
 
 :::caution  Warning
 
