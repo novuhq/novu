@@ -29,6 +29,8 @@ nav.menu {
   .menu__link {
     font-size: 14px;
     line-height: 1.25;
+    padding-left: 14px;
+    padding-right: 14px;
 
     svg {
       display: none;
@@ -46,17 +48,14 @@ nav.menu {
   .menu__list-item {
     position: relative;
 
-    &-collapsible {
-      margin-top: 20px;
-    }
-
     &.menu-home {
       font-weight: 500;
     }
     > .menu__list {
-      font-weight: 400;
+      font-weight: 350;
       font-size: 14px;
       padding-left: 0;
+      margin-left: 14px;
     }
   }
 
@@ -68,7 +67,7 @@ nav.menu {
     &--sublist-caret::before {
       top: 14px;
       position: absolute;
-      left: 0;
+      left: -1px;
       content: '';
       background-repeat: no-repeat;
       width: 10px;
@@ -80,6 +79,22 @@ nav.menu {
 
   .menu__list-item--collapsed .menu__link--sublist::before {
     transform: rotateZ(-90deg);
+  }
+
+  .theme-doc-sidebar-menu {
+    > .theme-doc-sidebar-item-category {
+      margin-top: 20px;
+    }
+
+    .theme-doc-sidebar-item-category-level-1.menu__list-item {
+      > .menu__list-item-collapsible > .menu__link {
+       
+        &:hover {
+          background-color: transparent !important;
+        }
+
+      }
+    }
   }
 }
 

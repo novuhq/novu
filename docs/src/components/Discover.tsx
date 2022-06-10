@@ -34,8 +34,8 @@ const discoverData = {
 function Items({ items, className }) {
   return (
     <ul className={className}>
-      {items.map(({ label, docId, href }) => (
-        <li key={docId}>
+      {items.map(({ label, href }) => (
+        <li key={label}>
           <Link href={href}>{label}</Link>
         </li>
       ))}

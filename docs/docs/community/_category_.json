@@ -1,4 +1,5 @@
 {
   "label": "Community",
-  "position": 5
+  "position": 5,
+  "collapsible": false
 }
