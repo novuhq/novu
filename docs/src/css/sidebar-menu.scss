@@ -49,7 +49,7 @@ nav.menu {
     position: relative;
 
     &.menu-home {
-      font-weight: 500;
+      display: none;
     }
     > .menu__list {
       font-weight: 350;
@@ -82,13 +82,13 @@ nav.menu {
   }
 
   .theme-doc-sidebar-menu {
-    > .theme-doc-sidebar-item-category {
-      margin-top: 20px;
+    > .theme-doc-sidebar-item-category:not(:first-child) {
+      margin-bottom: 20px;
     }
 
     .theme-doc-sidebar-item-category-level-1.menu__list-item {
+      > .menu__list-item-collapsible,
       > .menu__list-item-collapsible > .menu__link {
-       
         &:hover {
           background-color: transparent !important;
         }

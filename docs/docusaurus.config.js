@@ -67,7 +67,7 @@ const codeTheme = require('./src/utils/prism');
             alt: 'Novu Logo',
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
-            href: 'https://novu.co/',
+            href: '/docs',
             target: '_self',
             width: 102,
             height: 32,
@@ -97,7 +97,7 @@ const codeTheme = require('./src/utils/prism');
             alt: 'Novu',
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
-            href: 'https://novu.co/',
+            href: '/docs',
             width: 102,
             height: 32,
           },
@@ -106,7 +106,7 @@ const codeTheme = require('./src/utils/prism');
               items: [
                 {
                   label: 'Documentation',
-                  to: '/docs/overview/introduction',
+                  to: '/docs',
                 },
                 {
                   label: 'Providers',
@@ -136,6 +136,10 @@ const codeTheme = require('./src/utils/prism');
             },
           ],
           copyright: `© ${new Date().getFullYear()} Novu`,
+        },
+        tableOfContents: {
+          minHeadingLevel: 2,
+          maxHeadingLevel: 2,
         },
         prism: {
           theme: codeTheme,
