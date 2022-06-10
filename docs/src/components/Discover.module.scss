@@ -43,14 +43,6 @@
   @media only screen and (max-width: 639px) {
     margin-bottom: 20px;
   }
-
-  &.discoverIconDark {
-    background: linear-gradient(180deg, #333333 0%, rgba(51, 51, 51, 0.6) 100%);
-  }
-
-  &.discoverIconLight {
-    background: linear-gradient(180deg, #F2F2F2 0%, rgba(242, 242, 242, 0.6) 100%);
-  }
 }
 
 .discoverTitle {
@@ -88,6 +80,10 @@ html[data-theme='dark'] {
       }
     }
   }
+
+  .discoverIcon {
+    background: linear-gradient(180deg, #333333 0%, rgba(51, 51, 51, 0.6) 100%);
+  }
 }
 
 
@@ -98,5 +94,9 @@ html[data-theme='light'] {
         color: #0055FF;
       }
     }
+  }
+
+  .discoverIcon {
+    background: linear-gradient(180deg, #F2F2F2 0%, rgba(242, 242, 242, 0.6) 100%);
   }
 }

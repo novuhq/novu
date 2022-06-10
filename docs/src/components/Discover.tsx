@@ -1,8 +1,6 @@
 import React, { useContext } from 'react';
 import { SidebarContext } from '../theme/DocPage';
 import styles from './Discover.module.scss';
-import { useColorMode } from '@docusaurus/theme-common';
-import clsx from 'clsx';
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Link from '@docusaurus/Link';
@@ -49,19 +47,12 @@ export default function Discover() {
   const sidebar = useContext(SidebarContext);
   const sidebarItems = sidebar.filter((item) => item.docId !== 'home');
 
-  const { colorMode } = useColorMode();
-
   return (
     <div className={styles.discoverWrapper}>
       {sidebarItems.map(({ label, items }) => (
         <div className={styles.discoverInner} key={label}>
           <div className={styles.discoverContent}>
-            <div
-              className={clsx(
-                styles.discoverIcon,
-                colorMode === 'dark' ? styles.discoverIconDark : styles.discoverIconLight
-              )}
-            >
+            <div className={styles.discoverIcon}>
               <ThemedImage
                 alt=""
                 aria-hidden
