@@ -1,13 +1,13 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
-import { Button, colors, DragButton, Switch, Text, Title } from '../../../design-system';
+import { Button, colors, DragButton, Text, Title } from '../../../design-system';
 import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { channels, getChannel } from '../shared/channels';
-import { useTemplateController, StepEntity } from '../../../components/templates/use-template-controller.hook';
-import { Controller } from 'react-hook-form';
+import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
+import { StepActiveSwitch } from './StepActiveSwitch';
 
 const capitalize = (text: string) => {
   if (typeof text !== 'string') return '';
@@ -81,11 +81,7 @@ const WorkflowEditorPage = ({
                     Edit Template
                   </EditTemplateButton>
                   <Divider my={30} />
-                  <Controller
-                    control={control}
-                    name={`steps.${selectedStep}.active`}
-                    render={({ field }) => <StyledSwitch {...field} label={'Step is Active'} />}
-                  />
+                  <StepActiveSwitch index={selectedStep} control={control} />
                 </NavSection>
               </StyledNav>
             ) : (
@@ -130,10 +126,6 @@ const StyledNav = styled.div`
 
 const NavSection = styled.div`
   padding-bottom: 20px;
-`;
-
-const StyledSwitch = styled(Switch)`
-  max-width: 150px !important;
 `;
 
 const ButtonWrapper = styled.div`
