@@ -1,7 +1,6 @@
 import { ChannelCTATypeEnum, ChannelTypeEnum } from './channel.enum';
 
 export interface IEmailBlock {
-  subject?: string;
   type: 'text' | 'button';
   content: string;
   url?: string;

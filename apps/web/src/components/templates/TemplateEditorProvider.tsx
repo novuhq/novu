@@ -5,8 +5,6 @@ const actionEditMode = 'editMode';
 const actionIsDirty = 'isDirty';
 const actionIsEmbedModalVisible = 'isEmbedModalVisible';
 const actionTrigger = 'trigger';
-const actionSelectedMessageType = 'selectedMessageType';
-const actionActiveChannels = 'activeChannels';
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -30,19 +28,6 @@ const reducer = (state, action) => {
         ...state,
         trigger: action.payload,
       };
-    case actionSelectedMessageType:
-      return {
-        ...state,
-        selectedMessageType: action.payload,
-      };
-    case actionActiveChannels:
-      return {
-        ...state,
-        activeChannels: {
-          ...state.activeChannels,
-          ...action.payload,
-        },
-      };
     default:
       throw new Error('Unspecified reducer action');
   }
@@ -57,14 +42,6 @@ const TemplateEditorContext = createContext({
   setIsEmbedModalVisible: (isEmbedModalVisible: boolean) => {},
   trigger: undefined,
   setTrigger: (trigger: INotificationTrigger) => {},
-  selectedMessageType: null,
-  setSelectedMessageType: (selectedMessageType: ChannelTypeEnum | null) => {},
-  activeChannels: {
-    [ChannelTypeEnum.IN_APP]: false,
-    [ChannelTypeEnum.EMAIL]: false,
-    [ChannelTypeEnum.SMS]: false,
-  },
-  setActiveChannels: (activeChannels: { [key: string]: boolean }) => {},
 } as {
   editMode: boolean;
   setEditMode: (editMode: boolean) => void;
@@ -74,14 +51,6 @@ const TemplateEditorContext = createContext({
   setIsEmbedModalVisible: (isEmbedModalVisible: boolean) => void;
   trigger: INotificationTrigger | undefined;
   setTrigger: (trigger: INotificationTrigger) => void;
-  selectedMessageType: ChannelTypeEnum | null;
-  setSelectedMessageType: (selectedMessageType: ChannelTypeEnum | null) => void;
-  activeChannels: {
-    [ChannelTypeEnum.IN_APP]: boolean;
-    [ChannelTypeEnum.EMAIL]: boolean;
-    [ChannelTypeEnum.SMS]: boolean;
-  };
-  setActiveChannels: (activeChannels: { [key: string]: boolean }) => void;
   [key: string]: any;
 });
 
@@ -93,8 +62,6 @@ const TemplateEditorProvider = ({ children }) => {
     isDirty: false,
     isEmbedModalVisible: false,
     trigger: undefined,
-    selectedMessageType: null,
-    activeChannels: { [ChannelTypeEnum.IN_APP]: false, [ChannelTypeEnum.EMAIL]: false, [ChannelTypeEnum.SMS]: false },
   });
 
   const setEditMode = (editMode: boolean) => {
@@ -125,35 +92,17 @@ const TemplateEditorProvider = ({ children }) => {
     });
   };
 
-  const setSelectedMessageType = (selectedMessageType: ChannelTypeEnum | null) => {
-    dispatch({
-      type: actionTrigger,
-      payload: selectedMessageType,
-    });
-  };
-
-  const setActiveChannels = (activeChannels: { [key: string]: boolean }) => {
-    dispatch({
-      type: actionTrigger,
-      payload: activeChannels,
-    });
-  };
-
   return (
     <Provider
       value={{
-        setActiveChannels,
         setTrigger,
         setIsDirty,
         setEditMode,
         setIsEmbedModalVisible,
-        setSelectedMessageType,
-        selectedMessageType: state.selectedMessageType,
         editMode: state.editMode,
         isDirty: state.isDirty,
         isEmbedModalVisible: state.isEmbedModalVisible,
         trigger: state.trigger,
-        activeChannels: state.activeChannels,
       }}
     >
       {children}

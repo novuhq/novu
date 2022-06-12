@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactFlow, {
   addEdge,
   useNodesState,
@@ -20,6 +20,9 @@ import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import TriggerNode from './TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
+import { StepEntity } from '../templates/use-template-controller.hook';
+import { ChannelTypeEnum } from '@novu/shared';
+import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -37,15 +40,14 @@ const initialNodes: Node[] = [
   },
 ];
 
-let id = 0;
-const getId = () => `dndnode_${id++}`;
-
 export function FlowEditor({
-  setSelected,
-  channelButtons,
+  steps,
+  setSelectedNodeId,
+  addStep,
 }: {
-  setSelected: (string) => void;
-  channelButtons: string[];
+  steps: StepEntity[];
+  setSelectedNodeId: (nodeId: string) => void;
+  addStep: (channelType: ChannelTypeEnum, id: string) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
@@ -61,16 +63,28 @@ export function FlowEditor({
   }, [reactFlowInstance]);
 
   useEffect(() => {
-    if (channelButtons.length) {
+    if (steps.length) {
       let parentId = '1';
-      for (const type of channelButtons) {
-        const newId = getId();
+      if (nodes.length > 1) {
+        setNodes([
+          {
+            ...initialNodes[0],
+            position: {
+              ...nodes[0].position,
+            },
+          },
+        ]);
+      }
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
+        const newId = step._id || step.id;
         const newNode = {
           id: newId,
           type: 'channelNode',
-          position: { x: 0, y: 120 },
+          position: { x: oldNode.position.x, y: oldNode.position.y },
           parentNode: parentId,
-          data: { ...getChannel(type), index: nodes.length },
+          data: { ...getChannel(step.template.type), active: step.active, index: nodes.length },
         };
 
         const newEdge = {
@@ -87,11 +101,11 @@ export function FlowEditor({
         setEdges((eds) => addEdge(newEdge, eds));
       }
     }
-  }, [channelButtons]);
+  }, [steps]);
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
-    setSelected(node.data.tabKey);
+    setSelectedNodeId(node.id);
   }, []);
 
   const onDragOver = useCallback((event) => {
@@ -121,17 +135,26 @@ export function FlowEditor({
         return;
       }
 
-      const newId = getId();
+      const channel = getChannel(type);
+
+      if (!channel) {
+        return;
+      }
+
+      const newId = uuid4();
       const newNode = {
         id: newId,
         type: 'channelNode',
         position: { x: 0, y: 120 },
         parentNode: parentId,
         data: {
-          ...getChannel(type),
+          ...channel,
           index: nodes.length,
+          active: true,
         },
       };
+
+      addStep(newNode.data.channelType, newId);
 
       setNodes((nds) => nds.concat(newNode));
       updateNodeInternals(newId);
