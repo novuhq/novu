@@ -11,6 +11,7 @@ import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
+import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -54,6 +55,9 @@ export default function TemplateEditorPage() {
     errors,
     methods,
     isDirty,
+    isEmbedModalVisible,
+    trigger,
+    onTriggerModalDismiss,
   } = useTemplateController(templateId);
 
   useEffect(() => {
@@ -118,6 +122,9 @@ export default function TemplateEditorPage() {
               templateId={templateId}
             />
           ) : null}
+          {trigger && (
+            <TemplateTriggerModal trigger={trigger} onDismiss={onTriggerModalDismiss} isVisible={isEmbedModalVisible} />
+          )}
         </form>
       </FormProvider>
     </PageContainer>
