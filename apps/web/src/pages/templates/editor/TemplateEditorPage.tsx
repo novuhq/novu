@@ -1,4 +1,3 @@
-import { FormProvider } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
@@ -11,6 +10,7 @@ import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ReactFlowProvider } from 'react-flow-renderer';
+import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -82,6 +82,9 @@ export default function TemplateEditorPage() {
         {!loadingEditTemplate && !isIntegrationsLoading ? (
           <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
         ) : null}
+        {trigger && (
+          <TemplateTriggerModal trigger={trigger} onDismiss={onTriggerModalDismiss} isVisible={isEmbedModalVisible} />
+        )}
       </form>
     </PageContainer>
   );
