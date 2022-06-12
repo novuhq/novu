@@ -1,7 +1,7 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
 import { Button, colors, DragButton, Switch, Text, Title } from '../../../design-system';
-import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme, Group } from '@mantine/core';
+import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import React, { useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
@@ -50,6 +50,7 @@ const WorkflowEditorPage = ({
                   <EditTemplateButton
                     mt={10}
                     variant="outline"
+                    data-test-id="edit-template-channel"
                     fullWidth
                     onClick={() => handleAddChannel(selectedChannel)}
                   >
