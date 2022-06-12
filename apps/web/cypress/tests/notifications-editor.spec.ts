@@ -5,7 +5,7 @@ describe('Notifications Creator', function () {
     cy.initializeSession().as('session');
   });
 
-  it.only('should drag and drop channel', function () {
+  it('should drag and drop channel', function () {
     cy.visit('/templates/create');
     cy.getByTestId('workflowButton').click({ force: true });
     dragAndDrop('inApp');
