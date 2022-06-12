@@ -1,54 +1,25 @@
-import {
-  IsArray,
-  IsDefined,
-  IsEnum,
-  IsMongoId,
-  IsOptional,
-  IsString,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
-import { ChannelCTATypeEnum, ChannelTypeEnum, ICreateNotificationTemplateDto, IEmailBlock } from '@novu/shared';
+import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { ICreateNotificationTemplateDto } from '@novu/shared';
 import { MessageFilter } from './create-notification-template.dto';
-
-export class ChannelCTADto {
-  @IsEnum(ChannelCTATypeEnum)
-  type: ChannelCTATypeEnum;
-
-  data: {
-    url: string;
-  };
-}
+import { MessageTemplateDto } from './message-template.dto';
 
 export class NotificationStepDto {
+  @IsMongoId()
   @IsOptional()
-  @IsEnum(ChannelTypeEnum)
-  type: ChannelTypeEnum;
+  _id?: string;
 
-  @IsDefined()
-  content: string | IEmailBlock[];
-
-  @IsOptional()
-  contentType?: 'editor' | 'customHtml';
-
-  @IsOptional()
   @ValidateNested()
-  cta: ChannelCTADto;
-
   @IsOptional()
-  name?: string;
-
-  @IsOptional()
-  subject?: string;
+  template?: MessageTemplateDto;
 
   @IsOptional()
   @IsArray()
   @ValidateNested()
   filters?: MessageFilter[];
 
-  @IsMongoId()
+  @IsBoolean()
   @IsOptional()
-  _id?: string;
+  active?: boolean;
 }
 
 export class UpdateNotificationTemplateDto implements ICreateNotificationTemplateDto {

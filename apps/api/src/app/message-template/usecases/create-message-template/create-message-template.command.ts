@@ -1,8 +1,8 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsDefined, IsEnum, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
 import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { ChannelCTADto } from '../../../notification-template/dto/create-notification-template.dto';
+import { ChannelCTACommand } from '../../../notification-template/usecases/create-notification-template';
 
 export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: CreateMessageTemplateCommand) {
@@ -27,7 +27,7 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @ValidateNested()
-  cta: ChannelCTADto;
+  cta: ChannelCTACommand;
 
   @IsMongoId()
   parentChangeId: string;

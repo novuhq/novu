@@ -32,7 +32,7 @@ export class ProcessSubscriber {
       return [];
     }
 
-    const notification = await this.createNotification(command, template._id, subscriber.subscriberId);
+    const notification = await this.createNotification(command, template._id, subscriber);
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
 
@@ -111,11 +111,15 @@ export class ProcessSubscriber {
     return null;
   }
 
-  private async createNotification(command: ProcessSubscriberCommand, templateId: string, subscriberId: string) {
+  private async createNotification(
+    command: ProcessSubscriberCommand,
+    templateId: string,
+    subscriber: SubscriberEntity
+  ) {
     return await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: subscriberId,
+      _subscriberId: subscriber._id,
       _templateId: templateId,
       transactionId: command.transactionId,
     });
