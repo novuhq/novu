@@ -1,19 +1,17 @@
 import { useAuth } from '../../../hooks';
-import React, { useContext, useEffect } from 'react';
+import React from 'react';
 import { useQuery } from 'react-query';
 import { IOrganizationEntity } from '@novu/shared';
-import { colors } from '../../../shared/config/colors';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { Layout } from './layout/Layout';
 import { Main } from './Main';
 import { useApi } from '../../../hooks/use-api.hook';
-import { ThemeContext } from '../../../store/novu-theme.context';
+import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
 
 export function AppContent() {
   const { api } = useApi();
   const { isLoggedIn } = useAuth();
-  const { colorScheme } = useContext(ThemeContext);
-
+  const { theme: novuTheme } = useNovuThemeProvider();
   const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
     'organization',
     () => api.getOrganization(),
@@ -24,11 +22,11 @@ export function AppContent() {
 
   const theme = {
     colors: {
-      main: organization?.branding?.color || colors.vertical,
-      fontColor: colorScheme === 'light' ? colors.B40 : colors.white,
-      secondaryFontColor: colorScheme === 'light' ? colors.B80 : colors.B40,
+      main: organization?.branding?.color || novuTheme.mainColor,
+      fontColor: novuTheme.fontColor,
+      secondaryFontColor: novuTheme.secondaryFontColor,
     },
-    fontFamily: organization?.branding?.fontFamily || 'Lato',
+    fontFamily: organization?.branding?.fontFamily || novuTheme.fontFamily,
     layout: {
       direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },

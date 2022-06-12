@@ -1,13 +1,11 @@
 import styled, { css } from 'styled-components';
 import { IMessage } from '@novu/shared';
 import moment from 'moment';
-import { shadows } from '../../../shared/config/shadows';
 import { colors } from '../../../shared/config/colors';
 import { DotsHorizontal } from '../../../shared/icons';
-import React, { useContext } from 'react';
-import { NovuContext } from '../../../store/novu-provider.context';
-import { ColorScheme } from '../../../index';
-import { ThemeContext } from '../../../store/novu-theme.context';
+import React from 'react';
+import { INovuTheme } from '../../../store/novu-theme.context';
+import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
 
 export function NotificationListItem({
   notification,
@@ -16,11 +14,11 @@ export function NotificationListItem({
   notification: IMessage;
   onClick: (notification: IMessage) => void;
 }) {
-  const { colorScheme } = useContext(ThemeContext);
+  const { theme: novuTheme } = useNovuThemeProvider();
 
   return (
     <ItemWrapper
-      colorScheme={colorScheme}
+      novuTheme={novuTheme}
       data-test-id="notification-list-item"
       unseen={!notification.seen}
       onClick={() => onClick(notification)}
@@ -50,9 +48,10 @@ const SettingsActionWrapper = styled.div`
   color: ${({ theme }) => theme.colors.secondaryFontColor};
 `;
 
-const unseenNotificationStyles = css<{ colorScheme: ColorScheme }>`
-  background: ${({ colorScheme }) => (colorScheme === 'light' ? colors.white : colors.B20)};
-  box-shadow: ${({ colorScheme }) => (colorScheme === 'light' ? shadows.medium : shadows.dark)};
+const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
+  background: ${({ novuTheme }) => novuTheme.unseenNotificationBackground};
+  box-shadow: ${({ novuTheme }) => novuTheme.unseenNotificationBoxShadow};
+  color: ${({ novuTheme }) => novuTheme.seenNotificationFontColor};
   font-weight: 700;
 
   &:before {
@@ -67,13 +66,13 @@ const unseenNotificationStyles = css<{ colorScheme: ColorScheme }>`
     background: ${({ theme }) => theme.colors.main};
   }
 `;
-const seenNotificationStyles = css`
-  color: ${colors.B60};
+const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`
+  color: ${({ novuTheme }) => novuTheme.seenNotificationFontColor};
   font-weight: 400;
   font-size: 14px;
 `;
 
-const ItemWrapper = styled.div<{ unseen?: boolean; colorScheme: ColorScheme }>`
+const ItemWrapper = styled.div<{ unseen?: boolean; novuTheme: INovuTheme }>`
   padding: 14px 15px 14px 15px;
   position: relative;
   display: flex;
@@ -82,7 +81,7 @@ const ItemWrapper = styled.div<{ unseen?: boolean; colorScheme: ColorScheme }>`
   align-items: center;
   border-radius: 7px;
   margin: 10px 15px;
-  background: ${({ colorScheme }) => (colorScheme === 'light' ? colors.B98 : colors.B17)};
+  background: ${({ novuTheme }) => novuTheme.seenNotificationBackground};
 
   &:hover {
     cursor: pointer;

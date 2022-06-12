@@ -1,22 +1,20 @@
 /* eslint-disable max-len */
-import React, { useContext } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { colors } from '../../../../../shared/config/colors';
-import { ThemeContext } from '../../../../../store/novu-theme.context';
+import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
+import { INovuTheme } from '../../../../../store/novu-theme.context';
 
 export function Footer() {
-  const { colorScheme } = useContext(ThemeContext);
-
-  const textColor = colorScheme === 'light' ? 'black' : 'white';
+  const { theme } = useNovuThemeProvider();
 
   return (
     <FooterWrapper>
-      <Text colorScheme={colorScheme}>Powered By </Text>
+      <Text theme={theme}>Powered By </Text>
       <a
         rel="noreferrer"
         target="_blank"
         href="https://novu.co?utm_source=in-app-widget"
-        style={{ display: 'flex', color: textColor }}
+        style={{ display: 'flex', color: theme.footerLogoTextColor }}
       >
         <svg width="107" height="16" viewBox="0 0 1049 300" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
@@ -59,8 +57,8 @@ export function Footer() {
     </FooterWrapper>
   );
 }
-const Text = styled.div<{ colorScheme }>`
-  color: ${({ colorScheme }) => (colorScheme === 'light' ? colors.B70 : colors.B40)};
+const Text = styled.div<{ theme: INovuTheme }>`
+  color: ${({ theme }) => theme.footerTextColor};
   font-size: 10px;
   font-weight: 400;
 `;

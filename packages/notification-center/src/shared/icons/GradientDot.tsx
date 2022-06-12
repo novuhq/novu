@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNovuThemeProvider } from '../../hooks/use-novu-theme-provider.hook';
 /* eslint-disable */
 export function GradientDot(props: React.ComponentPropsWithoutRef<'svg'>) {
+  const { theme } = useNovuThemeProvider();
+
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" {...props}>
       <rect
@@ -15,8 +18,8 @@ export function GradientDot(props: React.ComponentPropsWithoutRef<'svg'>) {
       />
       <defs>
         <linearGradient id="paint0_linear_1722_2699" x1="8" y1="13" x2="8" y2="3" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop stopColor={theme.gradientDotFillColor.stopColor} />
+          <stop offset="1" stopColor={theme.gradientDotFillColor.stopColorOffset} />
         </linearGradient>
       </defs>
     </svg>
