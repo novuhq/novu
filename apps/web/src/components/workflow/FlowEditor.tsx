@@ -65,12 +65,24 @@ export function FlowEditor({
   useEffect(() => {
     if (steps.length) {
       let parentId = '1';
-      for (const step of steps) {
+      if (nodes.length > 1) {
+        setNodes([
+          {
+            ...initialNodes[0],
+            position: {
+              ...nodes[0].position,
+            },
+          },
+        ]);
+      }
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
         const newId = step._id || step.id;
         const newNode = {
           id: newId,
           type: 'channelNode',
-          position: { x: 0, y: 120 },
+          position: { x: oldNode.position.x, y: oldNode.position.y },
           parentNode: parentId,
           data: { ...getChannel(step.template.type), active: step.active, index: nodes.length },
         };

@@ -1,8 +1,7 @@
 import { useContext, createContext, ReactNode } from 'react';
-import { UseFieldArrayReturn } from 'react-hook-form';
 
 export type FieldArrayContextType = {
-  fieldArrays: Record<string, UseFieldArrayReturn>;
+  fieldArrays: Record<string, any>;
 };
 
 const FieldArrayContext = createContext<FieldArrayContextType>({

@@ -55,33 +55,31 @@ export default function TemplateEditorPage() {
   return (
     <PageContainer>
       <PageMeta title={editMode ? template?.name : 'Create Template'} />
-      <FormProvider {...methods}>
-        <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
-          <TemplatePageHeader
-            loading={isLoading || isUpdateLoading}
-            disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
-            templateId={templateId}
-            setActivePage={setActivePage}
+      <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
+        <TemplatePageHeader
+          loading={isLoading || isUpdateLoading}
+          disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+          templateId={templateId}
+          setActivePage={setActivePage}
+          activePage={activePage}
+        />
+        {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
+          <TemplateSettings
             activePage={activePage}
+            setActivePage={setActivePage}
+            showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
+            templateId={templateId}
           />
-          {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
-            <TemplateSettings
-              activePage={activePage}
-              setActivePage={setActivePage}
-              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
-              templateId={templateId}
-            />
-          )}
-          {activePage === ActivePageEnum.WORKFLOW && (
-            <ReactFlowProvider>
-              <WorkflowEditorPage setActiveStep={setActiveStep} templateId={templateId} setActivePage={setActivePage} />
-            </ReactFlowProvider>
-          )}
-          {!loadingEditTemplate && !isIntegrationsLoading ? (
-            <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
-          ) : null}
-        </form>
-      </FormProvider>
+        )}
+        {activePage === ActivePageEnum.WORKFLOW && (
+          <ReactFlowProvider>
+            <WorkflowEditorPage setActiveStep={setActiveStep} templateId={templateId} setActivePage={setActivePage} />
+          </ReactFlowProvider>
+        )}
+        {!loadingEditTemplate && !isIntegrationsLoading ? (
+          <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
+        ) : null}
+      </form>
     </PageContainer>
   );
 }
