@@ -15,8 +15,8 @@ import { TemplateTriggerModal } from '../../../components/templates/TemplateTrig
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
   WORKFLOW = 'Workflow',
-  SMS = 'sms',
-  EMAIL = 'email',
+  SMS = 'Sms',
+  EMAIL = 'Email',
   IN_APP = 'in_app',
   TRIGGER_SNIPPET = 'TriggerSnippet',
 }
