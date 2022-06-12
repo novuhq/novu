@@ -5,20 +5,13 @@ describe('Notifications Creator', function () {
     cy.initializeSession().as('session');
   });
 
-  it('should drag and drop channel', function () {
-    const dataTransfer = new DataTransfer();
-
+  it.only('should drag and drop channel', function () {
     cy.visit('/templates/create');
     cy.getByTestId('workflowButton').click({ force: true });
     dragAndDrop('inApp');
+    dragAndDrop('inApp', 'inApp');
 
-    cy.wait(1000);
-    cy.getByTestId('dnd-inAppSelector').trigger('dragstart', { dataTransfer, force: true });
-    cy.getByTestId('node-inAppSelector').parent().trigger('drop', { dataTransfer, force: true });
-    // cy.get('[data-id="dndnode_0"]').trigger('drop', { dataTransfer, force: true });
-    cy.wait(1000);
     cy.getByTestId('node-inAppSelector').last().parent().click({ force: true });
-    // cy.get('[data-id="dndnode_0"]').click({ force: true });
     cy.getByTestId('edit-template-channel').click({ force: true });
   });
 
@@ -86,7 +79,7 @@ describe('Notifications Creator', function () {
       .getByTestId('trigger-curl-snippet')
       .contains("--header 'Authorization: ApiKey");
 
-    // cy.getByTestId('success-trigger-modal').getByTestId('trigger-curl-snippet').contains('taskName');
+    cy.getByTestId('success-trigger-modal').getByTestId('trigger-curl-snippet').contains('taskName');
 
     cy.getByTestId('trigger-snippet-btn').click();
     cy.location('pathname').should('equal', '/templates');
@@ -134,8 +127,8 @@ describe('Notifications Creator', function () {
 
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
-    // cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('firstName:');
-    // cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('customVariable:');
+    cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('firstName:');
+    cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('customVariable:');
   });
 
   it('should create and edit group id', function () {
@@ -262,9 +255,11 @@ describe('Notifications Creator', function () {
     cy.location('pathname').should('equal', '/settings');
   });
 
-  it.skip('should show the brand logo on main page', function () {
+  it('should show the brand logo on main page', function () {
     cy.visit('/templates/create');
-    addChannel('email');
+    cy.getByTestId('workflowButton').click({ force: true });
+    dragAndDrop('email');
+    editChannel('email');
 
     cy.getByTestId('email-editor').getByTestId('brand-logo').should('have.attr', 'src', 'https://novu.co/img/logo.png');
   });
@@ -300,9 +295,9 @@ describe('Notifications Creator', function () {
       .getByTestId('trigger-code-snippet')
       .contains("import { Novu } from '@novu/node'");
 
-    // cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('taskName');
+    cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('taskName');
 
-    // cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('firstName');
+    cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('firstName');
 
     cy.getByTestId('trigger-snippet-btn').click();
     cy.location('pathname').should('equal', '/templates');
@@ -360,17 +355,6 @@ describe('Notifications Creator', function () {
   });
 });
 function addChannel(c: string) {}
-function addChannelAndEdit(channel: 'inApp' | 'email' | 'sms', parent?: 'inApp' | 'email' | 'sms' | 'trigger') {
-  const dataTransfer = new DataTransfer();
-
-  cy.wait(1000);
-  cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer, force: true });
-  if (parent) {
-    cy.getByTestId(`node-${parent}Selector`).parent().trigger('drop', { dataTransfer, force: true });
-  } else {
-    cy.getByTestId('node-triggerSelector').parent().trigger('drop', { dataTransfer, force: true });
-  }
-}
 
 function dragAndDrop(channel: 'inApp' | 'email' | 'sms', parent?: 'inApp' | 'email' | 'sms' | 'trigger') {
   const dataTransfer = new DataTransfer();
