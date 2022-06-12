@@ -26,7 +26,7 @@ export const TemplateFormProvider = ({ children }) => {
     },
   });
 
-  const steps: any = useFieldArray({
+  const steps = useFieldArray({
     control: methods.control,
     name: 'steps',
   });

@@ -8,14 +8,14 @@ import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage'
 
 export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
   const { integrations } = useActiveIntegrations();
-
-  const { trigger, control, errors, stepFields } = useTemplateController(templateId);
+  const { trigger, control, errors, watch } = useTemplateController(templateId);
+  const steps = watch('steps');
 
   return (
     <div>
       {activePage === ActivePageEnum.SMS && (
         <div style={{ padding: '20px 25px' }}>
-          {stepFields.map((message, index) => {
+          {steps.map((message, index) => {
             return message.template.type === ChannelTypeEnum.SMS &&
               (activeStep === message._id || activeStep === message.id) ? (
               <TemplateSMSEditor
@@ -31,7 +31,7 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
       )}
       {activePage === ActivePageEnum.EMAIL && (
         <div style={{ padding: '20px 25px' }}>
-          {stepFields.map((message, index) => {
+          {steps.map((message, index) => {
             return message.template.type === ChannelTypeEnum.EMAIL &&
               (activeStep === message._id || activeStep === message.id) ? (
               <EmailMessagesCards
@@ -48,7 +48,7 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
       )}
       {activePage === ActivePageEnum.IN_APP && (
         <>
-          {stepFields.map((message, index) => {
+          {steps.map((message, index) => {
             return message.template.type === ChannelTypeEnum.IN_APP &&
               (activeStep === message._id || activeStep === message.id) ? (
               <TemplateInAppEditor key={message._id} errors={errors} control={control} index={index} />
