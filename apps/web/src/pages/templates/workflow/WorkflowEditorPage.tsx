@@ -97,7 +97,7 @@ const WorkflowEditorPage = ({
                   {channels.map((channel) => (
                     <div
                       key={channel.tabKey}
-                      data-test-id={channel.testId}
+                      data-test-id={`dnd-${channel.testId}`}
                       onDragStart={(event) => onDragStart(event, channel.channelType)}
                       draggable
                     >
