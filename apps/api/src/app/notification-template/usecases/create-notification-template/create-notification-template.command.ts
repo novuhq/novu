@@ -64,6 +64,9 @@ class NotificationStepCommand {
   @IsOptional()
   name?: string;
 
+  @IsBoolean()
+  active?: boolean;
+
   @IsOptional()
   @IsArray()
   @ValidateNested()

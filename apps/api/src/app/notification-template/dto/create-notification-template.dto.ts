@@ -16,6 +16,10 @@ export class NotificationChannelDto {
   @ValidateNested()
   @IsOptional()
   filters?: MessageFilter[];
+
+  @IsBoolean()
+  @IsOptional()
+  active?: boolean;
 }
 
 export class MessageFilter {
