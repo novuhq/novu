@@ -15,8 +15,8 @@ import { TemplatePageHeader } from '../../../components/templates/TemplatePageHe
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
   WORKFLOW = 'Workflow',
-  SMS = 'Sms',
-  EMAIL = 'Email',
+  SMS = 'sms',
+  EMAIL = 'email',
   IN_APP = 'in_app',
   TRIGGER_SNIPPET = 'TriggerSnippet',
 }
