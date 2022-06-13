@@ -89,6 +89,34 @@
       visibility: hidden;
     }
   }
+
+  .DocSearch-Hit[aria-selected=true] {
+    mark {
+      text-decoration: none;
+      color: var(--docsearch-primary-color) !important;
+    }
+  }
+}
+
+.DocSearch-Modal {
+  .DocSearch-Hit-source {
+    font-weight: 400;
+  }
+  
+  .DocSearch-Hit-content-wrapper {
+    .DocSearch-Hit-title {
+      font-weight: 400;
+    }
+  
+    .DocSearch-Hit-path {
+      font-weight: 350;
+    }
+  }
+
+  .DocSearch-Prefill {
+    font-family: inherit;
+    font-weight: 400;
+  }
 }
 
 [data-theme='light'] {
@@ -131,10 +159,16 @@
         }
       }
     }
+
+    .DocSearch-Hit[aria-selected=true] {
+      a {
+        background-color: $color-gray-10;
+      }
+    }
   
     --docsearch-primary-color: #0055FF;
     --docsearch-text-color: #000000;
-    --docsearch-highlight-color: #E6E6E6;
+    --docsearch-highlight-color: #0055FF;
     --docsearch-muted-color: #333333;
     --docsearch-container-background: rgba(94, 100, 112, 0.7);
     /* Modal */
@@ -189,10 +223,16 @@
       }
     }
 
+    .DocSearch-Hit[aria-selected=true] {
+      a {
+        background-color: $color-gray-3;
+      }
+    }
+
     --docsearch-primary-color: #00D5FF;
     --docsearch-text-color: #FFFFFF; 
     --docsearch-text-color: var(--ifm-font-color-base);
-    --docsearch-highlight-color: #262626;
+    --docsearch-highlight-color: #00D5FF;
     --docsearch-muted-color: #999999;
     --docsearch-container-background: rgba(13, 13, 13, 0.7);
     /* Modal */

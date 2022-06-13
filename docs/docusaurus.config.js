@@ -50,9 +50,10 @@ const codeTheme = require('./src/utils/prism');
       ({
         image: '/img/social-preview.jpg',
         algolia: {
-          appId: 'KP6AAG0HM6',
-          apiKey: '607caef96e2cec3e128239b90da832be',
-          indexName: 'dev_novu',
+          appId: '5AG4YK0YDV',
+          apiKey: '67ce2424b44097b63a6f21a6615de538',
+          indexName: 'novu',
+          contextualSearch: false,
         },
         docs: {
           sidebar: {
