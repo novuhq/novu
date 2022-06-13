@@ -76,10 +76,10 @@ export class UpdateNotificationTemplate {
 
       for (const message of steps) {
         let stepId = message._id;
-        if (message._id) {
+        if (message._templateId) {
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
-              templateId: message._id,
+              templateId: message._templateId,
               type: message.template.type,
               name: message.template.name,
               content: message.template.content,
