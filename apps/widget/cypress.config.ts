@@ -6,7 +6,7 @@ export default defineConfig({
   projectId: 'vzkh7c',
   env: {
     NODE_ENV: 'test',
-    API_URL: 'http://localhost:3000',
+    API_URL: 'http://localhost:1336',
   },
   e2e: {
     // We've imported your old cypress plugins here.
@@ -14,7 +14,7 @@ export default defineConfig({
     setupNodeEvents(on, config) {
       return require('./cypress/plugins/index.ts')(on, config);
     },
-    baseUrl: 'http://localhost:4500',
+    baseUrl: 'http://localhost:3500',
     specPattern: 'cypress/e2e/**/*.{js,jsx,ts,tsx}',
   },
 });
