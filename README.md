@@ -42,13 +42,13 @@ Building a notification system is hard, at first it seems like just sending an e
 - 🌈 Single API for all messaging providers (Email, SMS, Push, Direct)
 - 💅 Easily manage notification over multiple channels
 - 🚀 Equipped with a CMS for advanced layouts and design management
-- 🛡 Built-in protection for missing variables
+- 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
 - 📦 Embeddable notification center with real-time updates
 - 🛡 Debug and analyze multi channel messages in a single dashboard
 - 👨‍💻 Community driven
 
-# Novu API & Admin panel (alpha)
+## 🚀 Getting Started
 We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
 ```
 npx novu init
@@ -67,7 +67,7 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 await novu.trigger('<TRIGGER_NAME>',
   {
     to: {
-      subscriberId: '<UUNIQUE_IDENTIFIER>',
+      subscriberId: '<UNIQUE_IDENTIFIER>',
       email: 'john@doemail.com',
       firstName: 'John',
       lastName: 'Doe',
@@ -81,6 +81,19 @@ await novu.trigger('<TRIGGER_NAME>',
   }
 );
 ```
+
+
+## Embeddable notification center
+
+Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
+
+<div align="center">
+<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://github.com/iampearceman/Design-assets/blob/main/Untitled%20design%20(8).gif?raw=true">
+  
+  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/docs/notification-center/getting-started)
+
+</div>
+
 
 ## Providers
 Novu provides a single API to manage providers across multiple channels with a simple to use interface.
@@ -117,9 +130,9 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Discord
 - [ ] Mattermost
 
-#### 📱 In-App (Coming Soon...)
-- [ ] Novu
-- [ ] MagicBell
+#### 📱 In-App
+- [x] [Novu](https://docs.novu.co/docs/notification-center/getting-started)
+- [ ] MagicBell 
 
 #### Other (Coming Soon...)
 - [ ] PagerDuty

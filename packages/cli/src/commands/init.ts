@@ -185,13 +185,15 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
 
   const steps = [
     {
-      type: ChannelTypeEnum.IN_APP,
-      content:
-        'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
-      cta: {
-        type: ChannelCTATypeEnum.REDIRECT,
-        data: {
-          url: redirectUrl,
+      template: {
+        type: ChannelTypeEnum.IN_APP,
+        content:
+          'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
+        cta: {
+          type: ChannelCTATypeEnum.REDIRECT,
+          data: {
+            url: redirectUrl,
+          },
         },
       },
     },

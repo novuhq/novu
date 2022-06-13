@@ -1,72 +1,87 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
 import { Button, colors, DragButton, Text, Title } from '../../../design-system';
-import { ActionIcon, Grid } from '@mantine/core';
-import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
-import React, { useState } from 'react';
+import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
+import { channels, getChannel } from '../shared/channels';
+import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
+import { StepActiveSwitch } from './StepActiveSwitch';
 
-export const channels = [
-  {
-    tabKey: ChannelTypeEnum.IN_APP,
-    label: 'In-App',
-    description: 'Send notifications to the in-app notification center',
-    Icon: MobileGradient,
-    testId: 'inAppSelector',
-    channelType: ChannelTypeEnum.IN_APP,
-  },
-  {
-    tabKey: ChannelTypeEnum.EMAIL,
-    label: 'Email',
-    description: 'Send using one of our email integrations',
-    Icon: MailGradient,
-    testId: 'emailSelector',
-    channelType: ChannelTypeEnum.EMAIL,
-  },
-  {
-    tabKey: ChannelTypeEnum.SMS,
-    label: 'SMS',
-    description: "Send an SMS directly to the user's phone",
-    Icon: SmsGradient,
-    testId: 'smsSelector',
-    channelType: ChannelTypeEnum.SMS,
-  },
-];
+const capitalize = (text: string) => {
+  if (typeof text !== 'string') return '';
 
-const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
-  const [show, setShow] = useState(true);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
+
+const WorkflowEditorPage = ({
+  setActivePage,
+  templateId,
+  setActiveStep,
+}: {
+  setActivePage: (string) => void;
+  setActiveStep: any;
+  templateId: string;
+}) => {
+  const { colorScheme } = useMantineColorScheme();
+  const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
+  const [selectedStep, setSelectedStep] = useState<number>(-1);
+  const [selectedNodeId, setSelectedNodeId] = useState<string>('');
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
+  const { addStep, control, watch } = useTemplateController(templateId);
+  const steps = watch('steps');
 
-  const goBackHandler = () => {
-    changeTab('Settings');
-  };
+  useEffect(() => {
+    if (selectedNodeId.length === 0) {
+      return;
+    }
+    const step = steps.find((item) => item._id === selectedNodeId || item.id === selectedNodeId);
+    const index = steps.findIndex((item) => item._id === selectedNodeId || item.id === selectedNodeId);
+    if (!step) {
+      return;
+    }
+    setSelectedStep(index);
+    setSelectedChannel(step.template.type);
+    setActiveStep(step._id || step.id);
+  }, [selectedNodeId]);
 
   return (
-    <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
-      <Grid grow style={{ minHeight: 500 }}>
+    <div style={{ minHeight: 500 }}>
+      <Grid gutter={0} grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
-          <FlowEditor changeTab={changeTab} onGoBack={goBackHandler} />
+          <FlowEditor steps={steps} addStep={addStep} setSelectedNodeId={setSelectedNodeId} />
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
-          <SideBarWrapper dark={true}>
-            {show ? (
+          <SideBarWrapper dark={colorScheme === 'dark'}>
+            {selectedChannel ? (
               <StyledNav>
                 <NavSection>
                   <ButtonWrapper>
-                    <Title size={2}>Email Properties</Title>
-                    <ActionIcon variant="transparent" onClick={() => setShow(false)}>
+                    <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
+                    <ActionIcon variant="transparent" onClick={() => setSelectedChannel(null)}>
                       <Close />
                     </ActionIcon>
                   </ButtonWrapper>
                 </NavSection>
                 <NavSection>
-                  <Button variant="outline" fullWidth onClick={() => changeTab(ChannelTypeEnum.EMAIL)}>
+                  <EditTemplateButton
+                    mt={10}
+                    variant="outline"
+                    fullWidth
+                    onClick={() =>
+                      setActivePage(
+                        selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
+                      )
+                    }
+                  >
                     Edit Template
-                  </Button>
+                  </EditTemplateButton>
+                  <Divider my={30} />
+                  <StepActiveSwitch index={selectedStep} control={control} />
                 </NavSection>
               </StyledNav>
             ) : (
@@ -77,15 +92,17 @@ const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
                     You can drag and drop new steps to the flow
                   </Text>
                 </NavSection>
-                {channels.map((channel) => (
-                  <NavSection
-                    key={channel.tabKey}
-                    onDragStart={(event) => onDragStart(event, channel.channelType)}
-                    draggable
-                  >
-                    <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
-                  </NavSection>
-                ))}
+                <Stack>
+                  {channels.map((channel) => (
+                    <div
+                      key={channel.tabKey}
+                      onDragStart={(event) => onDragStart(event, channel.channelType)}
+                      draggable
+                    >
+                      <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
+                    </div>
+                  ))}
+                </Stack>
               </StyledNav>
             )}
           </SideBarWrapper>
@@ -98,12 +115,13 @@ const WorkflowEditorPage = ({ changeTab }: { changeTab: (string) => void }) => {
 export default WorkflowEditorPage;
 
 const SideBarWrapper = styled.div<{ dark: boolean }>`
-  background-color: ${({ dark }) => (dark ? colors.B17 : colors.BGLight)};
+  background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)};
   height: 100%;
 `;
 
 const StyledNav = styled.div`
   padding: 15px 20px;
+  height: 100%;
 `;
 
 const NavSection = styled.div`
@@ -113,4 +131,8 @@ const NavSection = styled.div`
 const ButtonWrapper = styled.div`
   display: flex;
   justify-content: space-between;
+`;
+
+const EditTemplateButton = styled(Button)`
+  background-color: transparent;
 `;

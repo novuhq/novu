@@ -1,31 +1,32 @@
 import React, { useState } from 'react';
-import { UnstyledButton, Group, Popover } from '@mantine/core';
+import { UnstyledButton, Popover } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
+import { DotsHorizontal } from '../icons';
+import { When } from '../../components/utils/When';
+import { Tooltip } from '../tooltip/Tooltip';
+import { useFormContext } from 'react-hook-form';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
-  description: string;
   label: string;
   active?: boolean;
   action?: boolean;
-  tabKey: string;
   testId?: string;
   checked?: boolean;
   readonly?: boolean;
   switchButton?: (boolean) => void;
-  changeTab: (string) => void;
+  changeTab?: (string) => void;
   errors?: boolean | string;
+  showDots?: boolean;
+  id?: string | undefined;
 }
 
 export function ChannelButton({
-  description,
   active,
-  changeTab,
-  tabKey,
   action = false,
   switchButton,
   checked = false,
@@ -34,27 +35,53 @@ export function ChannelButton({
   Icon,
   testId,
   errors = false,
+  showDots = true,
+  id = undefined,
 }: ITemplateButtonProps) {
   const { cx, classes, theme } = useStyles();
   const disabled = action && !checked;
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled } : {};
   const [popoverOpened, setPopoverOpened] = useState(false);
+  const [showDotMenu, setShowDotMenu] = useState(false);
+  const { watch, setValue } = useFormContext();
+  const steps = watch('steps');
+
+  const tooltip = (
+    <div>
+      <Text>
+        <a
+          style={{
+            pointerEvents: 'all',
+          }}
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            const newSteps = steps.filter((step) => step._id !== id);
+            setShowDotMenu(false);
+            setValue('steps', newSteps);
+          }}
+        >
+          Delete node
+        </a>
+      </Text>
+    </div>
+  );
 
   return (
     <>
       <Button
         onMouseEnter={() => setPopoverOpened(true)}
         onMouseLeave={() => setPopoverOpened(false)}
-        onClick={() => !active && changeTab(tabKey)}
         data-test-id={testId}
         className={cx(classes.button, { [classes.active]: active })}
+        sx={{
+          backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
+        }}
       >
         <ButtonWrapper>
           <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>
-              <Icon {...disabledProp} />
-            </IconWrapper>
+            <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
             <StyledContentWrapper>
               <Text {...disabledColor} weight="bold">
                 {label}
@@ -66,6 +93,22 @@ export function ChannelButton({
             {action && !readonly && (
               <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
             )}
+            <When truthy={showDots}>
+              <Tooltip label={tooltip} opened={showDotMenu}>
+                <a
+                  style={{
+                    pointerEvents: 'all',
+                  }}
+                  href="/"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowDotMenu(!showDotMenu);
+                  }}
+                >
+                  <DotsHorizontal />
+                </a>
+              </Tooltip>
+            </When>
           </ActionWrapper>
         </ButtonWrapper>
 
@@ -155,8 +198,6 @@ const ButtonWrapper = styled.div`
 const StyledContentWrapper = styled.div`
   padding-right: 10px;
 `;
-
-const StyledGroup = styled(Group)``;
 
 const Button = styled(UnstyledButton)`
   position: relative;

@@ -5,6 +5,9 @@ import {
   NotificationTemplateEntity,
   SubscriberEntity,
   SubscriberRepository,
+  JobRepository,
+  JobEntity,
+  JobStatusEnum,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 
@@ -24,6 +27,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   const logRepository = new LogRepository();
+  const jobRepository = new JobRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -142,7 +146,18 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
+    let jobs: JobEntity[] = await jobRepository.find({});
+    let statuses: JobStatusEnum[] = jobs.map((job) => job.status);
+
+    expect(statuses.includes(JobStatusEnum.RUNNING)).true;
+    expect(statuses.includes(JobStatusEnum.PENDING)).true;
+
     await session.awaitRunningJobs();
+
+    jobs = await jobRepository.find({});
+    statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
+
+    expect(statuses.length).to.equal(0);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
@@ -183,10 +198,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await session.awaitRunningJobs();
 
-    const notifications = await notificationRepository.findBySubscriberId(
-      session.environment._id,
-      subscriber.subscriberId
-    );
+    const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
     expect(notifications.length).to.equal(1);
 

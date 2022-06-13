@@ -3,7 +3,7 @@ describe('Changes Screen', function () {
     cy.initializeSession().as('session');
   });
 
-  it('should display changes to promote ', function () {
+  it.skip('should display changes to promote ', function () {
     createNotification();
 
     cy.visit('/changes');
@@ -18,7 +18,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 1);
   });
 
-  it('fields should be disabled in Production', function () {
+  it.skip('fields should be disabled in Production', function () {
     createNotification();
     promoteNotification();
 
@@ -29,7 +29,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
   });
 
-  it('should show correct count of pending changes and update real time', function () {
+  it.skip('should show correct count of pending changes and update real time', function () {
     createNotification();
     cy.getByTestId('side-nav-changes-count').contains('1');
 
@@ -40,14 +40,14 @@ describe('Changes Screen', function () {
     cy.getByTestId('side-nav-changes-count').contains('1');
   });
 
-  it('should show correct type and description of change', function () {
+  it.skip('should show correct type and description of change', function () {
     createNotification();
     cy.visit('/changes');
     cy.getByTestId('change-type').contains('Template Change');
     cy.getByTestId('change-content').contains('Test Notification Title');
   });
 
-  it('should show history of changes', function () {
+  it.skip('should show history of changes', function () {
     createNotification();
     promoteNotification();
 
@@ -59,7 +59,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('promote-btn').should('be.disabled');
   });
 
-  it('should promote all changes with promote all btn', function () {
+  it.skip('should promote all changes with promote all btn', function () {
     createNotification();
     createNotification();
 

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Queue, Worker, QueueBaseOptions } from 'bullmq';
+import { Queue, Worker, QueueBaseOptions, JobsOptions } from 'bullmq';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { SendMessageCommand } from '../usecases/send-message/send-message.command';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
@@ -13,6 +13,9 @@ export class WorkflowQueueService {
       db: Number(process.env.REDIS_DB_INDEX),
       port: Number(process.env.REDIS_PORT),
       host: process.env.REDIS_HOST,
+      connectTimeout: 50000,
+      keepAlive: 30000,
+      family: 4,
     },
   };
   public readonly queue: Queue;
@@ -25,7 +28,7 @@ export class WorkflowQueueService {
   private jobRepository: JobRepository;
 
   constructor() {
-    this.queue = new Queue('standard', this.bullConfig);
+    this.queue = new Queue('standard', { ...this.bullConfig });
     this.worker = new Worker(
       'standard',
       async ({ data }: { data: JobEntity }) => {
@@ -35,6 +38,7 @@ export class WorkflowQueueService {
       },
       {
         ...this.bullConfig,
+        lockDuration: 90000,
         concurrency: 5000,
       }
     );
@@ -43,6 +47,7 @@ export class WorkflowQueueService {
     });
     this.worker.on('failed', async (job, e) => {
       await this.jobRepository.updateStatus(job.data._id, JobStatusEnum.FAILED);
+      await this.jobRepository.setError(job.data._id, e);
     });
   }
 
@@ -53,7 +58,7 @@ export class WorkflowQueueService {
         payload: job.payload ? job.payload : {},
         step: job.step,
         transactionId: job.transactionId,
-        notificationID: job._notificationId,
+        notificationId: job._notificationId,
         environmentId: job._environmentId,
         organizationId: job._organizationId,
         userId: job._userId,
@@ -74,12 +79,16 @@ export class WorkflowQueueService {
     if (!data) {
       return;
     }
+    const options: JobsOptions = {
+      removeOnComplete: true,
+      removeOnFail: true,
+    };
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
     if (data.delay) {
-      await this.queue.add(data._id, data, { delay: data.delay });
+      await this.queue.add(data._id, data, { delay: data.delay, ...options });
 
       return;
     }
-    await this.queue.add(data._id, data);
+    await this.queue.add(data._id, data, options);
   }
 }

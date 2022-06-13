@@ -41,6 +41,10 @@ const notificationTemplateSchema = new Schema(
     ],
     steps: [
       {
+        active: {
+          type: Schema.Types.Boolean,
+          default: true,
+        },
         filters: [
           {
             isNegated: Schema.Types.Boolean,

@@ -1,9 +1,10 @@
 {
   "name": "@novu/testing",
-  "version": "0.4.0-alpha.12",
+  "version": "0.4.1",
   "description": "",
   "private": true,
   "scripts": {
+    "start": "npm run start:dev",
     "afterinstall": "pnpm build",
     "build": "node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
@@ -20,9 +21,9 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.4.0-alpha.12",
-    "@novu/node": "^0.4.0-alpha.12",
-    "@novu/shared": "^0.4.0-alpha.12",
+    "@novu/dal": "^0.4.1",
+    "@novu/node": "^0.4.1",
+    "@novu/shared": "^0.4.1",
     "JSONStream": "^1.3.5",
     "async": "^3.2.0",
     "axios": "0.25.0",
