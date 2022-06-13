@@ -32,6 +32,7 @@ export interface INotificationTemplateStep {
   _id?: string;
   filters?: IMessageFilter[];
   _templateId?: string;
+  _parentId?: string;
   template?: IMessageTemplate;
   active?: boolean;
 }
