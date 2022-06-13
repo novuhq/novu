@@ -7,7 +7,7 @@ export const StepActiveSwitch = ({ control, index }) => (
     control={control}
     name={`steps.${index}.active`}
     render={({ field: { value, ...field } }) => {
-      return <StyledSwitch {...field} checked={value} label={'Step is Active'} />;
+      return <StyledSwitch {...field} checked={value} label={`Step is ${value ? 'Active' : 'Disabled'}`} />;
     }}
   />
 );
