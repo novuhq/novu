@@ -221,22 +221,26 @@ describe('Create Notification template - /notification-templates (POST)', async 
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          type: ChannelTypeEnum.IN_APP,
-          content: 'Test Template',
-          cta: {
-            type: ChannelCTATypeEnum.REDIRECT,
-            data: {
-              url: 'https://example.org/profile',
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            content: 'Test Template',
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'https://example.org/profile',
+              },
             },
           },
         },
         {
-          type: ChannelTypeEnum.IN_APP,
-          content: 'Test Template',
-          cta: {
-            type: ChannelCTATypeEnum.REDIRECT,
-            data: {
-              url: 'https://example.org/profile',
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            content: 'Test Template',
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'https://example.org/profile',
+              },
             },
           },
         },

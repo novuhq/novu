@@ -125,16 +125,20 @@ describe('Update notification template by id - /notification-templates/:template
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
-          content: [],
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            type: ChannelTypeEnum.EMAIL,
+            content: [],
+          },
         },
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
-          content: [],
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            type: ChannelTypeEnum.EMAIL,
+            content: [],
+          },
         },
       ],
     };
@@ -151,20 +155,24 @@ describe('Update notification template by id - /notification-templates/:template
         ...template.steps.map((step) => {
           return {
             _id: step._id,
+            template: {
+              name: 'Message Name',
+              subject: 'Test email subject',
+              type: ChannelTypeEnum.EMAIL,
+              content: [],
+              cta: null,
+            },
+            _parentId: step._parentId,
+          };
+        }),
+        {
+          template: {
             name: 'Message Name',
             subject: 'Test email subject',
             type: ChannelTypeEnum.EMAIL,
             content: [],
             cta: null,
-            _parentId: step._parentId,
-          };
-        }),
-        {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
-          content: [],
-          cta: null,
+          },
         },
       ],
       notificationGroupId: session.notificationGroups[0]._id,
