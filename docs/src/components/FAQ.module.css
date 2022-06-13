@@ -1,20 +1,109 @@
-.button_item {
-  background: none;
-  border: none;
+:root {
+  --ifm-h2-font-size: 30px;
+
+  --ifm-h4-font-size: 18px;
+
+  --ifm-heading-margin-top: 0;
+
+  --ifm-heading-margin-bottom: 0;
+
+  --ifm-paragraph-margin-bottom: 0;
+
+}
+
+.section_description{
+  margin-top: 16px;
 }
 
 .ul {
   list-style-type: none;
   
   padding-left: 0px;
-
+  
   global {
     li::marker {
-    display: none;
+      display: none;
     }
+  }
+
+}
+
+.menu__list_item{
+  padding: 16px 0px;
+
+  border-bottom: 1px solid #cccccc;
+
+  --ifm-list-item-margin: 0;
+
+  margin: 0;
+
+}
+
+.menu__list_item:first-child {
+  border-top: 1px solid #cccccc;
+
+  margin-top: 32px;
+
+}
+
+.item_btn {
+  width: 100%;
+  outline: none;
+  text-align: left;
+  transition: all 0.5s linear;
+  background: none ;
+  border: none ;
+
+  padding: 0px;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.item_btn::after {
+  content: url("../components/img/chevron-black.inline.svg");
+
+  float: right;
+  transition: all 0.3s linear;
+
+  margin: auto 0;
+}
+
+
+html[data-theme='light'] {
+  .item_btn::after {
+    content: url("../components/img/chevron-black.inline.svg");
   }
 }
 
-.faq_item_discription {
+html[data-theme='dark'] {
+  .item_btn::after {
+    content: url("../components/img/chevron-white.inline.svg");
+  }
+}
 
+.item_btn.is-open::after {
+  transition: all 0.4s;
+  -moz-transition: all 0.4s;
+  -webkit-transition: all 0.4s;
+  -o-transition: all 0.4s;
+
+  transform: rotate(180deg);
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+}
+
+
+.item_content {
+  /* max-height: 0px; */
+
+  transition: max-height 0.3s ease-in-out;
+
+  margin-top: 32px;
+  margin-bottom: 0px;
+}
+
+.item_content.is-open {
+  max-height: auto;
 }
