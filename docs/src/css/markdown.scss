@@ -42,6 +42,17 @@
     border-radius: 4px;
   }
   
+  blockquote {
+    border-left: 2px solid $color-secondary-yellow;
+
+    p {
+      font-weight: 400;
+    }
+
+    cite {
+      font-style: normal;
+    }
+  }
   
   pre code span,
   code {
@@ -110,6 +121,13 @@ html[data-theme='dark'] {
     }
   }
 
+  blockquote {
+    cite {
+      color: $color-gray-8;
+    }
+  }
+  
+
   code {
     &:not([class]) {
       background-color: $color-gray-2;
@@ -138,6 +156,12 @@ html[data-theme='light'] {
 
   a:not([class]):hover {
     text-decoration-color: $color-secondary-blue;
+  }
+
+  blockquote {
+    cite {
+      color: $color-gray-6;
+    }
   }
 
   code {
