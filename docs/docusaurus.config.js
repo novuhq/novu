@@ -53,7 +53,7 @@ const codeTheme = require('./src/utils/prism');
           appId: '5AG4YK0YDV',
           apiKey: '67ce2424b44097b63a6f21a6615de538',
           indexName: 'novu',
-          contextualSearch: true,
+          contextualSearch: false,
         },
         docs: {
           sidebar: {
