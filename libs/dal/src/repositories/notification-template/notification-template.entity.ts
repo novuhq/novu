@@ -62,6 +62,8 @@ export class NotificationStepEntity {
   template?: MessageTemplateEntity;
 
   filters?: StepFilter[];
+
+  _parentId?: string;
 }
 
 export class StepFilter {

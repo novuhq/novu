@@ -213,4 +213,46 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     expect(newTemplate.triggers[0].identifier).to.include('test-');
   });
+
+  it('should add parentId to step', async () => {
+    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+      name: 'test template',
+      description: 'This is a test description',
+      notificationGroupId: session.notificationGroups[0]._id,
+      steps: [
+        {
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            content: 'Test Template',
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'https://example.org/profile',
+              },
+            },
+          },
+        },
+        {
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            content: 'Test Template',
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: 'https://example.org/profile',
+              },
+            },
+          },
+        },
+      ],
+    };
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
+    expect(body.data).to.be.ok;
+
+    const template: INotificationTemplate = body.data;
+    const steps = template.steps;
+    expect(steps[0]._parentId).to.equal(null);
+    expect(steps[0]._id).to.equal(steps[1]._parentId);
+  });
 });
