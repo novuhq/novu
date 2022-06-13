@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "description",
   "author": "",
   "private": "true",
@@ -60,6 +60,7 @@
     "agenda": "^4.2.1",
     "axios": "^0.24.0",
     "bcrypt": "^5.0.0",
+    "body-parser": "^1.20.0",
     "bull": "^4.2.1",
     "bullmq": "^1.81.4",
     "class-transformer": "^0.5.1",

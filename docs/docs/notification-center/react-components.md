@@ -10,9 +10,13 @@ npm install @novu/notification-center
 import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
 
 function Header() {
+  function onNotificationClick(notification: IMessage) {
+    navigate(notification.cta.data.url);
+  }
+  
   return (
     <NovuProvider subscriberId={'USER_ID'} applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}>
-      <PopoverNotificationCenter>
+      <PopoverNotificationCenter onNotificationClick={onNotificationClick}>
         {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
       </PopoverNotificationCenter>
     </NovuProvider>

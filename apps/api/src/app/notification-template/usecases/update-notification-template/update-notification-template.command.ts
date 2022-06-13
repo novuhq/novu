@@ -1,17 +1,7 @@
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsDefined,
-  IsEnum,
-  IsMongoId,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-import { ChannelCTATypeEnum } from '@novu/shared';
+import { IsArray, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { NotificationStepDto } from '../../dto/update-notification-template.dto';
+import { NotificationStepDto } from '../../dto';
 
 export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: UpdateNotificationTemplateCommand) {
@@ -44,13 +34,4 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @ValidateNested()
   @IsOptional()
   steps: NotificationStepDto[];
-}
-
-export class ChannelCTADto {
-  @IsEnum(ChannelCTATypeEnum)
-  type: ChannelCTATypeEnum;
-
-  data: {
-    url: string;
-  };
 }

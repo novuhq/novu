@@ -69,6 +69,7 @@ export class NotificationTemplateService {
       templateSteps.push({
         filters: message.filters,
         _templateId: saved._id,
+        active: message.active,
       });
     }
 

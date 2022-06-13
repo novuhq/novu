@@ -16,7 +16,7 @@ export class UpdateMessageTemplate {
 
   async execute(command: UpdateMessageTemplateCommand): Promise<MessageTemplateEntity> {
     const existingTemplate = await this.messageTemplateRepository.findById(command.templateId);
-    if (!existingTemplate) throw new NotFoundException(`Entity with id ${command.templateId} not found`);
+    if (!existingTemplate) throw new NotFoundException(`Message template with id ${command.templateId} not found`);
 
     const updatePayload: Partial<MessageTemplateEntity> = {};
     if (command.name) {
