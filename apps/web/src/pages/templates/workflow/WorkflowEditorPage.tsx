@@ -69,6 +69,7 @@ const WorkflowEditorPage = ({
                   <EditTemplateButton
                     mt={10}
                     variant="outline"
+                    data-test-id="edit-template-channel"
                     fullWidth
                     onClick={() =>
                       setActivePage(
@@ -96,6 +97,7 @@ const WorkflowEditorPage = ({
                   {channels.map((channel) => (
                     <div
                       key={channel.tabKey}
+                      data-test-id={`dnd-${channel.testId}`}
                       onDragStart={(event) => onDragStart(event, channel.channelType)}
                       draggable
                     >

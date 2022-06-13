@@ -5,29 +5,48 @@ describe('Notifications Creator', function () {
     cy.initializeSession().as('session');
   });
 
-  it.skip('should not reset data when switching channel types', function () {
+  it('should drag and drop channel', function () {
     cy.visit('/templates/create');
-    cy.getByTestId('add-channel').click({ force: true });
-    cy.getByTestId('inAppAddChannel').click({ force: true });
+    cy.getByTestId('workflowButton').click({ force: true });
+    dragAndDrop('inApp');
+    dragAndDrop('inApp', 'inApp');
+
+    cy.wait(100);
+    cy.getByTestId('node-inAppSelector').last().parent().click({ force: true });
+    cy.getByTestId('edit-template-channel').click({ force: true });
+  });
+
+  it('should not reset data when switching channel types', function () {
+    cy.visit('/templates/create');
+
+    addAndEditChannel('inApp');
     cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
     });
-    cy.getByTestId('add-channel').click({ force: true });
-    cy.getByTestId('emailAddChannel').click({ force: true });
+
+    goBack();
+
+    dragAndDrop('email', 'inApp');
+    editChannel('email');
+
     cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
       parseSpecialCharSequences: false,
     });
     cy.getByTestId('emailSubject').type('this is email subject');
 
-    cy.getByTestId('inAppSelector').click({ force: true });
+    goBack();
+
+    editChannel('inApp');
     cy.getByTestId('in-app-editor-content-input').contains('someone assigned you to');
 
-    cy.getByTestId('emailSelector').click({ force: true });
+    goBack();
+    editChannel('email');
+
     cy.getByTestId('editable-text-content').contains('This text is written from a test');
     cy.getByTestId('emailSubject').should('have.value', 'this is email subject');
   });
 
-  it.skip('should create in-app notification', function () {
+  it('should create in-app notification', function () {
     cy.visit('/templates/create');
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
@@ -37,10 +56,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('trigger-code-snippet').should('not.exist');
     cy.getByTestId('groupSelector').should('have.value', 'General');
 
-    cy.getByTestId('add-channel').click({ force: true });
-    cy.getByTestId('inAppAddChannel').click({ force: true });
-
-    // cy.getByTestId('inAppSelector').click({ force: true });
+    addAndEditChannel('inApp');
 
     cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
@@ -65,14 +81,13 @@ describe('Notifications Creator', function () {
     cy.location('pathname').should('equal', '/templates');
   });
 
-  it.skip('should create email notification', function () {
+  it('should create email notification', function () {
     cy.visit('/templates/create');
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.get('body').click();
 
-    cy.getByTestId('add-channel').click({ force: true });
-    cy.getByTestId('emailAddChannel').click({ force: true });
+    addAndEditChannel('email');
 
     cy.getByTestId('email-editor').getByTestId('editor-row').click();
     cy.getByTestId('control-add').click({ force: true });
@@ -119,7 +134,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('submit-category-btn').click();
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
 
-    cy.wait(100);
+    cy.wait(500);
 
     cy.getByTestId('submit-btn').click();
 
@@ -133,16 +148,22 @@ describe('Notifications Creator', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.getByTestId('title').should('have.value', template.name);
-    cy.getByTestId('inAppSelector').click({ force: true });
+
+    addAndEditChannel('inApp');
 
     cy.getByTestId('in-app-editor-content-input')
       .getByTestId('in-app-editor-content-input')
       .contains('Test content for {{firstName}}');
 
+    goBack();
+    goBack();
+
     cy.getByTestId('settingsButton').click({ force: true });
     cy.getByTestId('title').clear().type('This is the new notification title');
+    cy.getByTestId('workflowButton').click({ force: true });
+    cy.wait(1000);
+    editChannel('inApp');
 
-    cy.getByTestId('inAppSelector').click({ force: true });
     cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
     cy.getByTestId('submit-btn').click();
 
@@ -152,7 +173,7 @@ describe('Notifications Creator', function () {
     });
   });
 
-  it.skip('should update notification active status', function () {
+  it('should update notification active status', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.getByTestId('active-toggle-switch').get('label').contains('Enabled');
@@ -185,7 +206,7 @@ describe('Notifications Creator', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
 
-    cy.getByTestId('"triggerCodeSelector"').click({ force: true });
+    cy.getByTestId('triggerCodeSelector').click({ force: true });
     cy.getByTestId('trigger-code-snippet').contains('test-event');
   });
 
@@ -194,14 +215,14 @@ describe('Notifications Creator', function () {
     cy.getByTestId('description').type('this is a notification template description');
     cy.getByTestId('submit-btn').click();
     cy.getByTestId('title').should('have.class', 'mantine-TextInput-invalid');
-    addChannel('inApp');
+    addAndEditChannel('inApp');
 
     cy.getByTestId('submit-btn').click();
     cy.getByTestId('inAppSelector').getByTestId('error-circle').should('be.visible');
     cy.getByTestId('settingsButton').getByTestId('error-circle').should('be.visible');
   });
 
-  it.skip('should allow uploading a logo from email editor', function () {
+  it('should allow uploading a logo from email editor', function () {
     cy.intercept(/.*organizations\/me.*/, (r) => {
       r.continue((res) => {
         if (res.body) {
@@ -212,7 +233,7 @@ describe('Notifications Creator', function () {
       });
     });
     cy.visit('/templates/create');
-    addChannel('email');
+    addAndEditChannel('email');
 
     cy.getByTestId('logo-upload-button').click();
 
@@ -220,16 +241,18 @@ describe('Notifications Creator', function () {
     cy.location('pathname').should('equal', '/settings');
   });
 
-  it.skip('should show the brand logo on main page', function () {
+  it('should show the brand logo on main page', function () {
     cy.visit('/templates/create');
-    addChannel('email');
+    addAndEditChannel('email');
 
     cy.getByTestId('email-editor').getByTestId('brand-logo').should('have.attr', 'src', 'https://novu.co/img/logo.png');
   });
 
-  it.skip('should support RTL text content', function () {
+  it('should support RTL text content', function () {
     cy.visit('/templates/create');
-    addChannel('email');
+    cy.getByTestId('workflowButton').click({ force: true });
+    dragAndDrop('email');
+    editChannel('email');
 
     cy.getByTestId('settings-row-btn').eq(0).invoke('show').click();
     cy.getByTestId('editable-text-content').should('have.css', 'direction', 'ltr');
@@ -237,11 +260,11 @@ describe('Notifications Creator', function () {
     cy.getByTestId('editable-text-content').should('have.css', 'direction', 'rtl');
   });
 
-  it.skip('should create an SMS channel message', function () {
+  it('should create an SMS channel message', function () {
     cy.visit('/templates/create');
 
     fillBasicNotificationDetails('Test SMS Notification Title');
-    addChannel('sms');
+    addAndEditChannel('sms');
 
     cy.getByTestId('smsNotificationContent').type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
@@ -266,7 +289,8 @@ describe('Notifications Creator', function () {
     cy.visit('/templates/create');
 
     fillBasicNotificationDetails('Custom Code HTML Notification Title');
-    addChannel('email');
+    addAndEditChannel('email');
+
     cy.getByTestId('emailSubject').type('this is email subject');
 
     cy.getByTestId('editor-type-selector')
@@ -275,13 +299,17 @@ describe('Notifications Creator', function () {
       .click();
     cy.get('#codeEditor').type('Hello world code {{name}} <div>Test', { parseSpecialCharSequences: false });
     cy.getByTestId('submit-btn').click();
+    cy.wait(1000);
     cy.getByTestId('trigger-snippet-btn').click();
+
     cy.get('tbody').contains('Custom Code HTM').click();
-    cy.getByTestId('emailSelector').click();
+
+    cy.getByTestId('workflowButton').click({ force: true });
+    editChannel('email');
     cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
   });
 
-  it.skip('should redirect to dev env for edit template', async function () {
+  it('should redirect to dev env for edit template', async function () {
     cy.intercept('POST', '*/notification-templates').as('createTemplate');
     cy.visit('/templates/create');
 
@@ -308,9 +336,30 @@ describe('Notifications Creator', function () {
   });
 });
 
-function addChannel(channel: 'inApp' | 'email' | 'sms') {
-  cy.getByTestId('add-channel').click({ force: true });
-  cy.getByTestId(channel + 'AddChannel').click({ force: true });
+function addAndEditChannel(channel: 'inApp' | 'email' | 'sms') {
+  cy.getByTestId('workflowButton').click({ force: true });
+  dragAndDrop(channel);
+  editChannel(channel);
+}
+
+function dragAndDrop(channel: 'inApp' | 'email' | 'sms', parent?: 'inApp' | 'email' | 'sms' | 'trigger') {
+  const dataTransfer = new DataTransfer();
+
+  cy.wait(1000);
+  cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer, force: true });
+  if (parent) {
+    cy.getByTestId(`node-${parent}Selector`).parent().trigger('drop', { dataTransfer, force: true });
+  } else {
+    cy.getByTestId('node-triggerSelector').parent().trigger('drop', { dataTransfer, force: true });
+  }
+}
+function editChannel(channel: 'inApp' | 'email' | 'sms') {
+  cy.getByTestId(`node-${channel}Selector`).click({ force: true });
+  cy.getByTestId('edit-template-channel').click({ force: true });
+}
+
+function goBack() {
+  cy.getByTestId('go-back-button').click({ force: true });
 }
 
 function fillBasicNotificationDetails(title?: string) {

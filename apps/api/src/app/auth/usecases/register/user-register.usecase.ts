@@ -40,18 +40,9 @@ export class UserRegister {
           userId: user._id,
         })
       );
-
-      this.analyticsService.upsertUser(
-        {
-          firstName: command.organizationName,
-          lastName: '',
-          email: user.email,
-          _id: user._id,
-          createdAt: user.createdAt,
-        } as never,
-        organization._id
-      );
     }
+
+    this.analyticsService.upsertUser(user, user._id);
 
     return {
       user: await this.userRepository.findById(user._id),
