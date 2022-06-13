@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { colors, TemplateButton, Text } from '../../design-system';
 import { BellGradient, TapeGradient } from '../../design-system/icons';
+import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 
 export function TemplatesSideBar({
   activeTab,
@@ -26,21 +27,21 @@ export function TemplatesSideBar({
     <StyledNav>
       <NavSection>
         <TemplateButton
-          tabKey="Settings"
+          tabKey={ActivePageEnum.SETTINGS}
           changeTab={changeTab}
           Icon={BellGradient}
           testId="settingsButton"
-          active={activeTab === 'Settings'}
+          active={activeTab === ActivePageEnum.SETTINGS}
           description="Configure cross-channel notification settings"
           label="Notification Settings"
           errors={showErrors && (errors.name || errors.notificationGroup)}
         />
         <TemplateButton
-          tabKey="Workflow"
+          tabKey={ActivePageEnum.WORKFLOW}
           changeTab={changeTab}
           Icon={BellGradient}
           testId="workflowButton"
-          active={activeTab === 'Workflow'}
+          active={activeTab === ActivePageEnum.WORKFLOW}
           description="Configure cross-channel notification settings"
           label="Workflow Editor"
           errors={showErrors && (errors.name || errors.notificationGroup)}
@@ -53,11 +54,11 @@ export function TemplatesSideBar({
           </Text>
           <div>
             <TemplateButton
-              tabKey="TriggerSnippet"
+              tabKey={ActivePageEnum.TRIGGER_SNIPPET}
               changeTab={changeTab}
               Icon={TapeGradient}
               testId="triggerCodeSelector"
-              active={activeTab === 'TriggerSnippet'}
+              active={activeTab === ActivePageEnum.TRIGGER_SNIPPET}
               description="Get your notification trigger code snippet"
               label="Trigger Snippet"
             />
