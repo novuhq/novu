@@ -10,9 +10,7 @@ import { useTemplateController } from '../../../components/templates/use-templat
 import { StepActiveSwitch } from './StepActiveSwitch';
 
 const capitalize = (text: string) => {
-  if (typeof text !== 'string') return '';
-
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
 };
 
 const WorkflowEditorPage = ({
@@ -82,7 +80,9 @@ const WorkflowEditorPage = ({
                     Edit Template
                   </EditTemplateButton>
                   <Divider my={30} />
-                  <StepActiveSwitch index={selectedStep} control={control} />
+                  {steps.map((i, index) => {
+                    return index === selectedStep ? <StepActiveSwitch index={selectedStep} control={control} /> : null;
+                  })}
                 </NavSection>
               </StyledNav>
             ) : (
