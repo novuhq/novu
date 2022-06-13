@@ -20,6 +20,10 @@ export class NotificationStepDto {
   @IsBoolean()
   @IsOptional()
   active?: boolean;
+
+  @IsOptional()
+  @IsMongoId()
+  _templateId?: string;
 }
 
 export class UpdateNotificationTemplateDto implements ICreateNotificationTemplateDto {

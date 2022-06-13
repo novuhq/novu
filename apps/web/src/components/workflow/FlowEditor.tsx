@@ -63,18 +63,18 @@ export function FlowEditor({
   }, [reactFlowInstance]);
 
   useEffect(() => {
-    if (steps.length) {
-      let parentId = '1';
-      if (nodes.length > 1) {
-        setNodes([
-          {
-            ...initialNodes[0],
-            position: {
-              ...nodes[0].position,
-            },
+    let parentId = '1';
+    if (nodes.length > 1) {
+      setNodes([
+        {
+          ...initialNodes[0],
+          position: {
+            ...nodes[0].position,
           },
-        ]);
-      }
+        },
+      ]);
+    }
+    if (steps.length) {
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
