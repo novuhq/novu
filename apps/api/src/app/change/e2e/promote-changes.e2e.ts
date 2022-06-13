@@ -230,6 +230,7 @@ describe('Promote changes', () => {
       steps: [
         {
           _id: step._templateId,
+          _templateId: step._templateId,
           template: {
             name: 'test',
             type: step.template.type,
@@ -300,6 +301,7 @@ describe('Promote changes', () => {
       steps: [
         {
           _id: step._templateId,
+          _templateId: step._templateId,
           template: {
             name: 'Message Name',
             content: step.template.content,
