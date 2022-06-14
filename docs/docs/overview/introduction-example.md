@@ -111,13 +111,12 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Consequat, dolor posuer
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Porttitor enim, tellus dolor eu. Aliquam metus, nibh pretium, egestas mauris. Imperdiet faucibus vivamus libero viverra.
 
 <FAQ>
-  <FAQItem title="Title" >Lorem ipsum dolor sit amet, consectetur adipiscing elit. Porttitor enim, tellus dolor eu. Aliquam metus, nibh pretium, egestas mauris. Imperdiet faucibus vivamus libero viverra.</FAQItem>
+  <FAQItem title="Lorem ipsum dolor sit amet, consectetur adipiscing elit?" isOpen>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Porttitor enim, tellus dolor eu. Aliquam metus, nibh pretium, egestas mauris. Imperdiet faucibus vivamus libero viverra.</FAQItem>
 
-  <FAQItem title="Title2" >Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fermentum ridiculus aliquam, cras lectus egestas ac. Fermentum laoreet vulputate egestas mattis neque eget. Lectus lorem ac blandit lacus scelerisque eget. Risus ipsum urna suspendisse eros at.</FAQItem>
+  <FAQItem title="Lorem ipsum dolor sit amet?">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fermentum ridiculus aliquam, cras lectus egestas ac. Fermentum laoreet vulputate egestas mattis neque eget. Lectus lorem ac blandit lacus scelerisque eget. Risus ipsum urna suspendisse eros at.</FAQItem>
 
-  <FAQItem title="Title3" >Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis.</FAQItem>
+  <FAQItem title="Lorem ipsum dolor sit amet?">Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis.</FAQItem>
 </FAQ>
-
 
 ## Callout component
 

@@ -6,12 +6,13 @@ import Chevron from '/static/img/chevron-white-faq.svg';
 export interface faqItemProps {
   title: string;
   children: React.ReactNode;
+  isOpen: boolean;
 }
 
-export default function FAQItem({ title, children }: faqItemProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function FAQItem({ title, children, isOpen = false }: faqItemProps) {
+  const [isItemOpen, setIsItemOpen] = useState(isOpen);
 
-  const handleButtonClick = () => setIsOpen((previousValue) => !previousValue);
+  const handleButtonClick = () => setIsItemOpen((previousValue) => !previousValue);
 
   return (
     <li className={styles.item}>
@@ -19,9 +20,9 @@ export default function FAQItem({ title, children }: faqItemProps) {
         <h4 className={styles.item_title} id={title}>
           {title}
         </h4>
-        <Chevron className={clsx(styles.button_icon, isOpen && styles.button_icon_is_open)} />
+        <Chevron className={clsx(styles.button_icon, isItemOpen && styles.button_icon_is_open)} />
       </button>
-      <div className={clsx(styles.item_content, isOpen && styles.item_content_is_open)}>
+      <div className={clsx(styles.item_content, isItemOpen && styles.item_content_is_open)}>
         {children}
       </div>
     </li>
