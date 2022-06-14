@@ -16,7 +16,7 @@ export const TemplateFormProvider = ({ children }) => {
         errors.notificationGroup = 'Required field notification group';
       }
 
-      data.steps.map((step, index) => {
+      data.steps.forEach((step, index) => {
         if (
           (step.template.type === ChannelTypeEnum.SMS || step.template.type === ChannelTypeEnum.IN_APP) &&
           step.template.content.length === 0
