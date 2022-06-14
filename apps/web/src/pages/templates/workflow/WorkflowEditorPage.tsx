@@ -35,6 +35,8 @@ const WorkflowEditorPage = ({
 
   useEffect(() => {
     if (selectedNodeId.length === 0) {
+      setSelectedChannel(null);
+
       return;
     }
     const step = steps.find((item) => item._id === selectedNodeId || item.id === selectedNodeId);
