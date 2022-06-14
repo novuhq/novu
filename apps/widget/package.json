@@ -49,7 +49,7 @@
     "@types/styled-components": "^5.1.7",
     "babel-plugin-styled-components": "^1.12.0",
     "craco-antd": "^1.19.0",
-    "cypress": "^7.3.0",
+    "cypress": "^10.1.0",
     "cypress-intellij-reporter": "^0.0.6",
     "http-server": "^0.12.3",
     "jest": "27.0.6",
