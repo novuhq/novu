@@ -44,7 +44,7 @@ export function TemplatesSideBar({
           active={activeTab === ActivePageEnum.WORKFLOW}
           description="Configure cross-channel notification settings"
           label="Workflow Editor"
-          errors={showErrors && (errors.name || errors.notificationGroup)}
+          errors={showErrors && getStepsErrors(errors)}
         />
       </NavSection>
       {showTriggerSection && (
@@ -69,13 +69,13 @@ export function TemplatesSideBar({
   );
 }
 
-function getChannelErrors(channel: 'sms' | 'email' | 'inApp', errors: { [p: string]: string }) {
+function getStepsErrors(errors: { [p: string]: string }) {
   const keys = Object.keys(errors);
   const channelErrors = keys.filter((key) => {
-    return key.includes(`${channel}Messages`);
+    return key.includes(`steps`);
   });
 
-  return channelErrors.map((key) => errors[key]).toString();
+  return channelErrors.length > 0 && 'Something is missing here';
 }
 
 const StyledNav = styled.div`
