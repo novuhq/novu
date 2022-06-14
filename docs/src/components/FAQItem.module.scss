@@ -1,0 +1,91 @@
+
+.button_icon { 
+  
+  margin: auto 0;
+  
+  &.button_icon_is_open {
+    transform: rotate(180deg);
+    transition: all 0.4s;
+  }
+}
+
+.menu__list_item{
+  padding: 16px 0px;
+  margin: 0;
+
+  --ifm-list-item-margin: 0;
+}
+
+.menu__list_item:first-child {
+  border-top: 1px solid #cccccc;
+
+  margin-top: 32px;
+}
+
+.item_btn {
+  width: 100%;
+  outline: none;
+  text-align: left;
+  background: none ;
+  border: none ;
+
+
+  padding: 0px;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+
+.item_title {
+  --ifm-font-family-base: "Brother-1816";
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 150%;
+
+  --ifm-heading-margin-bottom: 0;
+}
+
+
+.item_content {
+  display: none;
+  margin-top: 32px;
+  margin-bottom: 0px;
+
+  --ifm-paragraph-margin-bottom: 0px;
+
+  &.item_content_is_open {
+    display: block;
+  }
+}
+
+
+html[data-theme='light'] {
+  .button_icon {
+    color:black;
+  }
+
+  .menu__list_item{  
+    border-bottom: 1px solid #cccccc;
+  }
+  
+  .menu__list_item:first-child {
+    border-top: 1px solid #cccccc;
+  }
+}
+
+
+html[data-theme='dark'] {
+  .button_icon {
+    color:white;
+  }
+
+  .menu__list_item{  
+    border-bottom: 1px solid #333333;
+  }
+  
+  .menu__list_item:first-child {
+    border-top: 1px solid #333333;
+  }
+}

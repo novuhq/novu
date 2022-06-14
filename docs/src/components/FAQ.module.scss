@@ -1,0 +1,29 @@
+:root {
+  --ifm-h2-font-size: 30px;
+
+  --ifm-h4-font-size: 18px;
+
+  --ifm-heading-margin-top: 0;
+
+  --ifm-heading-margin-bottom: 0;
+
+  --ifm-paragraph-margin-bottom: 0;
+
+}
+
+
+html[data-theme='light'] {
+
+  .menu__list_item:first-child {
+    border-top: 1px solid #cccccc;
+  }
+}
+
+
+html[data-theme='dark'] {
+
+  .menu__list_item:first-child {
+    border-top: 1px solid #333333;
+  }
+}
+
