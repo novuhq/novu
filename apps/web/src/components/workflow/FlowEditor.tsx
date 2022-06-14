@@ -44,11 +44,13 @@ export function FlowEditor({
   steps,
   setSelectedNodeId,
   addStep,
-  errors,
+  templateId,
+errors,
 }: {
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
+  templateId: string;
   errors: any;
 }) {
   const { colorScheme } = useMantineColorScheme();
@@ -70,6 +72,10 @@ export function FlowEditor({
       setNodes([
         {
           ...initialNodes[0],
+          data: {
+            ...initialNodes[0].data,
+            templateId,
+          },
           position: {
             ...nodes[0].position,
           },
@@ -88,8 +94,9 @@ export function FlowEditor({
           parentNode: parentId,
           data: {
             ...getChannel(step.template.type),
-            active: step.active,
+            templateId: templateId,
             error: getChannelErrors(i, errors),
+            active: step.active,
             index: nodes.length,
           },
         };

@@ -9,6 +9,7 @@ import { DotsHorizontal } from '../icons';
 import { When } from '../../components/utils/When';
 import { Tooltip } from '../tooltip/Tooltip';
 import { useFormContext } from 'react-hook-form';
+import { useTemplateController } from '../../components/templates/use-template-controller.hook';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -23,6 +24,7 @@ interface ITemplateButtonProps {
   errors?: boolean | string;
   showDots?: boolean;
   id?: string | undefined;
+  templateId: string;
 }
 
 export function ChannelButton({
@@ -37,6 +39,7 @@ export function ChannelButton({
   errors = false,
   showDots = true,
   id = undefined,
+  templateId,
 }: ITemplateButtonProps) {
   const { cx, classes, theme } = useStyles();
   const disabled = action && !checked;
@@ -46,6 +49,8 @@ export function ChannelButton({
   const [showDotMenu, setShowDotMenu] = useState(false);
   const { watch, setValue } = useFormContext();
   const steps = watch('steps');
+
+  const { setIsDirty } = useTemplateController(templateId);
 
   const tooltip = (
     <div>
@@ -59,6 +64,7 @@ export function ChannelButton({
             e.preventDefault();
             const newSteps = steps.filter((step) => step._id !== id);
             setShowDotMenu(false);
+            setIsDirty(true);
             setValue('steps', newSteps);
           }}
         >
