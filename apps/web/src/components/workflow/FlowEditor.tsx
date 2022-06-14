@@ -44,10 +44,12 @@ export function FlowEditor({
   steps,
   setSelectedNodeId,
   addStep,
+  templateId,
 }: {
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
+  templateId: string;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
@@ -68,6 +70,10 @@ export function FlowEditor({
       setNodes([
         {
           ...initialNodes[0],
+          data: {
+            ...initialNodes[0].data,
+            templateId,
+          },
           position: {
             ...nodes[0].position,
           },
@@ -84,7 +90,12 @@ export function FlowEditor({
           type: 'channelNode',
           position: { x: oldNode.position.x, y: oldNode.position.y },
           parentNode: parentId,
-          data: { ...getChannel(step.template.type), active: step.active, index: nodes.length },
+          data: {
+            ...getChannel(step.template.type),
+            templateId: templateId,
+            active: step.active,
+            index: nodes.length,
+          },
         };
 
         const newEdge = {
