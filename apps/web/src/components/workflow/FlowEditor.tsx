@@ -98,8 +98,8 @@ export function FlowEditor({
           data: {
             ...getChannel(step.template.type),
             active: step.active,
-            error: getChannelErrors(i, errors),
             index: nodes.length,
+            error: getChannelErrors(i, errors),
             onDelete,
           },
         };
