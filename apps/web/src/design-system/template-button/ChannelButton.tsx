@@ -25,6 +25,7 @@ interface ITemplateButtonProps {
   showDots?: boolean;
   id?: string | undefined;
   onDelete?: () => void;
+  showDropZone?: boolean;
 }
 
 export function ChannelButton({
@@ -40,6 +41,7 @@ export function ChannelButton({
   showDots = true,
   id = undefined,
   onDelete = () => {},
+  showDropZone = false,
 }: ITemplateButtonProps) {
   const { readonly: readonlyEnv } = useEnvController();
   const { cx, classes, theme } = useStyles();
@@ -84,6 +86,9 @@ export function ChannelButton({
           backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
         }}
       >
+        <When truthy={showDropZone}>
+          <Dropzone dark={theme.colorScheme === 'dark'}>Place your next step here</Dropzone>
+        </When>
         <ButtonWrapper>
           <LeftContainerWrapper>
             <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
@@ -202,6 +207,21 @@ const ButtonWrapper = styled.div`
 
 const StyledContentWrapper = styled.div`
   padding-right: 10px;
+`;
+
+const Dropzone = styled.div<{ dark: boolean }>`
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  background: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
+  color: ${({ dark }) => (dark ? colors.B98 : colors.B17)};
+  border-radius: 7px;
+  text-align: center;
+  line-height: 75px;
+  z-index: 1000000;
+  border: 1px dashed ${({ dark }) => (dark ? colors.B30 : colors.B80)};
 `;
 
 const Button = styled(UnstyledButton)`
