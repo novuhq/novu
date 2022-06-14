@@ -1,9 +1,10 @@
 import React from 'react';
+import styles from './FAQ.module.scss';
 
 interface IFaqProps {
   children: React.ReactNode;
 }
 
 export default function FAQ({ children }: IFaqProps) {
-  return <div className="items_list">{children}</div>;
+  return <ul className={styles.items_list}>{children}</ul>;
 }

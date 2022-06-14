@@ -14,7 +14,7 @@ export default function FAQItem({ title, children }: faqItemProps) {
   const handleButtonClick = () => setIsOpen((previousValue) => !previousValue);
 
   return (
-    <div className={styles.menu__list_item}>
+    <li className={styles.item}>
       <button className={styles.item_btn} onClick={handleButtonClick}>
         <h4 className={styles.item_title} id={title}>
           {title}
@@ -22,8 +22,8 @@ export default function FAQItem({ title, children }: faqItemProps) {
         <Chevron className={clsx(styles.button_icon, isOpen && styles.button_icon_is_open)} />
       </button>
       <div className={clsx(styles.item_content, isOpen && styles.item_content_is_open)}>
-        <p>{children}</p>
+        {children}
       </div>
-    </div>
+    </li>
   );
 }
