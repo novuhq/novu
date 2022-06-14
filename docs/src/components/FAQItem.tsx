@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import styles from './FAQItem.module.scss';
 import Chevron from '/static/img/chevron-white-faq.svg';
 
-export interface faqItemProps {
+interface faqItemProps {
   title: string;
   children: React.ReactNode;
   isOpen: boolean;

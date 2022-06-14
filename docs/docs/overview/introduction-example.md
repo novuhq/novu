@@ -115,7 +115,10 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Porttitor enim, tellus 
 
   <FAQItem title="Lorem ipsum dolor sit amet?">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fermentum ridiculus aliquam, cras lectus egestas ac. Fermentum laoreet vulputate egestas mattis neque eget. Lectus lorem ac blandit lacus scelerisque eget. Risus ipsum urna suspendisse eros at.</FAQItem>
 
-  <FAQItem title="Lorem ipsum dolor sit amet?">Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis.</FAQItem>
+  <FAQItem title="Lorem ipsum dolor sit amet?">
+  <p> Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis.</p>
+  <p>Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis.</p>
+  </FAQItem>
 </FAQ>
 
 ## Callout component
