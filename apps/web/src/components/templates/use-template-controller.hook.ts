@@ -153,6 +153,7 @@ export function useTemplateController(templateId: string) {
         subject: '',
         name: 'Email Message Template',
       },
+      active: true,
       filters: [],
     });
   };
