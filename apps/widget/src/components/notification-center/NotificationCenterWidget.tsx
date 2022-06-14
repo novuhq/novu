@@ -10,6 +10,7 @@ interface INotificationCenterWidgetProps {
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
   applicationIdentifier: string | undefined;
+  backendUrl: string;
 }
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
@@ -52,7 +53,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     <>
       <GlobalStyle fontFamily={fontFamily} />
       <NovuProvider
-        backendUrl={API_URL}
+        backendUrl={props.backendUrl as string}
         socketUrl={WS_URL}
         applicationIdentifier={props.applicationIdentifier as string}
         subscriberId={userDataPayload.subscriberId}

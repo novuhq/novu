@@ -259,7 +259,10 @@ class Novu {
         );
       };
 
-      iframe.src = `${IFRAME_URL}/${clientId}/${backendUrl}`;
+      iframe.src = `${IFRAME_URL}/${clientId}?`;
+      if (backendUrl) {
+        iframe.src = iframe.src + 'backendUrl=' + encodeURIComponent(backendUrl);
+      }
       iframe.id = IFRAME_ID;
       iframe.style.border = 'none';
       (iframe as any).crossorigin = 'anonymous';
