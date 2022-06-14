@@ -11,7 +11,7 @@ import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hoo
 export function AppContent() {
   const { api } = useApi();
   const { isLoggedIn } = useAuth();
-  const { theme: novuTheme } = useNovuThemeProvider();
+  const { theme } = useNovuThemeProvider();
   const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
     'organization',
     () => api.getOrganization(),
@@ -20,22 +20,26 @@ export function AppContent() {
     }
   );
 
-  const theme = {
+  const organizationTheme = {
     colors: {
-      main: organization?.branding?.color || novuTheme.mainColor,
-      fontColor: novuTheme.fontColor,
-      secondaryFontColor: novuTheme.secondaryFontColor,
+      main: organization?.branding?.color || theme.mainColor,
+      fontColor: theme.layoutWrap.colors.fontColor,
+      secondaryFontColor: theme.layoutWrap.colors.secondaryFontColor,
     },
-    fontFamily: organization?.branding?.fontFamily || novuTheme.fontFamily,
+    fontFamily: organization?.branding?.fontFamily || theme.fontFamily,
     layout: {
       direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyle fontFamily={theme.fontFamily} />
-      <Wrap layoutDirection={theme.layout.direction} brandColor={theme.colors.main} fontColor={theme.colors.fontColor}>
+    <ThemeProvider theme={organizationTheme}>
+      <GlobalStyle fontFamily={organizationTheme.fontFamily} />
+      <Wrap
+        layoutDirection={organizationTheme.layout.direction}
+        brandColor={organizationTheme.colors.main}
+        fontColor={organizationTheme.colors.fontColor}
+      >
         <Layout>
           <Main />
         </Layout>

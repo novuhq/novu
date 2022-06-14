@@ -18,8 +18,8 @@ export function GradientDot(props: React.ComponentPropsWithoutRef<'svg'>) {
       />
       <defs>
         <linearGradient id="paint0_linear_1722_2699" x1="8" y1="13" x2="8" y2="3" gradientUnits="userSpaceOnUse">
-          <stop stopColor={theme.gradientDotFillColor.stopColor} />
-          <stop offset="1" stopColor={theme.gradientDotFillColor.stopColorOffset} />
+          <stop stopColor={theme.bellGradientDot.color.stopColor} />
+          <stop offset="1" stopColor={theme.bellGradientDot.color.stopColorOffset} />
         </linearGradient>
       </defs>
     </svg>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { ColorScheme } from '../index';
-import { colors } from '../shared/config/colors';
 
 export interface IThemeContext {
   colorScheme: ColorScheme;
@@ -8,38 +7,45 @@ export interface IThemeContext {
 }
 
 export interface INovuTheme {
-  background: string;
-  boxShadow: string;
-  fontColor: string;
-  secondaryFontColor: string;
+  layoutWrap: {
+    colors: {
+      main: string;
+      fontColor: string;
+      secondaryFontColor: string;
+    };
+  };
+  layout: { background: string; boxShadow: string };
+  header: { background: string; color: string };
+  popover: { background: string };
   fontFamily: string;
-  unseenNotificationBackground: string;
-  unseenNotificationBoxShadow: string;
-  seenNotificationBackground: string;
-  seenNotificationFontColor: string;
-  footerLogoTextColor: string;
-  footerTextColor: string;
+  notificationListItem: {
+    seen: { background: string; fontColor: string };
+    unseen: { background: string; boxShadow: string };
+  };
+  footer: { logoTextColor: string; textColor: string };
   mainColor: string;
-  gradientDotFillColor: { stopColor: string; stopColorOffset: string };
+  bellGradientDot: { color: { stopColor: string; stopColorOffset: string; color: string } };
 }
 
-const defaultNovuThemeValues: INovuTheme = {
-  background: null,
-  boxShadow: null,
-  fontColor: null,
-  secondaryFontColor: null,
-  fontFamily: 'Lato',
-  unseenNotificationBackground: null,
-  unseenNotificationBoxShadow: null,
-  seenNotificationBackground: null,
-  seenNotificationFontColor: null,
-  footerLogoTextColor: null,
-  footerTextColor: null,
-  mainColor: colors.vertical,
-  gradientDotFillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
-};
+/*
+ * const defaultNovuThemeValues: INovuTheme = {
+ *   background: null,
+ *   boxShadow: null,
+ *   fontColor: null,
+ *   secondaryFontColor: null,
+ *   fontFamily: 'Lato',
+ *   unseenNotificationBackground: null,
+ *   unseenNotificationBoxShadow: null,
+ *   seenNotificationBackground: null,
+ *   seenNotificationFontColor: null,
+ *   footerLogoTextColor: null,
+ *   footerTextColor: null,
+ *   mainColor: colors.vertical,
+ *   gradientDotFillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+ * };
+ */
 
 export const ThemeContext = React.createContext<IThemeContext>({
   colorScheme: 'light',
-  theme: defaultNovuThemeValues,
+  theme: null,
 });

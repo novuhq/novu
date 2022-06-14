@@ -49,9 +49,8 @@ const SettingsActionWrapper = styled.div`
 `;
 
 const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  background: ${({ novuTheme }) => novuTheme.unseenNotificationBackground};
-  box-shadow: ${({ novuTheme }) => novuTheme.unseenNotificationBoxShadow};
-  color: ${({ novuTheme }) => novuTheme.seenNotificationFontColor};
+  background: ${({ novuTheme }) => novuTheme.notificationListItem.unseen.background};
+  box-shadow: ${({ novuTheme }) => novuTheme.notificationListItem.unseen.boxShadow};
   font-weight: 700;
 
   &:before {
@@ -67,7 +66,7 @@ const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
   }
 `;
 const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  color: ${({ novuTheme }) => novuTheme.seenNotificationFontColor};
+  color: ${({ novuTheme }) => novuTheme.notificationListItem.seen.fontColor};
   font-weight: 400;
   font-size: 14px;
 `;
@@ -81,7 +80,7 @@ const ItemWrapper = styled.div<{ unseen?: boolean; novuTheme: INovuTheme }>`
   align-items: center;
   border-radius: 7px;
   margin: 10px 15px;
-  background: ${({ novuTheme }) => novuTheme.seenNotificationBackground};
+  background: ${({ novuTheme }) => novuTheme.notificationListItem.seen.background};
 
   &:hover {
     cursor: pointer;

@@ -1,10 +1,11 @@
-import styled, { useTheme } from 'styled-components';
+import styled from 'styled-components';
 import { Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
 import React from 'react';
+import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
 
 export function Header({ unseenCount }: { unseenCount: number }) {
-  const theme: any = useTheme();
+  const { theme } = useNovuThemeProvider();
 
   return (
     <HeaderWrapper>
@@ -19,7 +20,7 @@ export function Header({ unseenCount }: { unseenCount: number }) {
               height: 20,
               pointerEvents: 'none',
               border: 'none',
-              background: theme.colors.main,
+              background: theme.header.background,
               fontFamily: theme.fontFamily,
               lineHeight: '14px',
               color: colors.white,

@@ -26,10 +26,9 @@ const ContentWrapper = styled.div`
 `;
 
 const LayoutWrapper = styled.div<{ theme: IThemeContext }>`
-  background: white;
   padding: 15px 0;
   height: auto;
   border-radius: 7px;
-  box-shadow: ${({ theme }) => theme.boxShadow};
-  background: ${({ theme }) => theme.background};
+  box-shadow: ${({ theme }) => theme.layout.boxShadow};
+  background: ${({ theme }) => theme.layout.background};
 `;

@@ -7,33 +7,43 @@ const defaultTheme = {
 };
 
 export const defaultLightTheme: INovuTheme = {
-  background: colors.white,
-  boxShadow: shadows.medium,
-  fontColor: colors.B40,
-  secondaryFontColor: colors.B80,
-  unseenNotificationBackground: colors.white,
-  unseenNotificationBoxShadow: shadows.medium,
-  seenNotificationBackground: colors.B98,
-  seenNotificationFontColor: colors.B60,
-  footerLogoTextColor: 'black',
-  footerTextColor: colors.B70,
+  layoutWrap: {
+    colors: {
+      main: colors.vertical,
+      fontColor: colors.B60,
+      secondaryFontColor: colors.B80,
+    },
+  },
+  layout: { background: colors.white, boxShadow: shadows.medium },
+  header: { background: colors.white, color: colors.white },
+  popover: { background: colors.white },
+  notificationListItem: {
+    seen: { background: colors.B98, fontColor: colors.B60 },
+    unseen: { background: colors.white, boxShadow: shadows.medium },
+  },
+  footer: { logoTextColor: 'black', textColor: colors.B70 },
   mainColor: colors.vertical,
-  gradientDotFillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  bellGradientDot: { color: { stopColor: '#FF512F', stopColorOffset: '#DD2476', color: colors.white } },
   ...defaultTheme,
 };
 
 export const defaultDarkTheme: INovuTheme = {
-  background: colors.B15,
-  boxShadow: shadows.dark,
-  fontColor: colors.white,
-  secondaryFontColor: colors.B40,
-  unseenNotificationBackground: colors.B20,
-  unseenNotificationBoxShadow: shadows.dark,
-  seenNotificationBackground: colors.B17,
-  seenNotificationFontColor: colors.B60,
-  footerLogoTextColor: colors.white,
-  footerTextColor: colors.B40,
+  layoutWrap: {
+    colors: {
+      main: colors.vertical,
+      fontColor: colors.white,
+      secondaryFontColor: colors.B40,
+    },
+  },
+  layout: { background: colors.B15, boxShadow: shadows.dark },
+  header: { background: colors.B15, color: colors.white },
+  popover: { background: colors.B15 },
+  notificationListItem: {
+    seen: { background: colors.B17, fontColor: colors.white },
+    unseen: { background: colors.B20, boxShadow: shadows.dark },
+  },
+  footer: { logoTextColor: colors.white, textColor: colors.B40 },
   mainColor: colors.vertical,
-  gradientDotFillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  bellGradientDot: { color: { stopColor: '#FF512F', stopColorOffset: '#DD2476', color: colors.B15 } },
   ...defaultTheme,
 };
