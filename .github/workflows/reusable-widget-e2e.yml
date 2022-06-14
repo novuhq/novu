@@ -46,12 +46,12 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
-          projects: "@novu/widget"
+          projects: '@novu/widget'
 
       # Runs a single command using the runners shell
       - name: Build
         run: CI=false pnpm build:widget
-        
+
       - name: Build API
         run: CI='' pnpm build:api
 
@@ -79,4 +79,4 @@ jobs:
           browser: chrome
           install: false
           headless: true
-
+          config-file: cypress.config.ts
