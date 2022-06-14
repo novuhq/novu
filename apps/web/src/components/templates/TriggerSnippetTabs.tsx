@@ -10,7 +10,7 @@ const novu = new Novu('<API_KEY>');
 
 novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
   to: { 
-    subscriberId: '<REPLACE_WITH_USER_ID>', ${trigger.subscriberVariables
+    subscriberId: '<REPLACE_WITH_USER_ID>' ${trigger.subscriberVariables
       ?.map((variable) => {
         return `${variable.name}: "<REPLACE_WITH_DATA>",`;
       })
@@ -32,19 +32,19 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
      --data-raw '{
         "name": "${trigger.identifier?.replace(/'/g, "\\'")}",
         "to" : {
-            "subscriberId": "<REPLACE_WITH_USER_ID>",
+            "subscriberId": "<REPLACE_WITH_USER_ID>"
             ${trigger.subscriberVariables
-              ?.map((variable) => {
-                return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
-              })
-              .join(',\n            ')} 
+      ?.map((variable) => {
+        return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
+      })
+      .join(',\n            ')} 
         },
         "payload": {
             ${trigger.variables
-              .map((variable) => {
-                return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
-              })
-              .join(',\n            ')}
+      .map((variable) => {
+        return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
+      })
+      .join(',\n            ')}
         }
     }'
   `;
