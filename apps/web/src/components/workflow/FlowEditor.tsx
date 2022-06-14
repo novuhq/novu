@@ -241,6 +241,10 @@ const Wrapper = styled.div<{ dark: boolean }>`
     box-shadow: none;
   }
 
+  .react-flow__controls-interactive {
+    display: none;
+  }
+
   .react-flow__controls-button {
     background: transparent;
     border: none;
@@ -254,7 +258,6 @@ const Wrapper = styled.div<{ dark: boolean }>`
 const reactFlowDefaultProps: ReactFlowProps = {
   defaultEdgeOptions: {
     type: 'smoothstep',
-    style: { border: `1px dash red !important` },
   },
   zoomOnScroll: false,
   preventScrolling: true,
