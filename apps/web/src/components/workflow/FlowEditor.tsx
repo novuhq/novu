@@ -45,7 +45,7 @@ export function FlowEditor({
   setSelectedNodeId,
   addStep,
   templateId,
-errors,
+  errors,
 }: {
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;

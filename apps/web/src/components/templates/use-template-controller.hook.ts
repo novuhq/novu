@@ -116,7 +116,6 @@ export function useTemplateController(templateId: string) {
           message: 'Template updated successfully',
           color: 'green',
         });
-        navigate('/templates');
       } else {
         const response = await createNotification({ ...payload, active: true, draft: false });
 
