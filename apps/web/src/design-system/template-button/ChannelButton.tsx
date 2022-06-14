@@ -24,7 +24,7 @@ interface ITemplateButtonProps {
   errors?: boolean | string;
   showDots?: boolean;
   id?: string | undefined;
-  templateId: string;
+  onDelete?: () => void;
 }
 
 export function ChannelButton({
@@ -39,7 +39,7 @@ export function ChannelButton({
   errors = false,
   showDots = true,
   id = undefined,
-  templateId,
+  onDelete = () => {},
 }: ITemplateButtonProps) {
   const { cx, classes, theme } = useStyles();
   const disabled = action && !checked;
@@ -49,8 +49,6 @@ export function ChannelButton({
   const [showDotMenu, setShowDotMenu] = useState(false);
   const { watch, setValue } = useFormContext();
   const steps = watch('steps');
-
-  const { setIsDirty } = useTemplateController(templateId);
 
   const tooltip = (
     <div>
@@ -64,8 +62,8 @@ export function ChannelButton({
             e.preventDefault();
             const newSteps = steps.filter((step) => step._id !== id);
             setShowDotMenu(false);
-            setIsDirty(true);
             setValue('steps', newSteps);
+            onDelete();
           }}
         >
           Delete node
