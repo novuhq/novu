@@ -32,7 +32,7 @@ const WorkflowEditorPage = ({
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
-  const { addStep, control, watch } = useTemplateController(templateId);
+  const { addStep, control, watch, errors } = useTemplateController(templateId);
   const steps = watch('steps');
   const { readonly } = useEnvController();
 
@@ -56,7 +56,13 @@ const WorkflowEditorPage = ({
     <div style={{ minHeight: 500 }}>
       <Grid gutter={0} grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
-          <FlowEditor templateId={templateId} steps={steps} addStep={addStep} setSelectedNodeId={setSelectedNodeId} />
+          <FlowEditor
+            templateId={templateId}
+            errors={errors}
+            steps={steps}
+            addStep={addStep}
+            setSelectedNodeId={setSelectedNodeId}
+          />
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>

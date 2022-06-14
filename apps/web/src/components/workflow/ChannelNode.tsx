@@ -10,6 +10,7 @@ interface NodeData {
   index: number;
   testId: string;
   onDelete: () => void;
+  error: string;
 }
 
 export default memo(({ data, selected, id }: { data: NodeData; selected: boolean; id: string }) => {
@@ -18,7 +19,14 @@ export default memo(({ data, selected, id }: { data: NodeData; selected: boolean
 
   return (
     <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
-      <ChannelButton onDelete={data.onDelete} Icon={data.Icon} label={data.label} active={selected} id={id} />
+      <ChannelButton
+        errors={data.error}
+        onDelete={data.onDelete}
+        Icon={data.Icon}
+        label={data.label}
+        active={selected}
+        id={id}
+      />
       <Handle type="target" id="b" position={Position.Top} />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>
