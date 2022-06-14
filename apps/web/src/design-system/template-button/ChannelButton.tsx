@@ -9,7 +9,7 @@ import { DotsHorizontal } from '../icons';
 import { When } from '../../components/utils/When';
 import { Tooltip } from '../tooltip/Tooltip';
 import { useFormContext } from 'react-hook-form';
-import { useTemplateController } from '../../components/templates/use-template-controller.hook';
+import { useEnvController } from '../../store/use-env-controller';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -24,7 +24,7 @@ interface ITemplateButtonProps {
   errors?: boolean | string;
   showDots?: boolean;
   id?: string | undefined;
-  templateId: string;
+  onDelete?: () => void;
 }
 
 export function ChannelButton({
@@ -39,8 +39,9 @@ export function ChannelButton({
   errors = false,
   showDots = true,
   id = undefined,
-  templateId,
+  onDelete = () => {},
 }: ITemplateButtonProps) {
+  const { readonly: readonlyEnv } = useEnvController();
   const { cx, classes, theme } = useStyles();
   const disabled = action && !checked;
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
@@ -49,8 +50,6 @@ export function ChannelButton({
   const [showDotMenu, setShowDotMenu] = useState(false);
   const { watch, setValue } = useFormContext();
   const steps = watch('steps');
-
-  const { setIsDirty } = useTemplateController(templateId);
 
   const tooltip = (
     <div>
@@ -64,8 +63,8 @@ export function ChannelButton({
             e.preventDefault();
             const newSteps = steps.filter((step) => step._id !== id);
             setShowDotMenu(false);
-            setIsDirty(true);
             setValue('steps', newSteps);
+            onDelete();
           }}
         >
           Delete node
@@ -99,7 +98,7 @@ export function ChannelButton({
             {action && !readonly && (
               <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
             )}
-            <When truthy={showDots}>
+            <When truthy={showDots && !readonlyEnv}>
               <Tooltip label={tooltip} opened={showDotMenu}>
                 <a
                   style={{

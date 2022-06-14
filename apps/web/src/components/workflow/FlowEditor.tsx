@@ -20,7 +20,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import TriggerNode from './TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
-import { StepEntity } from '../templates/use-template-controller.hook';
+import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
 import { ChannelTypeEnum } from '@novu/shared';
 import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
 
@@ -66,16 +66,19 @@ export function FlowEditor({
     setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 800 });
   }, [reactFlowInstance]);
 
+  const { setIsDirty } = useTemplateController(templateId);
+
+  const onDelete = () => {
+    setSelectedNodeId('');
+    setIsDirty(true);
+  };
+
   useEffect(() => {
     let parentId = '1';
     if (nodes.length > 1) {
       setNodes([
         {
           ...initialNodes[0],
-          data: {
-            ...initialNodes[0].data,
-            templateId,
-          },
           position: {
             ...nodes[0].position,
           },
@@ -94,10 +97,10 @@ export function FlowEditor({
           parentNode: parentId,
           data: {
             ...getChannel(step.template.type),
-            templateId: templateId,
-            error: getChannelErrors(i, errors),
             active: step.active,
+            error: getChannelErrors(i, errors),
             index: nodes.length,
+            onDelete,
           },
         };
 
@@ -120,6 +123,9 @@ export function FlowEditor({
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
     setSelectedNodeId(node.id);
+    if (node.id === '1') {
+      onDelete();
+    }
   }, []);
 
   const onDragOver = useCallback((event) => {
