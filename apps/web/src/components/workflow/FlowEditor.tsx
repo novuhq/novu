@@ -44,10 +44,12 @@ export function FlowEditor({
   steps,
   setSelectedNodeId,
   addStep,
+  errors,
 }: {
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
+  errors: any;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
@@ -84,7 +86,12 @@ export function FlowEditor({
           type: 'channelNode',
           position: { x: oldNode.position.x, y: oldNode.position.y },
           parentNode: parentId,
-          data: { ...getChannel(step.template.type), active: step.active, index: nodes.length },
+          data: {
+            ...getChannel(step.template.type),
+            active: step.active,
+            error: getChannelErrors(i, errors),
+            index: nodes.length,
+          },
         };
 
         const newEdge = {
@@ -101,7 +108,7 @@ export function FlowEditor({
         setEdges((eds) => addEdge(newEdge, eds));
       }
     }
-  }, [steps]);
+  }, [steps, errors]);
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
@@ -254,6 +261,15 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
   }
 `;
+
+function getChannelErrors(index: number, errors: { [p: string]: string }) {
+  const keys = Object.keys(errors);
+  const channelErrors = keys.filter((key) => {
+    return key.includes(`steps.${index}`);
+  });
+
+  return channelErrors.map((key) => errors[key]).toString();
+}
 
 const reactFlowDefaultProps: ReactFlowProps = {
   defaultEdgeOptions: {
