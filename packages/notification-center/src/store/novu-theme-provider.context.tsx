@@ -1,9 +1,9 @@
 import React from 'react';
 import { INovuTheme, ThemeContext } from './novu-theme.context';
 import { ColorScheme } from '../index';
-import { defaultDarkTheme, defaultLightTheme } from '../shared/config/themeDefaultValues';
+import { useDefaultTheme } from '../hooks';
 
-export interface INovuProvider {
+export interface INovuThemeProvider {
   colorScheme: ColorScheme;
   light?: INovuTheme;
   dark?: INovuTheme;
@@ -16,19 +16,14 @@ interface ICommonTheme {
 
 interface INovuThemeProviderProps {
   children: React.ReactNode;
-  theme: INovuProvider;
+  theme: INovuThemeProvider;
 }
 
 export function NovuThemeProvider(props: INovuThemeProviderProps) {
-  const novuTheme =
-    props.theme.colorScheme === 'light'
-      ? { ...defaultLightTheme, ...props.theme.light }
-      : { ...defaultDarkTheme, ...props.theme.dark };
-
-  const providerTheme = { ...novuTheme, ...props.theme.common };
+  const { theme } = useDefaultTheme({ theme: props.theme });
 
   return (
-    <ThemeContext.Provider value={{ colorScheme: props.theme.colorScheme, theme: { ...providerTheme } }}>
+    <ThemeContext.Provider value={{ colorScheme: props.theme.colorScheme, theme: { ...theme } }}>
       {props.children}
     </ThemeContext.Provider>
   );

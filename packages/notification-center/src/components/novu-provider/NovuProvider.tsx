@@ -11,7 +11,6 @@ import { ApiService } from '../../api/api.service';
 import { useApi } from '../../hooks/use-api.hook';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
-import { INovuProvider, NovuThemeProvider } from '../../store/novu-theme-provider.context';
 
 interface INovuProviderProps {
   children: React.ReactNode;
@@ -22,7 +21,6 @@ interface INovuProviderProps {
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash?: string;
-  theme: INovuProvider;
 }
 
 let api: ApiService;
@@ -50,20 +48,15 @@ export function NovuProvider(props: INovuProviderProps) {
         subscriberHash: props.subscriberHash,
       }}
     >
-      <NovuThemeProvider theme={props.theme}>
-        <ApiContext.Provider value={{ api }}>
-          <AuthProvider>
-            <SessionInitialization
-              applicationIdentifier={props.applicationIdentifier}
-              subscriberId={props.subscriberId}
-            >
-              <SocketInitialization>
-                <UnseenProvider>{props.children}</UnseenProvider>
-              </SocketInitialization>
-            </SessionInitialization>
-          </AuthProvider>
-        </ApiContext.Provider>
-      </NovuThemeProvider>
+      <ApiContext.Provider value={{ api }}>
+        <AuthProvider>
+          <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
+            <SocketInitialization>
+              <UnseenProvider>{props.children}</UnseenProvider>
+            </SocketInitialization>
+          </SessionInitialization>
+        </AuthProvider>
+      </ApiContext.Provider>
     </NovuContext.Provider>
   );
 }

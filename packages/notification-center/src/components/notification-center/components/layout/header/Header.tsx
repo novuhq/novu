@@ -20,7 +20,7 @@ export function Header({ unseenCount }: { unseenCount: number }) {
               height: 20,
               pointerEvents: 'none',
               border: 'none',
-              background: theme.header.background,
+              background: theme.header.mainColor,
               fontFamily: theme.fontFamily,
               lineHeight: '14px',
               color: colors.white,

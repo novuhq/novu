@@ -20,25 +20,25 @@ export function AppContent() {
     }
   );
 
-  const organizationTheme = {
+  const themeConfig = {
     colors: {
-      main: organization?.branding?.color || theme.mainColor,
-      fontColor: theme.layoutWrap.colors.fontColor,
-      secondaryFontColor: theme.layoutWrap.colors.secondaryFontColor,
+      main: theme.mainColor || organization?.branding?.color,
+      fontColor: theme.layout?.wrapper.fontColor,
+      secondaryFontColor: theme.layout?.wrapper.secondaryFontColor,
     },
-    fontFamily: organization?.branding?.fontFamily || theme.fontFamily,
+    fontFamily: theme.fontFamily || organization?.branding?.fontFamily,
     layout: {
       direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
   };
 
   return (
-    <ThemeProvider theme={organizationTheme}>
-      <GlobalStyle fontFamily={organizationTheme.fontFamily} />
+    <ThemeProvider theme={themeConfig}>
+      <GlobalStyle fontFamily={themeConfig.fontFamily} />
       <Wrap
-        layoutDirection={organizationTheme.layout.direction}
-        brandColor={organizationTheme.colors.main}
-        fontColor={organizationTheme.colors.fontColor}
+        layoutDirection={themeConfig.layout.direction}
+        brandColor={themeConfig.colors.main}
+        fontColor={themeConfig.colors.fontColor}
       >
         <Layout>
           <Main />

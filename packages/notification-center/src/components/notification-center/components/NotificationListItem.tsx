@@ -62,7 +62,7 @@ const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
     bottom: 0;
     width: 5px;
     border-radius: 7px 0 0 7px;
-    background: ${({ theme }) => theme.colors.main};
+    background: ${({ novuTheme }) => novuTheme.notificationListItem.mainColor};
   }
 `;
 const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`

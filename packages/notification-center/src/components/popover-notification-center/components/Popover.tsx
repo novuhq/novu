@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Popover as MantinePopover } from '@mantine/core';
 import styled from 'styled-components';
-import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
+import { INovuTheme } from '../../../store/novu-theme.context';
 
 interface INovuPopoverProps {
   bell: (props: any) => JSX.Element;
   children: JSX.Element;
+  theme: INovuTheme;
 }
 
-export function Popover({ children, bell }: INovuPopoverProps) {
+export function Popover({ children, bell, theme }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
-  const { theme } = useNovuThemeProvider();
 
   function handlerBellClick() {
     setIsVisible(!isVisible);

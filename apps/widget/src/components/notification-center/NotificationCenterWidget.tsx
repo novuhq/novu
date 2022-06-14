@@ -58,9 +58,9 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
         subscriberId={userDataPayload.subscriberId}
         onLoad={onLoad}
         subscriberHash={userDataPayload.subscriberHash}
-        theme={{ colorScheme: 'light' }}
       >
         <NotificationCenter
+          theme={{ colorScheme: 'light' }}
           onNotificationClick={props.onNotificationClick}
           onUrlChange={props.onUrlChange}
           onUnseenCountChanged={props.onUnseenCountChanged}
