@@ -9,6 +9,7 @@ interface NodeData {
   tabKey: string;
   index: number;
   testId: string;
+  templateId: string;
 }
 
 export default memo(({ data, selected, id }: { data: NodeData; selected: boolean; id: string }) => {
@@ -17,7 +18,7 @@ export default memo(({ data, selected, id }: { data: NodeData; selected: boolean
 
   return (
     <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
-      <ChannelButton Icon={data.Icon} label={data.label} active={selected} id={id} />
+      <ChannelButton templateId={data.templateId} Icon={data.Icon} label={data.label} active={selected} id={id} />
       <Handle type="target" id="b" position={Position.Top} />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>
