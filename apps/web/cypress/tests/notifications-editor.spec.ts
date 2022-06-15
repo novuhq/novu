@@ -124,7 +124,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('customVariable:');
   });
 
-  it.skip('should create and edit group id', function () {
+  it('should create and edit group id', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
 
@@ -138,13 +138,14 @@ describe('Notifications Creator', function () {
 
     cy.getByTestId('submit-btn').click();
 
+    cy.visit('/templates');
     cy.getByTestId('template-edit-link');
     cy.visit('/templates/edit/' + template._id);
 
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
   });
 
-  it.skip('should edit notification', function () {
+  it('should edit notification', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.getByTestId('title').should('have.value', template.name);
@@ -167,6 +168,7 @@ describe('Notifications Creator', function () {
     cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
     cy.getByTestId('submit-btn').click();
 
+    cy.visit('/templates');
     cy.getByTestId('template-edit-link');
     cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
       matchCase: false,
@@ -210,15 +212,18 @@ describe('Notifications Creator', function () {
     cy.getByTestId('trigger-code-snippet').contains('test-event');
   });
 
-  it.skip('should validate form inputs', function () {
+  it('should validate form inputs', function () {
     cy.visit('/templates/create');
     cy.getByTestId('description').type('this is a notification template description');
     cy.getByTestId('submit-btn').click();
     cy.getByTestId('title').should('have.class', 'mantine-TextInput-invalid');
-    addAndEditChannel('inApp');
+
+    cy.getByTestId('workflowButton').click({ force: true });
+    dragAndDrop('inApp');
+    goBack();
 
     cy.getByTestId('submit-btn').click();
-    cy.getByTestId('inAppSelector').getByTestId('error-circle').should('be.visible');
+    cy.getByTestId('workflowButton').getByTestId('error-circle').should('be.visible');
     cy.getByTestId('settingsButton').getByTestId('error-circle').should('be.visible');
   });
 
