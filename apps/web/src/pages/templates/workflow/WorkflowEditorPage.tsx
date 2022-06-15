@@ -70,11 +70,15 @@ const WorkflowEditorPage = ({
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
             {selectedChannel ? (
-              <StyledNav>
+              <StyledNav data-test-id="step-properties-side-menu">
                 <NavSection>
                   <ButtonWrapper>
                     <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
-                    <ActionIcon variant="transparent" onClick={() => setSelectedChannel(null)}>
+                    <ActionIcon
+                      data-test-id="close-side-menu-btn"
+                      variant="transparent"
+                      onClick={() => setSelectedChannel(null)}
+                    >
                       <Close />
                     </ActionIcon>
                   </ButtonWrapper>
@@ -100,7 +104,7 @@ const WorkflowEditorPage = ({
                 </NavSection>
               </StyledNav>
             ) : (
-              <StyledNav>
+              <StyledNav data-test-id="drag-side-menu">
                 <NavSection>
                   <Title size={2}>Steps to add</Title>
                   <Text color={colors.B60} mt={10}>

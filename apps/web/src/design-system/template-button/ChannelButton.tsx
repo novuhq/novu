@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UnstyledButton, Popover } from '@mantine/core';
+import { UnstyledButton, Popover, ActionIcon } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
@@ -57,6 +57,7 @@ export function ChannelButton({
     <div>
       <Text>
         <a
+          data-test-id="delete-step-action"
           style={{
             pointerEvents: 'all',
           }}
@@ -87,7 +88,9 @@ export function ChannelButton({
         }}
       >
         <When truthy={showDropZone}>
-          <Dropzone dark={theme.colorScheme === 'dark'}>Place your next step here</Dropzone>
+          <Dropzone data-test-id="dropzone-area" dark={theme.colorScheme === 'dark'}>
+            Place your next step here
+          </Dropzone>
         </When>
         <ButtonWrapper>
           <LeftContainerWrapper>
@@ -115,7 +118,9 @@ export function ChannelButton({
                     setShowDotMenu(!showDotMenu);
                   }}
                 >
-                  <DotsHorizontal />
+                  <ActionIcon variant="transparent" data-test-id="step-actions-dropdown">
+                    <DotsHorizontal />
+                  </ActionIcon>
                 </a>
               </Tooltip>
             </When>
