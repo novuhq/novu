@@ -21,7 +21,7 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   async createSubscriber(@UserSession() user: IJwtPayload, @Body() body: CreateSubscriberBodyDto) {
-    return (await this.createSubscriberUsecase.execute(
+    return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -32,7 +32,7 @@ export class SubscribersController {
         phone: body.phone,
         avatar: body.avatar,
       })
-    )) as any;
+    );
   }
 
   @Put('/:subscriberId')
