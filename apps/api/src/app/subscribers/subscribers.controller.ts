@@ -8,7 +8,10 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
 import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
+import { ApiCreatedResponse, ApiOperation, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { SubscriberEntity } from './entity/subscriber.entity';
 
+@ApiTags('cats')
 @Controller('/subscribers')
 export class SubscribersController {
   constructor(
@@ -17,11 +20,15 @@ export class SubscribersController {
     private removeSubscriberUsecase: RemoveSubscriber
   ) {}
 
+  @ApiResponse({ status: 201, type: SubscriberEntity, description: 'Creates new user object.' })
   @Post('/')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async createSubscriber(@UserSession() user: IJwtPayload, @Body() body: CreateSubscriberBodyDto) {
-    return await this.createSubscriberUsecase.execute(
+  async createSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Body() body: CreateSubscriberBodyDto
+  ): Promise<SubscriberEntity> {
+    return (await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -32,7 +39,7 @@ export class SubscribersController {
         phone: body.phone,
         avatar: body.avatar,
       })
-    );
+    )) as any;
   }
 
   @Put('/:subscriberId')
