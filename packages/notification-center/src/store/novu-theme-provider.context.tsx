@@ -4,26 +4,26 @@ import { ColorScheme } from '../index';
 import { useDefaultTheme } from '../hooks';
 
 export interface INovuThemeProvider {
-  colorScheme: ColorScheme;
   light?: INovuTheme;
   dark?: INovuTheme;
   common?: ICommonTheme;
 }
 
-interface ICommonTheme {
-  fontFamily: string;
+export interface ICommonTheme {
+  fontFamily?: string;
 }
 
 interface INovuThemeProviderProps {
   children: React.ReactNode;
+  colorScheme: ColorScheme;
   theme: INovuThemeProvider;
 }
 
 export function NovuThemeProvider(props: INovuThemeProviderProps) {
-  const { theme } = useDefaultTheme({ theme: props.theme });
+  const { theme, common } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
 
   return (
-    <ThemeContext.Provider value={{ colorScheme: props.theme.colorScheme, theme: { ...theme } }}>
+    <ThemeContext.Provider value={{ colorScheme: props.colorScheme, theme: { ...theme }, common: { ...common } }}>
       {props.children}
     </ThemeContext.Provider>
   );

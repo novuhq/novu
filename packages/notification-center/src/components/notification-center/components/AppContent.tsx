@@ -11,7 +11,7 @@ import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hoo
 export function AppContent() {
   const { api } = useApi();
   const { isLoggedIn } = useAuth();
-  const { theme } = useNovuThemeProvider();
+  const { theme, common } = useNovuThemeProvider();
   const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
     'organization',
     () => api.getOrganization(),
@@ -23,10 +23,9 @@ export function AppContent() {
   const themeConfig = {
     colors: {
       main: theme.mainColor || organization?.branding?.color,
-      fontColor: theme.layout?.wrapper.fontColor,
       secondaryFontColor: theme.layout?.wrapper.secondaryFontColor,
     },
-    fontFamily: theme.fontFamily || organization?.branding?.fontFamily,
+    fontFamily: common.fontFamily || organization?.branding?.fontFamily,
     layout: {
       direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
@@ -35,11 +34,7 @@ export function AppContent() {
   return (
     <ThemeProvider theme={themeConfig}>
       <GlobalStyle fontFamily={themeConfig.fontFamily} />
-      <Wrap
-        layoutDirection={themeConfig.layout.direction}
-        brandColor={themeConfig.colors.main}
-        fontColor={themeConfig.colors.fontColor}
-      >
+      <Wrap layoutDirection={themeConfig.layout.direction} brandColor={themeConfig.colors.main}>
         <Layout>
           <Main />
         </Layout>
@@ -56,9 +51,8 @@ const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
   }
 `;
 
-const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string; fontColor: string }>`
+const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string }>`
   direction: ${({ layoutDirection }) => layoutDirection};
-  color: ${({ fontColor }) => fontColor};
   width: 420px;
   z-index: 999;
 

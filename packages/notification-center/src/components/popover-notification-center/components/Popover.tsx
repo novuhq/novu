@@ -29,9 +29,9 @@ export function Popover({ children, bell, theme }: INovuPopoverProps) {
         body: { border: 0 },
         popover: { background: `transparent` },
         arrow: {
-          background: `${theme.popover.background}`,
-          backgroundColor: `${theme.popover.background}`,
-          borderColor: `${theme.popover.background}`,
+          background: `${theme.popover?.arrowColor}`,
+          backgroundColor: `${theme.popover?.arrowColor}`,
+          borderColor: `${theme.popover?.arrowColor}`,
         },
       }}
     >

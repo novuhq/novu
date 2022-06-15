@@ -5,6 +5,7 @@ import { AppContent } from './components';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { useNovuContext } from '../../hooks';
 import { INovuThemeProvider, NovuThemeProvider } from '../../store/novu-theme-provider.context';
+import { ColorScheme } from '../../index';
 
 export interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -12,7 +13,8 @@ export interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  theme: INovuThemeProvider;
+  colorScheme: ColorScheme;
+  theme?: INovuThemeProvider;
 }
 
 export function NotificationCenter(props: INotificationCenterProps) {
@@ -31,7 +33,7 @@ export function NotificationCenter(props: INotificationCenterProps) {
           footer: props.footer,
         }}
       >
-        <NovuThemeProvider theme={props.theme}>
+        <NovuThemeProvider colorScheme={props.colorScheme} theme={props.theme}>
           <AppContent />
         </NovuThemeProvider>
       </NotificationCenterContext.Provider>

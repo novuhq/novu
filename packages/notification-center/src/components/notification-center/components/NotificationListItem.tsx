@@ -1,7 +1,6 @@
 import styled, { css } from 'styled-components';
 import { IMessage } from '@novu/shared';
 import moment from 'moment';
-import { colors } from '../../../shared/config/colors';
 import { DotsHorizontal } from '../../../shared/icons';
 import React from 'react';
 import { INovuTheme } from '../../../store/novu-theme.context';
@@ -31,7 +30,9 @@ export function NotificationListItem({
           }}
         />
         <div>
-          <TimeMark unseen={!notification.seen}>{moment(notification.createdAt).fromNow()}</TimeMark>
+          <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
+            {moment(notification.createdAt).fromNow()}
+          </TimeMark>
         </div>
       </div>
       <SettingsActionWrapper style={{ display: 'none' }}>
@@ -49,8 +50,9 @@ const SettingsActionWrapper = styled.div`
 `;
 
 const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  background: ${({ novuTheme }) => novuTheme.notificationListItem.unseen.background};
-  box-shadow: ${({ novuTheme }) => novuTheme.notificationListItem.unseen.boxShadow};
+  background: ${({ novuTheme }) => novuTheme.notificationListItem?.unseen?.background};
+  box-shadow: ${({ novuTheme }) => novuTheme.notificationListItem?.unseen?.boxShadow};
+  color: ${({ novuTheme }) => novuTheme.notificationListItem?.unseen?.fontColor};
   font-weight: 700;
 
   &:before {
@@ -62,11 +64,11 @@ const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
     bottom: 0;
     width: 5px;
     border-radius: 7px 0 0 7px;
-    background: ${({ novuTheme }) => novuTheme.notificationListItem.mainColor};
+    background: ${({ novuTheme }) => novuTheme.notificationListItem?.unseen?.notificationItemBeforeBrandColor};
   }
 `;
 const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  color: ${({ novuTheme }) => novuTheme.notificationListItem.seen.fontColor};
+  color: ${({ novuTheme }) => novuTheme.notificationListItem?.seen?.fontColor};
   font-weight: 400;
   font-size: 14px;
 `;
@@ -80,7 +82,7 @@ const ItemWrapper = styled.div<{ unseen?: boolean; novuTheme: INovuTheme }>`
   align-items: center;
   border-radius: 7px;
   margin: 10px 15px;
-  background: ${({ novuTheme }) => novuTheme.notificationListItem.seen.background};
+  background: ${({ novuTheme }) => novuTheme?.notificationListItem?.seen?.background};
 
   &:hover {
     cursor: pointer;
@@ -91,11 +93,14 @@ const ItemWrapper = styled.div<{ unseen?: boolean; novuTheme: INovuTheme }>`
   }}
 `;
 
-const TimeMark = styled.div<{ unseen?: boolean }>`
+const TimeMark = styled.div<{ novuTheme: INovuTheme; unseen?: boolean }>`
   min-width: 55px;
   font-size: 12px;
   font-weight: 400;
   opacity: 0.5;
   line-height: 14.4px;
-  color: ${({ unseen, theme }) => (unseen ? colors.B60 : theme.colors.secondaryFontColor)};
+  color: ${({ unseen, novuTheme }) =>
+    unseen
+      ? novuTheme?.notificationListItem?.unseen?.timeMarkFontColor
+      : novuTheme?.notificationListItem?.seen?.timeMarkFontColor};
 `;

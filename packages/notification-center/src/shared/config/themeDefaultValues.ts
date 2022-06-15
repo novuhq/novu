@@ -1,53 +1,78 @@
 import { colors } from './colors';
 import { shadows } from './shadows';
 import { INovuTheme } from '../../store/novu-theme.context';
-
-const defaultTheme = {
-  fontFamily: 'Lato',
-};
+import { ICommonTheme } from '../../store/novu-theme-provider.context';
 
 export const defaultLightTheme: INovuTheme = {
+  general: {
+    backgroundColor: colors.white,
+    mainBrandColor: colors.vertical,
+    boxShadowColor: shadows.medium,
+    fontColor: colors.B60,
+  },
   layout: {
     background: colors.white,
     boxShadow: shadows.medium,
     wrapper: {
-      mainColor: colors.vertical,
-      fontColor: colors.B60,
       secondaryFontColor: colors.B80,
     },
   },
-  header: { background: colors.white, color: colors.white, mainColor: colors.vertical },
-  popover: { background: colors.white },
-  notificationListItem: {
-    mainColor: colors.vertical,
-    seen: { background: colors.B98, fontColor: colors.B60 },
-    unseen: { background: colors.white, boxShadow: shadows.medium },
+  header: {
+    fontColor: colors.B60,
+    badgeColor: colors.vertical,
+    badgeTextColor: colors.white,
   },
-  footer: { logoTextColor: 'black', textColor: colors.B70 },
+  popover: { arrowColor: colors.white },
+  notificationListItem: {
+    seen: { background: colors.B98, fontColor: colors.B60, timeMarkFontColor: colors.B80 },
+    unseen: {
+      background: colors.white,
+      fontColor: colors.B60,
+      boxShadow: shadows.medium,
+      notificationItemBeforeBrandColor: colors.vertical,
+      timeMarkFontColor: colors.B60,
+    },
+  },
+  footer: { logoTextColor: 'black', logoPrefixFontColor: colors.B70 },
   mainColor: colors.vertical,
-  bellGradientDot: { color: { stopColor: '#FF512F', stopColorOffset: '#DD2476', backgroundColor: colors.white } },
-  ...defaultTheme,
+  bellGradientDot: { color: { stopColor: '#FF512F', stopColorOffset: '#DD2476', borderColor: colors.white } },
 };
 
 export const defaultDarkTheme: INovuTheme = {
+  general: {
+    backgroundColor: colors.B15,
+    mainBrandColor: colors.vertical,
+    boxShadowColor: shadows.dark,
+    fontColor: colors.white,
+  },
   layout: {
     background: colors.B15,
     boxShadow: shadows.dark,
     wrapper: {
-      mainColor: colors.vertical,
-      fontColor: colors.white,
       secondaryFontColor: colors.B40,
     },
   },
-  header: { background: colors.B15, color: colors.white, mainColor: colors.vertical },
-  popover: { background: colors.B15 },
-  notificationListItem: {
-    mainColor: colors.vertical,
-    seen: { background: colors.B17, fontColor: colors.white },
-    unseen: { background: colors.B20, boxShadow: shadows.dark },
+  header: {
+    fontColor: colors.white,
+    badgeColor: colors.vertical,
+    badgeTextColor: colors.white,
   },
-  footer: { logoTextColor: colors.white, textColor: colors.B40 },
+  popover: { arrowColor: colors.B15 },
+  notificationListItem: {
+    seen: { background: colors.B17, fontColor: colors.white, timeMarkFontColor: colors.B40 },
+    unseen: {
+      background: colors.B20,
+      fontColor: colors.white,
+      boxShadow: shadows.dark,
+      notificationItemBeforeBrandColor: colors.vertical,
+      timeMarkFontColor: colors.B60,
+    },
+  },
+  footer: { logoTextColor: colors.white, logoPrefixFontColor: colors.B40 },
   mainColor: colors.vertical,
-  bellGradientDot: { color: { stopColor: '#FF512F', stopColorOffset: '#DD2476', backgroundColor: colors.B15 } },
-  ...defaultTheme,
+  bellGradientDot: { color: { stopColor: '#FF512F', stopColorOffset: '#DD2476', borderColor: colors.B15 } },
+};
+
+export const defaultCommonTheme: ICommonTheme = {
+  fontFamily: 'Lato',
 };

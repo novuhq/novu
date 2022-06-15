@@ -50,7 +50,6 @@
     "acorn-jsx": "^5.3.2",
     "axios": "^0.26.1",
     "chroma-js": "^2.4.2",
-    "lodash": "^4.17.15",
     "moment": "^2.29.1",
     "react-infinite-scroll-component": "^6.0.0",
     "react-query": "^3.34.19",

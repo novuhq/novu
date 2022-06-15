@@ -58,7 +58,7 @@ export function Footer() {
   );
 }
 const Text = styled.div<{ theme: INovuTheme }>`
-  color: ${({ theme }) => theme.footerTextColor};
+  color: ${({ theme }) => theme.footer.logoPrefixFontColor};
   font-size: 10px;
   font-weight: 400;
 `;

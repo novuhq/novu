@@ -19,14 +19,12 @@ export function NotificationBell(props: INotificationBellProps) {
   return (
     <ActionIcon variant="transparent">
       <BellIcon {...headerIconsSettings} />
-      {unseenCount > 0 ? (
-        <StyledGradientDot theme={props.theme} backgroundColor={props.theme.bellGradientDot.color.backgroundColor} />
-      ) : null}
+      {unseenCount > 0 ? <StyledGradientDot theme={props.theme} /> : null}
     </ActionIcon>
   );
 }
 
-export function GradientDotWrap({ theme, backgroundColor, ...props }) {
+export function GradientDotWrap({ theme, ...props }) {
   return <GradientDot {...props} theme={theme} />;
 }
 

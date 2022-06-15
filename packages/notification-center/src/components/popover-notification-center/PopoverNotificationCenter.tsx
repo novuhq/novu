@@ -6,6 +6,7 @@ import { Popover } from './components/Popover';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { INovuThemeProvider } from '../../store/novu-theme-provider.context';
 import { useDefaultTheme } from '../../hooks';
+import { ColorScheme } from '../../index';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -14,12 +15,13 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  theme: INovuThemeProvider;
+  colorScheme: ColorScheme;
+  theme?: INovuThemeProvider;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
   const { setUnseenCount } = useContext(UnseenCountContext);
-  const { theme } = useDefaultTheme({ theme: props.theme });
+  const { theme } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
@@ -38,6 +40,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         onUrlChange={props.onUrlChange}
         header={props.header}
         footer={props.footer}
+        colorScheme={props.colorScheme}
         theme={props.theme}
       />
     </Popover>

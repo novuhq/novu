@@ -23,7 +23,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
         subscriberId={user?._id as string}
         applicationIdentifier={environment?.identifier as string}
       >
-        <PopoverNotificationCenter theme={{ colorScheme }} onNotificationClick={handlerOnNotificationClick}>
+        <PopoverNotificationCenter colorScheme={colorScheme} onNotificationClick={handlerOnNotificationClick}>
           {(props) => <NotificationBell {...props} />}
         </PopoverNotificationCenter>
       </NovuProvider>

@@ -17,7 +17,7 @@ export function GradientDot(props: IGradientDotProps) {
         height="13"
         rx="6.5"
         fill="url(#paint0_linear_1722_2699)"
-        stroke={props.theme.bellGradientDot.color.backgroundColor}
+        stroke={props.theme.bellGradientDot.color.borderColor}
         strokeWidth="3"
       />
       <defs>
