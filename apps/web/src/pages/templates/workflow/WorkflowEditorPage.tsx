@@ -28,6 +28,8 @@ const WorkflowEditorPage = ({
   const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
   const [selectedStep, setSelectedStep] = useState<number>(-1);
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
+  const [dragging, setDragging] = useState(false);
+
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
@@ -57,6 +59,7 @@ const WorkflowEditorPage = ({
       <Grid gutter={0} grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
           <FlowEditor
+            dragging={dragging}
             templateId={templateId}
             errors={errors}
             steps={steps}
@@ -111,7 +114,13 @@ const WorkflowEditorPage = ({
                       <div
                         key={channel.tabKey}
                         data-test-id={`dnd-${channel.testId}`}
-                        onDragStart={(event) => onDragStart(event, channel.channelType)}
+                        onDragStart={(event) => {
+                          setDragging(true);
+                          onDragStart(event, channel.channelType);
+                        }}
+                        onDragEnd={() => {
+                          setDragging(false);
+                        }}
                         draggable
                       >
                         <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />

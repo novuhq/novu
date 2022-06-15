@@ -45,12 +45,14 @@ export function FlowEditor({
   setSelectedNodeId,
   addStep,
   templateId,
+  dragging,
   errors,
 }: {
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
   templateId: string;
+  dragging: boolean;
   errors: any;
 }) {
   const { colorScheme } = useMantineColorScheme();
@@ -99,6 +101,7 @@ export function FlowEditor({
             ...getChannel(step.template.type),
             active: step.active,
             index: nodes.length,
+            showDropZone: i === steps.length - 1 && dragging,
             error: getChannelErrors(i, errors),
             onDelete,
           },
@@ -118,7 +121,7 @@ export function FlowEditor({
         setEdges((eds) => addEdge(newEdge, eds));
       }
     }
-  }, [steps, errors]);
+  }, [steps, dragging, errors]);
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
