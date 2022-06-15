@@ -14,6 +14,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
     formState: { errors },
     setValue,
     control,
+    getValues,
   } = useFormContext();
 
   const { data: groups, isLoading: loadingGroups } = useQuery('notificationGroups', getNotificationGroups);
@@ -30,10 +31,11 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
   });
 
   useEffect(() => {
-    if (groups?.length && !editMode) {
+    const group = getValues('notificationGroup');
+    if (groups?.length && !editMode && !group) {
       selectFirstGroupByDefault();
     }
-  }, [groups]);
+  }, [groups, editMode]);
 
   function selectFirstGroupByDefault() {
     setTimeout(() => {
