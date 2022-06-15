@@ -34,7 +34,7 @@ const WorkflowEditorPage = ({
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
-  const { addStep, control, watch } = useTemplateController(templateId);
+  const { addStep, control, watch, errors } = useTemplateController(templateId);
   const steps = watch('steps');
   const { readonly } = useEnvController();
 
@@ -61,6 +61,7 @@ const WorkflowEditorPage = ({
           <FlowEditor
             dragging={dragging}
             templateId={templateId}
+            errors={errors}
             steps={steps}
             addStep={addStep}
             setSelectedNodeId={setSelectedNodeId}

@@ -11,6 +11,7 @@ interface NodeData {
   testId: string;
   onDelete: () => void;
   showDropZone: boolean;
+  error: string;
 }
 
 export default memo(({ data, selected, id }: { data: NodeData; selected: boolean; id: string }) => {
@@ -21,6 +22,7 @@ export default memo(({ data, selected, id }: { data: NodeData; selected: boolean
     <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
       <ChannelButton
         showDropZone={data.showDropZone}
+        errors={data.error}
         onDelete={data.onDelete}
         Icon={data.Icon}
         label={data.label}

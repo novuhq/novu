@@ -46,12 +46,14 @@ export function FlowEditor({
   addStep,
   templateId,
   dragging,
+  errors,
 }: {
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
   templateId: string;
   dragging: boolean;
+  errors: any;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
@@ -100,6 +102,7 @@ export function FlowEditor({
             active: step.active,
             index: nodes.length,
             showDropZone: i === steps.length - 1 && dragging,
+            error: getChannelErrors(i, errors),
             onDelete,
           },
         };
@@ -118,7 +121,7 @@ export function FlowEditor({
         setEdges((eds) => addEdge(newEdge, eds));
       }
     }
-  }, [steps, dragging]);
+  }, [steps, dragging, errors]);
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
@@ -261,6 +264,10 @@ const Wrapper = styled.div<{ dark: boolean }>`
     box-shadow: none;
   }
 
+  .react-flow__controls-interactive {
+    display: none;
+  }
+
   .react-flow__controls-button {
     background: transparent;
     border: none;
@@ -271,10 +278,18 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
 `;
 
+function getChannelErrors(index: number, errors: { [p: string]: string }) {
+  const keys = Object.keys(errors);
+  const channelErrors = keys.filter((key) => {
+    return key.includes(`steps.${index}`);
+  });
+
+  return channelErrors.map((key) => errors[key]).toString();
+}
+
 const reactFlowDefaultProps: ReactFlowProps = {
   defaultEdgeOptions: {
     type: 'smoothstep',
-    style: { border: `1px dash red !important` },
   },
   zoomOnScroll: false,
   preventScrolling: true,
