@@ -78,9 +78,22 @@ export function useTemplateController(templateId: string) {
         steps: [],
       };
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      formValues.steps = template.steps;
+      formValues.steps = (template.steps as StepEntity[]).map((item) => {
+        if (item.template.type === ChannelTypeEnum.EMAIL && item.template?.contentType === 'customHtml') {
+          return {
+            ...item,
+            template: {
+              ...item.template,
+              htmlContent: item.template.content as string,
+              content: [],
+            },
+          };
+        }
+
+        return item;
+      });
+
+      console.log(formValues.steps);
 
       reset(formValues);
       setTrigger(template.triggers[0]);
@@ -94,12 +107,20 @@ export function useTemplateController(templateId: string) {
   }, [templateId]);
 
   const onSubmit = async (data: IForm) => {
+    let stepsToSave = data.steps as StepEntity[];
+    stepsToSave = stepsToSave.map((step: StepEntity) => {
+      if (step.template.type === ChannelTypeEnum.EMAIL && step.template.contentType === 'customHtml') {
+        step.template.content = step.template.htmlContent as string;
+      }
+
+      return step;
+    });
     const payload: ICreateNotificationTemplateDto = {
       notificationGroupId: data.notificationGroup,
       name: data.name,
       description: data.description,
       tags: data.tags,
-      steps: data.steps as any[],
+      steps: stepsToSave,
     };
 
     try {
@@ -180,13 +201,17 @@ export function useTemplateController(templateId: string) {
   };
 }
 
+interface ITemplates extends IMessageTemplate {
+  htmlContent?: string;
+}
+
 export interface StepEntity {
   id: string;
   _id?: string;
 
   _templateId: string;
 
-  template: IMessageTemplate;
+  template: ITemplates;
 
   filters?: any[];
 
