@@ -93,8 +93,6 @@ export function useTemplateController(templateId: string) {
         return item;
       });
 
-      console.log(formValues.steps);
-
       reset(formValues);
       setTrigger(template.triggers[0]);
     } else {
