@@ -22,6 +22,10 @@
       {
         "include": ".env.production",
         "outDir": "dist/src"
+      },
+      {
+        "include": "app/content-templates/usecases/compile-template/templates/basic.handlebars",
+        "outDir": "dist/src"
       }
     ],
     "plugins": [

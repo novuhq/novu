@@ -6,7 +6,7 @@
   "private": "true",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
