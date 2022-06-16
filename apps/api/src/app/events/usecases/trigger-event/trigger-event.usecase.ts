@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   IEmailBlock,
   IntegrationRepository,
@@ -30,6 +30,7 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { ISubscribersDefine } from '@novu/node';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class TriggerEvent {
@@ -45,7 +46,7 @@ export class TriggerEvent {
     private organizationRepository: OrganizationRepository,
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
-    private analyticsService: AnalyticsService,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private compileTemplate: CompileTemplate,
     private integrationRepository: IntegrationRepository
   ) {}
