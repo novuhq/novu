@@ -4,6 +4,10 @@
   "compilerOptions": {
     "assets": [
       {
+        "include": "app/content-templates/usecases/compile-template/templates/basic.handlebars",
+        "outDir": "dist/src/app/content-templates/usecases/compile-template/templates/basic.handlebars"
+      },
+      {
         "include": ".env",
         "outDir": "dist/src"
       },
