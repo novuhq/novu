@@ -1073,7 +1073,6 @@ importers:
       axios: ^0.26.1
       babel-loader: ^8.2.4
       chroma-js: ^2.4.2
-      lodash: ^4.17.15
       moment: ^2.29.1
       react-infinite-scroll-component: ^6.0.0
       react-query: ^3.34.19
@@ -1094,7 +1093,6 @@ importers:
       acorn-jsx: 5.3.2
       axios: 0.26.1
       chroma-js: 2.4.2
-      lodash: 4.17.21
       moment: 2.29.1
       react-infinite-scroll-component: 6.1.0
       react-query: 3.34.19
@@ -28537,7 +28535,7 @@ packages:
     engines: {node: '>= 4'}
 
   /image-size/0.5.5:
-    resolution: {integrity: sha1-Cd/Uq50g4p6xw+gLiZA3jfnjy5w=}
+    resolution: {integrity: sha512-6TDAlDPZxUFCv+fuOkIoXT/V/f3Qbq8e37p+YOiYrUv3v9cc3/6x78VdfPgFVaB9dZYeLUfKgHRebpkm/oP2VQ==}
     engines: {node: '>=0.10.0'}
     hasBin: true
     requiresBuild: true
@@ -42331,7 +42329,7 @@ packages:
       '@types/jest': 27.4.0
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@7.0.1
+      jest: 27.5.1_ts-node@9.1.1
       jest-util: 27.5.1
       json5: 2.2.1
       lodash.memoize: 4.1.2
