@@ -87,7 +87,7 @@ export function EmailContentCard({
             <Input
               {...field}
               mb={40}
-              error={errors[`steps.${index}.template.subject`]}
+              error={errors?.steps ? errors?.steps[index]?.template?.subject?.message : undefined}
               label="Subject line"
               disabled={readonly}
               value={field.value}
