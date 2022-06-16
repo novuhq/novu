@@ -4,12 +4,6 @@ import { INovuTheme } from '../../store/novu-theme.context';
 import { ICommonTheme } from '../../store/novu-theme-provider.context';
 
 export const defaultLightTheme: INovuTheme = {
-  general: {
-    backgroundColor: colors.white,
-    mainBrandColor: colors.vertical,
-    boxShadowColor: shadows.medium,
-    fontColor: colors.B60,
-  },
   layout: {
     background: colors.white,
     boxShadow: shadows.medium,
@@ -39,12 +33,6 @@ export const defaultLightTheme: INovuTheme = {
 };
 
 export const defaultDarkTheme: INovuTheme = {
-  general: {
-    backgroundColor: colors.B15,
-    mainBrandColor: colors.vertical,
-    boxShadowColor: shadows.dark,
-    fontColor: colors.white,
-  },
   layout: {
     background: colors.B15,
     boxShadow: shadows.dark,

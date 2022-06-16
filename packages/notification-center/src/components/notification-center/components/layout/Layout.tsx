@@ -5,7 +5,7 @@ import { FooterContainer as Footer } from './footer/FooterContainer';
 import React from 'react';
 import { useNovuContext } from 'packages/notification-center/src/hooks';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
-import { IThemeContext } from '../../../../store/novu-theme.context';
+import { INovuTheme } from '../../../../store/novu-theme.context';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
@@ -25,7 +25,7 @@ const ContentWrapper = styled.div`
   min-height: 400px;
 `;
 
-const LayoutWrapper = styled.div<{ theme: IThemeContext }>`
+const LayoutWrapper = styled.div<{ theme: INovuTheme }>`
   padding: 15px 0;
   height: auto;
   border-radius: 7px;

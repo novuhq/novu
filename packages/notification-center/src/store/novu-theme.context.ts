@@ -1,14 +1,5 @@
 import React from 'react';
 import { ColorScheme } from '../index';
-import {
-  IThemeBellGradientDot,
-  IThemeFooter,
-  IThemeGeneral,
-  IThemeHeader,
-  IThemeLayout,
-  IThemeNotificationListItem,
-  IThemePopover,
-} from '../shared/utils/themeMapper';
 import { ICommonTheme } from './novu-theme-provider.context';
 
 export interface IThemeContext {
@@ -17,8 +8,13 @@ export interface IThemeContext {
   common: ICommonTheme;
 }
 
+export const ThemeContext = React.createContext<IThemeContext>({
+  colorScheme: 'light',
+  theme: null,
+  common: null,
+});
+
 export interface INovuTheme {
-  general?: IThemeGeneral;
   layout?: IThemeLayout;
   header?: IThemeHeader;
   popover?: IThemePopover;
@@ -28,8 +24,56 @@ export interface INovuTheme {
   bellGradientDot?: IThemeBellGradientDot;
 }
 
-export const ThemeContext = React.createContext<IThemeContext>({
-  colorScheme: 'light',
-  theme: null,
-  common: null,
-});
+export interface IThemeLayout {
+  background?: string;
+  boxShadow?: string;
+  borderRadius?: string;
+  wrapper?: {
+    secondaryFontColor?: string;
+  };
+}
+
+export interface IThemeHeader {
+  badgeColor?: string;
+  badgeTextColor?: string;
+  fontColor?: string;
+}
+
+export interface IThemePopover {
+  arrowColor?: string;
+}
+
+export interface IThemeNotificationListItem {
+  seen?: {
+    fontColor?: string;
+    background?: string;
+    timeMarkFontColor?: string;
+  };
+  unseen?: {
+    fontColor?: string;
+    background?: string;
+    boxShadow?: string;
+    notificationItemBeforeBrandColor?: string;
+    timeMarkFontColor?: string;
+  };
+}
+
+export interface IThemeFooter {
+  logoTextColor?: string;
+  logoPrefixFontColor?: string;
+}
+
+export interface IThemeBellGradientDot {
+  color?: {
+    stopColor?: string;
+    stopColorOffset?: string;
+    borderColor?: string;
+  };
+}
+
+export interface IThemeGeneral {
+  backgroundColor?: string;
+  mainBrandColor?: string;
+  boxShadowColor?: string;
+  fontColor?: string;
+}

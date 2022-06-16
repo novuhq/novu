@@ -1,7 +1,7 @@
 import { defaultCommonTheme, defaultDarkTheme, defaultLightTheme } from '../shared/config/themeDefaultValues';
 import { ICommonTheme, INovuThemeProvider } from '../store/novu-theme-provider.context';
 import { INovuTheme } from '../store/novu-theme.context';
-import { mapCommon, mapTheme } from '../shared/utils/themeMapper';
+import merge from 'lodash.merge';
 import { ColorScheme } from '../index';
 
 interface IDefaultThemeProps {
@@ -15,10 +15,10 @@ export function useDefaultTheme(props: IDefaultThemeProps): {
 } {
   const theme =
     props.colorScheme === 'light'
-      ? mapTheme(defaultLightTheme, props?.theme?.light)
-      : mapTheme(defaultDarkTheme, props?.theme?.dark);
+      ? merge(defaultLightTheme, props?.theme?.light)
+      : merge(defaultDarkTheme, props?.theme?.dark);
 
-  const common = mapCommon(defaultCommonTheme, props?.theme?.common);
+  const common = merge(defaultCommonTheme, props?.theme?.common);
 
   return {
     theme,

@@ -69,6 +69,7 @@ const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
 `;
 const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`
   color: ${({ novuTheme }) => novuTheme.notificationListItem?.seen?.fontColor};
+  background: ${({ novuTheme }) => novuTheme?.notificationListItem?.seen?.background};
   font-weight: 400;
   font-size: 14px;
 `;
@@ -82,7 +83,6 @@ const ItemWrapper = styled.div<{ unseen?: boolean; novuTheme: INovuTheme }>`
   align-items: center;
   border-radius: 7px;
   margin: 10px 15px;
-  background: ${({ novuTheme }) => novuTheme?.notificationListItem?.seen?.background};
 
   &:hover {
     cursor: pointer;
