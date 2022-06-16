@@ -1,42 +1,76 @@
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { FieldArrayProvider } from './FieldArrayProvider';
 import { IForm } from './use-template-controller.hook';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { ChannelTypeEnum } from '@novu/shared';
+
+const schema = z
+  .object({
+    name: z.string({
+      required_error: 'Required field name',
+    }),
+    notificationGroup: z
+      .string({
+        invalid_type_error: 'Required field notification group',
+      })
+      .superRefine((data, ctx) => {
+        if (data.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 1,
+            type: 'string',
+            inclusive: true,
+            message: 'Required field notification group',
+            path: ['notificationGroup'],
+          });
+        }
+      }),
+    steps: z
+      .array(
+        z
+          .object({
+            template: z
+              .object({
+                content: z.any(),
+                subject: z.any(),
+              })
+              .passthrough()
+              .superRefine((template: any, ctx) => {
+                if (
+                  (template.type === ChannelTypeEnum.SMS || template.type === ChannelTypeEnum.IN_APP) &&
+                  template.content.length === 0
+                ) {
+                  ctx.addIssue({
+                    code: z.ZodIssueCode.too_small,
+                    minimum: 1,
+                    type: 'string',
+                    inclusive: true,
+                    message: 'Required field content',
+                    path: ['content'],
+                  });
+                }
+                if (template.type === ChannelTypeEnum.EMAIL && !template.subject) {
+                  ctx.addIssue({
+                    code: z.ZodIssueCode.too_small,
+                    minimum: 1,
+                    type: 'string',
+                    inclusive: true,
+                    message: 'Required field subject',
+                    path: ['subject'],
+                  });
+                }
+              }),
+          })
+          .passthrough()
+      )
+      .optional(),
+  })
+  .passthrough();
 
 export const TemplateFormProvider = ({ children }) => {
   const methods = useForm<IForm>({
-    resolver: async (data) => {
-      const errors: any = {};
-      let values = data;
-      if (!data.name) {
-        errors.name = 'Required field name';
-      }
-
-      if (!data.notificationGroup) {
-        errors.notificationGroup = 'Required field notification group';
-      }
-
-      data.steps.forEach((step, index) => {
-        if (
-          (step.template.type === ChannelTypeEnum.SMS || step.template.type === ChannelTypeEnum.IN_APP) &&
-          step.template.content.length === 0
-        ) {
-          errors[`steps.${index}.template.content`] = 'Required field content';
-        }
-        if (step.template.type === ChannelTypeEnum.EMAIL && !step.template.subject) {
-          errors[`steps.${index}.template.subject`] = 'Required field subject';
-        }
-      });
-
-      if (Object.keys(errors).length) {
-        values = {} as any;
-      }
-
-      return {
-        values,
-        errors,
-      };
-    },
+    resolver: zodResolver(schema),
   });
 
   const steps = useFieldArray({

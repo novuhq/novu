@@ -34,7 +34,7 @@ export function TemplatesSideBar({
           active={activeTab === ActivePageEnum.SETTINGS}
           description="Configure cross-channel notification settings"
           label="Notification Settings"
-          errors={showErrors && (errors.name || errors.notificationGroup)}
+          errors={showErrors && (errors.name?.message || errors.notificationGroup?.message)}
         />
         <TemplateButton
           tabKey={ActivePageEnum.WORKFLOW}

@@ -31,7 +31,7 @@ export function TemplateSMSEditor({
             styles={TextAreaStyles}
             {...field}
             data-test-id="smsNotificationContent"
-            error={errors[`steps.${index}.template.content`]}
+            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}
