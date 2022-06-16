@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
@@ -11,6 +11,7 @@ import { TemplateSettings } from '../../../components/templates/TemplateSettings
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
+import usePrompt from '../../../hooks/use-prompt';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -54,6 +55,8 @@ export default function TemplateEditorPage() {
   }, [environment, template]);
 
   if (isLoading) return null;
+
+  usePrompt('Any unsaved changes will be deleted. Proceed anyway?', isDirty);
 
   return (
     <PageContainer>
