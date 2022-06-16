@@ -74,5 +74,5 @@ export const defaultDarkTheme: INovuTheme = {
 };
 
 export const defaultCommonTheme: ICommonTheme = {
-  fontFamily: 'Lato',
+  fontFamily: 'Montserrat',
 };
