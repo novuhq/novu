@@ -373,6 +373,7 @@ describe('Notifications Creator', function () {
     it('should be able to delete a step', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
+      fillBasicNotificationDetails('Test to delete a step');
       cy.getByTestId('workflowButton').click({ force: true });
       cy.get('.react-flow__node').should('have.length', 3);
       cy.getByTestId('step-actions-dropdown')
