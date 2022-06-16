@@ -8,6 +8,7 @@ describe('Notifications Creator', function () {
   describe('workflow editor - drag and drop', function () {
     it('should drag and drop channel', function () {
       cy.visit('/templates/create');
+      fillBasicNotificationDetails('Test drag and drop channel');
       cy.getByTestId('workflowButton').click({ force: true });
       dragAndDrop('inApp');
       dragAndDrop('inApp', 'inApp');
@@ -19,6 +20,7 @@ describe('Notifications Creator', function () {
 
     it('should not be able to drop when not on last node', function () {
       cy.visit('/templates/create');
+      fillBasicNotificationDetails('Test only drop on last node');
       cy.getByTestId('workflowButton').click({ force: true });
       dragAndDrop('inApp');
       dragAndDrop('email', 'trigger');
@@ -30,6 +32,7 @@ describe('Notifications Creator', function () {
     it('should be able to select a step', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
+      fillBasicNotificationDetails('Test SMS Notification Title');
       cy.getByTestId('workflowButton').click({ force: true });
       cy.getByTestId(`node-inAppSelector`).click({ force: true }).parent().should('have.class', 'selected');
       cy.getByTestId(`step-properties-side-menu`).should('be.visible');
@@ -42,6 +45,7 @@ describe('Notifications Creator', function () {
   describe('workflow editor - main functionality', function () {
     it('should not reset data when switching channel types', function () {
       cy.visit('/templates/create');
+      fillBasicNotificationDetails('Test not reset data when switching channel types');
 
       addAndEditChannel('inApp');
       cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
@@ -205,6 +209,7 @@ describe('Notifications Creator', function () {
 
     it('should toggle active states of channels', function () {
       cy.visit('/templates/create');
+      fillBasicNotificationDetails('Test toggle active states of channels');
       // Enable email from button click
       cy.getByTestId('workflowButton').click({ force: true });
       dragAndDrop('email');
@@ -237,7 +242,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('description').type('this is a notification template description');
       cy.getByTestId('submit-btn').click();
       cy.getByTestId('title').should('have.class', 'mantine-TextInput-invalid');
-
+      fillBasicNotificationDetails('Test SMS Notification Title');
       cy.getByTestId('workflowButton').click({ force: true });
       dragAndDrop('inApp');
       goBack();
@@ -258,6 +263,7 @@ describe('Notifications Creator', function () {
         });
       });
       cy.visit('/templates/create');
+      fillBasicNotificationDetails('Test allow uploading a logo from email editor');
       addAndEditChannel('email');
 
       cy.getByTestId('logo-upload-button').click();
@@ -268,6 +274,7 @@ describe('Notifications Creator', function () {
 
     it('should show the brand logo on main page', function () {
       cy.visit('/templates/create');
+      fillBasicNotificationDetails('Test show the brand logo on main page');
       addAndEditChannel('email');
 
       cy.getByTestId('email-editor')
@@ -277,6 +284,7 @@ describe('Notifications Creator', function () {
 
     it('should support RTL text content', function () {
       cy.visit('/templates/create');
+      fillBasicNotificationDetails('Test support RTL text content');
       cy.getByTestId('workflowButton').click({ force: true });
       dragAndDrop('email');
       editChannel('email');
