@@ -41,6 +41,7 @@ const initialNodes: Node[] = [
 ];
 
 export function FlowEditor({
+  setActivePage,
   steps,
   setSelectedNodeId,
   addStep,
@@ -48,6 +49,7 @@ export function FlowEditor({
   dragging,
   errors,
 }: {
+  setActivePage: (string) => void;
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
@@ -104,6 +106,7 @@ export function FlowEditor({
             showDropZone: i === steps.length - 1 && dragging,
             error: getChannelErrors(i, errors),
             onDelete,
+            setActivePage,
           },
         };
 
