@@ -22,6 +22,7 @@ describe('Getting Started Screen', function () {
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.getByTestId('submit-btn').click();
+    cy.wait(1000);
 
     cy.getByTestId('side-nav-quickstart-link').click({ force: true });
     cy.getByTestId('create-template-btn').should('not.exist');
