@@ -370,7 +370,7 @@ describe('Notifications Creator', function () {
       });
     });
 
-    it.only('should be able to delete a step', function () {
+    it('should be able to delete a step', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
       fillBasicNotificationDetails('Test to delete a step');
