@@ -337,7 +337,7 @@ describe('Notifications Creator', function () {
       cy.wait(1000);
       cy.getByTestId('trigger-snippet-btn').click();
 
-      cy.get('tbody').contains('Custom Code HTM').click();
+      cy.get('tbody').contains('Custom Code HTM').click({ force: true });
 
       cy.getByTestId('workflowButton').click({ force: true });
       editChannel('email');
@@ -370,7 +370,7 @@ describe('Notifications Creator', function () {
       });
     });
 
-    it('should be able to delete a step', function () {
+    it.only('should be able to delete a step', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
       fillBasicNotificationDetails('Test to delete a step');
