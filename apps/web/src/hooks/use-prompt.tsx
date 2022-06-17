@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useCallback } from 'react';
-import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom';
+import { useContext, useEffect, useCallback, useState } from 'react';
+import { UNSAFE_NavigationContext as NavigationContext, useLocation, useNavigate } from 'react-router-dom';
 
 export function useBlocker(blocker, when = true) {
   const { navigator } = useContext(NavigationContext);
@@ -23,13 +23,43 @@ export function useBlocker(blocker, when = true) {
   }, [navigator, blocker, when]);
 }
 
-export default function usePrompt(message, when = true) {
-  const blocker = useCallback(
-    (tx) => {
-      if (window.confirm(message)) tx.retry();
+export const usePrompt = (when: boolean): [boolean, () => void, () => void] => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [lastLocation, setLastLocation] = useState<any>(null);
+  const [confirmedNavigation, setConfirmedNavigation] = useState(false);
+
+  const cancelNavigation = useCallback(() => {
+    setShowPrompt(false);
+  }, []);
+
+  const handleBlockedNavigation = useCallback(
+    (nextLocation) => {
+      if (!confirmedNavigation && nextLocation.location.pathname !== location.pathname) {
+        setShowPrompt(true);
+        setLastLocation(nextLocation);
+
+        return false;
+      }
+
+      return true;
     },
-    [message]
+    [confirmedNavigation]
   );
 
-  useBlocker(blocker, when);
-}
+  const confirmNavigation = useCallback(() => {
+    setShowPrompt(false);
+    setConfirmedNavigation(true);
+  }, []);
+
+  useEffect(() => {
+    if (confirmedNavigation && lastLocation) {
+      navigate(lastLocation.location.pathname);
+    }
+  }, [confirmedNavigation, lastLocation]);
+
+  useBlocker(handleBlockedNavigation, when);
+
+  return [showPrompt, confirmNavigation, cancelNavigation];
+};
