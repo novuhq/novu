@@ -2,7 +2,7 @@ import { useMantineTheme } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { colors, TemplateButton, Text } from '../../design-system';
-import { BellGradient, TapeGradient } from '../../design-system/icons';
+import { BellGradient, ConnectGradient, TapeGradient } from '../../design-system/icons';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 
 export function TemplatesSideBar({
@@ -39,10 +39,10 @@ export function TemplatesSideBar({
         <TemplateButton
           tabKey={ActivePageEnum.WORKFLOW}
           changeTab={changeTab}
-          Icon={BellGradient}
+          Icon={ConnectGradient}
           testId="workflowButton"
           active={activeTab === ActivePageEnum.WORKFLOW}
-          description="Configure cross-channel notification settings"
+          description="Edit your notification messages"
           label="Workflow Editor"
           errors={showErrors && getStepsErrors(errors)}
         />
