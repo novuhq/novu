@@ -364,7 +364,7 @@ describe('Notifications Creator', function () {
       cy.wait(1000);
       cy.getByTestId('trigger-snippet-btn').click();
 
-      cy.get('tbody').contains('Custom Code HTM').click();
+      cy.get('tbody').contains('Custom Code HTM').click({ force: true });
 
       cy.getByTestId('workflowButton').click({ force: true });
       editChannel('email');

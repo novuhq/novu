@@ -59,6 +59,7 @@ const WorkflowEditorPage = ({
       <Grid gutter={0} grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
           <FlowEditor
+            setActivePage={setActivePage}
             dragging={dragging}
             templateId={templateId}
             errors={errors}
