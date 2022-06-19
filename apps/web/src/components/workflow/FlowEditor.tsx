@@ -278,13 +278,15 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
 `;
 
-function getChannelErrors(index: number, errors: { [p: string]: string }) {
-  const keys = Object.keys(errors);
-  const channelErrors = keys.filter((key) => {
-    return key.includes(`steps.${index}`);
-  });
+function getChannelErrors(index: number, errors: any) {
+  if (errors?.steps) {
+    const stepErrors = errors.steps[index]?.template;
+    if (stepErrors) {
+      const keys = Object.keys(stepErrors);
 
-  return channelErrors.map((key) => errors[key]).toString();
+      return keys.map((key) => stepErrors[key]?.message);
+    }
+  }
 }
 
 const reactFlowDefaultProps: ReactFlowProps = {

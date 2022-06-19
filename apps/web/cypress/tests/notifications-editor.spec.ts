@@ -252,6 +252,33 @@ describe('Notifications Creator', function () {
       cy.getByTestId('settingsButton').getByTestId('error-circle').should('be.visible');
     });
 
+    it('should show error on node if message field is missing ', function () {
+      cy.visit('/templates/create');
+      fillBasicNotificationDetails();
+      cy.getByTestId('workflowButton').click({ force: true });
+      dragAndDrop('email');
+      cy.getByTestId('submit-btn').click();
+      cy.getByTestId('node-emailSelector').getByTestId('error-circle').should('be.visible');
+      editChannel('email');
+      cy.getByTestId('emailSubject').should('have.class', 'mantine-TextInput-invalid');
+
+      cy.getByTestId('emailSubject').type('this is email subject');
+      goBack();
+      cy.getByTestId('node-emailSelector').getByTestId('error-circle').should('not.exist');
+    });
+
+    it('should fill required settings before workflow btn is clickable', function () {
+      cy.visit('/templates/create');
+      cy.getByTestId('description').type('this is a notification template description');
+      cy.getByTestId('workflowButton').click({ force: true });
+      cy.getByTestId('title').should('have.class', 'mantine-TextInput-invalid');
+      cy.getByTestId('title').type('filled title');
+      cy.getByTestId('workflowButton').click({ force: true });
+
+      cy.wait(200);
+      cy.get('.react-flow__node').should('exist');
+    });
+
     it('should allow uploading a logo from email editor', function () {
       cy.intercept(/.*organizations\/me.*/, (r) => {
         r.continue((res) => {
@@ -268,7 +295,6 @@ describe('Notifications Creator', function () {
 
       cy.getByTestId('logo-upload-button').click();
 
-      cy.get('.mantine-Modal-modal button').contains('Yes').click({ force: true });
       cy.get('.mantine-Modal-modal button').contains('Yes').click({ force: true });
       cy.location('pathname').should('equal', '/settings');
     });
