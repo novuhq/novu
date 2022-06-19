@@ -267,7 +267,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('node-emailSelector').getByTestId('error-circle').should('not.exist');
     });
 
-    it.skip('should fill required settings before workflow btn is clickable', function () {
+    it('should fill required settings before workflow btn is clickable', function () {
       cy.visit('/templates/create');
       cy.getByTestId('description').type('this is a notification template description');
       cy.getByTestId('workflowButton').click({ force: true });
