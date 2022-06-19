@@ -8,11 +8,11 @@ import { ChannelTypeEnum } from '@novu/shared';
 const schema = z
   .object({
     name: z.string({
-      required_error: 'Required field name',
+      required_error: 'Required - Notification Name',
     }),
     notificationGroup: z
       .string({
-        invalid_type_error: 'Required field notification group',
+        invalid_type_error: 'Required - Notification Group',
       })
       .superRefine((data, ctx) => {
         if (data.length === 0) {
@@ -21,7 +21,7 @@ const schema = z
             minimum: 1,
             type: 'string',
             inclusive: true,
-            message: 'Required field notification group',
+            message: 'Required - Notification Group',
             path: ['notificationGroup'],
           });
         }
@@ -46,7 +46,7 @@ const schema = z
                     minimum: 1,
                     type: 'string',
                     inclusive: true,
-                    message: 'Required field content',
+                    message: 'Required - Message Content',
                     path: ['content'],
                   });
                 }
@@ -56,7 +56,7 @@ const schema = z
                     minimum: 1,
                     type: 'string',
                     inclusive: true,
-                    message: 'Required field subject',
+                    message: 'Required - Email Subject',
                     path: ['subject'],
                   });
                 }
