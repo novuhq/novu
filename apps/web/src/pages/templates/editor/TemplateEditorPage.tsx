@@ -61,7 +61,7 @@ export default function TemplateEditorPage() {
     <>
       <PageContainer>
         <PageMeta title={editMode ? template?.name : 'Create Template'} />
-        <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
+        <form name="template-form" noValidate onSubmit={handleSubmit(onSubmit)}>
           <TemplatePageHeader
             loading={isLoading || isUpdateLoading}
             disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
