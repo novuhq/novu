@@ -129,6 +129,8 @@ export function useTemplateController(templateId: string) {
         });
 
         refetch();
+        reset(payload);
+        setIsDirty(false);
 
         await client.refetchQueries(QueryKeys.changesCount);
         showNotification({
@@ -140,7 +142,8 @@ export function useTemplateController(templateId: string) {
 
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
-
+        reset(payload);
+        setIsDirty(false);
         await client.refetchQueries(QueryKeys.changesCount);
         showNotification({
           message: 'Template saved successfully',
