@@ -42,7 +42,7 @@ export function TemplatesSideBar({
           Icon={ConnectGradient}
           testId="workflowButton"
           active={activeTab === ActivePageEnum.WORKFLOW}
-          description="Edit your notification messages"
+          description="Create multi-step workflows"
           label="Workflow Editor"
           errors={showErrors && getStepsErrors(errors)}
         />
