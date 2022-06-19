@@ -268,7 +268,8 @@ describe('Notifications Creator', function () {
 
       cy.getByTestId('logo-upload-button').click();
 
-      cy.get('.mantine-Modal-modal button').contains('Yes').click();
+      cy.get('.mantine-Modal-modal button').contains('Yes').click({ force: true });
+      cy.get('.mantine-Modal-modal button').contains('Yes').click({ force: true });
       cy.location('pathname').should('equal', '/settings');
     });
 
@@ -373,7 +374,7 @@ describe('Notifications Creator', function () {
     it('should be able to delete a step', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
-      fillBasicNotificationDetails('Test to delete a step');
+      cy.wait(500);
       cy.getByTestId('workflowButton').click({ force: true });
       cy.get('.react-flow__node').should('have.length', 3);
       cy.getByTestId('step-actions-dropdown')
@@ -386,6 +387,7 @@ describe('Notifications Creator', function () {
       cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
       cy.getByTestId('submit-btn').click();
       cy.visit('/templates/edit/' + template._id);
+      cy.wait(500);
       cy.getByTestId('workflowButton').click({ force: true });
       cy.get('.react-flow__node').should('have.length', 2);
     });
@@ -393,6 +395,7 @@ describe('Notifications Creator', function () {
     it('should keep steps order on reload', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
+      cy.wait(500);
       cy.getByTestId('workflowButton').click({ force: true });
       dragAndDrop('sms', 'email');
 
@@ -400,6 +403,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('smsNotificationContent').type('new content for sms');
       cy.getByTestId('submit-btn').click();
       cy.visit('/templates/edit/' + template._id);
+      cy.wait(500);
       cy.getByTestId('workflowButton').click({ force: true });
       cy.get('.react-flow__node').should('have.length', 4);
       cy.get('.react-flow__node')
@@ -416,6 +420,7 @@ describe('Notifications Creator', function () {
     it('should be able to disable step', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
+      cy.wait(500);
       cy.getByTestId('workflowButton').click({ force: true });
       cy.getByTestId(`node-inAppSelector`).click({ force: true });
       cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').get('label').contains('Active');
