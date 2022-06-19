@@ -32,7 +32,7 @@ export const InAppCenterCard = () => {
           <Prism
             styles={(theme) => ({
               code: {
-                fontWeight: '400',
+                fontWeight: 400,
                 color: `${colors.B60} !important`,
                 backgroundColor: 'transparent !important',
                 border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,

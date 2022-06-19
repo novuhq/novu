@@ -161,7 +161,7 @@ const StyledContentWrapper = styled.div`
 
 const StyledGroup = styled(Group)``;
 
-const Button = styled(UnstyledButton)`
+const Button: any = styled(UnstyledButton)`
   position: relative;
 
   @media screen and (max-width: 1400px) {

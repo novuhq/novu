@@ -10,7 +10,7 @@ export default createStyles((theme, _params, getRef) => {
       ref: getRef('itemBulletWithChild'),
       color: colors.B60,
       fontSize: '20px',
-      fontWeight: '700',
+      fontWeight: 700,
     },
     itemBullet: {
       ref: getRef('itemBullet'),
