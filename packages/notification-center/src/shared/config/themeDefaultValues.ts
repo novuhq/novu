@@ -17,7 +17,7 @@ export const defaultLightTheme: INovuTheme = {
     badgeTextColor: colors.white,
   },
   popover: { arrowColor: colors.white },
-  notificationListItem: {
+  notificationItem: {
     seen: { background: colors.B98, fontColor: colors.B60, timeMarkFontColor: colors.B80 },
     unseen: {
       background: colors.white,
@@ -28,8 +28,10 @@ export const defaultLightTheme: INovuTheme = {
     },
   },
   footer: { logoTextColor: 'black', logoPrefixFontColor: colors.B70 },
-  mainColor: colors.vertical,
-  bellGradientDot: { color: { stopColor: '#FF512F', stopColorOffset: '#DD2476', borderColor: colors.white } },
+  loaderColor: colors.vertical,
+  unseenBadge: {
+    color: { fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' }, borderColor: colors.white },
+  },
 };
 
 export const defaultDarkTheme: INovuTheme = {
@@ -46,7 +48,7 @@ export const defaultDarkTheme: INovuTheme = {
     badgeTextColor: colors.white,
   },
   popover: { arrowColor: colors.B15 },
-  notificationListItem: {
+  notificationItem: {
     seen: { background: colors.B17, fontColor: colors.white, timeMarkFontColor: colors.B40 },
     unseen: {
       background: colors.B20,
@@ -57,8 +59,8 @@ export const defaultDarkTheme: INovuTheme = {
     },
   },
   footer: { logoTextColor: colors.white, logoPrefixFontColor: colors.B40 },
-  mainColor: colors.vertical,
-  bellGradientDot: { color: { stopColor: '#FF512F', stopColorOffset: '#DD2476', borderColor: colors.B15 } },
+  loaderColor: colors.vertical,
+  unseenBadge: { color: { fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' }, borderColor: colors.B15 } },
 };
 
 export const defaultCommonTheme: ICommonTheme = {

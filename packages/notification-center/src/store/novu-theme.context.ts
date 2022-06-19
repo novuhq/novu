@@ -14,14 +14,18 @@ export const ThemeContext = React.createContext<IThemeContext>({
   common: null,
 });
 
+export interface INovuPopoverTheme extends INovuTheme {
+  popover?: IThemePopover;
+}
+
 export interface INovuTheme {
   layout?: IThemeLayout;
   header?: IThemeHeader;
   popover?: IThemePopover;
-  notificationListItem?: IThemeNotificationListItem;
+  notificationItem?: IThemeNotificationListItem;
   footer?: IThemeFooter;
-  mainColor?: string;
-  bellGradientDot?: IThemeBellGradientDot;
+  loaderColor?: string;
+  unseenBadge?: IThemeUnseenBadge;
 }
 
 export interface IThemeLayout {
@@ -63,12 +67,16 @@ export interface IThemeFooter {
   logoPrefixFontColor?: string;
 }
 
-export interface IThemeBellGradientDot {
+export interface IThemeUnseenBadge {
   color?: {
-    stopColor?: string;
-    stopColorOffset?: string;
+    fillColor?: string | ISvgStopColor;
     borderColor?: string;
   };
+}
+
+export interface ISvgStopColor {
+  stopColor?: string;
+  stopColorOffset?: string;
 }
 
 export interface IThemeGeneral {

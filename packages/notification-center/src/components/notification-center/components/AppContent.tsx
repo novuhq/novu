@@ -22,7 +22,7 @@ export function AppContent() {
 
   const themeConfig = {
     colors: {
-      main: theme.mainColor || organization?.branding?.color,
+      main: theme.loaderColor || organization?.branding?.color,
       secondaryFontColor: theme.layout?.wrapper.secondaryFontColor,
     },
     fontFamily: common.fontFamily || organization?.branding?.fontFamily,

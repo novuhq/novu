@@ -4,7 +4,7 @@ import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
 import { UnseenCountContext } from '../../store/unseen-count.context';
-import { INovuThemeProvider } from '../../store/novu-theme-provider.context';
+import { INovuThemePopoverProvider } from '../../store/novu-theme-provider.context';
 import { useDefaultTheme } from '../../hooks';
 import { ColorScheme } from '../../index';
 
@@ -16,7 +16,7 @@ interface IPopoverNotificationCenterProps {
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
   colorScheme: ColorScheme;
-  theme?: INovuThemeProvider;
+  theme?: INovuThemePopoverProvider;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {

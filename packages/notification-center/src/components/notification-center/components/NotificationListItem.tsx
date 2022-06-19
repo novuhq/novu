@@ -50,9 +50,9 @@ const SettingsActionWrapper = styled.div`
 `;
 
 const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  background: ${({ novuTheme }) => novuTheme.notificationListItem?.unseen?.background};
-  box-shadow: ${({ novuTheme }) => novuTheme.notificationListItem?.unseen?.boxShadow};
-  color: ${({ novuTheme }) => novuTheme.notificationListItem?.unseen?.fontColor};
+  background: ${({ novuTheme }) => novuTheme?.notificationItem?.unseen?.background};
+  box-shadow: ${({ novuTheme }) => novuTheme?.notificationItem?.unseen?.boxShadow};
+  color: ${({ novuTheme }) => novuTheme?.notificationItem?.unseen?.fontColor};
   font-weight: 700;
 
   &:before {
@@ -64,12 +64,12 @@ const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
     bottom: 0;
     width: 5px;
     border-radius: 7px 0 0 7px;
-    background: ${({ novuTheme }) => novuTheme.notificationListItem?.unseen?.notificationItemBeforeBrandColor};
+    background: ${({ novuTheme }) => novuTheme?.notificationItem?.unseen?.notificationItemBeforeBrandColor};
   }
 `;
 const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  color: ${({ novuTheme }) => novuTheme.notificationListItem?.seen?.fontColor};
-  background: ${({ novuTheme }) => novuTheme?.notificationListItem?.seen?.background};
+  color: ${({ novuTheme }) => novuTheme?.notificationItem?.seen?.fontColor};
+  background: ${({ novuTheme }) => novuTheme?.notificationItem?.seen?.background};
   font-weight: 400;
   font-size: 14px;
 `;
@@ -101,6 +101,6 @@ const TimeMark = styled.div<{ novuTheme: INovuTheme; unseen?: boolean }>`
   line-height: 14.4px;
   color: ${({ unseen, novuTheme }) =>
     unseen
-      ? novuTheme?.notificationListItem?.unseen?.timeMarkFontColor
-      : novuTheme?.notificationListItem?.seen?.timeMarkFontColor};
+      ? novuTheme?.notificationItem?.unseen?.timeMarkFontColor
+      : novuTheme?.notificationItem?.seen?.timeMarkFontColor};
 `;
