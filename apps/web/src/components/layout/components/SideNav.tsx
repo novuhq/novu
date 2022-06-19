@@ -35,7 +35,7 @@ export function SideNav({}: Props) {
     },
     { icon: <Bolt />, link: '/templates', label: 'Notifications', testId: 'side-nav-templates-link' },
     { icon: <Activity />, link: '/activities', label: 'Activity Feed', testId: 'side-nav-activities-link' },
-    { icon: <Box />, link: '/integrations', label: 'Integration Store', testId: 'side-nav-integrations-link' },
+    { icon: <Box />, link: '/integrations', label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     { icon: <Settings />, link: '/settings', label: 'Settings', testId: 'side-nav-settings-link' },
     {
       icon: <Team />,
