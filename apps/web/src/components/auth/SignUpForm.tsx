@@ -94,7 +94,7 @@ export function SignUpForm({ token, email }: Props) {
             fullWidth
             radius="md"
             leftIcon={<Github />}
-            sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}
+            sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
             Sign Up with Github
           </GithubButton>
