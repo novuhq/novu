@@ -4,30 +4,31 @@ import styles from './Discover.module.scss';
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Link from '@docusaurus/Link';
+
 const discoverData = {
   Overview: {
     darkIcon: '/img/discover/view.svg',
     lightIcon: '/img/discover/view-light.svg',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mi pulvinar aliquet in metus sit eget. Eu quam faucibus id tristique pretium, dolor gravida adipiscing. Lacus amet leo eleifend.',
+      'This is your starting point to Novu. Learn how you can quickly start using it and how you can self deploy it using Docker.',
   },
   Platform: {
     darkIcon: '/img/discover/stack.svg',
     lightIcon: '/img/discover/stack-light.svg',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mi pulvinar aliquet in metus sit eget. Eu quam faucibus id tristique pretium, dolor gravida adipiscing.',
+      'Learn the building blocks of Novu, how you can create your first subscriber, integrate your delivery providers and deep dive to the Novu ecosystem. ',
   },
   'Notification Center': {
     darkIcon: '/img/discover/alarm.svg',
     lightIcon: '/img/discover/alarm-light.svg',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mi pulvinar aliquet in metus sit eget. Eu quam faucibus id tristique pretium, dolor gravida adipiscing.',
+      'Quickly add a fully functioning notification center to your application using our component libraries or a custom iframe embed.',
   },
   Community: {
     darkIcon: '/img/discover/multiple.svg',
     lightIcon: '/img/discover/multiple-light.svg',
     description:
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mi pulvinar aliquet in metus sit eget. Eu quam faucibus id tristique pretium, dolor gravida adipiscing. ',
+      'Novu is the only open-source notification infrastructure, join a community of thousands of developers. Learn about how you can contribute and stay in touch with our growing community.',
   },
 };
 

@@ -26,7 +26,8 @@ In this article, we’ll go over the benefits of planning for your webinar and t
   <TabItem value="nodejs" label="Node.js" default>
 
 ```jsx
-import { Novu } from '@novu/node';
+import { Novu } from 'packages/node/build/main/index';
+
 const novu = new Novu(process.env.NOVU_API_KEY);
 await novu.trigger('<TRIGGER_NAME>',
   {

@@ -1,4 +1,4 @@
-# Outgoing Communication Layer (OCL)
+# Architecture
 
 OCL was built all around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is key for easy maintenance and integration of new functionality.
 
