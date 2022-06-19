@@ -290,7 +290,6 @@ describe('Notifications Creator', function () {
       cy.getByTestId('logo-upload-button').click();
 
       cy.get('.mantine-Modal-modal button').contains('Yes').click({ force: true });
-      cy.get('.mantine-Modal-modal button').contains('Yes').click({ force: true });
       cy.location('pathname').should('equal', '/settings');
     });
 
