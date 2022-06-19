@@ -32,6 +32,7 @@ interface ISelectProps extends SpacingProps {
   searchable?: boolean;
   creatable?: boolean;
   disabled?: boolean;
+  required?: boolean;
   loading?: boolean;
   type?: 'multiselect' | 'select';
   filter?: (value: string, item: SelectItem) => boolean;
@@ -52,6 +53,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
       creatable = false,
       loading = false,
       disabled = false,
+      required = false,
       onChange,
       ...props
     }: ISelectProps,
@@ -109,6 +111,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             creatable={creatable}
             data={data}
             disabled={disabled}
+            required={required}
             valueComponent={Value}
             {...props}
           />
@@ -124,6 +127,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             filter={filterResults}
             onChange={onChange}
             data={data}
+            required={required}
             {...props}
           />
         )}

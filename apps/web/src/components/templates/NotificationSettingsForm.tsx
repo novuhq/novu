@@ -66,6 +66,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
               {...field}
               data-test-id="title"
               disabled={readonly}
+              required
               value={field.value || ''}
               error={errors.name?.message}
               label="Notification Name"
@@ -106,6 +107,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
                   disabled={readonly}
                   creatable
                   searchable
+                  required
                   description="Categorize notifications into groups for unified settings control"
                   error={errors.notificationGroup?.message}
                   getCreateLabel={(newGroup) => <div data-test-id="submit-category-btn">+ Create Group {newGroup}</div>}

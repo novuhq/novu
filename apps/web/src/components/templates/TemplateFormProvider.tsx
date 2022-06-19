@@ -7,9 +7,22 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 const schema = z
   .object({
-    name: z.string({
-      required_error: 'Required - Notification Name',
-    }),
+    name: z
+      .string({
+        required_error: 'Required - Notification Name',
+      })
+      .superRefine((data, ctx) => {
+        if (data.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.too_small,
+            minimum: 1,
+            type: 'string',
+            inclusive: true,
+            message: 'Required - Notification Name',
+            path: ['name'],
+          });
+        }
+      }),
     notificationGroup: z
       .string({
         invalid_type_error: 'Required - Notification Group',

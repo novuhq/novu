@@ -21,7 +21,7 @@ describe('Getting Started Screen', function () {
     cy.location('pathname').should('equal', '/templates/create');
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('submit-btn').click({ force: true });
     cy.get('.mantine-Notification-root').contains('Template saved successfully');
 
     cy.getByTestId('side-nav-quickstart-link').click({ force: true });
