@@ -50,7 +50,8 @@ describe('Compile Template', function () {
           dog_count: 1,
           sausage_count: 2,
         },
-        customTemplate: '<div>{{dog_count}} {{pluralize dog_count "dog" "dogs"}} and {{sausage_count}} {{pluralize sausage_count "sausage" "sausages"}} for {{pluralize dog_count "him" "them"}}</div>',
+        customTemplate:
+          '<div>{{dog_count}} {{pluralize dog_count "dog" "dogs"}} and {{sausage_count}} {{pluralize sausage_count "sausage" "sausages"}} for {{pluralize dog_count "him" "them"}}</div>',
       })
     );
 
@@ -84,5 +85,23 @@ describe('Compile Template', function () {
     expect(result).to.not.contains('ff6f61');
     expect(result).to.contain('#e7e7e7e9');
     expect(result).to.contain('Button content of text');
+  });
+
+  it('should allow the user to specify handlebars helpers', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        data: {
+          branding: {
+            color: '#e7e7e7e9',
+          },
+          message: 'hello world',
+          messageTwo: 'hEllo world',
+        },
+        customTemplate: '<div>{{titlecase message}} and {{lowercase messageTwo}} and {{uppercase message}}</div>',
+      })
+    );
+
+    expect(result).to.equal('<div>Hello World and hello world and HELLO WORLD</div>');
   });
 });

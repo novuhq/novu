@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   IEmailBlock,
   IntegrationRepository,
@@ -15,7 +15,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { IEmailOptions } from '@novu/stateless';
+import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { TriggerEventCommand } from './trigger-event.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -30,6 +30,7 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { ISubscribersDefine } from '@novu/node';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class TriggerEvent {
@@ -45,7 +46,7 @@ export class TriggerEvent {
     private organizationRepository: OrganizationRepository,
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
-    private analyticsService: AnalyticsService,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private compileTemplate: CompileTemplate,
     private integrationRepository: IntegrationRepository
   ) {}
@@ -194,41 +195,17 @@ export class TriggerEvent {
     );
 
     if (!subscriber) {
-      if (subscriberPayload.email || subscriberPayload.phone) {
-        subscriber = await this.createSubscriberUsecase.execute(
-          CreateSubscriberCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            subscriberId: subscriberPayload.subscriberId,
-            email: subscriberPayload.email,
-            firstName: subscriberPayload.firstName,
-            lastName: subscriberPayload.lastName,
-            phone: subscriberPayload.phone,
-          })
-        );
-      } else {
-        await this.createLogUsecase.execute(
-          CreateLogCommand.create({
-            transactionId: command.transactionId,
-            status: LogStatusEnum.ERROR,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            text: 'Subscriber not found',
-            userId: command.userId,
-            code: LogCodeEnum.SUBSCRIBER_NOT_FOUND,
-            templateId: template._id,
-            raw: {
-              payload: command.payload,
-              subscriber: subscriberPayload,
-              triggerIdentifier: command.identifier,
-            },
-          })
-        );
-
-        return {
-          status: 'subscriber_not_found',
-        };
-      }
+      subscriber = await this.createSubscriberUsecase.execute(
+        CreateSubscriberCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: subscriberPayload.subscriberId,
+          email: subscriberPayload.email,
+          firstName: subscriberPayload.firstName,
+          lastName: subscriberPayload.lastName,
+          phone: subscriberPayload.phone,
+        })
+      );
     }
 
     const notification = await this.notificationRepository.create({
@@ -557,11 +534,22 @@ export class TriggerEvent {
       active: true,
     });
 
+    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
+      (attachment) =>
+        <IAttachmentOptions>{
+          file: Buffer.from(attachment.file),
+          mime: attachment.mime,
+          name: attachment.name,
+          channels: attachment.channels,
+        }
+    );
+
     const mailData: IEmailOptions = {
       to: email,
       subject,
       html,
       from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      attachments,
     };
 
     if (email && integration) {

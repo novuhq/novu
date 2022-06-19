@@ -3,7 +3,7 @@ export function getLinearGradientColorStopValues(str: string) {
     str
       .trim()
       // strip off left side.
-      .split(/^(?:-\w+-)*linear-gradient\((?:.*?(?<=top|bottom|left|right|deg)\s*,\s*)*/)[1]
+      .split(/^(?:-\w+-)*linear-gradient\((?:.*?(top|bottom|left|right|deg)\s*,\s*)*/)[2]
       // strip off right side.
       .replace(/\s*\)\s*;*$/, '')
       // strip any whitespace (sequence) before and after each comma.
