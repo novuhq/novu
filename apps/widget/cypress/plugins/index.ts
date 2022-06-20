@@ -9,9 +9,8 @@
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
 
-import { DalService } from '@novu/dal';
-import { UserSession, NotificationTemplateService, NotificationsService, EnvironmentService } from '@novu/testing';
-import { EnvironmentEntity } from '@novu/dal';
+import { DalService, EnvironmentEntity } from '@novu/dal';
+import { EnvironmentService, NotificationsService, NotificationTemplateService, UserSession } from '@novu/testing';
 
 /**
  * @type {Cypress.PluginConfig}
@@ -49,7 +48,7 @@ module.exports = (on, config) => {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
 
-      const session = new UserSession('http://localhost:1336');
+      const session = new UserSession(config.env.API_URL);
 
       return true;
     },
@@ -57,7 +56,7 @@ module.exports = (on, config) => {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
 
-      const session = new UserSession('http://localhost:1336');
+      const session = new UserSession(config.env.API_URL);
       await session.initialize({
         noEnvironment: settings?.noEnvironment,
       });
