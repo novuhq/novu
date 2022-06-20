@@ -69,7 +69,7 @@ services:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
       REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-      REACT_APP_DOCKER_HOSTED_ENV: true
+      REACT_APP_DOCKER_HOSTED_ENV: 'true'
     ports:
         - 4200:4200
     volumes:

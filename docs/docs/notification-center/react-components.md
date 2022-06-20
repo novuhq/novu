@@ -7,7 +7,7 @@ npm install @novu/notification-center
 ```
 
 ```tsx
-import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
+import { NovuProvider, PopoverNotificationCenter, NotificationBell, IMessage } from '@novu/notification-center';
 
 function Header() {
   function onNotificationClick(notification: IMessage) {
@@ -25,7 +25,8 @@ function Header() {
 ```
 
 ## Use your own backend and socket url
-By default, Novu's hosted services of api and socket are used. Should you want, you could override them and configure your own. 
+
+By default, Novu's hosted services of api and socket are used. Should you want, you could override them and configure your own.
 
 ```tsx
 import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
@@ -46,9 +47,9 @@ function Header() {
 }
 ```
 
-
 ## Implementing custom bell icon
-It is common that you might have a special set of icons you use within your application and you will want to replace the default: `NotificationBell` coming from our library. 
+
+It is common that you might have a special set of icons you use within your application and you will want to replace the default: `NotificationBell` coming from our library.
 
 For this you can easily switch the `NotificationBell` with your own bell. Just make sure you pass the `unseenCount` param inside and use it accordingly.
 
@@ -61,12 +62,11 @@ For this you can easily switch the `NotificationBell` with your own bell. Just m
 ## Dark mode support
 
 To support dark mode in your application the notification center component can receive a `colorScheme` prop that can receive either `dark` or `light` mode.
+
 ```tsx
-<NovuProvider subscriberId={'USER_ID'} colorScheme={'dark' || 'light'}>
-  <PopoverNotificationCenter>
+  <PopoverNotificationCenter colorScheme={'dark' || 'light'}>
     {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
   </PopoverNotificationCenter>
-</NovuProvider>
 ```
 
 ## Custom UI

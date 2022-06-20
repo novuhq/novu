@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
 import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -7,13 +7,14 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { AuthService } from '../../services/auth.service';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class Login {
   constructor(
     private userRepository: UserRepository,
     private authService: AuthService,
-    private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: LoginCommand) {

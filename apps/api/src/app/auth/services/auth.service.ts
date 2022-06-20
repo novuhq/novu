@@ -20,6 +20,7 @@ import { SwitchOrganization } from '../usecases/switch-organization/switch-organ
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
 import { QueueService } from '../../shared/services/queue';
 import { AnalyticsService } from '../../shared/services/analytics/analytics.service';
+import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +30,7 @@ export class AuthService {
     private createUserUsecase: CreateUser,
     private jwtService: JwtService,
     private queueService: QueueService,
-    private analyticsService: AnalyticsService,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
