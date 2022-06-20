@@ -25,8 +25,8 @@ const discoverData = {
       'Quickly add a fully functioning notification center to your application using our component libraries or a custom iframe embed.',
   },
   Channels: {
-    darkIcon: '/img/discover/alarm.svg',
-    lightIcon: '/img/discover/alarm-light.svg',
+    darkIcon: '/img/discover/transactions.svg',
+    lightIcon: '/img/discover/transactions-light.svg',
     description:
       'With Novu you can send notification over multiple channels using a single API. Read more about our supported channels and recipes.',
   },
