@@ -5,8 +5,8 @@
   "scripts": {
     "start": "npm run start:dev",
     "afterinstall": "pnpm build",
-    "build": "node_modules/.bin/tsc -p tsconfig.build.json",
-    "build:watch": "node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
+    "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
+    "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
     "lint": "eslint src",

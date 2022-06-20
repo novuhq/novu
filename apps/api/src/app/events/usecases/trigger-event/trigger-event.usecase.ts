@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { Inject, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { TriggerEventCommand } from './trigger-event.command';
@@ -10,16 +10,17 @@ import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usec
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
 import { matchMessageWithFilters } from './message-filter.matcher';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class TriggerEvent {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createLogUsecase: CreateLog,
-    private analyticsService: AnalyticsService,
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
-    private workflowQueueService: WorkflowQueueService
+    private workflowQueueService: WorkflowQueueService,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: TriggerEventCommand) {
