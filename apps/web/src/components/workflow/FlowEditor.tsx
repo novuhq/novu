@@ -20,7 +20,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import TriggerNode from './TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
-import { StepEntity } from '../templates/use-template-controller.hook';
+import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
 import { ChannelTypeEnum } from '@novu/shared';
 import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
 
@@ -41,13 +41,21 @@ const initialNodes: Node[] = [
 ];
 
 export function FlowEditor({
+  setActivePage,
   steps,
   setSelectedNodeId,
   addStep,
+  templateId,
+  dragging,
+  errors,
 }: {
+  setActivePage: (string) => void;
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
+  templateId: string;
+  dragging: boolean;
+  errors: any;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef(null);
@@ -62,19 +70,26 @@ export function FlowEditor({
     setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 800 });
   }, [reactFlowInstance]);
 
+  const { setIsDirty } = useTemplateController(templateId);
+
+  const onDelete = () => {
+    setSelectedNodeId('');
+    setIsDirty(true);
+  };
+
   useEffect(() => {
-    if (steps.length) {
-      let parentId = '1';
-      if (nodes.length > 1) {
-        setNodes([
-          {
-            ...initialNodes[0],
-            position: {
-              ...nodes[0].position,
-            },
+    let parentId = '1';
+    if (nodes.length > 1) {
+      setNodes([
+        {
+          ...initialNodes[0],
+          position: {
+            ...nodes[0].position,
           },
-        ]);
-      }
+        },
+      ]);
+    }
+    if (steps.length) {
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
@@ -84,7 +99,15 @@ export function FlowEditor({
           type: 'channelNode',
           position: { x: oldNode.position.x, y: oldNode.position.y },
           parentNode: parentId,
-          data: { ...getChannel(step.template.type), active: step.active, index: nodes.length },
+          data: {
+            ...getChannel(step.template.type),
+            active: step.active,
+            index: nodes.length,
+            showDropZone: i === steps.length - 1 && dragging,
+            error: getChannelErrors(i, errors),
+            onDelete,
+            setActivePage,
+          },
         };
 
         const newEdge = {
@@ -101,11 +124,14 @@ export function FlowEditor({
         setEdges((eds) => addEdge(newEdge, eds));
       }
     }
-  }, [steps]);
+  }, [steps, dragging, errors]);
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
     setSelectedNodeId(node.id);
+    if (node.id === '1') {
+      onDelete();
+    }
   }, []);
 
   const onDragOver = useCallback((event) => {
@@ -241,6 +267,10 @@ const Wrapper = styled.div<{ dark: boolean }>`
     box-shadow: none;
   }
 
+  .react-flow__controls-interactive {
+    display: none;
+  }
+
   .react-flow__controls-button {
     background: transparent;
     border: none;
@@ -251,10 +281,20 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
 `;
 
+function getChannelErrors(index: number, errors: any) {
+  if (errors?.steps) {
+    const stepErrors = errors.steps[index]?.template;
+    if (stepErrors) {
+      const keys = Object.keys(stepErrors);
+
+      return keys.map((key) => stepErrors[key]?.message);
+    }
+  }
+}
+
 const reactFlowDefaultProps: ReactFlowProps = {
   defaultEdgeOptions: {
     type: 'smoothstep',
-    style: { border: `1px dash red !important` },
   },
   zoomOnScroll: false,
   preventScrolling: true,

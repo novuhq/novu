@@ -11,6 +11,8 @@ import { TemplateSettings } from '../../../components/templates/TemplateSettings
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
+import { usePrompt } from '../../../hooks/use-prompt';
+import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -29,7 +31,6 @@ export default function TemplateEditorPage() {
   const [activeStep, setActiveStep] = useState<string>('');
   const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
-
   const {
     editMode,
     template,
@@ -45,6 +46,7 @@ export default function TemplateEditorPage() {
     trigger,
     onTriggerModalDismiss,
   } = useTemplateController(templateId);
+  const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
 
   useEffect(() => {
     if (environment && template) {
@@ -57,36 +59,43 @@ export default function TemplateEditorPage() {
   if (isLoading) return null;
 
   return (
-    <PageContainer>
-      <PageMeta title={editMode ? template?.name : 'Create Template'} />
-      <form name="template-form" onSubmit={handleSubmit(onSubmit)}>
-        <TemplatePageHeader
-          loading={isLoading || isUpdateLoading}
-          disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
-          templateId={templateId}
-          setActivePage={setActivePage}
-          activePage={activePage}
-        />
-        {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
-          <TemplateSettings
-            activePage={activePage}
-            setActivePage={setActivePage}
-            showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
+    <>
+      <PageContainer>
+        <PageMeta title={editMode ? template?.name : 'Create Template'} />
+        <form name="template-form" noValidate onSubmit={handleSubmit(onSubmit)}>
+          <TemplatePageHeader
+            loading={isLoading || isUpdateLoading}
+            disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
             templateId={templateId}
+            setActivePage={setActivePage}
+            activePage={activePage}
           />
-        )}
-        {activePage === ActivePageEnum.WORKFLOW && (
-          <ReactFlowProvider>
-            <WorkflowEditorPage setActiveStep={setActiveStep} templateId={templateId} setActivePage={setActivePage} />
-          </ReactFlowProvider>
-        )}
-        {!loadingEditTemplate && !isIntegrationsLoading ? (
-          <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
-        ) : null}
-        {trigger && (
-          <TemplateTriggerModal trigger={trigger} onDismiss={onTriggerModalDismiss} isVisible={isEmbedModalVisible} />
-        )}
-      </form>
-    </PageContainer>
+          {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
+            <TemplateSettings
+              activePage={activePage}
+              setActivePage={setActivePage}
+              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
+              templateId={templateId}
+            />
+          )}
+          {activePage === ActivePageEnum.WORKFLOW && (
+            <ReactFlowProvider>
+              <WorkflowEditorPage setActiveStep={setActiveStep} templateId={templateId} setActivePage={setActivePage} />
+            </ReactFlowProvider>
+          )}
+          {!loadingEditTemplate && !isIntegrationsLoading ? (
+            <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
+          ) : null}
+          {trigger && (
+            <TemplateTriggerModal trigger={trigger} onDismiss={onTriggerModalDismiss} isVisible={isEmbedModalVisible} />
+          )}
+        </form>
+      </PageContainer>
+      <UnsavedChangesModal
+        isOpen={showModal}
+        cancelNavigation={cancelNavigation}
+        confirmNavigation={confirmNavigation}
+      />
+    </>
   );
 }

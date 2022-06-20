@@ -5,7 +5,7 @@ import { TapeGradient } from '../../design-system/icons';
 
 export default memo(({ selected }: { selected: boolean }) => {
   return (
-    <div style={{ pointerEvents: 'none' }}>
+    <div data-test-id={`node-triggerSelector`} style={{ pointerEvents: 'none' }}>
       <ChannelButton showDots={false} Icon={TapeGradient} label={'Trigger'} active={selected} />
       <Handle type="source" id="a" position={Position.Bottom} />
     </div>

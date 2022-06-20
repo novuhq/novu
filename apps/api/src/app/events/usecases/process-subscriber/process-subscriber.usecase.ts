@@ -34,7 +34,10 @@ export class ProcessSubscriber {
 
     const notification = await this.createNotification(command, template._id, subscriber);
 
-    const steps = matchMessageWithFilters(template.steps, command.payload);
+    const steps = matchMessageWithFilters(
+      template.steps.filter((step) => step.active === true),
+      command.payload
+    );
 
     await this.createLogUsecase.execute(
       CreateLogCommand.create({

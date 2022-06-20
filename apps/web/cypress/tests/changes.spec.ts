@@ -3,7 +3,7 @@ describe('Changes Screen', function () {
     cy.initializeSession().as('session');
   });
 
-  it.skip('should display changes to promote ', function () {
+  it('should display changes to promote ', function () {
     createNotification();
 
     cy.visit('/changes');
@@ -18,7 +18,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 1);
   });
 
-  it.skip('fields should be disabled in Production', function () {
+  it('fields should be disabled in Production', function () {
     createNotification();
     promoteNotification();
 
@@ -29,7 +29,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
   });
 
-  it.skip('should show correct count of pending changes and update real time', function () {
+  it('should show correct count of pending changes and update real time', function () {
     createNotification();
     cy.getByTestId('side-nav-changes-count').contains('1');
 
@@ -40,14 +40,14 @@ describe('Changes Screen', function () {
     cy.getByTestId('side-nav-changes-count').contains('1');
   });
 
-  it.skip('should show correct type and description of change', function () {
+  it('should show correct type and description of change', function () {
     createNotification();
     cy.visit('/changes');
     cy.getByTestId('change-type').contains('Template Change');
     cy.getByTestId('change-content').contains('Test Notification Title');
   });
 
-  it.skip('should show history of changes', function () {
+  it('should show history of changes', function () {
     createNotification();
     promoteNotification();
 
@@ -59,7 +59,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('promote-btn').should('be.disabled');
   });
 
-  it.skip('should promote all changes with promote all btn', function () {
+  it('should promote all changes with promote all btn', function () {
     createNotification();
     createNotification();
 
@@ -83,14 +83,24 @@ function switchEnvironment(environment: 'Production' | 'Development') {
 }
 
 function createNotification() {
+  const dataTransfer = new DataTransfer();
+
   cy.visit('/templates/create');
 
   cy.getByTestId('title').type('Test Notification Title');
   cy.getByTestId('description').type('This is a test description for a test title');
   cy.get('body').click();
 
-  cy.getByTestId('add-channel').click({ force: true });
-  cy.getByTestId('emailAddChannel').click({ force: true });
+  cy.getByTestId('workflowButton').click({ force: true });
+
+  cy.wait(1000);
+  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
+
+  cy.get('.react-flow__node-triggerNode').trigger('drop', { dataTransfer, force: true });
+
+  cy.getByTestId('node-emailSelector').parent().click({ force: true });
+  cy.getByTestId('edit-template-channel').click({ force: true });
+
   cy.getByTestId('emailSubject').type('this is email subject');
 
   cy.getByTestId('submit-btn').click();

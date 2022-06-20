@@ -60,6 +60,7 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActi
           <When truthy={activePage !== ActivePageEnum.SETTINGS && activePage !== ActivePageEnum.TRIGGER_SNIPPET}>
             <Center
               mt={10}
+              data-test-id="go-back-button"
               onClick={() => {
                 setActivePage(
                   activePage === ActivePageEnum.WORKFLOW ? ActivePageEnum.SETTINGS : ActivePageEnum.WORKFLOW

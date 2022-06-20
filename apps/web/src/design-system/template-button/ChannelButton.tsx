@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
-import { UnstyledButton, Popover } from '@mantine/core';
+import React, { useEffect, useState } from 'react';
+import { UnstyledButton, Popover, ActionIcon, MenuItem, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
-import { colors } from '../config';
-import { DotsHorizontal } from '../icons';
+import { colors, shadows } from '../config';
+import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
-import { Tooltip } from '../tooltip/Tooltip';
 import { useFormContext } from 'react-hook-form';
+import { useEnvController } from '../../store/use-env-controller';
+import { ChannelTypeEnum } from '@novu/shared';
+
+const capitalize = (text: string) => {
+  return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
+};
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -23,7 +28,39 @@ interface ITemplateButtonProps {
   errors?: boolean | string;
   showDots?: boolean;
   id?: string | undefined;
+  onDelete?: () => void;
+  showDropZone?: boolean;
+  dragging?: boolean;
+  setActivePage?: (string) => void;
 }
+
+const useMenuStyles = createStyles((theme: MantineTheme) => {
+  const dark = theme.colorScheme === 'dark';
+
+  return {
+    arrow: {
+      width: '7px',
+      height: '7px',
+      backgroundColor: dark ? colors.B20 : colors.white,
+      borderColor: dark ? colors.B30 : colors.B85,
+    },
+    body: {
+      minWidth: 220,
+      backgroundColor: dark ? colors.B20 : colors.white,
+      color: dark ? theme.white : colors.B40,
+      borderColor: dark ? colors.B30 : colors.B85,
+    },
+    item: {
+      borerRadius: '5px',
+      color: `${dark ? theme.white : colors.B40} !important`,
+      fontWeight: '400',
+      fontSize: '14px',
+    },
+    itemHovered: {
+      backgroundColor: dark ? colors.B30 : colors.B98,
+    },
+  };
+});
 
 export function ChannelButton({
   active,
@@ -37,8 +74,14 @@ export function ChannelButton({
   errors = false,
   showDots = true,
   id = undefined,
+  onDelete = () => {},
+  showDropZone = false,
+  dragging = false,
+  setActivePage = (page: string) => {},
 }: ITemplateButtonProps) {
+  const { readonly: readonlyEnv } = useEnvController();
   const { cx, classes, theme } = useStyles();
+  const { classes: menuClasses } = useMenuStyles();
   const disabled = action && !checked;
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled } : {};
@@ -47,26 +90,11 @@ export function ChannelButton({
   const { watch, setValue } = useFormContext();
   const steps = watch('steps');
 
-  const tooltip = (
-    <div>
-      <Text>
-        <a
-          style={{
-            pointerEvents: 'all',
-          }}
-          href="/"
-          onClick={(e) => {
-            e.preventDefault();
-            const newSteps = steps.filter((step) => step._id !== id);
-            setShowDotMenu(false);
-            setValue('steps', newSteps);
-          }}
-        >
-          Delete node
-        </a>
-      </Text>
-    </div>
-  );
+  useEffect(() => {
+    if (dragging && showDotMenu) {
+      setShowDotMenu(false);
+    }
+  }, [dragging, showDotMenu]);
 
   return (
     <>
@@ -79,6 +107,11 @@ export function ChannelButton({
           backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
         }}
       >
+        <When truthy={showDropZone}>
+          <Dropzone data-test-id="dropzone-area" dark={theme.colorScheme === 'dark'}>
+            Place your next step here
+          </Dropzone>
+        </When>
         <ButtonWrapper>
           <LeftContainerWrapper>
             <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
@@ -93,21 +126,69 @@ export function ChannelButton({
             {action && !readonly && (
               <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
             )}
-            <When truthy={showDots}>
-              <Tooltip label={tooltip} opened={showDotMenu}>
-                <a
-                  style={{
-                    pointerEvents: 'all',
-                  }}
-                  href="/"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowDotMenu(!showDotMenu);
-                  }}
+            <When truthy={showDots && !readonlyEnv}>
+              <a
+                style={{
+                  pointerEvents: 'all',
+                }}
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowDotMenu(!showDotMenu);
+                }}
+              >
+                <Menu
+                  shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
+                  classNames={menuClasses}
+                  withArrow={true}
+                  opened={showDotMenu}
+                  control={
+                    <ActionIcon variant="transparent" data-test-id="step-actions-dropdown">
+                      <DotsHorizontal />
+                    </ActionIcon>
+                  }
                 >
-                  <DotsHorizontal />
-                </a>
-              </Tooltip>
+                  <MenuItem
+                    style={{
+                      pointerEvents: 'all',
+                    }}
+                    icon={
+                      <Edit
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                        }}
+                      />
+                    }
+                    data-test-id="edit-step-action"
+                    onClick={() => {
+                      const thisStep = steps.find((step) => step._id === id);
+                      const selectedChannel = thisStep.template.type;
+                      setShowDotMenu(false);
+                      setActivePage(
+                        selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
+                      );
+                    }}
+                  >
+                    Edit Template
+                  </MenuItem>
+                  <MenuItem
+                    style={{
+                      pointerEvents: 'all',
+                    }}
+                    icon={<Trash />}
+                    data-test-id="delete-step-action"
+                    onClick={() => {
+                      const newSteps = steps.filter((step) => step._id !== id);
+                      setShowDotMenu(false);
+                      setValue('steps', newSteps);
+                      onDelete();
+                    }}
+                  >
+                    Delete Step
+                  </MenuItem>
+                </Menu>
+              </a>
             </When>
           </ActionWrapper>
         </ButtonWrapper>
@@ -197,6 +278,21 @@ const ButtonWrapper = styled.div`
 
 const StyledContentWrapper = styled.div`
   padding-right: 10px;
+`;
+
+const Dropzone = styled.div<{ dark: boolean }>`
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  background: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
+  color: ${({ dark }) => (dark ? colors.B98 : colors.B17)};
+  border-radius: 7px;
+  text-align: center;
+  line-height: 75px;
+  z-index: 1000000;
+  border: 1px dashed ${({ dark }) => (dark ? colors.B30 : colors.B80)};
 `;
 
 const Button = styled(UnstyledButton)`

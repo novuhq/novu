@@ -2,7 +2,8 @@ import { useMantineTheme } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { colors, TemplateButton, Text } from '../../design-system';
-import { BellGradient, TapeGradient } from '../../design-system/icons';
+import { BellGradient, ConnectGradient, TapeGradient } from '../../design-system/icons';
+import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 
 export function TemplatesSideBar({
   activeTab,
@@ -26,24 +27,24 @@ export function TemplatesSideBar({
     <StyledNav>
       <NavSection>
         <TemplateButton
-          tabKey="Settings"
+          tabKey={ActivePageEnum.SETTINGS}
           changeTab={changeTab}
           Icon={BellGradient}
           testId="settingsButton"
-          active={activeTab === 'Settings'}
+          active={activeTab === ActivePageEnum.SETTINGS}
           description="Configure cross-channel notification settings"
           label="Notification Settings"
-          errors={showErrors && (errors.name || errors.notificationGroup)}
+          errors={showErrors && (errors.name?.message || errors.notificationGroup?.message)}
         />
         <TemplateButton
-          tabKey="Workflow"
+          tabKey={ActivePageEnum.WORKFLOW}
           changeTab={changeTab}
-          Icon={BellGradient}
+          Icon={ConnectGradient}
           testId="workflowButton"
-          active={activeTab === 'Workflow'}
-          description="Configure cross-channel notification settings"
+          active={activeTab === ActivePageEnum.WORKFLOW}
+          description="Create multi-step workflows"
           label="Workflow Editor"
-          errors={showErrors && (errors.name || errors.notificationGroup)}
+          errors={showErrors && getStepsErrors(errors)}
         />
       </NavSection>
       {showTriggerSection && (
@@ -53,11 +54,11 @@ export function TemplatesSideBar({
           </Text>
           <div>
             <TemplateButton
-              tabKey="TriggerSnippet"
+              tabKey={ActivePageEnum.TRIGGER_SNIPPET}
               changeTab={changeTab}
               Icon={TapeGradient}
               testId="triggerCodeSelector"
-              active={activeTab === 'TriggerSnippet'}
+              active={activeTab === ActivePageEnum.TRIGGER_SNIPPET}
               description="Get your notification trigger code snippet"
               label="Trigger Snippet"
             />
@@ -68,13 +69,13 @@ export function TemplatesSideBar({
   );
 }
 
-function getChannelErrors(channel: 'sms' | 'email' | 'inApp', errors: { [p: string]: string }) {
+function getStepsErrors(errors: { [p: string]: string }) {
   const keys = Object.keys(errors);
   const channelErrors = keys.filter((key) => {
-    return key.includes(`${channel}Messages`);
+    return key.includes(`steps`);
   });
 
-  return channelErrors.map((key) => errors[key]).toString();
+  return channelErrors.length > 0 && 'Something is missing here';
 }
 
 const StyledNav = styled.div`
