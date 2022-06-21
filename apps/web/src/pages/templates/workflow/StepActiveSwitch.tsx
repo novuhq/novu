@@ -16,7 +16,7 @@ export const StepActiveSwitch = ({ control, index }) => {
             {...field}
             disabled={readonly}
             checked={value}
-            label={`Step is ${value ? 'Active' : 'Not Active'}`}
+            label={`Step is ${value ? 'active' : 'not active'}`}
           />
         );
       }}
