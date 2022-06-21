@@ -33,7 +33,7 @@ export const StepActiveSwitch = ({ control, index, templateId }) => {
             disabled={readonly}
             checked={check}
             onChange={handleChecked}
-            label={`Step is ${check ? 'Active' : 'Not Active'}`}
+            label={`Step is ${check ? 'active' : 'not active'}`}
           />
         );
       }}
@@ -42,5 +42,5 @@ export const StepActiveSwitch = ({ control, index, templateId }) => {
 };
 
 const StyledSwitch = styled(Switch)`
-  max-width: 150px !important;
+  max-width: 100% !important;
 `;

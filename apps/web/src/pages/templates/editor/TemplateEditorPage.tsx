@@ -13,6 +13,7 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { usePrompt } from '../../../hooks/use-prompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
+import { When } from '../../../components/utils/When';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -62,13 +63,15 @@ export default function TemplateEditorPage() {
       <PageContainer>
         <PageMeta title={editMode ? template?.name : 'Create Template'} />
         <form name="template-form" noValidate onSubmit={handleSubmit(onSubmit)}>
-          <TemplatePageHeader
-            loading={isLoading || isUpdateLoading}
-            disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
-            templateId={templateId}
-            setActivePage={setActivePage}
-            activePage={activePage}
-          />
+          <When truthy={activePage !== ActivePageEnum.WORKFLOW}>
+            <TemplatePageHeader
+              loading={isLoading || isUpdateLoading}
+              disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+              templateId={templateId}
+              setActivePage={setActivePage}
+              activePage={activePage}
+            />
+          </When>
           {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
             <TemplateSettings
               activePage={activePage}
@@ -79,7 +82,12 @@ export default function TemplateEditorPage() {
           )}
           {activePage === ActivePageEnum.WORKFLOW && (
             <ReactFlowProvider>
-              <WorkflowEditorPage setActiveStep={setActiveStep} templateId={templateId} setActivePage={setActivePage} />
+              <WorkflowEditorPage
+                activePage={activePage}
+                setActiveStep={setActiveStep}
+                templateId={templateId}
+                setActivePage={setActivePage}
+              />
             </ReactFlowProvider>
           )}
           {!loadingEditTemplate && !isIntegrationsLoading ? (
