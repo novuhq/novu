@@ -170,7 +170,7 @@ In order to present the provider in the Integration store we need logos in dark 
 this step is desirable but not necessary you can add and we will check and update if necessary. 
 If you locate the logos you can add them to `apps/web/public/static/images/providers` while the name of the file
 is the name of the provider.
-The possible formats are svg and png.
+The possible formats are `svg` and `png`.
 
 
 ## Add config item with in the list
