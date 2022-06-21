@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # How to add a Provider?
 
-## Creation of provider in Novu
+## Creating a Novu provider package
 
 All of our providers need to implement one or more of our provider interfaces, based on provider feature, from Email, and SMS through Direct, In-app, and push.
 
@@ -202,8 +202,8 @@ you created on the previous step, logoFileName should be as it was on the adding
 (with the format type included).
 
 ```typescript
-  {
-  id: 'sendgrid',
+ {
+    id: 'sendgrid',
     displayName: 'SendGrid',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendgridConfig,
@@ -213,13 +213,13 @@ you created on the previous step, logoFileName should be as it was on the adding
 ```
 
 
-## Add provider handler
+## Add provider handler in the API
 
 ### Create provider handler
 In order to map internally the different providers credentials, we need to add a provider handler that located in 
 `apps/api/src/app/events/services/mail-service/handlers`. 
 
-For example here we see the sendgrid handler
+For example here we see the SendGrid handler
 
 ```typescript
 import { ChannelTypeEnum } from '@novu/shared';
