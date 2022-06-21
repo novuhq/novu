@@ -47,6 +47,7 @@
     "@novu/ses": "^0.4.1",
     "@novu/shared": "^0.4.1",
     "@novu/sms77": "^0.4.1",
+    "@novu/termii": "^0.4.1",
     "@novu/sns": "^0.4.1",
     "@novu/stateless": "^0.4.1",
     "@novu/telnyx": "^0.4.1",
