@@ -79,17 +79,30 @@ export function ChannelButton({
   showDropZone = false,
   dragging = false,
   setActivePage = (page: string) => {},
-  disabled,
+  disabled: initDisabled,
 }: ITemplateButtonProps) {
   const { readonly: readonlyEnv } = useEnvController();
   const { cx, classes, theme } = useStyles();
   const { classes: menuClasses } = useMenuStyles();
-  const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
-  const disabledProp = disabled ? { disabled } : {};
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [showDotMenu, setShowDotMenu] = useState(false);
+  const [disabled, setDisabled] = useState(initDisabled);
+  const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
+  const disabledProp = disabled ? { disabled: disabled } : {};
+
   const { watch, setValue } = useFormContext();
-  const steps = watch('steps');
+  const steps = watch(`steps`);
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      const thisStep = values.steps.find((step) => step._id === id);
+      if (thisStep) {
+        setDisabled(!thisStep.active);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   useEffect(() => {
     if (dragging && showDotMenu) {

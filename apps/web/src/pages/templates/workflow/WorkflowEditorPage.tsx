@@ -114,7 +114,7 @@ const WorkflowEditorPage = ({
                   <Divider my={30} />
                   {steps.map((i, index) => {
                     return index === activeStep ? (
-                      <StepActiveSwitch index={activeStep} control={control} templateId={templateId} />
+                      <StepActiveSwitch key={index} index={activeStep} control={control} />
                     ) : null;
                   })}
                 </NavSection>
