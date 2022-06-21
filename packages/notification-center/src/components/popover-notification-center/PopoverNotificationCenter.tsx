@@ -20,8 +20,8 @@ interface IPopoverNotificationCenterProps {
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
-  const { setUnseenCount } = useContext(UnseenCountContext);
   const { theme } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
+  const { setUnseenCount, unseenCount } = useContext(UnseenCountContext);
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
@@ -33,7 +33,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
   }
 
   return (
-    <Popover theme={theme} bell={(bellProps) => children({ ...bellProps, theme })}>
+    <Popover theme={theme} bell={(bellProps) => children({ ...bellProps, unseenCount, theme })}>
       <NotificationCenter
         onNotificationClick={props.onNotificationClick}
         onUnseenCountChanged={handlerOnUnseenCount}
