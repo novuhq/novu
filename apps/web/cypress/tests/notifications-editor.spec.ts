@@ -447,11 +447,14 @@ describe('Notifications Creator', function () {
       cy.wait(500);
       cy.getByTestId('workflowButton').click({ force: true });
       cy.getByTestId(`node-inAppSelector`).click({ force: true });
-      cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').get('label').contains('Active');
+      cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').get('label').contains('Step is Active');
       cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').click({ force: true });
-      cy.getByTestId('submit-btn').click();
+      cy.getByTestId('submit-btn').click({ force: true });
       cy.getByTestId(`node-inAppSelector`).click({ force: true });
-      cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').get('label').contains('Disabled');
+      cy.getByTestId(`step-properties-side-menu`)
+        .find('.mantine-Switch-input')
+        .get('label')
+        .contains('Step is Not Active');
     });
   });
 });

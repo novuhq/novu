@@ -1830,6 +1830,45 @@ importers:
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
 
+  providers/termii:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@novu/stateless': ^0.4.1
+      '@types/jest': ^27.0.1
+      codecov: ^3.5.0
+      cspell: ^4.1.0
+      cz-conventional-changelog: ^3.3.0
+      gh-pages: ^3.1.0
+      jest: ^27.1.0
+      node-fetch: ^2.6.6
+      npm-run-all: ^4.1.5
+      nyc: ^15.1.0
+      open-cli: ^6.0.1
+      prettier: ^2.1.1
+      standard-version: ^9.0.0
+      ts-jest: ^27.0.5
+      ts-node: ^9.0.0
+      typedoc: ^0.19.0
+    dependencies:
+      '@novu/stateless': link:../../packages/stateless
+      node-fetch: 2.6.7
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.4.1
+      codecov: 3.8.3
+      cspell: 4.2.8
+      cz-conventional-changelog: 3.3.0
+      gh-pages: 3.2.3
+      jest: 27.5.1_ts-node@9.1.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      open-cli: 6.0.1
+      prettier: 2.6.2
+      standard-version: 9.3.2
+      ts-jest: 27.1.4_60149d457e34ffba7d4e845dde6a1263
+      ts-node: 9.1.1_typescript@4.6.2
+      typedoc: 0.19.2_typescript@4.6.2
+
   providers/twilio:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
@@ -8703,7 +8742,7 @@ packages:
     peerDependencies:
       react: '>=16.3.0'
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       '@emotion/cache': 10.0.29
       '@emotion/css': 10.0.27
       '@emotion/serialize': 0.11.16
@@ -8853,7 +8892,7 @@ packages:
       '@emotion/core': ^10.0.28
       react: '>=16.3.0'
     dependencies:
-      '@babel/runtime': 7.17.8
+      '@babel/runtime': 7.17.9
       '@emotion/core': 10.3.1
       '@emotion/is-prop-valid': 0.8.8
       '@emotion/serialize': 0.11.16
@@ -12152,7 +12191,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       react: 17.0.2
     dev: false
 
@@ -12169,7 +12208,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       react: 17.0.2
     dev: false
 
@@ -12188,7 +12227,7 @@ packages:
     peerDependencies:
       react: '>=16.8'
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       '@radix-ui/react-compose-refs': 0.1.0_react@17.0.2
       '@radix-ui/react-use-layout-effect': 0.1.0_react@17.0.2
       react: 17.0.2
@@ -12208,7 +12247,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       '@radix-ui/react-slot': 0.1.2_react@17.0.2
       react: 17.0.2
     dev: false
@@ -12235,7 +12274,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       '@radix-ui/number': 0.1.0
       '@radix-ui/primitive': 0.1.0
       '@radix-ui/react-compose-refs': 0.1.0_react@17.0.2
@@ -12262,7 +12301,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       '@radix-ui/react-compose-refs': 0.1.0_react@17.0.2
       react: 17.0.2
     dev: false
@@ -12280,7 +12319,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       react: 17.0.2
     dev: false
 
@@ -12297,7 +12336,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       react: 17.0.2
     dev: false
 
@@ -12314,7 +12353,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       react: 17.0.2
     dev: false
 
@@ -16560,7 +16599,7 @@ packages:
       qs: 6.10.3
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      react-draggable: 4.4.5_react-dom@17.0.2+react@17.0.2
+      react-draggable: 4.4.4_react-dom@17.0.2+react@17.0.2
       react-helmet-async: 1.3.0_react-dom@17.0.2+react@17.0.2
       react-sizeme: 3.0.2
       regenerator-runtime: 0.13.9
@@ -16637,7 +16676,7 @@ packages:
       qs: 6.10.3
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      react-draggable: 4.4.5_react-dom@17.0.2+react@17.0.2
+      react-draggable: 4.4.4_react-dom@17.0.2+react@17.0.2
       react-helmet-async: 1.3.0_react-dom@17.0.2+react@17.0.2
       react-sizeme: 3.0.2
       regenerator-runtime: 0.13.9
@@ -20693,7 +20732,7 @@ packages:
       babel-plugin-syntax-jsx: 6.18.0
       lodash: 4.17.21
       picomatch: 2.3.1
-      styled-components: 5.3.5_react-dom@17.0.2+react@17.0.2
+      styled-components: 5.3.5
     dev: false
 
   /babel-plugin-syntax-jsx/6.18.0:
@@ -24851,7 +24890,7 @@ packages:
     peerDependencies:
       react: '>=16.12.0'
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       compute-scroll-into-view: 1.0.17
       prop-types: 15.8.1
       react: 17.0.2
@@ -25009,7 +25048,7 @@ packages:
       '@emotion/core': ^10.0.27
       react: '>=16.3.0'
     dependencies:
-      '@babel/runtime': 7.17.8
+      '@babel/runtime': 7.17.9
       '@emotion/core': 10.3.1
       '@emotion/weak-memoize': 0.2.5
       hoist-non-react-statics: 3.3.2
@@ -27197,7 +27236,7 @@ packages:
       memfs: 3.4.1
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.3.7
+      semver: 7.3.5
       tapable: 1.1.3
       typescript: 4.5.4
       webpack: 4.46.0
@@ -27260,7 +27299,7 @@ packages:
       memfs: 3.4.1
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.3.7
+      semver: 7.3.5
       tapable: 1.1.3
       typescript: 4.5.4
       webpack: 5.70.0
@@ -35693,7 +35732,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.6.3
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -38524,6 +38563,17 @@ packages:
       prop-types: 15.8.1
     dev: true
 
+  /react-draggable/4.4.4_react-dom@17.0.2+react@17.0.2:
+    resolution: {integrity: sha512-6e0WdcNLwpBx/YIDpoyd2Xb04PB0elrDrulKUgdrIlwuYvxh5Ok9M+F8cljm8kPXXs43PmMzek9RrB1b7mLMqA==}
+    peerDependencies:
+      react: '>= 16.3.0'
+      react-dom: '>= 16.3.0'
+    dependencies:
+      clsx: 1.1.1
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+
   /react-draggable/4.4.5_react-dom@17.0.2+react@17.0.2:
     resolution: {integrity: sha512-OMHzJdyJbYTZo4uQE393fHcqqPYsEtkjfMgvCHr6rejT+Ezn4OZbNyGH50vv+SunC1RMvwOTSWkEODQLzw1M9g==}
     peerDependencies:
@@ -38534,6 +38584,7 @@ packages:
       prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+    dev: false
 
   /react-dropzone/11.7.1_react@17.0.2:
     resolution: {integrity: sha512-zxCMwhfPy1olUEbw3FLNPLhAm/HnaYH5aELIEglRbqabizKAdHs0h+WuyOpmA+v1JXn0++fpQDdNfUagWt5hJQ==}
@@ -38691,7 +38742,7 @@ packages:
     peerDependencies:
       react: ^16.8.4 || ^17.0.0
     dependencies:
-      '@babel/runtime': 7.17.8
+      '@babel/runtime': 7.17.9
       is-dom: 1.1.0
       prop-types: 15.8.1
     dev: true
@@ -38763,7 +38814,7 @@ packages:
       react: ^16.6.0 || ^17.0.0
       react-dom: ^16.6.0 || ^17.0.0
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       '@popperjs/core': 2.11.4
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -39133,7 +39184,7 @@ packages:
     peerDependencies:
       react: '>= 0.14.0'
     dependencies:
-      '@babel/runtime': 7.17.9
+      '@babel/runtime': 7.17.8
       highlight.js: 10.7.3
       lowlight: 1.20.0
       prismjs: 1.27.0
@@ -39180,7 +39231,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0
     dependencies:
-      '@babel/runtime': 7.17.8
+      '@babel/runtime': 7.17.9
       react: 17.0.2
       use-composed-ref: 1.2.1_react@17.0.2
       use-latest: 1.2.0_18ce5b4fa2aac98ae1c6ad949e4591be
@@ -39194,7 +39245,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0
     dependencies:
-      '@babel/runtime': 7.17.8
+      '@babel/runtime': 7.17.9
+      react: 17.0.2
       use-composed-ref: 1.2.1
       use-latest: 1.2.0_@types+react@17.0.43
     transitivePeerDependencies:
@@ -41787,7 +41839,7 @@ packages:
     dev: true
 
   /strip-ansi/3.0.1:
-    resolution: {integrity: sha1-ajhfuIU9lS1f8F0Oiq+UJ43GPc8=}
+    resolution: {integrity: sha512-VhumSSbBqDTP8p2ZLKj40UjBCV4+v8bUSEpUb4KjRgWk9pbqGF4REFj6KEagidb2f/M6AzC0EmFyDNGaw9OCzg==}
     engines: {node: '>=0.10.0'}
     dependencies:
       ansi-regex: 2.1.1

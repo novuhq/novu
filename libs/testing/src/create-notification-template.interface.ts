@@ -6,6 +6,7 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
   steps: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cta?: any;
+    active?: boolean;
     subject?: string;
     contentType?: 'editor' | 'customHtml';
     content: string | IEmailBlock[];

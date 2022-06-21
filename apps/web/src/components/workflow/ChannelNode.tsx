@@ -13,6 +13,7 @@ interface NodeData {
   showDropZone: boolean;
   error: string;
   setActivePage: (string) => void;
+  active: boolean;
 }
 
 export default memo(
@@ -31,6 +32,7 @@ export default memo(
           Icon={data.Icon}
           label={data.label}
           active={selected}
+          disabled={!data.active}
           id={id}
           dragging={dragging}
         />
