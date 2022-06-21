@@ -1,13 +1,13 @@
 {
   "name": "@novu/widget",
-  "version": "0.5.0-alpha.0",
+  "version": "0.5.0-alpha.1",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "^4.1.0",
     "@mantine/hooks": "^4.1.0",
     "@novu/embed": "^0.5.0-alpha.0",
-    "@novu/notification-center": "^0.5.0-alpha.0",
+    "@novu/notification-center": "^0.5.0-alpha.1",
     "@novu/shared": "^0.5.0-alpha.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
