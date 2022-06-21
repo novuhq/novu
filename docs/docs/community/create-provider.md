@@ -25,7 +25,7 @@ npm run setup:project
 At the root of the project build the `node` package to get started.
 
 ```zsh
-cd packages/node && yarn run build
+cd packages/node && npm run build
 ```
 
 ### Snippets
@@ -181,7 +181,7 @@ This part is made up of two parts:
 provider configuration to providers list.
 
 ### Create credentials config
-We need to add the credentials that are needed in order to create integration with the provider. For example if you 
+We need to add the credentials that are needed in order to create integration with the provider. For example, if you 
 added email provider like SendGrid and the credentials are 'From', 'SenderName' and 'ApiKey' you will need to add 
 a config object in `libs/shared/src/consts/providers/provider-credentials.ts` like below.
 
@@ -198,8 +198,8 @@ export const sendgridConfig: IConfigCredentials[] = [
 
 
 ### Add provider to providers list
-Now we need to add the provider data into the list that located in `libs/shared/src/consts/providers/channels/email.ts`.
-Note that the id is the providers name, displayName is providers name in pascal case, credentials are the one 
+Now we need to add the provider data to the list located at `libs/shared/src/consts/providers/channels/email.ts`.
+Note that the id is the provider's name, displayName is the provider's name in pascal case, credentials are the one 
 you created on the previous step, logoFileName should be as it was on the adding logo step 
 (with the format type included).
 
@@ -218,13 +218,13 @@ you created on the previous step, logoFileName should be as it was on the adding
 ## Add provider handler in the API
 
 ### Adding the provider depepndecy to the API
-In the previous step you created a standalone provider package that will be published to NPM, however currently in 
+In the previous step, you created a standalone provider package that will be published to NPM, however currently in 
 your development environment it is not yet published. In order to use it locally please go to the `package.json` 
 located in `apps/api/package.json` and add it manually to the dependencies list: 
 `"@novu/<NEW_PROVIDER_NAME>": "^<VERSION>"`
 
-Please note that the provider name and version are located in provider `package.json` you created earlier.
-After adding the depepndecy run `pnpm run setup:project` from the root of the monorepo so that pnpm can create the required symlinks for the newly created package.
+Please note that the provider name and version can be found from the provider `package.json` you created earlier.
+After adding the dependency run `npm run setup:project` from the root of the monorepo. so, it can create the required symlinks for the newly created package.
 
 ### Create provider handler
 In order to map internally the different providers credentials, we need to add a provider handler that located in 
@@ -251,6 +251,6 @@ export class SendgridHandler extends BaseHandler {
 ```
 
 ### Add handler to factory
-The last step is to initialize the handler in the factory that located in 
+The last step is to initialize the handler in the factory located in 
 `apps/api/src/app/events/services/mail-service/mail.factory.ts`
 
