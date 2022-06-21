@@ -215,17 +215,18 @@ you created on the previous step, logoFileName should be as it was on the adding
 
 ## Add provider handler in the API
 
+### Adding the provider depepndecy to the API
+In the previous step you created a standalone provider package that will be published to NPM, however currently in 
+your development environment it is not yet published. In order to use it locally please go to the `package.json` 
+located in `apps/api/package.json` and add it manually to the dependencies list: 
+`"@novu/<NEW_PROVIDER_NAME>": "^<VERSION>"`
+
+Please note that the provider name and version are located in provider `package.json` you created earlier.
+After adding the depepndecy run `pnpm run setup:project` from the root of the monorepo so that pnpm can create the required symlinks for the newly created package.
+
 ### Create provider handler
 In order to map internally the different providers credentials, we need to add a provider handler that located in 
 `apps/api/src/app/events/services/mail-service/handlers`. 
-
-#### Newly create dependency that needed to be added.
-In the previous step you create standalone provider package that will be published to NPM, however currently in 
-your development it is yet published. In order to use it locally please go to the package.json 
-located in `apps/api/package.json` and add it manually to the dependencies: 
-`"@novu/<NEW_PROVIDER_NAME>": "^<VERSION>"`
-
-Please note thea the provider name and version are located in provider package.json you created earlier.  
 
 Example of SendGrid handler
 
