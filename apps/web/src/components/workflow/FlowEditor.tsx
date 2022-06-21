@@ -83,6 +83,16 @@ export function FlowEditor({
 
   useEffect(() => {
     let parentId = '1';
+    if (nodes.length === 1) {
+      setNodes([
+        {
+          ...initialNodes[0],
+          data: {
+            showDropZone: dragging,
+          },
+        },
+      ]);
+    }
     if (nodes.length > 1) {
       setNodes([
         {
