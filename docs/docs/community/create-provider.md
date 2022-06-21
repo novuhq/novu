@@ -227,7 +227,7 @@ located in `apps/api/package.json` and add it manually to the dependencies:
 
 Please note thea the provider name and version are located in provider package.json you created earlier.  
 
-Example of sendgrid handler
+Example of SendGrid handler
 
 ```typescript
 import { ChannelTypeEnum } from '@novu/shared';
