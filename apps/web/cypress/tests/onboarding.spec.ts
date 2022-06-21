@@ -3,7 +3,7 @@ describe('Getting Started Screen', function () {
     cy.initializeSession().as('session');
   });
 
-  it.only('should change status of templates in on-boarding', function () {
+  it.skip('should change status of templates in on-boarding', function () {
     cy.intercept('GET', '*/notification-templates', (r) => {
       r.continue((res) => {
         if (res.body) {
