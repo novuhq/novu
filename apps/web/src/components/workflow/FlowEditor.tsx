@@ -11,7 +11,6 @@ import ReactFlow, {
   getOutgoers,
   ReactFlowProps,
   Controls,
-  useViewport,
   useReactFlow,
 } from 'react-flow-renderer';
 import ChannelNode from './ChannelNode';
@@ -36,7 +35,7 @@ const initialNodes: Node[] = [
     data: {
       label: 'Trigger',
     },
-    position: { x: 250, y: 100 },
+    position: { x: 0, y: 10 },
   },
 ];
 
@@ -58,16 +57,21 @@ export function FlowEditor({
   errors: any;
 }) {
   const { colorScheme } = useMantineColorScheme();
-  const reactFlowWrapper = useRef(null);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const updateNodeInternals = useUpdateNodeInternals();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
-  const { x: xPos, y: yPos, zoom } = useViewport();
-  const { setViewport, zoomIn, zoomOut, getViewport } = useReactFlow();
+  const { setViewport } = useReactFlow();
 
   useEffect(() => {
-    setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 800 });
+    if (reactFlowWrapper) {
+      const clientWidth = reactFlowWrapper.current?.clientWidth;
+      const middle = clientWidth ? clientWidth / 2 - 100 : 0;
+      const zoomView = nodes.length > 4 ? 0.75 : 1;
+      const xyPos = reactFlowInstance?.project({ x: middle, y: 0 });
+      setViewport({ x: xyPos?.x ?? 0, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
+    }
   }, [reactFlowInstance]);
 
   const { setIsDirty } = useTemplateController(templateId);
@@ -195,13 +199,9 @@ export function FlowEditor({
       };
 
       setEdges((eds) => addEdge(newEdge, eds));
-      // updateNodeInternals(newId);
-      reactFlowInstance?.fitBounds({ x: 0, y: 0, width: 500, height: 500 });
     },
     [reactFlowInstance, nodes, edges]
   );
-
-  const updateNode = useCallback(() => updateNodeInternals('dndnode_0'), [updateNodeInternals]);
 
   return (
     <Wrapper dark={colorScheme === 'dark'}>
@@ -300,16 +300,7 @@ const reactFlowDefaultProps: ReactFlowProps = {
   preventScrolling: true,
   nodesConnectable: false,
   nodesDraggable: true,
-  fitView: true,
-  nodeExtent: [
-    [0, 0],
-    [700, 400],
-  ],
-  translateExtent: [
-    [0, 0],
-    [700, 400],
-  ],
   minZoom: 0.5,
   maxZoom: 1.5,
-  defaultZoom: 0.5,
+  defaultZoom: 1,
 };
