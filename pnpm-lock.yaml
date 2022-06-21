@@ -1091,6 +1091,7 @@ importers:
       axios: ^0.26.1
       babel-loader: ^8.2.4
       chroma-js: ^2.4.2
+      lodash.merge: ^4.6.2
       moment: ^2.29.1
       react-infinite-scroll-component: ^6.0.0
       react-query: ^3.34.19
@@ -1111,6 +1112,7 @@ importers:
       acorn-jsx: 5.3.2
       axios: 0.26.1
       chroma-js: 2.4.2
+      lodash.merge: 4.6.2
       moment: 2.29.1
       react-infinite-scroll-component: 6.1.0
       react-query: 3.34.19
@@ -22240,6 +22242,7 @@ packages:
   /colors/1.4.0:
     resolution: {integrity: sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==}
     engines: {node: '>=0.1.90'}
+    requiresBuild: true
 
   /columnify/1.6.0:
     resolution: {integrity: sha512-lomjuFZKfM6MSAnV9aCZC9sc0qGbmZdfygNv+nCpqVkSKdCxCklLtd16O0EILGkImHw9ZpHkAnHaB+8Zxq5W6Q==}
@@ -41881,7 +41884,7 @@ packages:
       min-indent: 1.0.1
 
   /strip-json-comments/2.0.1:
-    resolution: {integrity: sha1-PFMZQukIwml8DsNEhYwobHygpgo=}
+    resolution: {integrity: sha512-4gB8na07fecVVkOI6Rs4e7T6NOTki5EmL7TUduTs6bu3EdnSycntVJ4re8kgZA+wx9IueI2Y11bfbgwtzuE0KQ==}
     engines: {node: '>=0.10.0'}
 
   /strip-json-comments/3.0.1:
@@ -43081,7 +43084,7 @@ packages:
       '@types/jest': 27.4.0
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@7.0.1
+      jest: 27.5.1_ts-node@9.1.1
       jest-util: 27.5.1
       json5: 2.2.1
       lodash.memoize: 4.1.2

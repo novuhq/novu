@@ -1,15 +1,16 @@
-import styled, { useTheme } from 'styled-components';
+import styled from 'styled-components';
 import { Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
 import React from 'react';
+import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
 
 export function Header({ unseenCount }: { unseenCount: number }) {
-  const theme: any = useTheme();
+  const { theme, common } = useNovuThemeProvider();
 
   return (
     <HeaderWrapper>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-        <Text>Notifications </Text>
+        <Text fontColor={theme.header.fontColor}>Notifications </Text>
         {unseenCount && unseenCount > 0 ? (
           <Badge
             data-test-id="unseen-count-label"
@@ -19,10 +20,10 @@ export function Header({ unseenCount }: { unseenCount: number }) {
               height: 20,
               pointerEvents: 'none',
               border: 'none',
-              background: theme.colors.main,
-              fontFamily: theme.fontFamily,
+              background: theme.header?.badgeColor,
+              fontFamily: common.fontFamily,
               lineHeight: '14px',
-              color: colors.white,
+              color: theme.header?.badgeTextColor,
               fontWeight: 'bold',
               fontSize: '12px',
             }}
@@ -45,7 +46,8 @@ const HeaderWrapper = styled.div`
   height: 55px;
 `;
 
-const Text = styled.div`
+const Text = styled.div<{ fontColor: string }>`
+  color: ${({ fontColor }) => fontColor};
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
