@@ -8,7 +8,7 @@ sidebar_position: 4
 
 All of our providers need to implement one or more of our provider interfaces, based on provider feature, from Email, and SMS through Direct, In-app, and push.
 
-For a provider template you can copy one of our existing provider in the `providers` folder in the novu project, make the relevant changes and create a PR against the monorepo.
+For a provider template, you can copy one of our existing provider from the `providers` folder in the Novu project, make the relevant changes and create a PR against the monorepo.
 
 ### Description
 
