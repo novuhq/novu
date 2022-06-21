@@ -175,7 +175,9 @@ The possible formats are `svg` and `png`.
 
 ## Add config item with in the list
 In order to build the UI integration store we need to provide it with list of provider integration.
-This part is made up of two parts and the first is to create credentials config and the second one is to add
+This part is made up of two parts:
+- Create credentials config
+- Add provider configuration to providers list
 provider configuration to providers list.
 
 ### Create credentials config
