@@ -22,6 +22,7 @@ module.exports = {
     sourceType: 'module',
   },
   rules: {
+    '@typescript-eslint/space-before-blocks': 'off',
     '@typescript-eslint/lines-between-class-members': 'off',
     'react/jsx-wrap-multilines': 'off',
     'react/jsx-filename-extension': 'off',

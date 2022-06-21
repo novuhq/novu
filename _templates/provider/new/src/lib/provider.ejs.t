@@ -10,7 +10,7 @@ import {
   ISendMessageSuccessResponse,
   I<%= PascalType %>Options,
   I<%= PascalType %>Provider,
-} from '@novu/node';
+} from '@novu/stateless';
 
 export class <%= PascalName %><%= PascalType %>Provider implements I<%= PascalType %>Provider {
   channelType = ChannelTypeEnum.<%= UpperType %> as ChannelTypeEnum.<%= UpperType %>;
