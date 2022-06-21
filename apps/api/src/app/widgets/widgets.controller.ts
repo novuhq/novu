@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { SessionInitializeBodyDto } from './dtos/session-initialize.dto';
@@ -14,6 +14,7 @@ import { MarkMessageAsSeen } from './usecases/mark-message-as-seen/mark-message-
 import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
+import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
 @Controller('/widgets')
 export class WidgetsController {
@@ -23,7 +24,7 @@ export class WidgetsController {
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
     private getOrganizationUsecase: GetOrganizationData,
-    private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   @Post('/session/initialize')
