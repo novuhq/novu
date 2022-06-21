@@ -32,6 +32,7 @@ interface ITemplateButtonProps {
   showDropZone?: boolean;
   dragging?: boolean;
   setActivePage?: (string) => void;
+  disabled?: boolean;
 }
 
 const useMenuStyles = createStyles((theme: MantineTheme) => {
@@ -78,11 +79,11 @@ export function ChannelButton({
   showDropZone = false,
   dragging = false,
   setActivePage = (page: string) => {},
+  disabled,
 }: ITemplateButtonProps) {
   const { readonly: readonlyEnv } = useEnvController();
   const { cx, classes, theme } = useStyles();
   const { classes: menuClasses } = useMenuStyles();
-  const disabled = action && !checked;
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled } : {};
   const [popoverOpened, setPopoverOpened] = useState(false);
@@ -250,7 +251,6 @@ const ErrorCircle = styled.div<{ dark: boolean }>`
 
 const IconWrapper = styled.div`
   padding-right: 15px;
-
   @media screen and (max-width: 1400px) {
     padding-right: 5px;
 
@@ -282,10 +282,10 @@ const StyledContentWrapper = styled.div`
 
 const Dropzone = styled.div<{ dark: boolean }>`
   position: absolute;
-  top: 0px;
-  bottom: 0px;
-  left: 0px;
-  right: 0px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   background: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
   color: ${({ dark }) => (dark ? colors.B98 : colors.B17)};
   border-radius: 7px;

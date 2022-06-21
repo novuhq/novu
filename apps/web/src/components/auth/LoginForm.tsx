@@ -9,7 +9,7 @@ import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
-import { API_ROOT } from '../../config';
+import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 
 type Props = {};
 
@@ -51,20 +51,23 @@ export function LoginForm({}: Props) {
 
   return (
     <>
-      <GithubButton
-        component="a"
-        href={`${API_ROOT}/v1/auth/github`}
-        my={30}
-        variant="white"
-        fullWidth
-        radius="md"
-        leftIcon={<Github />}
-        sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}
-      >
-        Sign In with Github
-      </GithubButton>
-      <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
-
+      {!IS_DOCKER_HOSTED && (
+        <>
+          <GithubButton
+            component="a"
+            href={`${API_ROOT}/v1/auth/github`}
+            my={30}
+            variant="white"
+            fullWidth
+            radius="md"
+            leftIcon={<Github />}
+            sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}
+          >
+            Sign In with Github
+          </GithubButton>
+          <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
+        </>
+      )}
       <form onSubmit={handleSubmit(onLogin)}>
         <Input
           error={errors.email?.message}
