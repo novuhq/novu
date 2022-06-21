@@ -42,7 +42,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/shared": "^0.4.0-alpha.12",
+    "@novu/shared": "^0.5.0-alpha.0",
     "axios": "^0.26.1",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
