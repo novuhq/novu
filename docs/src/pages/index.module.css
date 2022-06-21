@@ -8,6 +8,8 @@
   text-align: center;
   position: relative;
   overflow: hidden;
+  margin-top: 20px;
+  border-radius: 9px;
 }
 
 @media screen and (max-width: 966px) {

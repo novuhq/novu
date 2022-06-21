@@ -1,4 +1,5 @@
 {
   "label": "Platform",
-  "position": 2
+  "position": 2,
+  "collapsible": false
 }

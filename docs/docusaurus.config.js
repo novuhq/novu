@@ -1,5 +1,4 @@
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const codeTheme = require('./src/utils/prism');
 
 // With JSDoc @type annotations, IDEs can provide config autocompletion
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
@@ -11,10 +10,22 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
-    favicon: 'img/favicon-gradient.png',
+    favicon: 'img/favicon.ico',
     organizationName: 'novuhq', // Usually your GitHub org/user name.
     projectName: 'novu', // Usually your repo name.
-
+    plugins: [
+      'docusaurus-plugin-sass',
+      [
+        '@docusaurus/plugin-ideal-image',
+        {
+          quality: 80,
+          max: 1030, // max resized image's size.
+          min: 640, // min resized image's size. if original is lower, use that size.
+          steps: 2, // the max number of images generated between min and max (inclusive)
+          disableInDev: false,
+        },
+      ],
+    ],
     presets: [
       [
         '@docusaurus/preset-classic',
@@ -25,9 +36,10 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
+            breadcrumbs: false,
           },
           theme: {
-            customCss: require.resolve('./src/css/custom.css'),
+            customCss: require.resolve('./src/css/custom.scss'),
           },
         }),
       ],
@@ -36,65 +48,87 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
-        autoCollapseSidebarCategories: false,
+        image: '/img/social-preview.jpg',
+        algolia: {
+          appId: '5AG4YK0YDV',
+          apiKey: '67ce2424b44097b63a6f21a6615de538',
+          indexName: 'novu',
+          contextualSearch: true,
+        },
+        docs: {
+          sidebar: {
+            autoCollapseCategories: false,
+          },
+        },
         colorMode: {
           respectPrefersColorScheme: true,
         },
         navbar: {
           logo: {
             alt: 'Novu Logo',
-            src: 'img/logo-formerly-light-bg.svg',
-            srcDark: 'img/logo-formerly-dark-bg.svg',
-            width: 100,
-            height: 100,
+            src: 'img/logo-light-bg.svg',
+            srcDark: 'img/logo-dark-bg.svg',
+            href: '/docs',
+            target: '_self',
+            width: 102,
+            height: 32,
           },
           items: [
             {
-              type: 'doc',
-              docId: 'overview/introduction',
+              type: 'search',
               position: 'left',
-              label: 'Documentation',
-            },
-            {
-              href: 'https://discord.gg/9wcGSf22PM',
-              className: 'navbar-item-discord',
-              position: 'right',
             },
             {
               href: 'https://github.com/novuhq/novu',
               className: 'navbar-item-github',
+              label: 'GitHub',
+              position: 'right',
+            },
+            {
+              href: 'https://discord.gg/9wcGSf22PM',
+              className: 'navbar-item-discord',
+              label: 'Community',
               position: 'right',
             },
           ],
         },
         footer: {
           style: 'dark',
+          logo: {
+            alt: 'Novu',
+            src: 'img/logo-light-bg.svg',
+            srcDark: 'img/logo-dark-bg.svg',
+            href: '/docs',
+            width: 102,
+            height: 32,
+          },
           links: [
             {
-              title: 'Documentation',
               items: [
                 {
                   label: 'Documentation',
-                  to: '/docs/overview/introduction',
-                },
-              ],
-            },
-            {
-              title: 'Community',
-              items: [
-                {
-                  label: 'GitHub',
-                  href: 'https://github.com/novuhq/novu',
+                  to: '/docs',
                 },
                 {
-                  label: 'Discord',
+                  label: 'Providers',
+                  href: 'https://github.com/novuhq/novu/tree/main/providers',
+                },
+                {
+                  label: 'Contact Us',
                   href: 'https://discord.gg/9wcGSf22PM',
                 },
               ],
             },
             {
-              title: 'More',
               items: [
+                {
+                  label: 'Discord',
+                  href: 'https://discord.gg/9wcGSf22PM',
+                },
+                {
+                  label: 'Twitter',
+                  href: 'https://twitter.com/novuhq',
+                },
                 {
                   label: 'GitHub',
                   href: 'https://github.com/novuhq/novu',
@@ -102,11 +136,15 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
               ],
             },
           ],
-          copyright: `Copyright © ${new Date().getFullYear()} Novu.`,
+          copyright: `© ${new Date().getFullYear()} Novu`,
+        },
+        tableOfContents: {
+          minHeadingLevel: 2,
+          maxHeadingLevel: 2,
         },
         prism: {
-          theme: lightCodeTheme,
-          darkTheme: darkCodeTheme,
+          theme: codeTheme,
+          additionalLanguages: ['php', 'ruby', 'java'],
         },
       }),
   }
