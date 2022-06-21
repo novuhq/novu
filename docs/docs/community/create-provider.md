@@ -41,7 +41,7 @@ Choose the provider type.
 ```zsh
 yarn run v1.22.17
 $ npx hygen provider new
-? What type of provider is this? … 
+? What type of provider is this? …
 ❯ EMAIL
   SMS
 ```
@@ -69,17 +69,12 @@ export class ExampleProviderEmailProvider implements IEmailProvider {
     private config: {
       apiKey: string;
     }
-  ) {
-  }
+  ) {}
 
-  async sendMessage(
-    options: IEmailOptions
-  ): Promise<ISendMessageSuccessResponse> {
-
-
+  async sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse> {
     return {
       id: 'PLACEHOLDER',
-      date: 'PLACEHOLDER'
+      date: 'PLACEHOLDER',
     };
   }
 }
@@ -90,22 +85,20 @@ Template test case for `emailProvider`.
 ```ts
 import { ExampleProviderEmailProvider } from './exampleProvider.provider';
 
-test('should trigger exampleProvider library correctly', async () => {
-
-});
+test('should trigger exampleProvider library correctly', async () => {});
 ```
 
 ### Email Provider
 
-This is a code example of a basic email provider, with minimal fields required by our ``` IEmailProvider ``` interface.
+This is a code example of a basic email provider, with minimal fields required by our `IEmailProvider` interface.
 
- ```ts
-import { ChannelTypeEnum, IEmailProvider, IEmailOptions } from "@novu/stateless";
+```ts
+import { ChannelTypeEnum, IEmailProvider, IEmailOptions } from '@novu/stateless';
 
-import sendgridMail from "@sendgrid/mail";
+import sendgridMail from '@sendgrid/mail';
 
 export class SendgridEmailProvider implements IEmailProvider {
-  id = "sendgrid";
+  id = 'sendgrid';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   constructor(
@@ -126,25 +119,22 @@ export class SendgridEmailProvider implements IEmailProvider {
     });
   }
 }
- ```
+```
 
 ### SMS Provider
 
-This is a code example of a basic email provider, with minimal fields required by our ``` ISmsProvider ``` interface.
+This is a code example of a basic email provider, with minimal fields required by our `ISmsProvider` interface.
 
 ```typescript
-import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from "@novu/stateless";
+import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
-import { Twilio } from "twilio";
+import { Twilio } from 'twilio';
 
 export class TwilioSmsProvider implements ISmsProvider {
-  id = "twilio";
+  id = 'twilio';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
-  private twilioClient = new Twilio(
-    this.config.accountSid,
-    this.config.authToken
-  );
+  private twilioClient = new Twilio(this.config.accountSid, this.config.authToken);
   constructor(
     private config: {
       accountSid: string;
