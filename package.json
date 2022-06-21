@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "bootstrap": "npm run setup:dev",
-    "start": "npm run start:dev",
+    "start": "cross-env npm run start:dev",
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",

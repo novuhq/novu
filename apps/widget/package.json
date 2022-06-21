@@ -59,9 +59,9 @@
   },
   "scripts": {
     "start": "craco start",
-    "start:dev": "PORT=4500 pnpm start",
-    "start:cli:local": "pnpm start:shell:test & pnpm start:shell:embed & PORT=3500 pnpm start",
-    "start:test": "pnpm start:shell:test & pnpm start:shell:embed & NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 pnpm start",
+    "start:dev": "cross-env PORT=4500 pnpm start",
+    "start:cli:local": "pnpm start:shell:test & pnpm start:shell:embed & cross-env PORT=3500 pnpm start",
+    "start:test": "pnpm start:shell:test & pnpm start:shell:embed & cross-env NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 pnpm start",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "start:static:build": "pnpm envsetup:docker && http-server build -p 4500 --proxy http://localhost:4500?",
