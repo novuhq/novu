@@ -26,9 +26,7 @@ export class ClickatellSmsProvider implements ISmsProvider {
 
     const data = {
       to: [options.to],
-
       ...(this.config.isTwoWayIntegration && { from: options.from }),
-
       content: options.content,
       binary: true,
     };
