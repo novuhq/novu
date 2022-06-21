@@ -196,7 +196,7 @@ export function EmailMessageEditor({
                       <TextRowContent
                         key={blockIndex}
                         block={block}
-                        onTextChange={(text) => onBlockTextChanged(blockIndex, text)}
+                        onTextChange={(text) => onBlockTextChanged(index, text)}
                       />
                     );
                   }
@@ -206,8 +206,8 @@ export function EmailMessageEditor({
                         key={blockIndex}
                         block={block}
                         brandingColor={branding?.color}
-                        onUrlChange={(url) => onBlockUrlChanged(blockIndex, url)}
-                        onTextChange={(text) => onBlockTextChanged(blockIndex, text)}
+                        onUrlChange={(url) => onBlockUrlChanged(index, url)}
+                        onTextChange={(text) => onBlockTextChanged(index, text)}
                       />
                     );
                   }
