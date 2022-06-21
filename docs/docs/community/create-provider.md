@@ -219,7 +219,15 @@ you created on the previous step, logoFileName should be as it was on the adding
 In order to map internally the different providers credentials, we need to add a provider handler that located in 
 `apps/api/src/app/events/services/mail-service/handlers`. 
 
-For example here we see the sendgrid handler
+#### Newly create dependency that needed to be added.
+In the previous step you create standalone provider package that will be published to NPM, however currently in 
+your development it is yet published. In order to use it locally please go to the package.json 
+located in `apps/api/package.json` and add it manually to the dependencies: 
+`"@novu/<NEW_PROVIDER_NAME>": "^<VERSION>"`
+
+Please note thea the provider name and version are located in provider package.json you created earlier.  
+
+Example of sendgrid handler
 
 ```typescript
 import { ChannelTypeEnum } from '@novu/shared';
