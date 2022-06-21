@@ -28,7 +28,7 @@ export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const { readonly, environment } = useEnvController();
-  const [activeStep, setActiveStep] = useState<string>('');
+  const [activeStep, setActiveStep] = useState<number>(-1);
   const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
   const {
@@ -84,6 +84,7 @@ export default function TemplateEditorPage() {
             <ReactFlowProvider>
               <WorkflowEditorPage
                 activePage={activePage}
+                activeStep={activeStep}
                 setActiveStep={setActiveStep}
                 templateId={templateId}
                 setActivePage={setActivePage}

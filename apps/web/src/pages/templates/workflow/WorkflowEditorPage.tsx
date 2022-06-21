@@ -23,15 +23,16 @@ const WorkflowEditorPage = ({
   templateId,
   setActiveStep,
   activePage,
+  activeStep,
 }: {
   setActivePage: (string) => void;
   setActiveStep: any;
   templateId: string;
   activePage: ActivePageEnum;
+  activeStep: number;
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
-  const [selectedStep, setSelectedStep] = useState<number>(-1);
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
   const [dragging, setDragging] = useState(false);
 
@@ -55,9 +56,8 @@ const WorkflowEditorPage = ({
     if (!step) {
       return;
     }
-    setSelectedStep(index);
     setSelectedChannel(step.template.type);
-    setActiveStep(step._id || step.id);
+    setActiveStep(index);
   }, [selectedNodeId]);
 
   return (
@@ -113,8 +113,8 @@ const WorkflowEditorPage = ({
                   </EditTemplateButton>
                   <Divider my={30} />
                   {steps.map((i, index) => {
-                    return index === selectedStep ? (
-                      <StepActiveSwitch index={selectedStep} control={control} templateId={templateId} />
+                    return index === activeStep ? (
+                      <StepActiveSwitch index={activeStep} control={control} templateId={templateId} />
                     ) : null;
                   })}
                 </NavSection>
