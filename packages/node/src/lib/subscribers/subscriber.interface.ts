@@ -40,20 +40,7 @@ export interface ITriggerPayload {
     | undefined
     | IAttachmentOptions
     | IAttachmentOptions[]
-    | ITriggerPayloadProperty;
-}
-
-export interface ITriggerPayloadProperty {
-  attachments?: IAttachmentOptions[];
-  [key: string]:
-    | string
-    | string[]
-    | boolean
-    | number
-    | undefined
-    | IAttachmentOptions
-    | IAttachmentOptions[]
-    | ITriggerPayloadProperty;
+    | Record<string, unknown>;
 }
 
 export interface IAttachmentOptions {
