@@ -125,6 +125,11 @@ export function ActivitiesPage() {
               <Tag data-test-id="row-sms-channel">SMS</Tag>
             </Tooltip>
           ) : null}
+          {channel === ChannelTypeEnum.DIRECT ? (
+            <Tooltip label="Delivered on Direct Channel">
+              <Tag data-test-id="row-direct-channel">Direct</Tag>
+            </Tooltip>
+          ) : null}
         </>
       ),
     },
