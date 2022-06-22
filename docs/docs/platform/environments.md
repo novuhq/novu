@@ -2,11 +2,11 @@
 
 Novu runs all your requests in the context of an environment. By default, we will create 2 environments when your account was just created: Development, and production.
 
-#### Development environment
+## Development environment
 
 Used for testing purposes and validating notification changes prior to committing them to the production environment.
 
-#### Production
+## Production
 
 Will be your live/production environment, you cannot make changes to this environment templates directly. You will first have to make the changes in Development mode and then promote the to Production.
 

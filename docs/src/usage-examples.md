@@ -12,7 +12,7 @@ import FAQItem from '@site/src/components/FAQItem';
 
 To create your free managed or docker based Novu environment use our CLI tool:
 
-```
+```bash
 npx novu init
 ```
 

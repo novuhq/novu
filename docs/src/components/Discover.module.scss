@@ -49,7 +49,6 @@
   font-size: 20px;
 }
 
-
 .discoverItems {
   flex-basis: 290px;
 
@@ -76,7 +75,7 @@ html[data-theme='dark'] {
   .discoverItems {
     > li {
       a:hover {
-        color: #00D5FF;
+        color: #00d5ff;
       }
     }
   }
@@ -86,17 +85,16 @@ html[data-theme='dark'] {
   }
 }
 
-
 html[data-theme='light'] {
   .discoverItems {
     > li {
       a:hover {
-        color: #0055FF;
+        color: #0055ff;
       }
     }
   }
 
   .discoverIcon {
-    background: linear-gradient(180deg, #F2F2F2 0%, rgba(242, 242, 242, 0.6) 100%);
+    background: linear-gradient(180deg, #f2f2f2 0%, rgba(242, 242, 242, 0.6) 100%);
   }
 }
