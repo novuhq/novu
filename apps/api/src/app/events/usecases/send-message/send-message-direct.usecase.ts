@@ -71,7 +71,7 @@ export class SendMessageDirect extends SendMessageType {
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: directChannel.template._id,
-      channel: ChannelTypeEnum.SMS,
+      channel: ChannelTypeEnum.DIRECT,
       transactionId: command.transactionId,
       directWebhookUrl,
       content,
@@ -135,7 +135,7 @@ export class SendMessageDirect extends SendMessageType {
         'Subscriber does not have an active direct integration',
         command,
         notification,
-        LogCodeEnum.MISSING_SMS_INTEGRATION
+        LogCodeEnum.MISSING_DIRECT_INTEGRATION
       );
     }
   }
