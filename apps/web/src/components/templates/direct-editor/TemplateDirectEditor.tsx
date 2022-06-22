@@ -32,7 +32,7 @@ export function TemplateDirectEditor({
             styles={TextAreaStyles}
             {...field}
             data-test-id="directNotificationContent"
-            error={errors[`directMessages.${index}.template.content`]}
+            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}

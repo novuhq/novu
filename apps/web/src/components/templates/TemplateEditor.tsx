@@ -57,8 +57,7 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
       {activePage === ActivePageEnum.DIRECT && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === ChannelTypeEnum.DIRECT &&
-              (activeStep === message._id || activeStep === message.id) ? (
+            return message.template.type === ChannelTypeEnum.DIRECT && activeStep === index ? (
               <TemplateDirectEditor
                 key={index}
                 errors={errors}
