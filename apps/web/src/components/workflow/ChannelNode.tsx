@@ -1,5 +1,5 @@
-import React, { memo, useCallback } from 'react';
-import { Handle, Position, useStore } from 'react-flow-renderer';
+import React, { memo } from 'react';
+import { Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
 import { ChannelButton } from '../../design-system';
 
 interface NodeData {
@@ -18,9 +18,10 @@ interface NodeData {
 
 export default memo(
   ({ data, selected, id, dragging }: { data: NodeData; selected: boolean; id: string; dragging: boolean }) => {
-    const targetNode = useStore(useCallback((store) => store.nodeInternals.get(id), [id]));
-    const noChildStyle =
-      typeof targetNode?.isParent === 'undefined' ? { border: 'none', background: 'transparent' } : {};
+    const { getNode, getEdges, getNodes } = useReactFlow();
+    const thisNode = getNode(id);
+    const isParent = thisNode ? getOutgoers(thisNode, getNodes(), getEdges()).length : false;
+    const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
 
     return (
       <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
