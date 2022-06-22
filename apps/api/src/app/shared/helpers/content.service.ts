@@ -1,5 +1,4 @@
-import { ChannelTypeEnum, IMessageTemplate } from '@novu/shared';
-import { TriggerEventCommand } from '../../events/usecases/trigger-event';
+import { ChannelTypeEnum, INotificationTemplateStep } from '@novu/shared';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {
@@ -32,7 +31,7 @@ export class ContentService {
     return result;
   }
 
-  extractMessageVariables(messages: IMessageTemplate[]): string[] {
+  extractMessageVariables(messages: INotificationTemplateStep[]): string[] {
     const variables = [];
 
     for (const text of this.messagesTextIterator(messages)) {
@@ -44,15 +43,15 @@ export class ContentService {
     return Array.from(new Set(variables));
   }
 
-  extractSubscriberMessageVariables(messages: IMessageTemplate[]): string[] {
+  extractSubscriberMessageVariables(messages: INotificationTemplateStep[]): string[] {
     const variables = [];
 
-    const hasSmsMessage = !!messages.find((i) => i.type === ChannelTypeEnum.SMS);
+    const hasSmsMessage = !!messages.find((i) => i.template.type === ChannelTypeEnum.SMS);
     if (hasSmsMessage) {
       variables.push('phone');
     }
 
-    const hasEmailMessage = !!messages.find((i) => i.type === ChannelTypeEnum.EMAIL);
+    const hasEmailMessage = !!messages.find((i) => i.template.type === ChannelTypeEnum.EMAIL);
     if (hasEmailMessage) {
       variables.push('email');
     }
@@ -60,25 +59,25 @@ export class ContentService {
     return Array.from(new Set(variables));
   }
 
-  private *messagesTextIterator(messages: IMessageTemplate[]): Generator<string> {
+  private *messagesTextIterator(messages: INotificationTemplateStep[]): Generator<string> {
     for (const message of messages) {
-      if (message.type === ChannelTypeEnum.IN_APP) {
-        yield message.content as string;
+      if (message.template.type === ChannelTypeEnum.IN_APP) {
+        yield message.template.content as string;
 
-        if (message?.cta?.data?.url) {
-          yield message.cta.data.url;
+        if (message?.template.cta?.data?.url) {
+          yield message.template.cta.data.url;
         }
-      } else if (message.type === ChannelTypeEnum.SMS) {
-        yield message.content as string;
-      } else if (Array.isArray(message.content)) {
-        yield message.subject;
+      } else if (message.template.type === ChannelTypeEnum.SMS) {
+        yield message.template.content as string;
+      } else if (Array.isArray(message.template.content)) {
+        yield message.template.subject;
 
-        for (const block of message.content) {
+        for (const block of message.template.content) {
           yield block.url;
           yield block.content;
         }
-      } else if (typeof message.content === 'string') {
-        yield message.content;
+      } else if (typeof message.template.content === 'string') {
+        yield message.template.content;
       }
     }
   }
@@ -87,8 +86,8 @@ export class ContentService {
     return content.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
   }
 
-  buildMessageVariables(command: TriggerEventCommand, subscriberPayload): { [key: string]: any } {
-    const messageVariables: { [key: string]: any } = { ...command.payload };
+  buildMessageVariables(commandPayload: any, subscriberPayload): { [key: string]: any } {
+    const messageVariables: { [key: string]: any } = { ...commandPayload };
 
     return this.combineObjects(messageVariables, subscriberPayload, 'subscriber');
   }
