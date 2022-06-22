@@ -32,8 +32,6 @@ Cypress.Commands.add('initializeShellSession', (subscriberId, identifier, encryp
         {
           unseenBadgeSelector: '#unseen-badge-span',
           bellSelector: '#notification-bell',
-          backendUrl: 'evilCorpApiUrl',
-          socketUrl: 'evilCorpSocketUrl',
         },
         subscriber
       );
