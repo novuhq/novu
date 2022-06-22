@@ -22,7 +22,7 @@ export const useStyles = createStyles((theme) => {
       paddingLeft: '10px',
       backgroundColor: dark ? colors.B17 : colors.B98,
       borderRadius: '7px',
-      fontWeight: '700',
+      fontWeight: 700,
 
       '&:hover': {
         backgroundColor: dark ? colors.B20 : colors.BGLight,
