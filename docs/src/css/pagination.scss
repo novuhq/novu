@@ -17,6 +17,8 @@
       transition: text-decoration-color 0.2s;
       text-underline-offset: 4px;
       font-weight: 500;
+      display: flex;
+      align-items: baseline;
     }
   
     &.pagination-nav__link--next .pagination-nav__label::after,
@@ -28,14 +30,24 @@
       background-repeat: no-repeat;
     }
   
-    &.pagination-nav__link--next .pagination-nav__label::after {
-      transform: rotateZ(180deg);
-      margin-left: 8px;
-    }
+    &.pagination-nav__link--next {
+      .pagination-nav__label {
+        justify-content: flex-end;
+        &::after {
+          transform: rotateZ(180deg);
+          margin-left: 8px;
+        }
+      }
+    } 
   
-    &.pagination-nav__link--prev .pagination-nav__label::before {
-      margin-right: 8px;
-    }
+    &.pagination-nav__link--prev {
+      .pagination-nav__label {
+        justify-content: flex-start;
+        &::before {
+          margin-right: 8px;
+        }
+      }
+    } 
   }
 }
 
