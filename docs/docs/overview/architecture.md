@@ -5,8 +5,8 @@ OCL was built all around the idea of separation of concerns (SoC). The idea is t
 Let's deep dive into the building blocks of Novu's OCL approach.
 
 ## The mental model
-![Application Diagram - Frame 1](https://user-images.githubusercontent.com/8872447/168135722-2643eac4-8fcd-4de6-909b-02118faa1dc8.jpeg)
 
+![Application Diagram - Frame 1](https://user-images.githubusercontent.com/8872447/168135722-2643eac4-8fcd-4de6-909b-02118faa1dc8.jpeg)
 
 ## Templates
 

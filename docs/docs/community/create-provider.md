@@ -156,23 +156,25 @@ export class TwilioSmsProvider implements ISmsProvider {
 [GitHub Template](https://github.com/novuhq/provider-template)
 
 ## Add provider logos
-In order to present the provider in the Integration store we need logos in dark and light mode, 
-this step is desirable but not necessary you can add and we will check and update if necessary. 
+
+In order to present the provider in the Integration store we need logos in dark and light mode,
+this step is desirable but not necessary you can add and we will check and update if necessary.
 If you locate the logos you can add them to `apps/web/public/static/images/providers` while the name of the file
 is the name of the provider.
 The possible formats are `svg` and `png`.
 
-
 ## Add config item with in the list
+
 In order to build the UI integration store we need to provide it with list of provider integration.
 This part is made up of two parts:
+
 - Create credentials config
 - Add provider configuration to providers list
-provider configuration to providers list.
 
 ### Create credentials config
-We need to add the credentials that are needed in order to create integration with the provider. For example, if you 
-added email provider like SendGrid and the credentials are 'From', 'SenderName' and 'ApiKey' you will need to add 
+
+We need to add the credentials that are needed in order to create integration with the provider. For example, if you
+added email provider like SendGrid and the credentials are 'From', 'SenderName' and 'ApiKey' you will need to add
 a config object in `libs/shared/src/consts/providers/provider-credentials.ts` like below.
 
 ```typescript
@@ -186,12 +188,11 @@ export const sendgridConfig: IConfigCredentials[] = [
 ];
 ```
 
-
 ### Add provider to providers list
+
 Now we need to add the provider data to the list located at `libs/shared/src/consts/providers/channels/email.ts`.
-Note that the id is the provider's name, displayName is the provider's name in pascal case, credentials are the one 
-you created on the previous step, logoFileName should be as it was on the adding logo step 
-(with the format type included).
+Note that the id is the provider's name, displayName is the provider's name in pascal case, credentials are the one
+you created on the previous step, logoFileName should be as it was on the adding logo step (with the format type included).
 
 ```typescript
  {
@@ -204,21 +205,19 @@ you created on the previous step, logoFileName should be as it was on the adding
 }
 ```
 
-
 ## Add provider handler in the API
 
-### Adding the provider depepndecy to the API
-In the previous step, you created a standalone provider package that will be published to NPM, however currently in 
-your development environment it is not yet published. In order to use it locally please go to the `package.json` 
-located in `apps/api/package.json` and add it manually to the dependencies list: 
-`"@novu/<NEW_PROVIDER_NAME>": "^<VERSION>"`
+### Adding the provider dependency to the API
+
+In the previous step, you created a standalone provider package that will be published to NPM,
+however currently in your development environment it is not yet published. In order to use it locally please go to the `package.json` located in `apps/api/package.json` and add it manually to the dependencies list: `"@novu/<NEW_PROVIDER_NAME>": "^<VERSION>"`
 
 Please note that the provider name and version can be found from the provider `package.json` you created earlier.
 After adding the dependency run `npm run setup:project` from the root of the monorepo. so, it can create the required symlinks for the newly created package.
 
 ### Create provider handler
-In order to map internally the different providers credentials, we need to add a provider handler that located in 
-`apps/api/src/app/events/services/mail-service/handlers`. 
+
+In order to map internally the different providers credentials, we need to add a provider handler that located in `apps/api/src/app/events/services/mail-service/handlers`.
 
 Example of SendGrid handler
 
@@ -241,6 +240,5 @@ export class SendgridHandler extends BaseHandler {
 ```
 
 ### Add handler to factory
-The last step is to initialize the handler in the factory located in 
-`apps/api/src/app/events/services/mail-service/mail.factory.ts`
 
+The last step is to initialize the handler in the factory located in `apps/api/src/app/events/services/mail-service/mail.factory.ts`

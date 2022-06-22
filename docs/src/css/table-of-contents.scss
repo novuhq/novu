@@ -40,12 +40,12 @@
   }
 
   &__link {
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 1.25;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.25;
 
     &--active {
-      color: inherit
+      color: inherit;
     }
   }
 }
@@ -62,7 +62,7 @@ html[data-theme='dark'] {
 
     &__link {
       color: $color-white;
-  
+
       &:hover {
         color: $color-primary-blue;
       }
@@ -82,10 +82,10 @@ html[data-theme='light'] {
 
     &__link {
       color: $color-gray-4;
-  
+
       &:hover {
         color: $color-secondary-purple;
       }
     }
   }
-} 
+}

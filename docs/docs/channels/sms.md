@@ -2,6 +2,6 @@
 
 :::info
 
-This document is still under construction 
+This document is still under construction
 
 :::
