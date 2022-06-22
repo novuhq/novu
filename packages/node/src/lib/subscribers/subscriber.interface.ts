@@ -39,7 +39,21 @@ export interface ITriggerPayload {
     | number
     | undefined
     | IAttachmentOptions
-    | IAttachmentOptions[];
+    | IAttachmentOptions[]
+    | ITriggerPayloadProperty;
+}
+
+export interface ITriggerPayloadProperty {
+  attachments?: IAttachmentOptions[];
+  [key: string]:
+    | string
+    | string[]
+    | boolean
+    | number
+    | undefined
+    | IAttachmentOptions
+    | IAttachmentOptions[]
+    | ITriggerPayloadProperty;
 }
 
 export interface IAttachmentOptions {
