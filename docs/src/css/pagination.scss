@@ -7,18 +7,18 @@
   &__link {
     border: none;
     padding: 0;
-    
+
     .pagination-nav__sublabel {
       margin-bottom: 8px;
     }
-  
+
     .pagination-nav__label {
       text-decoration: underline 1px transparent;
       transition: text-decoration-color 0.2s;
       text-underline-offset: 4px;
       font-weight: 500;
     }
-  
+
     &.pagination-nav__link--next .pagination-nav__label::after,
     &.pagination-nav__link--prev .pagination-nav__label::before {
       width: 16px;
@@ -27,12 +27,12 @@
       content: '';
       background-repeat: no-repeat;
     }
-  
+
     &.pagination-nav__link--next .pagination-nav__label::after {
       transform: rotateZ(180deg);
       margin-left: 8px;
     }
-  
+
     &.pagination-nav__link--prev .pagination-nav__label::before {
       margin-right: 8px;
     }
@@ -42,7 +42,7 @@
 html[data-theme='dark'] {
   .pagination-nav {
     border-top: 1px dashed $color-gray-4;
-  
+
     &__link {
       &:hover {
         .pagination-nav__label {
