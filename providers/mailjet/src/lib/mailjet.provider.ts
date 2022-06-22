@@ -6,6 +6,7 @@ import {
 } from '@novu/stateless';
 import Client, { Email } from 'node-mailjet';
 import { MailjetResponse } from './mailjet-response.interface';
+import { MailjetConfig } from './mailjet.config';
 
 const MAILJET_API_VERSION = 'v3.1';
 
@@ -15,11 +16,7 @@ export class MailjetEmailProvider implements IEmailProvider {
 
   private mailjetClient: Email.Client;
   constructor(
-    private config: {
-      apiKey: string;
-      apiSecret: string;
-      from: string;
-    }
+    private readonly config: MailjetConfig
   ) {
     this.mailjetClient = Client.connect(config.apiKey, config.apiSecret);
   }

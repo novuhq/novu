@@ -5,6 +5,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { ServerClient, Models } from 'postmark';
+import { PostmarkConfig } from './postmark.config';
 
 export class PostmarkEmailProvider implements IEmailProvider {
   id = 'postmark';
@@ -12,10 +13,7 @@ export class PostmarkEmailProvider implements IEmailProvider {
   private client: ServerClient;
 
   constructor(
-    private config: {
-      apiKey: string;
-      from: string;
-    }
+    private readonly config: PostmarkConfig
   ) {
     this.client = new ServerClient(this.config.apiKey);
   }

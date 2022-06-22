@@ -5,6 +5,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import nodemailer, { Transporter } from 'nodemailer';
+import { NodemailerConfig } from './nodemailer.config';
 
 export class NodemailerProvider implements IEmailProvider {
   id = 'nodemailer';
@@ -13,16 +14,7 @@ export class NodemailerProvider implements IEmailProvider {
 
   private transports: Transporter;
 
-  constructor(
-    private config: {
-      from: string;
-      host: string;
-      port: number;
-      secure: boolean;
-      user: string;
-      password: string;
-    }
-  ) {
+  constructor(private readonly config: NodemailerConfig) {
     this.transports = nodemailer.createTransport({
       host: this.config.host,
       port: this.config.port,

@@ -6,6 +6,7 @@ import {
 } from '@novu/stateless';
 
 import { MailService } from '@sendgrid/mail';
+import { SendgridConfig } from './sendgrid.config';
 
 export class SendgridEmailProvider implements IEmailProvider {
   id = 'sendgrid';
@@ -13,10 +14,7 @@ export class SendgridEmailProvider implements IEmailProvider {
   private sendgridMail: MailService;
 
   constructor(
-    private config: {
-      apiKey: string;
-      from: string;
-    }
+    private readonly config: SendgridConfig
   ) {
     this.sendgridMail = new MailService();
     this.sendgridMail.setApiKey(this.config.apiKey);

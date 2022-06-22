@@ -6,6 +6,7 @@ import {
 } from '@novu/stateless';
 
 import Vonage from '@vonage/server-sdk';
+import { NexmoSmsConfig } from './nexmo.config';
 
 export class NexmoSmsProvider implements ISmsProvider {
   id = 'nexmo';
@@ -13,11 +14,7 @@ export class NexmoSmsProvider implements ISmsProvider {
   private vonageClient: Vonage;
 
   constructor(
-    private config: {
-      apiKey: string;
-      apiSecret: string;
-      from: string;
-    }
+    private readonly config: NexmoSmsConfig
   ) {
     this.vonageClient = new Vonage({
       apiKey: config.apiKey,

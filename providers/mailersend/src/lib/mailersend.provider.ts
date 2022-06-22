@@ -6,16 +6,14 @@ import {
 } from '@novu/stateless';
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
+import { MailersendConfig } from './mailersend.config';
+
 export class MailersendEmailProvider implements IEmailProvider {
   readonly id = 'mailersend';
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private mailerSend: MailerSend;
 
-  constructor(
-    private config: {
-      apiKey: string;
-    }
-  ) {
+  constructor(private readonly config: MailersendConfig) {
     this.mailerSend = new MailerSend({ api_key: this.config.apiKey });
   }
 

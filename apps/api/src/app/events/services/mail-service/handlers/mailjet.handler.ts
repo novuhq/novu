@@ -1,3 +1,4 @@
+import { MailjetConfig } from '@novu/mailjet/build/main/lib/mailjet.config';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
 import { MailjetEmailProvider } from '@novu/mailjet';
@@ -8,7 +9,7 @@ export class MailjetHandler extends BaseHandler {
     super('mailjet', ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from: string) {
-    const config: { apiKey: string; apiSecret: string; from: string } = {
+    const config: MailjetConfig = {
       from,
       apiKey: credentials.apiKey,
       apiSecret: credentials.secretKey,

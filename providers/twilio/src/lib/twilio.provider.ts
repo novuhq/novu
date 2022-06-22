@@ -6,6 +6,7 @@ import {
 } from '@novu/stateless';
 
 import { Twilio } from 'twilio';
+import { TwilioConfig } from './twilio.config';
 
 export class TwilioSmsProvider implements ISmsProvider {
   id = 'twilio';
@@ -13,11 +14,7 @@ export class TwilioSmsProvider implements ISmsProvider {
   private twilioClient: Twilio;
 
   constructor(
-    private config: {
-      accountSid: string;
-      authToken: string;
-      from: string;
-    }
+    private readonly config: TwilioConfig
   ) {
     this.twilioClient = new Twilio(config.accountSid, config.authToken);
   }

@@ -7,6 +7,7 @@ import {
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import Client from 'mailgun.js/dist/lib/client';
+import { MailgunConfig } from './mailgun.config';
 
 export class MailgunEmailProvider implements IEmailProvider {
   id = 'mailgun';
@@ -16,12 +17,7 @@ export class MailgunEmailProvider implements IEmailProvider {
   private mailgunClient: Client;
 
   constructor(
-    private config: {
-      apiKey: string;
-      username: string;
-      domain: string;
-      from: string;
-    }
+    private readonly config: MailgunConfig
   ) {
     const mailgun = new Mailgun(formData);
 

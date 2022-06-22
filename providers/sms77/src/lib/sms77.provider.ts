@@ -6,6 +6,7 @@ import {
 } from '@novu/stateless';
 
 import Sms77Client, { SmsJsonResponse, SmsParams } from 'sms77-client';
+import { Sms77Config } from './sms77.config';
 
 if (!globalThis.fetch) {
   // eslint-disable-next-line global-require
@@ -18,10 +19,7 @@ export class Sms77SmsProvider implements ISmsProvider {
   private sms77Client: Sms77Client;
 
   constructor(
-    private config: {
-      apiKey: string;
-      from?: string;
-    }
+    private readonly config: Sms77Config
   ) {
     this.sms77Client = new Sms77Client(config.apiKey, 'Novu');
   }

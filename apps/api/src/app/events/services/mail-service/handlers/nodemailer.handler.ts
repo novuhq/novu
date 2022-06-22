@@ -1,3 +1,4 @@
+import { NodemailerConfig } from '@novu/nodemailer/build/main/lib/nodemailer.config';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
 import { NodemailerProvider } from '@novu/nodemailer';
@@ -8,14 +9,7 @@ export class NodemailerHandler extends BaseHandler {
     super('nodemailer', ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from: string) {
-    const config: {
-      from: string;
-      host: string;
-      port: number;
-      secure: boolean;
-      user: string;
-      password: string;
-    } = {
+    const config: NodemailerConfig = {
       from,
       host: credentials.host,
       port: Number(credentials.port),

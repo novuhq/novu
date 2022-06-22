@@ -1,3 +1,4 @@
+import { SendgridConfig } from '@novu/sendgrid/build/main/lib/sendgrid.config';
 import { ChannelTypeEnum } from '@novu/shared';
 import { SendgridEmailProvider } from '@novu/sendgrid';
 import { BaseHandler } from './base.handler';
@@ -8,7 +9,7 @@ export class SendgridHandler extends BaseHandler {
   }
 
   buildProvider(credentials, from: string) {
-    const config: { apiKey: string; from: string } = { apiKey: credentials.apiKey, from };
+    const config: SendgridConfig = { apiKey: credentials.apiKey, from };
 
     this.provider = new SendgridEmailProvider(config);
   }

@@ -1,3 +1,4 @@
+import { PlivoConfig } from '@novu/plivo/build/main/lib/plivo.config';
 import { ChannelTypeEnum } from '@novu/node';
 import { PlivoSmsProvider } from '@novu/plivo';
 import { ICredentials } from '@novu/dal';
@@ -8,11 +9,7 @@ export class PlivoHandler extends BaseSmsHandler {
     super('plivo', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    const config: {
-      accountSid: string;
-      authToken: string;
-      from: string;
-    } = { accountSid: credentials.accountSid, authToken: credentials.token, from: credentials.from };
+    const config: PlivoConfig = { accountSid: credentials.accountSid, authToken: credentials.token, from: credentials.from };
 
     this.provider = new PlivoSmsProvider(config);
   }

@@ -7,6 +7,7 @@ import {
 
 import mailchimp from '@mailchimp/mailchimp_transactional';
 import { MandrillInterface } from './mandrill.interface';
+import { MandrillConfig } from './mandrill.config';
 
 export class MandrillProvider implements IEmailProvider {
   id = 'mandrill';
@@ -15,10 +16,7 @@ export class MandrillProvider implements IEmailProvider {
   private transporter: MandrillInterface;
 
   constructor(
-    private config: {
-      apiKey: string;
-      from: string;
-    }
+    private readonly config: MandrillConfig
   ) {
     this.transporter = mailchimp(this.config.apiKey);
   }

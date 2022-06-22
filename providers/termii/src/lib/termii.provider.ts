@@ -5,6 +5,7 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import { SmsParams, MessageChannel, SmsJsonResponse, AnyObject } from '../types/sms';
+import { TermiiConfig } from './termii.config';
 
 if (!globalThis.fetch) {
   // eslint-disable-next-line global-require
@@ -19,11 +20,7 @@ export class TermiiSmsProvider implements ISmsProvider {
   id='termii';
 
   constructor(
-    private config: {
-      apiKey: string;
-      from?: string;
-      channel: MessageChannel;
-    }
+    private readonly config: TermiiConfig
   ) {
   }
 

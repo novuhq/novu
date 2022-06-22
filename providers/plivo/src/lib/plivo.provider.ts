@@ -6,6 +6,7 @@ import {
 } from '@novu/stateless';
 
 import * as plivo from 'plivo';
+import { PlivoConfig } from './plivo.config';
 
 export class PlivoSmsProvider implements ISmsProvider {
   id = 'plivo';
@@ -13,11 +14,7 @@ export class PlivoSmsProvider implements ISmsProvider {
   private plivoClient: plivo.Client;
 
   constructor(
-    private config: {
-      accountSid: string;
-      authToken: string;
-      from: string;
-    }
+    private readonly config: PlivoConfig
   ) {
     this.plivoClient = new plivo.Client(config.accountSid, config.authToken);
   }

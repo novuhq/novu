@@ -10,6 +10,7 @@ import {
   TransactionalEmailsApi,
   TransactionalEmailsApiApiKeys,
 } from '@sendinblue/client';
+import { SendinblueConfig } from './sendinblue.config';
 
 export class SendinblueEmailProvider implements IEmailProvider {
   id = 'sendinblue';
@@ -17,9 +18,7 @@ export class SendinblueEmailProvider implements IEmailProvider {
   private transactionalEmailsApi: TransactionalEmailsApi;
 
   constructor(
-    private config: {
-      apiKey: string;
-    }
+    private readonly config: SendinblueConfig
   ) {
     this.transactionalEmailsApi = new TransactionalEmailsApi();
     this.transactionalEmailsApi.setApiKey(

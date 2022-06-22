@@ -6,7 +6,7 @@ import {
 } from '@novu/stateless';
 
 import Telnyx from 'telnyx';
-
+import { TelnyxConfig } from './telnyx.config';
 import { ITelnyxCLient } from './telnyx.interface';
 
 export class TelnyxSmsProvider implements ISmsProvider {
@@ -14,13 +14,7 @@ export class TelnyxSmsProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private telnyxClient: ITelnyxCLient;
 
-  constructor(
-    private config: {
-      apiKey: string;
-      from: string;
-      messageProfileId: string;
-    }
-  ) {
+  constructor(private readonly config: TelnyxConfig) {
     this.telnyxClient = Telnyx(config.apiKey);
   }
 
