@@ -25,7 +25,7 @@ export function InAppEditorBlock({
   }, [ref]);
 
   useEffect(() => {
-    let showPlaceHolder = !value;
+    let showPlaceHolder = value.length === 0;
 
     if (value === '<br>') showPlaceHolder = true;
 

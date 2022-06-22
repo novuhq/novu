@@ -10,6 +10,9 @@ import { useTemplateController } from '../../../components/templates/use-templat
 import { StepActiveSwitch } from './StepActiveSwitch';
 import { useEnvController } from '../../../store/use-env-controller';
 import { When } from '../../../components/utils/When';
+import { Trash } from '../../../design-system/icons';
+import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
+import { ActivePageEnum } from '../editor/TemplateEditorPage';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -19,11 +22,13 @@ const WorkflowEditorPage = ({
   setActivePage,
   templateId,
   setActiveStep,
+  activePage,
   activeStep,
 }: {
   setActivePage: (string) => void;
   setActiveStep: any;
   templateId: string;
+  activePage: ActivePageEnum;
   activeStep: number;
 }) => {
   const { colorScheme } = useMantineColorScheme();
@@ -35,7 +40,8 @@ const WorkflowEditorPage = ({
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
-  const { addStep, control, watch, errors } = useTemplateController(templateId);
+  const { addStep, control, watch, errors, setValue, setIsDirty } = useTemplateController(templateId);
+  const { isLoading, isUpdateLoading, loadingEditTemplate, isDirty } = useTemplateController(templateId);
   const steps = watch('steps');
   const { readonly } = useEnvController();
 
@@ -58,6 +64,13 @@ const WorkflowEditorPage = ({
     <div style={{ minHeight: 500 }}>
       <Grid gutter={0} grow style={{ minHeight: 500 }}>
         <Grid.Col md={9} sm={6}>
+          <TemplatePageHeader
+            loading={isLoading || isUpdateLoading}
+            disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+            templateId={templateId}
+            setActivePage={setActivePage}
+            activePage={activePage}
+          />
           <FlowEditor
             setActivePage={setActivePage}
             dragging={dragging}
@@ -105,6 +118,26 @@ const WorkflowEditorPage = ({
                     ) : null;
                   })}
                 </NavSection>
+                <NavSection>
+                  <DeleteStepButton
+                    mt={10}
+                    variant="outline"
+                    data-test-id="delete-step-button"
+                    onClick={() => {
+                      const newSteps = steps.filter((step) => step._id !== selectedNodeId);
+                      setValue('steps', newSteps);
+                      setSelectedNodeId('');
+                      setIsDirty(true);
+                    }}
+                  >
+                    <Trash
+                      style={{
+                        marginRight: '5px',
+                      }}
+                    />
+                    Delete Step
+                  </DeleteStepButton>
+                </NavSection>
               </StyledNav>
             ) : (
               <StyledNav data-test-id="drag-side-menu">
@@ -149,6 +182,7 @@ export default WorkflowEditorPage;
 const SideBarWrapper = styled.div<{ dark: boolean }>`
   background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)};
   height: 100%;
+  position: relative;
 `;
 
 const StyledNav = styled.div`
@@ -167,4 +201,17 @@ const ButtonWrapper = styled.div`
 
 const EditTemplateButton = styled(Button)`
   background-color: transparent;
+`;
+
+const DeleteStepButton = styled(Button)`
+  position: absolute;
+  bottom: 15px;
+  left: 20px;
+  right: 20px;
+  background: rgba(229, 69, 69, 0.15);
+  color: ${colors.error};
+  box-shadow: none;
+  :hover {
+    background: rgba(229, 69, 69, 0.15);
+  }
 `;

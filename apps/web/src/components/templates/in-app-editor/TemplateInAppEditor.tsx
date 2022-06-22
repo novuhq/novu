@@ -10,7 +10,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
 
   return (
     <>
-      <Container sx={{ maxWidth: '400px', paddingLeft: '0px', margin: '0 auto 15px auto' }}>
+      <Container sx={{ maxWidth: '450px', paddingLeft: '0px', margin: '0 auto 15px auto' }}>
         <Group grow direction="column">
           <Controller
             name={`steps.${index}.template.cta.data.url` as any}

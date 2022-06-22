@@ -1,13 +1,10 @@
 import styled, { css } from 'styled-components';
 import { IMessage } from '@novu/shared';
 import moment from 'moment';
-import { shadows } from '../../../shared/config/shadows';
-import { colors } from '../../../shared/config/colors';
 import { DotsHorizontal } from '../../../shared/icons';
-import React, { useContext } from 'react';
-import { NovuContext } from '../../../store/novu-provider.context';
-import { ColorScheme } from '../../../index';
-import { ThemeContext } from '../../../store/novu-theme.context';
+import React from 'react';
+import { INovuTheme } from '../../../store/novu-theme.context';
+import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
 
 export function NotificationListItem({
   notification,
@@ -16,11 +13,11 @@ export function NotificationListItem({
   notification: IMessage;
   onClick: (notification: IMessage) => void;
 }) {
-  const { colorScheme } = useContext(ThemeContext);
+  const { theme: novuTheme } = useNovuThemeProvider();
 
   return (
     <ItemWrapper
-      colorScheme={colorScheme}
+      novuTheme={novuTheme}
       data-test-id="notification-list-item"
       unseen={!notification.seen}
       onClick={() => onClick(notification)}
@@ -33,7 +30,9 @@ export function NotificationListItem({
           }}
         />
         <div>
-          <TimeMark unseen={!notification.seen}>{moment(notification.createdAt).fromNow()}</TimeMark>
+          <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
+            {moment(notification.createdAt).fromNow()}
+          </TimeMark>
         </div>
       </div>
       <SettingsActionWrapper style={{ display: 'none' }}>
@@ -50,9 +49,10 @@ const SettingsActionWrapper = styled.div`
   color: ${({ theme }) => theme.colors.secondaryFontColor};
 `;
 
-const unseenNotificationStyles = css<{ colorScheme: ColorScheme }>`
-  background: ${({ colorScheme }) => (colorScheme === 'light' ? colors.white : colors.B20)};
-  box-shadow: ${({ colorScheme }) => (colorScheme === 'light' ? shadows.medium : shadows.dark)};
+const unseenNotificationStyles = css<{ novuTheme: INovuTheme }>`
+  background: ${({ novuTheme }) => novuTheme?.notificationItem?.unseen?.background};
+  box-shadow: ${({ novuTheme }) => novuTheme?.notificationItem?.unseen?.boxShadow};
+  color: ${({ novuTheme }) => novuTheme?.notificationItem?.unseen?.fontColor};
   font-weight: 700;
 
   &:before {
@@ -64,16 +64,17 @@ const unseenNotificationStyles = css<{ colorScheme: ColorScheme }>`
     bottom: 0;
     width: 5px;
     border-radius: 7px 0 0 7px;
-    background: ${({ theme }) => theme.colors.main};
+    background: ${({ novuTheme }) => novuTheme?.notificationItem?.unseen?.notificationItemBeforeBrandColor};
   }
 `;
-const seenNotificationStyles = css`
-  color: ${colors.B60};
+const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`
+  color: ${({ novuTheme }) => novuTheme?.notificationItem?.seen?.fontColor};
+  background: ${({ novuTheme }) => novuTheme?.notificationItem?.seen?.background};
   font-weight: 400;
   font-size: 14px;
 `;
 
-const ItemWrapper = styled.div<{ unseen?: boolean; colorScheme: ColorScheme }>`
+const ItemWrapper = styled.div<{ unseen?: boolean; novuTheme: INovuTheme }>`
   padding: 14px 15px 14px 15px;
   position: relative;
   display: flex;
@@ -82,7 +83,6 @@ const ItemWrapper = styled.div<{ unseen?: boolean; colorScheme: ColorScheme }>`
   align-items: center;
   border-radius: 7px;
   margin: 10px 15px;
-  background: ${({ colorScheme }) => (colorScheme === 'light' ? colors.B98 : colors.B17)};
 
   &:hover {
     cursor: pointer;
@@ -93,11 +93,14 @@ const ItemWrapper = styled.div<{ unseen?: boolean; colorScheme: ColorScheme }>`
   }}
 `;
 
-const TimeMark = styled.div<{ unseen?: boolean }>`
+const TimeMark = styled.div<{ novuTheme: INovuTheme; unseen?: boolean }>`
   min-width: 55px;
   font-size: 12px;
   font-weight: 400;
   opacity: 0.5;
   line-height: 14.4px;
-  color: ${({ unseen, theme }) => (unseen ? colors.B60 : theme.colors.secondaryFontColor)};
+  color: ${({ unseen, novuTheme }) =>
+    unseen
+      ? novuTheme?.notificationItem?.unseen?.timeMarkFontColor
+      : novuTheme?.notificationItem?.seen?.timeMarkFontColor};
 `;

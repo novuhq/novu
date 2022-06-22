@@ -1,17 +1,16 @@
-# Outgoing Communication Layer (OCL)
+# Architecture
 
 OCL was built all around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is key for easy maintenance and integration of new functionality.
 
 Let's deep dive into the building blocks of Novu's OCL approach.
 
 ## The mental model
-![Application Diagram - Frame 1](https://user-images.githubusercontent.com/8872447/168135722-2643eac4-8fcd-4de6-909b-02118faa1dc8.jpeg)
 
+![Application Diagram - Frame 1](https://user-images.githubusercontent.com/8872447/168135722-2643eac4-8fcd-4de6-909b-02118faa1dc8.jpeg)
 
 ## Templates
 
 Templates are the blueprints for all notifications in Novu. They provide the base configurations for each message. A message is tied to a specific channel, for which a content template is provided, code rules and filters, priorities, and other metadata that will affect the delivery of a specific message.
-
 
 ## Environments
 
@@ -35,8 +34,8 @@ The responsibility of each provider is to send the notification to the end-recip
 
 ## Subscribers
 
-Are the recipients of notifications, a subscriber will contain the delivery details such as: Email address, phone number, push tokens and etc... 
-Populating a subscriber with data can be done using our server side SDK. Read more about it [here](/docs/platform/subscribers).  
+Are the recipients of notifications, a subscriber will contain the delivery details such as: Email address, phone number, push tokens and etc...
+Populating a subscriber with data can be done using our server side SDK. Read more about it [here](/docs/platform/subscribers).
 
 ## Trigger
 
@@ -50,4 +49,4 @@ This is the unit that is responsible for reading the configurations of the templ
 
 ## Template and Integration Stores
 
-Responsible for storing the configurations of all the providers and templates during the runtime of the API. 
+Responsible for storing the configurations of all the providers and templates during the runtime of the API.

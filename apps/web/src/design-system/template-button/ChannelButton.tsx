@@ -158,7 +158,11 @@ export function ChannelButton({
                   opened={showDotMenu}
                   control={
                     <ActionIcon variant="transparent" data-test-id="step-actions-dropdown">
-                      <DotsHorizontal />
+                      <DotsHorizontal
+                        style={{
+                          color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
+                        }}
+                      />
                     </ActionIcon>
                   }
                 >

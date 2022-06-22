@@ -55,6 +55,16 @@ export function EmailMessageEditor({
     setBlocks([...blocks]);
   }
 
+  function onBlockTextChanged(blockIndex: number, content: string) {
+    blocks[blockIndex].content = content;
+    setBlocks([...blocks]);
+  }
+
+  function onBlockUrlChanged(blockIndex: number, url: string) {
+    blocks[blockIndex].url = url;
+    setBlocks([...blocks]);
+  }
+
   function onHoverElement(e) {
     setTop(e.top + e.height);
   }
@@ -186,10 +196,7 @@ export function EmailMessageEditor({
                       <TextRowContent
                         key={blockIndex}
                         block={block}
-                        onTextChange={(text) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.content = text;
-                        }}
+                        onTextChange={(text) => onBlockTextChanged(index, text)}
                       />
                     );
                   }
@@ -199,14 +206,8 @@ export function EmailMessageEditor({
                         key={blockIndex}
                         block={block}
                         brandingColor={branding?.color}
-                        onUrlChange={(url) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.url = url;
-                        }}
-                        onTextChange={(text) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.content = text;
-                        }}
+                        onUrlChange={(url) => onBlockUrlChanged(index, url)}
+                        onTextChange={(text) => onBlockTextChanged(index, text)}
                       />
                     );
                   }

@@ -11,7 +11,7 @@ Novu provides you a set of API's and components to create rich customized notifi
 
 After creating your Novu Platform account and creating your first notification template it's time to connect the In-app channel to your application.
 
-```
+```bash
 npm install @novu/notification-center
 ```
 
@@ -36,6 +36,5 @@ function Header() {
 ```
 
 That's it! Now you're ready to send your first notifications using Novu.
-
 
 Not using React? Checkout the [iFrame Embed docs](/docs/notification-center/iframe-embed)

@@ -11,7 +11,7 @@ export default createStyles((theme: MantineTheme) => {
       boxShadow: dark ? shadows.dark : shadows.medium,
       padding: '12px 15px',
       fontSize: '14px',
-      fontWeight: '400',
+      fontWeight: 400,
     },
     arrow: {
       backgroundColor: dark ? colors.B20 : theme.white,
