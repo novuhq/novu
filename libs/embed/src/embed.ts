@@ -5,8 +5,7 @@
 import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
-import { API_URL, IFRAME_URL } from './shared/resources';
-import { SHOW_WIDGET } from './shared/eventTypes';
+import { IFRAME_URL } from './shared/resources';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
@@ -14,7 +13,9 @@ const IFRAME_ID = 'novu-iframe-element';
 class Novu {
   public clientId: string | unknown;
 
-  private backendUrl: string;
+  private backendUrl?: string = '';
+
+  private socketUrl?: string = '';
 
   private debugMode: boolean;
 
@@ -47,7 +48,6 @@ class Novu {
 
   init = (
     clientId: string,
-    backendUrl: string,
     selectorOrOptions: string | IOptions,
     data: { subscriberId: string; lastName: string; firstName: string; email: string; subscriberHash?: string }
   ) => {
@@ -58,10 +58,11 @@ class Novu {
       this.selector = selectorOrOptions.bellSelector;
       this.unseenBadgeSelector = selectorOrOptions.unseenBadgeSelector;
       this.options = selectorOrOptions;
+      this.backendUrl = selectorOrOptions.backendUrl;
+      this.socketUrl = selectorOrOptions.socketUrl;
     }
 
     this.clientId = clientId;
-    this.backendUrl = backendUrl;
     this.initializeIframe(clientId, data);
     this.mountIframe();
     const button = document.querySelector(this.selector) as HTMLButtonElement;
@@ -185,7 +186,7 @@ class Novu {
     this.domainAllowed = false;
   };
 
-  initializeIframe = (clientId: string, backendUrl: string, options: any) => {
+  initializeIframe = (clientId: string, options: any) => {
     if (!document.getElementById(IFRAME_ID)) {
       const iframe = document.createElement('iframe');
       iframe.onload = () => {
@@ -251,6 +252,7 @@ class Novu {
             value: {
               clientId: this.clientId,
               backendUrl: this.backendUrl,
+              socketUrl: this.socketUrl,
               topHost: window.location.host,
               data: options,
             },
@@ -260,9 +262,6 @@ class Novu {
       };
 
       iframe.src = `${IFRAME_URL}/${clientId}?`;
-      if (backendUrl) {
-        iframe.src = iframe.src + 'backendUrl=' + encodeURIComponent(backendUrl);
-      }
       iframe.id = IFRAME_ID;
       iframe.style.border = 'none';
       (iframe as any).crossorigin = 'anonymous';
@@ -341,6 +340,8 @@ function updateInnerTextCount(element: HTMLElement, count: number) {
 interface IOptions {
   bellSelector: string;
   unseenBadgeSelector: string;
+  backendUrl?: string;
+  socketUrl?: string;
   position?: {
     top?: number | string;
     left?: number | string;

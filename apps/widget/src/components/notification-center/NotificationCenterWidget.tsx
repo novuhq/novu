@@ -10,11 +10,12 @@ interface INotificationCenterWidgetProps {
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
   applicationIdentifier: string | undefined;
-  backendUrl: string;
 }
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
   const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
+  const [backendUrl, setBackendUrl] = useState('');
+  const [socketUrl, setSocketUrl] = useState('');
   const [fontFamily, setFontFamily] = useState<string>('Lato');
 
   useEffect(() => {
@@ -30,6 +31,8 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     const handler = async (event: { data: any }) => {
       if (event.data.type === 'INIT_IFRAME') {
         setUserDataPayload(event.data.value.data);
+        setBackendUrl(event.data.value.backendUrl);
+        setSocketUrl(event.data.value.socketUrl);
       }
     };
 
@@ -53,8 +56,8 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     <>
       <GlobalStyle fontFamily={fontFamily} />
       <NovuProvider
-        backendUrl={props.backendUrl as string}
-        socketUrl={WS_URL}
+        backendUrl={backendUrl ? backendUrl : API_URL}
+        socketUrl={socketUrl ? socketUrl : WS_URL}
         applicationIdentifier={props.applicationIdentifier as string}
         subscriberId={userDataPayload.subscriberId}
         onLoad={onLoad}
