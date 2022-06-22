@@ -25,7 +25,7 @@ export function TemplateDirectEditor({
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.DIRECT} /> : null}
       <Controller
-        name={`directMessages.${index}.template.content` as any}
+        name={`steps.${index}.template.content` as any}
         control={control}
         render={({ field }) => (
           <Textarea
