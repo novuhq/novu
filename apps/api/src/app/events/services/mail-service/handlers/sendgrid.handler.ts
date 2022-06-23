@@ -1,6 +1,5 @@
-import { SendgridConfig } from '@novu/sendgrid/build/main/lib/sendgrid.config';
 import { ChannelTypeEnum } from '@novu/shared';
-import { SendgridEmailProvider } from '@novu/sendgrid';
+import { SendgridEmailProvider, SendgridConfig } from '@novu/sendgrid';
 import { BaseHandler } from './base.handler';
 
 export class SendgridHandler extends BaseHandler {

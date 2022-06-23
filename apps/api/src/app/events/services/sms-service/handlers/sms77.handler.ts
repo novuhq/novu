@@ -1,7 +1,6 @@
-import { Sms77Config } from '@novu/sms77/build/main/lib/sms77.config';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
-import { Sms77SmsProvider } from '@novu/sms77';
+import { Sms77SmsProvider, Sms77Config } from '@novu/sms77';
 import { BaseSmsHandler } from './base.handler';
 
 export class Sms77Handler extends BaseSmsHandler {

@@ -1,7 +1,6 @@
-import { PostmarkConfig } from '@novu/postmark/build/main/lib/postmark.config';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
-import { PostmarkEmailProvider } from '@novu/postmark';
+import { PostmarkEmailProvider, PostmarkConfig } from '@novu/postmark';
 import { BaseHandler } from './base.handler';
 
 export class PostmarkHandler extends BaseHandler {

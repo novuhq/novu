@@ -1,7 +1,6 @@
-import { SendinblueConfig } from '@novu/sendinblue/build/main/lib/sendinblue.config';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
-import { SendinblueEmailProvider } from '@novu/sendinblue';
+import { SendinblueEmailProvider, SendinblueConfig } from '@novu/sendinblue';
 import { BaseHandler } from './base.handler';
 
 export class SendinblueHandler extends BaseHandler {

@@ -1,5 +1,4 @@
-import { TwilioConfig } from '@novu/twilio/build/main/lib/twilio.config';
-import { TwilioSmsProvider } from '@novu/twilio';
+import { TwilioSmsProvider, TwilioConfig } from '@novu/twilio';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
@@ -9,7 +8,11 @@ export class TwilioHandler extends BaseSmsHandler {
     super('twilio', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    const config: TwilioConfig = { accountSid: credentials.accountSid, authToken: credentials.token, from: credentials.from };
+    const config: TwilioConfig = {
+      accountSid: credentials.accountSid,
+      authToken: credentials.token,
+      from: credentials.from,
+    };
 
     this.provider = new TwilioSmsProvider(config);
   }
