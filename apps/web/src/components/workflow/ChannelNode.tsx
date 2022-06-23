@@ -30,6 +30,7 @@ export default memo(
           showDropZone={data.showDropZone}
           errors={data.error}
           onDelete={data.onDelete}
+          tabKey={data.tabKey}
           Icon={data.Icon}
           label={data.label}
           active={selected}

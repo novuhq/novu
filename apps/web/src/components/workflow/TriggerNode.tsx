@@ -12,6 +12,7 @@ export default memo(({ selected, data }: { selected: boolean; data: ITriggerNode
     <div data-test-id={`node-triggerSelector`} style={{ pointerEvents: 'none' }}>
       <ChannelButton
         showDropZone={data.showDropZone}
+        tabKey=""
         showDots={false}
         Icon={TapeGradient}
         label={'Trigger'}

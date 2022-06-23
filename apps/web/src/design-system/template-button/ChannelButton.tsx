@@ -21,6 +21,7 @@ interface ITemplateButtonProps {
   active?: boolean;
   action?: boolean;
   testId?: string;
+  tabKey: string;
   checked?: boolean;
   readonly?: boolean;
   switchButton?: (boolean) => void;
@@ -71,6 +72,7 @@ export function ChannelButton({
   readonly = false,
   label,
   Icon,
+  tabKey,
   testId,
   errors = false,
   showDots = true,
@@ -91,7 +93,6 @@ export function ChannelButton({
   const disabledProp = disabled ? { disabled: disabled } : {};
 
   const { watch } = useFormContext();
-  const steps = watch(`steps`);
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -180,12 +181,8 @@ export function ChannelButton({
                     }
                     data-test-id="edit-step-action"
                     onClick={() => {
-                      const thisStep = steps.find((step) => step._id === id);
-                      const selectedChannel = thisStep.template.type;
                       setShowDotMenu(false);
-                      setActivePage(
-                        selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
-                      );
+                      setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
                     }}
                   >
                     Edit Template
