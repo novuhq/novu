@@ -144,7 +144,7 @@ export function FlowEditor({
     event.preventDefault();
     setSelectedNodeId(node.id);
     if (node.id === '1') {
-      onDelete();
+      setSelectedNodeId('');
     }
   }, []);
 
