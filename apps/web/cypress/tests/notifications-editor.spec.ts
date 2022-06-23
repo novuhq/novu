@@ -442,6 +442,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('workflowButton').click();
       cy.get('.react-flow__node').should('have.length', 3);
       cy.getByTestId('step-actions-dropdown').first().click().getByTestId('delete-step-action').click();
+      cy.get('.mantine-Modal-modal button').contains('Yes').click();
       cy.getByTestId(`node-inAppSelector`).should('not.exist');
       cy.get('.react-flow__node').should('have.length', 2);
       cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
@@ -450,6 +451,21 @@ describe('Notifications Creator', function () {
 
       cy.getByTestId('workflowButton').click();
       cy.get('.react-flow__node').should('have.length', 2);
+    });
+
+    it.only('should show add step in sidebar after delete', function () {
+      const template = this.session.templates[0];
+      waitLoadTemplatePage(() => {
+        cy.visit('/templates/edit/' + template._id);
+      });
+
+      cy.getByTestId('workflowButton').click();
+      cy.get('.react-flow__node').should('have.length', 3);
+      cy.getByTestId('step-actions-dropdown').first().click().getByTestId('delete-step-action').click();
+      cy.get('.mantine-Modal-modal button').contains('Yes').click();
+      cy.getByTestId(`node-inAppSelector`).should('not.exist');
+      cy.get('.react-flow__node').should('have.length', 2);
+      cy.getByTestId('drag-side-menu').contains('Steps to add');
     });
 
     it('should keep steps order on reload', function () {

@@ -47,8 +47,10 @@ export function FlowEditor({
   templateId,
   dragging,
   errors,
+  onDelete,
 }: {
   setActivePage: (string) => void;
+  onDelete: (id: string) => void;
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
@@ -73,13 +75,6 @@ export function FlowEditor({
       setViewport({ x: xyPos?.x ?? 0, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
     }
   }, [reactFlowInstance]);
-
-  const { setIsDirty } = useTemplateController(templateId);
-
-  const onDelete = () => {
-    setSelectedNodeId('');
-    setIsDirty(true);
-  };
 
   useEffect(() => {
     let parentId = '1';

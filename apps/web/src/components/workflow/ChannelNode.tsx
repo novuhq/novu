@@ -9,7 +9,7 @@ interface NodeData {
   tabKey: string;
   index: number;
   testId: string;
-  onDelete: () => void;
+  onDelete: (id: string) => void;
   showDropZone: boolean;
   error: string;
   setActivePage: (string) => void;
