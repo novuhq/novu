@@ -11,14 +11,13 @@ import {
   I<%= PascalType %>Options,
   I<%= PascalType %>Provider,
 } from '@novu/stateless';
+import { <%= PascalName %>Config } from './<%= name %>.config';
 
 export class <%= PascalName %><%= PascalType %>Provider implements I<%= PascalType %>Provider {
   channelType = ChannelTypeEnum.<%= UpperType %> as ChannelTypeEnum.<%= UpperType %>;
 
   constructor(
-    private config: {
-      <%= UpperType === 'EMAIL' ? 'apiKey: string;' : null %>
-    }
+    private config: <%= PascalName %>Config
   ) {
   }
 
