@@ -2,8 +2,7 @@
   "rewrites": [
     { 
       "source": "/docs/:slug*",
-      "destination": "/:slug*", 
-      "statusCode": 301
+      "destination": "/:slug*"
     }
   ]
 }
