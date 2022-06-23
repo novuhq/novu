@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    { 
+      "source": "/docs/:slug*",
+      "destination": "/:slug*", 
+      "permanent": true
+    }
+  ]
+}
