@@ -15,7 +15,7 @@ You need the following installed in your system:
 
 Clone the Novu repo and enter the docker directory locally:
 
-```
+```bash
 # Get the code
 git clone --depth 1 https://github.com/novuhq/novu
 

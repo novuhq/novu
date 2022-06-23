@@ -31,6 +31,7 @@ export { Invite } from './actions/Invite';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';
+export { ArrowLeft } from './arrows/ArrowLeft';
 
 export { BellGradient } from './gradient/BellGradient';
 export { MailGradient } from './gradient/MailGradient';
@@ -41,5 +42,6 @@ export { CompassGradient } from './gradient/CompassGradient';
 export { SmsGradient } from './gradient/SmsGradient';
 export { TapeGradient } from './gradient/TapeGradient';
 export { BoltGradient } from './gradient/BoltGradient';
+export { ConnectGradient } from './gradient/ConnectGradient';
 
 export { Github } from './social/Github';

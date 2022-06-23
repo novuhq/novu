@@ -19,11 +19,11 @@
     font-weight: 400;
     font-size: 14px;
     line-height: 1;
-  
-   @include mobile-screen {
+
+    @include mobile-screen {
       display: none;
     }
-  
+
     svg {
       display: none;
     }
@@ -50,7 +50,7 @@
   &-item-github:before {
     width: 20px;
     height: 20px;
-  
+
     @include mobile-screen {
       width: 27px;
       height: 27px;
@@ -61,7 +61,7 @@
     &__brand {
       box-shadow: none;
     }
-    
+
     &__back {
       display: none;
     }
@@ -83,7 +83,7 @@ html[data-theme='dark'] {
 
     &-sidebar {
       background-color: $color-gray-1;
-  
+
       &__brand {
         border-bottom: 1px solid $color-gray-3;
       }

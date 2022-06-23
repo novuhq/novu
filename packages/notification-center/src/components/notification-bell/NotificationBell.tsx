@@ -4,13 +4,13 @@ import { Bell as BellIcon, GradientDot } from '../../shared/icons';
 import { ActionIcon } from '@mantine/core';
 import styled from 'styled-components';
 import { UnseenCountContext } from '../../store/unseen-count.context';
-import { ColorScheme } from '../../index';
+import { INovuTheme } from '../../store/novu-theme.context';
 
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export interface INotificationBellProps {
   unseenCount?: number;
-  colorScheme?: ColorScheme;
+  theme: INovuTheme;
 }
 
 export function NotificationBell(props: INotificationBellProps) {
@@ -19,15 +19,13 @@ export function NotificationBell(props: INotificationBellProps) {
   return (
     <ActionIcon variant="transparent">
       <BellIcon {...headerIconsSettings} />
-      {unseenCount > 0 ? <StyledGradientDot colorScheme={props.colorScheme} /> : null}
+      {unseenCount > 0 ? <StyledGradientDot theme={props.theme} /> : null}
     </ActionIcon>
   );
 }
 
-export function GradientDotWrap({ colorScheme, ...props }) {
-  const borderColor = colorScheme === 'dark' ? colors.B15 : colors.white;
-
-  return <GradientDot {...props} color={borderColor} />;
+export function GradientDotWrap({ theme, ...props }) {
+  return <GradientDot {...props} theme={theme} />;
 }
 
 const StyledGradientDot = styled(GradientDotWrap)`

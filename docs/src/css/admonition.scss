@@ -35,10 +35,7 @@ article {
     --ifm-heading-color: #e300bd;
     --ifm-alert-border-color: #e300bd;
   }
-  
 }
-
-
 
 html[data-theme='light'] {
   article {
@@ -47,7 +44,7 @@ html[data-theme='light'] {
       --ifm-alert-background-color: rgba(153, 153, 153, 0.08);
       --ifm-alert-border-color: #999999;
     }
-    
+
     .admonition-tip {
       --ifm-alert-background-color: rgba(0, 227, 189, 0.08);
     }
@@ -55,7 +52,7 @@ html[data-theme='light'] {
     .admonition-info {
       --ifm-alert-background-color: rgba(0, 213, 255, 0.08);
     }
-    
+
     .admonition-caution {
       --ifm-alert-background-color: rgba(255, 225, 77, 0.08);
     }
@@ -66,7 +63,6 @@ html[data-theme='light'] {
   }
 }
 
-
 html[data-theme='dark'] {
   article {
     .admonition-note {
@@ -74,7 +70,7 @@ html[data-theme='dark'] {
       --ifm-alert-background-color: rgba(255, 255, 255, 0.1);
       --ifm-alert-border-color: #ffffff;
     }
-    
+
     .admonition-tip {
       --ifm-alert-background-color: rgba(0, 227, 189, 0.1);
     }
@@ -82,7 +78,7 @@ html[data-theme='dark'] {
     .admonition-info {
       --ifm-alert-background-color: rgba(0, 213, 255, 0.1);
     }
-    
+
     .admonition-caution {
       --ifm-alert-background-color: rgba(255, 225, 77, 0.1);
     }

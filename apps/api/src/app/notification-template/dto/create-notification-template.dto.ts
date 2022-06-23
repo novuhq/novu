@@ -1,57 +1,25 @@
-import {
-  IsArray,
-  IsBoolean,
-  IsDefined,
-  IsEnum,
-  IsOptional,
-  IsString,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
 import {
   BuilderFieldOperator,
   BuilderFieldType,
   BuilderGroupValues,
-  ChannelCTATypeEnum,
-  ChannelTypeEnum,
   ICreateNotificationTemplateDto,
-  IEmailBlock,
 } from '@novu/shared';
-
-export class ChannelCTADto {
-  @IsEnum(ChannelCTATypeEnum)
-  type: ChannelCTATypeEnum;
-
-  data: {
-    url: string;
-  };
-}
+import { MessageTemplateDto } from './message-template.dto';
 
 export class NotificationChannelDto {
-  @IsDefined()
-  @IsEnum(ChannelTypeEnum)
-  type: ChannelTypeEnum;
-
-  @IsOptional()
-  @IsString()
-  subject?: string;
-
-  @IsOptional()
-  name?: string;
-
-  @IsDefined()
-  content: string | IEmailBlock[];
-
-  @IsOptional()
-  contentType?: 'editor' | 'customHtml';
-
   @ValidateNested()
-  cta?: ChannelCTADto;
+  @IsOptional()
+  template?: MessageTemplateDto;
 
   @IsArray()
   @ValidateNested()
   @IsOptional()
   filters?: MessageFilter[];
+
+  @IsBoolean()
+  @IsOptional()
+  active?: boolean;
 }
 
 export class MessageFilter {

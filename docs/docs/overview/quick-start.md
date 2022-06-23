@@ -4,6 +4,7 @@ sidebar_position: 2
 # Quick Start
 
 To create your free managed or docker based Novu environment use our CLI tool:
+
 ```shell
 npx novu init
 ```
@@ -41,7 +42,6 @@ You can specify the content for email in two ways:
 
 **Visual template builder** - For simple usecases you can use our visual template editor with limited control over design but easier to get-started.
 
-
 **Custom Code** - You can use the custom code section to specify custom html that will be used for the email.
 
 You can specify custom variables using the [{{handlebars}}](https://handlebarsjs.com/guide/) syntax.
@@ -73,13 +73,17 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
   }
 );
 ```
+
 The trigger function contains a parameters object as the second parameter. Let's explore it's different options:
 
 ### `to` key
+
 The `to` parameter contains the information about the subscriber of the notification, you can work with Novu in 2 modes:
 
 #### Pass the subscriber information in trigger (Quickest)
+
 You can pass the subscriber object containing the following keys as this paramter:
+
 ```typescript
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
   {
@@ -103,15 +107,17 @@ Novu will create an upsert command and either create a subscriber with specified
 
 **Note:** The api will perform a PATCH command, updating only the fields passed to it. So in order to reset a specific field you must explicitly pass `null` as the fields param.
 
-
 #### Pass only the subscriberId (Recommended)
+
 ```typescript
 {
   to: 'SUBSCRIBER_ID',
   payload: {}
 }
 ```
+
 In this approach, you will only pass the subscriberId as part of the trigger, however it will require you to identify the subscriber using the `identify` method from the `@novu/node` library.
 
 ### `payload` object
-Can pass any serializible JSON object to be used in the notification templates. 
+
+Can pass any serializible JSON object to be used in the notification templates.

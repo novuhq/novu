@@ -14,7 +14,7 @@ export class SubscribersService {
       phone: faker.phone.phoneNumber(),
       _environmentId: this._environmentId,
       _organizationId: this._organizationId,
-      subscriberId: faker.datatype.uuid(),
+      subscriberId: SubscriberRepository.createObjectId(),
     });
   }
 }

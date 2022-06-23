@@ -1,4 +1,3 @@
-
 .cardItems {
   display: flex;
   padding-left: 0;
@@ -33,7 +32,7 @@
 .cardImageWrapper {
   position: relative;
   margin-bottom: 18px;
-} 
+}
 
 .cardImage {
   position: absolute;
@@ -61,14 +60,13 @@
 }
 
 html[data-theme='dark'] {
- .cardItem {
-  background: linear-gradient(180deg, #1A1A1A 0%, rgba(26, 26, 26, 0.7) 100%);
- } 
+  .cardItem {
+    background: linear-gradient(180deg, #1a1a1a 0%, rgba(26, 26, 26, 0.7) 100%);
+  }
 }
 
 html[data-theme='light'] {
   .cardItem {
-    background: linear-gradient(180deg, #F2F2F2 0%, rgba(242, 242, 242, 0.6) 100%);
+    background: linear-gradient(180deg, #f2f2f2 0%, rgba(242, 242, 242, 0.6) 100%);
   }
 }
-

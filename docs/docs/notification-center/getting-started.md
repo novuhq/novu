@@ -11,7 +11,7 @@ Novu provides you a set of API's and components to create rich customized notifi
 
 After creating your Novu Platform account and creating your first notification template it's time to connect the In-app channel to your application.
 
-```
+```bash
 npm install @novu/notification-center
 ```
 

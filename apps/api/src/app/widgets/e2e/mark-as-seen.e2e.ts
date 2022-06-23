@@ -1,4 +1,4 @@
-import { MessageRepository, NotificationTemplateEntity } from '@novu/dal';
+import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { ChannelTypeEnum } from '@novu/shared';
@@ -8,10 +8,12 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
+  let subscriberId;
 
   before(async () => {
     session = new UserSession();
     await session.initialize();
+    subscriberId = SubscriberRepository.createObjectId();
     template = await session.createTemplate();
   });
 
@@ -20,16 +22,16 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
       .post('/v1/widgets/session/initialize')
       .send({
         applicationIdentifier: session.environment.identifier,
-        subscriberId: '12345',
+        subscriberId,
         firstName: 'Test',
         lastName: 'User',
         email: 'test@example.com',
       })
       .expect(201);
 
-    await session.triggerEvent(template.triggers[0].identifier, '12345');
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
-    await session.triggerEvent(template.triggers[0].identifier, '12345');
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     const { token } = body.data;
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

@@ -36,7 +36,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/node": "0.3.6-alpha.0"
+    "@novu/stateless": "^0.4.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

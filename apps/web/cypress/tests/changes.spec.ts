@@ -83,14 +83,24 @@ function switchEnvironment(environment: 'Production' | 'Development') {
 }
 
 function createNotification() {
+  const dataTransfer = new DataTransfer();
+
   cy.visit('/templates/create');
 
   cy.getByTestId('title').type('Test Notification Title');
   cy.getByTestId('description').type('This is a test description for a test title');
   cy.get('body').click();
 
-  cy.getByTestId('add-channel').click({ force: true });
-  cy.getByTestId('emailAddChannel').click({ force: true });
+  cy.getByTestId('workflowButton').click({ force: true });
+
+  cy.wait(1000);
+  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
+
+  cy.get('.react-flow__node-triggerNode').trigger('drop', { dataTransfer, force: true });
+
+  cy.getByTestId('node-emailSelector').parent().click({ force: true });
+  cy.getByTestId('edit-template-channel').click({ force: true });
+
   cy.getByTestId('emailSubject').type('this is email subject');
 
   cy.getByTestId('submit-btn').click();
