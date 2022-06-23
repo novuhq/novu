@@ -41,7 +41,7 @@ const WorkflowEditorPage = ({
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
-  const { addStep, control, watch, errors, setValue, setIsDirty } = useTemplateController(templateId);
+  const { addStep, deleteStep, control, watch, errors } = useTemplateController(templateId);
   const { isLoading, isUpdateLoading, loadingEditTemplate, isDirty } = useTemplateController(templateId);
   const steps = watch('steps');
   const { readonly } = useEnvController();
@@ -63,10 +63,9 @@ const WorkflowEditorPage = ({
   }, [selectedNodeId]);
 
   const confirmDelete = () => {
-    const newSteps = steps.filter((step) => step._id !== toDelete);
-    setValue('steps', newSteps);
+    const index = steps.findIndex((item) => item._id === toDelete);
+    deleteStep(index);
     setSelectedNodeId('');
-    setIsDirty(true);
     setToDelete('');
   };
 

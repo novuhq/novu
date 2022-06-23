@@ -90,7 +90,7 @@ export function ChannelButton({
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
 
-  const { watch, setValue } = useFormContext();
+  const { watch } = useFormContext();
   const steps = watch(`steps`);
 
   useEffect(() => {
