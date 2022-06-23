@@ -37,6 +37,7 @@ const codeTheme = require('./src/utils/prism');
             // Please change this to your repo.
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
             breadcrumbs: false,
+            routeBasePath: '/',
           },
           theme: {
             customCss: require.resolve('./src/css/custom.scss'),
@@ -68,7 +69,7 @@ const codeTheme = require('./src/utils/prism');
             alt: 'Novu Logo',
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
-            href: '/docs',
+            href: '/',
             target: '_self',
             width: 102,
             height: 32,
@@ -98,7 +99,7 @@ const codeTheme = require('./src/utils/prism');
             alt: 'Novu',
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
-            href: '/docs',
+            href: '/',
             width: 102,
             height: 32,
           },
@@ -107,7 +108,7 @@ const codeTheme = require('./src/utils/prism');
               items: [
                 {
                   label: 'Documentation',
-                  to: '/docs',
+                  to: '/',
                 },
                 {
                   label: 'Providers',
