@@ -127,7 +127,7 @@ html[data-theme='dark'] {
         color: $color-gray-8;
       }
     }
-  }
+  
 
     code {
       &:not([class]) {
@@ -142,6 +142,7 @@ html[data-theme='dark'] {
     }
   }
 }
+
 
 html[data-theme='light'] {
   --ifm-table-border-color: #cccccc;
