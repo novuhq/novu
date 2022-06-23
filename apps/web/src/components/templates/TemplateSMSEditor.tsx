@@ -24,14 +24,14 @@ export function TemplateSMSEditor({
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="SMS" /> : null}
       <Controller
-        name={`smsMessages.${index}.template.content` as any}
+        name={`steps.${index}.template.content` as any}
         control={control}
         render={({ field }) => (
           <Textarea
             styles={TextAreaStyles}
             {...field}
             data-test-id="smsNotificationContent"
-            error={errors[`smsMessages.${index}.template.content`]}
+            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}

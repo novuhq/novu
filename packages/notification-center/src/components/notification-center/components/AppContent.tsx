@@ -1,19 +1,17 @@
 import { useAuth } from '../../../hooks';
-import React, { useContext, useEffect } from 'react';
+import React from 'react';
 import { useQuery } from 'react-query';
 import { IOrganizationEntity } from '@novu/shared';
-import { colors } from '../../../shared/config/colors';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { Layout } from './layout/Layout';
 import { Main } from './Main';
 import { useApi } from '../../../hooks/use-api.hook';
-import { ThemeContext } from '../../../store/novu-theme.context';
+import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
 
 export function AppContent() {
   const { api } = useApi();
   const { isLoggedIn } = useAuth();
-  const { colorScheme } = useContext(ThemeContext);
-
+  const { theme, common } = useNovuThemeProvider();
   const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
     'organization',
     () => api.getOrganization(),
@@ -22,22 +20,21 @@ export function AppContent() {
     }
   );
 
-  const theme = {
+  const themeConfig = {
     colors: {
-      main: organization?.branding?.color || colors.vertical,
-      fontColor: colorScheme === 'light' ? colors.B40 : colors.white,
-      secondaryFontColor: colorScheme === 'light' ? colors.B80 : colors.B40,
+      main: theme.loaderColor || organization?.branding?.color,
+      secondaryFontColor: theme.layout?.wrapper.secondaryFontColor,
     },
-    fontFamily: organization?.branding?.fontFamily || 'Lato',
+    fontFamily: common.fontFamily || organization?.branding?.fontFamily,
     layout: {
       direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
     },
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyle fontFamily={theme.fontFamily} />
-      <Wrap layoutDirection={theme.layout.direction} brandColor={theme.colors.main} fontColor={theme.colors.fontColor}>
+    <ThemeProvider theme={themeConfig}>
+      <GlobalStyle fontFamily={themeConfig.fontFamily} />
+      <Wrap layoutDirection={themeConfig.layout.direction} brandColor={themeConfig.colors.main}>
         <Layout>
           <Main />
         </Layout>
@@ -54,9 +51,8 @@ const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
   }
 `;
 
-const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string; fontColor: string }>`
+const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string }>`
   direction: ${({ layoutDirection }) => layoutDirection};
-  color: ${({ fontColor }) => fontColor};
   width: 420px;
   z-index: 999;
 
