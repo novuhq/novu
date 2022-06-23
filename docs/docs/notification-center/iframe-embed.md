@@ -43,8 +43,6 @@ Optionally the embed init script receives a position object, you can use it to s
   novu.init('<REPLACE_APPLICATION_ID>', {
     unseenBadgeSelector: '#unseen-badge',
     bellSelector: '#notification-bell',
-    socketUrl: 'http://custom.com',
-    backendUrl: 'http://custom.com',
     position: {
       top: '50px',
       left: '100px'
