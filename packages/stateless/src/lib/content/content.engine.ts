@@ -20,7 +20,8 @@ type HandlebarsContext = {
     | number
     | undefined
     | IAttachmentOptions
-    | IAttachmentOptions[];
+    | IAttachmentOptions[]
+    | Record<string, unknown>;
 };
 
 export function compileTemplate(content: string, data: HandlebarsContext) {

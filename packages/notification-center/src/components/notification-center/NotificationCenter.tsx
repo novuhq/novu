@@ -1,12 +1,11 @@
 import React from 'react';
 import { IMessage } from '@novu/shared';
-
 import { NotificationCenterContext } from '../../store/notification-center.context';
 import { AppContent } from './components';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { ColorScheme } from '../../index';
-import { ThemeContext } from '../../store/novu-theme.context';
 import { useNovuContext } from '../../hooks';
+import { INovuThemeProvider, NovuThemeProvider } from '../../store/novu-theme-provider.context';
+import { ColorScheme } from '../../index';
 
 export interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -15,6 +14,7 @@ export interface INotificationCenterProps {
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
   colorScheme: ColorScheme;
+  theme?: INovuThemeProvider;
 }
 
 export function NotificationCenter(props: INotificationCenterProps) {
@@ -22,21 +22,21 @@ export function NotificationCenter(props: INotificationCenterProps) {
   const { applicationIdentifier } = useNovuContext();
 
   return (
-    <ThemeContext.Provider value={{ colorScheme: props.colorScheme }}>
-      <QueryClientProvider client={queryClient}>
-        <NotificationCenterContext.Provider
-          value={{
-            onUrlChange: props.onUrlChange,
-            onNotificationClick: props.onNotificationClick,
-            onUnseenCountChanged: props.onUnseenCountChanged,
-            isLoading: !applicationIdentifier,
-            header: props.header,
-            footer: props.footer,
-          }}
-        >
+    <QueryClientProvider client={queryClient}>
+      <NotificationCenterContext.Provider
+        value={{
+          onUrlChange: props.onUrlChange,
+          onNotificationClick: props.onNotificationClick,
+          onUnseenCountChanged: props.onUnseenCountChanged,
+          isLoading: !applicationIdentifier,
+          header: props.header,
+          footer: props.footer,
+        }}
+      >
+        <NovuThemeProvider colorScheme={props.colorScheme} theme={props.theme}>
           <AppContent />
-        </NotificationCenterContext.Provider>
-      </QueryClientProvider>
-    </ThemeContext.Provider>
+        </NovuThemeProvider>
+      </NotificationCenterContext.Provider>
+    </QueryClientProvider>
   );
 }

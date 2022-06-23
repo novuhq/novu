@@ -3,14 +3,17 @@ import { compileTemplate, getHandlebarsVariables } from './content.engine';
 test('should parse basic variables correctly', () => {
   const html = compileTemplate(
     `
-    Basic Html <div> {{firstName}} </div>
+    Basic Html <div> {{firstName}} {{user.lastName}} </div>
   `,
     {
       firstName: 'test variable',
+      user: {
+        lastName: 'test nested',
+      },
     }
   );
 
-  expect(html).toContain('<div> test variable </div>');
+  expect(html).toContain('<div> test variable test nested </div>');
 });
 
 test('should parse loop iterations', () => {
