@@ -17,6 +17,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [backendUrl, setBackendUrl] = useState('');
   const [socketUrl, setSocketUrl] = useState('');
   const [fontFamily, setFontFamily] = useState<string>('Lato');
+  const [frameInitialized, setFrameInitialized] = useState(false);
 
   useEffect(() => {
     WebFont.load({
@@ -33,6 +34,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
         setUserDataPayload(event.data.value.data);
         setBackendUrl(event.data.value.backendUrl);
         setSocketUrl(event.data.value.socketUrl);
+        setFrameInitialized(true);
       }
     };
 
@@ -55,21 +57,23 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   return (
     <>
       <GlobalStyle fontFamily={fontFamily} />
-      <NovuProvider
-        backendUrl={backendUrl ? backendUrl : API_URL}
-        socketUrl={socketUrl ? socketUrl : WS_URL}
-        applicationIdentifier={props.applicationIdentifier as string}
-        subscriberId={userDataPayload.subscriberId}
-        onLoad={onLoad}
-        subscriberHash={userDataPayload.subscriberHash}
-      >
-        <NotificationCenter
-          colorScheme="light"
-          onNotificationClick={props.onNotificationClick}
-          onUrlChange={props.onUrlChange}
-          onUnseenCountChanged={props.onUnseenCountChanged}
-        />
-      </NovuProvider>
+      {frameInitialized && (
+        <NovuProvider
+          backendUrl={backendUrl ? backendUrl : API_URL}
+          socketUrl={socketUrl ? socketUrl : WS_URL}
+          applicationIdentifier={props.applicationIdentifier as string}
+          subscriberId={userDataPayload.subscriberId}
+          onLoad={onLoad}
+          subscriberHash={userDataPayload.subscriberHash}
+        >
+          <NotificationCenter
+            colorScheme="light"
+            onNotificationClick={props.onNotificationClick}
+            onUrlChange={props.onUrlChange}
+            onUnseenCountChanged={props.onUnseenCountChanged}
+          />
+        </NovuProvider>
+      )}
     </>
   );
 }
