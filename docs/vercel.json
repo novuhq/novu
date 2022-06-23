@@ -1,8 +1,8 @@
 {
   "rewrites": [
     { 
-      "source": "/docs/:slug*",
-      "destination": "/:slug*"
+      "source": "/docs/:match*",
+      "destination": "/:match*"
     }
   ]
 }
