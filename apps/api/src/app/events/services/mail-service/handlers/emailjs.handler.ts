@@ -1,4 +1,4 @@
-import { EmailJsConfig } from '@novu/emailjs/build/main/lib/emailjs.config';
+import { IEmailJsConfig } from '@novu/emailjs/build/main/lib/emailjs.config';
 import { EmailJsProvider } from '@novu/emailjs';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
@@ -9,7 +9,7 @@ export class EmailJsHandler extends BaseHandler {
     super('emailjs', ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from: string) {
-    const config: EmailJsConfig = {
+    const config: IEmailJsConfig = {
       from,
       host: credentials.host,
       port: Number(credentials.port),

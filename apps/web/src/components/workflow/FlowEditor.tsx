@@ -19,7 +19,7 @@ import { ActionIcon, useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
-import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
+import { StepEntity } from '../templates/use-template-controller.hook';
 import { ChannelTypeEnum } from '@novu/shared';
 import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
 import { PlusCircleOutlined } from '../../design-system/icons';
@@ -45,11 +45,12 @@ export function FlowEditor({
   steps,
   setSelectedNodeId,
   addStep,
-  templateId,
   dragging,
   errors,
+  onDelete,
 }: {
   setActivePage: (string) => void;
+  onDelete: (id: string) => void;
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: ChannelTypeEnum, id: string) => void;
@@ -74,13 +75,6 @@ export function FlowEditor({
       setViewport({ x: xyPos?.x ?? 0, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
     }
   }, [reactFlowInstance]);
-
-  const { setIsDirty } = useTemplateController(templateId);
-
-  const onDelete = () => {
-    setSelectedNodeId('');
-    setIsDirty(true);
-  };
 
   useEffect(() => {
     let parentId = '1';
@@ -145,7 +139,7 @@ export function FlowEditor({
     event.preventDefault();
     setSelectedNodeId(node.id);
     if (node.id === '1') {
-      onDelete();
+      setSelectedNodeId('');
     }
   }, []);
 

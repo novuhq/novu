@@ -38,6 +38,7 @@
     "build:storybook": "nx run @novu/web:build-storybook",
     "test:providers": "find providers -name package.json -not -path \"*/node_modules/*\" -exec bash -c \"pnpm --prefix \\$(dirname {}) test\" \\;",
     "release:patch": "lerna version patch --no-push",
+    "release:minor": "lerna version minor --no-push",
     "release:preminor": "lerna version preminor --no-push",
     "release:prerelease": "lerna version prerelease --no-push",
     "start:e2e:api": "cd apps/api && pnpm start:test",

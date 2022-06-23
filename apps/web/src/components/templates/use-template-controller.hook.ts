@@ -179,8 +179,13 @@ export function useTemplateController(templateId: string) {
     });
   };
 
+  const deleteStep = (index: number) => {
+    steps.remove(index);
+  };
+
   return {
     addStep,
+    deleteStep,
     editMode,
     template,
     onSubmit,
