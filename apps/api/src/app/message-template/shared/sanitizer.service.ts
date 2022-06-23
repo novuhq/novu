@@ -16,7 +16,6 @@ export function sanitizeMessageContent(content: string | IEmailBlock[]) {
     return content.map((i) => {
       return {
         ...i,
-        subject: sanitizeHTML(i.subject),
         content: sanitizeHTML(i.content),
       };
     });

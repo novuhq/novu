@@ -1,4 +1,4 @@
-import { NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum, IMessage } from '@novu/shared';
@@ -7,17 +7,19 @@ describe('Get activity feed - /activity (GET)', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let smsOnlyTemplate: NotificationTemplateEntity;
+  let subscriberId: string;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
     smsOnlyTemplate = await session.createChannelTemplate(ChannelTypeEnum.SMS);
+    subscriberId = SubscriberRepository.createObjectId();
     await session.testAgent
       .post('/v1/widgets/session/initialize')
       .send({
         applicationIdentifier: session.environment.identifier,
-        subscriberId: '12345',
+        subscriberId,
         firstName: 'Test',
         lastName: 'User',
         email: 'test@example.com',
@@ -26,14 +28,15 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should get the current activity feed of user', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, '12345', {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, '12345', {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
     });
 
+    await session.awaitRunningJobs();
     const { body } = await session.testAgent.get('/v1/activity?page=0');
 
     const activities = body.data;
@@ -47,15 +50,15 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by channel', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, '12345', {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
     });
 
@@ -68,20 +71,21 @@ describe('Get activity feed - /activity (GET)', async () => {
   });
 
   it('should filter by templateId', async function () {
-    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, '12345', {
+    await session.triggerEvent(smsOnlyTemplate.triggers[0].identifier, subscriberId, {
       payload: {
         firstName: 'Test',
       },
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, '12345', {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
     });
 
-    await session.triggerEvent(template.triggers[0].identifier, '12345', {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
     });
 
+    await session.awaitRunningJobs();
     const { body } = await session.testAgent.get(`/v1/activity?page=0&templates=${template._id}`);
     const activities: IMessage[] = body.data;
 
@@ -96,7 +100,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     await session.triggerEvent(
       smsOnlyTemplate.triggers[0].identifier,
       {
-        subscriberId: '1234522',
+        subscriberId: SubscriberRepository.createObjectId(),
         email: 'test@email.coms',
       },
       {
@@ -104,14 +108,14 @@ describe('Get activity feed - /activity (GET)', async () => {
       }
     );
 
-    await session.triggerEvent(template.triggers[0].identifier, '1234564', {
+    await session.triggerEvent(template.triggers[0].identifier, SubscriberRepository.createObjectId(), {
       firstName: 'Test',
     });
 
     await session.triggerEvent(
       template.triggers[0].identifier,
       {
-        subscriberId: '123452',
+        subscriberId: SubscriberRepository.createObjectId(),
       },
       {
         firstName: 'Test',
@@ -121,7 +125,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     await session.triggerEvent(
       template.triggers[0].identifier,
       {
-        subscriberId: '12345',
+        subscriberId: subscriberId,
       },
       {
         firstName: 'Test',

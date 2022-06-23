@@ -14,6 +14,7 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
     formState: { errors },
     setValue,
     control,
+    getValues,
   } = useFormContext();
 
   const { data: groups, isLoading: loadingGroups } = useQuery('notificationGroups', getNotificationGroups);
@@ -30,10 +31,11 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
   });
 
   useEffect(() => {
-    if (groups?.length && !editMode) {
+    const group = getValues('notificationGroup');
+    if (groups?.length && !editMode && !group) {
       selectFirstGroupByDefault();
     }
-  }, [groups]);
+  }, [groups, editMode]);
 
   function selectFirstGroupByDefault() {
     setTimeout(() => {
@@ -64,8 +66,9 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
               {...field}
               data-test-id="title"
               disabled={readonly}
+              required
               value={field.value || ''}
-              error={errors.name}
+              error={errors.name?.message}
               label="Notification Name"
               description="This will be used to identify the notification in the app."
               placeholder="Notification name goes here..."
@@ -104,8 +107,9 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
                   disabled={readonly}
                   creatable
                   searchable
+                  required
                   description="Categorize notifications into groups for unified settings control"
-                  error={errors.notificationGroup}
+                  error={errors.notificationGroup?.message}
                   getCreateLabel={(newGroup) => <div data-test-id="submit-category-btn">+ Create Group {newGroup}</div>}
                   onCreate={addGroupItem}
                   placeholder="Attach notification to group"

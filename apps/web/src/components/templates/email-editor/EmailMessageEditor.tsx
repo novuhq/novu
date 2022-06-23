@@ -8,8 +8,8 @@ import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
-import { NavigateValidatorModal } from '../NavigateValidatorModal';
 import { useIsMounted } from '../../../hooks/use-is-mounted';
+import { useNavigate } from 'react-router-dom';
 
 export function EmailMessageEditor({
   onChange,
@@ -23,6 +23,7 @@ export function EmailMessageEditor({
   readonly: boolean;
 }) {
   const theme = useMantineTheme();
+  const navigate = useNavigate();
 
   const [blocks, setBlocks] = useState<IEmailBlock[]>(
     value?.length
@@ -39,7 +40,6 @@ export function EmailMessageEditor({
 
   const [top, setTop] = useState<number>(0);
   const [controlBarVisible, setActionBarVisible] = useState<boolean>(false);
-  const [confirmModalVisible, setConfirmModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     if (onChange && isMounted) {
@@ -52,6 +52,16 @@ export function EmailMessageEditor({
       ...styles,
     };
 
+    setBlocks([...blocks]);
+  }
+
+  function onBlockTextChanged(blockIndex: number, content: string) {
+    blocks[blockIndex].content = content;
+    setBlocks([...blocks]);
+  }
+
+  function onBlockUrlChanged(blockIndex: number, url: string) {
+    blocks[blockIndex].url = url;
     setBlocks([...blocks]);
   }
 
@@ -108,7 +118,7 @@ export function EmailMessageEditor({
 
   return (
     <Card withBorder sx={styledCard}>
-      <div onClick={() => !branding?.logo && setConfirmModalVisible(true)}>
+      <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())}>
         <Dropzone
           styles={{
             root: {
@@ -150,13 +160,6 @@ export function EmailMessageEditor({
         </Dropzone>
       </div>
 
-      <NavigateValidatorModal
-        isOpen={confirmModalVisible}
-        setModalVisibility={setConfirmModalVisible}
-        navigateRoute={getBrandSettingsUrl()}
-        navigateName="settings page"
-      />
-
       <Container
         mt={30}
         sx={{
@@ -193,10 +196,7 @@ export function EmailMessageEditor({
                       <TextRowContent
                         key={blockIndex}
                         block={block}
-                        onTextChange={(text) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.content = text;
-                        }}
+                        onTextChange={(text) => onBlockTextChanged(index, text)}
                       />
                     );
                   }
@@ -206,14 +206,8 @@ export function EmailMessageEditor({
                         key={blockIndex}
                         block={block}
                         brandingColor={branding?.color}
-                        onUrlChange={(url) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.url = url;
-                        }}
-                        onTextChange={(text) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.content = text;
-                        }}
+                        onUrlChange={(url) => onBlockUrlChanged(index, url)}
+                        onTextChange={(text) => onBlockTextChanged(index, text)}
                       />
                     );
                   }

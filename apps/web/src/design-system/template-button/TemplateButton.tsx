@@ -5,6 +5,8 @@ import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
+import { useFormContext } from 'react-hook-form';
+import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -40,13 +42,25 @@ export function TemplateButton({
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled } : {};
   const [popoverOpened, setPopoverOpened] = useState(false);
+  const { trigger } = useFormContext();
 
   return (
     <>
       <Button
         onMouseEnter={() => setPopoverOpened(true)}
         onMouseLeave={() => setPopoverOpened(false)}
-        onClick={() => !active && changeTab(tabKey)}
+        onClick={async () => {
+          if (active) {
+            return;
+          }
+          if (tabKey === ActivePageEnum.WORKFLOW) {
+            const valid = await trigger(['name', 'notificationGroup'], { shouldFocus: true });
+            if (!valid) {
+              return;
+            }
+          }
+          changeTab(tabKey);
+        }}
         data-test-id={testId}
         className={cx(classes.button, { [classes.active]: active })}
       >
