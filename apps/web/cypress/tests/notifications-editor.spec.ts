@@ -453,7 +453,7 @@ describe('Notifications Creator', function () {
       cy.get('.react-flow__node').should('have.length', 2);
     });
 
-    it.only('should show add step in sidebar after delete', function () {
+    it('should show add step in sidebar after delete', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
