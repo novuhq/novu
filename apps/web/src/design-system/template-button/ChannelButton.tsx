@@ -28,7 +28,7 @@ interface ITemplateButtonProps {
   errors?: boolean | string;
   showDots?: boolean;
   id?: string | undefined;
-  onDelete?: () => void;
+  onDelete?: (id: string) => void;
   showDropZone?: boolean;
   dragging?: boolean;
   setActivePage?: (string) => void;
@@ -197,10 +197,8 @@ export function ChannelButton({
                     icon={<Trash />}
                     data-test-id="delete-step-action"
                     onClick={() => {
-                      const newSteps = steps.filter((step) => step._id !== id);
                       setShowDotMenu(false);
-                      setValue('steps', newSteps);
-                      onDelete();
+                      onDelete(id || '');
                     }}
                   >
                     Delete Step
