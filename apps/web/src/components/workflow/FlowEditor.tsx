@@ -13,15 +13,16 @@ import ReactFlow, {
   Controls,
   useReactFlow,
 } from 'react-flow-renderer';
-import ChannelNode from './ChannelNode';
+import ChannelNode from './node-types/ChannelNode';
 import { colors } from '../../design-system';
-import { useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import TriggerNode from './TriggerNode';
+import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
 import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
 import { ChannelTypeEnum } from '@novu/shared';
 import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
+import { PlusCircleOutlined } from '../../design-system/icons';
 
 const nodeTypes = {
   channelNode: ChannelNode,

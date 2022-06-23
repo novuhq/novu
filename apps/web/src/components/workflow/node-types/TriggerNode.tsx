@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position } from 'react-flow-renderer';
-import { ChannelButton } from '../../design-system';
-import { TapeGradient } from '../../design-system/icons';
+import { ChannelButton } from '../../../design-system';
+import { TapeGradient } from '../../../design-system/icons';
 
 interface ITriggerNodeData {
   showDropZone: boolean;
