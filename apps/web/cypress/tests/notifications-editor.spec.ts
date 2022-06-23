@@ -5,7 +5,7 @@ describe('Notifications Creator', function () {
 
   describe('workflow editor - drag and drop', function () {
     it('should drag and drop channel', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Test drag and drop channel');
@@ -18,7 +18,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should not be able to drop when not on last node', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Test only drop on last node');
@@ -31,7 +31,7 @@ describe('Notifications Creator', function () {
 
     it('should be able to select a step', function () {
       const template = this.session.templates[0];
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
       fillBasicNotificationDetails('Test SMS Notification Title');
@@ -46,7 +46,7 @@ describe('Notifications Creator', function () {
 
   describe('workflow editor - main functionality', function () {
     it('should not reset data when switching channel types', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Test not reset data when switching channel types');
@@ -75,7 +75,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should create in-app notification', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       cy.getByTestId('title').type('Test Notification Title');
@@ -109,7 +109,7 @@ describe('Notifications Creator', function () {
       cy.location('pathname').should('equal', '/templates');
     });
     it('should create email notification', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       cy.getByTestId('title').type('Test Notification Title');
@@ -155,7 +155,7 @@ describe('Notifications Creator', function () {
 
     it('should create and edit group id', function () {
       const template = this.session.templates[0];
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
 
@@ -178,7 +178,7 @@ describe('Notifications Creator', function () {
 
     it('should edit notification', function () {
       const template = this.session.templates[0];
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
       cy.getByTestId('title').should('have.value', template.name);
@@ -210,7 +210,7 @@ describe('Notifications Creator', function () {
 
     it('should update notification active status', function () {
       const template = this.session.templates[0];
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
       cy.getByTestId('active-toggle-switch').get('label').contains('Enabled');
@@ -222,7 +222,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should toggle active states of channels', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Test toggle active states of channels');
@@ -247,7 +247,7 @@ describe('Notifications Creator', function () {
 
     it.skip('should show trigger snippet block when editing', function () {
       const template = this.session.templates[0];
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
 
@@ -256,7 +256,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should validate form inputs', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       cy.getByTestId('description').type('this is a notification template description');
@@ -273,7 +273,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should show error on node if message field is missing ', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails();
@@ -290,7 +290,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should fill required settings before workflow btn is clickable', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       cy.getByTestId('description').type('this is a notification template description');
@@ -313,7 +313,7 @@ describe('Notifications Creator', function () {
           res.send({ body: res.body });
         });
       });
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Test allow uploading a logo from email editor');
@@ -326,7 +326,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should show the brand logo on main page', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Test show the brand logo on main page');
@@ -338,7 +338,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should support RTL text content', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Test support RTL text content');
@@ -353,7 +353,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should create an SMS channel message', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Test SMS Notification Title');
@@ -379,7 +379,7 @@ describe('Notifications Creator', function () {
     });
 
     it('should save HTML template email', function () {
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
       fillBasicNotificationDetails('Custom Code HTML Notification Title');
@@ -407,7 +407,7 @@ describe('Notifications Creator', function () {
 
     it('should redirect to dev env for edit template', async function () {
       cy.intercept('POST', '*/notification-templates').as('createTemplate');
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
 
@@ -435,7 +435,7 @@ describe('Notifications Creator', function () {
 
     it('should be able to delete a step', function () {
       const template = this.session.templates[0];
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
 
@@ -454,7 +454,7 @@ describe('Notifications Creator', function () {
 
     it('should keep steps order on reload', function () {
       const template = this.session.templates[0];
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
       cy.getByTestId('workflowButton').click();
@@ -463,7 +463,7 @@ describe('Notifications Creator', function () {
       editChannel('sms');
       cy.getByTestId('smsNotificationContent').type('new content for sms');
       cy.getByTestId('submit-btn').click();
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
       cy.getByTestId('workflowButton').click();
@@ -481,7 +481,7 @@ describe('Notifications Creator', function () {
 
     it('should be able to disable step', function () {
       const template = this.session.templates[0];
-      waitLoadTemplate(() => {
+      waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
       });
       cy.getByTestId('workflowButton').click();
@@ -529,7 +529,7 @@ function fillBasicNotificationDetails(title?: string) {
   cy.getByTestId('description').type('This is a test description for a test title');
 }
 
-function waitLoadTemplate(beforeWait = (): string[] | void => []) {
+function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
   cy.intercept('GET', 'http://localhost:1336/v1/environments').as('environments');
   cy.intercept('GET', 'http://localhost:1336/v1/environments/me').as('environments-me');
   cy.intercept('GET', 'http://localhost:1336/v1/notification-groups').as('notification-groups');
