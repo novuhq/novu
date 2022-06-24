@@ -19,7 +19,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import TriggerNode from './TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
-import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
+import { StepEntity } from '../templates/use-template-controller.hook';
 import { ChannelTypeEnum } from '@novu/shared';
 import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
 
@@ -44,7 +44,6 @@ export function FlowEditor({
   steps,
   setSelectedNodeId,
   addStep,
-  templateId,
   dragging,
   errors,
   onDelete,
