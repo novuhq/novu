@@ -207,7 +207,7 @@ export interface INovuTheme {
 
 ```
 
-A theme object can be used to customize the notification center's layout, header, popover, notification list item, footer, and unseen badge. 
+A theme object can be used to customize the notification center's layout, header, popover, notification list item, footer, and unseen badge.
 The object can be modified partially or completely, depending on the level of customization you want to achieve.
 
 Here are the optional fields that can be used to customize the notification center:
@@ -263,5 +263,3 @@ A table of IThemeLayout properties:
 |---------------------|-----------------------------------------------|-----------------------------------------------|
 | `color.fillColor`   | `stopColor: #FF512F stopColorOffset: #DD2476` | `stopColor: #FF512F stopColorOffset: #DD2476` |  
 | `color.borderColor` | `#FFFFFF`                                     | `#1E1E26`                                     |  
-
-
