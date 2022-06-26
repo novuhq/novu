@@ -49,6 +49,9 @@ export class SendMessageInApp extends SendMessageType {
       );
     }
 
+    const messagePayload = Object.assign({}, command.payload);
+    delete messagePayload.attachments;
+
     const message = await this.messageRepository.create({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
@@ -60,6 +63,7 @@ export class SendMessageInApp extends SendMessageType {
       cta: inAppChannel.template.cta,
       transactionId: command.transactionId,
       content,
+      triggerPayload: messagePayload,
     });
 
     const count = await this.messageRepository.getUnseenCount(
