@@ -7,7 +7,6 @@ import { TriggerEventDto } from './dto/trigger-event.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ISubscribersDefine } from '@novu/node';
-import { ApiException } from '../shared/exceptions/api.exception';
 
 @Controller('events')
 export class EventsController {
@@ -35,8 +34,6 @@ export class EventsController {
   private mapSubscribers(body: TriggerEventDto) {
     const subscribers = Array.isArray(body.to) ? body.to : [body.to];
     const mappedSubscribers: ISubscribersDefine[] = subscribers.map((subscriber) => {
-      EventsController.validateSubscriberIdProperty(subscriber);
-
       if (typeof subscriber === 'string') {
         return {
           subscriberId: subscriber,
@@ -47,15 +44,5 @@ export class EventsController {
     });
 
     return mappedSubscribers;
-  }
-
-  private static validateSubscriberIdProperty(subscriber) {
-    const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-    if (!subscriberIdExists) {
-      throw new ApiException(
-        'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
-      );
-    }
   }
 }
