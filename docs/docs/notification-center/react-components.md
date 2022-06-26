@@ -223,7 +223,6 @@ A table of IThemeLayout properties:
 | `borderRadius`               | `7px`                                    | `7px`                             |
 | `wrapper.secondaryFontColor` | `#BEBECC`                                | `#525266`                         |
 
-
 ### `IThemeHeader` customization properties
 
 | Property         | Default Value - Light Theme                     | Default Value - Dark Theme                      |
@@ -232,13 +231,11 @@ A table of IThemeLayout properties:
 | `badgeTextColor` | `#FFFFFF`                                       | `#FFFFFF`                                       |
 | `fontColor`      | `#828299`                                       | `#FFFFFF`                                       |
 
-
 ### `IThemePopover` customization properties
 
 | Property     | Default Value - Light Theme | Default Value - Dark Theme |
 |--------------|-----------------------------|----------------------------|
 | `arrowColor` | `#FFFFFF`                   | `#1E1E26`                  |  
-
 
 ### `IThemeNotificationListItem` customization properties
 
@@ -253,14 +250,12 @@ A table of IThemeLayout properties:
 | `unseen.notificationItemBeforeBrandColor` | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)` | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)` |
 | `unseen.timeMarkFontColor`                | `#828299`                                       | `#828299`                                       |
 
-
 ### `IThemeFooter` customization properties
 
 | Property              | Default Value - Light Theme | Default Value - Dark Theme |
 |-----------------------|-----------------------------|----------------------------|
 | `logoTextColor`       | `#000000`                   | `#FFFFFF`                  |  
 | `logoPrefixFontColor` | `#A1A1B2`                   | `#525266`                  |  
-
 
 ### `IThemeUnseenBadge` customization properties
 
