@@ -15,7 +15,7 @@ export default memo(({ data }: { data: NodeData }) => {
   };
 
   return (
-    <div data-test-id={`node-addNodeSelector`} style={{ pointerEvents: 'none' }}>
+    <div data-test-id={`addNodeButton`} style={{ pointerEvents: 'none' }}>
       <Dropdown
         placement="center"
         control={

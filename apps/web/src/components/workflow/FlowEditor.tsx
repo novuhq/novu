@@ -23,6 +23,7 @@ import { StepEntity } from '../templates/use-template-controller.hook';
 import { ChannelTypeEnum } from '@novu/shared';
 import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
 import AddNode from './node-types/AddNode';
+import { useEnvController } from '../../store/use-env-controller';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -66,6 +67,7 @@ export function FlowEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
+  const { readonly } = useEnvController();
 
   useEffect(() => {
     if (reactFlowWrapper) {
@@ -137,20 +139,22 @@ export function FlowEditor({
         setEdges((eds) => addEdge(newEdge, eds));
       }
     }
-    const addNodeButton = {
-      id: '2',
-      type: 'addNode',
-      data: {
-        label: '',
-        addNewNode,
-        parentId,
-      },
-      className: 'nodrag',
-      isConnectable: false,
-      parentNode: parentId,
-      position: { x: 85, y: 90 },
-    };
-    setNodes((nds) => nds.concat(addNodeButton));
+    if (!readonly) {
+      const addNodeButton = {
+        id: '2',
+        type: 'addNode',
+        data: {
+          label: '',
+          addNewNode,
+          parentId,
+        },
+        className: 'nodrag',
+        isConnectable: false,
+        parentNode: parentId,
+        position: { x: 85, y: 90 },
+      };
+      setNodes((nds) => nds.concat(addNodeButton));
+    }
   }, [steps, dragging, errors]);
 
   const addNewNode = useCallback((parentNodeId: string, channelType: string) => {
