@@ -15,7 +15,7 @@ interface NodeData {
   tabKey: string;
   index: number;
   testId: string;
-  onDelete: () => void;
+  onDelete: (id: string) => void;
   showDropZone: boolean;
   error: string;
   setActivePage: (string) => void;
@@ -71,6 +71,7 @@ export default memo(
           showDropZone={data.showDropZone}
           errors={data.error}
           onDelete={data.onDelete}
+          tabKey={data.tabKey}
           Icon={data.Icon}
           label={data.label}
           active={selected}
