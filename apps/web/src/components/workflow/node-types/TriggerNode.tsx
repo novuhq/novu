@@ -2,7 +2,6 @@ import React, { memo } from 'react';
 import { Handle, Position, useReactFlow } from 'react-flow-renderer';
 import { ChannelButton } from '../../../design-system';
 import { TapeGradient } from '../../../design-system/icons';
-import { When } from '../../utils/When';
 
 interface ITriggerNodeData {
   showDropZone: boolean;
@@ -11,6 +10,7 @@ interface ITriggerNodeData {
 export default memo(({ selected, data }: { selected: boolean; data: ITriggerNodeData }) => {
   const { getNodes } = useReactFlow();
   const isParent = getNodes().length > 2;
+  const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
 
   return (
     <div data-test-id={`node-triggerSelector`} style={{ pointerEvents: 'none' }}>
@@ -22,9 +22,7 @@ export default memo(({ selected, data }: { selected: boolean; data: ITriggerNode
         label={'Trigger'}
         active={selected}
       />
-      <When truthy={isParent}>
-        <Handle type="source" id="a" position={Position.Bottom} />
-      </When>
+      <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>
   );
 });
