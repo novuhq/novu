@@ -203,6 +203,10 @@ export class SendMessageEmail extends SendMessageType {
       const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
       const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
       for (const block of content) {
+        /*
+         * We need to trim the content in order to avoid mail provider like GMail
+         * to display the mail with `[Message clipped]` footer.
+         */
         block.content = contentService.replaceVariables(block.content, messageVariables).trim();
         block.url = contentService.replaceVariables(block.url, messageVariables);
       }
