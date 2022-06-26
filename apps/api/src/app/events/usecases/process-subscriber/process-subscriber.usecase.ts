@@ -13,6 +13,7 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
+import { ISubscribersDefine } from '@novu/node';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -27,7 +28,7 @@ export class ProcessSubscriber {
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
 
-    const subscriber: SubscriberEntity = await this.getSubscriber(command, template._id);
+    const subscriber: SubscriberEntity = await this.getSubscriber(command);
     if (subscriber === null) {
       return [];
     }
@@ -70,17 +71,21 @@ export class ProcessSubscriber {
     });
   }
 
-  private async getSubscriber(command: ProcessSubscriberCommand, templateId: string): Promise<SubscriberEntity> {
+  private async getSubscriber(command: ProcessSubscriberCommand): Promise<SubscriberEntity> {
     const subscriberPayload = command.to;
     const subscriber = await this.subscriberRepository.findOne({
       _environmentId: command.environmentId,
       subscriberId: subscriberPayload.subscriberId,
     });
 
-    if (subscriber) {
+    if (subscriber && !this.subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;
     }
 
+    return await this.createOrUpdateSubscriber(command, subscriberPayload);
+  }
+
+  private async createOrUpdateSubscriber(command: ProcessSubscriberCommand, subscriberPayload) {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
         environmentId: command.environmentId,
@@ -90,7 +95,18 @@ export class ProcessSubscriber {
         firstName: subscriberPayload.firstName,
         lastName: subscriberPayload.lastName,
         phone: subscriberPayload.phone,
+        avatar: subscriberPayload.avatar,
       })
+    );
+  }
+
+  private subscriberNeedUpdate(subscriber: SubscriberEntity, subscriberPayload: ISubscribersDefine): boolean {
+    return (
+      subscriber.email !== subscriberPayload.email ||
+      subscriber.firstName !== subscriberPayload.firstName ||
+      subscriber.lastName !== subscriberPayload.lastName ||
+      subscriber.phone !== subscriberPayload.phone ||
+      subscriber.avatar !== subscriberPayload.avatar
     );
   }
 
