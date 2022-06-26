@@ -157,7 +157,7 @@ export class TriggerEvent {
       .catch((e) => console.error(e));
   }
 
-  private async validateSubscriberIdProperty(command: TriggerEventCommand) {
+  private async validateSubscriberIdProperty(command: TriggerEventCommand): Promise<boolean> {
     for (const subscriber of command.to) {
       const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
@@ -168,6 +168,8 @@ export class TriggerEvent {
         );
       }
     }
+
+    return true;
   }
 
   private async logSubscriberIdMissing(command: TriggerEventCommand) {

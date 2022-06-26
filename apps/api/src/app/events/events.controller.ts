@@ -31,9 +31,10 @@ export class EventsController {
     );
   }
 
-  private mapSubscribers(body: TriggerEventDto) {
+  private mapSubscribers(body: TriggerEventDto): ISubscribersDefine[] {
     const subscribers = Array.isArray(body.to) ? body.to : [body.to];
-    const mappedSubscribers: ISubscribersDefine[] = subscribers.map((subscriber) => {
+
+    return subscribers.map((subscriber) => {
       if (typeof subscriber === 'string') {
         return {
           subscriberId: subscriber,
@@ -42,7 +43,5 @@ export class EventsController {
         return subscriber;
       }
     });
-
-    return mappedSubscribers;
   }
 }
