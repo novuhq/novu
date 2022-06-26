@@ -214,7 +214,7 @@ Here are the optional fields that can be used to customize the notification cent
 
 A table of IThemeLayout properties:
 
-## Default styles for `IThemeLayout`
+### `IThemeLayout` customization properties
 
 | Property | Default Value - Light Theme              | Default Value - Dark Theme |
 | -------- |------------------------------------------|----------------------------|
@@ -223,17 +223,8 @@ A table of IThemeLayout properties:
 | `borderRadius` | `7px`                                     |`7px`                                         |
 | `wrapper.secondaryFontColor` | `#BEBECC`                                | `#525266`                               |
 
-```tsx
-export interface IThemeLayout {
-  background?: string;
-  boxShadow?: string;
-  borderRadius?: string;
-  wrapper?: {
-    secondaryFontColor?: string;
-  };
-}
-```
-## Default styles for `IThemeHeader`
+
+### `IThemeHeader` customization properties
 
 | Property | Default Value - Light Theme              | Default Value - Dark Theme |
 | -------- |------------------------------------------|----------------------------|
@@ -241,25 +232,15 @@ export interface IThemeLayout {
 | `badgeTextColor` | `#FFFFFF` | `#FFFFFF` |
 | `fontColor` | `#828299`                                     |`#FFFFFF`                                         |
 
-```tsx
-export interface IThemeHeader {
-  badgeColor?: string;
-  badgeTextColor?: string;
-  fontColor?: string;
-}
-```
-## Default styles for `IThemePopover`
+
+### `IThemePopover` customization properties
 
 | Property | Default Value - Light Theme              | Default Value - Dark Theme |
 | -------- |------------------------------------------|----------------------------|
 | `arrowColor` | `#FFFFFF`                                | `#1E1E26`                                |  
 
-```tsx
-export interface IThemePopover {
-  arrowColor?: string;
-}
-```
-## Default styles for `IThemeNotificationListItem`
+
+### `IThemeNotificationListItem` customization properties
 
 | Property                 | Default Value - Light Theme              | Default Value - Dark Theme |
 |--------------------------|------------------------------------------|----------------------------|
@@ -272,36 +253,16 @@ export interface IThemePopover {
 | `unseen.notificationItemBeforeBrandColor`| `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)`                                | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)`                              |
 | `unseen.timeMarkFontColor`      | `#828299`                                | `#828299`                              |
 
-```tsx
-export interface IThemeNotificationListItem {
-  seen?: {
-    fontColor?: string;
-    background?: string;
-    timeMarkFontColor?: string;
-  };
-  unseen?: {
-    fontColor?: string;
-    background?: string;
-    boxShadow?: string;
-    notificationItemBeforeBrandColor?: string;
-    timeMarkFontColor?: string;
-  };
-}
-```
-## Default styles for `IThemeFooter`
+
+### `IThemeFooter` customization properties
 
 | Property | Default Value - Light Theme              | Default Value - Dark Theme |
 | -------- |------------------------------------------|----------------------------|
 | `logoTextColor` | `#000000`                                | `#FFFFFF`                                |  
 | `logoPrefixFontColor` | `#A1A1B2`                                | `#525266`                                |  
 
-```tsx
-export interface IThemeFooter {
-  logoTextColor?: string;
-  logoPrefixFontColor?: string;
-}
-```
-## Default styles for `IThemeUnseenBadge`
+
+### `IThemeUnseenBadge` customization properties
 
 | Property          | Default Value - Light Theme                | Default Value - Dark Theme |
 |-------------------|--------------------------------------------|----------------------------|
