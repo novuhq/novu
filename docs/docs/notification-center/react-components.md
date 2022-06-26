@@ -214,16 +214,14 @@ Here are the optional fields that can be used to customize the notification cent
 
 A table of IThemeLayout properties:
 
-## Layout styles for `IThemeLayout`
+## Default styles for `IThemeLayout`
 
-
-| Property | Default Value |
-| -------- | ----------- |
-| `background` | `#fefe` | 
-| `boxShadow` |  |
-| `borderRadius` |  |
-| `wrapper.secondaryFontColor` | `#000` |
-
+| Property | Default Value - Light Theme              | Default Value - Dark Theme |
+| -------- |------------------------------------------|----------------------------|
+| `background` | `#FFFFFF`                                | `#1E1E26`                                |  
+| `boxShadow` | `0px 5px 15px rgba(122, 133, 153, 0.25)` | `0px 5px 20px rgba(0, 0, 0, 0.2)` |
+| `borderRadius` | `7px`                                     |`7px`                                         |
+| `wrapper.secondaryFontColor` | `#BEBECC`                                | `#525266`                               |
 
 ```tsx
 export interface IThemeLayout {
@@ -234,17 +232,47 @@ export interface IThemeLayout {
     secondaryFontColor?: string;
   };
 }
+```
+## Default styles for `IThemeHeader`
 
+| Property | Default Value - Light Theme              | Default Value - Dark Theme |
+| -------- |------------------------------------------|----------------------------|
+| `badgeColor` | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)`                                | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)`                                |  
+| `badgeTextColor` | `#FFFFFF` | `#FFFFFF` |
+| `fontColor` | `#828299`                                     |`#FFFFFF`                                         |
+
+```tsx
 export interface IThemeHeader {
   badgeColor?: string;
   badgeTextColor?: string;
   fontColor?: string;
 }
+```
+## Default styles for `IThemePopover`
 
+| Property | Default Value - Light Theme              | Default Value - Dark Theme |
+| -------- |------------------------------------------|----------------------------|
+| `arrowColor` | `#FFFFFF`                                | `#1E1E26`                                |  
+
+```tsx
 export interface IThemePopover {
   arrowColor?: string;
 }
+```
+## Default styles for `IThemeNotificationListItem`
 
+| Property                 | Default Value - Light Theme              | Default Value - Dark Theme |
+|--------------------------|------------------------------------------|----------------------------|
+| `seen.fontColor`         | `#828299`                                | `#FFFFFF`                               |  
+| `seen.background`        | `#F5F8FA`                                | `#23232B`                                |  
+| `seen.timeMarkFontColor` | `#BEBECC` | `#525266` |
+| `unseen.fontColor`       | `#828299`                                     |`#FFFFFF`                                        |
+| `unseen.background`      | `#FFFFFF`                                | `#292933`                              |
+| `unseen.boxShadow`      | `0px 5px 15px rgba(122, 133, 153, 0.25)`                                | `0px 5px 20px rgba(0, 0, 0, 0.2)`                              |
+| `unseen.notificationItemBeforeBrandColor`| `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)`                                | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)`                              |
+| `unseen.timeMarkFontColor`      | `#828299`                                | `#828299`                              |
+
+```tsx
 export interface IThemeNotificationListItem {
   seen?: {
     fontColor?: string;
@@ -259,12 +287,28 @@ export interface IThemeNotificationListItem {
     timeMarkFontColor?: string;
   };
 }
+```
+## Default styles for `IThemeFooter`
 
+| Property | Default Value - Light Theme              | Default Value - Dark Theme |
+| -------- |------------------------------------------|----------------------------|
+| `logoTextColor` | `#000000`                                | `#FFFFFF`                                |  
+| `logoPrefixFontColor` | `#A1A1B2`                                | `#525266`                                |  
+
+```tsx
 export interface IThemeFooter {
   logoTextColor?: string;
   logoPrefixFontColor?: string;
 }
+```
+## Default styles for `IThemeUnseenBadge`
 
+| Property          | Default Value - Light Theme                | Default Value - Dark Theme |
+|-------------------|--------------------------------------------|----------------------------|
+| `color.fillColor` | `stopColor: #FF512F stopColorOffset: #DD2476` | `stopColor: #FF512F stopColorOffset: #DD2476`                                |  
+| `color.borderColor`          | `#FFFFFF`                                   | `#1E1E26`                               |  
+
+```tsx
 export interface IThemeUnseenBadge {
   color?: {
     fillColor?: string | ISvgStopColor;
@@ -273,4 +317,3 @@ export interface IThemeUnseenBadge {
 }
 ```
 
-  
