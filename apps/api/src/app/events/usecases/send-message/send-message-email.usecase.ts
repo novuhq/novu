@@ -13,7 +13,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { IEmailOptions } from '@novu/stateless';
+import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -95,11 +95,22 @@ export class SendMessageEmail extends SendMessageType {
       active: true,
     });
 
+    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
+      (attachment) =>
+        <IAttachmentOptions>{
+          file: Buffer.from(attachment.file),
+          mime: attachment.mime,
+          name: attachment.name,
+          channels: attachment.channels,
+        }
+    );
+
     const mailData: IEmailOptions = {
       to: email,
       subject,
       html,
       from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      attachments,
     };
 
     if (email && integration) {
