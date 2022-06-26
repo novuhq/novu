@@ -231,9 +231,9 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(message.seen).to.equal(false);
     expect(message.cta.data.url).to.equal('/cypress/test-shell/example/test?test-param=true');
     expect(message.lastSeenDate).to.be.not.ok;
-    expect(message.triggerPayload.firstName).to.equal('Testing of User Name');
-    expect(message.triggerPayload.urlVar).to.equal('/test/url/path');
-    expect(message.triggerPayload.attachments).to.be.not.ok;
+    expect(message.payload.firstName).to.equal('Testing of User Name');
+    expect(message.payload.urlVar).to.equal('/test/url/path');
+    expect(message.payload.attachments).to.be.not.ok;
 
     const emails = await messageRepository.findBySubscriberChannel(
       session.environment._id,

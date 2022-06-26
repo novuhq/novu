@@ -55,5 +55,5 @@ export class MessageEntity {
   @Exclude()
   providerResponse: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  triggerPayload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: Record<string, unknown>;
 }

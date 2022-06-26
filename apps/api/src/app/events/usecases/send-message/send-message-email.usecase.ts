@@ -70,7 +70,7 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
-      triggerPayload: messagePayload,
+      payload: messagePayload,
     });
 
     const contentService = new ContentService();

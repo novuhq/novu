@@ -61,7 +61,7 @@ export class SendMessageSms extends SendMessageType {
       transactionId: command.transactionId,
       phone,
       content,
-      triggerPayload: messagePayload,
+      payload: messagePayload,
     });
 
     const integration = await this.integrationRepository.findOne({
