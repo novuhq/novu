@@ -173,3 +173,104 @@ Then pass the created HMAC to your client side application forward it to the com
 <NovuProvider subscriberId={'PLAIN_TEXT_ID'} subscriberHash={'HASHED_SUBSCRIBER_ID'} applicationIdentifier={'APP_ID'}>
 </NovuProvider>
 ```
+
+## Customizing the notification center theme
+
+The notification center component can be customized by passing a `theme` prop to the `PopoverNotificationCenter` component.
+
+```tsx
+const theme: INovuTheme = {
+   dark: {
+      // Dark Theme Props
+   },
+   light: {
+       // Light Theme Props
+   },
+   common: {
+      // Common
+   }
+};
+
+<PopoverNotificationCenter theme={theme}>
+  {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
+</PopoverNotificationCenter>
+
+export interface INovuTheme {
+  layout?: IThemeLayout;
+  header?: IThemeHeader;
+  popover?: IThemePopover;
+  notificationItem?: IThemeNotificationListItem;
+  footer?: IThemeFooter;
+  loaderColor?: string;
+  unseenBadge?: IThemeUnseenBadge;
+}
+
+```
+
+A theme object can be used to customize the notification center's layout, header, popover, notification list item, footer, and unseen badge. 
+The object can be modified partially or completely, depending on the level of customization you want to achieve.
+
+Here are the optional fields that can be used to customize the notification center:
+
+A table of IThemeLayout properties:
+
+## Layout styles for `IThemeLayout`
+
+
+| Property | Default Value |
+| -------- | ----------- |
+| `background` | `#fefe` | 
+| `boxShadow` |  |
+| `borderRadius` |  |
+| `wrapper.secondaryFontColor` | `#000` |
+
+
+```tsx
+export interface IThemeLayout {
+  background?: string;
+  boxShadow?: string;
+  borderRadius?: string;
+  wrapper?: {
+    secondaryFontColor?: string;
+  };
+}
+
+export interface IThemeHeader {
+  badgeColor?: string;
+  badgeTextColor?: string;
+  fontColor?: string;
+}
+
+export interface IThemePopover {
+  arrowColor?: string;
+}
+
+export interface IThemeNotificationListItem {
+  seen?: {
+    fontColor?: string;
+    background?: string;
+    timeMarkFontColor?: string;
+  };
+  unseen?: {
+    fontColor?: string;
+    background?: string;
+    boxShadow?: string;
+    notificationItemBeforeBrandColor?: string;
+    timeMarkFontColor?: string;
+  };
+}
+
+export interface IThemeFooter {
+  logoTextColor?: string;
+  logoPrefixFontColor?: string;
+}
+
+export interface IThemeUnseenBadge {
+  color?: {
+    fillColor?: string | ISvgStopColor;
+    borderColor?: string;
+  };
+}
+```
+
+  
