@@ -35,7 +35,7 @@ The responsibility of each provider is to send the notification to the end-recip
 ## Subscribers
 
 Are the recipients of notifications, a subscriber will contain the delivery details such as: Email address, phone number, push tokens and etc...
-Populating a subscriber with data can be done using our server side SDK. Read more about it [here](/docs/platform/subscribers).
+Populating a subscriber with data can be done using our server side SDK. Read more about it [here](/platform/subscribers).
 
 ## Trigger
 

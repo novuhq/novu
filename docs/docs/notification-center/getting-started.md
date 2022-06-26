@@ -37,4 +37,4 @@ function Header() {
 
 That's it! Now you're ready to send your first notifications using Novu.
 
-Not using React? Checkout the [iFrame Embed docs](/docs/notification-center/iframe-embed)
+Not using React? Checkout the [iFrame Embed docs](/notification-center/iframe-embed)

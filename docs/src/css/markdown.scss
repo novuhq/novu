@@ -107,73 +107,77 @@
 html[data-theme='dark'] {
   --ifm-table-border-color: #333333;
 
-  h2 {
-    border-top: 1px dashed $color-gray-4;
-  }
-
-  a:not([class]):hover {
-    text-decoration-color: $color-primary-blue;
-  }
-
-  ul,
-  ol {
-    > li::marker {
-      color: $color-primary-blue;
+  .markdown {
+    h2 {
+      border-top: 1px dashed $color-gray-4;
     }
-  }
 
-  blockquote {
-    cite {
-      color: $color-gray-8;
+    a:not([class]):hover {
+      text-decoration-color: $color-primary-blue;
     }
-  }
 
-  code {
-    &:not([class]) {
-      background-color: $color-gray-2;
+    ul, ol {
+      > li::marker {
+        color: $color-primary-blue;
+      }
     }
-  }
 
-  table {
-    th {
-      color: $color-gray-8;
+    blockquote {
+      cite {
+        color: $color-gray-8;
+      }
+    }
+  
+
+    code {
+      &:not([class]) {
+        background-color: $color-gray-2;
+      }
+    }
+
+    table {
+      th {
+        color: $color-gray-8;
+      }
     }
   }
 }
 
+
 html[data-theme='light'] {
   --ifm-table-border-color: #cccccc;
 
-  ul,
-  ol {
-    > li::marker {
-      color: $color-secondary-blue;
+  .markdown {
+    ul, ol {
+      > li::marker {
+        color: $color-secondary-blue;
+      }
     }
-  }
 
-  h2 {
-    border-top: 1px dashed $color-gray-9;
-  }
-
-  a:not([class]):hover {
-    text-decoration-color: $color-secondary-blue;
-  }
-
-  blockquote {
-    cite {
-      color: $color-gray-6;
+    h2 {
+      border-top: 1px dashed $color-gray-9;
     }
-  }
 
-  code {
-    &:not([class]) {
-      background-color: $color-gray-11;
+    a:not([class]):hover {
+      text-decoration-color: $color-secondary-blue;
     }
-  }
 
-  table {
-    th {
-      color: $color-gray-6;
+    blockquote {
+      cite {
+        color: $color-gray-6;
+      }
+    }
+
+    code {
+      &:not([class]) {
+        background-color: $color-gray-11;
+      }
+    }
+
+    table {
+      th {
+        color: $color-gray-6;
+      }
     }
   }
 }
