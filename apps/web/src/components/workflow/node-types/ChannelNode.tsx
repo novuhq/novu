@@ -1,12 +1,6 @@
 import React, { memo } from 'react';
-import { Handle, Position, getOutgoers, useReactFlow, useUpdateNodeInternals } from 'react-flow-renderer';
-import { ChannelButton, Dropdown } from '../../../design-system';
-import { ActionIcon, MenuItem as DropdownItem } from '@mantine/core';
-import { PlusCircleOutlined } from '../../../design-system/icons';
-import { When } from '../../utils/When';
-import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
-import { getChannel } from '../../../pages/templates/shared/channels';
-import { ChannelTypeEnum } from '@novu/shared';
+import { Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
+import { ChannelButton } from '../../../design-system';
 
 interface NodeData {
   Icon: React.FC<any>;
@@ -24,45 +18,10 @@ interface NodeData {
 
 export default memo(
   ({ data, selected, id, dragging }: { data: NodeData; selected: boolean; id: string; dragging: boolean }) => {
-    const { getNode, getEdges, getNodes, addNodes, addEdges } = useReactFlow();
-    const updateNodeInternals = useUpdateNodeInternals();
+    const { getNode, getEdges, getNodes } = useReactFlow();
     const thisNode = getNode(id);
     const isParent = thisNode ? getOutgoers(thisNode, getNodes(), getEdges()).length : false;
     const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
-
-    const addNewNode = (type) => {
-      const channel = getChannel(type);
-
-      if (!channel) {
-        return;
-      }
-      const newId = uuid4();
-      const newNode = {
-        id: newId,
-        type: 'channelNode',
-        position: { x: 0, y: 120 },
-        parentNode: id,
-        data: {
-          ...channel,
-          index: data.index + 1,
-          active: true,
-        },
-      };
-
-      addNodes(newNode);
-
-      const newEdge = {
-        id: `e-${id}-${newId}`,
-        source: id,
-        sourceHandle: 'a',
-        targetHandle: 'b',
-        target: newId,
-        curvature: 7,
-      };
-
-      addEdges(newEdge);
-      updateNodeInternals(id);
-    };
 
     return (
       <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
@@ -79,23 +38,6 @@ export default memo(
           id={id}
           dragging={dragging}
         />
-        <When truthy={!isParent}>
-          <Dropdown
-            control={
-              <ActionIcon
-                onClick={() => (selected = false)}
-                sx={{ zIndex: 9999, pointerEvents: 'all' }}
-                variant="transparent"
-              >
-                <PlusCircleOutlined />
-              </ActionIcon>
-            }
-          >
-            <DropdownItem onClick={() => addNewNode(ChannelTypeEnum.SMS)}>SMS</DropdownItem>
-            <DropdownItem>Email</DropdownItem>
-            <DropdownItem>In-App</DropdownItem>
-          </Dropdown>
-        </When>
         <Handle type="target" id="b" position={Position.Top} />
         <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
       </div>

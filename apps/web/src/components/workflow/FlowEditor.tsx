@@ -15,18 +15,19 @@ import ReactFlow, {
 } from 'react-flow-renderer';
 import ChannelNode from './node-types/ChannelNode';
 import { colors } from '../../design-system';
-import { ActionIcon, useMantineColorScheme } from '@mantine/core';
+import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
 import { StepEntity } from '../templates/use-template-controller.hook';
 import { ChannelTypeEnum } from '@novu/shared';
 import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
-import { PlusCircleOutlined } from '../../design-system/icons';
+import AddNode from './node-types/AddNode';
 
 const nodeTypes = {
   channelNode: ChannelNode,
   triggerNode: TriggerNode,
+  addNode: AddNode,
 };
 
 const initialNodes: Node[] = [
@@ -95,6 +96,9 @@ export function FlowEditor({
           position: {
             ...nodes[0].position,
           },
+          data: {
+            showDropZone: nodes.length === 2 && dragging,
+          },
         },
       ]);
     }
@@ -133,7 +137,58 @@ export function FlowEditor({
         setEdges((eds) => addEdge(newEdge, eds));
       }
     }
+    const addNodeButton = {
+      id: '2',
+      type: 'addNode',
+      data: {
+        label: '',
+        addNewNode,
+        parentId,
+      },
+      className: 'nodrag',
+      isConnectable: false,
+      parentNode: parentId,
+      position: { x: 85, y: 90 },
+    };
+    setNodes((nds) => nds.concat(addNodeButton));
   }, [steps, dragging, errors]);
+
+  const addNewNode = useCallback((parentNodeId: string, channelType: string) => {
+    const channel = getChannel(channelType);
+
+    if (!channel) {
+      return;
+    }
+
+    const newId = uuid4();
+    const newNode = {
+      id: newId,
+      type: 'channelNode',
+      position: { x: 0, y: 120 },
+      parentNode: parentNodeId,
+      data: {
+        ...channel,
+        index: nodes.length,
+        active: true,
+      },
+    };
+
+    addStep(newNode.data.channelType, newId);
+    setNodes((nds) => nds.slice(0, -1));
+    setNodes((nds) => nds.concat(newNode));
+    updateNodeInternals(newId);
+
+    const newEdge = {
+      id: `e-${parentNodeId}-${newId}`,
+      source: parentNodeId,
+      sourceHandle: 'a',
+      targetHandle: 'b',
+      target: newId,
+      curvature: 7,
+    };
+
+    setEdges((eds) => addEdge(newEdge, eds));
+  }, []);
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
@@ -161,7 +216,7 @@ export function FlowEditor({
 
       const parentNode = reactFlowInstance?.getNode(parentId);
 
-      if (typeof parentNode === 'undefined') {
+      if (typeof parentNode === 'undefined' || parentId === '2') {
         return;
       }
 
@@ -170,40 +225,7 @@ export function FlowEditor({
         return;
       }
 
-      const channel = getChannel(type);
-
-      if (!channel) {
-        return;
-      }
-
-      const newId = uuid4();
-      const newNode = {
-        id: newId,
-        type: 'channelNode',
-        position: { x: 0, y: 120 },
-        parentNode: parentId,
-        data: {
-          ...channel,
-          index: nodes.length,
-          active: true,
-        },
-      };
-
-      addStep(newNode.data.channelType, newId);
-
-      setNodes((nds) => nds.concat(newNode));
-      updateNodeInternals(newId);
-
-      const newEdge = {
-        id: `e-${parentId}-${newId}`,
-        source: parentId,
-        sourceHandle: 'a',
-        targetHandle: 'b',
-        target: newId,
-        curvature: 7,
-      };
-
-      setEdges((eds) => addEdge(newEdge, eds));
+      addNewNode(parentId, type);
     },
     [reactFlowInstance, nodes, edges]
   );
