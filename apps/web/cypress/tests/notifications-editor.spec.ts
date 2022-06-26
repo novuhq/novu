@@ -52,6 +52,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('button-add').click();
       cy.getByTestId('add-sms-node').click();
       cy.get('.react-flow__node').should('have.length', 3);
+      cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'SMS');
     });
   });
 
