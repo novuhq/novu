@@ -20,6 +20,7 @@ export default memo(({ data }: { data: NodeData }) => {
         placement="center"
         control={
           <ActionIcon
+            data-test-id="button-add"
             styles={(theme) => ({
               root: {
                 '&:active': {
@@ -41,13 +42,17 @@ export default memo(({ data }: { data: NodeData }) => {
           </ActionIcon>
         }
       >
-        <DropdownItem icon={<Sms />} onClick={() => addNewNode(ChannelTypeEnum.SMS)}>
+        <DropdownItem data-test-id={`add-sms-node`} icon={<Sms />} onClick={() => addNewNode(ChannelTypeEnum.SMS)}>
           SMS
         </DropdownItem>
-        <DropdownItem icon={<Mail />} onClick={() => addNewNode(ChannelTypeEnum.EMAIL)}>
+        <DropdownItem data-test-id={`add-email-node`} icon={<Mail />} onClick={() => addNewNode(ChannelTypeEnum.EMAIL)}>
           Email
         </DropdownItem>
-        <DropdownItem icon={<Mobile />} onClick={() => addNewNode(ChannelTypeEnum.IN_APP)}>
+        <DropdownItem
+          data-test-id={`add-in-app-node`}
+          icon={<Mobile />}
+          onClick={() => addNewNode(ChannelTypeEnum.IN_APP)}
+        >
           In-App
         </DropdownItem>
       </Dropdown>
