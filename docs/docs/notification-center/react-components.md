@@ -220,7 +220,6 @@ A table of IThemeLayout properties:
 |------------------------------|------------------------------------------|-----------------------------------|
 | `background`                 | `#FFFFFF`                                | `#1E1E26`                         |  
 | `boxShadow`                  | `0px 5px 15px rgba(122, 133, 153, 0.25)` | `0px 5px 20px rgba(0, 0, 0, 0.2)` |
-| `borderRadius`               | `7px`                                    | `7px`                             |
 | `wrapper.secondaryFontColor` | `#BEBECC`                                | `#525266`                         |
 
 ### `IThemeHeader` customization properties
