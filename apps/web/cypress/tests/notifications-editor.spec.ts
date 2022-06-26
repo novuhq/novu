@@ -26,7 +26,7 @@ describe('Notifications Creator', function () {
       dragAndDrop('inApp');
       dragAndDrop('email', 'trigger');
       cy.getByTestId('node-emailSelector').should('not.exist');
-      cy.get('.react-flow__node').should('have.length', 2);
+      cy.get('.react-flow__node').should('have.length', 3);
     });
 
     it('should be able to select a step', function () {
