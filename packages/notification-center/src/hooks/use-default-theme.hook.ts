@@ -6,11 +6,11 @@ import {
   defaultNotificationBellLightTheme,
 } from '../shared/config/themeDefaultValues';
 import { ICommonTheme, INovuThemeProvider } from '../store/novu-theme-provider.context';
-import { INotificationBellTheme, INovuTheme } from '../store/novu-theme.context';
+import { INotificationBellColors, INovuTheme, ISvgStopColor } from '../store/novu-theme.context';
 import merge from 'lodash.merge';
 import { ColorScheme } from '../index';
 
-interface IDefaultThemeProps {
+export interface IDefaultThemeProps {
   colorScheme: ColorScheme;
   theme: INovuThemeProvider;
 }
@@ -32,22 +32,26 @@ export function useDefaultTheme(props: IDefaultThemeProps): {
   };
 }
 
-export interface IDefaultBellThemeProps {
-  theme?: INotificationBellTheme;
+export interface IDefaultBellColors {
   colorScheme?: ColorScheme;
+  fillColor?: string | ISvgStopColor;
+  borderColor?: string;
 }
 
-export function useDefaultBellTheme(props: IDefaultBellThemeProps): {
-  theme: INotificationBellTheme;
-} {
+export function useDefaultBellColors(props: IDefaultBellColors): { bellColors: INotificationBellColors } {
   const colorScheme = props?.colorScheme ? props?.colorScheme : 'light';
 
-  const theme =
+  const notificationBellColors: INotificationBellColors = {
+    fillColor: props?.fillColor,
+    borderColor: props?.borderColor,
+  };
+
+  const bellColors =
     colorScheme === 'light'
-      ? merge(defaultNotificationBellLightTheme, props?.theme)
-      : merge(defaultNotificationBellDarkTheme, props?.theme);
+      ? merge(defaultNotificationBellLightTheme, notificationBellColors)
+      : merge(defaultNotificationBellDarkTheme, notificationBellColors);
 
   return {
-    theme,
+    bellColors,
   };
 }

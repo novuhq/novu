@@ -1,6 +1,6 @@
 import { colors } from './colors';
 import { shadows } from './shadows';
-import { INotificationBellTheme, INovuTheme } from '../../store/novu-theme.context';
+import { INotificationBellColors, INovuTheme } from '../../store/novu-theme.context';
 import { ICommonTheme } from '../../store/novu-theme-provider.context';
 
 export const defaultLightTheme: INovuTheme = {
@@ -63,10 +63,12 @@ export const defaultCommonTheme: ICommonTheme = {
   fontFamily: 'Lato',
 };
 
-export const defaultNotificationBellLightTheme: INotificationBellTheme = {
-  color: { fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' }, borderColor: colors.white },
+export const defaultNotificationBellLightTheme: INotificationBellColors = {
+  fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  borderColor: colors.white,
 };
 
-export const defaultNotificationBellDarkTheme: INotificationBellTheme = {
-  color: { fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' }, borderColor: colors.B15 },
+export const defaultNotificationBellDarkTheme: INotificationBellColors = {
+  fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  borderColor: colors.B15,
 };

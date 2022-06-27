@@ -5,31 +5,36 @@ import { ActionIcon } from '@mantine/core';
 import styled from 'styled-components';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ColorScheme } from '../../index';
-import { INotificationBellTheme } from '../../store/novu-theme.context';
-import { useDefaultBellTheme } from '../../hooks';
+import { ISvgStopColor } from '../../store/novu-theme.context';
+import { useDefaultBellColors } from '../../hooks';
 
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export interface INotificationBellProps {
   unseenCount?: number;
-  theme?: INotificationBellTheme;
+  fillColor?: string | ISvgStopColor;
+  borderColor?: string;
   colorScheme?: ColorScheme;
 }
 
 export function NotificationBell(props: INotificationBellProps) {
   const { unseenCount } = useContext(UnseenCountContext);
-  const { theme } = useDefaultBellTheme({ colorScheme: props.colorScheme, theme: props.theme });
+  const { bellColors } = useDefaultBellColors({
+    fillColor: props?.fillColor,
+    borderColor: props?.borderColor,
+    colorScheme: props?.colorScheme,
+  });
 
   return (
     <ActionIcon variant="transparent">
       <BellIcon {...headerIconsSettings} />
-      {unseenCount > 0 ? <StyledGradientDot theme={theme} /> : null}
+      {unseenCount > 0 ? <StyledGradientDot bellColors={bellColors} /> : null}
     </ActionIcon>
   );
 }
 
-export function GradientDotWrap({ theme, ...props }) {
-  return <GradientDot {...props} theme={theme} />;
+export function GradientDotWrap({ bellColors, ...props }) {
+  return <GradientDot {...props} bellColors={bellColors} />;
 }
 
 const StyledGradientDot = styled(GradientDotWrap)`

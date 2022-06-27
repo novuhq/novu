@@ -66,11 +66,9 @@ export interface IThemeFooter {
   logoPrefixFontColor?: string;
 }
 
-export interface INotificationBellTheme {
-  color?: {
-    fillColor?: string | ISvgStopColor;
-    borderColor?: string;
-  };
+export interface INotificationBellColors {
+  fillColor?: string | ISvgStopColor;
+  borderColor?: string;
 }
 
 export interface ISvgStopColor {
