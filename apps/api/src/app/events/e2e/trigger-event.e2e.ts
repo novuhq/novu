@@ -155,9 +155,9 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     await session.awaitRunningJobs();
 
     jobs = await jobRepository.find({});
-    statuses = jobs.map((job) => job.status).filter((value) => value === JobStatusEnum.COMPLETED);
+    statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
 
-    expect(statuses.length).to.equal(4);
+    expect(statuses.length).to.equal(0);
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
