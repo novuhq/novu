@@ -10,7 +10,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
   const { colorScheme } = useMantineColorScheme();
 
   function handlerOnNotificationClick(message: IMessage) {
-    if (message.cta.data.url) {
+    if (message?.cta?.data?.url) {
       window.location.href = message.cta.data.url;
     }
   }
