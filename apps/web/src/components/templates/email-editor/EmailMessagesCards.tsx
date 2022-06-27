@@ -1,7 +1,5 @@
 import { useQuery } from 'react-query';
-import { ChannelTypeEnum, IOrganizationEntity } from '@novu/shared';
-import { FieldArrayWithId } from 'react-hook-form';
-import { IForm } from '../use-template-controller.hook';
+import { IOrganizationEntity } from '@novu/shared';
 import { EmailContentCard } from './EmailContentCard';
 import { getCurrentOrganization } from '../../../api/organization';
 
