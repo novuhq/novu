@@ -67,8 +67,8 @@ export interface IThemeFooter {
 }
 
 export interface INotificationBellColors {
-  fillColor?: string | ISvgStopColor;
-  borderColor?: string;
+  unseenBadgeColor?: string | ISvgStopColor;
+  unseenBadgeBackgroundColor?: string;
 }
 
 export interface ISvgStopColor {

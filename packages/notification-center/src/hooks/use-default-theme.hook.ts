@@ -34,16 +34,16 @@ export function useDefaultTheme(props: IDefaultThemeProps): {
 
 export interface IDefaultBellColors {
   colorScheme?: ColorScheme;
-  fillColor?: string | ISvgStopColor;
-  borderColor?: string;
+  unseenBadgeColor?: string | ISvgStopColor;
+  unseenBadgeBackgroundColor?: string;
 }
 
 export function useDefaultBellColors(props: IDefaultBellColors): { bellColors: INotificationBellColors } {
   const colorScheme = props?.colorScheme ? props?.colorScheme : 'light';
 
   const notificationBellColors: INotificationBellColors = {
-    fillColor: props?.fillColor,
-    borderColor: props?.borderColor,
+    unseenBadgeColor: props?.unseenBadgeColor,
+    unseenBadgeBackgroundColor: props?.unseenBadgeBackgroundColor,
   };
 
   const bellColors =

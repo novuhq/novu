@@ -12,16 +12,16 @@ const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export interface INotificationBellProps {
   unseenCount?: number;
-  fillColor?: string | ISvgStopColor;
-  borderColor?: string;
+  unseenBadgeColor?: string | ISvgStopColor;
+  unseenBadgeBackgroundColor?: string;
   colorScheme?: ColorScheme;
 }
 
 export function NotificationBell(props: INotificationBellProps) {
   const { unseenCount } = useContext(UnseenCountContext);
   const { bellColors } = useDefaultBellColors({
-    fillColor: props?.fillColor,
-    borderColor: props?.borderColor,
+    unseenBadgeColor: props?.unseenBadgeColor,
+    unseenBadgeBackgroundColor: props?.unseenBadgeBackgroundColor,
     colorScheme: props?.colorScheme,
   });
 

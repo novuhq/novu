@@ -64,11 +64,11 @@ export const defaultCommonTheme: ICommonTheme = {
 };
 
 export const defaultNotificationBellLightTheme: INotificationBellColors = {
-  fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
-  borderColor: colors.white,
+  unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  unseenBadgeBackgroundColor: colors.white,
 };
 
 export const defaultNotificationBellDarkTheme: INotificationBellColors = {
-  fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
-  borderColor: colors.B15,
+  unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  unseenBadgeBackgroundColor: colors.B15,
 };
