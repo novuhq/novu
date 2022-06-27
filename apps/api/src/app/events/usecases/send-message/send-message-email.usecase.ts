@@ -56,6 +56,9 @@ export class SendMessageEmail extends SendMessageType {
 
     const content: string | IEmailBlock[] = this.getContent(isEditorMode, emailChannel, command, subscriber);
 
+    const messagePayload = Object.assign({}, command.payload);
+    delete messagePayload.attachments;
+
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
       _environmentId: command.environmentId,
@@ -67,6 +70,7 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
+      payload: messagePayload,
     });
 
     const contentService = new ContentService();
