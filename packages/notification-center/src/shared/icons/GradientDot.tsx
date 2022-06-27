@@ -1,14 +1,14 @@
 import React from 'react';
-import { INovuTheme } from '../../store/novu-theme.context';
+import { INotificationBellTheme } from '../../store/novu-theme.context';
 
 interface IGradientDotProps {
   props?: React.ComponentPropsWithoutRef<'svg'>;
-  theme: INovuTheme;
+  theme: INotificationBellTheme;
 }
 
 /* eslint-disable */
 export function GradientDot(props: IGradientDotProps) {
-  const color = props.theme.unseenBadge.color.fillColor;
+  const color = props.theme.color.fillColor;
   const regularColor = typeof color === 'string';
 
   return (
@@ -20,7 +20,7 @@ export function GradientDot(props: IGradientDotProps) {
         height="13"
         rx="6.5"
         fill="url(#paint0_linear_1722_2699)"
-        stroke={props.theme.unseenBadge.color.borderColor}
+        stroke={props.theme.color.borderColor}
         strokeWidth="3"
       />
       <defs>

@@ -1,6 +1,6 @@
 import { colors } from './colors';
 import { shadows } from './shadows';
-import { INovuTheme } from '../../store/novu-theme.context';
+import { INotificationBellTheme, INovuTheme } from '../../store/novu-theme.context';
 import { ICommonTheme } from '../../store/novu-theme-provider.context';
 
 export const defaultLightTheme: INovuTheme = {
@@ -29,9 +29,6 @@ export const defaultLightTheme: INovuTheme = {
   },
   footer: { logoTextColor: 'black', logoPrefixFontColor: colors.B70 },
   loaderColor: colors.vertical,
-  unseenBadge: {
-    color: { fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' }, borderColor: colors.white },
-  },
 };
 
 export const defaultDarkTheme: INovuTheme = {
@@ -60,9 +57,16 @@ export const defaultDarkTheme: INovuTheme = {
   },
   footer: { logoTextColor: colors.white, logoPrefixFontColor: colors.B40 },
   loaderColor: colors.vertical,
-  unseenBadge: { color: { fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' }, borderColor: colors.B15 } },
 };
 
 export const defaultCommonTheme: ICommonTheme = {
-  fontFamily: 'Montserrat',
+  fontFamily: 'Lato',
+};
+
+export const defaultNotificationBellLightTheme: INotificationBellTheme = {
+  color: { fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' }, borderColor: colors.white },
+};
+
+export const defaultNotificationBellDarkTheme: INotificationBellTheme = {
+  color: { fillColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' }, borderColor: colors.B15 },
 };
