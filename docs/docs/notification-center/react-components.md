@@ -202,7 +202,6 @@ export interface INovuTheme {
   notificationItem?: IThemeNotificationListItem;
   footer?: IThemeFooter;
   loaderColor?: string;
-  unseenBadge?: IThemeUnseenBadge;
 }
 
 ```
@@ -262,3 +261,19 @@ A table of IThemeLayout properties:
 |---------------------|-----------------------------------------------|-----------------------------------------------|
 | `color.fillColor`   | `stopColor: #FF512F stopColorOffset: #DD2476` | `stopColor: #FF512F stopColorOffset: #DD2476` |  
 | `color.borderColor` | `#FFFFFF`                                     | `#1E1E26`                                     |  
+
+
+### `NotificationBell` customization properties
+
+| Property                     | Default Value - Light Theme                          | Default Value - Dark Theme                              |
+|------------------------------|------------------------------------------------------|---------------------------------------------------------|
+| `colorScheme`                | `light`                                              | `light`                                                 |  
+| `unseenBadgeColor`           | `stopColor: '#FF512F', stopColorOffset: '#DD2476'`   | `{ stopColor: '#FF512F', stopColorOffset: '#DD2476' }`  |  
+| `unseenBadgeBackgroundColor` | `#FFFFFF`                                            | `#1E1E26`                                               |  
+
+
+Note: unseenBadgeColor is of a type : string | {stopColor : string, stopColorOffset : sting}, so if you would like one 
+color badge you can use a string of the color and not the object in order to create gradient.
+
+
+
