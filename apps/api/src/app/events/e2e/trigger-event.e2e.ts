@@ -517,7 +517,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     await session.awaitRunningJobs();
 
     const jobs = await jobRepository.find({});
-    expect(jobs.length).to.equal(3);
     const job = jobs[jobs.length - 1];
     expect(job.digest?.events?.length).to.equal(2);
   });
