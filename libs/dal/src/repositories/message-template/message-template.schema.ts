@@ -34,6 +34,10 @@ const messageTemplateSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    _feedId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Feed',
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
