@@ -49,7 +49,7 @@ export class ProcessSubscriber {
       const earliest = moment().subtract(10, 'minutes').toDate();
       const jobs = await this.jobRepository.findJobsToDigest(
         earliest,
-        command.identifier,
+        command.templateId,
         command.environmentId,
         subscriber._id
       );
