@@ -47,12 +47,12 @@ export class ProcessSubscriber {
 
     if (digests.length > 0) {
       const earliest = moment().subtract(10, 'minutes').toDate();
-      const jobs = await this.jobRepository.find({
-        updatedAt: {
-          $gte: earliest,
-        },
-        status: JobStatusEnum.COMPLETED,
-      });
+      const jobs = await this.jobRepository.findJobsToDigest(
+        earliest,
+        command.identifier,
+        command.environmentId,
+        subscriber._id
+      );
 
       if (jobs.length === 0) {
         steps = steps.filter((step) => step.template.type !== ChannelTypeEnum.DIGEST);

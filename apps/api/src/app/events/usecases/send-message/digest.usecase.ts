@@ -19,14 +19,13 @@ export class Digest extends SendMessageType {
     const currentJob = await this.jobRepository.findOne({
       _id: command.jobId,
     });
-
     const earliest = moment(currentJob.createdAt).subtract(10, 'minutes').toDate();
-    const jobs = await this.jobRepository.find({
-      updatedAt: {
-        $gte: earliest,
-      },
-      status: JobStatusEnum.COMPLETED,
-    });
+    const jobs = await this.jobRepository.findJobsToDigest(
+      earliest,
+      command.identifier,
+      command.environmentId,
+      command.subscriberId
+    );
 
     const nextJob = await this.jobRepository.findOne({
       _parentId: command.jobId,

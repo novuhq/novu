@@ -46,4 +46,16 @@ export class JobRepository extends BaseRepository<JobEntity> {
       }
     );
   }
+
+  public async findJobsToDigest(from: Date, identifier: string, environmentId: string, subscriberId: string) {
+    return await this.find({
+      updatedAt: {
+        $gte: from,
+      },
+      status: JobStatusEnum.COMPLETED,
+      identifier: identifier,
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+    });
+  }
 }
