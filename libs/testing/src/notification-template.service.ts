@@ -69,6 +69,7 @@ export class NotificationTemplateService {
       templateSteps.push({
         filters: message.filters,
         _templateId: saved._id,
+        active: message.active,
       });
     }
 
@@ -84,7 +85,7 @@ export class NotificationTemplateService {
       description: faker.commerce.productDescription().slice(0, 90),
       triggers: [
         {
-          identifier: `test-event-${faker.datatype.uuid()}`,
+          identifier: faker.datatype.uuid(),
           type: 'event',
           variables: [{ name: 'firstName' }, { name: 'lastName' }, { name: 'urlVariable' }],
         },

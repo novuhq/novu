@@ -1,5 +1,5 @@
 {
-  "extends": ["@commitlint/config-angular"],
+  "extends": ["@commitlint/config-conventional"],
   "rules": {
     "subject-case": [
       2,

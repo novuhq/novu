@@ -9,6 +9,10 @@ Cypress.Commands.add('getBySelectorLike', (selector, ...args) => {
   return cy.get(`[data-test*=${selector}]`, ...args);
 });
 
+Cypress.Commands.add('clickWorkflowNode', (selector: string, ...args) => {
+  return cy.getByTestId(selector).click({ force: true });
+});
+
 Cypress.Commands.add('seed', () => {
   return cy.request('POST', `${Cypress.env('apiUrl')}/v1/testing/seed`, {});
 });

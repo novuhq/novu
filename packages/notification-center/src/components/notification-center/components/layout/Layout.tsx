@@ -2,18 +2,17 @@ import styled from 'styled-components';
 import { Loader } from '../Loader';
 import { HeaderContainer as Header } from './header/HeaderContainer';
 import { FooterContainer as Footer } from './footer/FooterContainer';
-import { shadows } from '../../../../shared/config/shadows';
-import { colors } from '../../../../shared/config/colors';
-import React, { useContext } from 'react';
-import { NovuContext } from '../../../../store/novu-provider.context';
-import { ThemeContext } from '../../../../store/novu-theme.context';
+import React from 'react';
+import { useNovuContext } from 'packages/notification-center/src/hooks';
+import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
+import { INovuTheme } from '../../../../store/novu-theme.context';
 
 export function Layout({ children }: { children: JSX.Element }) {
-  const { initialized } = useContext(NovuContext);
-  const { colorScheme } = useContext(ThemeContext);
+  const { initialized } = useNovuContext();
+  const { theme } = useNovuThemeProvider();
 
   return (
-    <LayoutWrapper colorScheme={colorScheme}>
+    <LayoutWrapper theme={theme}>
       <Header />
       <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
       <Footer />
@@ -26,11 +25,10 @@ const ContentWrapper = styled.div`
   min-height: 400px;
 `;
 
-const LayoutWrapper = styled.div<{ colorScheme: 'light' | 'dark' }>`
-  background: white;
+const LayoutWrapper = styled.div<{ theme: INovuTheme }>`
   padding: 15px 0;
   height: auto;
   border-radius: 7px;
-  box-shadow: ${({ colorScheme }) => (colorScheme === 'light' ? shadows.medium : shadows.dark)};
-  background: ${({ colorScheme }) => (colorScheme === 'light' ? colors.white : colors.B15)};
+  box-shadow: ${({ theme }) => theme.layout.boxShadow};
+  background: ${({ theme }) => theme.layout.background};
 `;

@@ -56,6 +56,7 @@ export class AcceptInvite {
           },
           payload: {
             invitedUserEmail: member.invite.email,
+            firstName: capitalize(inviter.firstName),
             ctaUrl: '/team',
           },
         });

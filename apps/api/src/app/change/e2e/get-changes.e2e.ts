@@ -2,8 +2,7 @@ import { ChangeRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { CreateNotificationTemplateDto } from '../../notification-template/dto/create-notification-template.dto';
-import { UpdateNotificationTemplateDto } from '../../notification-template/dto/update-notification-template.dto';
+import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto } from '../../notification-template/dto';
 
 describe('Get changes', () => {
   let session: UserSession;
@@ -39,9 +38,12 @@ describe('Get changes', () => {
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
+            type: ChannelTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -54,12 +56,6 @@ describe('Get changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },

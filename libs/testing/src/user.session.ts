@@ -15,6 +15,8 @@ import {
   NotificationGroupEntity,
   EnvironmentRepository,
   NotificationGroupRepository,
+  JobRepository,
+  JobStatusEnum,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -28,6 +30,7 @@ export class UserSession {
   private userRepository = new UserRepository();
   private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
+  private jobRepository = new JobRepository();
 
   token: string;
 
@@ -236,5 +239,20 @@ export class UserSession {
       to: to,
       payload,
     });
+  }
+
+  public async awaitRunningJobs(timeout = 10000, delay = 1000) {
+    let runningJobs = 0;
+    const startTime = +new Date();
+    let timedOut = false;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    do {
+      runningJobs = await this.jobRepository.count({
+        status: {
+          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
+        },
+      });
+      timedOut = timeout < +new Date() - startTime;
+    } while (runningJobs > 0 && !timedOut);
   }
 }
