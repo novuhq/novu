@@ -72,7 +72,7 @@ To support dark mode in your application the notification center component can r
 ## Custom UI
 
 If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our react library.
-Let's see and example on how you can do that:
+Let's see an example on how you can do that:
 
 ```tsx
 import { NovuProvider, useNotifications } from '@novu/notification-center';
@@ -111,7 +111,7 @@ function CustomNotificationCenter() {
 
 ## Realtime sockets
 
-Novu provides a real-time socket API for you to consume to get updates about new notifications added to the user's feed. To use the socket connection you can use the `useSocket` hook provided by the `@novu/notification-center` library. Let's see and example of that:
+Novu provides a real-time socket API for you to consume to get updates about new notifications added to the user's feed. To use the socket connection you can use the `useSocket` hook provided by the `@novu/notification-center` library. Let's see an example of that:
 
 ```tsx
 import { NovuProvider, useSocket } from '@novu/notification-center';
