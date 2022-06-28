@@ -27,12 +27,12 @@ export const channels = [
     channelType: ChannelTypeEnum.SMS,
   },
   {
-    tabKey: ChannelTypeEnum.DIGEST_BACKOFF,
+    tabKey: ChannelTypeEnum.DIGEST,
     label: 'Digest',
     description: '',
     Icon: SmsGradient,
     testId: 'digestBackoffSelector',
-    channelType: ChannelTypeEnum.DIGEST_BACKOFF,
+    channelType: ChannelTypeEnum.DIGEST,
   },
 ];
 

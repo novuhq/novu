@@ -167,7 +167,7 @@ export function ChannelButton({
                     </ActionIcon>
                   }
                 >
-                  <When truthy={tabKey !== ChannelTypeEnum.DIGEST_BACKOFF}>
+                  <When truthy={tabKey !== ChannelTypeEnum.DIGEST}>
                     <MenuItem
                       style={{
                         pointerEvents: 'all',

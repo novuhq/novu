@@ -23,7 +23,7 @@ export class SendMessage {
         return await this.sendMessageInApp.execute(command);
       case ChannelTypeEnum.EMAIL:
         return await this.sendMessageEmail.execute(command);
-      case ChannelTypeEnum.DIGEST_BACKOFF:
+      case ChannelTypeEnum.DIGEST:
         return await this.digest.execute(command);
     }
   }
