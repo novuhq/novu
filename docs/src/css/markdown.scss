@@ -25,13 +25,13 @@
   h2 {
     padding-top: 40px;
     margin-top: 40px;
-  
+
     @include mobile-screen {
       padding-top: 25px !important;
       margin-top: 25px !important;
     }
   }
-  
+
   a:not([class]) {
     text-decoration: underline 1px rgba(0, 0, 0, 0);
     text-underline-offset: 3px;
@@ -41,7 +41,7 @@
   img {
     border-radius: 4px;
   }
-  
+
   blockquote {
     border-left: 2px solid $color-secondary-yellow;
 
@@ -53,12 +53,12 @@
       font-style: normal;
     }
   }
-  
+
   pre code span,
   code {
     font-family: 'IBM Plex Mono';
   }
-  
+
   pre code:not([class]) {
     display: initial;
   }
@@ -81,7 +81,7 @@
 
     th,
     td {
-      border: none
+      border: none;
     }
 
     thead {
@@ -115,7 +115,8 @@ html[data-theme='dark'] {
     text-decoration-color: $color-primary-blue;
   }
 
-  ul, ol {
+  ul,
+  ol {
     > li::marker {
       color: $color-primary-blue;
     }
@@ -126,7 +127,6 @@ html[data-theme='dark'] {
       color: $color-gray-8;
     }
   }
-  
 
   code {
     &:not([class]) {
@@ -142,9 +142,10 @@ html[data-theme='dark'] {
 }
 
 html[data-theme='light'] {
-  --ifm-table-border-color: #CCCCCC;
+  --ifm-table-border-color: #cccccc;
 
-  ul, ol {
+  ul,
+  ol {
     > li::marker {
       color: $color-secondary-blue;
     }
@@ -169,7 +170,6 @@ html[data-theme='light'] {
       background-color: $color-gray-11;
     }
   }
-
 
   table {
     th {

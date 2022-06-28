@@ -22,7 +22,7 @@ main {
     max-width: 100%;
     padding: 0 !important;
 
-   @include mobile-screen {
+    @include mobile-screen {
       padding-top: 20px !important;
     }
     .row {
@@ -79,11 +79,11 @@ article,
 article {
   margin-top: 48px;
 
- @include tablet-screen {
+  @include tablet-screen {
     margin-top: 30px;
   }
 
- @include mobile-screen {
+  @include mobile-screen {
     margin-top: 0;
   }
 }
@@ -144,7 +144,7 @@ article {
 }
 
 html[data-theme='dark'] {
-  --ifm-background-color: #0D0D0D;
+  --ifm-background-color: #0d0d0d;
   --ifm-hover-overlay: rgba(0, 213, 255, 0.1);
   --ifm-font-color-base: #e6e6e6;
   --ifm-toc-border-color: #262626;
@@ -187,9 +187,9 @@ html[data-theme='light'] {
   ---ifm-navbar-background-color: #ffffff;
   --ifm-hover-overlay: rgba(0, 213, 255, 0.1);
   --ifm-font-color-base: #000000;
-  --ifm-toc-border-color: #E6E6E6;
-  --ifm-link-color: #0055FF;
-  --ifm-color-primary: #0055FF;
+  --ifm-toc-border-color: #e6e6e6;
+  --ifm-link-color: #0055ff;
+  --ifm-color-primary: #0055ff;
   --ifm-menu-color-background-active: rgba(227, 0, 189, 0.08);
 
   main {

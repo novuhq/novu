@@ -1,4 +1,4 @@
-import { NotificationStepDto } from './shared';
+import { NotificationStepDto } from './notification-template.dto';
 
 export interface IUpdateNotificationTemplate {
   name?: string;

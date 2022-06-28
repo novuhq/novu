@@ -1,8 +1,7 @@
-
-.button_icon { 
+.button_icon {
   margin: auto 0;
   transition: transform 0.4s;
-  
+
   &.button_icon_is_open {
     transform: rotate(180deg);
   }
@@ -25,7 +24,6 @@
   cursor: pointer;
 }
 
-
 .item_title {
   font-style: normal;
   font-weight: 500;
@@ -33,7 +31,6 @@
   line-height: 150%;
   --ifm-heading-margin-bottom: 0;
 }
-
 
 .item_content {
   height: 0;
@@ -55,13 +52,12 @@
   }
 }
 
-
 html[data-theme='light'] {
   .button_icon {
     color: #000000;
   }
 
-  .item {  
+  .item {
     border-bottom: 1px solid #cccccc;
 
     &:first-child {
@@ -70,15 +66,14 @@ html[data-theme='light'] {
   }
 }
 
-
 html[data-theme='dark'] {
   .button_icon {
     color: #ffffff;
   }
 
-  .item {  
+  .item {
     border-bottom: 1px solid #333333;
-    
+
     &:first-child {
       border-top: 1px solid #333333;
     }

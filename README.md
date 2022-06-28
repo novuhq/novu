@@ -46,8 +46,8 @@ Building a notification system is hard, at first it seems like just sending an e
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
-- 📦 Embeddable notification center with real-time updates
 - 🛡 Debug and analyze multi channel messages in a single dashboard
+- 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
 ## 🚀 Getting Started
