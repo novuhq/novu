@@ -90,23 +90,23 @@ export class ProcessSubscriber {
       CreateSubscriberCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        subscriberId: subscriberPayload.subscriberId,
-        email: subscriberPayload.email,
-        firstName: subscriberPayload.firstName,
-        lastName: subscriberPayload.lastName,
-        phone: subscriberPayload.phone,
-        avatar: subscriberPayload.avatar,
+        subscriberId: subscriberPayload?.subscriberId,
+        email: subscriberPayload?.email,
+        firstName: subscriberPayload?.firstName,
+        lastName: subscriberPayload?.lastName,
+        phone: subscriberPayload?.phone,
+        avatar: subscriberPayload?.avatar,
       })
     );
   }
 
   private subscriberNeedUpdate(subscriber: SubscriberEntity, subscriberPayload: ISubscribersDefine): boolean {
     return (
-      subscriber.email !== subscriberPayload.email ||
-      subscriber.firstName !== subscriberPayload.firstName ||
-      subscriber.lastName !== subscriberPayload.lastName ||
-      subscriber.phone !== subscriberPayload.phone ||
-      subscriber.avatar !== subscriberPayload.avatar
+      (subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
+      (subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
+      (subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
+      (subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
+      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
     );
   }
 
