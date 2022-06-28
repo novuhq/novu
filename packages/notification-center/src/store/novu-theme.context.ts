@@ -25,7 +25,6 @@ export interface INovuTheme {
   notificationItem?: IThemeNotificationListItem;
   footer?: IThemeFooter;
   loaderColor?: string;
-  unseenBadge?: IThemeUnseenBadge;
 }
 
 export interface IThemeLayout {
@@ -67,11 +66,9 @@ export interface IThemeFooter {
   logoPrefixFontColor?: string;
 }
 
-export interface IThemeUnseenBadge {
-  color?: {
-    fillColor?: string | ISvgStopColor;
-    borderColor?: string;
-  };
+export interface INotificationBellColors {
+  unseenBadgeColor?: string | ISvgStopColor;
+  unseenBadgeBackgroundColor?: string;
 }
 
 export interface ISvgStopColor {
