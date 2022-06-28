@@ -13,14 +13,15 @@
 </div>
 
 
-<h1 align="center">Notification management simplified.</h1>
+<h2 align="center">The First Open Source Notification Infrastructure</h2>
 
 <div align="center">
-The ultimate service for managing multi-channel notifications with a single API. 
+Ultimate service for managing multi-channel notifications with a single API. 
 </div>
 
+***
+
   <p align="center">
-    <br />
     <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
     <br />
 
@@ -36,8 +37,21 @@ The ultimate service for managing multi-channel notifications with a single API.
     <a href="https://twitter.com/novuhq">Twitter</a>
   </p>
   
-## ⭐️ Why
-Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, direct and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
+  ***
+
+<div align="center">
+  <p>
+  Building a notification system is hard, at first, it seems like just sending an email but in reality,<br />
+  it's just the beginning. In today's world users expect a multi-channel communication <br />
+experience over email, SMS, push, direct, and more... 
+
+An ever-growing list of providers is popping up each day, and notifications are spread around the code. 
+
+<strong>Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication.</strong>
+  </p>
+  </div>
+
+  ***
 
 ## ✨ Features
 
@@ -46,22 +60,94 @@ Building a notification system is hard, at first it seems like just sending an e
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
-- 🛡 Debug and analyze multi channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
+- 🛡 Debug and analyze multi channel messages in a single dashboard
 - 👨‍💻 Community driven
 
+***
+
 ## 🚀 Getting Started
-We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
+<br />
+<details>
+  <summary><strong>Self-hosted version </strong></summary>
+
+```markdown
+💡 Before you begin, make sure you have all the below installed:
 ```
-npx novu init
-```
-After setting up your account using the cloud or docker version you can trigger the API using the `@novu/node` package.
+
+- [Node.js v14 or above](https://nodejs.org/en/download/)
+- [npm v7 or above](https://github.blog/2020-10-13-presenting-v7-0-0-of-the-npm-cli/)
+- [Docker](https://docs.docker.com/desktop/)
+- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git/)
+- [MongoDB](https://www.mongodb.com/docs/)
+- [PNPM](https://pnpm.io/)
+- [Redis](https://redis.io/docs/)
+
+## Project Setup
+1. On your home `~/` directory create a `projects` folder.
+    
+    This will help you to organize all of your code in an accessible place in the terminal.
+    
+2. On GitHub desktop (or using git CLI) clone the project `novuhq/novu` into the newly created `projects` folder.
+    
+    As result, you will have the following directory structure:  `~/projects/novu/{CODE}`
+    
+3. For VSCode - click Open Workspace, as it would automatically organize folders in the best way:
+
+<div align="center">
+
+![something](https://user-images.githubusercontent.com/63902456/176311038-3276a028-3ec9-4e44-8323-5a701681437d.png)
+
+</div>
+
+CD into the following: `~/projects/novu/`  and run the setup command: 
+> This won’t work if you don’t run the container before
 
 ```bash
+npm run setup:project
+```
+
+```markdown
+
+💡 The command will run pnpm install and install all the dependencies for the services and generate local .env files.
+
+```
+
+## Running the project
+
+There are 2 ways for you to run the project:
+
+### 1. Global PNPM start **(Fastest)**
+
+Run with - you will run all the projects on one terminal. As result, you won't be able to update or debug a specific service in isolation. 
+
+### 2. Scoped service run
+
+Select one service and run it under its directory with `pnpm start`. 
+A good way for updating and testing specific services.
+
+</details>
+<br />
+<details>
+  <summary><strong>Stateless</strong></summary>
+  
+</details>
+<br />
+<details>
+  <summary><strong>Hosted version</strong></summary>
+  
+ ```bash 
+npx novu init
+```
+
+After setting up your account using the cloud or docker version you can trigger the API using the `@novu/node` package.
+
+ ```bash 
 npm install @novu/node
 ```
 
-```ts
+```typescript
+
 import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
@@ -82,7 +168,12 @@ await novu.trigger('<TRIGGER_NAME>',
     },
   }
 );
+
 ```
+</details>
+<br />
+
+***
 
 
 ## Embeddable notification center
