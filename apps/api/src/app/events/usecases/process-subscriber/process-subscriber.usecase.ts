@@ -15,7 +15,7 @@ import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.c
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { ISubscribersDefine } from '@novu/node';
-import moment from 'moment';
+import * as moment from 'moment';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -86,6 +86,7 @@ export class ProcessSubscriber {
         _userId: command.userId,
         _subscriberId: subscriber._id,
         status: JobStatusEnum.PENDING,
+        _templateId: notification._templateId,
       };
     });
   }

@@ -465,6 +465,62 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
   });
+
+  it('should digest', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload: {
+          customVar: 'Testing of User Name',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs();
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload: {
+          customVar: 'digest',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs();
+
+    const jobs = await jobRepository.find({});
+    expect(jobs.length).to.equal(3);
+    const job = jobs[jobs.length - 1];
+    expect(job.digest?.events?.length).to.equal(2);
+  });
 });
 
 async function createTemplate(session, channelType) {

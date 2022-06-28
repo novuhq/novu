@@ -25,4 +25,7 @@ export class JobEntity {
   error?: any;
   createdAt?: string;
   _templateId: string;
+  digest?: {
+    events?: any[];
+  };
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { JobStatusEnum, MessageRepository, JobRepository, NotificationRepository } from '@novu/dal';
+import { MessageRepository, JobRepository, NotificationRepository } from '@novu/dal';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
-import moment from 'moment';
+import * as moment from 'moment';
 
 @Injectable()
 export class Digest extends SendMessageType {
