@@ -46,6 +46,7 @@
     "@novu/testing": "^0.5.1",
     "@types/moment": "^2.13.0",
     "@types/react-router-dom": "^5.1.7",
+    "webpack-dev-server": "4.9.2",
     "@types/styled-components": "^5.1.7",
     "babel-plugin-styled-components": "^1.12.0",
     "craco-antd": "^1.19.0",
