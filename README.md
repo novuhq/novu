@@ -1,15 +1,14 @@
 
 <div align="center">
   
-  ![Logo Dark](https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png#gh-dark-mode-only)
-
+  ![Logo Dark](https://user-images.githubusercontent.com/63902456/176308451-9ad6ca93-a3c2-4908-b224-de2d9f36626a.png#gh-dark-mode-only)
   
 </div>
 
 <div align="center">
   
-  ![Logo Light](https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png#gh-light-mode-only)
-  
+  ![Logo Light](https://user-images.githubusercontent.com/63902456/176308628-c00882c7-6a41-4ea9-b351-0f1140205637.png#gh-light-mode-only)
+
 </div>
 
 
