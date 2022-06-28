@@ -23,4 +23,5 @@ export class JobEntity {
   _parentId?: string;
   status: JobStatusEnum;
   error?: any;
+  createdAt: string;
 }

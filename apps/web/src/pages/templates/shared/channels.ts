@@ -26,6 +26,14 @@ export const channels = [
     testId: 'smsSelector',
     channelType: ChannelTypeEnum.SMS,
   },
+  {
+    tabKey: ChannelTypeEnum.DIGEST_BACKOFF,
+    label: 'Digest',
+    description: '',
+    Icon: SmsGradient,
+    testId: 'digestBackoffSelector',
+    channelType: ChannelTypeEnum.DIGEST_BACKOFF,
+  },
 ];
 
 export const getChannel = (channelKey: string) => {

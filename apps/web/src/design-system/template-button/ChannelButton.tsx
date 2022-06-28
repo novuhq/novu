@@ -167,26 +167,28 @@ export function ChannelButton({
                     </ActionIcon>
                   }
                 >
-                  <MenuItem
-                    style={{
-                      pointerEvents: 'all',
-                    }}
-                    icon={
-                      <Edit
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                        }}
-                      />
-                    }
-                    data-test-id="edit-step-action"
-                    onClick={() => {
-                      setShowDotMenu(false);
-                      setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
-                    }}
-                  >
-                    Edit Template
-                  </MenuItem>
+                  <When truthy={tabKey !== ChannelTypeEnum.DIGEST_BACKOFF}>
+                    <MenuItem
+                      style={{
+                        pointerEvents: 'all',
+                      }}
+                      icon={
+                        <Edit
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                          }}
+                        />
+                      }
+                      data-test-id="edit-step-action"
+                      onClick={() => {
+                        setShowDotMenu(false);
+                        setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
+                      }}
+                    >
+                      Edit Template
+                    </MenuItem>
+                  </When>
                   <MenuItem
                     style={{
                       pointerEvents: 'all',
