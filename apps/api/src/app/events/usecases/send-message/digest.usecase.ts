@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { JobStatusEnum, MessageRepository } from '@novu/dal';
+import { JobStatusEnum, MessageRepository, JobRepository } from '@novu/dal';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
-import { JobRepository } from '../../../../../../../libs/dal/src/repositories/job/job.repository';
 import moment from 'moment';
 
 @Injectable()
