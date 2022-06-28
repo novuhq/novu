@@ -4,7 +4,7 @@ import { schemaOptions } from '../schema-default.options';
 import { FeedEntity } from './feed.entity';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-const FeedSchema = new Schema(
+const feedSchema = new Schema(
   {
     name: Schema.Types.String,
     _organizationId: {
@@ -26,4 +26,4 @@ interface IFeedDocument extends FeedEntity, Document {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const Feed = mongoose.models.Feed || mongoose.model<IFeedDocument>('Feed', FeedSchema);
+export const Feed = mongoose.models.Feed || mongoose.model<IFeedDocument>('Feed', feedSchema);
