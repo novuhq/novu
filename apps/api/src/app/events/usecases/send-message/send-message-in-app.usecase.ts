@@ -49,6 +49,12 @@ export class SendMessageInApp extends SendMessageType {
       );
     }
 
+    if (inAppChannel.template.cta?.actions) {
+      inAppChannel.template.cta?.actions.map((action) => {
+        if (action.content.text) return contentService.replaceVariables(action.content.text, messageVariables);
+      });
+    }
+
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
 
