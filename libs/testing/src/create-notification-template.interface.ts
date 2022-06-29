@@ -12,5 +12,9 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
     content: string | IEmailBlock[];
     name?: string;
     type: ChannelTypeEnum;
+    metadata?: {
+      amount?: number;
+      unit?: string;
+    };
   }[];
 }

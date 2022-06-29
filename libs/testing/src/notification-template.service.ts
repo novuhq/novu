@@ -70,6 +70,7 @@ export class NotificationTemplateService {
         filters: message.filters,
         _templateId: saved._id,
         active: message.active,
+        metadata: message.metadata,
       });
     }
 

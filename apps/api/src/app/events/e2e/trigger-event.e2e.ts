@@ -472,6 +472,10 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         {
           type: ChannelTypeEnum.DIGEST,
           content: '',
+          metadata: {
+            unit: 'minutes',
+            amount: 10,
+          },
         },
         {
           type: ChannelTypeEnum.SMS,
@@ -517,6 +521,9 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     await session.awaitRunningJobs();
 
     const jobs = await jobRepository.find({});
+    const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
+    expect(digestJob.digest.amount).to.equal(10);
+    expect(digestJob.digest.unit).to.equal('minutes');
     const job = jobs[jobs.length - 1];
     expect(job.digest?.events?.length).to.equal(2);
   });
