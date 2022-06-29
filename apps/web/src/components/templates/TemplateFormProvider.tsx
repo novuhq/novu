@@ -74,8 +74,45 @@ const schema = z
                   });
                 }
               }),
+            metadata: z
+              .object({
+                amount: z.any().optional(),
+                unit: z.string().optional(),
+              })
+              .passthrough()
+              .optional(),
           })
           .passthrough()
+          .superRefine((step: any, ctx) => {
+            if (step.template.type !== ChannelTypeEnum.DIGEST) {
+              return;
+            }
+
+            const amount = parseInt(step.metadata?.amount, 10);
+            const unit = step.metadata?.unit;
+
+            if (unit === 'hours' && amount > 24) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.too_big,
+                maximum: 24,
+                type: 'number',
+                inclusive: true,
+                message: 'Digest time amount must be 24 or below',
+                path: ['metadata', 'amount'],
+              });
+            }
+
+            if (unit === 'days' && amount > 31) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.too_big,
+                maximum: 31,
+                type: 'number',
+                inclusive: true,
+                message: 'Digest time amount must be 31 or below',
+                path: ['metadata', 'amount'],
+              });
+            }
+          })
       )
       .optional(),
   })
@@ -85,6 +122,8 @@ export const TemplateFormProvider = ({ children }) => {
   const methods = useForm<IForm>({
     resolver: zodResolver(schema),
   });
+
+  console.log(methods.formState.errors);
 
   const steps = useFieldArray({
     control: methods.control,
