@@ -28,6 +28,10 @@ export class MessageTemplateDto {
 
   @IsOptional()
   @IsString()
+  feedId?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()

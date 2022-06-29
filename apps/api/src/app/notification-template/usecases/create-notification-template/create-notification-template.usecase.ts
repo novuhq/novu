@@ -62,6 +62,7 @@ export class CreateNotificationTemplate {
           userId: command.userId,
           cta: message.template.cta,
           subject: message.template.subject,
+          feedId: message.template.feedId,
           parentChangeId,
         })
       );
