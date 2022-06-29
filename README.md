@@ -13,7 +13,7 @@
 </div>
 
 
-<h2 align="center">The First Open Source Notification Infrastructure</h2>
+<h2 align="center">The Open-Source Notification Infrastructure</h2>
 
 <div align="center">
 Ultimate service for managing multi-channel notifications with a single API. 
