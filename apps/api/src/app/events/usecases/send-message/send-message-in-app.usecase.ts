@@ -46,6 +46,7 @@ export class SendMessageInApp extends SendMessageType {
         templateId: 'custom',
         customTemplate: inAppChannel.template.content as string,
         data: {
+          subscriber,
           step: {
             events: command.events,
             total_count: command.events.length,

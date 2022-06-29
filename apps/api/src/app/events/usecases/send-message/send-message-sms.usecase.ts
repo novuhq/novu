@@ -50,6 +50,7 @@ export class SendMessageSms extends SendMessageType {
         templateId: 'custom',
         customTemplate: smsChannel.template.content as string,
         data: {
+          subscriber,
           step: {
             events: command.events,
             total_count: command.events.length,
