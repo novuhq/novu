@@ -28,9 +28,6 @@ export interface IPushOptions {
   target: string;
   title: string;
   content: string;
-  notificationName?: IAttachmentOptions[];
-  sound?: boolean;
-  expire?: string;
   payload?: object;
 }
 

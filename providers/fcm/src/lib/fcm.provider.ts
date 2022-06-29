@@ -35,7 +35,6 @@ export class FcmPushProvider implements IPushProvider {
     const res = await this.messaging.sendToDevice(options.target, {
       notification: {
         title: options.title,
-        sound: 'default',
         body: options.content,
         ...options.payload,
       },
