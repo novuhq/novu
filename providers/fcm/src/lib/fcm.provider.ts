@@ -4,8 +4,7 @@ import {
   IPushOptions,
   IPushProvider,
 } from '@novu/stateless';
-import { cert } from 'firebase-admin/app';
-import { initializeApp } from 'firebase-admin/app';
+import { initializeApp, cert } from 'firebase-admin/app';
 import { getMessaging, Messaging } from 'firebase-admin/messaging';
 import crypto from 'crypto';
 
@@ -39,7 +38,7 @@ export class FcmPushProvider implements IPushProvider {
         ...options.payload,
       },
     });
-    console.log(res);
+
     return {
       id: 'PLACEHOLDER',
       date: 'PLACEHOLDER',

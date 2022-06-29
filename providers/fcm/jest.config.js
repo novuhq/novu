@@ -2,4 +2,6 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  resolver: 'jest-node-exports-resolver',
+  modulePathIgnorePatterns: ['build'],
 };
