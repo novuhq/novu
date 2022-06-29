@@ -21,6 +21,8 @@ export class MessageTemplateEntity {
 
   name?: string;
 
+  _feedId?: string;
+
   cta?: {
     type: ChannelCTATypeEnum;
     data: {
