@@ -27,5 +27,7 @@ export class JobEntity {
   _templateId: string;
   digest?: {
     events?: any[];
+    amount?: number;
+    unit?: string;
   };
 }

@@ -24,6 +24,12 @@ export class NotificationStepDto {
   @IsOptional()
   @IsMongoId()
   _templateId?: string;
+
+  @IsOptional()
+  metadata?: {
+    amount?: number;
+    unit?: string;
+  };
 }
 
 export class UpdateNotificationTemplateDto implements ICreateNotificationTemplateDto {

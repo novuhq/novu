@@ -64,6 +64,11 @@ export class NotificationStepEntity {
   filters?: StepFilter[];
 
   _parentId?: string;
+
+  metadata?: {
+    amount?: number;
+    unit?: string;
+  };
 }
 
 export class StepFilter {

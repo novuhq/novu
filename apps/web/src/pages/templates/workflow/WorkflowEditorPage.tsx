@@ -14,6 +14,7 @@ import { Trash } from '../../../design-system/icons';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { DeleteStepModal } from '../../../components/templates/DeleteStepModal';
+import { DigestMetadata } from './DigestMetadata';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -135,6 +136,13 @@ const WorkflowEditorPage = ({
                       return index === activeStep ? (
                         <StepActiveSwitch key={index} index={activeStep} control={control} />
                       ) : null;
+                    })}
+                  </NavSection>
+                </When>
+                <When truthy={selectedChannel === ChannelTypeEnum.DIGEST}>
+                  <NavSection>
+                    {steps.map((i, index) => {
+                      return index === activeStep ? <DigestMetadata control={control} index={index} /> : null;
                     })}
                   </NavSection>
                 </When>

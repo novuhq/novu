@@ -75,6 +75,12 @@ class NotificationStepCommand {
   @IsMongoId()
   @IsOptional()
   _id?: string;
+
+  @IsOptional()
+  metadata?: {
+    amount?: number;
+    unit?: string;
+  };
 }
 
 export class MessageFilter {

@@ -222,6 +222,11 @@ export interface StepEntity {
   filters?: any[];
 
   active: boolean;
+
+  metadata?: {
+    amount?: number;
+    unit?: string;
+  };
 }
 
 export interface IForm {
