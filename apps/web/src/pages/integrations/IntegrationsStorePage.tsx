@@ -14,6 +14,7 @@ export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
   const [emailProviders, setEmailProviders] = useState<IIntegratedProvider[]>([]);
   const [smsProvider, setSmsProvider] = useState<IIntegratedProvider[]>([]);
+  const [pushProvider, setPushProvider] = useState<IIntegratedProvider[]>([]);
   const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
@@ -64,6 +65,9 @@ export function IntegrationsStore() {
       setSmsProvider(
         sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS))
       );
+      setPushProvider(
+        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH))
+      );
     }
   }, [integrations]);
 
@@ -93,6 +97,7 @@ export function IntegrationsStore() {
           <ContentWrapper>
             <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
             <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={pushProvider} title="Push" onProviderClick={handlerVisible} />
           </ContentWrapper>
         </PageContainer>
       ) : null}

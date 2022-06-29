@@ -9,5 +9,6 @@
     "allowJs": false,
     "esModuleInterop": false,
     "declarationMap": true
-  }
+  },
+  "exclude": ["node_modules"]
 }

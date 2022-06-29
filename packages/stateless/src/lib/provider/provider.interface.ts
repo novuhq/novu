@@ -24,6 +24,16 @@ export interface ISmsOptions {
   attachments?: IAttachmentOptions[];
 }
 
+export interface IPushOptions {
+  target: string;
+  title: string;
+  content: string;
+  notificationName?: IAttachmentOptions[];
+  sound?: boolean;
+  expire?: string;
+  payload?: object;
+}
+
 export interface IDirectOptions {
   channelId: string;
   content: string;
@@ -50,4 +60,10 @@ export interface IDirectProvider extends IProvider {
   sendMessage(options: IDirectOptions): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.DIRECT;
+}
+
+export interface IPushProvider extends IProvider {
+  sendMessage(options: IPushOptions): Promise<ISendMessageSuccessResponse>;
+
+  channelType: ChannelTypeEnum.PUSH;
 }

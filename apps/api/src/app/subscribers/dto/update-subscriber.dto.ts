@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class UpdateSubscriberBodyDto {
   @IsEmail()
@@ -20,4 +20,9 @@ export class UpdateSubscriberBodyDto {
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  notificationIdentifiers?: string[];
 }

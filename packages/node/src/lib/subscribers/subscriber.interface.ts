@@ -4,6 +4,7 @@ export interface ISubscriberPayload {
   email?: string;
   phone?: string;
   avatar?: string;
+  noficationIdentifiers?: string[];
   [key: string]: string | string[] | boolean | number | undefined;
 }
 
@@ -15,6 +16,7 @@ export enum ChannelTypeEnum {
   EMAIL = 'email',
   SMS = 'sms',
   DIRECT = 'direct',
+  PUSH = 'push',
 }
 
 export type TriggerRecipientsTypeArray = string[] | ISubscribersDefine[];

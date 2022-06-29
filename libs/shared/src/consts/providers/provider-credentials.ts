@@ -23,6 +23,8 @@ const smsConfigBase: IConfigCredentials[] = [
   },
 ];
 
+const pushConfigBase: IConfigCredentials[] = [];
+
 export const mailJsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -230,4 +232,13 @@ export const twilioConfig: IConfigCredentials[] = [
     type: 'string',
   },
   ...smsConfigBase,
+];
+
+export const fcmConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Firebase Admin Key JSON',
+    type: 'string',
+  },
+  ...pushConfigBase,
 ];

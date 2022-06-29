@@ -37,36 +37,40 @@
       "path": "libs/shared"
     },
     {
-      "name": "📦 @notifire/core",
-      "path": "packages/core"
+      "name": "📦 @novu/stateless",
+      "path": "packages/stateless"
     },
     {
-      "name": "🔔 @notifire/emailjs",
+      "name": "🔔 @novu/emailjs",
       "path": "providers/emailjs"
     },
     {
-      "name": "🔔 @notifire/mailgun",
+      "name": "🔔 @novu/mailgun",
       "path": "providers/mailgun"
     },
     {
-      "name": "🔔 @notifire/nodemailer",
+      "name": "🔔 @novu/nodemailer",
       "path": "providers/nodemailer"
     },
     {
-      "name": "🔔 @notifire/plivo",
+      "name": "🔔 @novu/plivo",
       "path": "providers/plivo"
     },
     {
-      "name": "🔔 @notifire/postmark",
+      "name": "🔔 @novu/postmark",
       "path": "providers/postmark"
     },
     {
-      "name": "🔔 @notifire/sendgrid",
+      "name": "🔔 @novu/sendgrid",
       "path": "providers/sendgrid"
     },
     {
-      "name": "🔔 @notifire/twilio",
+      "name": "🔔 @novu/twilio",
       "path": "providers/twilio"
+    },
+    {
+      "name": "🔔 @novu/fcm",
+      "path": "providers/fcm"
     }
   ],
   "settings": {

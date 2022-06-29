@@ -73,6 +73,7 @@ export class TriggerEvent {
       smsChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.SMS)?.length,
       emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
       inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
+      pushChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.PUSH)?.length,
     });
 
     for (const job of jobs) {

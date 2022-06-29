@@ -37,6 +37,10 @@ export class MessageEntity {
 
   phone?: string;
 
+  notificationIdentifiers?: string[];
+
+  title?: string;
+
   lastSeenDate: string;
 
   cta: {
