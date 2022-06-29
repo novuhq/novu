@@ -123,8 +123,6 @@ export const TemplateFormProvider = ({ children }) => {
     resolver: zodResolver(schema),
   });
 
-  console.log(methods.formState.errors);
-
   const steps = useFieldArray({
     control: methods.control,
     name: 'steps',

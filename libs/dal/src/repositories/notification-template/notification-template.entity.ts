@@ -1,4 +1,4 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '@novu/shared';
+import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, DigestUnit } from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 
@@ -67,7 +67,7 @@ export class NotificationStepEntity {
 
   metadata?: {
     amount?: number;
-    unit?: string;
+    unit?: DigestUnit;
   };
 }
 

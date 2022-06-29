@@ -1,3 +1,4 @@
+import { DigestUnit } from '@novu/shared';
 import { NotificationStepEntity } from '../notification-template';
 
 export enum JobStatusEnum {
@@ -28,6 +29,6 @@ export class JobEntity {
   digest?: {
     events?: any[];
     amount?: number;
-    unit?: string;
+    unit?: DigestUnit;
   };
 }

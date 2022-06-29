@@ -69,7 +69,12 @@ const notificationTemplateSchema = new Schema(
           type: Schema.Types.ObjectId,
         },
         metadata: {
-          type: Schema.Types.Mixed,
+          amount: {
+            type: Schema.Types.Number,
+          },
+          unit: {
+            type: Schema.Types.String,
+          },
         },
       },
     ],
