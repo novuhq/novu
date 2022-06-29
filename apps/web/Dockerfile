@@ -7,7 +7,6 @@ RUN npm install -g pnpm@7.3.0 -g --loglevel notice --force; \
  pnpm setup; \
  mkdir -p /usr/local/share/pnpm &&\
  export PNPM_HOME="/usr/local/share/pnpm" &&\
- export PATH="$PNPM_HOME:$PATH"; \
  pnpm bin -g
 
 COPY .npmrc .
@@ -28,7 +27,7 @@ COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
 RUN pnpm install
-RUN pnpm add @babel/core -W
+RUN pnpm add @babel/core -w
 
 COPY .eslintrc.js .
 COPY .prettierrc .
