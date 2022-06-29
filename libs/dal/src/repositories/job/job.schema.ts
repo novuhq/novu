@@ -18,6 +18,10 @@ const jobSchema = new Schema(
     step: {
       type: Schema.Types.Mixed,
     },
+    _templateId: {
+      type: Schema.Types.String,
+      index: true,
+    },
     transactionId: {
       type: Schema.Types.String,
       index: true,
@@ -56,6 +60,9 @@ const jobSchema = new Schema(
     },
     error: {
       type: Schema.Types.Mixed,
+    },
+    digest: {
+      events: [Schema.Types.Mixed],
     },
   },
   schemaOptions

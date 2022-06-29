@@ -55,6 +55,13 @@ export default memo(({ data }: { data: NodeData }) => {
         >
           In-App
         </DropdownItem>
+        <DropdownItem
+          data-test-id={`add-digest-node`}
+          icon={<Mobile />}
+          onClick={() => addNewNode(ChannelTypeEnum.DIGEST)}
+        >
+          Digest
+        </DropdownItem>
       </Dropdown>
     </div>
   );

@@ -103,39 +103,41 @@ const WorkflowEditorPage = ({
           <SideBarWrapper dark={colorScheme === 'dark'}>
             {selectedChannel ? (
               <StyledNav data-test-id="step-properties-side-menu">
-                <NavSection>
-                  <ButtonWrapper>
-                    <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
-                    <ActionIcon
-                      data-test-id="close-side-menu-btn"
-                      variant="transparent"
-                      onClick={() => setSelectedChannel(null)}
+                <When truthy={selectedChannel !== ChannelTypeEnum.DIGEST}>
+                  <NavSection>
+                    <ButtonWrapper>
+                      <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
+                      <ActionIcon
+                        data-test-id="close-side-menu-btn"
+                        variant="transparent"
+                        onClick={() => setSelectedChannel(null)}
+                      >
+                        <Close />
+                      </ActionIcon>
+                    </ButtonWrapper>
+                  </NavSection>
+                  <NavSection>
+                    <EditTemplateButton
+                      mt={10}
+                      variant="outline"
+                      data-test-id="edit-template-channel"
+                      fullWidth
+                      onClick={() =>
+                        setActivePage(
+                          selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
+                        )
+                      }
                     >
-                      <Close />
-                    </ActionIcon>
-                  </ButtonWrapper>
-                </NavSection>
-                <NavSection>
-                  <EditTemplateButton
-                    mt={10}
-                    variant="outline"
-                    data-test-id="edit-template-channel"
-                    fullWidth
-                    onClick={() =>
-                      setActivePage(
-                        selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
-                      )
-                    }
-                  >
-                    Edit Template
-                  </EditTemplateButton>
-                  <Divider my={30} />
-                  {steps.map((i, index) => {
-                    return index === activeStep ? (
-                      <StepActiveSwitch key={index} index={activeStep} control={control} />
-                    ) : null;
-                  })}
-                </NavSection>
+                      Edit Template
+                    </EditTemplateButton>
+                    <Divider my={30} />
+                    {steps.map((i, index) => {
+                      return index === activeStep ? (
+                        <StepActiveSwitch key={index} index={activeStep} control={control} />
+                      ) : null;
+                    })}
+                  </NavSection>
+                </When>
                 <NavSection>
                   <DeleteStepButton
                     mt={10}
