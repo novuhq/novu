@@ -8,8 +8,11 @@ npm install @novu/notification-center
 
 ```tsx
 import { NovuProvider, PopoverNotificationCenter, NotificationBell, IMessage } from '@novu/notification-center';
+import { useNavigate } from 'react-router-dom';
 
 function Header() {
+  const navigate = useNavigate();
+  
   function onNotificationClick(notification: IMessage) {
     navigate(notification.cta.data.url);
   }
