@@ -12,7 +12,7 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
+import { ChannelTypeEnum, DigestUnit, IEmailBlock } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
 
@@ -473,7 +473,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: ChannelTypeEnum.DIGEST,
           content: '',
           metadata: {
-            unit: 'minutes',
+            unit: DigestUnit.MINUTES,
             amount: 10,
           },
         },
@@ -523,7 +523,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const jobs = await jobRepository.find({});
     const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
     expect(digestJob.digest.amount).to.equal(10);
-    expect(digestJob.digest.unit).to.equal('minutes');
+    expect(digestJob.digest.unit).to.equal(DigestUnit.MINUTES);
     const job = jobs[jobs.length - 1];
     expect(job.digest?.events?.length).to.equal(2);
   });
