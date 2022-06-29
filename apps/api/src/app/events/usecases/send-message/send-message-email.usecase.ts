@@ -88,6 +88,10 @@ export class SendMessageEmail extends SendMessageType {
             color: organization.branding?.color || '#f47373',
           },
           blocks: isEditorMode ? content : [],
+          step: {
+            events: command.events,
+            total_count: command.events.length,
+          },
           ...command.payload,
         },
       })
