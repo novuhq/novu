@@ -2,13 +2,8 @@ FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
-RUN npm install -g pnpm@7.3.0 -g --loglevel notice --force; \
- pnpm --version; \
- pnpm setup; \
- mkdir -p /usr/local/share/pnpm &&\
- export PNPM_HOME="/usr/local/share/pnpm" &&\
- export PATH="$PNPM_HOME:$PATH"; \
- pnpm bin -g
+RUN npm install -g pnpm@7.3.0 -g --loglevel notice --force
+RUN pnpm setup
 
 COPY .npmrc .
 RUN pnpm i pm2 -g
