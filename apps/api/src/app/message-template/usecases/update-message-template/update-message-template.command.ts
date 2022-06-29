@@ -33,6 +33,9 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   cta: ChannelCTACommand;
 
+  @IsOptional()
+  feedId: string;
+
   @IsMongoId()
   parentChangeId: string;
 }

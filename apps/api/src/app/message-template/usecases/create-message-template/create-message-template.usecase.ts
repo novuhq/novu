@@ -18,6 +18,7 @@ export class CreateMessageTemplate {
       contentType: command.contentType,
       subject: command.subject,
       type: command.type,
+      _feedId: command.feedId,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       _creatorId: command.userId,

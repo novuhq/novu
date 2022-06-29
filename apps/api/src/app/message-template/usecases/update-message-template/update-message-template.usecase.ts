@@ -36,6 +36,10 @@ export class UpdateMessageTemplate {
       updatePayload.cta = command.cta;
     }
 
+    if (command.feedId) {
+      updatePayload._feedId = command.feedId;
+    }
+
     if (command.subject) {
       updatePayload.subject = command.subject;
     }
