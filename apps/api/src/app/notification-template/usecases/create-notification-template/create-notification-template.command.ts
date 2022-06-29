@@ -8,7 +8,13 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, ChannelCTATypeEnum } from '@novu/shared';
+import {
+  BuilderFieldOperator,
+  BuilderFieldType,
+  BuilderGroupValues,
+  ChannelCTATypeEnum,
+  ButtonTypeEnum,
+} from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageTemplateDto } from '../../dto';
@@ -54,6 +60,10 @@ export class ChannelCTACommand {
   data: {
     url: string;
   };
+
+  @IsOptional()
+  @IsArray()
+  actions?: { type: ButtonTypeEnum; content: { text: string } }[];
 }
 
 class NotificationStepCommand {
