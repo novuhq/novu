@@ -63,7 +63,8 @@
     "eslint-plugin-prettier": "^3.4.0",
     "nodemon": "^2.0.3",
     "ts-node": "^9.0.0",
-    "tsconfig-paths": "^3.9.0"
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "4.6.2"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

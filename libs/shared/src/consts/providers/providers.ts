@@ -147,6 +147,6 @@ export const providers: IProviderConfig[] = [
     channel: ChannelTypeEnum.PUSH,
     credentials: fcmConfig,
     docReference: 'https://firebase.google.com/docs/cloud-messaging',
-    logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
+    logoFileName: { light: 'fcm.svg', dark: 'fcm.svg' },
   },
 ];

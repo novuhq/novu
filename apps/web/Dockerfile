@@ -2,8 +2,9 @@ FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
-RUN npm i pnpm@6.32.11 -g --loglevel notice --force
+RUN npm install -g pnpm@7.3.0 --loglevel notice
 
+COPY .npmrc .
 COPY package.json .
 
 COPY apps/web ./apps/web
@@ -21,7 +22,7 @@ COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
 RUN pnpm install
-RUN pnpm add @babel/core -W
+RUN pnpm add @babel/core -w
 
 COPY .eslintrc.js .
 COPY .prettierrc .
