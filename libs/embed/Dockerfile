@@ -2,7 +2,7 @@ FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
-RUN npm install -g pnpm@7.3.0 -g --loglevel notice --force
+RUN npm install -g pnpm@7.3.0 --loglevel notice --force
 
 COPY .npmrc .
 COPY package.json .
