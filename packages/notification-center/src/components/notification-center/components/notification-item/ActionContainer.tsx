@@ -1,12 +1,12 @@
 import React from 'react';
 import { NotificationButton } from './NorificationItemButton';
-import { ButtonTypeEnum } from '@novu/shared';
+import { ButtonTypeEnum, IMessageAction } from '@novu/shared';
 
 export interface IActionContainerProps {
-  actions?: { type: ButtonType; content: { text: string } }[];
+  actions?: IMessageAction[];
 }
 
-export function ActionContainer(props: any) {
+export function ActionContainer(props: IActionContainerProps) {
   const buttons = props?.actions;
 
   sortButtonsByEnum(buttons);
@@ -19,7 +19,7 @@ export function ActionContainer(props: any) {
     </>
   );
 }
-function sortButtonsByEnum(buttons) {
+function sortButtonsByEnum(buttons: IMessageAction[]) {
   const buttonsEnumOrder = Object.values(ButtonTypeEnum);
   buttons?.sort((a, b) => buttonsEnumOrder.indexOf(a.type) - buttonsEnumOrder.indexOf(b.type));
 }
