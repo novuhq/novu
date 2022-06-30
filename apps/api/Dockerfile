@@ -2,13 +2,11 @@ FROM node:16.13.1
 
 WORKDIR /usr/src/app
 
-RUN npm install -g pnpm@7.3.0 -g --loglevel notice --force
-RUN pnpm setup
-
-COPY .npmrc .
-RUN pnpm i pm2 -g
+RUN npm install -g pnpm@7.3.0 -g --loglevel notice
+RUN npm i pm2 -g
 
 COPY package.json .
+COPY .npmrc .
 
 COPY apps/api ./apps/api
 COPY libs/dal ./libs/dal
