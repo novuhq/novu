@@ -63,6 +63,12 @@ const jobSchema = new Schema(
     },
     digest: {
       events: [Schema.Types.Mixed],
+      amount: {
+        type: Schema.Types.Number,
+      },
+      unit: {
+        type: Schema.Types.String,
+      },
     },
   },
   schemaOptions

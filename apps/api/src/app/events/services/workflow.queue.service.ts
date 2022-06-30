@@ -69,6 +69,7 @@ export class WorkflowQueueService {
         userId: job._userId,
         subscriberId: job._subscriberId,
         jobId: job._id,
+        events: job.digest.events,
       })
     );
     await this.queueNextJob.execute(

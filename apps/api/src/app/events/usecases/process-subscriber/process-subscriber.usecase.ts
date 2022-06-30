@@ -43,10 +43,14 @@ export class ProcessSubscriber {
       command.payload
     );
 
-    const digests = steps.filter((step) => step.template.type === ChannelTypeEnum.DIGEST);
+    const digest = steps.find((step) => step.template.type === ChannelTypeEnum.DIGEST);
 
-    if (digests.length > 0) {
-      const earliest = moment().subtract(10, 'minutes').toDate();
+    if (digest) {
+      const amount =
+        typeof digest.metadata.amount === 'number' ? digest.metadata.amount : parseInt(digest.metadata.amount, 10);
+      const earliest = moment()
+        .subtract(amount, digest.metadata.unit as moment.unitOfTime.DurationConstructor)
+        .toDate();
       const jobs = await this.jobRepository.findJobsToDigest(
         earliest,
         command.templateId,
@@ -87,6 +91,7 @@ export class ProcessSubscriber {
         _subscriberId: subscriber._id,
         status: JobStatusEnum.PENDING,
         _templateId: notification._templateId,
+        digest: step.metadata,
       };
     });
   }

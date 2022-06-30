@@ -14,6 +14,8 @@ import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.c
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
+import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
+import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -22,7 +24,8 @@ export class SendMessageInApp extends SendMessageType {
     protected messageRepository: MessageRepository,
     private queueService: QueueService,
     protected createLogUsecase: CreateLog,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private compileTemplate: CompileTemplate
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -38,11 +41,23 @@ export class SendMessageInApp extends SendMessageType {
     });
     const inAppChannel: NotificationStepEntity = command.step;
     const contentService = new ContentService();
-
-    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
-    const content = contentService.replaceVariables(inAppChannel.template.content as string, messageVariables);
+    const content = await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        customTemplate: inAppChannel.template.content as string,
+        data: {
+          subscriber,
+          step: {
+            events: command.events,
+            total_count: command.events.length,
+          },
+          ...command.payload,
+        },
+      })
+    );
 
     if (inAppChannel.template.cta?.data?.url) {
+      const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
       inAppChannel.template.cta.data.url = contentService.replaceVariables(
         inAppChannel.template.cta?.data?.url,
         messageVariables

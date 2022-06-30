@@ -68,6 +68,14 @@ const notificationTemplateSchema = new Schema(
         _parentId: {
           type: Schema.Types.ObjectId,
         },
+        metadata: {
+          amount: {
+            type: Schema.Types.Number,
+          },
+          unit: {
+            type: Schema.Types.String,
+          },
+        },
       },
     ],
     _environmentId: {

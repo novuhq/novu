@@ -21,7 +21,13 @@ export class Digest extends SendMessageType {
       _id: command.jobId,
     });
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const earliest = moment(currentJob.createdAt).subtract(10, 'minutes').toDate();
+    const amount =
+      typeof currentJob?.digest.amount === 'number'
+        ? currentJob?.digest.amount
+        : parseInt(currentJob.digest.amount, 10);
+    const earliest = moment(currentJob.createdAt)
+      .subtract(amount, currentJob.digest.unit as moment.unitOfTime.DurationConstructor)
+      .toDate();
     const jobs = await this.jobRepository.findJobsToDigest(
       earliest,
       notification._templateId,

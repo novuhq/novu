@@ -1,5 +1,5 @@
 import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
-import { ICreateNotificationTemplateDto } from '@novu/shared';
+import { ICreateNotificationTemplateDto, DigestUnit } from '@novu/shared';
 import { MessageFilter } from './create-notification-template.dto';
 import { MessageTemplateDto } from './message-template.dto';
 
@@ -24,6 +24,12 @@ export class NotificationStepDto {
   @IsOptional()
   @IsMongoId()
   _templateId?: string;
+
+  @IsOptional()
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnit;
+  };
 }
 
 export class UpdateNotificationTemplateDto implements ICreateNotificationTemplateDto {
