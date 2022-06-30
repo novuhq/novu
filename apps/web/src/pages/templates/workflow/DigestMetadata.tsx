@@ -1,3 +1,4 @@
+import { DigestUnit } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Select } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -21,9 +22,10 @@ export const DigestMetadata = ({ control, index }) => {
               label="Time unit"
               placeholder="Time unit"
               data={[
-                { value: 'minutes', label: 'Minutes' },
-                { value: 'hours', label: 'Hours' },
-                { value: 'days', label: 'Days' },
+                { value: DigestUnit.SECONDS, label: 'Seconds' },
+                { value: DigestUnit.MINUTES, label: 'Minutes' },
+                { value: DigestUnit.HOURS, label: 'Hours' },
+                { value: DigestUnit.DAYS, label: 'Days' },
               ]}
               data-test-id="time-unit"
               {...field}
