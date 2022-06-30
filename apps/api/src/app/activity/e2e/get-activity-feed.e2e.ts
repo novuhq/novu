@@ -62,6 +62,8 @@ describe('Get activity feed - /activity (GET)', async () => {
       firstName: 'Test',
     });
 
+    await session.awaitRunningJobs();
+
     const { body } = await session.testAgent.get(`/v1/activity?page=0&channels=${ChannelTypeEnum.SMS}`);
     const activities: IMessage[] = body.data;
 
