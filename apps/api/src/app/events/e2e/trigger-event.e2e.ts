@@ -531,6 +531,93 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const job = jobs[jobs.length - 1];
     expect(job.digest?.events?.length).to.equal(2);
   });
+
+  it('should digest based on batchkey', async function () {
+    const id = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnit.SECONDS,
+            amount: 3,
+            batchkey: 'id',
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload: {
+          customVar: 'Testing of User Name',
+          id,
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs();
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload: {
+          customVar: 'digest',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs();
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload: {
+          customVar: 'haj',
+          id,
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs();
+
+    const jobs = await jobRepository.find({});
+    const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
+    expect(digestJob.digest.batchkey).to.equal('id');
+    const job = jobs[jobs.length - 1];
+    expect(job.digest?.events?.length).to.equal(2);
+  });
 });
 
 async function createTemplate(session, channelType) {

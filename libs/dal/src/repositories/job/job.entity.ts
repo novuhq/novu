@@ -31,6 +31,7 @@ export class JobEntity {
     events?: any[];
     amount?: number;
     unit?: DigestUnit;
+    batchkey?: string;
   };
   type?: ChannelTypeEnum;
 }

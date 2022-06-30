@@ -86,6 +86,7 @@ class NotificationStepCommand {
   metadata?: {
     amount?: number;
     unit?: DigestUnit;
+    batchkey?: string;
   };
 }
 

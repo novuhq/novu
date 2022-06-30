@@ -48,6 +48,19 @@ export const DigestMetadata = ({ control, index }) => {
           );
         }}
       />
+      <Controller
+        control={control}
+        name={`steps.${index}.metadata.batchkey`}
+        render={({ field }) => {
+          return (
+            <Input
+              {...field}
+              error={errors?.steps ? errors.steps[index]?.metadata?.batchkey?.message : undefined}
+              type="text"
+            />
+          );
+        }}
+      />
     </>
   );
 };

@@ -227,6 +227,7 @@ export interface StepEntity {
   metadata?: {
     amount?: number;
     unit?: DigestUnit;
+    batchkey?: string;
   };
 }
 

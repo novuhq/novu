@@ -28,7 +28,7 @@ export class Digest extends SendMessageType {
     const earliest = moment()
       .subtract(amount, currentJob.digest.unit as moment.unitOfTime.DurationConstructor)
       .toDate();
-    const jobs = await this.jobRepository.findJobsToDigest(
+    let jobs = await this.jobRepository.findJobsToDigest(
       earliest,
       notification._templateId,
       command.environmentId,
@@ -44,6 +44,13 @@ export class Digest extends SendMessageType {
         $ne: JobStatusEnum.COMPLETED,
       },
     });
+
+    const batchValue = currentJob.payload[currentJob.digest.batchkey];
+    if (batchValue) {
+      jobs = jobs.filter((job) => {
+        return job.payload[currentJob.digest.batchkey] === batchValue;
+      });
+    }
 
     const events = [currentJob.payload, ...jobs.map((job) => job.payload)];
     await this.jobRepository.update(
