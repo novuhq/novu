@@ -30,7 +30,7 @@ export function NotificationListItem({
             __html: notification.content as string,
           }}
         />
-        {notification?.cta ? <ActionContainer actions={notification.cta} /> : null}
+        {notification?.cta?.actions ? <ActionContainer actions={notification.cta.actions} /> : null}
         <div>
           <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
             {moment(notification.createdAt).fromNow()}
