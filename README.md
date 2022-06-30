@@ -3,7 +3,7 @@
   
   ![Logo Dark](https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png#gh-dark-mode-only)
 
-  
+
 </div>
 
 <div align="center">
@@ -144,7 +144,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 We are more than happy to help you. Don't worry if you are getting some errors or problems while working with the project. Or just want to discuss something related to the project.
 
-Just <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a> server and ask for help.
+Just <a href="https://discord.gg/TT6TttXjRe">Join Our Discord </a> server and ask for help.
 
 ## 🔗 Links
 - [Home page](https://novu.co/)
