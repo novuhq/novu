@@ -7,6 +7,7 @@ export enum JobStatusEnum {
   RUNNING = 'running',
   COMPLETED = 'completed',
   FAILED = 'failed',
+  DELAYED = 'delayed',
 }
 
 export class JobEntity {

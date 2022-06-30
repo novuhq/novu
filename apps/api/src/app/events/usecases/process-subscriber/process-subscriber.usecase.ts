@@ -57,25 +57,23 @@ export class ProcessSubscriber {
       },
     ];
 
+    let digestIsRunning = false;
     for (const step of matchedSteps) {
-      if (step.template.type !== ChannelTypeEnum.DIGEST) {
+      if (step.template.type !== ChannelTypeEnum.DIGEST && !digestIsRunning) {
         steps.push(step);
         continue;
       }
 
-      const amount =
-        typeof step.metadata.amount === 'number' ? step.metadata.amount : parseInt(step.metadata.amount, 10);
-      const earliest = moment()
-        .subtract(amount, step.metadata.unit as moment.unitOfTime.DurationConstructor)
-        .toDate();
-      const jobs = await this.jobRepository.findJobsToDigest(
-        earliest,
-        command.templateId,
-        command.environmentId,
-        subscriber._id
-      );
+      const delayedDigests = await this.jobRepository.find({
+        status: JobStatusEnum.DELAYED,
+        _subscribeId: subscriber._id,
+        _templateId: command.templateId,
+        _environmentId: command.environmentId,
+      });
 
-      if (jobs.length > 0) {
+      digestIsRunning = delayedDigests.length > 0;
+
+      if (!digestIsRunning) {
         steps.push(step);
       }
     }

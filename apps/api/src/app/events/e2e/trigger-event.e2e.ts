@@ -477,8 +477,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: ChannelTypeEnum.DIGEST,
           content: '',
           metadata: {
-            unit: DigestUnit.MINUTES,
-            amount: 10,
+            unit: DigestUnit.SECONDS,
+            amount: 1,
           },
         },
         {
@@ -526,8 +526,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const jobs = await jobRepository.find({});
     const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
-    expect(digestJob.digest.amount).to.equal(10);
-    expect(digestJob.digest.unit).to.equal(DigestUnit.MINUTES);
+    expect(digestJob.digest.amount).to.equal(1);
+    expect(digestJob.digest.unit).to.equal(DigestUnit.SECONDS);
     const job = jobs[jobs.length - 1];
     expect(job.digest?.events?.length).to.equal(2);
   });

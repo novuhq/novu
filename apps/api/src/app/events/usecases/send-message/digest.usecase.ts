@@ -25,7 +25,7 @@ export class Digest extends SendMessageType {
       typeof currentJob?.digest.amount === 'number'
         ? currentJob?.digest.amount
         : parseInt(currentJob.digest.amount, 10);
-    const earliest = moment(currentJob.createdAt)
+    const earliest = moment()
       .subtract(amount, currentJob.digest.unit as moment.unitOfTime.DurationConstructor)
       .toDate();
     const jobs = await this.jobRepository.findJobsToDigest(
@@ -45,7 +45,7 @@ export class Digest extends SendMessageType {
       },
     });
 
-    const events = jobs.map((job) => job.payload);
+    const events = [currentJob.payload, ...jobs.map((job) => job.payload)];
     await this.jobRepository.update(
       {
         _id: {
