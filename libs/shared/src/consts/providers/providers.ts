@@ -146,7 +146,7 @@ export const providers: IProviderConfig[] = [
     displayName: 'Firebase Cloud Messaging',
     channel: ChannelTypeEnum.PUSH,
     credentials: fcmConfig,
-    docReference: 'https://firebase.google.com/docs/cloud-messaging',
+    docReference: 'https://docs.novu.co/channels/push#firebase-cloud-messages',
     logoFileName: { light: 'fcm.svg', dark: 'fcm.svg' },
   },
 ];
