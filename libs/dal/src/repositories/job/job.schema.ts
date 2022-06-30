@@ -70,6 +70,9 @@ const jobSchema = new Schema(
         type: Schema.Types.String,
       },
     },
+    type: {
+      type: Schema.Types.String,
+    },
   },
   schemaOptions
 );

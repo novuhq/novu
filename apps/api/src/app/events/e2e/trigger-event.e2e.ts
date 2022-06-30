@@ -470,6 +470,10 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await session.createTemplate({
       steps: [
         {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
           type: ChannelTypeEnum.DIGEST,
           content: '',
           metadata: {

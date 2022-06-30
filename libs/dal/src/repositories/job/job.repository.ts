@@ -1,6 +1,7 @@
 import { BaseRepository } from '../base-repository';
 import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export class JobRepository extends BaseRepository<JobEntity> {
   constructor() {
@@ -48,14 +49,30 @@ export class JobRepository extends BaseRepository<JobEntity> {
   }
 
   public async findJobsToDigest(from: Date, templateId: string, environmentId: string, subscriberId: string) {
+    const digests = await this.find({
+      updatedAt: {
+        $gte: from,
+      },
+      _templateId: templateId,
+      status: JobStatusEnum.COMPLETED,
+      type: ChannelTypeEnum.DIGEST,
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+    });
+    const transactionIds = digests.map((job) => job.transactionId);
+
     return await this.find({
       updatedAt: {
         $gte: from,
       },
       _templateId: templateId,
       status: JobStatusEnum.COMPLETED,
+      type: ChannelTypeEnum.TRIGGER,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
+      transactionId: {
+        $nin: transactionIds,
+      },
     });
   }
 }

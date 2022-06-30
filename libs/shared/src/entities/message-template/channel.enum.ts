@@ -3,6 +3,7 @@ export enum ChannelTypeEnum {
   EMAIL = 'email',
   SMS = 'sms',
   DIGEST = 'digest',
+  TRIGGER = 'trigger',
 }
 
 export enum ChannelCTATypeEnum {

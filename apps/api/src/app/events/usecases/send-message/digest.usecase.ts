@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository, JobRepository, NotificationRepository } from '@novu/dal';
+import { MessageRepository, JobRepository, NotificationRepository, JobStatusEnum } from '@novu/dal';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
@@ -35,14 +35,22 @@ export class Digest extends SendMessageType {
       command.subscriberId
     );
 
-    const nextJob = await this.jobRepository.findOne({
-      _parentId: command.jobId,
+    const nextJobs = await this.jobRepository.find({
+      transactionId: command.transactionId,
+      _id: {
+        $ne: command.jobId,
+      },
+      status: {
+        $ne: JobStatusEnum.COMPLETED,
+      },
     });
 
-    const events = [nextJob.payload, ...jobs.map((job) => job.payload)];
+    const events = jobs.map((job) => job.payload);
     await this.jobRepository.update(
       {
-        _id: nextJob._id,
+        _id: {
+          $in: nextJobs.map((job) => job._id),
+        },
       },
       {
         $set: {

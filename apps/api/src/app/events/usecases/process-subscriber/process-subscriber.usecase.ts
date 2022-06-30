@@ -7,6 +7,7 @@ import {
   JobEntity,
   JobStatusEnum,
   JobRepository,
+  NotificationStepEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -38,18 +39,34 @@ export class ProcessSubscriber {
 
     const notification = await this.createNotification(command, template._id, subscriber);
 
-    let steps = matchMessageWithFilters(
+    const matchedSteps = matchMessageWithFilters(
       template.steps.filter((step) => step.active === true),
       command.payload
     );
 
-    const digest = steps.find((step) => step.template.type === ChannelTypeEnum.DIGEST);
+    const steps: NotificationStepEntity[] = [
+      {
+        template: {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _creatorId: command.userId,
+          type: ChannelTypeEnum.TRIGGER,
+          content: '',
+        },
+        _templateId: command.templateId,
+      },
+    ];
 
-    if (digest) {
+    for (const step of matchedSteps) {
+      if (step.template.type !== ChannelTypeEnum.DIGEST) {
+        steps.push(step);
+        continue;
+      }
+
       const amount =
-        typeof digest.metadata.amount === 'number' ? digest.metadata.amount : parseInt(digest.metadata.amount, 10);
+        typeof step.metadata.amount === 'number' ? step.metadata.amount : parseInt(step.metadata.amount, 10);
       const earliest = moment()
-        .subtract(amount, digest.metadata.unit as moment.unitOfTime.DurationConstructor)
+        .subtract(amount, step.metadata.unit as moment.unitOfTime.DurationConstructor)
         .toDate();
       const jobs = await this.jobRepository.findJobsToDigest(
         earliest,
@@ -58,8 +75,8 @@ export class ProcessSubscriber {
         subscriber._id
       );
 
-      if (jobs.length === 0) {
-        steps = steps.filter((step) => step.template.type !== ChannelTypeEnum.DIGEST);
+      if (jobs.length > 0) {
+        steps.push(step);
       }
     }
 
@@ -92,6 +109,7 @@ export class ProcessSubscriber {
         status: JobStatusEnum.PENDING,
         _templateId: notification._templateId,
         digest: step.metadata,
+        type: step.template.type,
       };
     });
   }
