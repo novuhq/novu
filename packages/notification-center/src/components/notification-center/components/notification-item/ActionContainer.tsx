@@ -1,6 +1,6 @@
 import React from 'react';
 import { NotificationButton } from './NorificationItemButton';
-import { ButtonType } from '../../../../shared/config/notificationItemButton';
+import { ButtonTypeEnum } from '@novu/shared';
 
 export interface IActionContainerProps {
   actions?: { type: ButtonType; content: { text: string } }[];
@@ -20,6 +20,6 @@ export function ActionContainer(props: any) {
   );
 }
 function sortButtonsByEnum(buttons) {
-  const buttonsEnumOrder = Object.values(ButtonType);
+  const buttonsEnumOrder = Object.values(ButtonTypeEnum);
   buttons?.sort((a, b) => buttonsEnumOrder.indexOf(a.type) - buttonsEnumOrder.indexOf(b.type));
 }

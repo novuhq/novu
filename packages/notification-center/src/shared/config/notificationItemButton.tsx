@@ -1,10 +1,7 @@
-export enum ButtonType {
-  PRIMARY = 'primary',
-  SECONDARY = 'secondary',
-}
+import { ButtonTypeEnum } from '@novu/shared';
 
 export interface INotificationButtonStyles {
-  key: ButtonType;
+  key: ButtonTypeEnum;
   value: IButtonStyles;
 }
 
@@ -13,14 +10,14 @@ export interface IButtonStyles {
 }
 
 const primaryButton: INotificationButtonStyles = {
-  key: ButtonType.PRIMARY,
+  key: ButtonTypeEnum.PRIMARY,
   value: {
     color: 'blue',
   },
 };
 
 const secondaryButton: INotificationButtonStyles = {
-  key: ButtonType.SECONDARY,
+  key: ButtonTypeEnum.SECONDARY,
   value: {
     color: 'red',
   },
