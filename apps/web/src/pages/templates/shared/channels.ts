@@ -30,7 +30,7 @@ export const channels = [
     tabKey: ChannelTypeEnum.PUSH,
     label: 'Push',
     description: 'Send an Push Notification using one of our Push integrations',
-    Icon: SmsGradient,
+    Icon: MobileGradient,
     testId: 'pushSelector',
     channelType: ChannelTypeEnum.PUSH,
   },
