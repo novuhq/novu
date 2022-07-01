@@ -94,7 +94,7 @@ export class WorkflowQueueService {
     if (data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit) {
       await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
       const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
-      await this.queue.add(data._id, data, { delay: data.delay, ...options });
+      await this.queue.add(data._id, data, { delay, ...options });
 
       return;
     }

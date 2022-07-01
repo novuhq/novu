@@ -241,18 +241,17 @@ export class UserSession {
     });
   }
 
-  public async awaitRunningJobs(timeout = 10000, delay = 1000) {
+  public async awaitRunningJobs() {
     let runningJobs = 0;
-    const startTime = +new Date();
-    let timedOut = false;
-    await new Promise((resolve) => setTimeout(resolve, delay));
     do {
       runningJobs = await this.jobRepository.count({
+        type: {
+          $nin: [ChannelTypeEnum.DIGEST],
+        },
         status: {
           $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
         },
       });
-      timedOut = timeout < +new Date() - startTime;
-    } while (runningJobs > 0 && !timedOut);
+    } while (runningJobs > 0);
   }
 }
