@@ -200,7 +200,7 @@ export function ChannelButton({
                       onDelete(id || '');
                     }}
                   >
-                    Delete Step
+                    Delete {tabKey !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
                   </MenuItem>
                 </Menu>
               </a>

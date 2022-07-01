@@ -20,6 +20,23 @@ const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
 };
 
+const DraggableNode = ({ channel, setDragging, onDragStart }) => (
+  <div
+    key={channel.tabKey}
+    data-test-id={`dnd-${channel.testId}`}
+    onDragStart={(event) => {
+      setDragging(true);
+      onDragStart(event, channel.channelType);
+    }}
+    onDragEnd={() => {
+      setDragging(false);
+    }}
+    draggable
+  >
+    <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
+  </div>
+);
+
 const WorkflowEditorPage = ({
   setActivePage,
   templateId,
@@ -141,6 +158,21 @@ const WorkflowEditorPage = ({
                 </When>
                 <When truthy={selectedChannel === ChannelTypeEnum.DIGEST}>
                   <NavSection>
+                    <ButtonWrapper>
+                      <Title size={2}>Digest Properties</Title>
+                      <ActionIcon
+                        data-test-id="close-side-menu-btn"
+                        variant="transparent"
+                        onClick={() => setSelectedChannel(null)}
+                      >
+                        <Close />
+                      </ActionIcon>
+                    </ButtonWrapper>
+                    <Text mr={10} size="md" color={colors.B60}>
+                      You can drag and drop new steps to the flow
+                    </Text>
+                  </NavSection>
+                  <NavSection>
                     {steps.map((i, index) => {
                       return index === activeStep ? <DigestMetadata control={control} index={index} /> : null;
                     })}
@@ -160,7 +192,7 @@ const WorkflowEditorPage = ({
                         marginRight: '5px',
                       }}
                     />
-                    Delete Step
+                    Delete {selectedChannel !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
                   </DeleteStepButton>
                 </NavSection>
               </StyledNav>
@@ -175,22 +207,31 @@ const WorkflowEditorPage = ({
                 </NavSection>
                 <When truthy={!readonly}>
                   <Stack>
-                    {channels.map((channel) => (
-                      <div
-                        key={channel.tabKey}
-                        data-test-id={`dnd-${channel.testId}`}
-                        onDragStart={(event) => {
-                          setDragging(true);
-                          onDragStart(event, channel.channelType);
-                        }}
-                        onDragEnd={() => {
-                          setDragging(false);
-                        }}
-                        draggable
-                      >
-                        <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
-                      </div>
-                    ))}
+                    {channels
+                      .filter((channel) => !channel.action)
+                      .map((channel) => (
+                        <DraggableNode channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
+                      ))}
+                  </Stack>
+                </When>
+                <NavSection
+                  style={{
+                    marginTop: '30px',
+                  }}
+                >
+                  <Title size={2}>Actions</Title>
+                  <Text color={colors.B60} mt={10}>
+                    <When truthy={!readonly}>Add actions to the flow</When>
+                    <When truthy={readonly}>You can not drag and drop new actions in Production</When>
+                  </Text>
+                </NavSection>
+                <When truthy={!readonly}>
+                  <Stack>
+                    {channels
+                      .filter((channel) => channel.action)
+                      .map((channel) => (
+                        <DraggableNode channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
+                      ))}
                   </Stack>
                 </When>
               </StyledNav>
