@@ -91,23 +91,23 @@ export class SendMessagePush extends SendMessageType {
   }
 
   private async sendErrors(
-    phone,
+    notificationIdentifiers,
     integration,
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity
   ) {
-    if (!phone) {
+    if (!notificationIdentifiers) {
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
-          text: 'Subscriber does not have active phone',
+          text: 'Subscriber does not have active push notification receiver',
           userId: command.userId,
           subscriberId: command.subscriberId,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_PHONE,
+          code: LogCodeEnum.SUBSCRIBER_MISSING_PUSH,
           templateId: notification._templateId,
           raw: {
             payload: command.payload,
@@ -119,8 +119,8 @@ export class SendMessagePush extends SendMessageType {
         message._id,
         'warning',
         null,
-        'no_subscriber_phone',
-        'Subscriber does not have active phone'
+        'no_push_receiver',
+        'Subscriber does not have active push notification receiver'
       );
     }
     if (!integration) {
@@ -132,17 +132,6 @@ export class SendMessagePush extends SendMessageType {
         command,
         notification,
         LogCodeEnum.MISSING_PUSH_INTEGRATION
-      );
-    }
-    if (!integration?.credentials?.from) {
-      await this.sendErrorStatus(
-        message,
-        'warning',
-        'no_integration_from_phone',
-        'Integration does not have from phone configured',
-        command,
-        notification,
-        LogCodeEnum.MISSING_PUSH_PROVIDER
       );
     }
   }

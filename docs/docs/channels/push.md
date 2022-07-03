@@ -30,6 +30,8 @@ await novu.subscribers.identify(user.id, {
 
 Firebase Cloud Messages is a free notification delivery service provided by Google Firebase.
 
+To enable the FCM integration, you need to get your service account key from the Firebase dashboard. You can acquire the account key JSON by selecting your project, clicking the gear icon in top of the sidebar, going to service account tab and download the JSON. Then you have to copy the contents of the file, and paste them into the Secret Key field.
+
 The payload field supports all [NotificationMessagePayload](https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.notificationmessagepayload.md#notificationmessagepayload_interface) values, example below.
 
 <Tabs>
