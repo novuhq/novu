@@ -8,7 +8,6 @@ import { UserModule } from './app/user/user.module';
 import { AuthModule } from './app/auth/auth.module';
 import { TestingModule } from './app/testing/testing.module';
 import { HealthModule } from './app/health/health.module';
-import { AdminModule } from './app/admin/admin.module';
 import { OrganizationModule } from './app/organization/organization.module';
 import { EnvironmentsModule } from './app/environments/environments.module';
 import { NotificationTemplateModule } from './app/notification-template/notification-template.module';
@@ -24,14 +23,12 @@ import { QueueService } from './app/shared/services/queue';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
-
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   OrganizationModule,
   SharedModule,
   UserModule,
   AuthModule,
   HealthModule,
-  AdminModule,
   EnvironmentsModule,
   NotificationTemplateModule,
   EventsModule,

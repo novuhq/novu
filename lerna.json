@@ -1,5 +1,6 @@
 {
-  "npmClient": "yarn",
+  "npmClient": "pnpm",
+  "useNx": true,
   "packages": [
     "apps/*",
     "libs/*",
