@@ -19,7 +19,7 @@ describe('Get Feeds - /feeds (GET)', async () => {
 
     const { body } = await session.testAgent.get(`/v1/feeds`);
 
-    expect(body.data.length).to.equal(2);
+    expect(body.data.length).to.equal(4);
     const feed = body.data.find((i) => i.name === 'Test name');
 
     expect(feed.name).to.equal(`Test name`);
@@ -28,7 +28,7 @@ describe('Get Feeds - /feeds (GET)', async () => {
 
   it('should create default feed if none exists', async function () {
     const { body } = await session.testAgent.get(`/v1/feeds`);
-    expect(body.data.length).to.equal(1);
+    expect(body.data.length).to.equal(2);
     const defaultFeed = body.data[0];
 
     expect(defaultFeed.name).to.equal(`Activities`);
@@ -38,7 +38,7 @@ describe('Get Feeds - /feeds (GET)', async () => {
     });
     const { body: newBody } = await session.testAgent.get(`/v1/feeds`);
 
-    expect(newBody.data.length).to.equal(2);
+    expect(newBody.data.length).to.equal(3);
     const feed = newBody.data.find((i) => i.name === 'Feed 2');
 
     expect(feed.name).to.equal(`Feed 2`);
