@@ -20,5 +20,6 @@ export interface IMessage {
       url?: string;
     };
   };
+  _feedId: string;
   payload: Record<string, unknown>;
 }

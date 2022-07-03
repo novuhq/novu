@@ -17,6 +17,7 @@ import {
   NotificationGroupRepository,
   JobRepository,
   JobStatusEnum,
+  FeedRepository,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -31,6 +32,7 @@ export class UserSession {
   private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
   private jobRepository = new JobRepository();
+  private feedRepository = new FeedRepository();
 
   token: string;
 
@@ -79,6 +81,8 @@ export class UserSession {
         this.apiKey = this.environment.apiKeys[0].key;
 
         await this.createIntegration();
+        await this.createFeed();
+        await this.createFeed('New');
       }
     }
 
@@ -231,6 +235,16 @@ export class UserSession {
 
       await this.fetchJWT();
     }
+  }
+
+  async createFeed(name?: string) {
+    const feed = await this.feedRepository.create({
+      name: name ? name : 'Activities',
+      _environmentId: this.environment._id,
+      _organizationId: this.organization._id,
+    });
+
+    return feed;
   }
 
   async triggerEvent(triggerName: string, to: TriggerRecipientsType, payload = {}) {

@@ -15,6 +15,8 @@ import { GetOrganizationData } from './usecases/get-organization-data/get-organi
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { GetFeedsCommand } from './usecases/get-feeds/get-feeds.command';
+import { GetFeeds } from './usecases/get-feeds/get-feeds.usecase';
 
 @Controller('/widgets')
 export class WidgetsController {
@@ -24,6 +26,7 @@ export class WidgetsController {
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
     private getOrganizationUsecase: GetOrganizationData,
+    private getFeedsUsecase: GetFeeds,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -44,15 +47,32 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/feed')
-  async getNotificationsFeed(@SubscriberSession() subscriberSession: SubscriberEntity, @Query('page') page: number) {
+  async getNotificationsFeed(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query('page') page: number,
+    @Query('feedId') feedId: string
+  ) {
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
       page,
+      feedId,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/notifications/feeds')
+  async getFeeds(@SubscriberSession() subscriberSession: SubscriberEntity) {
+    const command = GetFeedsCommand.create({
+      organizationId: subscriberSession._organizationId,
+      environmentId: subscriberSession._environmentId,
+      subscriberId: subscriberSession._id,
+    });
+
+    return await this.getFeedsUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

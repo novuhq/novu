@@ -8,14 +8,17 @@ export class GetNotificationsFeed {
   constructor(private messageRepository: MessageRepository) {}
 
   async execute(command: GetNotificationsFeedCommand): Promise<MessageEntity[]> {
-    return await this.messageRepository.findBySubscriberChannel(
+    const result = await this.messageRepository.findBySubscriberChannel(
       command.environmentId,
       command.subscriberId,
       ChannelTypeEnum.IN_APP,
+      command.feedId,
       {
         limit: 10,
         skip: command.page * 10,
       }
     );
+
+    return result;
   }
 }

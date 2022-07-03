@@ -14,21 +14,23 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
+    feedId?: string,
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
-    return await this.find(
-      {
-        _environmentId: environmentId,
-        _subscriberId: subscriberId,
-        channel,
-      },
-      '',
-      {
-        limit: options.limit,
-        skip: options.skip,
-        sort: '-createdAt',
-      }
-    );
+    const requestQuery: FilterQuery<MessageEntity> = {
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      channel,
+    };
+    if (feedId) {
+      requestQuery._feedId = feedId;
+    }
+
+    return await this.find(requestQuery, '', {
+      limit: options.limit,
+      skip: options.skip,
+      sort: '-createdAt',
+    });
   }
 
   async getUnseenCount(environmentId: string, subscriberId: string, channel: ChannelTypeEnum) {
