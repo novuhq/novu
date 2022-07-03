@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -8,14 +8,29 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
 import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
+import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
+import { GetSubscribersCommand } from './usecases/get-subscribers';
 
 @Controller('/subscribers')
 export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
     private updateSubscriberUsecase: UpdateSubscriber,
-    private removeSubscriberUsecase: RemoveSubscriber
+    private removeSubscriberUsecase: RemoveSubscriber,
+    private getSubscribersUsecase: GetSubscribers
   ) {}
+
+  @Get('')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  getNotificationTemplates(@UserSession() user: IJwtPayload) {
+    return this.getSubscribersUsecase.execute(
+      GetSubscribersCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+      })
+    );
+  }
 
   @Post('/')
   @ExternalApiAccessible()
