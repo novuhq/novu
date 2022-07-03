@@ -63,10 +63,6 @@ jobs:
       - name: Start WS
         run: pnpm start:ws:test &
 
-      # Runs a single command using the runners shell
-      - name: Wait for WS
-        run: npx wait-on --timeout=30000 http://localhost:1340/v1/health-check
-
       - name: Cypress run
         uses: cypress-io/github-action@v2
         env:
@@ -75,7 +71,7 @@ jobs:
         with:
           working-directory: apps/widget
           start: pnpm start:api
-          wait-on: http://localhost:1336/v1/health-check, http://localhost:3500
+          wait-on: http://localhost:1336/v1/health-check, http://localhost:3500, http://localhost:1340/v1/health-check
           browser: chrome
           install: false
           headless: true
