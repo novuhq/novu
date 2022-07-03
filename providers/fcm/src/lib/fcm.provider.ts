@@ -40,8 +40,8 @@ export class FcmPushProvider implements IPushProvider {
     });
 
     return {
-      id: 'PLACEHOLDER',
-      date: 'PLACEHOLDER',
+      id: `${res.multicastId}`,
+      date: new Date().toISOString(),
     };
   }
 }
