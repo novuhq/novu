@@ -15,13 +15,19 @@ export class FcmPushProvider implements IPushProvider {
   private messaging: Messaging;
   constructor(
     private config: {
+      projectName: string;
+      user: string;
       secretKey: string;
     }
   ) {
     this.config = config;
     const firebase = initializeApp(
       {
-        credential: cert(JSON.parse(this.config.secretKey)),
+        credential: cert({
+          projectId: this.config.projectName,
+          clientEmail: this.config.user,
+          privateKey: JSON.parse(`"${this.config.secretKey}"`),
+        }),
       },
       crypto.randomBytes(4).toString()
     );

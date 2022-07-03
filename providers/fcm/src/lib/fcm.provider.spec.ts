@@ -5,7 +5,9 @@ test('should trigger fcm correctly', async () => {
   jest.mock('firebase-admin');
 
   const provider = new FcmPushProvider({
-    secretKey: '{"project_id": "test"}',
+    secretKey: '--BEGIN PRIVATE KEY--abc',
+    projectName: 'test',
+    user: 'test@iam.firebase.google.com',
   });
 
   const spy = jest
