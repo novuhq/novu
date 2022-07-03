@@ -9,6 +9,9 @@ export class TriggerEventDto {
   @IsObject()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
+  @IsObject()
+  overrides: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
   @IsDefined()
   to: TriggerRecipientsType; // eslint-disable-line @typescript-eslint/no-explicit-any
 }

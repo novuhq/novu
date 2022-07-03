@@ -21,6 +21,10 @@
       "path": "apps/widget"
     },
     {
+      "name": "📜 @novu/docs",
+      "path": "docs"
+    },
+    {
       "name": "📦 @novu/dal",
       "path": "libs/dal"
     },
@@ -39,6 +43,10 @@
     {
       "name": "📦 @novu/stateless",
       "path": "packages/stateless"
+    },
+     {
+      "name": "📦 @novu/node",
+      "path": "packages/node"
     },
     {
       "name": "🔔 @novu/emailjs",

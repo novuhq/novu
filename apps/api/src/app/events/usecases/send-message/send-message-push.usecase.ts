@@ -36,6 +36,11 @@ export class SendMessagePush extends SendMessageType {
     Sentry.addBreadcrumb({
       message: 'Sending Push',
     });
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      channel: ChannelTypeEnum.PUSH,
+      active: true,
+    });
     const pushChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -47,6 +52,7 @@ export class SendMessagePush extends SendMessageType {
     const content = contentService.replaceVariables(pushChannel.template.content as string, messageVariables);
     const title = contentService.replaceVariables(pushChannel.template.title as string, messageVariables);
     const notificationIdentifiers = command.payload.notificationIdentifiers || subscriber.notificationIdentifiers;
+    const overrides = command.overrides[integration.providerId] || {};
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -64,12 +70,7 @@ export class SendMessagePush extends SendMessageType {
       content,
       title,
       payload: messagePayload,
-    });
-
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.PUSH,
-      active: true,
+      overrides,
     });
 
     if (notificationIdentifiers && integration) {
@@ -81,7 +82,8 @@ export class SendMessagePush extends SendMessageType {
         message,
         command,
         notification,
-        command.payload
+        command.payload,
+        overrides
       );
 
       return;
@@ -144,7 +146,8 @@ export class SendMessagePush extends SendMessageType {
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity,
-    payload: object
+    payload: object,
+    overrides: object
   ) {
     try {
       const pushHandler = this.pushFactory.getHandler(integration);
@@ -154,6 +157,7 @@ export class SendMessagePush extends SendMessageType {
         title,
         content,
         payload,
+        overrides,
       });
     } catch (e) {
       await this.createLogUsecase.execute(

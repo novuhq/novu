@@ -40,6 +40,11 @@ export class SendMessageEmail extends SendMessageType {
   }
 
   public async execute(command: SendMessageCommand) {
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+    });
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -55,6 +60,7 @@ export class SendMessageEmail extends SendMessageType {
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
     const content: string | IEmailBlock[] = this.getContent(isEditorMode, emailChannel, command, subscriber);
+    const overrides = command.overrides[integration.providerId] || {};
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -71,6 +77,7 @@ export class SendMessageEmail extends SendMessageType {
       transactionId: command.transactionId,
       email,
       payload: messagePayload,
+      overrides,
     });
 
     const contentService = new ContentService();
@@ -92,12 +99,6 @@ export class SendMessageEmail extends SendMessageType {
         },
       })
     );
-
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.EMAIL,
-      active: true,
-    });
 
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>

@@ -35,7 +35,7 @@ export class FcmPushProvider implements IPushProvider {
       notification: {
         title: options.title,
         body: options.content,
-        ...options.payload,
+        ...options.overrides,
       },
     });
 

@@ -57,6 +57,7 @@ export class TriggerEvent {
           ProcessSubscriberCommand.create({
             identifier: command.identifier,
             payload: command.payload,
+            overrides: command.overrides,
             to: subscriberToTrigger,
             transactionId: command.transactionId,
             environmentId: command.environmentId,

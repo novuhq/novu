@@ -32,7 +32,7 @@ Firebase Cloud Messages is a free notification delivery service provided by Goog
 
 To enable the FCM integration, you need to get your service account key from the Firebase dashboard. You can acquire the account key JSON by selecting your project, clicking the gear icon in top of the sidebar, going to service account tab and download the JSON. Then you have to copy the contents of the file, and paste them into the Secret Key field.
 
-The payload field supports all [NotificationMessagePayload](https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.notificationmessagepayload.md#notificationmessagepayload_interface) values, example below.
+The overrides field supports all [NotificationMessagePayload](https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.notificationmessagepayload.md#notificationmessagepayload_interface) values, example below.
 
 <Tabs>
   <TabItem value="nodejs" label="Node.js" default>
@@ -47,12 +47,17 @@ The payload field supports all [NotificationMessagePayload](https://firebase.goo
       subscriberId: '...'
     },
     payload: {
-      notificationIdentifiers: ['abcda...'], // Override subscriberId notification/device identifiers 
-      badge: 1, // iOS: The value of the badge on the home screen app icon, if 0 then the badge is removed.
-      clickAction: 'clickity', // Android: Action associated with a user click on the notification.
-      color: '#ff00ff', // Android: Hex color of the notification
-      icon: 'myicon', // Android: Drawable resource id of icon, Web: URL to icon
-      sound: 'custom_sound', // Android: name of custom notification sound
+      abc: 'def',
+    },
+    overrides: {
+      fcm: {
+        notificationIdentifiers: ['abcda...'], // Override subscriberId notification/device identifiers 
+        badge: 1, // iOS: The value of the badge on the home screen app icon, if 0 then the badge is removed.
+        clickAction: 'clickity', // Android: Action associated with a user click on the notification.
+        color: '#ff00ff', // Android: Hex color of the notification
+        icon: 'myicon', // Android: Drawable resource id of icon, Web: URL to icon
+        sound: 'custom_sound', // Android: name of custom notification sound
+      },
     }
   })
   ```

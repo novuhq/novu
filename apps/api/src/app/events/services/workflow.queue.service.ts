@@ -61,6 +61,7 @@ export class WorkflowQueueService {
       SendMessageCommand.create({
         identifier: job.identifier,
         payload: job.payload ? job.payload : {},
+        overrides: job.overrides ? job.overrides : {},
         step: job.step,
         transactionId: job.transactionId,
         notificationId: job._notificationId,

@@ -25,6 +25,7 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
+        overrides: body.overrides,
         to: mappedSubscribers,
         transactionId: uuidv4(),
       })

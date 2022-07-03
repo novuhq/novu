@@ -59,6 +59,7 @@ export class ProcessSubscriber {
       return {
         identifier: command.identifier,
         payload: command.payload,
+        overrides: command.overrides,
         step,
         transactionId: command.transactionId,
         _notificationId: notification._id,

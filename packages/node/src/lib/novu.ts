@@ -33,6 +33,7 @@ export class Novu extends EventEmitter {
       payload: {
         ...data?.payload,
       },
+      overrides: data.overrides || {},
     });
   }
 
