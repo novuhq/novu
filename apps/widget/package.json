@@ -62,7 +62,7 @@
     "webpack-dev-server": "4.9.2"
   },
   "scripts": {
-    "start": "cross-env craco start",
+    "start": "craco start",
     "start:dev": "cross-env PORT=4500 pnpm start",
     "start:cli:local": "pnpm start:shell:test & pnpm start:shell:embed & cross-env PORT=3500 pnpm start",
     "start:test": "pnpm start:shell:test & pnpm start:shell:embed & cross-env NODE_ENV=test REACT_APP_API_URL=http://localhost:1336 REACT_APP_WS_URL=http://localhost:1340 PORT=3500 pnpm start",
