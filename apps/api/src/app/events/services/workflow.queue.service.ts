@@ -5,7 +5,7 @@ import { SendMessageCommand } from '../usecases/send-message/send-message.comman
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { ChannelTypeEnum, DigestUnit } from '@novu/shared';
+import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -101,15 +101,15 @@ export class WorkflowQueueService {
     await this.queue.add(data._id, data, options);
   }
 
-  public static toMilliseconds(amount: number, unit: DigestUnit): number {
+  public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {
     let delay = 1000 * amount;
-    if (unit === DigestUnit.DAYS) {
+    if (unit === DigestUnitEnum.DAYS) {
       delay = 60 * 60 * 24 * delay;
     }
-    if (unit === DigestUnit.HOURS) {
+    if (unit === DigestUnitEnum.HOURS) {
       delay = 60 * 60 * delay;
     }
-    if (unit === DigestUnit.MINUTES) {
+    if (unit === DigestUnitEnum.MINUTES) {
       delay = 60 * delay;
     }
 

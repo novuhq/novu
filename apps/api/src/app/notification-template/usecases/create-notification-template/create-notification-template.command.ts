@@ -13,7 +13,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   ChannelCTATypeEnum,
-  DigestUnit,
+  DigestUnitEnum,
 } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -85,7 +85,7 @@ class NotificationStepCommand {
   @IsOptional()
   metadata?: {
     amount?: number;
-    unit?: DigestUnit;
+    unit?: DigestUnitEnum;
     batchkey?: string;
   };
 }
