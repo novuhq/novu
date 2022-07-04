@@ -14,8 +14,8 @@ interface INotificationCenterWidgetProps {
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
   const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
-  const [backendUrl, setBackendUrl] = useState('');
-  const [socketUrl, setSocketUrl] = useState('');
+  const [backendUrl, setBackendUrl] = useState(API_URL);
+  const [socketUrl, setSocketUrl] = useState(WS_URL);
   const [fontFamily, setFontFamily] = useState<string>('Lato');
   const [frameInitialized, setFrameInitialized] = useState(false);
 
@@ -32,8 +32,15 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     const handler = async (event: { data: any }) => {
       if (event.data.type === 'INIT_IFRAME') {
         setUserDataPayload(event.data.value.data);
-        setBackendUrl(event.data.value.backendUrl);
-        setSocketUrl(event.data.value.socketUrl);
+
+        if (event.data.value.backendUrl) {
+          setBackendUrl(event.data.value.backendUrl);
+        }
+
+        if (event.data.value.socketUrl) {
+          setSocketUrl(event.data.value.socketUrl);
+        }
+
         setFrameInitialized(true);
       }
     };
@@ -59,8 +66,8 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
       <GlobalStyle fontFamily={fontFamily} />
       {frameInitialized && (
         <NovuProvider
-          backendUrl={backendUrl ? backendUrl : API_URL}
-          socketUrl={socketUrl ? socketUrl : WS_URL}
+          backendUrl={backendUrl}
+          socketUrl={socketUrl}
           applicationIdentifier={props.applicationIdentifier as string}
           subscriberId={userDataPayload.subscriberId}
           onLoad={onLoad}
