@@ -28,7 +28,7 @@ export interface IPushOptions {
   title: string;
   content: string;
   payload: object;
-  overrides: {
+  overrides?: {
     tag?: string;
     body?: string;
     icon?: string;
