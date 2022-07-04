@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -23,11 +23,12 @@ export class SubscribersController {
   @Get('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  getNotificationTemplates(@UserSession() user: IJwtPayload) {
-    return this.getSubscribersUsecase.execute(
+  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0) {
+    return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
+        page: page ? Number(page) : 0,
       })
     );
   }
