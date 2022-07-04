@@ -16,16 +16,7 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
   trackEvent(@UserSession() user: IJwtPayload, @Body() body: TriggerEventDto) {
-    const subscribers = Array.isArray(body.to) ? body.to : [body.to];
-    const mappedSubscribers: ISubscribersDefine[] = subscribers.map((subscriber) => {
-      if (typeof subscriber === 'string') {
-        return {
-          subscriberId: subscriber,
-        };
-      } else {
-        return subscriber;
-      }
-    });
+    const mappedSubscribers = this.mapSubscribers(body);
 
     return this.triggerEvent.execute(
       TriggerEventCommand.create({
@@ -38,5 +29,19 @@ export class EventsController {
         transactionId: uuidv4(),
       })
     );
+  }
+
+  private mapSubscribers(body: TriggerEventDto): ISubscribersDefine[] {
+    const subscribers = Array.isArray(body.to) ? body.to : [body.to];
+
+    return subscribers.map((subscriber) => {
+      if (typeof subscriber === 'string') {
+        return {
+          subscriberId: subscriber,
+        };
+      } else {
+        return subscriber;
+      }
+    });
   }
 }

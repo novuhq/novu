@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "On-Boarding Cli",
   "main": "index.js",
   "scripts": {
@@ -22,7 +22,7 @@
     "novu": "./dist/index.js"
   },
   "devDependencies": {
-    "@novu/shared": "^0.5.0",
+    "@novu/shared": "^0.5.1",
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
     "nodemon": "^2.0.15",

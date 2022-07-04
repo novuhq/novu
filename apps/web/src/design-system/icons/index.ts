@@ -19,6 +19,8 @@ export { CheckCircle } from './general/CheckCircle';
 export { Box } from './general/Box';
 export { CheckCircleOutlined } from './general/CheckCircleOutlined';
 export { Repeat } from './general/Repeat';
+export { Sms } from './general/Sms';
+export { Mobile } from './general/Mobile';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';

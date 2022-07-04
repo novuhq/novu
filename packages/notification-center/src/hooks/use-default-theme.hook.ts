@@ -1,10 +1,16 @@
-import { defaultCommonTheme, defaultDarkTheme, defaultLightTheme } from '../shared/config/themeDefaultValues';
+import {
+  defaultCommonTheme,
+  defaultDarkTheme,
+  defaultLightTheme,
+  defaultNotificationBellDarkTheme,
+  defaultNotificationBellLightTheme,
+} from '../shared/config/themeDefaultValues';
 import { ICommonTheme, INovuThemeProvider } from '../store/novu-theme-provider.context';
-import { INovuTheme } from '../store/novu-theme.context';
+import { INotificationBellColors, INovuTheme, ISvgStopColor } from '../store/novu-theme.context';
 import merge from 'lodash.merge';
 import { ColorScheme } from '../index';
 
-interface IDefaultThemeProps {
+export interface IDefaultThemeProps {
   colorScheme: ColorScheme;
   theme: INovuThemeProvider;
 }
@@ -23,5 +29,29 @@ export function useDefaultTheme(props: IDefaultThemeProps): {
   return {
     theme,
     common,
+  };
+}
+
+export interface IDefaultBellColors {
+  colorScheme?: ColorScheme;
+  unseenBadgeColor?: string | ISvgStopColor;
+  unseenBadgeBackgroundColor?: string;
+}
+
+export function useDefaultBellColors(props: IDefaultBellColors): { bellColors: INotificationBellColors } {
+  const colorScheme = props?.colorScheme ? props?.colorScheme : 'light';
+
+  const notificationBellColors: INotificationBellColors = {
+    unseenBadgeColor: props?.unseenBadgeColor,
+    unseenBadgeBackgroundColor: props?.unseenBadgeBackgroundColor,
+  };
+
+  const bellColors =
+    colorScheme === 'light'
+      ? merge(defaultNotificationBellLightTheme, notificationBellColors)
+      : merge(defaultNotificationBellDarkTheme, notificationBellColors);
+
+  return {
+    bellColors,
   };
 }

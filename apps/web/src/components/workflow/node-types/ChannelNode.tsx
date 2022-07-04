@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
-import { ChannelButton } from '../../design-system';
+import { ChannelButton } from '../../../design-system';
 
 interface NodeData {
   Icon: React.FC<any>;
@@ -9,7 +9,7 @@ interface NodeData {
   tabKey: string;
   index: number;
   testId: string;
-  onDelete: () => void;
+  onDelete: (id: string) => void;
   showDropZone: boolean;
   error: string;
   setActivePage: (string) => void;
@@ -30,6 +30,7 @@ export default memo(
           showDropZone={data.showDropZone}
           errors={data.error}
           onDelete={data.onDelete}
+          tabKey={data.tabKey}
           Icon={data.Icon}
           label={data.label}
           active={selected}

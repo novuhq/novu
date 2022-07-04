@@ -13,19 +13,7 @@ const codeTheme = require('./src/utils/prism');
     favicon: 'img/favicon.ico',
     organizationName: 'novuhq', // Usually your GitHub org/user name.
     projectName: 'novu', // Usually your repo name.
-    plugins: [
-      'docusaurus-plugin-sass',
-      [
-        '@docusaurus/plugin-ideal-image',
-        {
-          quality: 80,
-          max: 1030, // max resized image's size.
-          min: 640, // min resized image's size. if original is lower, use that size.
-          steps: 2, // the max number of images generated between min and max (inclusive)
-          disableInDev: false,
-        },
-      ],
-    ],
+    plugins: ['docusaurus-plugin-sass'],
     presets: [
       [
         '@docusaurus/preset-classic',
@@ -37,6 +25,7 @@ const codeTheme = require('./src/utils/prism');
             // Please change this to your repo.
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
             breadcrumbs: false,
+            routeBasePath: '/',
           },
           theme: {
             customCss: require.resolve('./src/css/custom.scss'),
@@ -68,7 +57,7 @@ const codeTheme = require('./src/utils/prism');
             alt: 'Novu Logo',
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
-            href: '/docs',
+            href: '/',
             target: '_self',
             width: 102,
             height: 32,
@@ -98,7 +87,7 @@ const codeTheme = require('./src/utils/prism');
             alt: 'Novu',
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
-            href: '/docs',
+            href: '/',
             width: 102,
             height: 32,
           },
@@ -107,7 +96,7 @@ const codeTheme = require('./src/utils/prism');
               items: [
                 {
                   label: 'Documentation',
-                  to: '/docs',
+                  to: '/',
                 },
                 {
                   label: 'Providers',
