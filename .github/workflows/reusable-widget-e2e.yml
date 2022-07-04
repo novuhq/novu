@@ -69,6 +69,9 @@ jobs:
       - name: Wait on API
         run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
 
+      - name: Wait on WIDGET
+        run: wait-on --timeout=90000 http://localhost:3500
+
       - name: Cypress run
         uses: cypress-io/github-action@v2
         env:
