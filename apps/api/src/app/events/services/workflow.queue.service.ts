@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Queue, Worker, QueueBaseOptions, JobsOptions } from 'bullmq';
+import { Queue, Worker, QueueBaseOptions, JobsOptions, QueueScheduler } from 'bullmq';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { SendMessageCommand } from '../usecases/send-message/send-message.command';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
@@ -27,6 +27,7 @@ export class WorkflowQueueService {
   private queueNextJob: QueueNextJob;
   @Inject()
   private jobRepository: JobRepository;
+  private readonly queueScheduler: QueueScheduler;
 
   constructor() {
     this.queue = new Queue('standard', {
@@ -53,6 +54,7 @@ export class WorkflowQueueService {
       await this.jobRepository.updateStatus(job.data._id, JobStatusEnum.FAILED);
       await this.jobRepository.setError(job.data._id, e);
     });
+    this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
   }
 
   public async work(job: JobEntity) {
