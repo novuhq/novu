@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
-import { ChannelButton } from '../../design-system';
+import { ChannelButton } from '../../../design-system';
 
 interface NodeData {
   Icon: React.FC<any>;

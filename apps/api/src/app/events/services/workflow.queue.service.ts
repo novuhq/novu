@@ -28,7 +28,12 @@ export class WorkflowQueueService {
   private jobRepository: JobRepository;
 
   constructor() {
-    this.queue = new Queue('standard', { ...this.bullConfig });
+    this.queue = new Queue('standard', {
+      ...this.bullConfig,
+      defaultJobOptions: {
+        removeOnComplete: true,
+      },
+    });
     this.worker = new Worker(
       'standard',
       async ({ data }: { data: JobEntity }) => {

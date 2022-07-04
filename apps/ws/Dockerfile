@@ -1,10 +1,11 @@
-FROM node:16.13.1
+FROM node:16.15.1
 
 WORKDIR /usr/src/app
 
-RUN npm i pnpm@6.32.11 -g --loglevel notice --force
-RUN pnpm i pm2 -g
+RUN npm install -g pnpm@7.3.0 --loglevel notice
+RUN npm i pm2 -g
 
+COPY .npmrc .
 COPY package.json .
 
 COPY apps/ws ./apps/ws

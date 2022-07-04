@@ -7,6 +7,7 @@ interface IDropdownProps extends JSX.ElementChildrenAttribute {
   control?: React.ReactElement;
   opened?: boolean;
   gutter?: number;
+  placement?: 'center' | 'end' | 'start';
   sx?: Sx | Sx[];
 }
 export function Dropdown({ children, ...props }: IDropdownProps) {

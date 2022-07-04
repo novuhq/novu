@@ -52,7 +52,7 @@ Similiar to the the email, custom variables using hbs syntax can be described to
 
 #### In-app
 
-In the notification center preview you can type the content, you can select content an use `CMD` + `B` to make the selected text bold.
+In the notification center preview you can type the content, you can select content and use `CMD` + `B` to make the selected text bold.
 
 ## Trigger the notification
 

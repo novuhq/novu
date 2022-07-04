@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
@@ -9,6 +9,8 @@
     "@babel/plugin-transform-runtime": "^7.16.5",
     "@cypress/react": "^5.12.4",
     "@cypress/webpack-dev-server": "^1.8.2",
+    "html-webpack-plugin": "5.5.0",
+    "webpack-dev-server": "4.9.2",
     "@editorjs/editorjs": "^2.19.3",
     "@editorjs/paragraph": "^2.8.0",
     "@emotion/babel-plugin": "^11.7.2",
@@ -20,8 +22,8 @@
     "@mantine/hooks": "^4.1.0",
     "@mantine/notifications": "^4.1.0",
     "@mantine/prism": "^4.1.0",
-    "@novu/notification-center": "^0.5.0",
-    "@novu/shared": "^0.5.0",
+    "@novu/notification-center": "^0.5.1",
+    "@novu/shared": "^0.5.1",
     "@sentry/react": "^6.3.1",
     "@sentry/tracing": "^6.3.1",
     "@storybook/addon-docs": "^6.4.19",
@@ -78,8 +80,8 @@
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/runtime": "^7.14.6",
-    "@novu/dal": "^0.5.0",
-    "@novu/testing": "^0.5.0",
+    "@novu/dal": "^0.5.1",
+    "@novu/testing": "^0.5.1",
     "@storybook/addon-actions": "^6.4.14",
     "@storybook/addon-essentials": "^6.4.14",
     "@storybook/addon-links": "^6.4.14",
@@ -97,7 +99,8 @@
     "nodemon": "^2.0.15",
     "react-error-overlay": "6.0.9",
     "start-server-and-test": "1.11.6",
-    "webpack": "4.46.0"
+    "webpack": "4.46.0",
+    "typescript": "4.6.2"
   },
   "scripts": {
     "start": "cross-env PORT=4200 react-app-rewired start",

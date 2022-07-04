@@ -47,6 +47,9 @@ export class SendMessageSms extends SendMessageType {
     const content = contentService.replaceVariables(smsChannel.template.content as string, messageVariables);
     const phone = command.payload.phone || subscriber.phone;
 
+    const messagePayload = Object.assign({}, command.payload);
+    delete messagePayload.attachments;
+
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
@@ -58,6 +61,7 @@ export class SendMessageSms extends SendMessageType {
       transactionId: command.transactionId,
       phone,
       content,
+      payload: messagePayload,
     });
 
     const integration = await this.integrationRepository.findOne({
