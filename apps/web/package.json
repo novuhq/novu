@@ -99,7 +99,7 @@
     "nodemon": "^2.0.15",
     "react-error-overlay": "6.0.9",
     "start-server-and-test": "1.11.6",
-    "webpack": "4.",
+    "webpack": "4.46.0",
     "typescript": "4.6.2"
   },
   "scripts": {
