@@ -27,6 +27,8 @@ export const DigestMetadata = ({ control, index }) => {
                     min={0}
                     max={100}
                     type="number"
+                    data-test-id="time-amount"
+                    placeholder="20"
                   />
                 );
               }}
@@ -41,7 +43,7 @@ export const DigestMetadata = ({ control, index }) => {
                   <Select
                     disabled={readonly}
                     error={errors?.steps ? errors.steps[index]?.metadata?.unit?.message : undefined}
-                    placeholder="20"
+                    placeholder="Minutes"
                     data={[
                       { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
                       { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
@@ -69,6 +71,7 @@ export const DigestMetadata = ({ control, index }) => {
               description="A batch key is used to batch notifications"
               error={errors?.steps ? errors.steps[index]?.metadata?.batchkey?.message : undefined}
               type="text"
+              data-test-id="batch-key"
             />
           );
         }}

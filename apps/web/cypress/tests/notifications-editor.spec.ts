@@ -165,6 +165,67 @@ describe('Notifications Creator', function () {
       cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('customVariable:');
     });
 
+    it('should add digest node', function () {
+      waitLoadTemplatePage(() => {
+        cy.visit('/templates/create');
+      });
+      cy.getByTestId('title').type('Test Notification Title');
+      cy.getByTestId('description').type('This is a test description for a test title');
+      cy.get('body').click();
+
+      addAndEditChannel('email', 'trigger');
+
+      cy.getByTestId('email-editor').getByTestId('editor-row').click();
+      cy.getByTestId('control-add').click();
+      cy.getByTestId('add-btn-block').click();
+      cy.getByTestId('button-block-wrapper').should('be.visible');
+      cy.getByTestId('button-block-wrapper').find('button').click();
+      cy.getByTestId('button-text-input').clear().type('Example Text Of {{ctaName}}', {
+        parseSpecialCharSequences: false,
+      });
+      cy.getByTestId('button-block-wrapper').find('button').contains('Example Text Of {{ctaName}}');
+      cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+        parseSpecialCharSequences: false,
+      });
+
+      cy.getByTestId('email-editor').getByTestId('editor-row').eq(1).click();
+      cy.getByTestId('control-add').click();
+      cy.getByTestId('add-text-block').click();
+      cy.getByTestId('editable-text-content').eq(1).clear().type('This another text will be {{customVariable}}', {
+        parseSpecialCharSequences: false,
+      });
+      cy.getByTestId('editable-text-content').eq(1).click();
+
+      cy.getByTestId('settings-row-btn').eq(1).invoke('show').click();
+      cy.getByTestId('remove-row-btn').click();
+      cy.getByTestId('button-block-wrapper').should('not.exist');
+
+      cy.getByTestId('emailSubject').type('this is email subject');
+
+      goBack();
+
+      dragAndDrop('digest', 'email');
+
+      cy.clickWorkflowNode(`node-digestSelector`);
+
+      cy.getByTestId('time-amount').type('20');
+      cy.getByTestId('batch-key').type('id');
+
+      cy.getByTestId('submit-btn').click();
+
+      cy.getByTestId('success-trigger-modal').should('be.visible');
+      cy.getByTestId('trigger-snippet-btn').click();
+      cy.intercept('GET', '/v1/notification-templates').as('notification-templates');
+      cy.visit('/templates');
+      cy.wait('@notification-templates');
+      cy.get('tbody').contains('Test Notification Title').click();
+      cy.getByTestId('workflowButton').click();
+      cy.clickWorkflowNode(`node-digestSelector`);
+
+      cy.getByTestId('time-amount').should('have.value', '20');
+      cy.getByTestId('batch-key').should('have.value', 'id');
+    });
+
     it('should create and edit group id', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
@@ -526,13 +587,16 @@ describe('Notifications Creator', function () {
   });
 });
 
-function addAndEditChannel(channel: 'inApp' | 'email' | 'sms') {
+type Channel = 'inApp' | 'email' | 'sms' | 'digest';
+type Parent = Channel | 'trigger';
+
+function addAndEditChannel(channel: Channel, parent?: Parent) {
   cy.getByTestId('workflowButton').click();
-  dragAndDrop(channel);
+  dragAndDrop(channel, parent);
   editChannel(channel);
 }
 
-function dragAndDrop(channel: 'inApp' | 'email' | 'sms', parent?: 'inApp' | 'email' | 'sms' | 'trigger') {
+function dragAndDrop(channel: Channel, parent?: Parent) {
   const dataTransfer = new DataTransfer();
 
   cy.wait(1000);
@@ -543,7 +607,7 @@ function dragAndDrop(channel: 'inApp' | 'email' | 'sms', parent?: 'inApp' | 'ema
     cy.getByTestId('node-triggerSelector').parent().trigger('drop', { dataTransfer });
   }
 }
-function editChannel(channel: 'inApp' | 'email' | 'sms') {
+function editChannel(channel: Channel) {
   cy.clickWorkflowNode(`node-${channel}Selector`);
   cy.getByTestId('edit-template-channel').click();
 }

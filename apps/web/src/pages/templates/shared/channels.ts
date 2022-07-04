@@ -40,7 +40,7 @@ export const channels = [
     label: 'Digest',
     description: 'This sub title will describe things',
     Icon: Digest,
-    testId: 'digestBackoffSelector',
+    testId: 'digestSelector',
     channelType: ChannelTypeEnum.DIGEST,
     type: StepTypeEnum.ACTION,
   },
