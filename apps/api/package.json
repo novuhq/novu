@@ -80,6 +80,7 @@
     "newrelic": "^7.4.0",
     "passport": "^0.4.1",
     "passport-github2": "^0.1.12",
+    "passport-oauth2": "1.6.1",
     "passport-jwt": "^4.0.0",
     "recursive-diff": "^1.0.8",
     "reflect-metadata": "^0.1.13",
@@ -110,8 +111,9 @@
     "mocha": "^8.1.1",
     "nodemon": "^2.0.3",
     "sinon": "^9.0.2",
-    "ts-loader": "9.2.8",
     "ts-node": "^9.0.0",
+    "typescript": "4.6.2",
+    "ts-loader": "9.2.8",
     "tsconfig-paths": "3.11.0"
   },
   "lint-staged": {

@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "jsonwebtoken": "8.5.1",
     "@godaddy/terminus": "^4.3.1",
     "@nestjs/common": "^7.6.17",
     "@nestjs/core": "^7.6.17",
