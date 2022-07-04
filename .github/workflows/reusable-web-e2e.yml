@@ -25,7 +25,6 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '18.4.0'
-      - run: echo 'NODE_OPTIONS="--openssl-legacy-provider"' >> $GITHUB_ENV
 
       - name: Start Redis
         uses: supercharge/redis-github-action@1.2.0
