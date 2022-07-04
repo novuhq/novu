@@ -54,8 +54,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Start Client
-        run: pnpm start:widget:test &
-
+        run: pnpm start:widget:test
 
       - name: Build API
         run: CI='' pnpm build:api
