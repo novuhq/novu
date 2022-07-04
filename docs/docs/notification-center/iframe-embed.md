@@ -95,4 +95,3 @@ The second parameter of `novu.init` can be used to specify the options for the e
 | `socketUrl` | `string` | Custom WebSocket Service location in case of self-hosted version of Novu |
 | `position.top` | `string` \| `number` | Override the top position of the notification center drop down |
 | `position.left` | `string` \| `number` | Override the left position of the notification center drop down |
-
