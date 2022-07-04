@@ -21,6 +21,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
   let workflowQueueService: WorkflowQueueService;
+  const messageRepository = new MessageRepository();
 
   const awaitRunningJobs = async (unfinishedjobs = 0) => {
     let runningJobs = 0;
@@ -35,6 +36,22 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
         },
       });
     } while (runningJobs > unfinishedjobs);
+  };
+
+  const triggerEvent = async (payload) => {
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload,
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
   };
 
   beforeEach(async () => {
@@ -68,37 +85,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       ],
     });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'Testing of User Name',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'digest',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    await triggerEvent({
+      customVar: 'digest',
+    });
 
     const delayedJob = await jobRepository.findOne({
       _templateId: template._id,
@@ -144,55 +137,19 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       ],
     });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'Testing of User Name',
-          id,
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      id,
+    });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'digest',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    await triggerEvent({
+      customVar: 'digest',
+    });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'haj',
-          id,
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    await triggerEvent({
+      customVar: 'haj',
+      id,
+    });
 
     await awaitRunningJobs(3);
     const delayedJob = await jobRepository.findOne({
@@ -229,44 +186,20 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
         },
         {
           type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{customVar}}' as string,
+          content: 'Hello world {{step.events.length}}' as string,
         },
       ],
     });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'Testing of User Name',
-          id,
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      id,
+    });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'digest',
-          id: MessageRepository.createObjectId(),
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    await triggerEvent({
+      customVar: 'digest',
+      id: MessageRepository.createObjectId(),
+    });
 
     await awaitRunningJobs(3);
     const delayedJob = await jobRepository.findOne({
@@ -274,12 +207,21 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: ChannelTypeEnum.DIGEST,
     });
     await workflowQueueService.work(delayedJob);
-
     const jobs = await jobRepository.find({
       _templateId: template._id,
     });
-    const digestjobs = jobs.filter((item) => item.digest.events.length > 0);
-    expect(digestjobs.length).to.equal(1);
+    const digestjobs = jobs.find((item) => item.digest.events.length > 0);
+    await workflowQueueService.work(digestjobs);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.SMS,
+    });
+
+    const message = messages[2];
+
+    expect(message.content).to.equal('Hello world 1');
   });
 
   it('should digest delayed events', async function () {
@@ -299,26 +241,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
         },
         {
           type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{customVar}}' as string,
+          content: 'Hello world {{step.events.length}}' as string,
         },
       ],
     });
 
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'Testing of User Name',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
 
     await awaitRunningJobs(0);
 

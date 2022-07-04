@@ -5,7 +5,7 @@ import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantin
 import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
-import { channels, getChannel } from '../shared/channels';
+import { channels, getChannel, StepTypeEnum } from '../shared/channels';
 import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
 import { StepActiveSwitch } from './StepActiveSwitch';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -208,7 +208,7 @@ const WorkflowEditorPage = ({
                 <When truthy={!readonly}>
                   <Stack>
                     {channels
-                      .filter((channel) => !channel.action)
+                      .filter((channel) => channel.type === StepTypeEnum.CHANNEL)
                       .map((channel) => (
                         <DraggableNode channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
                       ))}
@@ -228,7 +228,7 @@ const WorkflowEditorPage = ({
                 <When truthy={!readonly}>
                   <Stack>
                     {channels
-                      .filter((channel) => channel.action)
+                      .filter((channel) => channel.type === StepTypeEnum.ACTION)
                       .map((channel) => (
                         <DraggableNode channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
                       ))}
