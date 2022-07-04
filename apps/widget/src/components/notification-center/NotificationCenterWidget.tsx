@@ -14,7 +14,10 @@ interface INotificationCenterWidgetProps {
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
   const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
+  const [backendUrl, setBackendUrl] = useState(API_URL);
+  const [socketUrl, setSocketUrl] = useState(WS_URL);
   const [fontFamily, setFontFamily] = useState<string>('Lato');
+  const [frameInitialized, setFrameInitialized] = useState(false);
 
   useEffect(() => {
     WebFont.load({
@@ -29,6 +32,16 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     const handler = async (event: { data: any }) => {
       if (event.data.type === 'INIT_IFRAME') {
         setUserDataPayload(event.data.value.data);
+
+        if (event.data.value.backendUrl) {
+          setBackendUrl(event.data.value.backendUrl);
+        }
+
+        if (event.data.value.socketUrl) {
+          setSocketUrl(event.data.value.socketUrl);
+        }
+
+        setFrameInitialized(true);
       }
     };
 
@@ -51,21 +64,23 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   return (
     <>
       <GlobalStyle fontFamily={fontFamily} />
-      <NovuProvider
-        backendUrl={API_URL}
-        socketUrl={WS_URL}
-        applicationIdentifier={props.applicationIdentifier as string}
-        subscriberId={userDataPayload.subscriberId}
-        onLoad={onLoad}
-        subscriberHash={userDataPayload.subscriberHash}
-      >
-        <NotificationCenter
-          colorScheme="light"
-          onNotificationClick={props.onNotificationClick}
-          onUrlChange={props.onUrlChange}
-          onUnseenCountChanged={props.onUnseenCountChanged}
-        />
-      </NovuProvider>
+      {frameInitialized && (
+        <NovuProvider
+          backendUrl={backendUrl}
+          socketUrl={socketUrl}
+          applicationIdentifier={props.applicationIdentifier as string}
+          subscriberId={userDataPayload.subscriberId}
+          onLoad={onLoad}
+          subscriberHash={userDataPayload.subscriberHash}
+        >
+          <NotificationCenter
+            colorScheme="light"
+            onNotificationClick={props.onNotificationClick}
+            onUrlChange={props.onUrlChange}
+            onUnseenCountChanged={props.onUnseenCountChanged}
+          />
+        </NovuProvider>
+      )}
     </>
   );
 }
