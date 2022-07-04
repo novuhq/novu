@@ -63,7 +63,7 @@
     "bull": "^4.2.1",
     "bullmq": "^1.81.4",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.12.2",
+    "class-validator": "^0.13.2",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
     "dotenv": "^8.2.0",
