@@ -64,10 +64,11 @@ jobs:
       - name: Start WS
         run: pnpm start:ws:test &
 
+      - name: Install wait-on plugin
+        run: npm i -g wait-on
+
       - name: Wait on API
-        run: |
-          npm i -g wait-on
-          wait-on --timeout=30000 http://localhost:1340/v1/health-check
+        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
 
       - name: Cypress run
         uses: cypress-io/github-action@v2
