@@ -82,3 +82,16 @@ novu.init('<REPLACE_APPLICATION_ID>', {
   subscriberHash: 'REPLACE_WITH_HASHED_VALUE' 
 })
 ```
+
+## Embed options parameters
+
+The second parameter of `novu.init` can be used to specify the options for the embed script. Here is a list of all the available options:
+
+| Parameter | Type | Description |
+| --------- | --------- |----------- |
+| `bellSelector` | `string` | A `class` or `id` of the notification bell in your UI. We will attach an event listener for it. |
+| `unseenBadgeSelector` | `string` | A selector to the unseen count badge (the red dot) which Novu can use to populate in case unseen notifications exist |
+| `backendUrl` | `string` | Custom API location in case of self-hosted version of Novu |
+| `socketUrl` | `string` | Custom WebSocket Service location in case of self-hosted version of Novu |
+| `position.top` | `string` \| `number` | Override the top position of the notification center drop down |
+| `position.left` | `string` \| `number` | Override the left position of the notification center drop down |
