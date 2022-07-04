@@ -56,12 +56,18 @@ jobs:
       - name: Start Client
         run: pnpm start:widget:test &
 
+
       - name: Build API
         run: CI='' pnpm build:api
 
       # Runs a single command using the runners shell
       - name: Start WS
         run: pnpm start:ws:test &
+
+      - name: Wait on API
+        run: |
+          npm i -g wait-on
+          wait-on --timeout=30000 http://localhost:1340/v1/health-check
 
       - name: Cypress run
         uses: cypress-io/github-action@v2
@@ -71,7 +77,7 @@ jobs:
         with:
           working-directory: apps/widget
           start: pnpm start:api
-          wait-on: http://localhost:1336/v1/health-check, http://localhost:3500, http://localhost:1340/v1/health-check
+          wait-on: http://localhost:1336/v1/health-check, http://localhost:3500
           browser: chrome
           install: false
           headless: true
