@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # Monorepo structure
 
 In this guide, we will explore the Novu mono-repo structure and high-level structure of the different libraries and services we use.
