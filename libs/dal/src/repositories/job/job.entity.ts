@@ -1,4 +1,4 @@
-import { DigestUnit } from '@novu/shared';
+import { ChannelTypeEnum, DigestUnit } from '@novu/shared';
 import { NotificationStepEntity } from '../notification-template';
 
 export enum JobStatusEnum {
@@ -7,6 +7,7 @@ export enum JobStatusEnum {
   RUNNING = 'running',
   COMPLETED = 'completed',
   FAILED = 'failed',
+  DELAYED = 'delayed',
 }
 
 export class JobEntity {
@@ -30,5 +31,7 @@ export class JobEntity {
     events?: any[];
     amount?: number;
     unit?: DigestUnit;
+    batchkey?: string;
   };
+  type?: ChannelTypeEnum;
 }

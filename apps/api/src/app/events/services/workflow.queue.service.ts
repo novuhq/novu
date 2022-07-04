@@ -5,6 +5,7 @@ import { SendMessageCommand } from '../usecases/send-message/send-message.comman
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { ChannelTypeEnum, DigestUnit } from '@novu/shared';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -90,12 +91,29 @@ export class WorkflowQueueService {
       removeOnComplete: true,
       removeOnFail: true,
     };
-    await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
-    if (data.delay) {
+    if (data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit) {
+      await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
+      const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
       await this.queue.add(data._id, data, { delay: data.delay, ...options });
 
       return;
     }
+    await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
     await this.queue.add(data._id, data, options);
+  }
+
+  public static toMilliseconds(amount: number, unit: DigestUnit): number {
+    let delay = 1000 * amount;
+    if (unit === DigestUnit.DAYS) {
+      delay = 60 * 60 * 24 * delay;
+    }
+    if (unit === DigestUnit.HOURS) {
+      delay = 60 * 60 * delay;
+    }
+    if (unit === DigestUnit.MINUTES) {
+      delay = 60 * delay;
+    }
+
+    return delay;
   }
 }

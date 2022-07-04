@@ -29,6 +29,7 @@ export class NotificationStepDto {
   metadata?: {
     amount?: number;
     unit?: DigestUnit;
+    batchkey?: string;
   };
 }
 

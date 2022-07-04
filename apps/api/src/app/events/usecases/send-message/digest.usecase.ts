@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository, JobRepository, NotificationRepository } from '@novu/dal';
+import { MessageRepository, JobRepository, NotificationRepository, JobStatusEnum } from '@novu/dal';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
@@ -25,24 +25,39 @@ export class Digest extends SendMessageType {
       typeof currentJob?.digest.amount === 'number'
         ? currentJob?.digest.amount
         : parseInt(currentJob.digest.amount, 10);
-    const earliest = moment(currentJob.createdAt)
+    const earliest = moment()
       .subtract(amount, currentJob.digest.unit as moment.unitOfTime.DurationConstructor)
       .toDate();
-    const jobs = await this.jobRepository.findJobsToDigest(
+    let jobs = await this.jobRepository.findJobsToDigest(
       earliest,
       notification._templateId,
       command.environmentId,
       command.subscriberId
     );
 
-    const nextJob = await this.jobRepository.findOne({
-      _parentId: command.jobId,
+    const nextJobs = await this.jobRepository.find({
+      transactionId: command.transactionId,
+      _id: {
+        $ne: command.jobId,
+      },
+      status: {
+        $ne: JobStatusEnum.COMPLETED,
+      },
     });
 
-    const events = [nextJob.payload, ...jobs.map((job) => job.payload)];
+    const batchValue = currentJob.payload[currentJob.digest.batchkey];
+    if (batchValue) {
+      jobs = jobs.filter((job) => {
+        return job.payload[currentJob.digest.batchkey] === batchValue;
+      });
+    }
+
+    const events = [currentJob.payload, ...jobs.map((job) => job.payload)];
     await this.jobRepository.update(
       {
-        _id: nextJob._id,
+        _id: {
+          $in: nextJobs.map((job) => job._id),
+        },
       },
       {
         $set: {
