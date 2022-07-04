@@ -6,11 +6,11 @@ import {
   JobStatusEnum,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-import * as sinon from 'sinon';
 
 import { expect } from 'chai';
 import { ChannelTypeEnum, DigestUnit } from '@novu/shared';
 import axios from 'axios';
+import { WorkflowQueueService } from '../services/workflow.queue.service';
 
 const axiosInstance = axios.create();
 
@@ -20,7 +20,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let clock: sinon.SinonFakeTimers;
+  let workflowQueueService: WorkflowQueueService;
 
   const awaitRunningJobs = async (unfinishedjobs = 0) => {
     let runningJobs = 0;
@@ -38,16 +38,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   };
 
   beforeEach(async () => {
-    clock = sinon.useFakeTimers();
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-  });
-
-  afterEach(async () => {
-    sinon.restore();
+    workflowQueueService = session.testServer.getService(WorkflowQueueService);
   });
 
   it('should digest events within time interval', async function () {
@@ -104,12 +100,18 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       }
     );
 
-    await awaitRunningJobs(1);
-    clock.tick(1000 * 60 * 6);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await awaitRunningJobs(2);
+    await workflowQueueService.work(delayedJob);
 
     const jobs = await jobRepository.find({
       _templateId: template._id,
     });
+
     const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
     expect(digestJob.digest.amount).to.equal(5);
     expect(digestJob.digest.unit).to.equal(DigestUnit.MINUTES);
@@ -119,8 +121,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   });
 
   it('should digest based on batchkey within time interval', async function () {
-    const date = new Date();
-    clock.setSystemTime(date);
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -194,8 +194,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       }
     );
 
-    await awaitRunningJobs(2);
-    clock.tick(1000 * 60 * 6);
+    await awaitRunningJobs(3);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+    await workflowQueueService.work(delayedJob);
 
     const jobs = await jobRepository.find({
       _templateId: template._id,
@@ -264,8 +268,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       }
     );
 
-    await awaitRunningJobs(1);
-    clock.tick(1000 * 60 * 6);
+    await awaitRunningJobs(3);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+    await workflowQueueService.work(delayedJob);
 
     const jobs = await jobRepository.find({
       _templateId: template._id,

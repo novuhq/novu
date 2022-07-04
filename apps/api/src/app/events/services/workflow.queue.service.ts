@@ -38,8 +38,6 @@ export class WorkflowQueueService {
     this.worker = new Worker(
       'standard',
       async ({ data }: { data: JobEntity }) => {
-        await this.jobRepository.updateStatus(data._id, JobStatusEnum.RUNNING);
-
         return await this.work(data);
       },
       {
@@ -57,7 +55,8 @@ export class WorkflowQueueService {
     });
   }
 
-  private async work(job: JobEntity) {
+  public async work(job: JobEntity) {
+    await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
     await this.sendMessage.execute(
       SendMessageCommand.create({
         identifier: job.identifier,
