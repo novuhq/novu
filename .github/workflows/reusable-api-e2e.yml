@@ -20,7 +20,8 @@ jobs:
       run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
     - uses: actions/setup-node@v2
       with:
-        node-version: '16.13.0'
+        node-version: '16.15.1'
+
     - name: Start Redis
       uses: supercharge/redis-github-action@1.2.0
 

@@ -32,7 +32,6 @@
     "@nestjs/platform-express": "^8.4.6",
     "@nestjs/swagger": "^5.2.1",
     "@nestjs/terminus": "^8.0.6",
-    "@nestjsx/crud": "^4.6.2",
     "@novu/dal": "^0.5.1",
     "@novu/emailjs": "^0.5.1",
     "@novu/fcm": "^0.5.1",

@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # Monorepo structure
 
 In this guide, we will explore the Novu mono-repo structure and high-level structure of the different libraries and services we use.
@@ -19,6 +23,8 @@ This will:
 - run `pnpm install`, that will download all the needed dependencies and create symlinks for packages.
 - will copy the `.env.example` file to the `.env` file for the API service
 - will execute a `npm run build` command to build all the dependency tree locally.
+
+For additional information on running novu locally visit the [run locally](https://docs.novu.co/community/run-locally) guide.
 
 ## Apps
 
