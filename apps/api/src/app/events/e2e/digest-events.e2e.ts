@@ -114,7 +114,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(digestJob.digest.amount).to.equal(5);
     expect(digestJob.digest.unit).to.equal(DigestUnit.MINUTES);
     const job = jobs.find((item) => item.digest.events.length > 0);
-    console.log(JSON.stringify(job, null, 2));
 
     expect(job.digest?.events?.length).to.equal(2);
   });
