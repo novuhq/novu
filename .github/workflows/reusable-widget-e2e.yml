@@ -21,7 +21,8 @@ jobs:
         run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - uses: actions/setup-node@v2
         with:
-          node-version: '16.13.0'
+          node-version: '16.15.1'
+
       - name: Start Redis
         uses: supercharge/redis-github-action@1.2.0
 
@@ -63,9 +64,14 @@ jobs:
       - name: Start WS
         run: pnpm start:ws:test &
 
-      # Runs a single command using the runners shell
-      - name: Wait for WS
-        run: npx wait-on --timeout=30000 http://localhost:1340/v1/health-check
+      - name: Install wait-on plugin
+        run: npm i -g wait-on
+
+      - name: Wait on API
+        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
+
+      - name: Wait on WIDGET
+        run: wait-on --timeout=90000 http://localhost:3500
 
       - name: Cypress run
         uses: cypress-io/github-action@v2
