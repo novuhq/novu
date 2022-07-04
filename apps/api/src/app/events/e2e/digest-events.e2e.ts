@@ -104,7 +104,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       }
     );
 
-    await awaitRunningJobs();
+    await awaitRunningJobs(1);
     clock.tick(1000 * 60 * 6);
 
     const jobs = await jobRepository.find({
@@ -114,6 +114,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(digestJob.digest.amount).to.equal(5);
     expect(digestJob.digest.unit).to.equal(DigestUnit.MINUTES);
     const job = jobs.find((item) => item.digest.events.length > 0);
+    console.log(JSON.stringify(job, null, 2));
+
     expect(job.digest?.events?.length).to.equal(2);
   });
 
@@ -193,7 +195,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       }
     );
 
-    await awaitRunningJobs();
+    await awaitRunningJobs(2);
     clock.tick(1000 * 60 * 6);
 
     const jobs = await jobRepository.find({
@@ -202,7 +204,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const digestJob = jobs.find((job) => job?.digest?.batchkey === 'id');
     expect(digestJob).not.be.undefined;
     const jobsWithEvents = jobs.filter((item) => item.digest.events.length > 0);
-    expect(jobsWithEvents.length).to.equal(2);
+    expect(jobsWithEvents.length).to.equal(1);
   });
 
   it('should digest based on same batchkey within time interval', async function () {
@@ -270,6 +272,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
     });
     const digestjobs = jobs.filter((item) => item.digest.events.length > 0);
-    expect(digestjobs.length).to.equal(2);
+    expect(digestjobs.length).to.equal(1);
   });
 });

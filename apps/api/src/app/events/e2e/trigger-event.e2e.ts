@@ -55,6 +55,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
+    await session.awaitRunningJobs(template._id);
+
     await new Promise((resolve) => setTimeout(resolve, 100));
     const logs = await logRepository.find({
       _environmentId: session.environment._id,
