@@ -377,6 +377,7 @@ importers:
       styled-components: ^5.2.1
       typescript: 4.5.4
       uniqid: ^5.3.0
+      uuid: 8.3.2
       web-vitals: ^1.0.1
       webpack: 4.46.0
       webpack-dev-server: 4.9.2
@@ -448,6 +449,7 @@ importers:
       styled-components: 5.3.5_fane7jikarojcev26y27hpbhu4
       typescript: 4.5.4
       uniqid: 5.4.0
+      uuid: 8.3.2
       web-vitals: 1.1.2
       webpack-dev-server: 4.9.2_webpack@4.46.0
       zod: 3.17.3
@@ -675,7 +677,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_wtx2nrjddirg55bot2dqsebe7u
+      ts-jest: 27.1.4_urt74ykh3q2ftlzq7ntcteaspu
       ts-loader: 8.3.0_cox5sk5lpaw3lsuqm5g7gwlmfm
       ts-node: 9.1.1_typescript@4.0.5
       tsconfig-paths: 3.14.1
@@ -44287,40 +44289,6 @@ packages:
       make-error: 1.3.6
       semver: 7.3.5
       typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_wtx2nrjddirg55bot2dqsebe7u:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@types/jest': 27.4.1
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.5
-      typescript: 4.0.5
       yargs-parser: 20.2.9
     dev: true
 
