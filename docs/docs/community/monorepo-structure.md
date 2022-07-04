@@ -24,6 +24,8 @@ This will:
 - will copy the `.env.example` file to the `.env` file for the API service
 - will execute a `npm run build` command to build all the dependency tree locally.
 
+For additional information on running novu locally visit the [run locally](https://docs.novu.co/community/run-locally) guide.
+
 ## Apps
 
 The apps folder contains high-level applications and API’s. The apps outputs usually contain deployable units that a user can interact with either as an API or as a web/cli application.
