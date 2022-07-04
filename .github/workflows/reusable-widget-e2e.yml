@@ -55,8 +55,6 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Start Client
-        env: 
-          NODE_OPTIONS: "--openssl-legacy-provider"
         run: pnpm start:widget:test
 
       - name: Build API
