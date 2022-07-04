@@ -47,7 +47,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   });
 
   afterEach(async () => {
-    clock.restore();
+    sinon.restore();
   });
 
   it('should digest events within time interval', async function () {
@@ -104,7 +104,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       }
     );
 
-    await awaitRunningJobs(1);
+    await awaitRunningJobs();
     clock.tick(1000 * 60 * 6);
 
     const jobs = await jobRepository.find({
@@ -193,7 +193,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       }
     );
 
-    await awaitRunningJobs(1);
+    await awaitRunningJobs();
     clock.tick(1000 * 60 * 6);
 
     const jobs = await jobRepository.find({
@@ -263,7 +263,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       }
     );
 
-    await awaitRunningJobs(0);
+    await awaitRunningJobs(1);
     clock.tick(1000 * 60 * 6);
 
     const jobs = await jobRepository.find({

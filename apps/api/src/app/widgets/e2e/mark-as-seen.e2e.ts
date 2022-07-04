@@ -32,7 +32,7 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
     const { token } = body.data;
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

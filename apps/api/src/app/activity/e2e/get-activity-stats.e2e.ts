@@ -37,7 +37,7 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
       firstName: 'Test',
     });
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const existing = await messageRepository.find(
       {

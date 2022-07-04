@@ -241,13 +241,14 @@ export class UserSession {
     });
   }
 
-  public async awaitRunningJobs() {
+  public async awaitRunningJobs(templateId?: string | string[]) {
     let runningJobs = 0;
     do {
       runningJobs = await this.jobRepository.count({
         type: {
           $nin: [ChannelTypeEnum.DIGEST],
         },
+        _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
         status: {
           $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
         },
