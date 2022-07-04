@@ -7,7 +7,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",
-    "setup:project": "npx pnpm@6.32.3 i && node scripts/setup-env-files.js && npx pnpm build",
+    "setup:project": "npx pnpm@7.3.0 i && node scripts/setup-env-files.js && npx pnpm build",
     "commit": "cz",
     "nx": "nx",
     "generate:provider": "npx hygen provider new",
@@ -47,7 +47,7 @@
     "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env"
   },
   "devDependencies": {
-    "@auto-it/jira": "^10.36.5",
+    "@octokit/core": "^3.6.0",
     "@auto-it/npm": "^10.36.5",
     "@auto-it/released": "^10.36.5",
     "@commitlint/cli": "17.0.1",
@@ -59,6 +59,7 @@
     "@nrwl/tao": "13.8.5",
     "@nrwl/workspace": "13.8.5",
     "@types/node": "16.11.7",
+    "@types/jest": "27.4.0",
     "@typescript-eslint/eslint-plugin": "^5.28.0",
     "@typescript-eslint/parser": "^5.28.0",
     "auto": "^10.36.5",
