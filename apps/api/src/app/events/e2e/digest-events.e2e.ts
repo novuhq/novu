@@ -281,4 +281,54 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const digestjobs = jobs.filter((item) => item.digest.events.length > 0);
     expect(digestjobs.length).to.equal(1);
   });
+
+  it('should digest delayed events', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.SECONDS,
+            amount: 1,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload: {
+          customVar: 'Testing of User Name',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await awaitRunningJobs(0);
+
+    const jobs = await jobRepository.find({
+      _templateId: template._id,
+      status: {
+        $ne: JobStatusEnum.COMPLETED,
+      },
+    });
+
+    expect(jobs.length).to.equal(0);
+  });
 });
