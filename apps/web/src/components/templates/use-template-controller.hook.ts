@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import {
   ChannelTypeEnum,
-  DigestUnit,
+  DigestUnitEnum,
   ICreateNotificationTemplateDto,
   IMessageTemplate,
   INotificationTemplate,
@@ -226,7 +226,7 @@ export interface StepEntity {
 
   metadata?: {
     amount?: number;
-    unit?: DigestUnit;
+    unit?: DigestUnitEnum;
     batchkey?: string;
   };
 }

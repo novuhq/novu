@@ -1,5 +1,11 @@
 import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Digest } from '../../../design-system/icons/general/Digest';
+
+export enum StepTypeEnum {
+  CHANNEL = 'channel',
+  ACTION = 'action',
+}
 
 export const channels = [
   {
@@ -9,6 +15,7 @@ export const channels = [
     Icon: MobileGradient,
     testId: 'inAppSelector',
     channelType: ChannelTypeEnum.IN_APP,
+    type: StepTypeEnum.CHANNEL,
   },
   {
     tabKey: ChannelTypeEnum.EMAIL,
@@ -17,6 +24,7 @@ export const channels = [
     Icon: MailGradient,
     testId: 'emailSelector',
     channelType: ChannelTypeEnum.EMAIL,
+    type: StepTypeEnum.CHANNEL,
   },
   {
     tabKey: ChannelTypeEnum.SMS,
@@ -25,14 +33,16 @@ export const channels = [
     Icon: SmsGradient,
     testId: 'smsSelector',
     channelType: ChannelTypeEnum.SMS,
+    type: StepTypeEnum.CHANNEL,
   },
   {
     tabKey: ChannelTypeEnum.DIGEST,
     label: 'Digest',
-    description: '',
-    Icon: SmsGradient,
+    description: 'This sub title will describe things',
+    Icon: Digest,
     testId: 'digestBackoffSelector',
     channelType: ChannelTypeEnum.DIGEST,
+    type: StepTypeEnum.ACTION,
   },
 ];
 

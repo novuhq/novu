@@ -12,7 +12,7 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, DigestUnit, IEmailBlock } from '@novu/shared';
+import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
 
@@ -54,6 +54,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
+
+    await session.awaitRunningJobs(template._id);
 
     await new Promise((resolve) => setTimeout(resolve, 100));
     const logs = await logRepository.find({
@@ -152,9 +154,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(statuses.includes(JobStatusEnum.RUNNING)).true;
     expect(statuses.includes(JobStatusEnum.PENDING)).true;
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
-    jobs = await jobRepository.find({});
+    jobs = await jobRepository.find({
+      _templateId: template._id,
+    });
     statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
 
     expect(statuses.length).to.equal(0);
@@ -206,7 +210,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
@@ -278,7 +282,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -317,7 +321,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -364,7 +368,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -384,7 +388,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -408,7 +412,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -448,7 +452,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -464,159 +468,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const block = message.content[0] as IEmailBlock;
 
     expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
-  });
-
-  it('should digest', async function () {
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{customVar}}' as string,
-        },
-        {
-          type: ChannelTypeEnum.DIGEST,
-          content: '',
-          metadata: {
-            unit: DigestUnit.SECONDS,
-            amount: 1,
-          },
-        },
-        {
-          type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{customVar}}' as string,
-        },
-      ],
-    });
-
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'Testing of User Name',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs();
-
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'digest',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs();
-
-    const jobs = await jobRepository.find({});
-    const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
-    expect(digestJob.digest.amount).to.equal(1);
-    expect(digestJob.digest.unit).to.equal(DigestUnit.SECONDS);
-    const job = jobs[jobs.length - 1];
-    expect(job.digest?.events?.length).to.equal(2);
-  });
-
-  it('should digest based on batchkey', async function () {
-    const id = MessageRepository.createObjectId();
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{customVar}}' as string,
-        },
-        {
-          type: ChannelTypeEnum.DIGEST,
-          content: '',
-          metadata: {
-            unit: DigestUnit.SECONDS,
-            amount: 3,
-            batchkey: 'id',
-          },
-        },
-        {
-          type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{customVar}}' as string,
-        },
-      ],
-    });
-
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'Testing of User Name',
-          id,
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs();
-
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'digest',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs();
-
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'haj',
-          id,
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs();
-
-    const jobs = await jobRepository.find({});
-    const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
-    expect(digestJob.digest.batchkey).to.equal('id');
-    const job = jobs[jobs.length - 1];
-    expect(job.digest?.events?.length).to.equal(2);
   });
 });
 

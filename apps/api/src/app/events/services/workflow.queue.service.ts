@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Queue, Worker, QueueBaseOptions, JobsOptions } from 'bullmq';
+import { Queue, Worker, QueueBaseOptions, JobsOptions, QueueScheduler } from 'bullmq';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { SendMessageCommand } from '../usecases/send-message/send-message.command';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { ChannelTypeEnum, DigestUnit } from '@novu/shared';
+import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -27,6 +27,7 @@ export class WorkflowQueueService {
   private queueNextJob: QueueNextJob;
   @Inject()
   private jobRepository: JobRepository;
+  private readonly queueScheduler: QueueScheduler;
 
   constructor() {
     this.queue = new Queue('standard', {
@@ -38,8 +39,6 @@ export class WorkflowQueueService {
     this.worker = new Worker(
       'standard',
       async ({ data }: { data: JobEntity }) => {
-        await this.jobRepository.updateStatus(data._id, JobStatusEnum.RUNNING);
-
         return await this.work(data);
       },
       {
@@ -55,9 +54,11 @@ export class WorkflowQueueService {
       await this.jobRepository.updateStatus(job.data._id, JobStatusEnum.FAILED);
       await this.jobRepository.setError(job.data._id, e);
     });
+    this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
   }
 
-  private async work(job: JobEntity) {
+  public async work(job: JobEntity) {
+    await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
     await this.sendMessage.execute(
       SendMessageCommand.create({
         identifier: job.identifier,
@@ -94,7 +95,7 @@ export class WorkflowQueueService {
     if (data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit) {
       await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
       const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
-      await this.queue.add(data._id, data, { delay: data.delay, ...options });
+      await this.queue.add(data._id, data, { delay, ...options });
 
       return;
     }
@@ -102,15 +103,15 @@ export class WorkflowQueueService {
     await this.queue.add(data._id, data, options);
   }
 
-  public static toMilliseconds(amount: number, unit: DigestUnit): number {
+  public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {
     let delay = 1000 * amount;
-    if (unit === DigestUnit.DAYS) {
+    if (unit === DigestUnitEnum.DAYS) {
       delay = 60 * 60 * 24 * delay;
     }
-    if (unit === DigestUnit.HOURS) {
+    if (unit === DigestUnitEnum.HOURS) {
       delay = 60 * 60 * delay;
     }
-    if (unit === DigestUnit.MINUTES) {
+    if (unit === DigestUnitEnum.MINUTES) {
       delay = 60 * delay;
     }
 

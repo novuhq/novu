@@ -52,7 +52,7 @@ export class Digest extends SendMessageType {
       });
     }
 
-    const events = [currentJob.payload, ...jobs.map((job) => job.payload)];
+    const events = jobs.map((job) => job.payload);
     await this.jobRepository.update(
       {
         _id: {
