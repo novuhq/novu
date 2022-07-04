@@ -29,7 +29,10 @@ Cypress.Commands.add('initializeShellSession', (subscriberId, identifier, encryp
 
       w.novu.init(
         identifier,
-        { unseenBadgeSelector: '#unseen-badge-span', bellSelector: '#notification-bell' },
+        {
+          unseenBadgeSelector: '#unseen-badge-span',
+          bellSelector: '#notification-bell',
+        },
         subscriber
       );
 
