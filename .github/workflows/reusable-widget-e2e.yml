@@ -53,12 +53,12 @@ jobs:
       - name: Build
         run: CI=false pnpm build:widget
 
-      # Runs a single command using the runners shell
-      - name: Start Client
-        run: pnpm start:widget:test
-
       - name: Build API
         run: CI='' pnpm build:api
+
+      # Runs a single command using the runners shell
+      - name: Start Client
+        run: pnpm start:widget:test &
 
       # Runs a single command using the runners shell
       - name: Start WS
