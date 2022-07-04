@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, DigestUnit } from '@novu/shared';
+import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { IEmailBlock, NotificationTemplateEntity } from '@novu/dal';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -14,7 +14,7 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
     type: ChannelTypeEnum;
     metadata?: {
       amount?: number;
-      unit?: DigestUnit;
+      unit?: DigestUnitEnum;
       batchkey?: string;
     };
   }[];

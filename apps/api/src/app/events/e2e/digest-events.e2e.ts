@@ -8,7 +8,7 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, DigestUnit } from '@novu/shared';
+import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
 
@@ -57,7 +57,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           type: ChannelTypeEnum.DIGEST,
           content: '',
           metadata: {
-            unit: DigestUnit.MINUTES,
+            unit: DigestUnitEnum.MINUTES,
             amount: 5,
           },
         },
@@ -114,7 +114,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
     expect(digestJob.digest.amount).to.equal(5);
-    expect(digestJob.digest.unit).to.equal(DigestUnit.MINUTES);
+    expect(digestJob.digest.unit).to.equal(DigestUnitEnum.MINUTES);
     const job = jobs.find((item) => item.digest.events.length > 0);
 
     expect(job.digest?.events?.length).to.equal(2);
@@ -132,7 +132,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           type: ChannelTypeEnum.DIGEST,
           content: '',
           metadata: {
-            unit: DigestUnit.MINUTES,
+            unit: DigestUnitEnum.MINUTES,
             amount: 5,
             batchkey: 'id',
           },
@@ -222,7 +222,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           type: ChannelTypeEnum.DIGEST,
           content: '',
           metadata: {
-            unit: DigestUnit.MINUTES,
+            unit: DigestUnitEnum.MINUTES,
             amount: 5,
             batchkey: 'id',
           },

@@ -1,5 +1,5 @@
 import { Grid, InputWrapper } from '@mantine/core';
-import { DigestUnit } from '@novu/shared';
+import { DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Select } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
@@ -43,10 +43,10 @@ export const DigestMetadata = ({ control, index }) => {
                     error={errors?.steps ? errors.steps[index]?.metadata?.unit?.message : undefined}
                     placeholder="20"
                     data={[
-                      { value: DigestUnit.SECONDS, label: 'Seconds' },
-                      { value: DigestUnit.MINUTES, label: 'Minutes' },
-                      { value: DigestUnit.HOURS, label: 'Hours' },
-                      { value: DigestUnit.DAYS, label: 'Days' },
+                      { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
+                      { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
+                      { value: DigestUnitEnum.HOURS, label: 'Hours' },
+                      { value: DigestUnitEnum.DAYS, label: 'Days' },
                     ]}
                     data-test-id="time-unit"
                     {...field}
