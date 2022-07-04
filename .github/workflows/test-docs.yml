@@ -29,6 +29,7 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
-          all: true
+          projects: @novu/docs
+          nxCloud: true
 
       - run: pnpm build
