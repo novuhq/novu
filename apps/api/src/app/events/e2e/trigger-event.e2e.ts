@@ -152,9 +152,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(statuses.includes(JobStatusEnum.RUNNING)).true;
     expect(statuses.includes(JobStatusEnum.PENDING)).true;
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
-    jobs = await jobRepository.find({});
+    jobs = await jobRepository.find({
+      _templateId: template._id,
+    });
     statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
 
     expect(statuses.length).to.equal(0);
@@ -206,7 +208,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
@@ -278,7 +280,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -317,7 +319,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -364,7 +366,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -384,7 +386,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -408,7 +410,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -448,7 +450,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,

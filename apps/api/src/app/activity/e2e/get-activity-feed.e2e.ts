@@ -36,7 +36,7 @@ describe('Get activity feed - /activity (GET)', async () => {
       firstName: 'Test',
     });
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
     const { body } = await session.testAgent.get('/v1/activity?page=0');
 
     const activities = body.data;
@@ -62,7 +62,7 @@ describe('Get activity feed - /activity (GET)', async () => {
       firstName: 'Test',
     });
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs([template._id, smsOnlyTemplate._id]);
 
     const { body } = await session.testAgent.get(`/v1/activity?page=0&channels=${ChannelTypeEnum.SMS}`);
     const activities: IMessage[] = body.data;
@@ -87,7 +87,7 @@ describe('Get activity feed - /activity (GET)', async () => {
       firstName: 'Test',
     });
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
     const { body } = await session.testAgent.get(`/v1/activity?page=0&templates=${template._id}`);
     const activities: IMessage[] = body.data;
 
