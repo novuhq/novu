@@ -45,14 +45,14 @@ export class Digest extends SendMessageType {
       },
     });
 
-    const batchValue = currentJob.payload[currentJob.digest.batchkey];
+    const batchValue = currentJob?.payload ? currentJob.payload[currentJob?.digest?.batchkey] : undefined;
     if (batchValue) {
       jobs = jobs.filter((job) => {
         return job.payload[currentJob.digest.batchkey] === batchValue;
       });
     }
 
-    const events = jobs.map((job) => job.payload);
+    const events = [currentJob.payload, ...jobs.map((job) => job.payload)];
     await this.jobRepository.update(
       {
         _id: {

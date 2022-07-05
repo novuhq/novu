@@ -66,7 +66,7 @@ export class ProcessSubscriber {
 
       const delayedDigests = await this.jobRepository.find({
         status: JobStatusEnum.DELAYED,
-        _subscribeId: subscriber._id,
+        _subscriberId: subscriber._id,
         _templateId: command.templateId,
         _environmentId: command.environmentId,
       });
