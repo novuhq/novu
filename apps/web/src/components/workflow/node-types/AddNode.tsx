@@ -48,6 +48,9 @@ export default memo(({ data }: { data: NodeData }) => {
         <DropdownItem data-test-id={`add-email-node`} icon={<Mail />} onClick={() => addNewNode(ChannelTypeEnum.EMAIL)}>
           Email
         </DropdownItem>
+        <DropdownItem data-test-id={`add-push-node`} icon={<Sms />} onClick={() => addNewNode(ChannelTypeEnum.PUSH)}>
+          Push
+        </DropdownItem>
         <DropdownItem
           data-test-id={`add-in-app-node`}
           icon={<Mobile />}

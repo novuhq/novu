@@ -47,6 +47,7 @@ const schema = z
               .object({
                 content: z.any(),
                 subject: z.any(),
+                title: z.any(),
               })
               .passthrough()
               .superRefine((template: any, ctx) => {

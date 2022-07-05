@@ -30,6 +30,7 @@ export class Novu extends EventEmitter implements INovu {
       payload: {
         ...data?.payload,
       },
+      overrides: data.overrides || {},
     });
   }
 

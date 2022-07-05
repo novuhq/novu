@@ -20,6 +20,7 @@ export class CreateSubscriber {
         email: command.email,
         phone: command.phone,
         avatar: command.avatar,
+        notificationIdentifiers: command.notificationIdentifiers,
       });
     } else {
       subscriber = await this.updateSubscriber.execute(
@@ -32,6 +33,7 @@ export class CreateSubscriber {
           email: command.email,
           phone: command.phone,
           avatar: command.avatar,
+          notificationIdentifiers: command.notificationIdentifiers,
         })
       );
     }

@@ -11,7 +11,10 @@ export enum JobStatusEnum {
 export class JobEntity {
   _id?: string;
   identifier: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  overrides: any;
   step: NotificationStepEntity;
   transactionId: string;
   _notificationId: string;
@@ -22,5 +25,6 @@ export class JobEntity {
   delay?: number;
   _parentId?: string;
   status: JobStatusEnum;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error?: any;
 }

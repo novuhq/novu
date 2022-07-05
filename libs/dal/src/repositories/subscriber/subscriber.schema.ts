@@ -31,6 +31,7 @@ const subscriberSchema = new Schema(
     ],
     email: Schema.Types.String,
     avatar: Schema.Types.String,
+    notificationIdentifiers: [Schema.Types.String],
   },
   schemaOptions
 );

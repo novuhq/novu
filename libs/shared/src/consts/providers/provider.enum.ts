@@ -31,6 +31,8 @@ export enum CredentialsKeyEnum {
   ApplicationId = 'applicationId',
   // eslint-disable-next-line @typescript-eslint/naming-convention
   ClientId = 'clientId',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ProjectName = 'projectName',
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

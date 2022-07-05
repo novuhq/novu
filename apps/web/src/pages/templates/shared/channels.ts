@@ -26,6 +26,22 @@ export const channels = [
     testId: 'smsSelector',
     channelType: ChannelTypeEnum.SMS,
   },
+  {
+    tabKey: ChannelTypeEnum.DIRECT,
+    label: 'Direct',
+    description: 'Send an Direct message to a user',
+    Icon: MobileGradient,
+    testId: 'directSelector',
+    channelType: ChannelTypeEnum.DIRECT,
+  },
+  {
+    tabKey: ChannelTypeEnum.PUSH,
+    label: 'Push',
+    description: "Send an Push Notification to a user's device",
+    Icon: MobileGradient,
+    testId: 'pushSelector',
+    channelType: ChannelTypeEnum.PUSH,
+  },
 ];
 
 export const getChannel = (channelKey: string) => {

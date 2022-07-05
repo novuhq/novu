@@ -21,6 +21,7 @@ export class PromoteMessageTemplateChange {
         subject: newItem.subject,
         content: newItem.content,
         contentType: newItem.contentType,
+        title: newItem.title,
         cta: newItem.cta,
         active: newItem.active,
         _parentId: newItem._id,
@@ -40,6 +41,7 @@ export class PromoteMessageTemplateChange {
         subject: newItem.subject,
         content: newItem.content,
         contentType: newItem.contentType,
+        title: newItem.title,
         cta: newItem.cta,
         active: newItem.active,
       }

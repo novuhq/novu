@@ -89,6 +89,7 @@ export class UpdateNotificationTemplate {
               contentType: message.template.contentType,
               cta: message.template.cta,
               subject: message.template.subject,
+              title: message.template.title,
               parentChangeId,
             })
           );
@@ -112,6 +113,7 @@ export class UpdateNotificationTemplate {
               userId: command.userId,
               cta: message.template.cta,
               subject: message.template.subject,
+              title: message.template.title,
               parentChangeId,
             })
           );

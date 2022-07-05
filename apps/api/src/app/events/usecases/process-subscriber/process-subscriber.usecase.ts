@@ -59,6 +59,7 @@ export class ProcessSubscriber {
       return {
         identifier: command.identifier,
         payload: command.payload,
+        overrides: command.overrides,
         step,
         transactionId: command.transactionId,
         _notificationId: notification._id,
@@ -126,6 +127,7 @@ export class ProcessSubscriber {
         lastName: subscriberPayload?.lastName,
         phone: subscriberPayload?.phone,
         avatar: subscriberPayload?.avatar,
+        notificationIdentifiers: subscriberPayload?.notificationIdentifiers,
       })
     );
   }
@@ -136,7 +138,9 @@ export class ProcessSubscriber {
       (subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
       (subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
       (subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
+      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar) ||
+      (subscriberPayload?.notificationIdentifiers &&
+        subscriber?.notificationIdentifiers !== subscriberPayload?.notificationIdentifiers)
     );
   }
 

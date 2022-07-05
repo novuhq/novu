@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsArray } from 'class-validator';
 import { ISubscriberChannel, IUpdateSubscriberDto } from '@novu/shared';
 
 export class UpdateSubscriberBodyDto implements IUpdateSubscriberDto {
@@ -24,4 +24,9 @@ export class UpdateSubscriberBodyDto implements IUpdateSubscriberDto {
 
   @IsOptional()
   channel: ISubscriberChannel;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  notificationIdentifiers?: string[];
 }

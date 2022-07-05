@@ -60,6 +60,7 @@ export class NotificationTemplateService {
         cta: message.cta,
         content: message.content,
         subject: message.subject,
+        title: message.title,
         name: message.name,
         _creatorId: this.userId,
         _organizationId: this.organizationId,

@@ -8,6 +8,7 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
     cta?: any;
     active?: boolean;
     subject?: string;
+    title?: string;
     contentType?: 'editor' | 'customHtml';
     content: string | IEmailBlock[];
     name?: string;

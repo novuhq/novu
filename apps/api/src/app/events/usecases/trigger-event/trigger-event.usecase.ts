@@ -57,6 +57,7 @@ export class TriggerEvent {
           ProcessSubscriberCommand.create({
             identifier: command.identifier,
             payload: command.payload,
+            overrides: command.overrides,
             to: subscriberToTrigger,
             transactionId: command.transactionId,
             environmentId: command.environmentId,
@@ -74,6 +75,7 @@ export class TriggerEvent {
       emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
       inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
       directChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.DIRECT)?.length,
+      pushChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.PUSH)?.length,
     });
 
     for (const job of jobs) {
