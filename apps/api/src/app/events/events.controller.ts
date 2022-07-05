@@ -33,8 +33,10 @@ export class EventsController {
     );
   }
 
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
   @Delete('/trigger/:transactionId')
-  private async cancelDigest(
+  async cancelDigest(
     @UserSession() user: IJwtPayload,
     @Param('transactionId') transactionId: string
   ): Promise<boolean> {
