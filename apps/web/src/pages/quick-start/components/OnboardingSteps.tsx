@@ -114,7 +114,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
           title="Embed a notification center in your app (Optional)"
           description="Use our embeddable widget to add a notification center in minutes"
         />
-        <a href="https://docs.novu.co/docs/notification-center/iframe-embed" target="_blank">
+        <a href="https://docs.novu.co/notification-center/iframe-embed" target="_blank">
           <Button mt={20}> Embed Now</Button>
         </a>
       </Timeline.Item>
