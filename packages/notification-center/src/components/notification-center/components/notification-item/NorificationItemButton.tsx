@@ -1,16 +1,15 @@
 import React from 'react';
-import { notificationItemButtons, IButtonStyles } from '../../../../shared/config/notificationItemButton';
 import styled from 'styled-components';
 import { Button } from '@mantine/core';
-import { ButtonTypeEnum } from '@novu/shared';
+import { ButtonTypeEnum, notificationItemButtons, IButtonStyles, IMessageButton } from '@novu/shared';
 
 interface NotificationButtonProps {
-  buttonContext: any;
+  buttonContext: IMessageButton;
 }
 export function NotificationButton(props: NotificationButtonProps) {
   const buttonType = props?.buttonContext?.type ? props.buttonContext.type : ButtonTypeEnum.PRIMARY;
 
-  const buttonText = props?.buttonContext?.content?.text ? props.buttonContext.content.text : '';
+  const buttonText = props?.buttonContext?.content ? props.buttonContext.content : '';
   const buttonStyles = notificationItemButtons.find((button) => button.key === buttonType)?.value;
 
   return (
