@@ -48,6 +48,17 @@ export class JobRepository extends BaseRepository<JobEntity> {
     );
   }
 
+  public async findInAppsForDigest(transactionId: string, subscriberId: string) {
+    return await this.find({
+      transactionId,
+      _subscriberid: subscriberId,
+      type: ChannelTypeEnum.IN_APP,
+      status: {
+        $ne: JobStatusEnum.COMPLETED,
+      },
+    });
+  }
+
   public async findJobsToDigest(from: Date, templateId: string, environmentId: string, subscriberId: string) {
     const digests = await this.find({
       updatedAt: {

@@ -97,6 +97,12 @@ export class WorkflowQueueService {
       const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
       await this.queue.add(data._id, data, { delay, ...options });
 
+      const inApps = await this.jobRepository.findInAppsForDigest(data.transactionId, data._subscriberId);
+
+      for (const inApp of inApps) {
+        await this.addJob(inApp);
+      }
+
       return;
     }
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
