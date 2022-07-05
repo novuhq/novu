@@ -235,7 +235,7 @@ interface ISelectedButtonTemplateProps {
 
 function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
   function handleOnButtonContentChange(data: any, buttonIndex: number) {
-    const selectedTemplateClone = Object.assign({}, props.selectedTemplate);
+    const selectedTemplateClone = [...props.selectedTemplate];
     selectedTemplateClone[buttonIndex].content = data.target.value;
     props.onChangeCtaAdapter(selectedTemplateClone);
   }
