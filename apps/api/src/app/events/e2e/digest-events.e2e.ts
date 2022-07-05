@@ -109,7 +109,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(digestJob.digest.amount).to.equal(5);
     expect(digestJob.digest.unit).to.equal(DigestUnitEnum.MINUTES);
     const job = jobs.find((item) => item.digest.events.length > 0);
-
     expect(job.digest?.events?.length).to.equal(2);
   });
 
@@ -206,6 +205,15 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
       type: ChannelTypeEnum.DIGEST,
     });
+
+    const delayedCount = await jobRepository.count({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+      status: JobStatusEnum.DELAYED,
+    });
+
+    expect(delayedCount).to.equal(1);
+
     await workflowQueueService.work(delayedJob);
     const jobs = await jobRepository.find({
       _templateId: template._id,

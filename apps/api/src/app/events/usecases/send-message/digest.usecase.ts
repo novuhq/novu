@@ -4,6 +4,7 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import * as moment from 'moment';
+import { ChannelTypeEnum } from '@novu/shared';
 
 @Injectable()
 export class Digest extends SendMessageType {
@@ -52,7 +53,15 @@ export class Digest extends SendMessageType {
       });
     }
 
-    const events = [currentJob.payload, ...jobs.map((job) => job.payload)];
+    const currentTrigger = await this.jobRepository.findOne({
+      transactionId: command.transactionId,
+      type: ChannelTypeEnum.TRIGGER,
+    });
+
+    const events = [
+      currentJob.payload,
+      ...jobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload),
+    ];
     await this.jobRepository.update(
       {
         _id: {
