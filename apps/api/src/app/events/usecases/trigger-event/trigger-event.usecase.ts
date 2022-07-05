@@ -87,6 +87,7 @@ export class TriggerEvent {
     return {
       acknowledged: true,
       status: 'processed',
+      transactionId: command.transactionId,
     };
   }
 
