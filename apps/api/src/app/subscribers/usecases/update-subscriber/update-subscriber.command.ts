@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEmail, IsOptional, IsString } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
@@ -27,4 +27,9 @@ export class UpdateSubscriberCommand extends EnvironmentCommand {
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  notificationIdentifiers?: string[];
 }

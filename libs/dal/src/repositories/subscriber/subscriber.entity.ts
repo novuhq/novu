@@ -11,6 +11,8 @@ export class SubscriberEntity {
 
   avatar?: string;
 
+  notificationIdentifiers?: string[];
+
   subscriberId: string;
 
   _organizationId: string;

@@ -47,6 +47,7 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+        notificationIdentifiers: body.notificationIdentifiers,
       })
     );
   }
@@ -69,6 +70,7 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+        notificationIdentifiers: body.notificationIdentifiers,
       })
     );
   }

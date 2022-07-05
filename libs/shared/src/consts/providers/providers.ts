@@ -1,4 +1,5 @@
 import {
+  fcmConfig,
   mailgunConfig,
   mailjetConfig,
   mailJsConfig,
@@ -148,5 +149,13 @@ export const providers: IProviderConfig[] = [
     credentials: twilioConfig,
     docReference: 'https://www.twilio.com/docs',
     logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
+  },
+  {
+    id: 'fcm',
+    displayName: 'Firebase Cloud Messaging',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: fcmConfig,
+    docReference: 'https://docs.novu.co/channels/push#firebase-cloud-messages',
+    logoFileName: { light: 'fcm.svg', dark: 'fcm.svg' },
   },
 ];

@@ -99,9 +99,10 @@ export function ActivitiesPage() {
     {
       accessor: 'recipient',
       Header: 'Recipient',
-      Cell: ({ channel, email, phone }: any) => (
+      Cell: ({ channel, email, phone, notificationIdentifiers }: any) => (
         <Text rows={1}>
-          {channel === ChannelTypeEnum.EMAIL ? email : ''} {channel === ChannelTypeEnum.SMS ? phone : ''}
+          {channel === ChannelTypeEnum.EMAIL ? email : ''} {channel === ChannelTypeEnum.SMS ? phone : ''}{' '}
+          {channel === ChannelTypeEnum.PUSH ? notificationIdentifiers.join(',') : ''}
         </Text>
       ),
     },
@@ -123,6 +124,11 @@ export function ActivitiesPage() {
           {channel === ChannelTypeEnum.SMS ? (
             <Tooltip label="Delivered on SMS Channel">
               <Tag data-test-id="row-sms-channel">SMS</Tag>
+            </Tooltip>
+          ) : null}
+          {channel === ChannelTypeEnum.PUSH ? (
+            <Tooltip label="Delivered on Push Channel">
+              <Tag data-test-id="row-sms-channel">Push</Tag>
             </Tooltip>
           ) : null}
         </>
@@ -158,6 +164,7 @@ export function ActivitiesPage() {
                     { value: ChannelTypeEnum.SMS, label: 'SMS' },
                     { value: ChannelTypeEnum.EMAIL, label: 'Email' },
                     { value: ChannelTypeEnum.IN_APP, label: 'In-App' },
+                    { value: ChannelTypeEnum.PUSH, label: 'Push' },
                   ]}
                   data-test-id="activities-filter"
                   {...field}

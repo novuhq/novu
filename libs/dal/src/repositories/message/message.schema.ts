@@ -42,6 +42,8 @@ const messageSchema = new Schema(
     channel: Schema.Types.String,
     content: Schema.Types.Mixed,
     phone: Schema.Types.String,
+    notificationIdentifiers: [Schema.Types.Array],
+    title: Schema.Types.String,
     seen: {
       type: Schema.Types.Boolean,
       default: false,
@@ -63,6 +65,7 @@ const messageSchema = new Schema(
       index: true,
     },
     payload: Schema.Types.Mixed,
+    overrides: Schema.Types.Mixed,
   },
   { ...schemaOptions }
 );

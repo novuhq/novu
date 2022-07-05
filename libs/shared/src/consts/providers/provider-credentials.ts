@@ -23,6 +23,8 @@ const smsConfigBase: IConfigCredentials[] = [
   },
 ];
 
+const pushConfigBase: IConfigCredentials[] = [];
+
 export const mailJsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -239,4 +241,23 @@ export const twilioConfig: IConfigCredentials[] = [
     type: 'string',
   },
   ...smsConfigBase,
+];
+
+export const fcmConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ProjectName,
+    displayName: 'Service Account Project Name',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Service Account Client Email',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Service Account Private Key',
+    type: 'string',
+  },
+  ...pushConfigBase,
 ];

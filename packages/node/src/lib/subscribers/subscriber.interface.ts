@@ -4,6 +4,7 @@ export interface ISubscriberPayload {
   email?: string;
   phone?: string;
   avatar?: string;
+  noficationIdentifiers?: string[];
   [key: string]: string | string[] | boolean | number | undefined;
 }
 
@@ -15,6 +16,7 @@ export enum ChannelTypeEnum {
   EMAIL = 'email',
   SMS = 'sms',
   DIRECT = 'direct',
+  PUSH = 'push',
 }
 
 export type TriggerRecipientsTypeArray = string[] | ISubscribersDefine[];
@@ -27,6 +29,7 @@ export type TriggerRecipientsType =
 
 export interface ITriggerPayloadOptions {
   payload: ITriggerPayload;
+  overrides?: ITriggerOverrides;
   to: TriggerRecipientsType;
 }
 
@@ -43,6 +46,33 @@ export interface ITriggerPayload {
     | Record<string, unknown>;
 }
 
+export type ITriggerOverrides = {
+  [key in
+    | 'emailjs'
+    | 'mailgun'
+    | 'nodemailer'
+    | 'plivo'
+    | 'postmark'
+    | 'sendgrid'
+    | 'twilio']: object;
+} & {
+  [key in 'fcm']: ITriggerOverrideFCM;
+};
+
+export type ITriggerOverrideFCM = {
+  tag?: string;
+  body?: string;
+  icon?: string;
+  badge?: string;
+  color?: string;
+  sound?: string;
+  title?: string;
+  bodyLocKey?: string;
+  bodyLocArgs?: string;
+  clickAction?: string;
+  titleLocKey?: string;
+  titleLocArgs?: string;
+};
 export interface IAttachmentOptions {
   mime: string;
   file: Buffer;
