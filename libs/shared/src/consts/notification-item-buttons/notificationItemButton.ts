@@ -6,8 +6,14 @@ export interface INotificationButtonConfig {
 }
 
 export interface IButtonStyles {
-  color: string;
-  backGround: string;
+  backGroundColor: string;
+  fontColor: string;
+  removeCircleColor: string;
+}
+
+export interface IStyleButtons {
+  primary: IButtonStyles;
+  secondary: IButtonStyles;
 }
 
 const primaryButton: INotificationButtonConfig = {
@@ -20,7 +26,7 @@ const secondaryButton: INotificationButtonConfig = {
   displayName: 'Secondary',
 };
 
-export const darkButtonStyle = {
+export const darkButtonStyle: IStyleButtons = {
   primary: {
     backGroundColor: 'linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)',
     fontColor: '#FFFFFF',
@@ -29,7 +35,7 @@ export const darkButtonStyle = {
   secondary: { backGroundColor: '#3D3D4D', fontColor: '#FFFFFF', removeCircleColor: '#525266' },
 };
 
-export const lightButtonStyle = {
+export const lightButtonStyle: IStyleButtons = {
   primary: {
     backGroundColor: 'linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)',
     fontColor: '#FFFFFF',
