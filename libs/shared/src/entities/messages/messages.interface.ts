@@ -15,17 +15,29 @@ export interface IMessage {
   seen: boolean;
   lastSeenDate: string;
   createdAt: string;
-  cta: {
-    type: ChannelCTATypeEnum;
-    data: {
-      url?: string;
-    };
-    actions?: IMessageAction[];
-  };
+  cta: ICta;
   payload: Record<string, unknown>;
 }
 
+export interface ICta {
+  type: ChannelCTATypeEnum;
+  data: {
+    url?: string;
+  };
+  action?: IMessageAction;
+}
+
 export interface IMessageAction {
+  status: MessageActionStatusEnum;
+  buttons: IMessageButton[];
+}
+
+export interface IMessageButton {
   type: ButtonTypeEnum;
-  content: { text: string };
+  content: string;
+}
+
+export enum MessageActionStatusEnum {
+  PENDING = 'pending',
+  DONE = 'done',
 }
