@@ -5,7 +5,7 @@ import { Button, colors, shadows, Text, Title } from '../../design-system';
 import { ButtonsTemplatesPopover } from '../templates/in-app-editor/ButtonsTemplatesPopover';
 import React, { useState } from 'react';
 import { RemoveCircle } from '../../design-system/icons/general/RemoveCircle';
-import { IMessageButton } from '@novu/shared';
+import { IMessageButton, darkButtonStyle, lightButtonStyle } from '@novu/shared';
 
 export function InAppWidgetPreview({
   readonly,
@@ -233,11 +233,16 @@ interface ISelectedButtonTemplateProps {
 }
 
 function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
+  const dark = useMantineTheme().colorScheme === 'dark';
+  const buttonStyle = dark ? darkButtonStyle : lightButtonStyle;
+
   function handleOnButtonContentChange(data: any, buttonIndex: number) {
     const selectedTemplateClone = [...props.selectedTemplate];
     selectedTemplateClone[buttonIndex].content = data.target.value;
     props.onChangeCtaAdapter(selectedTemplateClone);
   }
+
+  const lastButtonType = props.selectedTemplate[props.selectedTemplate.length - 1]?.type;
 
   return (
     <>
@@ -247,8 +252,9 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
             const buttonText = button?.content ? button?.content : '';
 
             return (
-              <NotificationButton fullWidth key={buttonIndex}>
+              <NotificationButton buttonStyle={buttonStyle[button.type]} fullWidth key={buttonIndex}>
                 <ButtonInput
+                  buttonStyle={buttonStyle[button.type]}
                   value={buttonText}
                   onChange={(data) => {
                     handleOnButtonContentChange(data, buttonIndex);
@@ -257,7 +263,7 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
               </NotificationButton>
             );
           })}
-          <DeleteIcon>
+          <DeleteIcon buttonStyle={buttonStyle[lastButtonType]}>
             <RemoveCircle onClick={props.onRemoveTemplate} />
           </DeleteIcon>
         </TemplateContainer>
@@ -279,9 +285,9 @@ const TemplateContainerWrap = styled.div`
   border: none;
 `;
 
-const NotificationButton = styled(Button)`
+const NotificationButton = styled(Button)<{ buttonStyle }>`
+  background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
   position: relative;
-  color: white;
   cursor: default;
   justify-content: center;
   display: flex;
@@ -289,18 +295,23 @@ const NotificationButton = styled(Button)`
   margin-right: 5px;
   text-align-last: center;
   border: none;
+  box-shadow: none;
 `;
 
-const DeleteIcon = styled.div`
+const DeleteIcon = styled.div<{ buttonStyle }>`
   align-content: center;
   position: absolute;
   align-items: center;
   height: 14px;
   top: 14px;
   right: 14px;
+  cursor: pointer;
+  path {
+    fill: ${({ buttonStyle }) => buttonStyle.removeCircleColor};
+  }
 `;
 
-const ButtonInput = styled(TextInput)`
+const ButtonInput = styled(TextInput)<{ buttonStyle }>`
   display: flex;
   align-content: center;
   text-align: center;
@@ -309,6 +320,7 @@ const ButtonInput = styled(TextInput)`
   input {
     border: transparent;
     background: transparent;
-    color: white;
+    color: ${({ buttonStyle }) => buttonStyle.fontColor};
+    font-weight: 700;
   }
 `;

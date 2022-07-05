@@ -1,6 +1,6 @@
-import { ButtonTypeEnum, IMessageButton } from '@novu/shared';
+import { ButtonTypeEnum, IMessageButton, darkButtonStyle, lightButtonStyle } from '@novu/shared';
 import styled from '@emotion/styled';
-import { Divider } from '@mantine/core';
+import { Divider, useMantineTheme } from '@mantine/core';
 import { Button } from '../../../design-system';
 
 interface IButtonsTemplatesProps {
@@ -79,12 +79,22 @@ interface ITemplateButton {
 }
 
 export function TemplateButton(props: ITemplateButton) {
+  const dark = useMantineTheme().colorScheme === 'dark';
+  const buttonStyle = dark ? darkButtonStyle : lightButtonStyle;
+
   const buttonText = props.button?.content ? props.button?.content : '';
 
-  return <StyledButton fullWidth>{buttonText}</StyledButton>;
+  return (
+    <StyledButton buttonStyle={buttonStyle[props.button.type]} fullWidth>
+      {buttonText}
+    </StyledButton>
+  );
 }
 
-const StyledButton = styled(Button)`
+const StyledButton = styled(Button)<{ buttonStyle }>`
+  background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
+  color: ${({ buttonStyle }) => buttonStyle.fontColor};
+  box-shadow: none;
   display: flex;
   justify-content: center;
   margin-left: 5px;
