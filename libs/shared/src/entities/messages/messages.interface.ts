@@ -20,4 +20,5 @@ export interface IMessage {
       url?: string;
     };
   };
+  payload: Record<string, unknown>;
 }

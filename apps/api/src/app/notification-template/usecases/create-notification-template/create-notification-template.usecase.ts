@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
-import { INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 import { CreateNotificationTemplateCommand } from './create-notification-template.command';
@@ -49,27 +48,32 @@ export class CreateNotificationTemplate {
 
     const parentChangeId: string = NotificationTemplateRepository.createObjectId();
     const templateSteps = [];
+    let parentStepId: string | null = null;
 
     for (const message of command.steps) {
       const template = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
-          type: message.type,
-          name: message.name,
-          content: message.content,
-          contentType: message.contentType,
+          type: message.template.type,
+          name: message.template.name,
+          content: message.template.content,
+          contentType: message.template.contentType,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
-          cta: message.cta,
-          subject: message.subject,
+          cta: message.template.cta,
+          subject: message.template.subject,
           parentChangeId,
         })
       );
 
+      const stepId = template._id;
       templateSteps.push({
+        _id: stepId,
         _templateId: template._id,
         filters: message.filters,
+        _parentId: parentStepId,
       });
+      parentStepId = stepId;
     }
 
     const savedTemplate = await this.notificationTemplateRepository.create({

@@ -23,7 +23,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   transactionId: string;
 
   @IsDefined()
-  notificationId;
+  notificationId: string;
 
   @IsDefined()
   subscriberId: string;

@@ -1,6 +1,6 @@
 {
   "name": "@novu/nest",
-  "version": "0.4.1",
+  "version": "0.5.1",
   "description": "A nestjs wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@nestjs/common": "^8.2.0",
-    "@novu/stateless": "^0.4.1"
+    "@novu/stateless": "^0.5.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -52,7 +52,8 @@
     "standard-version": "^9.0.0",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
-    "typedoc": "^0.19.0"
+    "typedoc": "^0.19.0",
+    "typescript": "4.6.2"
   },
   "files": [
     "build/main",

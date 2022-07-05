@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { Inject, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { TriggerEventCommand } from './trigger-event.command';
@@ -9,14 +9,19 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
 import { matchMessageWithFilters } from './message-filter.matcher';
+import { WorkflowQueueService } from '../../services/workflow.queue.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class TriggerEvent {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createLogUsecase: CreateLog,
-    private analyticsService: AnalyticsService,
-    private processSubscriber: ProcessSubscriber
+    private processSubscriber: ProcessSubscriber,
+    private jobRepository: JobRepository,
+    private workflowQueueService: WorkflowQueueService,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -26,6 +31,8 @@ export class TriggerEvent {
         triggerIdentifier: command.identifier,
       },
     });
+
+    await this.validateSubscriberIdProperty(command);
 
     this.logEventTriggered(command);
 
@@ -42,18 +49,22 @@ export class TriggerEvent {
       return this.logTemplateNotActive(command, template);
     }
 
+    const jobs: JobEntity[][] = [];
+
     for (const subscriberToTrigger of command.to) {
-      await this.processSubscriber.execute(
-        ProcessSubscriberCommand.create({
-          identifier: command.identifier,
-          payload: command.payload,
-          to: subscriberToTrigger,
-          transactionId: command.transactionId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.organizationId,
-          templateId: template._id,
-        })
+      jobs.push(
+        await this.processSubscriber.execute(
+          ProcessSubscriberCommand.create({
+            identifier: command.identifier,
+            payload: command.payload,
+            to: subscriberToTrigger,
+            transactionId: command.transactionId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.organizationId,
+            templateId: template._id,
+          })
+        )
       );
     }
 
@@ -64,6 +75,11 @@ export class TriggerEvent {
       inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
       directChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.DIRECT)?.length,
     });
+
+    for (const job of jobs) {
+      const firstJob = await this.jobRepository.storeJobs(job);
+      await this.workflowQueueService.addJob(firstJob);
+    }
 
     if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
       return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
@@ -140,5 +156,42 @@ export class TriggerEvent {
       )
       // eslint-disable-next-line no-console
       .catch((e) => console.error(e));
+  }
+
+  private async validateSubscriberIdProperty(command: TriggerEventCommand): Promise<boolean> {
+    for (const subscriber of command.to) {
+      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
+
+      if (!subscriberIdExists) {
+        await this.logSubscriberIdMissing(command);
+        throw new ApiException(
+          'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
+        );
+      }
+    }
+
+    return true;
+  }
+
+  private async logSubscriberIdMissing(command: TriggerEventCommand) {
+    await this.createLogUsecase.execute(
+      CreateLogCommand.create({
+        transactionId: command.transactionId,
+        status: LogStatusEnum.ERROR,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        text: 'SubscriberId missing in to property',
+        userId: command.userId,
+        code: LogCodeEnum.SUBSCRIBER_ID_MISSING,
+        raw: {
+          triggerIdentifier: command.identifier,
+        },
+      })
+    );
+
+    return {
+      acknowledged: true,
+      status: 'subscriber_id_missing',
+    };
   }
 }

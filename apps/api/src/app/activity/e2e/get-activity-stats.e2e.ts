@@ -1,4 +1,4 @@
-import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { MessageRepository, NotificationTemplateEntity, SubscriberRepository, JobRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as moment from 'moment';
@@ -7,6 +7,7 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   const messageRepository = new MessageRepository();
+  const jobRepository = new JobRepository();
   let subscriberId: string;
 
   beforeEach(async () => {
@@ -35,6 +36,8 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
     });
+
+    await session.awaitRunningJobs();
 
     const existing = await messageRepository.find(
       {

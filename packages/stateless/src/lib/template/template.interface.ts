@@ -39,7 +39,8 @@ export interface ITriggerPayload {
     | number
     | undefined
     | IAttachmentOptions
-    | IAttachmentOptions[];
+    | IAttachmentOptions[]
+    | Record<string, unknown>;
 }
 
 export interface IAttachmentOptions {

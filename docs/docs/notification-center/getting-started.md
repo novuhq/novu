@@ -11,7 +11,7 @@ Novu provides you a set of API's and components to create rich customized notifi
 
 After creating your Novu Platform account and creating your first notification template it's time to connect the In-app channel to your application.
 
-```
+```bash
 npm install @novu/notification-center
 ```
 
@@ -21,9 +21,13 @@ And in the appropriate place withing your app add the `PopoverNotificationCenter
 import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
 
 function Header() {
+  function onNotificationClick(notification: IMessage) {
+    navigate(notification.cta.data.url);
+  }
+  
   return (
     <NovuProvider subscriberId={'USER_ID'} applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}>
-      <PopoverNotificationCenter>
+      <PopoverNotificationCenter onNotificationClick={onNotificationClick}>
         {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
       </PopoverNotificationCenter>
     </NovuProvider>
@@ -33,5 +37,4 @@ function Header() {
 
 That's it! Now you're ready to send your first notifications using Novu.
 
-
-Not using React? Checkout the [iFrame Embed docs](/docs/notification-center/iframe-embed)
+Not using React? Checkout the [iFrame Embed docs](/notification-center/iframe-embed)

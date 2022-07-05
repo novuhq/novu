@@ -46,6 +46,14 @@ export function ActivitiesPage() {
     return () => subscription.unsubscribe();
   }, [watch]);
 
+  function capitalizeSubscriberIfExist(subscriber) {
+    return subscriber
+      ? `${subscriber.firstName ? capitalize(subscriber.firstName) : ''} ${
+          subscriber.lastName ? capitalize(subscriber.lastName) : ''
+        }`
+      : 'Deleted Subscriber';
+  }
+
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
       accessor: 'status',
@@ -84,7 +92,7 @@ export function ActivitiesPage() {
       Header: 'Subscriber',
       Cell: ({ subscriber }: any) => (
         <Text data-test-id="subscriber-name" rows={1}>
-          {capitalize(subscriber.firstName)} {capitalize(subscriber.lastName)}
+          {capitalizeSubscriberIfExist(subscriber)}
         </Text>
       ),
     },

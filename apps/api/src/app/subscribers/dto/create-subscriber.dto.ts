@@ -1,6 +1,8 @@
 import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSubscriberBodyDto {
+  @ApiProperty()
   @IsString()
   @IsDefined()
   subscriberId: string;

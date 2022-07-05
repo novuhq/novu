@@ -27,7 +27,7 @@ export function EmailContentCard({
     setValue,
     watch,
   } = useFormContext(); // retrieve all hook methods
-  const contentType = watch(`emailMessages.${index}.template.contentType`);
+  const contentType = watch(`steps.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
@@ -40,14 +40,14 @@ export function EmailContentCard({
 
   const onTabChange = (tabIndex) => {
     setActiveTab(tabIndex);
-    setValue(`emailMessages.${index}.template.contentType` as any, tabIndex === 0 ? 'editor' : 'customHtml');
+    setValue(`steps.${index}.template.contentType` as any, tabIndex === 0 ? 'editor' : 'customHtml');
   };
   const menuTabs = [
     {
       label: 'Editor',
       content: (
         <Controller
-          name={`emailMessages.${index}.template.content` as any}
+          name={`steps.${index}.template.content` as any}
           control={control}
           render={({ field, formState }) => {
             return (
@@ -66,7 +66,7 @@ export function EmailContentCard({
       label: 'Custom Code',
       content: (
         <Controller
-          name={`emailMessages.${index}.template.htmlContent` as any}
+          name={`steps.${index}.template.htmlContent` as any}
           control={control}
           render={({ field, formState }) => {
             return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
@@ -80,14 +80,14 @@ export function EmailContentCard({
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
       <Controller
-        name={`emailMessages.${index}.template.subject` as any}
+        name={`steps.${index}.template.subject` as any}
         control={control}
         render={({ field }) => {
           return (
             <Input
               {...field}
               mb={40}
-              error={errors[`emailMessages.${index}.template.subject`]}
+              error={errors?.steps ? errors?.steps[index]?.template?.subject?.message : undefined}
               label="Subject line"
               disabled={readonly}
               value={field.value}

@@ -1,17 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { EnvironmentRepository, SubscriberEntity } from '@novu/dal';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { InitializeSessionCommand } from './initialize-session.command';
 import { createHmac } from 'crypto';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class InitializeSession {
   constructor(
     private environmentRepository: EnvironmentRepository,
     private createSubscriber: CreateSubscriber,
-    private authService: AuthService
+    private authService: AuthService,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: InitializeSessionCommand): Promise<{
@@ -39,6 +42,11 @@ export class InitializeSession {
     });
 
     const subscriber = await this.createSubscriber.execute(commandos);
+
+    this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
+      organizationId: environment._organizationId,
+      environmentName: environment.name,
+    });
 
     return {
       token: await this.authService.getSubscriberWidgetToken(subscriber),

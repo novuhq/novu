@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { 
+      "source": "/docs/:slug*",
+      "destination": "/:slug*"
+    }
+  ]
+}

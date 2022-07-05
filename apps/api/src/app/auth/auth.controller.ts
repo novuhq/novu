@@ -74,7 +74,16 @@ export class AuthController {
       return response.redirect(`${process.env.CLIENT_SUCCESS_AUTH_REDIRECT}?error=AuthenticationError`);
     }
 
-    let url = JSON.parse(request.query.state).redirectUrl || process.env.CLIENT_SUCCESS_AUTH_REDIRECT;
+    let url = process.env.CLIENT_SUCCESS_AUTH_REDIRECT;
+    const redirectUrl = JSON.parse(request.query.state).redirectUrl;
+
+    /**
+     * Make sure we only allow localhost redirects for CLI use and our own success route
+     * https://github.com/novuhq/novu/security/code-scanning/3
+     */
+    if (redirectUrl && redirectUrl.startsWith('http://localhost:')) {
+      url = redirectUrl;
+    }
 
     url += `?token=${request.user.token}`;
 

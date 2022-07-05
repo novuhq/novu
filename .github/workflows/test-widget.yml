@@ -15,6 +15,7 @@ on:
       - 'apps/widget/**'
       - 'apps/ws/**'
       - 'libs/shared/**'
+      - 'packages/notification-center/**'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

@@ -4,6 +4,8 @@ import {
   SubscriberRepository,
   NotificationTemplateRepository,
   SubscriberEntity,
+  JobEntity,
+  JobStatusEnum,
 } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -11,8 +13,7 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
-import { SendMessage } from '../send-message/send-message.usecase';
-import { SendMessageCommand } from '../send-message/send-message.command';
+import { ISubscribersDefine } from '@novu/node';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -21,38 +22,23 @@ export class ProcessSubscriber {
     private notificationRepository: NotificationRepository,
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
-    private notificationTemplateRepository: NotificationTemplateRepository,
-    private sendMessage: SendMessage
+    private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
-  public async execute(command: ProcessSubscriberCommand) {
+  public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
 
-    const subscriber: SubscriberEntity = await this.getSubscriber(command, template._id);
+    const subscriber: SubscriberEntity = await this.getSubscriber(command);
     if (subscriber === null) {
-      return {
-        status: 'subscriber_not_found',
-      };
+      return [];
     }
 
     const notification = await this.createNotification(command, template._id, subscriber);
 
-    const steps = matchMessageWithFilters(template.steps, command.payload);
-    for (const step of steps) {
-      await this.sendMessage.execute(
-        SendMessageCommand.create({
-          identifier: command.identifier,
-          payload: command.payload,
-          step,
-          transactionId: command.transactionId,
-          notificationId: notification._id,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          subscriberId: subscriber._id,
-        })
-      );
-    }
+    const steps = matchMessageWithFilters(
+      template.steps.filter((step) => step.active === true),
+      command.payload
+    );
 
     await this.createLogUsecase.execute(
       CreateLogCommand.create({
@@ -69,19 +55,30 @@ export class ProcessSubscriber {
       })
     );
 
-    return {
-      status: 'success',
-    };
+    return steps.map((step): JobEntity => {
+      return {
+        identifier: command.identifier,
+        payload: command.payload,
+        step,
+        transactionId: command.transactionId,
+        _notificationId: notification._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _userId: command.userId,
+        _subscriberId: subscriber._id,
+        status: JobStatusEnum.PENDING,
+      };
+    });
   }
 
-  private async getSubscriber(command: ProcessSubscriberCommand, templateId: string): Promise<SubscriberEntity> {
+  private async getSubscriber(command: ProcessSubscriberCommand): Promise<SubscriberEntity> {
     const subscriberPayload = command.to;
     const subscriber = await this.subscriberRepository.findOne({
       _environmentId: command.environmentId,
       subscriberId: subscriberPayload.subscriberId,
     });
 
-    if (subscriber) {
+    if (subscriber && !this.subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;
     }
     if (subscriberPayload.subscriberId) {
@@ -106,7 +103,7 @@ export class ProcessSubscriber {
         text: 'Subscriber not found',
         userId: command.userId,
         code: LogCodeEnum.SUBSCRIBER_NOT_FOUND,
-        templateId: templateId,
+        templateId: command.templateId,
         raw: {
           payload: command.payload,
           subscriber: subscriberPayload,
@@ -115,7 +112,32 @@ export class ProcessSubscriber {
       })
     );
 
-    return null;
+    return await this.createOrUpdateSubscriber(command, subscriberPayload);
+  }
+
+  private async createOrUpdateSubscriber(command: ProcessSubscriberCommand, subscriberPayload) {
+    return await this.createSubscriberUsecase.execute(
+      CreateSubscriberCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: subscriberPayload?.subscriberId,
+        email: subscriberPayload?.email,
+        firstName: subscriberPayload?.firstName,
+        lastName: subscriberPayload?.lastName,
+        phone: subscriberPayload?.phone,
+        avatar: subscriberPayload?.avatar,
+      })
+    );
+  }
+
+  private subscriberNeedUpdate(subscriber: SubscriberEntity, subscriberPayload: ISubscribersDefine): boolean {
+    return (
+      (subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
+      (subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
+      (subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
+      (subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
+      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
+    );
   }
 
   private async createNotification(

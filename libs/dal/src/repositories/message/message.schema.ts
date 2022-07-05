@@ -64,6 +64,7 @@ const messageSchema = new Schema(
       type: Schema.Types.String,
       index: true,
     },
+    payload: Schema.Types.Mixed,
   },
   { ...schemaOptions }
 );

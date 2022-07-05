@@ -52,6 +52,8 @@ export class SendMessageSms extends SendMessageType {
       channel: ChannelTypeEnum.SMS,
       active: true,
     });
+    const messagePayload = Object.assign({}, command.payload);
+    delete messagePayload.attachments;
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
@@ -65,6 +67,7 @@ export class SendMessageSms extends SendMessageType {
       phone,
       content,
       providerId: integration.providerId,
+      payload: messagePayload,
     });
 
     if (phone && integration) {

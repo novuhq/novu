@@ -191,6 +191,15 @@ export const sms77Config: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const termiiConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+  },
+  ...smsConfigBase,
+];
+
 export const snsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
