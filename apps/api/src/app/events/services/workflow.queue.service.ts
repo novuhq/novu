@@ -58,17 +58,17 @@ export class WorkflowQueueService {
   }
 
   public async work(job: JobEntity) {
-    await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
-
     if (job.type === ChannelTypeEnum.DIGEST) {
       const count = await this.jobRepository.count({
         _id: job._id,
         status: JobStatusEnum.CANCELED,
       });
-      if (count) {
+      if (count > 0) {
         return;
       }
     }
+
+    await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
 
     await this.sendMessage.execute(
       SendMessageCommand.create({
