@@ -11,7 +11,7 @@ export class CommandHelper {
       ...data,
     });
 
-    const errors = validateSync(convertedObject);
+    const errors = validateSync(convertedObject as unknown as object);
     if (errors?.length) {
       const mappedErrors = flatten(errors.map((item) => Object.values(item.constraints)));
 
