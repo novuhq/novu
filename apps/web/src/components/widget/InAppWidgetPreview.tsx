@@ -1,11 +1,44 @@
-import { Badge, Card, Container, Group, Space, useMantineTheme } from '@mantine/core';
+import { Badge, Card, Container, Group, Space, TextInput, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import moment from 'moment';
-import { colors, shadows, Text, Title } from '../../design-system';
-/* eslint-disable max-len */
+import { Button, colors, shadows, Text, Title } from '../../design-system';
+import { ButtonsTemplatesPopover } from '../templates/in-app-editor/ButtonsTemplatesPopover';
+import React, { useState } from 'react';
+import { notificationItemButtons } from '@novu/shared';
+import { RemoveCircle } from '../../design-system/icons/general/RemoveCircle';
+import { IMessageButton } from '@novu/shared';
 
-export function InAppWidgetPreview({ readonly, children }: { readonly: boolean; children: JSX.Element }) {
+export function InAppWidgetPreview({
+  readonly,
+  buttonTemplate,
+  children,
+  onChangeCtaAdapter,
+}: {
+  readonly: boolean;
+  buttonTemplate: IMessageButton[] | undefined;
+  children: JSX.Element;
+  onChangeCtaAdapter: (actions: IMessageButton[]) => void;
+}) {
   const theme = useMantineTheme();
+  const [isButtonsTemplateVisible, setIsButtonsTemplateVisible] = useState<boolean>(false);
+  const [isButtonsTemplateSelected, setIsButtonsTemplateSelected] = useState<boolean>(
+    !!buttonTemplate && buttonTemplate?.length !== 0
+  );
+  const [selectedTemplate, setSelectedTemplate] = useState<IMessageButton[]>(buttonTemplate || []);
+
+  function onButtonAddClickHandle() {
+    setIsButtonsTemplateVisible(true);
+  }
+
+  function onRemoveTemplate() {
+    setIsButtonsTemplateSelected(false);
+    setSelectedTemplateAdapter([]);
+  }
+
+  function setSelectedTemplateAdapter(actions: IMessageButton[]) {
+    setSelectedTemplate(actions);
+    onChangeCtaAdapter(actions);
+  }
 
   return (
     <Card withBorder sx={styledCard}>
@@ -34,32 +67,48 @@ export function InAppWidgetPreview({ readonly, children }: { readonly: boolean; 
         </Group>
       </Card.Section>
       <Card.Section sx={{ padding: '15px' }}>
-        <Container
-          fluid
-          sx={{
-            padding: '15px 15px 16px',
-            borderRadius: '7px',
-            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
-            boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
-            ...(readonly
-              ? {
-                  backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
-                  color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
-                  opacity: 0.6,
-                }
-              : {}),
-          }}
+        <ButtonsTemplatesPopover
+          isVisible={isButtonsTemplateVisible}
+          setIsPopoverVisible={setIsButtonsTemplateVisible}
+          setTemplateSelected={setIsButtonsTemplateSelected}
+          setSelectedTemplate={setSelectedTemplateAdapter}
         >
-          <Group position="apart">
-            <div style={{ width: 'calc(100% - 32px)' }}>
-              <Text weight="bold">{children}</Text>
-              <Text mt={5} color={colors.B60}>
-                {moment(moment().subtract(5, 'minutes')).fromNow()}
-              </Text>
-            </div>
-            <UnseenNotificationDot />
-          </Group>
-        </Container>
+          <Container
+            fluid
+            sx={{
+              padding: '15px 15px 16px',
+              borderRadius: '7px',
+              backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
+              boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
+              ...(readonly
+                ? {
+                    backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
+                    color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
+                    opacity: 0.6,
+                  }
+                : {}),
+            }}
+          >
+            <Group position="apart">
+              <div style={{ width: '100%' }}>
+                <Text weight="bold">{children}</Text>
+                {isButtonsTemplateSelected ? (
+                  <SelectedButtonTemplate
+                    onChangeCtaAdapter={onChangeCtaAdapter}
+                    selectedTemplate={selectedTemplate}
+                    onRemoveTemplate={onRemoveTemplate}
+                  />
+                ) : (
+                  <AddButtonSection onButtonAddClick={onButtonAddClickHandle} />
+                )}
+
+                <Text mt={5} color={colors.B60}>
+                  {moment(moment().subtract(5, 'minutes')).fromNow()}
+                </Text>
+              </div>
+            </Group>
+          </Container>
+        </ButtonsTemplatesPopover>
 
         <Container
           mt={10}
@@ -158,11 +207,113 @@ export function Footer() {
   );
 }
 
-const UnseenNotificationDot = styled.div`
-  width: 7px;
-  height: 7px;
+export function AddButtonSection({ onButtonAddClick }: { onButtonAddClick?: () => void }) {
+  return (
+    <StyledButton data-test-id="control-add" onClick={onButtonAddClick}>
+      <span>+ Add Button</span>
+    </StyledButton>
+  );
+}
+
+const StyledButton = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 44px;
+  border: dashed;
   border-radius: 7px;
-  display: block;
-  align-items: end;
-  background-image: ${colors.horizontal};
+  margin: 14px 0 14px 0;
+  color: ${colors.B60};
+  cursor: pointer;
+`;
+
+interface ISelectedButtonTemplateProps {
+  selectedTemplate: IMessageButton[];
+  onRemoveTemplate: () => void;
+  onChangeCtaAdapter: (actions: IMessageButton[]) => void;
+}
+
+function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
+  function handleOnButtonContentChange(data: any, buttonIndex: number) {
+    const selectedTemplateClone = Object.assign({}, props.selectedTemplate);
+    selectedTemplateClone[buttonIndex].content = data.target.value;
+    props.onChangeCtaAdapter(selectedTemplateClone);
+  }
+
+  return (
+    <>
+      <TemplateContainerWrap>
+        <TemplateContainer>
+          {props.selectedTemplate.map((button: IMessageButton, buttonIndex: number) => {
+            const buttonText = button?.content ? button?.content : '';
+            const buttonStyles = notificationItemButtons.find(
+              (notificationItemButton) => notificationItemButton.key === button.type
+            )?.value;
+
+            return (
+              <NotificationButton fullWidth key={buttonIndex} test={buttonStyles}>
+                <ButtonInput
+                  value={buttonText}
+                  onChange={(data) => {
+                    handleOnButtonContentChange(data, buttonIndex);
+                  }}
+                />
+              </NotificationButton>
+            );
+          })}
+          <DeleteIcon>
+            <RemoveCircle onClick={props.onRemoveTemplate} />
+          </DeleteIcon>
+        </TemplateContainer>
+      </TemplateContainerWrap>
+    </>
+  );
+}
+
+const TemplateContainer = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  margin: 15px -15px;
+`;
+
+const TemplateContainerWrap = styled.div`
+  margin-left: 10px;
+  margin-right: 10px;
+  border: none;
+`;
+
+const NotificationButton = styled(Button)<{ test }>`
+  position: relative;
+  color: white;
+  background: ${({ test }) => test.backGround};
+  cursor: default;
+  justify-content: center;
+  display: flex;
+  margin-left: 5px;
+  margin-right: 5px;
+  text-align-last: center;
+  border: none;
+`;
+
+const DeleteIcon = styled.div`
+  align-content: center;
+  position: absolute;
+  align-items: center;
+  height: 14px;
+  top: 14px;
+  right: 14px;
+`;
+
+const ButtonInput = styled(TextInput)`
+  display: flex;
+  align-content: center;
+  text-align: center;
+  border: none;
+  cursor: none;
+  input {
+    border: transparent;
+    background: transparent;
+    color: white;
+  }
 `;

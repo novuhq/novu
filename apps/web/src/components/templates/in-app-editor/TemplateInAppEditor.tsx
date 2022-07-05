@@ -28,7 +28,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             )}
           />
           <Controller
-            name={`steps.${index}.template.content` as any}
+            name={`steps.${index}.template` as any}
             data-test-id="in-app-content-form-item"
             control={control}
             render={({ field }) => {

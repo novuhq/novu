@@ -1,8 +1,9 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
 import { colors } from '../../../design-system';
 import { useMantineTheme } from '@mantine/core';
+import { IEmailBlock, IMessage, IMessageButton, MessageActionStatusEnum } from '@novu/shared';
 
 export function InAppEditorBlock({
   contentPlaceholder,
@@ -11,35 +12,38 @@ export function InAppEditorBlock({
   readonly,
 }: {
   contentPlaceholder: string;
-  value: string;
-  onChange: (data: string) => void;
+  value: IMessage;
+  onChange: (data: IMessage) => void;
   readonly: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const theme = useMantineTheme();
-  const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!value);
-  const [content, setContent] = useState<string>(value);
+  const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!value.content);
+  const [content, setContent] = useState<string | IEmailBlock[]>(value.content);
 
   useEffect(() => {
     ref.current?.focus();
   }, [ref]);
 
   useEffect(() => {
-    let showPlaceHolder = value.length === 0;
+    let showPlaceHolder = value.content.length === 0;
 
-    if (value === '<br>') showPlaceHolder = true;
+    if (value.content === '<br>') showPlaceHolder = true;
 
     setVisiblePlaceholder(showPlaceHolder);
-  }, [value, content]);
+  }, [value.content, content]);
 
   useEffect(() => {
-    if (value !== ref.current?.innerHTML) {
-      setContent(value);
+    if (value.content !== ref.current?.innerHTML) {
+      setContent(value.content);
     }
-  }, [value]);
+  }, [value.content]);
 
   function onContentChange(data) {
-    onChange(data);
+    const currentValue = Object.assign({}, value);
+    currentValue.content = data;
+
+    onChange(currentValue);
 
     let showPlaceHolder = !data;
     if (data === '<br>') showPlaceHolder = true;
@@ -47,15 +51,26 @@ export function InAppEditorBlock({
     setVisiblePlaceholder(showPlaceHolder);
   }
 
+  function onChangeCtaAdapter(buttons: IMessageButton[]) {
+    const currentValue = Object.assign({}, value);
+    currentValue.cta.action = { buttons: buttons, status: MessageActionStatusEnum.PENDING };
+
+    onChange(currentValue);
+  }
+
   return (
-    <InAppWidgetPreview readonly={readonly}>
+    <InAppWidgetPreview
+      buttonTemplate={value?.cta?.action?.buttons}
+      onChangeCtaAdapter={onChangeCtaAdapter}
+      readonly={readonly}
+    >
       <div style={{ position: 'relative' }}>
         <div
           ref={ref}
           data-test-id="in-app-editor-content-input"
           contentEditable={!readonly}
           dangerouslySetInnerHTML={{
-            __html: content,
+            __html: content as string,
           }}
           onKeyUp={(e: any) => onContentChange(e.target.innerHTML)}
           suppressContentEditableWarning
@@ -82,7 +97,7 @@ export function InAppEditorBlock({
 const PlaceHolder = styled.div<{ show: boolean }>`
   position: absolute;
   z-index: 1;
-  top: 0px;
+  top: 0;
   pointer-events: none;
   display: ${({ show }) => (show ? 'block' : 'none')};
   opacity: 0.4;
