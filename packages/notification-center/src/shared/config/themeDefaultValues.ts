@@ -12,7 +12,7 @@ export const defaultLightTheme: INovuTheme = {
     },
   },
   header: {
-    fontColor: colors.B60,
+    fontColor: colors.B40,
     badgeColor: colors.vertical,
     badgeTextColor: colors.white,
   },
@@ -21,7 +21,7 @@ export const defaultLightTheme: INovuTheme = {
     seen: { background: colors.B98, fontColor: colors.B60, timeMarkFontColor: colors.B80 },
     unseen: {
       background: colors.white,
-      fontColor: colors.B60,
+      fontColor: colors.B40,
       boxShadow: shadows.medium,
       notificationItemBeforeBrandColor: colors.vertical,
       timeMarkFontColor: colors.B60,
