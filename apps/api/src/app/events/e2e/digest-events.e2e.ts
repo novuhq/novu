@@ -304,14 +304,28 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     );
 
     await awaitRunningJobs(1);
-
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
       },
     });
 
-    const delayedJob = await jobRepository.findOne({
+    let delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await workflowQueueService.work(delayedJob);
+
+    const pendingJobs = await jobRepository.count({
+      _templateId: template._id,
+      status: JobStatusEnum.PENDING,
+      transactionId: id,
+    });
+
+    expect(pendingJobs).to.equal(1);
+
+    delayedJob = await jobRepository.findOne({
       _templateId: template._id,
       type: ChannelTypeEnum.DIGEST,
       transactionId: id,
