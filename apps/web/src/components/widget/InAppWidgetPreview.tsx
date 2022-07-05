@@ -4,7 +4,6 @@ import moment from 'moment';
 import { Button, colors, shadows, Text, Title } from '../../design-system';
 import { ButtonsTemplatesPopover } from '../templates/in-app-editor/ButtonsTemplatesPopover';
 import React, { useState } from 'react';
-import { notificationItemButtons } from '@novu/shared';
 import { RemoveCircle } from '../../design-system/icons/general/RemoveCircle';
 import { IMessageButton } from '@novu/shared';
 
@@ -246,12 +245,9 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
         <TemplateContainer>
           {props.selectedTemplate.map((button: IMessageButton, buttonIndex: number) => {
             const buttonText = button?.content ? button?.content : '';
-            const buttonStyles = notificationItemButtons.find(
-              (notificationItemButton) => notificationItemButton.key === button.type
-            )?.value;
 
             return (
-              <NotificationButton fullWidth key={buttonIndex} test={buttonStyles}>
+              <NotificationButton fullWidth key={buttonIndex}>
                 <ButtonInput
                   value={buttonText}
                   onChange={(data) => {
@@ -283,10 +279,9 @@ const TemplateContainerWrap = styled.div`
   border: none;
 `;
 
-const NotificationButton = styled(Button)<{ test }>`
+const NotificationButton = styled(Button)`
   position: relative;
   color: white;
-  background: ${({ test }) => test.backGround};
   cursor: default;
   justify-content: center;
   display: flex;

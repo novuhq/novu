@@ -1,4 +1,4 @@
-import { ButtonTypeEnum, notificationItemButtons, IMessageButton } from '@novu/shared';
+import { ButtonTypeEnum, IMessageButton } from '@novu/shared';
 import styled from '@emotion/styled';
 import { Divider } from '@mantine/core';
 import { Button } from '../../../design-system';
@@ -80,20 +80,11 @@ interface ITemplateButton {
 
 export function TemplateButton(props: ITemplateButton) {
   const buttonText = props.button?.content ? props.button?.content : '';
-  const buttonStyles = notificationItemButtons.find(
-    (notificationItemButton) => notificationItemButton.key === props.button.type
-  )?.value;
 
-  return (
-    <StyledButton style={buttonStyles} fullWidth>
-      {buttonText}
-    </StyledButton>
-  );
+  return <StyledButton fullWidth>{buttonText}</StyledButton>;
 }
 
-const StyledButton = styled(Button)<{ style }>`
-  color: ${({ style }) => style.color};
-  background: ${({ style }) => style.backGround};
+const StyledButton = styled(Button)`
   display: flex;
   justify-content: center;
   margin-left: 5px;
