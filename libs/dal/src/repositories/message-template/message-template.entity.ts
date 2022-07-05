@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, ChannelTypeEnum, ButtonTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICta } from '@novu/shared';
 
 export class MessageTemplateEntity {
   _id?: string;
@@ -23,13 +23,7 @@ export class MessageTemplateEntity {
 
   _feedId?: string;
 
-  cta?: {
-    type: ChannelCTATypeEnum;
-    data: {
-      url?: string;
-    };
-    actions?: { type: ButtonTypeEnum; content: { text: string } }[];
-  };
+  cta?: ICta;
 
   _parentId?: string;
 }

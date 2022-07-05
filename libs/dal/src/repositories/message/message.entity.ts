@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, ChannelTypeEnum, ButtonTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICta } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 import { IEmailBlock } from '../message-template';
 import { SubscriberEntity } from '../subscriber';
@@ -39,13 +39,7 @@ export class MessageEntity {
 
   lastSeenDate: string;
 
-  cta: {
-    type: ChannelCTATypeEnum;
-    data: {
-      url?: string;
-    };
-    actions?: { type: ButtonTypeEnum; content: { text: string } }[];
-  };
+  cta: ICta;
 
   status: 'sent' | 'error' | 'warning';
 

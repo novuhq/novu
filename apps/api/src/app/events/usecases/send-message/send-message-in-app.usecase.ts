@@ -49,9 +49,9 @@ export class SendMessageInApp extends SendMessageType {
       );
     }
 
-    if (inAppChannel.template.cta?.actions) {
-      inAppChannel.template.cta?.actions.map((action) => {
-        if (action.content.text) return contentService.replaceVariables(action.content.text, messageVariables);
+    if (inAppChannel.template.cta?.action?.buttons) {
+      inAppChannel.template.cta?.action.buttons.map((action) => {
+        if (action.content) return contentService.replaceVariables(action.content, messageVariables);
       });
     }
 

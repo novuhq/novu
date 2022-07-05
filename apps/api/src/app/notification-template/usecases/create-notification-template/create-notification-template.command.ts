@@ -13,7 +13,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   ChannelCTATypeEnum,
-  ButtonTypeEnum,
+  IMessageAction,
 } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -63,7 +63,8 @@ export class ChannelCTACommand {
 
   @IsOptional()
   @IsArray()
-  actions?: { type: ButtonTypeEnum; content: { text: string } }[];
+  @ValidateNested()
+  action?: IMessageAction[];
 }
 
 class NotificationStepCommand {
