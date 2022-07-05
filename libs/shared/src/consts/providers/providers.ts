@@ -15,6 +15,7 @@ import {
   snsConfig,
   telnyxConfig,
   twilioConfig,
+  termiiConfig,
 } from './provider-credentials';
 import { ChannelTypeEnum } from '../../entities/message-template';
 import { IProviderConfig } from './provider.interface';
@@ -116,6 +117,14 @@ export const providers: IProviderConfig[] = [
     credentials: sms77Config,
     docReference: 'https://www.sms77.io/de/docs/gateway/http-api/',
     logoFileName: { light: 'sms77.svg', dark: 'sms77.svg' },
+  },
+  {
+    id: 'termii',
+    displayName: 'Termii',
+    channel: ChannelTypeEnum.SMS,
+    credentials: termiiConfig,
+    docReference: 'https://developers.termii.com/messaging',
+    logoFileName: { light: 'termii.png', dark: 'termii.png' },
   },
   {
     id: 'sns',

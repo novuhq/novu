@@ -22,7 +22,6 @@ export class TermiiSmsProvider implements ISmsProvider {
     private config: {
       apiKey: string;
       from?: string;
-      channel: MessageChannel;
     }
   ) {
   }
@@ -35,7 +34,7 @@ export class TermiiSmsProvider implements ISmsProvider {
       from: options.from || this.config.from,
       sms: options.content,
       type: 'plain',
-      channel: this.config.channel,
+      channel: MessageChannel.GENERIC,
       api_key: this.config.apiKey,
     };
 

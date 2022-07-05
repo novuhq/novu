@@ -4,10 +4,10 @@
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
-    "@auth0/nextjs-auth0": "^0.16.0",
     "@babel/plugin-proposal-optional-chaining": "^7.16.5",
     "@babel/plugin-transform-runtime": "^7.16.5",
     "@cypress/react": "^5.12.4",
+    "uuid": "8.3.2",
     "@cypress/webpack-dev-server": "^1.8.2",
     "html-webpack-plugin": "5.5.0",
     "webpack-dev-server": "4.9.2",
