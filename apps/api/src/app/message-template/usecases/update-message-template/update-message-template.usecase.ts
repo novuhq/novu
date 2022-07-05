@@ -40,12 +40,8 @@ export class UpdateMessageTemplate {
         updatePayload.cta.data.url = command.cta.data.url;
       }
       if (command.cta.action) {
-        if (command.cta.action.status) {
-          updatePayload['cta.action.status'] = command.cta.action.status;
-        }
-        if (command.cta.action.buttons) {
-          updatePayload['cta.action.buttons'] = command.cta.action.buttons;
-        }
+        updatePayload['cta.action.status'] = command.cta.action.status;
+        updatePayload['cta.action.buttons'] = command.cta.action.buttons;
       }
     }
 
