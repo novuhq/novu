@@ -31,4 +31,6 @@ where you will send a POST request to URL `https://slack.com/api/oauth.v2.access
 - providerId is a unique provider identifier, we recommend using our DirectProviderIdEnum in our case its Slack.
 - credentials are the argument you need to be authentication with your provider workspace. At this point, we support direct messages through webhook, so a webhookUrl is needed to be provided.
 
+<!-- markdownlint-disable MD029 -->
 10. You all set up and ready to send your first direct message via our `@novu/node` package novu.trigger or the API.
+<!-- markdownlint-enable MD029 -->
