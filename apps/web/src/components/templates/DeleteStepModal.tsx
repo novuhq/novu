@@ -44,7 +44,7 @@ export function DeleteStepModal({
             <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
               No
             </Button>
-            <Button mt={30} size="md" onClick={() => confirm()}>
+            <Button mt={30} size="md" onClick={() => confirm()} data-autofocus>
               Yes
             </Button>
           </Group>
