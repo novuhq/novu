@@ -107,6 +107,7 @@ export class SendMessageInApp extends SendMessageType {
             cta: inAppChannel.template.cta,
             content,
             payload: messagePayload,
+            createdAt: new Date(),
           },
         }
       );
