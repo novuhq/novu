@@ -61,8 +61,6 @@ In addition to the integration, any subscriber needs to set credentials in order
 
 The credentials is can be saved through @novu/node package.
 
-
-
 ## Trigger the notification
 
 After creating the template trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.
