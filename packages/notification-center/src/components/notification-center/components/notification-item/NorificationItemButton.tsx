@@ -1,11 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
-import { IButtonStyles, IMessageButton } from '@novu/shared';
+import { IButtonStyles, IMessageButton, ButtonTypeEnum } from '@novu/shared';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { Button } from '@mantine/core';
 
 interface NotificationButtonProps {
   buttonContext: IMessageButton;
+  onNotificationClick: (actionButtonType: ButtonTypeEnum) => void;
 }
 export function NotificationButton(props: NotificationButtonProps) {
   const { theme } = useNovuThemeProvider();
@@ -15,7 +16,9 @@ export function NotificationButton(props: NotificationButtonProps) {
 
   return (
     <>
-      <StyledButton buttonStyle={buttonStyle}>{buttonText}</StyledButton>
+      <StyledButton onClick={() => props.onNotificationClick(props.buttonContext.type)} buttonStyle={buttonStyle}>
+        {buttonText}
+      </StyledButton>
     </>
   );
 }

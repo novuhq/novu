@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef } from 'react';
-import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
+import { ChannelCTATypeEnum, IMessage, ButtonTypeEnum } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './NotificationsList';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
@@ -13,6 +13,7 @@ export function Main() {
   const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
   const {
     markAsSeen: markNotificationAsSeen,
+    markAsActionAsDone,
     fetchNextPage,
     refetch,
     notifications: data,
@@ -32,7 +33,9 @@ export function Main() {
     await fetchNextPage();
   }
 
-  async function onNotificationClicked(notification: IMessage) {
+  async function onNotificationClicked(notification: IMessage, actionButtonType?: ButtonTypeEnum) {
+    await markAsActionAsDone(notification._id, actionButtonType);
+
     await markNotificationAsSeen(notification._id);
 
     if (onNotificationClick) {

@@ -1,10 +1,11 @@
 import React from 'react';
 import { NotificationButton } from './NorificationItemButton';
-import { IMessageAction } from '@novu/shared';
+import { IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import styled from 'styled-components';
 
 export interface IActionContainerProps {
   action?: IMessageAction;
+  onNotificationClick: (actionButtonType: ButtonTypeEnum) => void;
 }
 
 export function ActionContainer(props: IActionContainerProps) {
@@ -15,7 +16,11 @@ export function ActionContainer(props: IActionContainerProps) {
       <TemplateContainerWrap>
         <TemplateContainer>
           {buttons?.map((button) => (
-            <NotificationButton buttonContext={button} key={button.type} />
+            <NotificationButton
+              onNotificationClick={props.onNotificationClick}
+              buttonContext={button}
+              key={button.type}
+            />
           ))}
         </TemplateContainer>
       </TemplateContainerWrap>

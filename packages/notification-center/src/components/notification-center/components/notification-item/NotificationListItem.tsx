@@ -1,5 +1,5 @@
 import styled, { css } from 'styled-components';
-import { IMessage } from '@novu/shared';
+import { IMessage, ButtonTypeEnum } from '@novu/shared';
 import moment from 'moment';
 import { DotsHorizontal } from '../../../../shared/icons';
 import React from 'react';
@@ -12,31 +12,37 @@ export function NotificationListItem({
   onClick,
 }: {
   notification: IMessage;
-  onClick: (notification: IMessage) => void;
+  onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
+
+  function handleNotificationClick(actionButtonType?: ButtonTypeEnum) {
+    onClick(notification, actionButtonType);
+  }
 
   return (
     <ItemWrapper
       novuTheme={novuTheme}
       data-test-id="notification-list-item"
       unseen={!notification.seen}
-      onClick={() => onClick(notification)}
+      onClick={() => handleNotificationClick}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'left' }}>
+      <NotificationItemContainer>
         <TextContent
           data-test-id="notification-content"
           dangerouslySetInnerHTML={{
             __html: notification.content as string,
           }}
         />
-        {notification?.cta?.actions ? <ActionContainer actions={notification.cta.actions} /> : null}
+        {notification?.cta?.action ? (
+          <ActionContainer onNotificationClick={handleNotificationClick} action={notification.cta.action} />
+        ) : null}
         <div>
           <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
             {moment(notification.createdAt).fromNow()}
           </TimeMark>
         </div>
-      </div>
+      </NotificationItemContainer>
       <SettingsActionWrapper style={{ display: 'none' }}>
         <DotsHorizontal />
       </SettingsActionWrapper>
@@ -44,9 +50,18 @@ export function NotificationListItem({
   );
 }
 
+const NotificationItemContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: normal;
+  width: 100%;
+`;
+
 const TextContent = styled.div`
   line-height: 16px;
 `;
+
 const SettingsActionWrapper = styled.div`
   color: ${({ theme }) => theme.colors.secondaryFontColor};
 `;

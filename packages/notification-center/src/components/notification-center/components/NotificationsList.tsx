@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { IMessage } from '@novu/shared';
+import { IMessage, ButtonTypeEnum } from '@novu/shared';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { NotificationListItem } from './notification-item/NotificationListItem';
 import { Loader } from './Loader';
@@ -14,7 +14,7 @@ export function NotificationsList({
   notifications: IMessage[] | never;
   onFetch: () => void;
   hasNextPage: boolean;
-  onNotificationClicked: (notification: IMessage) => void;
+  onNotificationClicked: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
   const totalCount = notifications?.length;
 
