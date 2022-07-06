@@ -364,6 +364,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           type: ChannelTypeEnum.IN_APP,
           content: 'Hello world {{step.events.length}}' as string,
         },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
       ],
     });
 
@@ -373,7 +377,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       },
       id
     );
-    await awaitRunningJobs(0);
+    await awaitRunningJobs(1);
 
     const oldMessage = await messageRepository.findOne({
       channel: ChannelTypeEnum.IN_APP,

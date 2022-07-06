@@ -7,6 +7,10 @@ import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.c
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
 
+interface IJobEntityExtended extends JobEntity {
+  presend?: boolean;
+}
+
 @Injectable()
 export class WorkflowQueueService {
   private bullConfig: QueueBaseOptions = {
@@ -38,7 +42,7 @@ export class WorkflowQueueService {
     });
     this.worker = new Worker(
       'standard',
-      async ({ data }: { data: JobEntity }) => {
+      async ({ data }: { data: IJobEntityExtended }) => {
         return await this.work(data);
       },
       {
@@ -57,7 +61,7 @@ export class WorkflowQueueService {
     this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
   }
 
-  public async work(job: JobEntity) {
+  public async work(job: IJobEntityExtended) {
     if (job.type === ChannelTypeEnum.DIGEST) {
       const count = await this.jobRepository.count({
         _id: job._id,
@@ -85,6 +89,9 @@ export class WorkflowQueueService {
         events: job.digest.events,
       })
     );
+    if (job.presend === true) {
+      return;
+    }
     await this.queueNextJob.execute(
       QueueNextJobCommand.create({
         parentId: job._id,
@@ -95,7 +102,7 @@ export class WorkflowQueueService {
     );
   }
 
-  public async addJob(data: JobEntity | undefined) {
+  public async addJob(data: JobEntity | undefined, presend = false) {
     if (!data) {
       return;
     }
@@ -110,7 +117,7 @@ export class WorkflowQueueService {
       if (data.digest?.resend) {
         const inApps = await this.jobRepository.findInAppsForDigest(data.transactionId, data._subscriberId);
         for (const inApp of inApps) {
-          await this.addJob(inApp);
+          await this.addJob(inApp, true);
         }
       }
       await this.queue.add(data._id, data, { delay, ...options });
@@ -118,7 +125,14 @@ export class WorkflowQueueService {
       return;
     }
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
-    await this.queue.add(data._id, data, options);
+    await this.queue.add(
+      data._id,
+      {
+        ...data,
+        presend,
+      },
+      options
+    );
   }
 
   public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {
