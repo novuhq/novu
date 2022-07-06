@@ -48,7 +48,7 @@ export class AcceptInvite {
       if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
         const novu = new Novu(process.env.NOVU_API_KEY);
 
-        await novu.trigger('invite-accepted-dEQAsKD1E', {
+        await novu.trigger(rocess.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E', {
           to: {
             subscriberId: inviter._id,
             firstName: capitalize(inviter.firstName),
