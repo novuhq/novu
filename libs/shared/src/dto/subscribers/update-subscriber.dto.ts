@@ -1,4 +1,4 @@
-import { DirectProviderIdEnum } from '../../consts';
+import { DirectProviderIdEnum, PushProviderIdEnum } from '../../consts';
 
 export interface IUpdateSubscriberDto {
   subscriberId?: string;
@@ -12,20 +12,23 @@ export interface IUpdateSubscriberDto {
   phone?: string;
 
   avatar?: string;
+
+  channels?: ISubscriberChannel[];
 }
 
 export class ISubscriberChannel {
-  providerId: DirectProviderIdEnum;
+  providerId: DirectProviderIdEnum | PushProviderIdEnum;
 
   credentials: IChannelCredentials;
 }
 
 export class IChannelCredentials {
-  webhookUrl: string;
+  webhookUrl?: string;
+  notificationIdentifiers?: string[];
 }
 
 export interface IUpdateSubscriberChannelDto {
-  providerId: DirectProviderIdEnum;
+  providerId: DirectProviderIdEnum | PushProviderIdEnum;
 
   credentials: IChannelCredentials;
 }

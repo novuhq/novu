@@ -142,11 +142,13 @@ export function ActivitiesPage() {
     {
       accessor: 'providerId',
       Header: 'Provider',
-      Cell: ({ providerId }: any) => (
-        <Text data-test-id="provider-id" rows={1}>
-          {providerId ? capitalize(providerId) : ''}
-        </Text>
-      ),
+      Cell: ({ providerId }: any) => {
+        return (
+          <Text data-test-id="provider-id" rows={1}>
+            {providerId ? capitalize(providerId) : ''}
+          </Text>
+        );
+      },
     },
 
     {

@@ -1,10 +1,11 @@
 import { ChannelTypeEnum } from '../../../entities/message-template';
 import { fcmConfig } from '../provider-credentials';
+import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
 
 export const pushProviders: IProviderConfig[] = [
   {
-    id: 'fcm',
+    id: PushProviderIdEnum.FCM,
     displayName: 'Firebase Cloud Messaging',
     channel: ChannelTypeEnum.PUSH,
     credentials: fcmConfig,
