@@ -32,6 +32,7 @@ export class TriggerEvent {
       },
     });
 
+    await this.validateTransactionIdProperty(command);
     await this.validateSubscriberIdProperty(command);
 
     this.logEventTriggered(command);
@@ -87,6 +88,7 @@ export class TriggerEvent {
     return {
       acknowledged: true,
       status: 'processed',
+      transactionId: command.transactionId,
     };
   }
 
@@ -167,6 +169,20 @@ export class TriggerEvent {
           'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
         );
       }
+    }
+
+    return true;
+  }
+
+  private async validateTransactionIdProperty(command: TriggerEventCommand): Promise<boolean> {
+    const count = await this.jobRepository.count({
+      transactionId: command.transactionId,
+    });
+
+    if (count > 0) {
+      throw new ApiException(
+        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
+      );
     }
 
     return true;

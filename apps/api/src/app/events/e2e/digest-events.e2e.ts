@@ -11,6 +11,7 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
+import { v4 as uuidv4 } from 'uuid';
 
 const axiosInstance = axios.create();
 
@@ -38,10 +39,11 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     } while (runningJobs > unfinishedjobs);
   };
 
-  const triggerEvent = async (payload) => {
+  const triggerEvent = async (payload, transactionId?: string) => {
     await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
       {
+        transactionId,
         name: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
         payload,
@@ -268,5 +270,80 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     expect(jobs.length).to.equal(0);
+  });
+
+  it('should be able to cancel digest', async function () {
+    const id = uuidv4();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            batchkey: 'id',
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent(
+      {
+        customVar: 'Testing of User Name',
+      },
+      id
+    );
+
+    try {
+      await triggerEvent(
+        {
+          customVar: 'Testing of User Name',
+        },
+        id
+      );
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.response.data.message).to.equal(
+        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
+      );
+    }
+
+    await awaitRunningJobs(1);
+    await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    let delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await workflowQueueService.work(delayedJob);
+
+    const pendingJobs = await jobRepository.count({
+      _templateId: template._id,
+      status: JobStatusEnum.PENDING,
+      transactionId: id,
+    });
+
+    expect(pendingJobs).to.equal(1);
+
+    delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+      transactionId: id,
+    });
+    expect(delayedJob.status).to.equal(JobStatusEnum.CANCELED);
   });
 });
