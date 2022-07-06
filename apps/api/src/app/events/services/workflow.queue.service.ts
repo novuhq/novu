@@ -103,20 +103,17 @@ export class WorkflowQueueService {
       removeOnComplete: true,
       removeOnFail: true,
     };
+
     if (data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit) {
       await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
       const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
+      if (data.digest?.resend) {
+        const inApps = await this.jobRepository.findInAppsForDigest(data.transactionId, data._subscriberId);
+        for (const inApp of inApps) {
+          await this.addJob(inApp);
+        }
+      }
       await this.queue.add(data._id, data, { delay, ...options });
-
-      if (!data?.digest?.resend) {
-        return;
-      }
-
-      const inApps = await this.jobRepository.findInAppsForDigest(data.transactionId, data._subscriberId);
-
-      for (const inApp of inApps) {
-        await this.addJob(inApp);
-      }
 
       return;
     }

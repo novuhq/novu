@@ -346,4 +346,60 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
     expect(delayedJob.status).to.equal(JobStatusEnum.CANCELED);
   });
+
+  it('should be able to resend in app digest', async function () {
+    const id = uuidv4();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            resend: true,
+          },
+        },
+        {
+          type: ChannelTypeEnum.IN_APP,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent(
+      {
+        customVar: 'Testing of User Name',
+      },
+      id
+    );
+    await awaitRunningJobs(0);
+
+    const oldMessage = await messageRepository.findOne({
+      channel: ChannelTypeEnum.IN_APP,
+      _templateId: template._id,
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+      transactionId: id,
+    });
+
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.findOne({
+      channel: ChannelTypeEnum.IN_APP,
+      _templateId: template._id,
+    });
+
+    expect(oldMessage.content).to.equal('Hello world 0');
+    expect(message.content).to.equal('Hello world 2');
+  });
 });
