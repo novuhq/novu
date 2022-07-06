@@ -303,6 +303,20 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       id
     );
 
+    try {
+      await triggerEvent(
+        {
+          customVar: 'Testing of User Name',
+        },
+        id
+      );
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.response.data.message).to.equal(
+        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
+      );
+    }
+
     await awaitRunningJobs(1);
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
