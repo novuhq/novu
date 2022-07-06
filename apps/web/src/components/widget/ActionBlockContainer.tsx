@@ -64,9 +64,6 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
 
   const buttons = props.value?.buttons;
 
-  // eslint-disable-next-line no-console
-  console.log(buttons);
-
   return (
     <>
       <TemplateContainerWrap>
