@@ -3,26 +3,25 @@ import moment from 'moment';
 import { colors, shadows, Text, Title } from '../../design-system';
 import { ButtonsTemplatesPopover } from '../templates/in-app-editor/ButtonsTemplatesPopover';
 import React, { useState } from 'react';
-import { IMessageButton } from '@novu/shared';
+import { IMessageAction } from '@novu/shared';
 import { ActionBlockContainer } from './ActionBlockContainer';
 
 export function InAppWidgetPreview({
   readonly,
-  buttonTemplate,
   children,
-  onChangeCtaAdapter,
+  value,
+  onChange,
 }: {
   readonly: boolean;
-  buttonTemplate: IMessageButton[] | undefined;
   children: JSX.Element;
-  onChangeCtaAdapter: (actions: IMessageButton[]) => void;
+  value: IMessageAction;
+  onChange: (data: any) => void;
 }) {
   const theme = useMantineTheme();
   const [isButtonsTemplateVisible, setIsButtonsTemplateVisible] = useState<boolean>(false);
   const [isButtonsTemplateSelected, setIsButtonsTemplateSelected] = useState<boolean>(
-    !!buttonTemplate && buttonTemplate?.length !== 0
+    !!value.buttons && value.buttons?.length !== 0
   );
-  const [selectedTemplate, setSelectedTemplate] = useState<IMessageButton[]>(buttonTemplate || []);
 
   function onButtonAddClickHandle() {
     setIsButtonsTemplateVisible(true);
@@ -30,12 +29,7 @@ export function InAppWidgetPreview({
 
   function onRemoveTemplate() {
     setIsButtonsTemplateSelected(false);
-    setSelectedTemplateAdapter([]);
-  }
-
-  function setSelectedTemplateAdapter(actions: IMessageButton[]) {
-    setSelectedTemplate(actions);
-    onChangeCtaAdapter(actions);
+    onChange({});
   }
 
   return (
@@ -69,7 +63,8 @@ export function InAppWidgetPreview({
           isVisible={isButtonsTemplateVisible}
           setIsPopoverVisible={setIsButtonsTemplateVisible}
           setTemplateSelected={setIsButtonsTemplateSelected}
-          setSelectedTemplate={setSelectedTemplateAdapter}
+          value={value}
+          onChange={onChange}
         >
           <Container
             fluid
@@ -91,13 +86,12 @@ export function InAppWidgetPreview({
               <div style={{ width: '100%' }}>
                 <Text weight="bold">{children}</Text>
                 <ActionBlockContainer
-                  onChangeCtaAdapter={onChangeCtaAdapter}
+                  value={value}
+                  onChange={onChange}
                   onButtonAddClickHandle={onButtonAddClickHandle}
                   onRemoveTemplate={onRemoveTemplate}
                   isButtonsTemplateSelected={isButtonsTemplateSelected}
-                  selectedTemplate={selectedTemplate}
                 />
-
                 <Text mt={5} color={colors.B60}>
                   {moment(moment().subtract(5, 'minutes')).fromNow()}
                 </Text>

@@ -2,18 +2,29 @@ import { Popover, useMantineColorScheme } from '@mantine/core';
 import { colors } from '../../../design-system';
 import React from 'react';
 import { ButtonsTemplates } from './ButtonsTemplates';
+import { IMessageAction, IMessageButton, MessageActionStatusEnum } from '@novu/shared';
 
 interface IButtonsTemplatesPopoverProps {
   isVisible: boolean;
   setIsPopoverVisible: (boolean) => void;
   setTemplateSelected: (boolean) => void;
-  setSelectedTemplate: (any) => void;
   children: JSX.Element;
+  onChange: (data: any) => void;
+  value: IMessageAction;
 }
 
 export function ButtonsTemplatesPopover(props: IButtonsTemplatesPopoverProps) {
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
+
+  function handleOnButtonChange(buttons: IMessageButton[]) {
+    let currentValue = Object.assign({}, props.value.buttons);
+    if (currentValue) {
+      currentValue = buttons;
+      const newAction = { buttons: currentValue, status: MessageActionStatusEnum.PENDING };
+      props.onChange(newAction);
+    }
+  }
 
   return (
     <Popover
@@ -46,7 +57,7 @@ export function ButtonsTemplatesPopover(props: IButtonsTemplatesPopoverProps) {
       <ButtonsTemplates
         setTemplateSelected={props.setTemplateSelected}
         setIsPopoverVisible={props.setIsPopoverVisible}
-        setSelectedTemplate={props.setSelectedTemplate}
+        setSelectedTemplate={handleOnButtonChange}
       />
     </Popover>
   );

@@ -6,19 +6,19 @@ import { IEmailBlock } from '@novu/shared';
 
 export function ContentContainer({
   contentPlaceholder,
-  onContentChange,
   readonly,
-  initContent,
+  value,
+  onChange,
 }: {
   contentPlaceholder: string;
-  onContentChange: (string) => void;
   readonly: boolean;
-  initContent: string | IEmailBlock[];
+  onChange: (data: any) => void;
+  value: string;
 }) {
   const theme = useMantineTheme();
   const ref = useRef<HTMLDivElement>(null);
-  const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!initContent);
-  const [content, setContent] = useState<string | IEmailBlock[]>(initContent);
+  const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!value);
+  const [content, setContent] = useState<string | IEmailBlock[]>(value);
 
   const handleChange = (e: React.ChangeEvent<HTMLDivElement>) => {
     const textContent = e.target.textContent;
@@ -31,7 +31,7 @@ export function ContentContainer({
     if (textContent === '<br>') showPlaceHolder = true;
     setVisiblePlaceholder(showPlaceHolder);
 
-    onContentChange(textContent);
+    onChange(textContent);
   };
 
   useEffect(() => {
@@ -43,16 +43,16 @@ export function ContentContainer({
   useEffect(() => {
     let showPlaceHolder = content.length === 0;
 
-    if (initContent === '<br>') showPlaceHolder = true;
+    if (value === '<br>') showPlaceHolder = true;
 
     setVisiblePlaceholder(showPlaceHolder);
-  }, [initContent, content]);
+  }, [value, content]);
 
   useEffect(() => {
-    if (initContent !== ref.current?.innerHTML) {
-      setContent(initContent);
+    if (value !== ref.current?.innerHTML) {
+      setContent(value);
     }
-  }, [initContent]);
+  }, [value]);
 
   return (
     <div style={{ position: 'relative' }}>

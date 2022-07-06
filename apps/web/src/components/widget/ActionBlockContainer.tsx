@@ -1,31 +1,34 @@
 import React from 'react';
-import { darkButtonStyle, IMessageButton, lightButtonStyle } from '@novu/shared';
+import {
+  darkButtonStyle,
+  IMessageButton,
+  lightButtonStyle,
+  ButtonTypeEnum,
+  IMessageAction,
+  MessageActionStatusEnum,
+} from '@novu/shared';
 import { TextInput, useMantineTheme } from '@mantine/core';
 import { RemoveCircle } from '../../design-system/icons/general/RemoveCircle';
 import styled from '@emotion/styled';
 import { Button, colors } from '../../design-system';
 
 export function ActionBlockContainer({
-  onChangeCtaAdapter,
   onButtonAddClickHandle,
   onRemoveTemplate,
   isButtonsTemplateSelected,
-  selectedTemplate,
+  onChange,
+  value,
 }: {
-  onChangeCtaAdapter: (actions: IMessageButton[]) => void;
   onButtonAddClickHandle: () => void;
   onRemoveTemplate: () => void;
   isButtonsTemplateSelected: boolean;
-  selectedTemplate: IMessageButton[];
+  onChange: (data: any) => void;
+  value: IMessageAction;
 }) {
   return (
     <>
       {isButtonsTemplateSelected ? (
-        <SelectedButtonTemplate
-          onChangeCtaAdapter={onChangeCtaAdapter}
-          selectedTemplate={selectedTemplate}
-          onRemoveTemplate={onRemoveTemplate}
-        />
+        <SelectedButtonTemplate onChange={onChange} value={value} onRemoveTemplate={onRemoveTemplate} />
       ) : (
         <AddButtonSection onButtonAddClick={onButtonAddClickHandle} />
       )}
@@ -34,9 +37,9 @@ export function ActionBlockContainer({
 }
 
 interface ISelectedButtonTemplateProps {
-  selectedTemplate: IMessageButton[];
+  value: IMessageAction;
   onRemoveTemplate: () => void;
-  onChangeCtaAdapter: (actions: IMessageButton[]) => void;
+  onChange: (actions: any) => void;
 }
 
 function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
@@ -44,18 +47,31 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
   const buttonStyle = dark ? darkButtonStyle : lightButtonStyle;
 
   function handleOnButtonContentChange(data: any, buttonIndex: number) {
-    const selectedTemplateClone = [...props.selectedTemplate];
-    selectedTemplateClone[buttonIndex].content = data.target.value;
-    props.onChangeCtaAdapter(selectedTemplateClone);
+    const currentButtonsValue = props?.value?.buttons ? [...props?.value?.buttons] : [];
+
+    if (currentButtonsValue) {
+      if (currentButtonsValue[buttonIndex]) {
+        currentButtonsValue[buttonIndex].content = data.target.value;
+        const newAction = { buttons: currentButtonsValue, status: MessageActionStatusEnum.PENDING };
+        props.onChange(newAction);
+      }
+    }
   }
 
-  const lastButtonType = props.selectedTemplate[props.selectedTemplate.length - 1]?.type;
+  const lastButtonType = props?.value?.buttons
+    ? props?.value?.buttons[props.value.buttons.length - 1]?.type
+    : ButtonTypeEnum.PRIMARY;
+
+  const buttons = props.value?.buttons;
+
+  // eslint-disable-next-line no-console
+  console.log(buttons);
 
   return (
     <>
       <TemplateContainerWrap>
         <TemplateContainer>
-          {props.selectedTemplate.map((button: IMessageButton, buttonIndex: number) => {
+          {buttons?.map((button: IMessageButton, buttonIndex: number) => {
             const buttonText = button?.content ? button?.content : '';
 
             return (

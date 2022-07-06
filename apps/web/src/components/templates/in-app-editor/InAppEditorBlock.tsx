@@ -1,44 +1,64 @@
 import React from 'react';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
-import { IMessage, IMessageButton, MessageActionStatusEnum } from '@novu/shared';
 import { ContentContainer } from './ContentContainer';
+import { Control, Controller } from 'react-hook-form';
+import { IForm } from '../use-template-controller.hook';
 
 export function InAppEditorBlock({
   contentPlaceholder,
-  onChange,
-  value,
+  control,
+  index,
   readonly,
 }: {
   contentPlaceholder: string;
-  value: IMessage;
-  onChange: (data: IMessage) => void;
+  control: Control<IForm>;
+  index: number;
   readonly: boolean;
 }) {
-  function onContentChange(data) {
-    const currentValue = Object.assign({}, value);
-    currentValue.content = data;
-    onChange(currentValue);
-  }
-
-  function onChangeCtaAdapter(buttons: IMessageButton[]) {
-    const currentValue = Object.assign({}, value);
-    currentValue.cta.action = { buttons: buttons, status: MessageActionStatusEnum.PENDING };
-
-    onChange(currentValue);
-  }
-
   return (
-    <InAppWidgetPreview
-      buttonTemplate={value?.cta?.action?.buttons}
-      onChangeCtaAdapter={onChangeCtaAdapter}
-      readonly={readonly}
-    >
-      <ContentContainer
-        contentPlaceholder={contentPlaceholder}
-        onContentChange={onContentChange}
-        initContent={value.content}
-        readonly={readonly}
-      />
-    </InAppWidgetPreview>
+    <Controller
+      name={`steps.${index}.template.cta.action` as any}
+      data-test-id="in-app-content-form-item"
+      control={control}
+      render={({ field }) => {
+        const { ref, ...fieldRefs } = field;
+
+        return (
+          <InAppWidgetPreview {...fieldRefs} readonly={readonly}>
+            <ContentContainerController
+              control={control}
+              index={index}
+              contentPlaceholder={contentPlaceholder}
+              readonly={readonly}
+            />
+          </InAppWidgetPreview>
+        );
+      }}
+    />
+  );
+}
+
+function ContentContainerController({
+  contentPlaceholder,
+  control,
+  index,
+  readonly,
+}: {
+  contentPlaceholder: string;
+  control: Control<IForm>;
+  index: number;
+  readonly: boolean;
+}) {
+  return (
+    <Controller
+      name={`steps.${index}.template.content` as any}
+      data-test-id="in-app-content-form-item"
+      control={control}
+      render={({ field }) => {
+        const { ref, ...fieldRefs } = field;
+
+        return <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} />;
+      }}
+    />
   );
 }
