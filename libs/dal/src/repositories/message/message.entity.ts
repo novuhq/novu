@@ -46,6 +46,8 @@ export class MessageEntity {
     };
   };
 
+  _feedId: string;
+
   status: 'sent' | 'error' | 'warning';
 
   errorId: string;

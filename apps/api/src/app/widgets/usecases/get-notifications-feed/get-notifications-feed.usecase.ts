@@ -12,6 +12,7 @@ export class GetNotificationsFeed {
       command.environmentId,
       command.subscriberId,
       ChannelTypeEnum.IN_APP,
+      command.feedId,
       {
         limit: 10,
         skip: command.page * 10,

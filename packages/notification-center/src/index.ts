@@ -1,10 +1,9 @@
-import { IMessage, ISubscriberJwt, IOrganizationEntity } from '@novu/shared';
+import { IMessage, ISubscriberJwt, IOrganizationEntity, IFeedEntity } from '@novu/shared';
 
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
 export * from './hooks/use-socket.hook';
 export * from './hooks/use-notifications.hook';
-export { IMessage } from '@novu/shared';
 
 export interface IAuthContext {
   applyToken: (token: string | null) => void;
@@ -49,6 +48,13 @@ export interface INovuProviderContext {
   socketUrl?: string;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash: string;
+}
+
+export type FeedInfo = Pick<IFeedEntity, '_id' | 'name'>;
+
+export interface IFeedsContext {
+  feeds: FeedInfo[];
+  setFeeds: (feeds: FeedInfo[]) => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';

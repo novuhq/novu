@@ -1,4 +1,4 @@
-import { IsNumber, IsPositive } from 'class-validator';
+import { IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
@@ -9,4 +9,8 @@ export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
 
   @IsNumber()
   page: number;
+
+  @IsString()
+  @IsOptional()
+  feedId: string;
 }

@@ -39,6 +39,10 @@ const messageSchema = new Schema(
       },
       data: Schema.Types.Mixed,
     },
+    _feedId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Feed',
+    },
     channel: Schema.Types.String,
     content: Schema.Types.Mixed,
     phone: Schema.Types.String,

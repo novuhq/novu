@@ -44,12 +44,17 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/feed')
-  async getNotificationsFeed(@SubscriberSession() subscriberSession: SubscriberEntity, @Query('page') page: number) {
+  async getNotificationsFeed(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query('page') page: number,
+    @Query('feedId') feedId: string
+  ) {
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
       page,
+      feedId,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
