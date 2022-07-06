@@ -25,7 +25,7 @@ export function NotificationListItem({
       novuTheme={novuTheme}
       data-test-id="notification-list-item"
       unseen={!notification.seen}
-      onClick={() => handleNotificationClick}
+      onClick={() => handleNotificationClick()}
     >
       <NotificationItemContainer>
         <TextContent

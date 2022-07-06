@@ -1,7 +1,8 @@
 import React from 'react';
-import { NotificationButton } from './NorificationItemButton';
-import { IMessageAction, ButtonTypeEnum } from '@novu/shared';
+import { ActionButton, NotificationButton } from './NorificationItemButton';
+import { IMessageAction, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
+import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 
 export interface IActionContainerProps {
   action?: IMessageAction;
@@ -9,19 +10,30 @@ export interface IActionContainerProps {
 }
 
 export function ActionContainer(props: IActionContainerProps) {
+  const { theme } = useNovuThemeProvider();
   const buttons = props?.action?.buttons;
+  const buttonStyle = theme.notificationItem.buttons[ButtonTypeEnum.CLICKED];
+
+  const clicked = props.action.status === MessageActionStatusEnum.DONE;
 
   return (
     <>
       <TemplateContainerWrap>
         <TemplateContainer>
-          {buttons?.map((button) => (
-            <NotificationButton
-              onNotificationClick={props.onNotificationClick}
-              buttonContext={button}
-              key={button.type}
-            />
-          ))}
+          {clicked ? (
+            <ActionButton clicked={clicked} buttonStyle={buttonStyle}>
+              Clicked
+            </ActionButton>
+          ) : (
+            buttons?.map((button, buttonIndex) => (
+              <NotificationButton
+                onNotificationClick={props.onNotificationClick}
+                messageAction={props?.action}
+                buttonIndex={buttonIndex}
+                key={button.type}
+              />
+            ))
+          )}
         </TemplateContainer>
       </TemplateContainerWrap>
     </>

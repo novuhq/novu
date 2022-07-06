@@ -14,6 +14,7 @@ export interface IButtonStyles {
 export interface IStyleButtons {
   primary: IButtonStyles;
   secondary: IButtonStyles;
+  clicked: IButtonStyles;
 }
 
 const primaryButton: INotificationButtonConfig = {
@@ -33,6 +34,7 @@ export const darkButtonStyle: IStyleButtons = {
     removeCircleColor: 'white',
   },
   secondary: { backGroundColor: '#3D3D4D', fontColor: '#FFFFFF', removeCircleColor: '#525266' },
+  clicked: { backGroundColor: 'white', fontColor: '#FFFFFF', removeCircleColor: '#525266' },
 };
 
 export const lightButtonStyle: IStyleButtons = {
@@ -42,6 +44,7 @@ export const lightButtonStyle: IStyleButtons = {
     removeCircleColor: 'white',
   },
   secondary: { backGroundColor: '#F5F8FA', fontColor: '#525266', removeCircleColor: '#525266' },
+  clicked: { backGroundColor: 'white', fontColor: '#525266', removeCircleColor: '#525266' },
 };
 
 export const notificationItemButtons: INotificationButtonConfig[] = [primaryButton, secondaryButton];
