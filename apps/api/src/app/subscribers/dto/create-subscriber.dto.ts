@@ -1,5 +1,6 @@
 import { IsArray, IsDefined, IsEmail, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IChannelSettings } from '@novu/dal';
 
 export class CreateSubscriberBodyDto {
   @ApiProperty()
@@ -26,9 +27,4 @@ export class CreateSubscriberBodyDto {
   @IsString()
   @IsOptional()
   avatar?: string;
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  notificationIdentifiers?: string[];
 }

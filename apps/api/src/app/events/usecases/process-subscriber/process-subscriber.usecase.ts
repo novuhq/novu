@@ -127,7 +127,6 @@ export class ProcessSubscriber {
         lastName: subscriberPayload?.lastName,
         phone: subscriberPayload?.phone,
         avatar: subscriberPayload?.avatar,
-        notificationIdentifiers: subscriberPayload?.notificationIdentifiers,
       })
     );
   }
@@ -138,9 +137,7 @@ export class ProcessSubscriber {
       (subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
       (subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
       (subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar) ||
-      (subscriberPayload?.notificationIdentifiers &&
-        subscriber?.notificationIdentifiers !== subscriberPayload?.notificationIdentifiers)
+      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
     );
   }
 

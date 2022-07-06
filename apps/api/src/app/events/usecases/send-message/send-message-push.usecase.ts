@@ -9,7 +9,7 @@ import {
   NotificationEntity,
   MessageEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, PushProviderIdEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -51,62 +51,45 @@ export class SendMessagePush extends SendMessageType {
     const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
     const content = contentService.replaceVariables(pushChannel.template.content as string, messageVariables);
     const title = contentService.replaceVariables(pushChannel.template.title as string, messageVariables);
-    const notificationIdentifiers = command.payload.notificationIdentifiers || subscriber.notificationIdentifiers;
     const overrides = command.overrides[integration.providerId] || {};
+    const pushChannels = subscriber.channels.filter((chan) =>
+      Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
+    );
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
 
-    const message: MessageEntity = await this.messageRepository.create({
-      _notificationId: notification._id,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      _subscriberId: command.subscriberId,
-      _templateId: notification._templateId,
-      _messageTemplateId: pushChannel.template._id,
-      channel: ChannelTypeEnum.PUSH,
-      transactionId: command.transactionId,
-      notificationIdentifiers,
-      content,
-      title,
-      payload: messagePayload,
-      overrides,
-    });
-
-    if (notificationIdentifiers && integration) {
-      await this.sendMessage(
-        integration,
-        notificationIdentifiers,
-        title,
-        content,
-        message,
-        command,
-        notification,
-        command.payload,
-        overrides
-      );
+    if (integration) {
+      for (const channel of pushChannels) {
+        if (!channel.credentials.notificationIdentifiers) continue;
+        await this.sendMessage(
+          integration,
+          channel.credentials.notificationIdentifiers,
+          title,
+          content,
+          command,
+          notification,
+          command.payload,
+          overrides,
+          channel.providerId
+        );
+      }
 
       return;
     }
 
-    await this.sendErrors(notificationIdentifiers, integration, message, command, notification);
+    await this.sendErrors(pushChannels, command, notification);
   }
 
-  private async sendErrors(
-    notificationIdentifiers,
-    integration,
-    message: MessageEntity,
-    command: SendMessageCommand,
-    notification: NotificationEntity
-  ) {
-    if (!notificationIdentifiers) {
+  private async sendErrors(pushChannels, command: SendMessageCommand, notification: NotificationEntity) {
+    if (!pushChannels) {
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
           status: LogStatusEnum.ERROR,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
-          text: 'Subscriber does not have active push notification receiver',
+          text: 'Subscriber does not have active channel',
           userId: command.userId,
           subscriberId: command.subscriberId,
           code: LogCodeEnum.SUBSCRIBER_MISSING_PUSH,
@@ -117,43 +100,42 @@ export class SendMessagePush extends SendMessageType {
           },
         })
       );
-      await this.messageRepository.updateMessageStatus(
-        message._id,
-        'warning',
-        null,
-        'no_push_receiver',
-        'Subscriber does not have active push notification receiver'
-      );
-    }
-    if (!integration) {
-      await this.sendErrorStatus(
-        message,
-        'warning',
-        'push_missing_integration_error',
-        'Subscriber does not have an active push integration',
-        command,
-        notification,
-        LogCodeEnum.MISSING_PUSH_INTEGRATION
-      );
     }
   }
 
   private async sendMessage(
     integration,
-    target: string,
+    target: string[],
     title: string,
     content: string,
-    message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity,
     payload: object,
-    overrides: object
+    overrides: object,
+    providerId: string
   ) {
+    const message: MessageEntity = await this.messageRepository.create({
+      _notificationId: notification._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _subscriberId: command.subscriberId,
+      _templateId: notification._templateId,
+      _messageTemplateId: command.step.template._id,
+      channel: ChannelTypeEnum.PUSH,
+      transactionId: command.transactionId,
+      notificationIdentifiers: target,
+      content,
+      title,
+      payload: payload as never,
+      overrides: overrides as never,
+      providerId,
+    });
+
     try {
       const pushHandler = this.pushFactory.getHandler(integration);
 
       await pushHandler.send({
-        target,
+        target: (overrides as { notificationIdentifiers?: string[] }).notificationIdentifiers || target,
         title,
         content,
         payload,
