@@ -121,11 +121,11 @@ const WorkflowEditorPage = ({
                     variant="outline"
                     data-test-id="edit-template-channel"
                     fullWidth
-                    onClick={() =>
+                    onClick={() => {
                       setActivePage(
                         selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
-                      )
-                    }
+                      );
+                    }}
                   >
                     Edit Template
                   </EditTemplateButton>

@@ -20359,7 +20359,7 @@ packages:
     dev: false
 
   /array-uniq/1.0.3:
-    resolution: {integrity: sha512-MNha4BWQ6JbwhFhj03YK552f7cb3AzoE8SzeljgChvL1dl3IcvggXVz1DilzySZkCja+CXuZbdW7yATchWn8/Q==}
+    resolution: {integrity: sha1-r2rId6Jcx/dOBYiUdThY39sk/bY=}
     engines: {node: '>=0.10.0'}
 
   /array-unique/0.2.1:
@@ -27800,7 +27800,7 @@ packages:
     dev: true
 
   /filename-reserved-regex/2.0.0:
-    resolution: {integrity: sha512-lc1bnsSr4L4Bdif8Xb/qrtokGbq5zlsms/CYH8PP+WtCkGNF65DPiQY8vG3SakEdRn8Dlnm+gW/qWKKjS5sZzQ==}
+    resolution: {integrity: sha1-q/c9+rc10EVECr/qLZHzieu/oik=}
     engines: {node: '>=4'}
     dev: true
 
@@ -29240,7 +29240,7 @@ packages:
     dev: false
 
   /globby/6.1.0:
-    resolution: {integrity: sha512-KVbFv2TQtbzCoxAnfD6JcHZTYCzyliEaaeM/gH8qQdkKr5s0OP9scEgvdcngyk7AVdY6YVW/TJHd+lQ/Df3Daw==}
+    resolution: {integrity: sha1-9abXDoOV4hyFj7BInWTfAkJNUGw=}
     engines: {node: '>=0.10.0'}
     dependencies:
       array-union: 1.0.2

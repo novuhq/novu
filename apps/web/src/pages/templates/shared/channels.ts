@@ -29,8 +29,8 @@ export const channels = [
   {
     tabKey: ChannelTypeEnum.DIRECT,
     label: 'Direct',
-    description: 'Send an Direct message to a user',
-    Icon: MobileGradient,
+    description: 'Send a direct message',
+    Icon: SmsGradient,
     testId: 'directSelector',
     channelType: ChannelTypeEnum.DIRECT,
   },
