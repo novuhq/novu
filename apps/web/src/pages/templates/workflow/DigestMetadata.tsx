@@ -1,9 +1,15 @@
 import { Grid, InputWrapper } from '@mantine/core';
 import { DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Input, Select } from '../../../design-system';
+import { Input, Select, Switch } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
+import styled from '@emotion/styled';
+
+const StyledSwitch = styled(Switch)`
+  max-width: 100% !important;
+  margin-top: 15px;
+`;
 
 export const DigestMetadata = ({ control, index }) => {
   const { readonly } = useEnvController();
@@ -72,6 +78,21 @@ export const DigestMetadata = ({ control, index }) => {
               error={errors?.steps ? errors.steps[index]?.metadata?.batchkey?.message : undefined}
               type="text"
               data-test-id="batch-key"
+            />
+          );
+        }}
+      />
+      <Controller
+        control={control}
+        name={`steps.${index}.metadata.resend`}
+        render={({ field: { value, ...field } }) => {
+          return (
+            <StyledSwitch
+              {...field}
+              data-test-id="resend"
+              disabled={readonly}
+              checked={value}
+              label={`Resend in app notifications`}
             />
           );
         }}
