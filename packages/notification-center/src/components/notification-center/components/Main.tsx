@@ -34,7 +34,9 @@ export function Main() {
   }
 
   async function onNotificationClicked(notification: IMessage, actionButtonType?: ButtonTypeEnum) {
-    await markAsActionAsDone(notification._id, actionButtonType);
+    if (actionButtonType) {
+      await markAsActionAsDone(notification._id, actionButtonType);
+    }
 
     await markNotificationAsSeen(notification._id);
 
