@@ -29,6 +29,7 @@ export interface ICta {
 
 export interface IMessageAction {
   status?: MessageActionStatusEnum;
+  executedType?: ButtonTypeEnum;
   buttons?: IMessageButton[];
 }
 

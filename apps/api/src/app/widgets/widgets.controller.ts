@@ -15,6 +15,9 @@ import { GetOrganizationData } from './usecases/get-organization-data/get-organi
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { ButtonTypeEnum } from '@novu/shared';
+import { MarkActionAsDone } from './usecases/mark-action-as-done/mark-action-as-done.usecause';
+import { MarkActionAsDoneCommand } from './usecases/mark-action-as-done/mark-action-as-done.command';
 
 @Controller('/widgets')
 export class WidgetsController {
@@ -23,6 +26,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
+    private markActionAsDoneUsecase: MarkActionAsDone,
     private getOrganizationUsecase: GetOrganizationData,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
@@ -81,6 +85,24 @@ export class WidgetsController {
     });
 
     return await this.markMessageAsSeenUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/:messageId/actiondone')
+  async markActionAsSeen(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('messageId') messageId: string,
+    @Body() body: { executedType: ButtonTypeEnum } // eslint-disable-line @typescript-eslint/no-explicit-any
+  ): Promise<MessageEntity> {
+    return await this.markActionAsDoneUsecase.execute(
+      MarkActionAsDoneCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession._id,
+        environmentId: subscriberSession._environmentId,
+        messageId,
+        executedType: body.executedType,
+      })
+    );
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
