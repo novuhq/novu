@@ -50,9 +50,11 @@ export interface INovuProviderContext {
   subscriberHash: string;
 }
 
+export type FeedInfo = Pick<IFeedEntity, '_id' | 'name'>;
+
 export interface IFeedsContext {
-  feeds: IFeedEntity[];
-  setFeeds: (feeds: IFeedEntity[]) => void;
+  feeds: FeedInfo[];
+  setFeeds: (feeds: FeedInfo[]) => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';

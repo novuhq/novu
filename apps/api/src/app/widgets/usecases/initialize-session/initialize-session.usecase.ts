@@ -45,9 +45,12 @@ export class InitializeSession {
 
     const subscriber = await this.createSubscriber.execute(commandos);
 
-    const feeds = await this.feedRepository.find({
-      _environmentId: environment._id,
-    });
+    const feeds = await this.feedRepository.find(
+      {
+        _environmentId: environment._id,
+      },
+      '_id name'
+    );
 
     this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
       organizationId: environment._organizationId,

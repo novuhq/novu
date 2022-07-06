@@ -23,10 +23,3 @@ export interface IMessage {
   _feedId: string;
   payload: Record<string, unknown>;
 }
-
-export interface IFeedEntity {
-  _id: string;
-  name: string;
-  _environmentId: string;
-  _organizationId: string;
-}

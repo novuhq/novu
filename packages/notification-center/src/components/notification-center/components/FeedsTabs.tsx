@@ -29,7 +29,7 @@ export function FeedsTabs() {
           ))}
         </Tabs>
       ) : (
-        <NotificationsListTab feedId={''} />
+        <NotificationsListTab />
       )}
     </>
   );

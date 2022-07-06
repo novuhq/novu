@@ -1,8 +1,7 @@
 import React from 'react';
-import { IFeedsContext } from '../index';
-import { IFeedEntity } from '@novu/shared';
+import { FeedInfo, IFeedsContext } from '../index';
 
 export const FeedsContext = React.createContext<IFeedsContext>({
   feeds: null,
-  setFeeds: (feeds: IFeedEntity[]) => {},
+  setFeeds: (feeds: FeedInfo[]) => {},
 });

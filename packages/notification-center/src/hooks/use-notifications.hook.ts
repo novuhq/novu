@@ -2,7 +2,7 @@ import { useApi } from './use-api.hook';
 import { useEffect, useState } from 'react';
 import { IMessage } from '@novu/shared';
 
-export function useNotifications(feedId?: string) {
+export function useNotifications(feedId: string) {
   const { api } = useApi();
   const [notifications, setNotifications] = useState<IMessage[]>([]);
   const [page, setPage] = useState<number>(0);

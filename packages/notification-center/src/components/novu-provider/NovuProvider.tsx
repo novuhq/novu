@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, IAuthContext, INovuProviderContext } from '../../index';
+import { ColorScheme, FeedInfo, IAuthContext, INovuProviderContext } from '../../index';
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
@@ -10,7 +10,7 @@ import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
 import { useApi } from '../../hooks/use-api.hook';
 import { AuthProvider } from '../notification-center/components';
-import { IOrganizationEntity, IFeedEntity } from '@novu/shared';
+import { IOrganizationEntity } from '@novu/shared';
 import { FeedsContext } from '../../store/feeds.context';
 
 interface INovuProviderProps {
@@ -72,7 +72,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   const { api: apiService } = useApi();
   const { applyToken, setUser } = useContext<IAuthContext>(AuthContext);
   const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
-  const [feeds, setFeeds] = useState<IFeedEntity[]>(null);
+  const [feeds, setFeeds] = useState<FeedInfo[]>(null);
 
   useEffect(() => {
     if (props.subscriberId && props.applicationIdentifier) {
