@@ -409,7 +409,7 @@ describe('Notifications Creator', function () {
       cy.intercept('GET', '/v1/notification-templates').as('notification-templates');
       cy.getByTestId('trigger-snippet-btn').click();
 
-      cy.wait('@notification-templates');
+      cy.wait('@notification-templates', { timeout: 60000 });
       cy.get('tbody').contains('Custom Code HTM').click();
 
       cy.getByTestId('workflowButton').click();
