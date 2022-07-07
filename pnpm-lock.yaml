@@ -173,7 +173,7 @@ importers:
       nest-raven: ^8.1.0
       newrelic: ^7.4.0
       nodemon: ^2.0.3
-      passport: ^0.4.1
+      passport: 0.6.0
       passport-github2: ^0.1.12
       passport-jwt: ^4.0.0
       passport-oauth2: 1.6.1
@@ -198,9 +198,9 @@ importers:
       '@nestjs/axios': 0.0.8_qna2ix3wuyhvmc56wewcijj25m
       '@nestjs/common': 8.4.6_kgmvgmqc4iohdboj3f7yqhrie4
       '@nestjs/core': 8.4.6_suave6mfkne66p6dqupcjv2744
-      '@nestjs/graphql': 10.0.15_o67kdqb2vfzucilgtugk4xf6ya
+      '@nestjs/graphql': 10.0.15_7vx4dzesc35xphnxlqqjuxv64y
       '@nestjs/jwt': 8.0.1_@nestjs+common@8.4.6
-      '@nestjs/passport': 8.2.1_n4dtjdc2xggw3aijge6jndqjz4
+      '@nestjs/passport': 8.2.1_rgfpjs3s462m3ujji7kreilcr4
       '@nestjs/platform-express': 8.4.6_etfae4mmenqzp3rs3pua7csngy
       '@nestjs/swagger': 5.2.1_zi4tuyx3qtp34xthrn3ho5tamm
       '@nestjs/terminus': 8.0.6_ylfx5swiot7inr3kdyigrsa54e
@@ -248,9 +248,9 @@ importers:
       mixpanel: 0.13.0
       moment: 2.29.1
       nanoid: 3.3.2
-      nest-raven: 8.1.0_skrmnxzh27dq2km5y7pqncmlxy
+      nest-raven: 8.1.0_y5ex5k5nkngkiov6ktrkmo4jpa
       newrelic: 7.5.2
-      passport: 0.4.1
+      passport: 0.6.0
       passport-github2: 0.1.12
       passport-jwt: 4.0.0
       passport-oauth2: 1.6.1
@@ -282,7 +282,7 @@ importers:
       mocha: 8.4.0
       nodemon: 2.0.15
       sinon: 9.2.4
-      ts-loader: 9.2.8_cyciznkqvonecovanekmmyqwva
+      ts-loader: 9.2.8_ub35lyjrfansgnglcfaofeaefe
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.11.0
 
@@ -9664,6 +9664,17 @@ packages:
       graphql: 15.8.0
       tslib: 2.4.0
     dev: false
+    optional: true
+
+  /@graphql-tools/merge/8.2.13_graphql@16.5.0:
+    resolution: {integrity: sha512-lhzjCa6wCthOYl7B6UzER3SGjU2WjSGnW0WGr8giMYsrtf6G3vIRotMcSVMlhDzyyMIOn7uPULOUt3/kaJ/rIA==}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+    dependencies:
+      '@graphql-tools/utils': 8.6.12_graphql@16.5.0
+      graphql: 16.5.0
+      tslib: 2.4.0
+    dev: false
 
   /@graphql-tools/merge/8.2.6_graphql@15.8.0:
     resolution: {integrity: sha512-dkwTm4czMISi/Io47IVvq2Fl9q4TIGKpJ0VZjuXYdEFkECyH6A5uwxZfPVandZG+gQs8ocFFoa6RisiUJLZrJw==}
@@ -9714,6 +9725,19 @@ packages:
       tslib: 2.4.0
       value-or-promise: 1.0.11
     dev: false
+    optional: true
+
+  /@graphql-tools/schema/8.3.13_graphql@16.5.0:
+    resolution: {integrity: sha512-e+bx1VHj1i5v4HmhCYCar0lqdoLmkRi/CfV07rTqHR6CRDbIb/S/qDCajHLt7FCovQ5ozlI5sRVbBhzfq5H0PQ==}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+    dependencies:
+      '@graphql-tools/merge': 8.2.13_graphql@16.5.0
+      '@graphql-tools/utils': 8.6.12_graphql@16.5.0
+      graphql: 16.5.0
+      tslib: 2.4.0
+      value-or-promise: 1.0.11
+    dev: false
 
   /@graphql-tools/schema/8.3.5_graphql@15.8.0:
     resolution: {integrity: sha512-3mJ/K7TdL+fnEUtCUqF4qkh1fcNMzaxgwKgO9fSYSTS7zyT16hbi5XSulSTshygHgaD2u+MO588iR4ZJcbZcIg==}
@@ -9747,6 +9771,16 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 15.8.0
+      tslib: 2.4.0
+    dev: false
+    optional: true
+
+  /@graphql-tools/utils/8.6.12_graphql@16.5.0:
+    resolution: {integrity: sha512-WQ91O40RC+UJgZ9K+IzevSf8oolR1QE+WQ21Oyc2fgDYYiqT0eSf+HVyhZr/8x9rVjn3N9HeqCsywbdmbljg0w==}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+    dependencies:
+      graphql: 16.5.0
       tslib: 2.4.0
     dev: false
 
@@ -11457,7 +11491,7 @@ packages:
       call-me-maybe: 1.0.1
       glob-to-regexp: 0.3.0
 
-  /@nestjs/apollo/10.0.16_mtzrja2y6kez4cgehoupvavfi4:
+  /@nestjs/apollo/10.0.16_eq4e5pd6wowvfip7giip3fanxa:
     resolution: {integrity: sha512-aN9jR0Y3F9wWxQ3qiVLbJ9GIKnqrG9QbztQbjIv1ODByKEXJnhvqXlCDTDj32DFYkZudsUjQEbdOda3EQNR5DQ==}
     requiresBuild: true
     peerDependencies:
@@ -11480,7 +11514,7 @@ packages:
     dependencies:
       '@nestjs/common': 8.4.6_kgmvgmqc4iohdboj3f7yqhrie4
       '@nestjs/core': 8.4.6_suave6mfkne66p6dqupcjv2744
-      '@nestjs/graphql': 10.0.15_o67kdqb2vfzucilgtugk4xf6ya
+      '@nestjs/graphql': 10.0.16_7vx4dzesc35xphnxlqqjuxv64y
       iterall: 1.3.0
       lodash.omit: 4.5.0
       tslib: 2.4.0
@@ -11717,7 +11751,7 @@ packages:
     transitivePeerDependencies:
       - encoding
 
-  /@nestjs/graphql/10.0.15_o67kdqb2vfzucilgtugk4xf6ya:
+  /@nestjs/graphql/10.0.15_7vx4dzesc35xphnxlqqjuxv64y:
     resolution: {integrity: sha512-G/w21tNhHuNe9ux0a/7jFX8MbG0NQhoe0XQKfIK/zbO/RLpUqMZGYW6DpSNIkXD9AWrMSThxOhgAjipAoGhikQ==}
     peerDependencies:
       '@apollo/subgraph': ^0.1.5 || ^0.3.0 || ^0.4.0 || ^2.0.0
@@ -11732,21 +11766,21 @@ packages:
       ts-morph:
         optional: true
     dependencies:
-      '@graphql-tools/merge': 8.2.13_graphql@15.8.0
-      '@graphql-tools/schema': 8.3.13_graphql@15.8.0
-      '@graphql-tools/utils': 8.6.12_graphql@15.8.0
+      '@graphql-tools/merge': 8.2.13_graphql@16.5.0
+      '@graphql-tools/schema': 8.3.13_graphql@16.5.0
+      '@graphql-tools/utils': 8.6.12_graphql@16.5.0
       '@nestjs/common': 8.4.6_kgmvgmqc4iohdboj3f7yqhrie4
       '@nestjs/core': 8.4.6_suave6mfkne66p6dqupcjv2744
       '@nestjs/mapped-types': 1.0.1_2v2uegmigrjmkn34lwfzpe6n3u
       chokidar: 3.5.3
       fast-glob: 3.2.11
-      graphql: 15.8.0
-      graphql-tag: 2.12.6_graphql@15.8.0
-      graphql-ws: 5.5.5_graphql@15.8.0
+      graphql: 16.5.0
+      graphql-tag: 2.12.6_graphql@16.5.0
+      graphql-ws: 5.5.5_graphql@16.5.0
       lodash: 4.17.21
       normalize-path: 3.0.0
       reflect-metadata: 0.1.13
-      subscriptions-transport-ws: 0.11.0_graphql@15.8.0
+      subscriptions-transport-ws: 0.11.0_graphql@16.5.0
       tslib: 2.4.0
       uuid: 8.3.2
       ws: 8.7.0
@@ -11756,6 +11790,48 @@ packages:
       - class-validator
       - utf-8-validate
     dev: false
+
+  /@nestjs/graphql/10.0.16_7vx4dzesc35xphnxlqqjuxv64y:
+    resolution: {integrity: sha512-vuGm9lqpbhpH/7TTRBEVO9DtV+TayPailtrnbpXaCy4bdjeSRqbfpZphU+Jpb+GjMmD9zEBWuwNBt8uSzmLDAQ==}
+    requiresBuild: true
+    peerDependencies:
+      '@apollo/subgraph': ^0.1.5 || ^0.3.0 || ^0.4.0 || ^2.0.0
+      '@nestjs/common': ^8.2.3
+      '@nestjs/core': ^8.2.3
+      graphql: ^15.8.0 || ^16.0.0
+      reflect-metadata: ^0.1.13
+      ts-morph: ^13.0.2 || ^14.0.0 || ^15.0.0
+    peerDependenciesMeta:
+      '@apollo/subgraph':
+        optional: true
+      ts-morph:
+        optional: true
+    dependencies:
+      '@graphql-tools/merge': 8.2.13_graphql@16.5.0
+      '@graphql-tools/schema': 8.3.13_graphql@16.5.0
+      '@graphql-tools/utils': 8.6.12_graphql@16.5.0
+      '@nestjs/common': 8.4.6_kgmvgmqc4iohdboj3f7yqhrie4
+      '@nestjs/core': 8.4.6_suave6mfkne66p6dqupcjv2744
+      '@nestjs/mapped-types': 1.0.1_2v2uegmigrjmkn34lwfzpe6n3u
+      chokidar: 3.5.3
+      fast-glob: 3.2.11
+      graphql: 16.5.0
+      graphql-tag: 2.12.6_graphql@16.5.0
+      graphql-ws: 5.5.5_graphql@16.5.0
+      lodash: 4.17.21
+      normalize-path: 3.0.0
+      reflect-metadata: 0.1.13
+      subscriptions-transport-ws: 0.11.0_graphql@16.5.0
+      tslib: 2.4.0
+      uuid: 8.3.2
+      ws: 8.7.0
+    transitivePeerDependencies:
+      - bufferutil
+      - class-transformer
+      - class-validator
+      - utf-8-validate
+    dev: false
+    optional: true
 
   /@nestjs/graphql/7.11.0_txvperw2o27tazgzc6v3oedijq:
     resolution: {integrity: sha512-ePvvAZkYFYPF+Ibax+Nuz5z7p4U6jXUqdxNsjI6m6DYwsAa8hzXhKA9bPhBs2FCrrAcEJ9KrmI2luJ/Lj0SHbg==}
@@ -11851,14 +11927,14 @@ packages:
       reflect-metadata: 0.1.13
     dev: false
 
-  /@nestjs/passport/8.2.1_n4dtjdc2xggw3aijge6jndqjz4:
+  /@nestjs/passport/8.2.1_rgfpjs3s462m3ujji7kreilcr4:
     resolution: {integrity: sha512-HXEKMLX1x865+lsJB4srwKHBciDNAhWY1Ha+xbxYRbk7J5leGDoHJAmeqe+Wb3NDn5nkboggLV87t0q2mbYc8w==}
     peerDependencies:
       '@nestjs/common': ^6.0.0 || ^7.0.0 || ^8.0.0
       passport: ^0.4.0 || ^0.5.0
     dependencies:
       '@nestjs/common': 8.4.6_kgmvgmqc4iohdboj3f7yqhrie4
-      passport: 0.4.1
+      passport: 0.6.0
     dev: false
 
   /@nestjs/platform-express/7.6.18_ezseebmi4ciby6kdvs2gspf26q:
@@ -13381,12 +13457,30 @@ packages:
       tslib: 1.14.1
     dev: false
 
+  /@sentry/hub/6.19.7:
+    resolution: {integrity: sha512-y3OtbYFAqKHCWezF0EGGr5lcyI2KbaXW2Ik7Xp8Mu9TxbSTuwTe4rTntwg8ngPjUQU3SUHzgjqVB8qjiGqFXCA==}
+    engines: {node: '>=6'}
+    dependencies:
+      '@sentry/types': 6.19.7
+      '@sentry/utils': 6.19.7
+      tslib: 1.14.1
+    dev: false
+
   /@sentry/minimal/6.19.3:
     resolution: {integrity: sha512-xy/6ThHK8B2NJT98nWrx6V9eVgUbzq2N/8lv5/QqrKsICjxx22TRC8Q6zPg/o7BYcrY5vpugSEbIeErTnyxHDA==}
     engines: {node: '>=6'}
     dependencies:
       '@sentry/hub': 6.19.3
       '@sentry/types': 6.19.3
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/minimal/6.19.7:
+    resolution: {integrity: sha512-wcYmSJOdvk6VAPx8IcmZgN08XTXRwRtB1aOLZm+MVHjIZIhHoBGZJYTVQS/BWjldsamj2cX3YGbGXNunaCfYJQ==}
+    engines: {node: '>=6'}
+    dependencies:
+      '@sentry/hub': 6.19.7
+      '@sentry/types': 6.19.7
       tslib: 1.14.1
     dev: false
 
@@ -13437,11 +13531,24 @@ packages:
     engines: {node: '>=6'}
     dev: false
 
+  /@sentry/types/6.19.7:
+    resolution: {integrity: sha512-jH84pDYE+hHIbVnab3Hr+ZXr1v8QABfhx39KknxqKWr2l0oEItzepV0URvbEhB446lk/S/59230dlUUIBGsXbg==}
+    engines: {node: '>=6'}
+    dev: false
+
   /@sentry/utils/6.19.3:
     resolution: {integrity: sha512-GdC9B/FK7qd0zItY43135bYbhuVSawE18bIrQDNuno8gTpDJ5OgShpTN9zR53AmMh16/lwKNnV3ZZjlpKcxuNw==}
     engines: {node: '>=6'}
     dependencies:
       '@sentry/types': 6.19.3
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/utils/6.19.7:
+    resolution: {integrity: sha512-z95ECmE3i9pbWoXQrD/7PgkBAzJYR+iXtPuTkpBjDKs86O3mT+PXOT3BAn79w2wkn7/i3vOGD2xVr1uiMl26dA==}
+    engines: {node: '>=6'}
+    dependencies:
+      '@sentry/types': 6.19.7
       tslib: 1.14.1
     dev: false
 
@@ -29241,6 +29348,16 @@ packages:
       graphql: 15.8.0
       tslib: 2.4.0
 
+  /graphql-tag/2.12.6_graphql@16.5.0:
+    resolution: {integrity: sha512-FdSNcu2QQcWnM2VNvSCCDCVS5PpPqpzgFT8+GXzqJuoDd0CBncxCY278u4mhRO7tMgo2JjgJA5aZ+nWSQ/Z+xg==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+    dependencies:
+      graphql: 16.5.0
+      tslib: 2.4.0
+    dev: false
+
   /graphql-tools/4.0.8_graphql@15.8.0:
     resolution: {integrity: sha512-MW+ioleBrwhRjalKjYaLQbr+920pHBgy9vM/n47sswtns8+96sRn5M/G+J1eu7IMeKWiN/9p6tmwCHU7552VJg==}
     deprecated: This package has been deprecated and now it only exports makeExecutableSchema.\nAnd it will no longer receive updates.\nWe recommend you to migrate to scoped packages such as @graphql-tools/schema, @graphql-tools/utils and etc.\nCheck out https://www.graphql-tools.com to learn what package you should use instead
@@ -29256,18 +29373,23 @@ packages:
     dev: false
     optional: true
 
-  /graphql-ws/5.5.5_graphql@15.8.0:
+  /graphql-ws/5.5.5_graphql@16.5.0:
     resolution: {integrity: sha512-hvyIS71vs4Tu/yUYHPvGXsTgo0t3arU820+lT5VjZS2go0ewp2LqyCgxEN56CzOG7Iys52eRhHBiD1gGRdiQtw==}
     engines: {node: '>=10'}
     peerDependencies:
       graphql: '>=0.11 <=16'
     dependencies:
-      graphql: 15.8.0
+      graphql: 16.5.0
     dev: false
 
   /graphql/15.8.0:
     resolution: {integrity: sha512-5gghUc24tP9HRznNpV2+FIoq3xKkj5dTQqf4v0CpdPbFVwFkWoxOM+o+2OC9ZSvjEMTjfmG9QT+gcvggTwW1zw==}
     engines: {node: '>= 10.x'}
+
+  /graphql/16.5.0:
+    resolution: {integrity: sha512-qbHgh8Ix+j/qY+a/ZcJnFQ+j8ezakqPiHwPiZhV/3PgGlgf96QMBB5/f2rkiC9sgLoy/xvT6TSiaf2nTHJh5iA==}
+    engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
+    dev: false
 
   /gray-matter/4.0.3:
     resolution: {integrity: sha512-5v6yZd4JK3eMI3FqqCouswVqwugaA9r4dNZB1wwcmrD02QkV5H0y7XBQW8QwQqEaZY1pM9aqORSORhJRdNK44Q==}
@@ -34865,19 +34987,73 @@ packages:
   /ms/2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
-  /msgpackr-extract/1.0.16:
-    resolution: {integrity: sha512-fxdRfQUxPrL/TizyfYfMn09dK58e+d65bRD/fcaVH4052vj30QOzzqxcQIS7B0NsqlypEQ/6Du3QmP2DhWFfCA==}
+  /msgpackr-extract-darwin-arm64/1.1.0:
+    resolution: {integrity: sha512-s1kHoT12tS2cCQOv+Wl3I+/cYNJXBPtwQqGA+dPYoXmchhXiE0Nso+BIfvQ5PxbmAyjj54Q5o7PnLTqVquNfZA==}
+    cpu: [arm64]
+    os: [darwin]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /msgpackr-extract-darwin-x64/1.1.0:
+    resolution: {integrity: sha512-yx/H/i12IKg4eWGu/eKdKzJD4jaYvvujQSaVmeOMCesbSQnWo5X6YR9TFjoiNoU9Aexk1KufzL9gW+1DozG1yw==}
+    cpu: [x64]
+    os: [darwin]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /msgpackr-extract-linux-arm/1.1.0:
+    resolution: {integrity: sha512-0VvSCqi12xpavxl14gMrauwIzHqHbmSChUijy/uo3mpjB1Pk4vlisKpZsaOZvNJyNKj0ACi5jYtbWnnOd7hYGw==}
+    cpu: [arm]
+    os: [linux]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /msgpackr-extract-linux-arm64/1.1.0:
+    resolution: {integrity: sha512-AxFle3fHNwz2V4CYDIGFxI6o/ZuI0lBKg0uHI8EcCMUmDE5mVAUWYge5WXmORVvb8sVWyVgFlmi3MTu4Ve6tNQ==}
+    cpu: [arm64]
+    os: [linux]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /msgpackr-extract-linux-x64/1.1.0:
+    resolution: {integrity: sha512-O+XoyNFWpdB8oQL6O/YyzffPpmG5rTNrr1nKLW70HD2ENJUhcITzbV7eZimHPzkn8LAGls1tBaMTHQezTBpFOw==}
+    cpu: [x64]
+    os: [linux]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /msgpackr-extract-win32-x64/1.1.0:
+    resolution: {integrity: sha512-6AJdM5rNsL4yrskRfhujVSPEd6IBpgvsnIT/TPowKNLQ62iIdryizPY2PJNFiW3AJcY249AHEiDBXS1cTDPxzA==}
+    cpu: [x64]
+    os: [win32]
+    requiresBuild: true
+    dev: false
+    optional: true
+
+  /msgpackr-extract/1.1.4:
+    resolution: {integrity: sha512-WQbHvsThprXh+EqZYy+SQFEs7z6bNM7a0vgirwUfwUcphWGT2mdPcpyLCNiRsN6w5q5VKJUMblHY+tNEyceb9Q==}
     requiresBuild: true
     dependencies:
-      nan: 2.15.0
-      node-gyp-build: 4.3.0
+      node-gyp-build-optional-packages: 4.3.5
+    optionalDependencies:
+      msgpackr-extract-darwin-arm64: 1.1.0
+      msgpackr-extract-darwin-x64: 1.1.0
+      msgpackr-extract-linux-arm: 1.1.0
+      msgpackr-extract-linux-arm64: 1.1.0
+      msgpackr-extract-linux-x64: 1.1.0
+      msgpackr-extract-win32-x64: 1.1.0
     dev: false
     optional: true
 
   /msgpackr/1.5.5:
     resolution: {integrity: sha512-JG0V47xRIQ9pyUnx6Hb4+3TrQoia2nA3UIdmyTldhxaxtKFkekkKpUW/N6fwHwod9o4BGuJGtouxOk+yCP5PEA==}
     optionalDependencies:
-      msgpackr-extract: 1.0.16
+      msgpackr-extract: 1.1.4
     dev: false
 
   /multer/1.4.2:
@@ -35088,7 +35264,7 @@ packages:
       - utf-8-validate
     dev: false
 
-  /nest-raven/8.1.0_skrmnxzh27dq2km5y7pqncmlxy:
+  /nest-raven/8.1.0_y5ex5k5nkngkiov6ktrkmo4jpa:
     resolution: {integrity: sha512-LuDhVuamwCqDhP2diVSR4sBKN7Je6o6WPzveyCi1a5dXTMWO0DiKx/atEfINVA9nXQHgjey0dnEKRmtAAf+sQQ==}
     peerDependencies:
       '@nestjs/common': ^8.0.0
@@ -35098,13 +35274,13 @@ packages:
       rxjs: ^7.0.0
     dependencies:
       '@nestjs/common': 8.4.6_kgmvgmqc4iohdboj3f7yqhrie4
-      '@sentry/minimal': 6.19.3
+      '@sentry/minimal': 6.19.7
       '@sentry/node': 6.19.3
       reflect-metadata: 0.1.13
       rxjs: 7.5.5
     optionalDependencies:
-      '@nestjs/apollo': 10.0.16_mtzrja2y6kez4cgehoupvavfi4
-      '@nestjs/graphql': 10.0.15_o67kdqb2vfzucilgtugk4xf6ya
+      '@nestjs/apollo': 10.0.16_eq4e5pd6wowvfip7giip3fanxa
+      '@nestjs/graphql': 10.0.16_7vx4dzesc35xphnxlqqjuxv64y
     transitivePeerDependencies:
       - '@apollo/gateway'
       - '@apollo/subgraph'
@@ -35261,6 +35437,12 @@ packages:
   /node-forge/1.3.1:
     resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}
     engines: {node: '>= 6.13.0'}
+
+  /node-gyp-build-optional-packages/4.3.5:
+    resolution: {integrity: sha512-5ke7D8SiQsTQL7CkHpfR1tLwfqtKc0KYEmlnkwd40jHCASskZeS98qoZ1qDUns2aUQWikcjidRUs6PM/3iyN/w==}
+    hasBin: true
+    dev: false
+    optional: true
 
   /node-gyp-build/4.3.0:
     resolution: {integrity: sha512-iWjXZvmboq0ja1pUGULQBexmxq8CV4xBhX7VDOTbL7ZR4FOowwY/VOtRxBN/yKxmdGoIp4j5ysNT4u3S2pDQ3Q==}
@@ -36729,12 +36911,13 @@ packages:
     engines: {node: '>= 0.4.0'}
     dev: false
 
-  /passport/0.4.1:
-    resolution: {integrity: sha512-IxXgZZs8d7uFSt3eqNjM9NQ3g3uQCW5avD8mRNoXV99Yig50vjuaez6dQK2qC0kVWPRTujxY0dWgGfT09adjYg==}
+  /passport/0.6.0:
+    resolution: {integrity: sha512-0fe+p3ZnrWRW74fe8+SvCyf4a3Pb2/h7gFkQ8yTJpAO50gDzlfjZUZTO1k5Eg9kUct22OxHLqDZoKUWRHOh9ug==}
     engines: {node: '>= 0.4.0'}
     dependencies:
       passport-strategy: 1.0.0
       pause: 0.0.1
+      utils-merge: 1.0.1
     dev: false
 
   /path-browserify/0.0.1:
@@ -36813,7 +36996,7 @@ packages:
       through: 2.3.8
 
   /pause/0.0.1:
-    resolution: {integrity: sha1-HUCLP9t2kjuVQ9lvtMnf1TXZy10=}
+    resolution: {integrity: sha512-KG8UEiEVkR3wGEb4m5yZkVCzigAD+cVEJck2CzYZO37ZGJfctvVptVO192MwrtPhzONn6go8ylnOdMhKqi4nfg==}
     dev: false
 
   /pbkdf2/3.1.2:
@@ -43355,7 +43538,7 @@ packages:
       minimist: 1.2.6
     dev: true
 
-  /subscriptions-transport-ws/0.11.0_graphql@15.8.0:
+  /subscriptions-transport-ws/0.11.0_graphql@16.5.0:
     resolution: {integrity: sha512-8D4C6DIH5tGiAIpp5I0wD/xRlNiZAPGHygzCe7VzyzUoxHtawzjNAY9SUTXU05/EY2NMY9/9GF0ycizkXr1CWQ==}
     deprecated: The `subscriptions-transport-ws` package is no longer maintained. We recommend you use `graphql-ws` instead. For help migrating Apollo software to `graphql-ws`, see https://www.apollographql.com/docs/apollo-server/data/subscriptions/#switching-from-subscriptions-transport-ws    For general help using `graphql-ws`, see https://github.com/enisdenjo/graphql-ws/blob/master/README.md
     peerDependencies:
@@ -43363,7 +43546,7 @@ packages:
     dependencies:
       backo2: 1.0.2
       eventemitter3: 3.1.2
-      graphql: 15.8.0
+      graphql: 16.5.0
       iterall: 1.3.0
       symbol-observable: 1.2.0
       ws: 7.5.7
@@ -44537,7 +44720,7 @@ packages:
       webpack: 5.72.1
     dev: true
 
-  /ts-loader/9.2.8_cyciznkqvonecovanekmmyqwva:
+  /ts-loader/9.2.8_ub35lyjrfansgnglcfaofeaefe:
     resolution: {integrity: sha512-gxSak7IHUuRtwKf3FIPSW1VpZcqF9+MBrHOvBp9cjHh+525SjtCIJKVGjRKIAfxBwDGDGCFF00rTfzB1quxdSw==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
@@ -44549,7 +44732,7 @@ packages:
       micromatch: 4.0.5
       semver: 7.3.7
       typescript: 4.3.5
-      webpack: 5.72.1
+      webpack: 5.73.0
     dev: true
 
   /ts-morph/11.0.3:
