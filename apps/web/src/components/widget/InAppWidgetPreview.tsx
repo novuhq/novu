@@ -20,7 +20,7 @@ export function InAppWidgetPreview({
   const theme = useMantineTheme();
   const [isButtonsTemplateVisible, setIsButtonsTemplateVisible] = useState<boolean>(false);
   const [isButtonsTemplateSelected, setIsButtonsTemplateSelected] = useState<boolean>(
-    !!value.buttons && value.buttons?.length !== 0
+    !!value?.buttons && value?.buttons?.length !== 0
   );
 
   function onButtonAddClickHandle() {
