@@ -406,7 +406,7 @@ describe('Notifications Creator', function () {
       cy.get('#codeEditor').type('Hello world code {{name}} <div>Test', { parseSpecialCharSequences: false });
       cy.getByTestId('submit-btn').click();
       cy.wait(1000);
-      cy.intercept('GET', '/v1/notification-templates').as('notification-templates');
+      cy.intercept('/v1/notification-templates').as('notification-templates');
       cy.getByTestId('trigger-snippet-btn').click();
 
       cy.wait('@notification-templates', { timeout: 60000 });
