@@ -5,6 +5,7 @@ import {
   NotificationRepository,
   SubscriberRepository,
   SubscriberEntity,
+  MessageEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -78,7 +79,7 @@ export class SendMessageInApp extends SendMessageType {
       transactionId: command.transactionId,
     });
 
-    let message;
+    let message: MessageEntity;
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
@@ -111,7 +112,7 @@ export class SendMessageInApp extends SendMessageType {
           },
         }
       );
-      message = this.messageRepository.findById(oldMessage._id);
+      message = await this.messageRepository.findById(oldMessage._id);
     }
 
     const count = await this.messageRepository.getUnseenCount(
