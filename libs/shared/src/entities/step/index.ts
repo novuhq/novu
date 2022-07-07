@@ -4,3 +4,8 @@ export enum DigestUnitEnum {
   HOURS = 'hours',
   DAYS = 'days',
 }
+
+export enum DigestTypeEnum {
+  REGULAR = 'regular',
+  BACKOFF = 'backoff',
+}

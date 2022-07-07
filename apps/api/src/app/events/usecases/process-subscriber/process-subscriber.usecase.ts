@@ -9,7 +9,7 @@ import {
   JobRepository,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -72,6 +72,21 @@ export class ProcessSubscriber {
       });
 
       digestIsRunning = delayedDigests.length > 0;
+
+      if (!digestIsRunning && step.metadata.type === DigestTypeEnum.BACKOFF) {
+        const from = moment().subtract(step.metadata.backoffamount, step.metadata.backoffunit).toDate();
+        const triggerCount = await this.jobRepository.count({
+          updatedAt: {
+            $gte: from,
+          },
+          _templateId: command.templateId,
+          status: JobStatusEnum.COMPLETED,
+          type: ChannelTypeEnum.TRIGGER,
+          _environmentId: command.environmentId,
+          _subscriberId: subscriber._id,
+        });
+        digestIsRunning = triggerCount > 0;
+      }
 
       if (!digestIsRunning) {
         steps.push(step);

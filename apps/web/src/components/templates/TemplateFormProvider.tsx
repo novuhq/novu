@@ -3,7 +3,7 @@ import { FieldArrayProvider } from './FieldArrayProvider';
 import { IForm } from './use-template-controller.hook';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum } from '@novu/shared';
 
 const schema = z
   .object({
@@ -88,8 +88,8 @@ const schema = z
               return;
             }
 
-            const amount = parseInt(step.metadata?.amount, 10);
-            const unit = step.metadata?.unit;
+            let amount = parseInt(step.metadata?.amount, 10);
+            let unit = step.metadata?.unit;
 
             if (unit === 'hours' && amount > 24) {
               ctx.addIssue({
@@ -110,6 +110,27 @@ const schema = z
                 inclusive: true,
                 message: 'Digest time amount must be 31 or below',
                 path: ['metadata', 'amount'],
+              });
+            }
+
+            if (step.metadata?.type !== DigestTypeEnum.BACKOFF) {
+              return;
+            }
+            amount = step.metadata?.backoffamount;
+            unit = step.metadata?.backoffunit;
+            if (!unit) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Digest backoff time is required',
+                path: ['metadata', 'backoffunit'],
+              });
+            }
+
+            if (!amount) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Digest backoff time is required',
+                path: ['metadata', 'backoffamount'],
               });
             }
           })

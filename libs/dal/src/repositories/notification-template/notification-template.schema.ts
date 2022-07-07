@@ -78,6 +78,15 @@ const notificationTemplateSchema = new Schema(
           batchkey: {
             type: Schema.Types.String,
           },
+          type: {
+            type: Schema.Types.String,
+          },
+          backoffunit: {
+            type: Schema.Types.String,
+          },
+          backoffamount: {
+            type: Schema.Types.Number,
+          },
         },
       },
     ],
