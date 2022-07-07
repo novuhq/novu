@@ -9,5 +9,5 @@ export async function createFeed(data: { name: string }) {
 }
 
 export async function deleteFeed(feedId: string) {
-  return api.put(`/v1/feeds/${feedId}`, {});
+  return api.delete(`/v1/feeds/${feedId}`, {});
 }

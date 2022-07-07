@@ -1,17 +1,23 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
-import { Container, Group } from '@mantine/core';
+import { ActionIcon, Container, Group, SegmentedControl, useMantineTheme } from '@mantine/core';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Input, Select } from '../../../design-system';
+import { Button, colors, Input, Select, Text } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { createFeed, getFeeds } from '../../../api/feeds';
+import { createFeed, deleteFeed, getFeeds } from '../../../api/feeds';
 import { useEffect } from 'react';
 import { QueryKeys } from '../../../api/query.keys';
+import { Trash, PlusCircleOutlined, PlusGradient } from '../../../design-system/icons';
+import { useInputState } from '@mantine/hooks';
+import * as Sentry from '@sentry/react';
+import { showNotification } from '@mantine/notifications';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
+  const theme = useMantineTheme();
+  const [newFeed, setNewFeed] = useInputState('');
   const {
     formState: { errors },
     setValue,
@@ -25,6 +31,15 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   >(createFeed, {
     onSuccess: (data) => {
       queryClient.setQueryData(QueryKeys.getFeeds, [...feeds, data]);
+    },
+  });
+  const { mutateAsync: deleteFeedById } = useMutation<
+    { name: string; _id: string }[],
+    { error: string; message: string; statusCode: number },
+    string
+  >((feedId) => deleteFeed(feedId), {
+    onSuccess: (data) => {
+      queryClient.refetchQueries([QueryKeys.getFeeds]);
     },
   });
 
@@ -41,15 +56,35 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
     }, 0);
   }
 
-  async function addNewFeed(newFeed) {
+  async function addNewFeed() {
     if (newFeed) {
       const response = await createNewFeed({
         name: newFeed,
       });
 
+      setNewFeed('');
+
       setTimeout(() => {
         setValue(`steps.${index}.template.feedId`, response._id);
       }, 0);
+    }
+  }
+
+  async function deleteFeedHandler(feedId: string) {
+    try {
+      await deleteFeedById(feedId);
+      selectDefaultFeed();
+      showNotification({
+        message: 'Feed deleted successfully',
+        color: 'green',
+      });
+    } catch (e: any) {
+      Sentry.captureException(e);
+
+      showNotification({
+        message: e.message || 'Un-expected error occurred',
+        color: 'red',
+      });
     }
   }
 
@@ -78,28 +113,42 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             render={({ field }) => {
               return (
                 <>
-                  <Select
-                    {...field}
-                    label="Feeds"
-                    data-test-id="feedSelector"
-                    loading={loadingFeeds || loadingCreateFeed}
-                    disabled={readonly}
-                    creatable
-                    searchable
-                    required
-                    description="Choose a feed category"
-                    error={errors?.steps ? errors.steps[index]?.template?.feedId?.message : undefined}
-                    getCreateLabel={(newGroup) => (
-                      <div data-test-id="submit-category-btn">+ Create Feed {newGroup}</div>
-                    )}
-                    onCreate={addNewFeed}
-                    placeholder="Attach message to feed"
-                    data={(feeds || []).map((item) => ({ label: item.name, value: item._id }))}
+                  {feeds && (
+                    <SegmentedControl
+                      {...field}
+                      disabled={readonly}
+                      data={(feeds || []).map((item) => ({
+                        label: (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Text>{item.name}</Text>
+                            <ActionIcon variant="transparent" onClick={() => deleteFeedHandler(item._id)}>
+                              <Trash
+                                style={{
+                                  color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
+                                }}
+                              />
+                            </ActionIcon>
+                          </div>
+                        ),
+                        value: item._id,
+                      }))}
+                    />
+                  )}
+                  <Input
+                    placeholder="Add a new feed"
+                    value={newFeed}
+                    onChange={setNewFeed}
+                    rightSection={
+                      <ActionIcon variant="transparent" onClick={addNewFeed}>
+                        <PlusGradient />
+                      </ActionIcon>
+                    }
                   />
                 </>
               );
             }}
           />
+
           <Controller
             name={`steps.${index}.template.content` as any}
             data-test-id="in-app-content-form-item"

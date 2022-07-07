@@ -2,10 +2,10 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
-  Put,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -46,7 +46,7 @@ export class FeedsController {
 
   @Get('')
   @Roles(MemberRoleEnum.ADMIN)
-  getNotificationGroups(@UserSession() user: IJwtPayload) {
+  getFeeds(@UserSession() user: IJwtPayload) {
     return this.getFeedsUsecase.execute(
       GetFeedsCommand.create({
         organizationId: user.organizationId,
@@ -56,7 +56,7 @@ export class FeedsController {
     );
   }
 
-  @Put('/:feedId')
+  @Delete('/:feedId')
   @Roles(MemberRoleEnum.ADMIN)
   deleteFeedById(@UserSession() user: IJwtPayload, @Param('feedId') feedId: string) {
     return this.deleteFeedsUsecase.execute(

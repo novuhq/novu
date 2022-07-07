@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FeedRepository, FeedEntity, DalException } from '@novu/dal';
+import { FeedRepository, DalException } from '@novu/dal';
 import { DeleteFeedCommand } from './delete-feed.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
@@ -7,7 +7,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 export class DeleteFeed {
   constructor(private feedRepository: FeedRepository) {}
 
-  async execute(command: DeleteFeedCommand): Promise<FeedEntity[]> {
+  async execute(command: DeleteFeedCommand) {
     try {
       await this.feedRepository.delete({
         _environmentId: command.environmentId,
