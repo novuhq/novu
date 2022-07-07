@@ -1,11 +1,13 @@
 import { Group, Modal, useMantineTheme } from '@mantine/core';
 import { Button, colors, shadows, Title, Text } from '../../design-system';
 
-export function DeleteStepModal({
+export function DeleteConfirmModal({
+  target,
   isOpen,
   cancel,
   confirm,
 }: {
+  target: string;
   isOpen: boolean;
   cancel: () => void;
   confirm: () => void;
@@ -29,7 +31,7 @@ export function DeleteStepModal({
             paddingTop: '180px',
           },
         }}
-        title={<Title size={2}>Delete step</Title>}
+        title={<Title size={2}>Delete {target}</Title>}
         sx={{ backdropFilter: 'blur(10px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
@@ -39,7 +41,7 @@ export function DeleteStepModal({
         }}
       >
         <div>
-          <Text>Would you like to delete this step?</Text>
+          <Text>Would you like to delete this {target}?</Text>
           <Group position="right">
             <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
               No
