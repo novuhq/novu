@@ -85,7 +85,7 @@ export class ProcessSubscriber {
           _environmentId: command.environmentId,
           _subscriberId: subscriber._id,
         });
-        digestIsRunning = triggerCount > 0;
+        digestIsRunning = triggerCount < 0;
       }
 
       if (!digestIsRunning) {

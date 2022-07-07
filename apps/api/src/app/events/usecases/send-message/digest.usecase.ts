@@ -33,7 +33,8 @@ export class Digest extends SendMessageType {
       earliest,
       notification._templateId,
       command.environmentId,
-      command.subscriberId
+      command.subscriberId,
+      currentJob.digest.type
     );
 
     const nextJobs = await this.jobRepository.find({

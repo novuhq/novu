@@ -1,5 +1,5 @@
 import { Grid, InputWrapper } from '@mantine/core';
-import { DigestUnitEnum } from '@novu/shared';
+import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { When } from '../../../components/utils/When';
 import { Input, Select } from '../../../design-system';
@@ -90,8 +90,8 @@ export const DigestMetadata = ({ control, index }) => {
               disabled={readonly}
               placeholder="Regular"
               data={[
-                { value: 'regular', label: 'Regular' },
-                { value: 'backoff', label: 'Backoff' },
+                { value: DigestTypeEnum.REGULAR, label: 'Regular' },
+                { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
               ]}
               data-test-id="digest-type"
               {...field}
