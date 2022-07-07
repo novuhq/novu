@@ -18,10 +18,8 @@ export function ButtonsTemplatesPopover(props: IButtonsTemplatesPopoverProps) {
   const dark = colorScheme === 'dark';
 
   function handleOnButtonChange(buttons: IMessageButton[]) {
-    let currentValue = Object.assign({}, props.value.buttons);
-    if (currentValue) {
-      currentValue = buttons;
-      const newAction = { buttons: currentValue, status: MessageActionStatusEnum.PENDING };
+    if (buttons) {
+      const newAction = { buttons: buttons, status: MessageActionStatusEnum.PENDING };
       props.onChange(newAction);
     }
   }
