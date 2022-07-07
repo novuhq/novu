@@ -65,23 +65,13 @@ export const NotificationSettingsForm = ({
   return (
     <Grid gutter={30} grow>
       <Grid.Col md={6} sm={12}>
-        {trigger && (
-          <Input
-            mb={30}
-            data-test-id="trigger-id"
-            disabled={true}
-            value={trigger.identifier || ''}
-            error={errors.name?.message}
-            label="Notification ID"
-            description="This will be used to identify the notification using the API."
-          />
-        )}
         <Controller
           control={control}
           name="name"
           render={({ field }) => (
             <Input
               {...field}
+              mb={30}
               data-test-id="title"
               disabled={readonly}
               required
@@ -93,15 +83,12 @@ export const NotificationSettingsForm = ({
             />
           )}
         />
-      </Grid.Col>
-      <Grid.Col md={6} sm={12}>
         <Controller
           name="description"
           control={control}
           render={({ field }) => (
             <Input
               {...field}
-              mb={30}
               value={field.value || ''}
               disabled={readonly}
               data-test-id="description"
@@ -111,6 +98,19 @@ export const NotificationSettingsForm = ({
             />
           )}
         />
+      </Grid.Col>
+      <Grid.Col md={6} sm={12}>
+        {trigger && (
+          <Input
+            mb={30}
+            data-test-id="trigger-id"
+            disabled={true}
+            value={trigger.identifier || ''}
+            error={errors.name?.message}
+            label="Notification ID"
+            description="This will be used to identify the notification using the API."
+          />
+        )}
         <Controller
           name="notificationGroup"
           control={control}
