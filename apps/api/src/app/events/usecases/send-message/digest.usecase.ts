@@ -4,7 +4,7 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import * as moment from 'moment';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum } from '@novu/shared';
 
 @Injectable()
 export class Digest extends SendMessageType {
@@ -35,6 +35,19 @@ export class Digest extends SendMessageType {
       command.environmentId,
       command.subscriberId
     );
+
+    if (currentJob.digest.type === DigestTypeEnum.BACKOFF) {
+      jobs = await this.jobRepository.find({
+        createdAt: {
+          $gte: currentJob.createdAt,
+        },
+        _templateId: notification._templateId,
+        status: JobStatusEnum.COMPLETED,
+        type: ChannelTypeEnum.TRIGGER,
+        _environmentId: command.environmentId,
+        _subscriberId: command.subscriberId,
+      });
+    }
 
     const nextJobs = await this.jobRepository.find({
       transactionId: command.transactionId,
