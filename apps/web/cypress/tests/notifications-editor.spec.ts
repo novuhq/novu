@@ -208,8 +208,17 @@ describe('Notifications Creator', function () {
 
       cy.clickWorkflowNode(`node-digestSelector`);
 
+      cy.getByTestId('time-unit').click();
+      cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
       cy.getByTestId('time-amount').type('20');
       cy.getByTestId('batch-key').type('id');
+      cy.getByTestId('digest-type').click();
+      cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Backoff').click();
+
+      cy.getByTestId('backoff-amount').type('20');
+
+      cy.getByTestId('backoff-unit').click();
+      cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
 
       cy.getByTestId('submit-btn').click();
 
@@ -224,6 +233,10 @@ describe('Notifications Creator', function () {
 
       cy.getByTestId('time-amount').should('have.value', '20');
       cy.getByTestId('batch-key').should('have.value', 'id');
+      cy.getByTestId('backoff-amount').should('have.value', '20');
+      cy.getByTestId('time-unit').should('have.value', 'Minutes');
+      cy.getByTestId('digest-type').should('have.value', 'Backoff');
+      cy.getByTestId('backoff-unit').should('have.value', 'Minutes');
     });
 
     it('should create and edit group id', function () {
