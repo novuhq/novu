@@ -25,7 +25,7 @@ export function NotificationButton(props: NotificationButtonProps) {
   );
 }
 
-export const ActionButton = styled(MantineButton)<{ clicked?: boolean; buttonStyle: IButtonStyles }>`
+export const ActionButton = styled(MantineButton)<{ clicked?: string; buttonStyle: IButtonStyles }>`
   background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
   color: ${({ buttonStyle }) => buttonStyle.fontColor};
   box-shadow: none;
@@ -35,7 +35,7 @@ export const ActionButton = styled(MantineButton)<{ clicked?: boolean; buttonSty
   margin-right: 5px;
 
   ${({ clicked }) =>
-    clicked &&
+    clicked === 'true' &&
     `
     pointer-events: none;
   `}

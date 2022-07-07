@@ -21,7 +21,7 @@ export function ActionContainer(props: IActionContainerProps) {
       <TemplateContainerWrap>
         <TemplateContainer>
           {clicked ? (
-            <ActionButton clicked={clicked} buttonStyle={buttonStyle}>
+            <ActionButton clicked={clicked.toString()} buttonStyle={buttonStyle}>
               Clicked
             </ActionButton>
           ) : (
