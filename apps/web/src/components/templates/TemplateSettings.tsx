@@ -7,11 +7,31 @@ import styled from '@emotion/styled';
 import { useTemplateController } from './use-template-controller.hook';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { Trash } from '../../design-system/icons';
+import { useState } from 'react';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { useNavigate } from 'react-router-dom';
 
 export const TemplateSettings = ({ activePage, setActivePage, showErrors, templateId }) => {
   const { colorScheme } = useMantineColorScheme();
 
-  const { editMode, template, trigger } = useTemplateController(templateId);
+  const { editMode, template, trigger, deleteTemplate } = useTemplateController(templateId);
+  const [toDelete, setToDelete] = useState(false);
+
+  const navigate = useNavigate();
+
+  const confirmDelete = () => {
+    navigate('/templates');
+    deleteTemplate();
+    setToDelete(false);
+  };
+
+  const cancelDelete = () => {
+    setToDelete(false);
+  };
+
+  const onDelete = () => {
+    setToDelete(true);
+  };
 
   return (
     <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
@@ -26,7 +46,7 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
             />
           </SideBarWrapper>
         </Grid.Col>
-        <Grid.Col md={8} sm={6} styles={{ position: 'relative' }}>
+        <Grid.Col md={8} sm={6} style={{ position: 'relative' }}>
           <div style={{ paddingLeft: 23 }}>
             {activePage === ActivePageEnum.SETTINGS && (
               <>
@@ -36,9 +56,7 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
                     mt={10}
                     variant="outline"
                     data-test-id="delete-notification-button"
-                    onClick={() => {
-                      /** TODO: implement */
-                    }}
+                    onClick={onDelete}
                   >
                     <Trash
                       style={{
@@ -48,6 +66,12 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
                     Delete Template
                   </DeleteNotificationButton>
                 )}
+                <DeleteConfirmModal
+                  target="notification template"
+                  isOpen={toDelete}
+                  confirm={confirmDelete}
+                  cancel={cancelDelete}
+                />
               </>
             )}
 
