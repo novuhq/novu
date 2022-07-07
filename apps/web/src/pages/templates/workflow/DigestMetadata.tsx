@@ -16,8 +16,18 @@ export const DigestMetadata = ({ control, index }) => {
 
   return (
     <>
-      <InputWrapper label="Time Interval" description="Set the time intervals for the batch" styles={inputStyles}>
-        <Grid>
+      <InputWrapper
+        label="Time Interval"
+        description="Set the time intervals for the batch"
+        styles={{
+          ...inputStyles,
+        }}
+      >
+        <Grid
+          sx={{
+            marginBottom: '5px',
+          }}
+        >
           <Grid.Col span={4}>
             <Controller
               control={control}
@@ -62,50 +72,66 @@ export const DigestMetadata = ({ control, index }) => {
           </Grid.Col>
         </Grid>
       </InputWrapper>
-      <Controller
-        control={control}
-        name={`steps.${index}.metadata.batchkey`}
-        render={({ field }) => {
-          return (
-            <Input
-              {...field}
-              label="Batch Key"
-              placeholder="Property key on payload"
-              description="A batch key is used to batch notifications"
-              error={errors?.steps ? errors.steps[index]?.metadata?.batchkey?.message : undefined}
-              type="text"
-              data-test-id="batch-key"
-            />
-          );
+      <div
+        style={{
+          marginBottom: '15px',
         }}
-      />
-      <Controller
-        control={control}
-        defaultValue="regular"
-        name={`steps.${index}.metadata.type`}
-        render={({ field }) => {
-          return (
-            <Select
-              label="Type of digest"
-              disabled={readonly}
-              placeholder="Regular"
-              data={[
-                { value: DigestTypeEnum.REGULAR, label: 'Regular' },
-                { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
-              ]}
-              data-test-id="digest-type"
-              {...field}
-            />
-          );
+      >
+        <Controller
+          control={control}
+          name={`steps.${index}.metadata.batchkey`}
+          render={({ field }) => {
+            return (
+              <Input
+                {...field}
+                label="Batch Key"
+                placeholder="Property key on payload"
+                description="A batch key is used to batch notifications"
+                error={errors?.steps ? errors.steps[index]?.metadata?.batchkey?.message : undefined}
+                type="text"
+                data-test-id="batch-key"
+              />
+            );
+          }}
+        />
+      </div>
+      <div
+        style={{
+          marginBottom: '15px',
         }}
-      />
+      >
+        <Controller
+          control={control}
+          defaultValue="regular"
+          name={`steps.${index}.metadata.type`}
+          render={({ field }) => {
+            return (
+              <Select
+                label="Type of digest"
+                disabled={readonly}
+                placeholder="Regular"
+                data={[
+                  { value: DigestTypeEnum.REGULAR, label: 'Regular' },
+                  { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
+                ]}
+                data-test-id="digest-type"
+                {...field}
+              />
+            );
+          }}
+        />
+      </div>
       <When truthy={type === 'backoff'}>
         <InputWrapper
           label="Backoff Time Interval"
           description="Set the time intervals for the backoff"
           styles={inputStyles}
         >
-          <Grid>
+          <Grid
+            sx={{
+              marginBottom: '5px',
+            }}
+          >
             <Grid.Col span={4}>
               <Controller
                 control={control}
