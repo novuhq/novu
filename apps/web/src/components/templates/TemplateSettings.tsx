@@ -1,11 +1,12 @@
 import { Grid, useMantineColorScheme } from '@mantine/core';
-import { colors } from '../../design-system';
+import { Button, colors } from '../../design-system';
 import { NotificationSettingsForm } from './NotificationSettingsForm';
 import { TemplatesSideBar } from './TemplatesSideBar';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import styled from '@emotion/styled';
 import { useTemplateController } from './use-template-controller.hook';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { Trash } from '../../design-system/icons';
 
 export const TemplateSettings = ({ activePage, setActivePage, showErrors, templateId }) => {
   const { colorScheme } = useMantineColorScheme();
@@ -25,10 +26,29 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
             />
           </SideBarWrapper>
         </Grid.Col>
-        <Grid.Col md={8} sm={6}>
+        <Grid.Col md={8} sm={6} styles={{ position: 'relative' }}>
           <div style={{ paddingLeft: 23 }}>
             {activePage === ActivePageEnum.SETTINGS && (
-              <NotificationSettingsForm editMode={editMode} trigger={trigger} />
+              <>
+                <NotificationSettingsForm editMode={editMode} trigger={trigger} />
+                {editMode && (
+                  <DeleteNotificationButton
+                    mt={10}
+                    variant="outline"
+                    data-test-id="delete-notification-button"
+                    onClick={() => {
+                      /** TODO: implement */
+                    }}
+                  >
+                    <Trash
+                      style={{
+                        marginRight: '5px',
+                      }}
+                    />
+                    Delete Template
+                  </DeleteNotificationButton>
+                )}
+              </>
             )}
 
             {template && trigger && activePage === ActivePageEnum.TRIGGER_SNIPPET && (
@@ -44,4 +64,16 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
 const SideBarWrapper = styled.div<{ dark: boolean }>`
   border-right: 1px solid ${({ dark }) => (dark ? colors.B20 : colors.BGLight)};
   height: 100%;
+`;
+
+const DeleteNotificationButton = styled(Button)`
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  background: rgba(229, 69, 69, 0.15);
+  color: ${colors.error};
+  box-shadow: none;
+  :hover {
+    background: rgba(229, 69, 69, 0.15);
+  }
 `;
