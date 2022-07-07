@@ -6,8 +6,15 @@ import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
 import { Input, Select } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
+import { INotificationTrigger } from '@novu/shared';
 
-export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) => {
+export const NotificationSettingsForm = ({
+  editMode,
+  trigger,
+}: {
+  editMode: boolean;
+  trigger?: INotificationTrigger;
+}) => {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const {
@@ -58,6 +65,17 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
   return (
     <Grid gutter={30} grow>
       <Grid.Col md={6} sm={12}>
+        {trigger && (
+          <Input
+            mb={30}
+            data-test-id="trigger-id"
+            disabled={true}
+            value={trigger.identifier || ''}
+            error={errors.name?.message}
+            label="Notification ID"
+            description="This will be used to identify the notification using the API."
+          />
+        )}
         <Controller
           control={control}
           name="name"
@@ -70,18 +88,20 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
               value={field.value || ''}
               error={errors.name?.message}
               label="Notification Name"
-              description="This will be used to identify the notification in the app."
+              description="This will be used to identify the notification in the dashboard."
               placeholder="Notification name goes here..."
             />
           )}
         />
+      </Grid.Col>
+      <Grid.Col md={6} sm={12}>
         <Controller
           name="description"
           control={control}
           render={({ field }) => (
             <Input
-              mt={35}
               {...field}
+              mb={30}
               value={field.value || ''}
               disabled={readonly}
               data-test-id="description"
@@ -91,8 +111,6 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
             />
           )}
         />
-      </Grid.Col>
-      <Grid.Col md={6} sm={12}>
         <Controller
           name="notificationGroup"
           control={control}
