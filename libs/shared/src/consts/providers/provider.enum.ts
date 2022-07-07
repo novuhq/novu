@@ -31,6 +31,8 @@ export enum CredentialsKeyEnum {
   ApplicationId = 'applicationId',
   // eslint-disable-next-line @typescript-eslint/naming-convention
   ClientId = 'clientId',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ProjectName = 'projectName',
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -39,4 +41,9 @@ export enum DirectProviderIdEnum {
   Slack = 'slack',
   // eslint-disable-next-line @typescript-eslint/naming-convention
   Discord = 'discord',
+}
+
+export enum PushProviderIdEnum {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  FCM = 'fcm',
 }

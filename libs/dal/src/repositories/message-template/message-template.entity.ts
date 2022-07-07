@@ -19,6 +19,8 @@ export class MessageTemplateEntity {
 
   subject?: string;
 
+  title?: string;
+
   name?: string;
 
   cta?: {

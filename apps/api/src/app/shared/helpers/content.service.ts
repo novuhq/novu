@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChannelTypeEnum, INotificationTemplateStep } from '@novu/shared';
 
 export class ContentService {

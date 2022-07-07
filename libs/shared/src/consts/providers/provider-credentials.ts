@@ -23,6 +23,8 @@ const smsConfigBase: IConfigCredentials[] = [
   },
 ];
 
+const pushConfigBase: IConfigCredentials[] = [];
+
 export const mailJsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -191,6 +193,15 @@ export const sms77Config: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const termiiConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+  },
+  ...smsConfigBase,
+];
+
 export const snsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -248,4 +259,23 @@ export const slackConfig: IConfigCredentials[] = [
     displayName: 'Application Id',
     type: 'string',
   },
+];
+
+export const fcmConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ProjectName,
+    displayName: 'Service Account Project Name',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Service Account Client Email',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Service Account Private Key',
+    type: 'string',
+  },
+  ...pushConfigBase,
 ];

@@ -13,6 +13,7 @@ import { When } from '../../../components/utils/When';
 import { Trash } from '../../../design-system/icons';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
+import { DeleteStepModal } from '../../../components/templates/DeleteStepModal';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -40,10 +41,11 @@ const WorkflowEditorPage = ({
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
-  const { addStep, control, watch, errors, setValue, setIsDirty } = useTemplateController(templateId);
+  const { addStep, deleteStep, control, watch, errors } = useTemplateController(templateId);
   const { isLoading, isUpdateLoading, loadingEditTemplate, isDirty } = useTemplateController(templateId);
   const steps = watch('steps');
   const { readonly } = useEnvController();
+  const [toDelete, setToDelete] = useState<string>('');
 
   useEffect(() => {
     if (selectedNodeId.length === 0) {
@@ -60,6 +62,21 @@ const WorkflowEditorPage = ({
     setActiveStep(index);
   }, [selectedNodeId]);
 
+  const confirmDelete = () => {
+    const index = steps.findIndex((item) => item._id === toDelete);
+    deleteStep(index);
+    setSelectedNodeId('');
+    setToDelete('');
+  };
+
+  const cancelDelete = () => {
+    setToDelete('');
+  };
+
+  const onDelete = (id) => {
+    setToDelete(id);
+  };
+
   return (
     <div style={{ minHeight: 500 }}>
       <Grid gutter={0} grow style={{ minHeight: 500 }}>
@@ -72,6 +89,7 @@ const WorkflowEditorPage = ({
             activePage={activePage}
           />
           <FlowEditor
+            onDelete={onDelete}
             setActivePage={setActivePage}
             dragging={dragging}
             templateId={templateId}
@@ -124,10 +142,7 @@ const WorkflowEditorPage = ({
                     variant="outline"
                     data-test-id="delete-step-button"
                     onClick={() => {
-                      const newSteps = steps.filter((step) => step._id !== selectedNodeId);
-                      setValue('steps', newSteps);
-                      setSelectedNodeId('');
-                      setIsDirty(true);
+                      onDelete(selectedNodeId);
                     }}
                   >
                     <Trash
@@ -173,6 +188,7 @@ const WorkflowEditorPage = ({
           </SideBarWrapper>
         </Grid.Col>
       </Grid>
+      <DeleteStepModal isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
     </div>
   );
 };

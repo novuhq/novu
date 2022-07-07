@@ -44,6 +44,8 @@ const messageSchema = new Schema(
     phone: Schema.Types.String,
     directWebhookUrl: Schema.Types.String,
     providerId: Schema.Types.String,
+    notificationIdentifiers: [Schema.Types.Array],
+    title: Schema.Types.String,
     seen: {
       type: Schema.Types.Boolean,
       default: false,
@@ -64,6 +66,8 @@ const messageSchema = new Schema(
       type: Schema.Types.String,
       index: true,
     },
+    payload: Schema.Types.Mixed,
+    overrides: Schema.Types.Mixed,
   },
   { ...schemaOptions }
 );

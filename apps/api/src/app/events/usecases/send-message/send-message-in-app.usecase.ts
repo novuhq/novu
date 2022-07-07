@@ -49,6 +49,9 @@ export class SendMessageInApp extends SendMessageType {
       );
     }
 
+    const messagePayload = Object.assign({}, command.payload);
+    delete messagePayload.attachments;
+
     const message = await this.messageRepository.create({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
@@ -61,6 +64,7 @@ export class SendMessageInApp extends SendMessageType {
       transactionId: command.transactionId,
       content,
       providerId: 'novu',
+      payload: messagePayload,
     });
 
     const count = await this.messageRepository.getUnseenCount(

@@ -3,7 +3,6 @@
   
   ![Logo Dark](https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png#gh-dark-mode-only)
 
-  
 </div>
 
 <div align="center">
@@ -12,11 +11,10 @@
   
 </div>
 
-
 <h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
-The ultimate service for managing multi-channel notifications with a single API. 
+The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
   <p align="center">
@@ -37,6 +35,7 @@ The ultimate service for managing multi-channel notifications with a single API.
   </p>
   
 ## ⭐️ Why
+
 Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, direct and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
 
 ## ✨ Features
@@ -46,15 +45,18 @@ Building a notification system is hard, at first it seems like just sending an e
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
-- 📦 Embeddable notification center with real-time updates
 - 🛡 Debug and analyze multi channel messages in a single dashboard
+- 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
 ## 🚀 Getting Started
+
 We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
+
 ```
 npx novu init
 ```
+
 After setting up your account using the cloud or docker version you can trigger the API using the `@novu/node` package.
 
 ```bash
@@ -84,7 +86,6 @@ await novu.trigger('<TRIGGER_NAME>',
 );
 ```
 
-
 ## Embeddable notification center
 
 Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
@@ -92,15 +93,16 @@ Using the Novu API and admin panel you can easily add real-time notification cen
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://github.com/iampearceman/Design-assets/blob/main/Untitled%20design%20(8).gif?raw=true">
   
-  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/docs/notification-center/getting-started)
+  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
 </div>
 
-
 ## Providers
+
 Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
 #### 💌 Email
+
 - [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
 - [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
 - [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
@@ -113,6 +115,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] SparkPost
 
 #### 📞 SMS
+
 - [x] [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
 - [x] [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
 - [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
@@ -124,27 +127,32 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] RingCentral
 
 #### 📱 Push (Coming Soon...)
+
 - [ ] Pushwoosh
 - [ ] SNS
 
 #### 👇 Direct (Coming Soon...)
+
 - [ ] Slack
 - [ ] MS Teams
 - [ ] Discord
 - [ ] Mattermost
 
 #### 📱 In-App
-- [x] [Novu](https://docs.novu.co/docs/notification-center/getting-started)
-- [ ] MagicBell 
+
+- [x] [Novu](https://docs.novu.co/notification-center/getting-started)
+- [ ] MagicBell
 
 #### Other (Coming Soon...)
+
 - [ ] PagerDuty
 
 ## 💻  Need Help?
 
-We are more than happy to help you. Don't worry if you are getting some errors or problems while working with the project. Or just want to discuss something related to the project.
+We are more than happy to help you. If you are getting some errors or problems while working with the project, or want to discuss something related to the project.
 
 Just <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a> server and ask for help.
 
 ## 🔗 Links
+
 - [Home page](https://novu.co/)

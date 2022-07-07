@@ -47,7 +47,7 @@ export class SendMessageDirect extends SendMessageType {
     const content = contentService.replaceVariables(directChannel.template.content as string, messageVariables);
 
     const directChannels = subscriber.channels.filter((chan) =>
-      Object.values(DirectProviderIdEnum).includes(chan.providerId)
+      Object.values(DirectProviderIdEnum).includes(chan.providerId as DirectProviderIdEnum)
     );
 
     for (const channel of directChannels) {

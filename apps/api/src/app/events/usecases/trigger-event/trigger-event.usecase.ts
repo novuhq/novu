@@ -11,6 +11,7 @@ import { ProcessSubscriberCommand } from '../process-subscriber/process-subscrib
 import { matchMessageWithFilters } from './message-filter.matcher';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class TriggerEvent {
@@ -30,6 +31,8 @@ export class TriggerEvent {
         triggerIdentifier: command.identifier,
       },
     });
+
+    await this.validateSubscriberIdProperty(command);
 
     this.logEventTriggered(command);
 
@@ -54,6 +57,7 @@ export class TriggerEvent {
           ProcessSubscriberCommand.create({
             identifier: command.identifier,
             payload: command.payload,
+            overrides: command.overrides,
             to: subscriberToTrigger,
             transactionId: command.transactionId,
             environmentId: command.environmentId,
@@ -71,6 +75,7 @@ export class TriggerEvent {
       emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
       inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
       directChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.DIRECT)?.length,
+      pushChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.PUSH)?.length,
     });
 
     for (const job of jobs) {
@@ -153,5 +158,42 @@ export class TriggerEvent {
       )
       // eslint-disable-next-line no-console
       .catch((e) => console.error(e));
+  }
+
+  private async validateSubscriberIdProperty(command: TriggerEventCommand): Promise<boolean> {
+    for (const subscriber of command.to) {
+      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
+
+      if (!subscriberIdExists) {
+        await this.logSubscriberIdMissing(command);
+        throw new ApiException(
+          'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
+        );
+      }
+    }
+
+    return true;
+  }
+
+  private async logSubscriberIdMissing(command: TriggerEventCommand) {
+    await this.createLogUsecase.execute(
+      CreateLogCommand.create({
+        transactionId: command.transactionId,
+        status: LogStatusEnum.ERROR,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        text: 'SubscriberId missing in to property',
+        userId: command.userId,
+        code: LogCodeEnum.SUBSCRIBER_ID_MISSING,
+        raw: {
+          triggerIdentifier: command.identifier,
+        },
+      })
+    );
+
+    return {
+      acknowledged: true,
+      status: 'subscriber_id_missing',
+    };
   }
 }

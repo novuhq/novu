@@ -36,6 +36,11 @@ export class SendMessageSms extends SendMessageType {
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
     });
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      channel: ChannelTypeEnum.SMS,
+      active: true,
+    });
     const smsChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -46,12 +51,10 @@ export class SendMessageSms extends SendMessageType {
     const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
     const content = contentService.replaceVariables(smsChannel.template.content as string, messageVariables);
     const phone = command.payload.phone || subscriber.phone;
+    const overrides = command.overrides[integration.providerId] || {};
 
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.SMS,
-      active: true,
-    });
+    const messagePayload = Object.assign({}, command.payload);
+    delete messagePayload.attachments;
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
@@ -65,10 +68,12 @@ export class SendMessageSms extends SendMessageType {
       phone,
       content,
       providerId: integration.providerId,
+      payload: messagePayload,
+      overrides,
     });
 
     if (phone && integration) {
-      await this.sendMessage(phone, integration, content, message, command, notification);
+      await this.sendMessage(phone, integration, content, message, command, notification, overrides);
 
       return;
     }
@@ -139,7 +144,8 @@ export class SendMessageSms extends SendMessageType {
     content,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    overrides: object
   ) {
     try {
       const smsHandler = this.smsFactory.getHandler(integration);

@@ -13,7 +13,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { IEmailOptions } from '@novu/stateless';
+import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -40,6 +40,11 @@ export class SendMessageEmail extends SendMessageType {
   }
 
   public async execute(command: SendMessageCommand) {
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+    });
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -55,12 +60,10 @@ export class SendMessageEmail extends SendMessageType {
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
     const content: string | IEmailBlock[] = this.getContent(isEditorMode, emailChannel, command, subscriber);
+    const overrides = command.overrides[integration.providerId] || {};
 
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.EMAIL,
-      active: true,
-    });
+    const messagePayload = Object.assign({}, command.payload);
+    delete messagePayload.attachments;
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
@@ -74,6 +77,8 @@ export class SendMessageEmail extends SendMessageType {
       transactionId: command.transactionId,
       email,
       providerId: integration.providerId,
+      payload: messagePayload,
+      overrides,
     });
 
     const contentService = new ContentService();
@@ -96,11 +101,22 @@ export class SendMessageEmail extends SendMessageType {
       })
     );
 
+    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
+      (attachment) =>
+        <IAttachmentOptions>{
+          file: Buffer.from(attachment.file),
+          mime: attachment.mime,
+          name: attachment.name,
+          channels: attachment.channels,
+        }
+    );
+
     const mailData: IEmailOptions = {
       to: email,
       subject,
       html,
       from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      attachments,
     };
 
     if (email && integration) {
@@ -204,7 +220,11 @@ export class SendMessageEmail extends SendMessageType {
       const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
       const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
       for (const block of content) {
-        block.content = contentService.replaceVariables(block.content, messageVariables);
+        /*
+         * We need to trim the content in order to avoid mail provider like GMail
+         * to display the mail with `[Message clipped]` footer.
+         */
+        block.content = contentService.replaceVariables(block.content, messageVariables).trim();
         block.url = contentService.replaceVariables(block.url, messageVariables);
       }
 

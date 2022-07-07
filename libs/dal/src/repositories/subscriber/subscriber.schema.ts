@@ -20,17 +20,9 @@ const subscriberSchema = new Schema(
     lastName: Schema.Types.String,
     phone: Schema.Types.String,
     subscriberId: Schema.Types.String,
-    channels: [
-      {
-        _integrationId: Schema.Types.String,
-        providerId: Schema.Types.String,
-        credentials: {
-          webhookUrl: Schema.Types.String,
-        },
-      },
-    ],
     email: Schema.Types.String,
     avatar: Schema.Types.String,
+    channels: [Schema.Types.Mixed],
   },
   schemaOptions
 );

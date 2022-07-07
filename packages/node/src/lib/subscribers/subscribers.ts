@@ -9,6 +9,14 @@ export class Subscribers implements ISubscribers {
     this.http = http;
   }
 
+  async list(page: number) {
+    return await this.http.get(`/subscribers`, {
+      params: {
+        page,
+      },
+    });
+  }
+
   async identify(subscriberId: string, data: ISubscriberPayload) {
     return await this.http.post(`/subscribers`, {
       subscriberId,
@@ -28,11 +36,9 @@ export class Subscribers implements ISubscribers {
     credentials: IChannelCredentials
   ) {
     return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
-      channel: {
-        providerId,
-        credentials: {
-          ...credentials,
-        },
+      providerId,
+      credentials: {
+        ...credentials,
       },
     });
   }

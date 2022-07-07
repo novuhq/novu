@@ -5,6 +5,7 @@ import { CommandHelper } from '../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../shared/commands/project.command';
 
 export interface IItem extends Pick<Document, '_id'> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 

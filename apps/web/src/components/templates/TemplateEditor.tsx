@@ -5,6 +5,7 @@ import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
 import { TemplateSMSEditor } from './TemplateSMSEditor';
 import { useTemplateController } from './use-template-controller.hook';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateDirectEditor } from './direct-editor/TemplateDirectEditor';
 
 export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
@@ -53,6 +54,23 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
             ) : null;
           })}
         </>
+      )}
+      {activePage === ActivePageEnum.PUSH && (
+        <div style={{ padding: '20px 25px' }}>
+          {steps.map((message, index) => {
+            return message.template.type === ChannelTypeEnum.PUSH && activeStep === index ? (
+              <TemplatePushEditor
+                key={message._id}
+                control={control}
+                index={index}
+                errors={errors}
+                isIntegrationActive={
+                  !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)
+                }
+              />
+            ) : null;
+          })}
+        </div>
       )}
       {activePage === ActivePageEnum.DIRECT && (
         <div style={{ padding: '20px 25px' }}>

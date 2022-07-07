@@ -41,6 +41,10 @@ export class MessageEntity {
 
   providerId?: string;
 
+  notificationIdentifiers?: string[];
+
+  title?: string;
+
   lastSeenDate: string;
 
   cta: {
@@ -58,4 +62,8 @@ export class MessageEntity {
 
   @Exclude()
   providerResponse: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  payload: Record<string, unknown>;
+
+  overrides: Record<string, Record<string, unknown>>;
 }

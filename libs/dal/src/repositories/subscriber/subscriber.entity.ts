@@ -1,4 +1,4 @@
-import { DirectProviderIdEnum } from '@novu/shared';
+import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class SubscriberEntity {
   _id?: string;
@@ -15,21 +15,22 @@ export class SubscriberEntity {
 
   subscriberId: string;
 
+  channels?: IChannelSettings[];
+
   _organizationId: string;
 
   _environmentId: string;
-
-  channels?: IChannelSettings[];
 }
 
 export class IChannelSettings {
   _integrationId: string;
 
-  providerId: DirectProviderIdEnum;
+  providerId: DirectProviderIdEnum | PushProviderIdEnum;
 
   credentials: IChannelCredentials;
 }
 
 export class IChannelCredentials {
-  webhookUrl: string;
+  webhookUrl?: string;
+  notificationIdentifiers?: string[];
 }

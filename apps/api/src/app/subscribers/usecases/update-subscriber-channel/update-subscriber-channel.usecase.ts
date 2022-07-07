@@ -79,11 +79,16 @@ export class UpdateSubscriberChannel {
   }
 
   private createUpdatePayload(command: UpdateSubscriberChannelCommand) {
-    const updatePayload: Partial<IChannelSettings> = {};
+    const updatePayload: Partial<IChannelSettings> = {
+      credentials: {},
+    };
 
     if (command.credentials != null) {
       if (command.credentials.webhookUrl != null) {
-        updatePayload[`credentials.webhookUrl`] = command.credentials.webhookUrl;
+        updatePayload.credentials.webhookUrl = command.credentials.webhookUrl;
+      }
+      if (command.credentials.notificationIdentifiers != null) {
+        updatePayload.credentials.notificationIdentifiers = command.credentials.notificationIdentifiers;
       }
     }
 

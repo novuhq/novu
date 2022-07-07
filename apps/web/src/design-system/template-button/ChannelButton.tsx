@@ -10,6 +10,7 @@ import { When } from '../../components/utils/When';
 import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../store/use-env-controller';
 import { ChannelTypeEnum } from '@novu/shared';
+import { useClickOutside } from '@mantine/hooks';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -21,6 +22,7 @@ interface ITemplateButtonProps {
   active?: boolean;
   action?: boolean;
   testId?: string;
+  tabKey: string;
   checked?: boolean;
   readonly?: boolean;
   switchButton?: (boolean) => void;
@@ -28,7 +30,7 @@ interface ITemplateButtonProps {
   errors?: boolean | string;
   showDots?: boolean;
   id?: string | undefined;
-  onDelete?: () => void;
+  onDelete?: (id: string) => void;
   showDropZone?: boolean;
   dragging?: boolean;
   setActivePage?: (string) => void;
@@ -71,6 +73,7 @@ export function ChannelButton({
   readonly = false,
   label,
   Icon,
+  tabKey,
   testId,
   errors = false,
   showDots = true,
@@ -89,9 +92,9 @@ export function ChannelButton({
   const [disabled, setDisabled] = useState(initDisabled);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
+  const menuRef = useClickOutside(() => setShowDotMenu(false), ['click', 'mousedown', 'touchstart']);
 
-  const { watch, setValue } = useFormContext();
-  const steps = watch(`steps`);
+  const { watch } = useFormContext();
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -152,6 +155,7 @@ export function ChannelButton({
                 }}
               >
                 <Menu
+                  ref={menuRef}
                   shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
                   classNames={menuClasses}
                   withArrow={true}
@@ -180,12 +184,8 @@ export function ChannelButton({
                     }
                     data-test-id="edit-step-action"
                     onClick={() => {
-                      const thisStep = steps.find((step) => step._id === id);
-                      const selectedChannel = thisStep.template.type;
                       setShowDotMenu(false);
-                      setActivePage(
-                        selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
-                      );
+                      setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
                     }}
                   >
                     Edit Template
@@ -197,10 +197,8 @@ export function ChannelButton({
                     icon={<Trash />}
                     data-test-id="delete-step-action"
                     onClick={() => {
-                      const newSteps = steps.filter((step) => step._id !== id);
                       setShowDotMenu(false);
-                      setValue('steps', newSteps);
-                      onDelete();
+                      onDelete(id || '');
                     }}
                   >
                     Delete Step

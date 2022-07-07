@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -10,6 +10,8 @@ import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
 import { UpdateSubscriberChannelDto } from './dto/update-subscriber-channel.dto';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
+import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
+import { GetSubscribersCommand } from './usecases/get-subscribers';
 
 @Controller('/subscribers')
 export class SubscribersController {
@@ -17,8 +19,22 @@ export class SubscribersController {
     private createSubscriberUsecase: CreateSubscriber,
     private updateSubscriberUsecase: UpdateSubscriber,
     private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
-    private removeSubscriberUsecase: RemoveSubscriber
+    private removeSubscriberUsecase: RemoveSubscriber,
+    private getSubscribersUsecase: GetSubscribers
   ) {}
+
+  @Get('')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0) {
+    return await this.getSubscribersUsecase.execute(
+      GetSubscribersCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        page: page ? Number(page) : 0,
+      })
+    );
+  }
 
   @Post('/')
   @ExternalApiAccessible()

@@ -28,7 +28,12 @@ export class WorkflowQueueService {
   private jobRepository: JobRepository;
 
   constructor() {
-    this.queue = new Queue('standard', { ...this.bullConfig });
+    this.queue = new Queue('standard', {
+      ...this.bullConfig,
+      defaultJobOptions: {
+        removeOnComplete: true,
+      },
+    });
     this.worker = new Worker(
       'standard',
       async ({ data }: { data: JobEntity }) => {
@@ -56,6 +61,7 @@ export class WorkflowQueueService {
       SendMessageCommand.create({
         identifier: job.identifier,
         payload: job.payload ? job.payload : {},
+        overrides: job.overrides ? job.overrides : {},
         step: job.step,
         transactionId: job.transactionId,
         notificationId: job._notificationId,

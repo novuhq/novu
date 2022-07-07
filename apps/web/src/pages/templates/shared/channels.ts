@@ -29,10 +29,18 @@ export const channels = [
   {
     tabKey: ChannelTypeEnum.DIRECT,
     label: 'Direct',
-    description: 'Send an direct messages',
+    description: 'Send a direct message',
     Icon: SmsGradient,
     testId: 'directSelector',
     channelType: ChannelTypeEnum.DIRECT,
+  },
+  {
+    tabKey: ChannelTypeEnum.PUSH,
+    label: 'Push',
+    description: "Send an Push Notification to a user's device",
+    Icon: MobileGradient,
+    testId: 'pushSelector',
+    channelType: ChannelTypeEnum.PUSH,
   },
 ];
 
