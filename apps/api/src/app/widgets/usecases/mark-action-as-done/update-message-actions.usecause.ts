@@ -1,18 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, MessageTemplateEntity } from '@novu/dal';
-import { MarkActionAsDoneCommand } from './mark-action-as-done.command';
-import { MessageActionStatusEnum } from '@novu/shared';
+import { UpdateMessageActionsCommand } from './update-message-actions.command';
 
 @Injectable()
-export class MarkActionAsDone {
+export class UpdateMessageActions {
   constructor(private messageRepository: MessageRepository) {}
 
-  async execute(command: MarkActionAsDoneCommand): Promise<MessageEntity> {
+  async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
     const updatePayload: Partial<MessageTemplateEntity> = {};
 
-    if (command.executedType) {
-      updatePayload['cta.action.status'] = MessageActionStatusEnum.DONE;
-      updatePayload['cta.action.executedType'] = command.executedType;
+    if (command.type) {
+      updatePayload['cta.action.result.type'] = command.type;
+    }
+
+    if (command.status) {
+      updatePayload['cta.action.status'] = command.status;
+    }
+
+    if (command.payload) {
+      updatePayload['cta.action.result.payload'] = command.payload;
     }
 
     await this.messageRepository.update(

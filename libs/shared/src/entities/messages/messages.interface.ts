@@ -29,13 +29,17 @@ export interface ICta {
 
 export interface IMessageAction {
   status?: MessageActionStatusEnum;
-  executedType?: ButtonTypeEnum;
   buttons?: IMessageButton[];
+  result: {
+    payload?: any;
+    type?: ButtonTypeEnum;
+  };
 }
 
 export interface IMessageButton {
   type: ButtonTypeEnum;
   content: string;
+  resultContent?: string;
 }
 
 export enum MessageActionStatusEnum {

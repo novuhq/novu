@@ -15,9 +15,9 @@ import { GetOrganizationData } from './usecases/get-organization-data/get-organi
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
-import { ButtonTypeEnum } from '@novu/shared';
-import { MarkActionAsDone } from './usecases/mark-action-as-done/mark-action-as-done.usecause';
-import { MarkActionAsDoneCommand } from './usecases/mark-action-as-done/mark-action-as-done.command';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
+import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
 
 @Controller('/widgets')
 export class WidgetsController {
@@ -26,7 +26,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
-    private markActionAsDoneUsecase: MarkActionAsDone,
+    private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
@@ -88,19 +88,22 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/messages/:messageId/actiondone')
+  @Post('/messages/:messageId/actions/:type')
   async markActionAsSeen(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('messageId') messageId: string,
-    @Body() body: { executedType: ButtonTypeEnum } // eslint-disable-line @typescript-eslint/no-explicit-any
+    @Param('type') type: ButtonTypeEnum,
+    @Body() body: { payload: any; status: MessageActionStatusEnum } // eslint-disable-line @typescript-eslint/no-explicit-any
   ): Promise<MessageEntity> {
-    return await this.markActionAsDoneUsecase.execute(
-      MarkActionAsDoneCommand.create({
+    return await this.updateMessageActionsUsecase.execute(
+      UpdateMessageActionsCommand.create({
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession._id,
         environmentId: subscriberSession._environmentId,
         messageId,
-        executedType: body.executedType,
+        type,
+        payload: body.payload,
+        status: body.status,
       })
     );
   }

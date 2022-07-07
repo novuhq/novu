@@ -44,8 +44,8 @@ export function useNotifications() {
     return await api.markMessageAsSeen(messageId);
   }
 
-  async function markAsActionAsDone(messageId: string, actionButtonType?: ButtonTypeEnum) {
-    return await api.markAsActionAsDone(messageId, actionButtonType);
+  async function markActionAsDone(messageId: string, actionButtonType?: ButtonTypeEnum) {
+    return await api.markActionAsDone(messageId, actionButtonType);
   }
 
   async function refetch() {
@@ -58,7 +58,7 @@ export function useNotifications() {
     hasNextPage,
     fetching,
     markAsSeen,
-    markAsActionAsDone,
+    markAsActionAsDone: markActionAsDone,
     refetch,
   };
 }
