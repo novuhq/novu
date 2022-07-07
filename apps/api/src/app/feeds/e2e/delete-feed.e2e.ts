@@ -39,7 +39,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     const { body: deletedBody } = await session.testAgent.delete(`/v1/feeds/${newFeedId}`).send();
 
     expect(deletedBody.data).to.be.ok;
-    expect(deletedBody.data.length).to.equal(2);
+    expect(deletedBody.data.length).to.equal(1);
     const deletedFeed = (await feedRepository.findDeleted({ _id: newFeedId }))[0];
 
     expect(deletedFeed.deleted).to.equal(true);
