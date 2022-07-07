@@ -1,14 +1,15 @@
 import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
+import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { FeedRepository } from '@novu/dal';
 
 describe('Delete A Feed - /feeds (POST)', async () => {
   let session: UserSession;
-  const feedRepository = new FeedRepository();
+  let feedRepository = new FeedRepository();
 
-  before(async () => {
+  beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    feedRepository = new FeedRepository();
   });
 
   it('should not be able to delete feed that has a message', async function () {
@@ -16,6 +17,13 @@ describe('Delete A Feed - /feeds (POST)', async () => {
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
     });
+
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+    await notificationTemplateService.createTemplate();
 
     const { body } = await session.testAgent.delete(`/v1/feeds/${feeds[0]._id}`).send();
 
@@ -39,7 +47,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     const { body: deletedBody } = await session.testAgent.delete(`/v1/feeds/${newFeedId}`).send();
 
     expect(deletedBody.data).to.be.ok;
-    expect(deletedBody.data.length).to.equal(1);
+    expect(deletedBody.data.length).to.equal(2);
     const deletedFeed = (await feedRepository.findDeleted({ _id: newFeedId }))[0];
 
     expect(deletedFeed.deleted).to.equal(true);
