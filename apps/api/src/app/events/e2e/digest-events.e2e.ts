@@ -8,7 +8,7 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
 import { v4 as uuidv4 } from 'uuid';
@@ -78,6 +78,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
+            type: DigestTypeEnum.REGULAR,
           },
         },
         {
@@ -114,7 +115,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(job.digest?.events?.length).to.equal(2);
   });
 
-  it('should digest based on batchkey within time interval', async function () {
+  it('should digest based on batchKey within time interval', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -128,7 +129,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchkey: 'id',
+            batchKey: 'id',
+            type: DigestTypeEnum.REGULAR,
           },
         },
         {
@@ -162,13 +164,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const jobs = await jobRepository.find({
       _templateId: template._id,
     });
-    const digestJob = jobs.find((job) => job?.digest?.batchkey === 'id');
+    const digestJob = jobs.find((job) => job?.digest?.batchKey === 'id');
     expect(digestJob).not.be.undefined;
     const jobsWithEvents = jobs.filter((item) => item.digest.events.length > 0);
     expect(jobsWithEvents.length).to.equal(1);
   });
 
-  it('should digest based on same batchkey within time interval', async function () {
+  it('should digest based on same batchKey within time interval', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -182,7 +184,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchkey: 'id',
+            batchKey: 'id',
+            type: DigestTypeEnum.REGULAR,
           },
         },
         {
@@ -247,6 +250,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.SECONDS,
             amount: 1,
+            type: DigestTypeEnum.REGULAR,
           },
         },
         {
@@ -286,7 +290,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchkey: 'id',
+            batchKey: 'id',
+            type: DigestTypeEnum.REGULAR,
           },
         },
         {
@@ -358,6 +363,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
             updateMode: true,
+            type: DigestTypeEnum.REGULAR,
           },
         },
         {
@@ -405,5 +411,60 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     expect(oldMessage.content).to.equal('Hello world 0');
     expect(message.content).to.equal('Hello world 2');
+  });
+
+  it('should digest with backoff strategy', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await awaitRunningJobs(0);
+
+    await triggerEvent({
+      customVar: 'digest',
+    });
+
+    await awaitRunningJobs(1);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    const pendingJobs = await jobRepository.find({
+      _templateId: template._id,
+      status: {
+        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED],
+      },
+    });
+
+    expect(pendingJobs.length).to.equal(1);
+    const pendingJob = pendingJobs[0];
+
+    await workflowQueueService.work(delayedJob);
+    await awaitRunningJobs(0);
+    const job = await jobRepository.findById(pendingJob._id);
+
+    expect(job.digest.events.length).to.equal(1);
+    expect(job.digest.events[0].customVar).to.equal('digest');
   });
 });

@@ -1,4 +1,10 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, DigestUnitEnum } from '@novu/shared';
+import {
+  BuilderFieldOperator,
+  BuilderFieldType,
+  BuilderGroupValues,
+  DigestUnitEnum,
+  DigestTypeEnum,
+} from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 
@@ -68,7 +74,10 @@ export class NotificationStepEntity {
   metadata?: {
     amount?: number;
     unit?: DigestUnitEnum;
-    batchkey?: string;
+    batchKey?: string;
+    type: DigestTypeEnum;
+    backoffUnit?: DigestUnitEnum;
+    backoffAmount?: number;
     updateMode?: boolean;
   };
 }

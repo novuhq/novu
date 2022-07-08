@@ -1,5 +1,5 @@
 import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
-import { ICreateNotificationTemplateDto, DigestUnitEnum } from '@novu/shared';
+import { ICreateNotificationTemplateDto, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import { MessageFilter } from './create-notification-template.dto';
 import { MessageTemplateDto } from './message-template.dto';
 
@@ -29,7 +29,10 @@ export class NotificationStepDto {
   metadata?: {
     amount?: number;
     unit?: DigestUnitEnum;
-    batchkey?: string;
+    batchKey?: string;
+    type: DigestTypeEnum;
+    backoffUnit?: DigestUnitEnum;
+    backoffAmount?: number;
   };
 }
 

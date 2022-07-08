@@ -9,7 +9,7 @@ import {
   JobRepository,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -44,37 +44,23 @@ export class ProcessSubscriber {
       command.payload
     );
 
-    const steps: NotificationStepEntity[] = [
-      {
-        template: {
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          _creatorId: command.userId,
-          type: ChannelTypeEnum.TRIGGER,
-          content: '',
-        },
-        _templateId: command.templateId,
-      },
-    ];
+    let steps: NotificationStepEntity[] = [];
 
-    let digestIsRunning = false;
-    for (const step of matchedSteps) {
-      if (step.template.type !== ChannelTypeEnum.DIGEST && !digestIsRunning) {
+    const digestStep = matchedSteps.find((step) => step.template.type === ChannelTypeEnum.DIGEST);
+
+    if (!digestStep) {
+      for (const step of matchedSteps) {
         steps.push(step);
-        continue;
       }
+    }
 
-      const delayedDigests = await this.jobRepository.find({
-        status: JobStatusEnum.DELAYED,
-        _subscriberId: subscriber._id,
-        _templateId: command.templateId,
-        _environmentId: command.environmentId,
-      });
-
-      digestIsRunning = delayedDigests.length > 0;
-
-      if (!digestIsRunning) {
-        steps.push(step);
+    if (digestStep) {
+      const type = digestStep.metadata.type;
+      if (type === DigestTypeEnum.REGULAR) {
+        steps = await this.filterStepsRegularDigest(matchedSteps, subscriber._id, command);
+      }
+      if (type === DigestTypeEnum.BACKOFF) {
+        steps = await this.filterStepsBackoffDigest(matchedSteps, subscriber._id, command);
       }
     }
 
@@ -163,5 +149,79 @@ export class ProcessSubscriber {
       _templateId: templateId,
       transactionId: command.transactionId,
     });
+  }
+
+  private createTriggerStep(command: ProcessSubscriberCommand): NotificationStepEntity {
+    return {
+      template: {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _creatorId: command.userId,
+        type: ChannelTypeEnum.TRIGGER,
+        content: '',
+      },
+      _templateId: command.templateId,
+    };
+  }
+
+  private async filterStepsRegularDigest(
+    matchedSteps: NotificationStepEntity[],
+    subscriberId: string,
+    command: ProcessSubscriberCommand
+  ) {
+    const steps = [this.createTriggerStep(command)];
+    let digestIsRunning = false;
+    for (const step of matchedSteps) {
+      if (step.template.type !== ChannelTypeEnum.DIGEST && !digestIsRunning) {
+        steps.push(step);
+        continue;
+      }
+
+      const delayedDigests = await this.jobRepository.find({
+        status: JobStatusEnum.DELAYED,
+        _subscriberId: subscriberId,
+        _templateId: command.templateId,
+        _environmentId: command.environmentId,
+      });
+
+      digestIsRunning = delayedDigests.length > 0;
+
+      if (!digestIsRunning) {
+        steps.push(step);
+      }
+    }
+
+    return steps;
+  }
+
+  private async filterStepsBackoffDigest(
+    matchedSteps: NotificationStepEntity[],
+    subscriberId: string,
+    command: ProcessSubscriberCommand
+  ) {
+    const steps = [this.createTriggerStep(command)];
+    for (const step of matchedSteps) {
+      if (step.template.type === ChannelTypeEnum.DIGEST) {
+        const from = moment().subtract(step.metadata.backoffAmount, step.metadata.backoffUnit).toDate();
+        const triggerCount = await this.jobRepository.find({
+          updatedAt: {
+            $gt: from,
+          },
+          _templateId: command.templateId,
+          status: JobStatusEnum.COMPLETED,
+          type: ChannelTypeEnum.TRIGGER,
+          _environmentId: command.environmentId,
+          _subscriberId: subscriberId,
+        });
+        if (triggerCount.length === 0) {
+          continue;
+        }
+        steps.push(step);
+        continue;
+      }
+      steps.push(step);
+    }
+
+    return steps;
   }
 }
