@@ -69,6 +69,7 @@ export class NotificationStepEntity {
     amount?: number;
     unit?: DigestUnitEnum;
     batchkey?: string;
+    updateMode?: boolean;
   };
 }
 

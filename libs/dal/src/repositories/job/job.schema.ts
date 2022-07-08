@@ -72,6 +72,9 @@ const jobSchema = new Schema(
       batchkey: {
         type: Schema.Types.String,
       },
+      updateMode: {
+        type: Schema.Types.Boolean,
+      },
     },
     type: {
       type: Schema.Types.String,

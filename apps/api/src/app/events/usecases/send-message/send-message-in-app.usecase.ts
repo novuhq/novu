@@ -5,6 +5,7 @@ import {
   NotificationRepository,
   SubscriberRepository,
   SubscriberEntity,
+  MessageEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -67,7 +68,7 @@ export class SendMessageInApp extends SendMessageType {
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
 
-    const message = await this.messageRepository.create({
+    const oldMessage = await this.messageRepository.findOne({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -75,11 +76,44 @@ export class SendMessageInApp extends SendMessageType {
       _templateId: notification._templateId,
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
-      cta: inAppChannel.template.cta,
       transactionId: command.transactionId,
-      content,
-      payload: messagePayload,
     });
+
+    let message: MessageEntity;
+
+    if (!oldMessage) {
+      message = await this.messageRepository.create({
+        _notificationId: notification._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _subscriberId: command.subscriberId,
+        _templateId: notification._templateId,
+        _messageTemplateId: inAppChannel.template._id,
+        channel: ChannelTypeEnum.IN_APP,
+        cta: inAppChannel.template.cta,
+        transactionId: command.transactionId,
+        content,
+        payload: messagePayload,
+      });
+    }
+
+    if (oldMessage) {
+      await this.messageRepository.update(
+        {
+          _id: oldMessage._id,
+        },
+        {
+          $set: {
+            seen: false,
+            cta: inAppChannel.template.cta,
+            content,
+            payload: messagePayload,
+            createdAt: new Date(),
+          },
+        }
+      );
+      message = await this.messageRepository.findById(oldMessage._id);
+    }
 
     const count = await this.messageRepository.getUnseenCount(
       command.environmentId,

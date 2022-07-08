@@ -210,6 +210,7 @@ describe('Notifications Creator', function () {
 
       cy.getByTestId('time-amount').type('20');
       cy.getByTestId('batch-key').type('id');
+      cy.getByTestId('updateMode').click();
 
       cy.getByTestId('submit-btn').click();
 
@@ -224,6 +225,7 @@ describe('Notifications Creator', function () {
 
       cy.getByTestId('time-amount').should('have.value', '20');
       cy.getByTestId('batch-key').should('have.value', 'id');
+      cy.getByTestId('updateMode').should('be.checked');
     });
 
     it('should create and edit group id', function () {

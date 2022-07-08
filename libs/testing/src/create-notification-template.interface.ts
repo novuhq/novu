@@ -16,6 +16,7 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
       amount?: number;
       unit?: DigestUnitEnum;
       batchkey?: string;
+      updateMode?: boolean;
     };
   }[];
 }
