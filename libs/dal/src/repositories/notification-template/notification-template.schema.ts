@@ -78,7 +78,7 @@ const notificationTemplateSchema = new Schema(
           batchkey: {
             type: Schema.Types.String,
           },
-          resend: {
+          updateMode: {
             type: Schema.Types.Boolean,
           },
         },

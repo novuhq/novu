@@ -84,15 +84,15 @@ export const DigestMetadata = ({ control, index }) => {
       />
       <Controller
         control={control}
-        name={`steps.${index}.metadata.resend`}
+        name={`steps.${index}.metadata.updateMode`}
         render={({ field: { value, ...field } }) => {
           return (
             <StyledSwitch
               {...field}
-              data-test-id="resend"
+              data-test-id="updateMode"
               disabled={readonly}
               checked={value}
-              label={`Resend in app notifications`}
+              label={`Update in app notifications`}
             />
           );
         }}

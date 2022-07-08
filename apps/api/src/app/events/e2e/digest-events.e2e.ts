@@ -357,7 +357,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            resend: true,
+            updateMode: true,
           },
         },
         {

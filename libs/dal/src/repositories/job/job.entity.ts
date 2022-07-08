@@ -33,7 +33,7 @@ export class JobEntity {
     amount?: number;
     unit?: DigestUnitEnum;
     batchkey?: string;
-    resend?: boolean;
+    updateMode?: boolean;
   };
   type?: ChannelTypeEnum;
 }
