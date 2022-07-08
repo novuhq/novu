@@ -13,8 +13,8 @@ import { When } from '../../../components/utils/When';
 import { Trash } from '../../../design-system/icons';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
-import { DeleteStepModal } from '../../../components/templates/DeleteStepModal';
 import { DigestMetadata } from './DigestMetadata';
+import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -239,7 +239,7 @@ const WorkflowEditorPage = ({
           </SideBarWrapper>
         </Grid.Col>
       </Grid>
-      <DeleteStepModal isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
+      <DeleteConfirmModal target="step" isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
     </div>
   );
 };
