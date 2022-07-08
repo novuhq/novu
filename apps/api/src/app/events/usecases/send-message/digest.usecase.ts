@@ -49,14 +49,19 @@ export class Digest extends SendMessageType {
       });
     }
 
-    const nextJobs = await this.jobRepository.find({
+    let nextJobs = await this.jobRepository.find({
       transactionId: command.transactionId,
       _id: {
         $ne: command.jobId,
       },
-      status: {
-        $ne: JobStatusEnum.COMPLETED,
-      },
+    });
+
+    nextJobs = nextJobs.filter((job) => {
+      if (job.type === ChannelTypeEnum.IN_APP && job.status === JobStatusEnum.COMPLETED) {
+        return true;
+      }
+
+      return job.status !== JobStatusEnum.COMPLETED && job.status !== JobStatusEnum.FAILED;
     });
 
     const batchValue = currentJob?.payload ? currentJob.payload[currentJob?.digest?.batchKey] : undefined;

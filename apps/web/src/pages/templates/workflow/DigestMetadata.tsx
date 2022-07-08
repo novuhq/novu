@@ -2,9 +2,15 @@ import { Grid, InputWrapper } from '@mantine/core';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { When } from '../../../components/utils/When';
-import { Input, Select } from '../../../design-system';
+import { Input, Select, Switch } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
+import styled from '@emotion/styled';
+
+const StyledSwitch = styled(Switch)`
+  max-width: 100% !important;
+  margin-top: 15px;
+`;
 
 export const DigestMetadata = ({ control, index }) => {
   const { readonly } = useEnvController();
@@ -179,6 +185,21 @@ export const DigestMetadata = ({ control, index }) => {
           </Grid>
         </InputWrapper>
       </When>
+      <Controller
+        control={control}
+        name={`steps.${index}.metadata.updateMode`}
+        render={({ field: { value, ...field } }) => {
+          return (
+            <StyledSwitch
+              {...field}
+              data-test-id="updateMode"
+              disabled={readonly}
+              checked={value}
+              label={`Update in app notifications`}
+            />
+          );
+        }}
+      />
     </>
   );
 };

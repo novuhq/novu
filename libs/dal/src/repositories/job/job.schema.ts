@@ -81,6 +81,9 @@ const jobSchema = new Schema(
       backoffAmount: {
         type: Schema.Types.Number,
       },
+      updateMode: {
+        type: Schema.Types.Boolean,
+      },
     },
     type: {
       type: Schema.Types.String,

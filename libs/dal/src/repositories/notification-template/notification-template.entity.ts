@@ -78,6 +78,7 @@ export class NotificationStepEntity {
     type: DigestTypeEnum;
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;
+    updateMode?: boolean;
   };
 }
 

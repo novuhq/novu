@@ -86,6 +86,9 @@ const notificationTemplateSchema = new Schema(
           },
           backoffAmount: {
             type: Schema.Types.Number,
+          };
+          updateMode: {
+            type: Schema.Types.Boolean,
           },
         },
       },

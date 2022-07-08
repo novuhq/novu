@@ -36,6 +36,7 @@ export class JobEntity {
     type: DigestTypeEnum;
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;
+    updateMode?: boolean;
   };
   type?: ChannelTypeEnum;
 }

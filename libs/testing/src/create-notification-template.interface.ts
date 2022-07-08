@@ -19,6 +19,7 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
       type: DigestTypeEnum;
       backoffUnit?: DigestUnitEnum;
       backoffAmount?: number;
+      updateMode?: boolean;
     };
   }[];
 }

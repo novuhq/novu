@@ -352,7 +352,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(delayedJob.status).to.equal(JobStatusEnum.CANCELED);
   });
 
-  it('should digest with backoff strategy', async function () {
+  it('should be able to update existing message on the in-app digest', async function () {
+    const id = uuidv4();
     template = await session.createTemplate({
       steps: [
         {
@@ -373,37 +374,39 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       ],
     });
 
+    await triggerEvent(
+      {
+        customVar: 'Testing of User Name',
+      },
+      id
+    );
+    await awaitRunningJobs(1);
+
+    const oldMessage = await messageRepository.findOne({
+      channel: ChannelTypeEnum.IN_APP,
+      _templateId: template._id,
+    });
+
     await triggerEvent({
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(0);
-
-    await triggerEvent({
-      customVar: 'digest',
-    });
-
-    await awaitRunningJobs(1);
     const delayedJob = await jobRepository.findOne({
       _templateId: template._id,
       type: ChannelTypeEnum.DIGEST,
+      transactionId: id,
     });
-
-    const pendingJobs = await jobRepository.find({
-      _templateId: template._id,
-      status: {
-        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED],
-      },
-    });
-
-    expect(pendingJobs.length).to.equal(1);
-    const pendingJob = pendingJobs[0];
 
     await workflowQueueService.work(delayedJob);
-    await awaitRunningJobs(0);
-    const job = await jobRepository.findById(pendingJob._id);
 
-    expect(job.digest.events.length).to.equal(1);
-    expect(job.digest.events[0].customVar).to.equal('digest');
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.findOne({
+      channel: ChannelTypeEnum.IN_APP,
+      _templateId: template._id,
+    });
+
+    expect(oldMessage.content).to.equal('Hello world 0');
+    expect(message.content).to.equal('Hello world 2');
   });
 });

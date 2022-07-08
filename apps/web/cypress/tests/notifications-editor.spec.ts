@@ -212,6 +212,7 @@ describe('Notifications Creator', function () {
       cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
       cy.getByTestId('time-amount').type('20');
       cy.getByTestId('batch-key').type('id');
+
       cy.getByTestId('digest-type').click();
       cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Backoff').click();
 
@@ -219,6 +220,8 @@ describe('Notifications Creator', function () {
 
       cy.getByTestId('backoff-unit').click();
       cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
+
+      cy.getByTestId('updateMode').click();
 
       cy.getByTestId('submit-btn').click();
 
@@ -237,6 +240,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('time-unit').should('have.value', 'Minutes');
       cy.getByTestId('digest-type').should('have.value', 'Backoff');
       cy.getByTestId('backoff-unit').should('have.value', 'Minutes');
+      cy.getByTestId('updateMode').should('be.checked');
     });
 
     it('should create and edit group id', function () {
