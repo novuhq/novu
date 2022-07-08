@@ -20,3 +20,5 @@ jobs:
   # This workflow contains a single job called "build"
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
+    with:
+      cypress_key: ${{secrets.CYPRESS_WEB_KEY}}

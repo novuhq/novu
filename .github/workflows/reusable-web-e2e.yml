@@ -102,7 +102,7 @@ jobs:
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          CYPRESS_RECORD_KEY: ${{ inputs.cypress_key }}
         with:
           working-directory: apps/web
           start: pnpm start:api
