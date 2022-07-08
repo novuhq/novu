@@ -16,20 +16,32 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
 
   const { editMode, template, trigger, deleteTemplate } = useTemplateController(templateId);
   const [toDelete, setToDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isError, setIsError] = useState<string | undefined>(undefined);
 
   const navigate = useNavigate();
 
   const confirmDelete = async () => {
-    navigate('/templates');
-    await deleteTemplate();
-    setToDelete(false);
+    setIsDeleting(true);
+    setIsError(undefined);
+    try {
+      await deleteTemplate();
+      setIsDeleting(false);
+      setToDelete(false);
+      navigate('/templates');
+    } catch (e: any) {
+      setIsDeleting(false);
+      setIsError(e?.message || 'Unknown error');
+    }
   };
 
   const cancelDelete = () => {
     setToDelete(false);
+    setIsDeleting(false);
   };
 
   const onDelete = () => {
+    setIsError(undefined);
     setToDelete(true);
   };
 
@@ -71,6 +83,8 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
                   isOpen={toDelete}
                   confirm={confirmDelete}
                   cancel={cancelDelete}
+                  isLoading={isDeleting}
+                  error={isError}
                 />
               </>
             )}

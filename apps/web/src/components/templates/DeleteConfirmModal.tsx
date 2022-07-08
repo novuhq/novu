@@ -1,4 +1,5 @@
-import { Group, Modal, useMantineTheme } from '@mantine/core';
+import { Alert, Group, Modal, useMantineTheme } from '@mantine/core';
+import { WarningOutlined } from '@ant-design/icons';
 import { Button, colors, shadows, Title, Text } from '../../design-system';
 
 export function DeleteConfirmModal({
@@ -6,11 +7,15 @@ export function DeleteConfirmModal({
   isOpen,
   cancel,
   confirm,
+  isLoading,
+  error,
 }: {
   target: string;
   isOpen: boolean;
   cancel: () => void;
   confirm: () => void;
+  isLoading?: boolean;
+  error?: string;
 }) {
   const theme = useMantineTheme();
 
@@ -41,12 +46,22 @@ export function DeleteConfirmModal({
         }}
       >
         <div>
+          {error && (
+            <Alert
+              icon={<WarningOutlined size={16} />}
+              title="An error occurred!"
+              color={`linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%)`}
+              mb={32}
+            >
+              {error}
+            </Alert>
+          )}
           <Text>Would you like to delete this {target}?</Text>
           <Group position="right">
             <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
               No
             </Button>
-            <Button mt={30} size="md" onClick={() => confirm()} data-autofocus>
+            <Button mt={30} size="md" onClick={() => confirm()} loading={isLoading} data-autofocus>
               Yes
             </Button>
           </Group>
