@@ -39,6 +39,7 @@
     "@novu/mandrill": "^0.5.1",
     "@novu/node": "^0.5.1",
     "@novu/nodemailer": "^0.5.1",
+    "@novu/netcore": "^0.5.1",
     "@novu/plivo": "^0.5.1",
     "@novu/postmark": "^0.5.1",
     "@novu/sendgrid": "^0.5.1",

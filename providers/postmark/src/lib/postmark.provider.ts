@@ -48,5 +48,6 @@ export class PostmarkEmailProvider implements IEmailProvider {
 
 const getFormattedTo = (to: string | string[]): string => {
   if (Array.isArray(to)) return to.join(', ');
+
   return to;
 };

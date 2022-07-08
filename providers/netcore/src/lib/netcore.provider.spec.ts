@@ -38,7 +38,10 @@ const mockNovuMessage = {
 test('should trigger netcore correctly', async () => {
   const id = 'id';
   const apiKey = 'apiKey';
-  const provider = new NetCoreProvider(apiKey);
+  const provider = new NetCoreProvider({
+    apiKey,
+    from: 'test@test.com',
+  });
   createGeneratethemailsendrequest.mockReturnValue({
     data: {
       message_id: id,

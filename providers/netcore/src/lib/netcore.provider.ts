@@ -4,37 +4,57 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import * as lib from 'pepipost/lib';
 
 export class NetCoreProvider implements IEmailProvider {
   id = 'netcore';
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  constructor(apiKey: string) {
-    lib.Configuration.apiKey = apiKey;
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  netcoreLib: any;
+
+  constructor(
+    private config: {
+      apiKey: string;
+      from: string;
+    }
+  ) {}
 
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const controller = lib.MailSendController;
-    const body = new lib.Send();
+    this.netcoreLib = await import('pepipost/lib');
 
-    body.from = new lib.From();
-    body.from.email = options.from;
+    this.netcoreLib.Configuration.apiKey = this.config.apiKey;
+    this.netcoreLib.ConfigService.from = this.config.from;
+
+    const controller = this.netcoreLib.MailSendController;
+    const body = new this.netcoreLib.Send();
+
+    body.from = new this.netcoreLib.From();
+    body.from.email = options.from || this.config.from;
     body.subject = options.subject;
 
     body.content = [];
-    body.content[0] = new lib.Content();
-    body.content[0].type = lib.TypeEnum.HTML;
+    body.content[0] = new this.netcoreLib.Content();
+    body.content[0].type = this.netcoreLib.TypeEnum.HTML;
     body.content[0].value = options.html;
 
     body.personalizations = [];
-    body.personalizations[0] = new lib.Personalizations();
+    body.personalizations[0] = new this.netcoreLib.Personalizations();
     body.personalizations[0].to = [];
-    body.personalizations[0].to[0] = new lib.EmailStruct();
+    body.personalizations[0].to[0] = new this.netcoreLib.EmailStruct();
     body.personalizations[0].to[0].email = options.to;
+
+    body.personalizations[0].attachments = options.attachments?.map(
+      (attachment) => {
+        const attachmentPayload = new this.netcoreLib.Attachments();
+        attachmentPayload.content = attachment.file.toString('base64');
+        attachmentPayload.filename = attachment.name;
+
+        return attachment;
+      }
+    );
 
     const response = await controller.createGeneratethemailsendrequest(body);
 
