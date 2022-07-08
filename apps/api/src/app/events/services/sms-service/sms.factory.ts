@@ -1,6 +1,6 @@
 import { IntegrationEntity } from '@novu/dal';
 import { ISmsFactory, ISmsHandler } from './interfaces';
-import { SnsHandler, TelnyxHandler, TwilioHandler, Sms77Handler, PlivoHandler } from './handlers';
+import { SnsHandler, TelnyxHandler, TwilioHandler, Sms77Handler, TermiiSmsHandler, PlivoHandler } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [
@@ -8,6 +8,7 @@ export class SmsFactory implements ISmsFactory {
     new TelnyxHandler(),
     new TwilioHandler(),
     new Sms77Handler(),
+    new TermiiSmsHandler(),
     new PlivoHandler(),
   ];
 

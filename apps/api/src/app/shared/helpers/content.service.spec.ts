@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ContentService } from './content.service';
-import { IMessageTemplate } from '@novu/shared';
+import { INotificationTemplateStep } from '@novu/shared';
 
 describe('ContentService', function () {
   describe('replaceVariables', function () {
@@ -73,9 +73,11 @@ describe('ContentService', function () {
       const contentService = new ContentService();
       const variables = contentService.extractMessageVariables([
         {
-          type: ChannelTypeEnum.IN_APP,
-          subject: 'Test',
-          content: 'Text',
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            subject: 'Test',
+            content: 'Text',
+          },
         },
       ]);
       expect(variables.length).to.equal(0);
@@ -85,9 +87,11 @@ describe('ContentService', function () {
       const contentService = new ContentService();
       const variables = contentService.extractMessageVariables([
         {
-          type: ChannelTypeEnum.EMAIL,
-          subject: 'Test {{firstName}}',
-          content: [],
+          template: {
+            type: ChannelTypeEnum.EMAIL,
+            subject: 'Test {{firstName}}',
+            content: [],
+          },
         },
       ]);
       expect(variables.length).to.equal(1);
@@ -98,13 +102,17 @@ describe('ContentService', function () {
       const contentService = new ContentService();
       const variables = contentService.extractSubscriberMessageVariables([
         {
-          type: ChannelTypeEnum.IN_APP,
-          subject: 'Test',
-          content: 'Text',
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            subject: 'Test',
+            content: 'Text',
+          },
         },
         {
-          type: ChannelTypeEnum.SMS,
-          content: 'Text',
+          template: {
+            type: ChannelTypeEnum.SMS,
+            content: 'Text',
+          },
         },
       ]);
       expect(variables.length).to.equal(1);
@@ -115,13 +123,17 @@ describe('ContentService', function () {
       const contentService = new ContentService();
       const variables = contentService.extractSubscriberMessageVariables([
         {
-          type: ChannelTypeEnum.EMAIL,
-          subject: 'Test',
-          content: 'Text',
+          template: {
+            type: ChannelTypeEnum.EMAIL,
+            subject: 'Test',
+            content: 'Text',
+          },
         },
         {
-          type: ChannelTypeEnum.IN_APP,
-          content: 'Text',
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            content: 'Text',
+          },
         },
       ]);
       expect(variables.length).to.equal(1);
@@ -132,36 +144,40 @@ describe('ContentService', function () {
       const contentService = new ContentService();
       const messages = [
         {
-          type: ChannelTypeEnum.EMAIL,
-          subject: 'Test {{firstName}}',
-          content: [
-            {
-              content: 'Test of {{lastName}}',
-              type: 'text',
-            },
-            {
-              content: 'Test of {{lastName}}',
-              type: 'text',
-              url: 'Test of {{url}}',
-            },
-          ],
+          template: {
+            type: ChannelTypeEnum.EMAIL,
+            subject: 'Test {{firstName}}',
+            content: [
+              {
+                content: 'Test of {{lastName}}',
+                type: 'text',
+              },
+              {
+                content: 'Test of {{lastName}}',
+                type: 'text',
+                url: 'Test of {{url}}',
+              },
+            ],
+          },
         },
         {
-          type: ChannelTypeEnum.EMAIL,
-          subject: 'Test {{email}}',
-          content: [
-            {
-              content: 'Test of {{lastName}}',
-              type: 'text',
-            },
-            {
-              content: 'Test of {{lastName}}',
-              type: 'text',
-              url: 'Test of {{url}}',
-            },
-          ],
+          template: {
+            type: ChannelTypeEnum.EMAIL,
+            subject: 'Test {{email}}',
+            content: [
+              {
+                content: 'Test of {{lastName}}',
+                type: 'text',
+              },
+              {
+                content: 'Test of {{lastName}}',
+                type: 'text',
+                url: 'Test of {{url}}',
+              },
+            ],
+          },
         },
-      ] as IMessageTemplate[];
+      ] as INotificationTemplateStep[];
 
       const variables = contentService.extractMessageVariables(messages);
       const subscriberVariables = contentService.extractSubscriberMessageVariables(messages);
@@ -177,8 +193,10 @@ describe('ContentService', function () {
       const contentService = new ContentService();
       const variables = contentService.extractMessageVariables([
         {
-          type: ChannelTypeEnum.IN_APP,
-          content: '{{customVariables}}',
+          template: {
+            type: ChannelTypeEnum.IN_APP,
+            content: '{{customVariables}}',
+          },
         },
       ]);
 

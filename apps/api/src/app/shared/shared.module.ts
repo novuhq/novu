@@ -14,6 +14,7 @@ import {
   LogRepository,
   IntegrationRepository,
   ChangeRepository,
+  JobRepository,
 } from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { MailService } from './services/mail/mail.service';
@@ -34,6 +35,7 @@ const DAL_MODELS = [
   LogRepository,
   IntegrationRepository,
   ChangeRepository,
+  JobRepository,
 ];
 
 const dalService = new DalService();

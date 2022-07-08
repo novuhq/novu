@@ -4,6 +4,8 @@ import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
 import { UnseenCountContext } from '../../store/unseen-count.context';
+import { INovuThemePopoverProvider } from '../../store/novu-theme-provider.context';
+import { useDefaultTheme } from '../../hooks';
 import { ColorScheme } from '../../index';
 
 interface IPopoverNotificationCenterProps {
@@ -13,11 +15,13 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  colorScheme?: ColorScheme;
+  colorScheme: ColorScheme;
+  theme?: INovuThemePopoverProvider;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
-  const { setUnseenCount } = useContext(UnseenCountContext);
+  const { theme } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
+  const { setUnseenCount, unseenCount } = useContext(UnseenCountContext);
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
@@ -29,17 +33,15 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
   }
 
   return (
-    <Popover
-      colorScheme={props.colorScheme}
-      bell={(bellProps) => children({ colorScheme: props.colorScheme, ...bellProps })}
-    >
+    <Popover theme={theme} bell={(bellProps) => children({ ...bellProps, unseenCount, theme })}>
       <NotificationCenter
-        colorScheme={props.colorScheme || 'light'}
         onNotificationClick={props.onNotificationClick}
         onUnseenCountChanged={handlerOnUnseenCount}
         onUrlChange={props.onUrlChange}
         header={props.header}
         footer={props.footer}
+        colorScheme={props.colorScheme}
+        theme={props.theme}
       />
     </Popover>
   );

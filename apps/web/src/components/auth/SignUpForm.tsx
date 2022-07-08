@@ -9,7 +9,7 @@ import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
-import { API_ROOT, GITHUB_AUTH_OPTION } from '../../config';
+import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { showNotification } from '@mantine/notifications';
 
 type Props = {
@@ -84,7 +84,7 @@ export function SignUpForm({ token, email }: Props) {
 
   return (
     <>
-      {GITHUB_AUTH_OPTION && !token && (
+      {!IS_DOCKER_HOSTED && !token && (
         <>
           <GithubButton
             my={30}
@@ -94,7 +94,7 @@ export function SignUpForm({ token, email }: Props) {
             fullWidth
             radius="md"
             leftIcon={<Github />}
-            sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}
+            sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
             Sign Up with Github
           </GithubButton>

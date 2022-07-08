@@ -4,13 +4,14 @@ import useStyles from './Tooltip.styles';
 
 interface ITooltipProps extends JSX.ElementChildrenAttribute {
   label: React.ReactNode;
+  opened?: boolean;
 }
 
 /**
  * Tooltip component
  *
  */
-export function Tooltip({ children, label, ...props }: ITooltipProps) {
+export function Tooltip({ children, label, opened = undefined, ...props }: ITooltipProps) {
   const { classes } = useStyles();
   const defaultDesign = {
     withArrow: true,
@@ -20,7 +21,7 @@ export function Tooltip({ children, label, ...props }: ITooltipProps) {
   } as TooltipProps;
 
   return (
-    <MantineTooltip classNames={classes} {...defaultDesign} label={label} {...props}>
+    <MantineTooltip opened={opened} classNames={classes} {...defaultDesign} label={label} {...props}>
       {children}
     </MantineTooltip>
   );

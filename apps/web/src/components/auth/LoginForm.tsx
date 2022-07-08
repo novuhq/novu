@@ -9,7 +9,7 @@ import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
-import { API_ROOT, GITHUB_AUTH_OPTION } from '../../config';
+import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 
 type Props = {};
 
@@ -51,7 +51,7 @@ export function LoginForm({}: Props) {
 
   return (
     <>
-      {GITHUB_AUTH_OPTION && (
+      {!IS_DOCKER_HOSTED && (
         <>
           <GithubButton
             component="a"
@@ -61,7 +61,7 @@ export function LoginForm({}: Props) {
             fullWidth
             radius="md"
             leftIcon={<Github />}
-            sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}
+            sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
             Sign In with Github
           </GithubButton>

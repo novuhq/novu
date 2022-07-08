@@ -28,7 +28,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
         paddingRight: 30,
       },
       '& thead tr th': {
-        fontWeight: '400',
+        fontWeight: 400,
         height: '17px',
         color: dark ? colors.B40 : colors.B70,
         borderBottom: 'none',

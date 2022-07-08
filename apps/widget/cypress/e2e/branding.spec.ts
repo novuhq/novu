@@ -27,11 +27,13 @@ describe('App Branding', function () {
       // get Window reference from element
       const win = $els[0].ownerDocument.defaultView;
       const before = win.getComputedStyle($els[0], 'before');
-      const contentValue = before.getPropertyValue('background-color');
+      const contentValueColor = before.getPropertyValue('background-color');
+      const contentValueImage = before.getPropertyValue('background-image');
 
-      expect(contentValue).to.eq('rgb(42, 157, 143)');
+      expect(contentValueColor).to.eq('rgba(0, 0, 0, 0)');
+      expect(contentValueImage).to.eq('linear-gradient(0deg, rgb(255, 81, 47) 0%, rgb(221, 36, 118) 100%)');
     });
 
-    cy.get('body').first().should('have.css', 'font-family', 'Montserrat, Helvetica, sans-serif');
+    cy.get('body').first().should('have.css', 'font-family', 'Lato, Helvetica, sans-serif');
   });
 });

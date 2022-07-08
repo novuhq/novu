@@ -1,6 +1,6 @@
 {
   "name": "@novu/ws",
-  "version": "0.4.1",
+  "version": "0.5.1",
   "description": "",
   "author": "",
   "private": true,
@@ -21,6 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "jsonwebtoken": "8.5.1",
     "@godaddy/terminus": "^4.3.1",
     "@nestjs/common": "^7.6.17",
     "@nestjs/core": "^7.6.17",
@@ -30,9 +31,9 @@
     "@nestjs/swagger": "^4.8.0",
     "@nestjs/terminus": "^7.2.0",
     "@nestjs/websockets": "^7.6.17",
-    "@novu/dal": "^0.4.1",
-    "@novu/shared": "^0.4.1",
-    "@novu/testing": "^0.4.1",
+    "@novu/dal": "^0.5.1",
+    "@novu/shared": "^0.5.1",
+    "@novu/testing": "^0.5.1",
     "@sentry/node": "^6.3.3",
     "bull": "^4.4.0",
     "class-transformer": "^0.5.1",

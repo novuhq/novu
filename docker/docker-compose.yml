@@ -6,7 +6,7 @@ services:
     logging:
       driver: "none"
   mongodb:
-    image : mongo
+    image: mongo
     container_name: mongodb
     logging:
       driver: "none"
@@ -19,7 +19,7 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
-    image : "ghcr.io/novuhq/novu/api:latest"
+    image: "ghcr.io/novuhq/novu/api:latest"
     depends_on:
       - mongodb
       - redis
@@ -41,8 +41,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     ports:
       - "3000:3000"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
   ws:
     image: "ghcr.io/novuhq/novu/ws:latest"
     depends_on:
@@ -58,8 +56,6 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     ports:
       - "3002:3002"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
   web:
     image: "ghcr.io/novuhq/novu/web:latest"
     depends_on:
@@ -69,11 +65,9 @@ services:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
       REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-      REACT_APP_DOCKER_HOSTED_ENV: true
+      REACT_APP_DOCKER_HOSTED_ENV: 'true'
     ports:
-        - 4200:4200
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - 4200:4200
   widget:
     image: "ghcr.io/novuhq/novu/widget:latest"
     depends_on:
@@ -85,9 +79,7 @@ services:
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
     ports:
-        - 4500:4500
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - 4500:4500
   embed:
     depends_on:
       - widget

@@ -1,6 +1,7 @@
 {
   "version": "0.2.0",
   "configurations": [
+
     {
       "name": "API - TEST ENV",
       "request": "launch",
@@ -66,6 +67,20 @@
       ],
       "runtimeExecutable": "npm",
       "cwd": "${workspaceFolder}/apps/widget",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "name": "DOCS",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/docs",
       "skipFiles": [
         "<node_internals>/**"
       ],

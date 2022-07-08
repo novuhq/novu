@@ -1,25 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from '@emotion/styled';
 import { Text } from '../../design-system';
 import { DoubleArrowRight } from '../../design-system/icons/arrows/CircleArrowRight';
-import { NavigateValidatorModal } from './NavigateValidatorModal';
+import { useNavigate } from 'react-router-dom';
 
 export function LackIntegrationError({ channelType }: { channelType: string }) {
-  const [confirmModalVisible, setConfirmModalVisible] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   return (
     <>
       <WarningMessage>
         <Text>
           {`Looks like you haven’t configured your ${channelType} provider yet, this channel will be disabled until you`}
-          <StyledSpan onClick={() => setConfirmModalVisible(true)}>configure it</StyledSpan>
-
-          <NavigateValidatorModal
-            isOpen={confirmModalVisible}
-            setModalVisibility={setConfirmModalVisible}
-            navigateRoute="/integrations"
-            navigateName="integration store"
-          />
+          <StyledSpan onClick={() => navigate('/integrations')}>configure it</StyledSpan>
         </Text>
         <DoubleArrowRight />
       </WarningMessage>
