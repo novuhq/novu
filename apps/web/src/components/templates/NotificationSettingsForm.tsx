@@ -1,12 +1,14 @@
 import { Controller, useFormContext } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useEffect } from 'react';
-import { Grid } from '@mantine/core';
+import { ActionIcon, Grid } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
-import { Input, Select } from '../../design-system';
+import { Input, Select, Tooltip } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
 import { INotificationTrigger } from '@novu/shared';
+import { useClipboard } from '@mantine/hooks';
+import { Check, Copy } from '../../design-system/icons';
 
 export const NotificationSettingsForm = ({
   editMode,
@@ -15,6 +17,7 @@ export const NotificationSettingsForm = ({
   editMode: boolean;
   trigger?: INotificationTrigger;
 }) => {
+  const idClipboard = useClipboard({ timeout: 1000 });
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const {
@@ -107,8 +110,15 @@ export const NotificationSettingsForm = ({
             disabled={true}
             value={trigger.identifier || ''}
             error={errors.name?.message}
-            label="Notification ID"
-            description="This will be used to identify the notification using the API."
+            label="Notification Identifier"
+            description="This will be used to identify the notification template using the API."
+            rightSection={
+              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon variant="transparent" onClick={() => idClipboard.copy(trigger.identifier)}>
+                  {idClipboard.copied ? <Check /> : <Copy />}
+                </ActionIcon>
+              </Tooltip>
+            }
           />
         )}
         <Controller

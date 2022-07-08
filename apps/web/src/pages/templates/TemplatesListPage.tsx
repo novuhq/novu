@@ -24,8 +24,8 @@ function NotificationList() {
       accessor: 'identifier',
       Header: 'Trigger ID',
       Cell: ({ triggers }: any) => (
-        <Tooltip label={triggers[0].identifier}>
-          <Text rows={1}>{triggers[0].identifier}</Text>
+        <Tooltip label={triggers ? triggers[0].identifier : 'Unknown'}>
+          <Text rows={1}>{triggers ? triggers[0].identifier : 'Unknown'}</Text>
         </Tooltip>
       ),
     },
