@@ -40,10 +40,10 @@ To learn a detailed guide on running the project locally, visit [https://docs.no
 If a feature is missing you can _request_ a new one by [submitting an issue](#submitting-an-issue) to our GitHub Repository.
 If you would like to _implement_ it, an issue with your proposal must be submitted first, to be sure that we can use it. Please consider:
 
-
 ## Coding guides
 
 To ensure consistency throughout the source code, keep these rules in mind as you are working:
+
 - All features or bug fixes must be tested by one or more specs (unit-tests).
 - We use [Eslint default rule guide](https://eslint.org/docs/rules/), with minor changes. An automated formatter is available using prettier.
 
@@ -62,7 +62,6 @@ Questions, suggestions and thoughts are most welcome. Feel free to open a [Githu
 - Report a bug
 - **Improve documentation** - fix incomplete or missing [docs](https://docs.novu.co/), bad wording, examples or explanations.
 
-
 ## Missing a provider?
 
-If you are in need of a provider we do not yet have, you can request a new one by [submitting an issue](#submitting-an-issue). Or you can build a new one by following our [create a provider guide](https://docs.novu.co/docs/community/create-provider).
+If you are in need of a provider we do not yet have, you can request a new one by [submitting an issue](#submitting-an-issue). Or you can build a new one by following our [create a provider guide](https://docs.novu.co/community/create-provider).

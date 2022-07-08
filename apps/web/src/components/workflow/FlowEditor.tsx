@@ -21,7 +21,7 @@ import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
 import { StepEntity } from '../templates/use-template-controller.hook';
 import { ChannelTypeEnum } from '@novu/shared';
-import { uuid4 } from '.pnpm/@sentry+utils@6.19.3/node_modules/@sentry/utils';
+import { v4 as uuid4 } from 'uuid';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/use-env-controller';
 
