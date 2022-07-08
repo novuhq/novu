@@ -19,9 +19,9 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
 
   const navigate = useNavigate();
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     navigate('/templates');
-    deleteTemplate();
+    await deleteTemplate();
     setToDelete(false);
   };
 
