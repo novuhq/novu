@@ -111,7 +111,7 @@ export const NotificationSettingsForm = ({
             value={trigger.identifier || ''}
             error={errors.name?.message}
             label="Notification Identifier"
-            description="This will be used to identify the notification using the API."
+            description="This will be used to identify the notification template using the API."
             rightSection={
               <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>
                 <ActionIcon variant="transparent" onClick={() => idClipboard.copy(trigger.identifier)}>
