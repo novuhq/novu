@@ -70,6 +70,9 @@ export class TriggerEvent {
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
     this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
+      _template: template._id,
+      _organization: command.organizationId,
+      channels: steps.map((step) => step.template?.type),
       smsChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.SMS)?.length,
       emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
       inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
