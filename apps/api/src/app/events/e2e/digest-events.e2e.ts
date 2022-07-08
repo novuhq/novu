@@ -347,7 +347,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(delayedJob.status).to.equal(JobStatusEnum.CANCELED);
   });
 
-  it('should be able to resend in app digest', async function () {
+  it('should be able to update existing message on the in-app digest', async function () {
     const id = uuidv4();
     template = await session.createTemplate({
       steps: [
