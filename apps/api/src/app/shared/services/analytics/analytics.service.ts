@@ -39,10 +39,14 @@ export class AnalyticsService {
   track(name: string, userId: string, data: Record<string, unknown> = {}) {
     if (!this.analyticsEnabled) return;
 
-    this.mixpanel.track(name, {
-      distinct_id: userId,
-      ...data,
-    });
+    try {
+      this.mixpanel.track(name, {
+        distinct_id: userId,
+        ...data,
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private get analyticsEnabled() {

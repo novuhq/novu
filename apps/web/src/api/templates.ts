@@ -16,3 +16,7 @@ export async function getTemplateById(id: string) {
 export async function updateTemplateStatus(templateId: string, active: boolean) {
   return api.put(`/v1/notification-templates/${templateId}/status`, { active });
 }
+
+export async function deleteTemplateById(templateId: string) {
+  return api.delete(`/v1/notification-templates/${templateId}`);
+}
