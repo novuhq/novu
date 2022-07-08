@@ -21,7 +21,7 @@ jobs:
       matrix:
         # run 3 copies of the current job in parallel
         containers: [1, 2, 3]
-        
+
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
@@ -109,6 +109,7 @@ jobs:
           wait-on: http://localhost:1336/v1/health-check
           browser: chrome
           headless: true
+          record: true
           parallel: true
           install: false
           config-file: cypress.config.ts
