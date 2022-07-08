@@ -28,11 +28,13 @@ export class GetNotificationsFeed {
       sampleFeedItem = feed[0];
     }
 
-    this.analyticsService.track('Fetch Feed - [Notification Center]', command.organizationId, {
-      _subscriber: sampleFeedItem._subscriberId,
-      _organization: command.organizationId,
-      feedSize: feed.length,
-    });
+    if (sampleFeedItem) {
+      this.analyticsService.track('Fetch Feed - [Notification Center]', command.organizationId, {
+        _subscriber: sampleFeedItem._subscriberId,
+        _organization: command.organizationId,
+        feedSize: feed.length,
+      });
+    }
 
     return feed;
   }

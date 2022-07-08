@@ -61,8 +61,9 @@ export function SignUpForm({ token, email }: Props) {
       const responseInvite = await acceptInvite(token);
 
       setToken(responseInvite);
-
       navigate('/templates');
+
+      return;
     }
 
     navigate('/auth/application');
