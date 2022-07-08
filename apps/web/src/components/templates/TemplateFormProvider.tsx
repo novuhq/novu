@@ -116,13 +116,13 @@ const schema = z
             if (step.metadata?.type !== DigestTypeEnum.BACKOFF) {
               return;
             }
-            amount = step.metadata?.backoffamount;
-            unit = step.metadata?.backoffunit;
+            amount = step.metadata?.backoffAmount;
+            unit = step.metadata?.backoffUnit;
             if (!unit) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Digest backoff time is required',
-                path: ['metadata', 'backoffunit'],
+                path: ['metadata', 'backoffUnit'],
               });
             }
 
@@ -130,7 +130,7 @@ const schema = z
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Digest backoff time is required',
-                path: ['metadata', 'backoffamount'],
+                path: ['metadata', 'backoffAmount'],
               });
             }
           })

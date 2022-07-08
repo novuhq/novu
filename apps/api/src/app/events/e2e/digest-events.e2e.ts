@@ -115,7 +115,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(job.digest?.events?.length).to.equal(2);
   });
 
-  it('should digest based on batchkey within time interval', async function () {
+  it('should digest based on batchKey within time interval', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -129,7 +129,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchkey: 'id',
+            batchKey: 'id',
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -164,13 +164,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const jobs = await jobRepository.find({
       _templateId: template._id,
     });
-    const digestJob = jobs.find((job) => job?.digest?.batchkey === 'id');
+    const digestJob = jobs.find((job) => job?.digest?.batchKey === 'id');
     expect(digestJob).not.be.undefined;
     const jobsWithEvents = jobs.filter((item) => item.digest.events.length > 0);
     expect(jobsWithEvents.length).to.equal(1);
   });
 
-  it('should digest based on same batchkey within time interval', async function () {
+  it('should digest based on same batchKey within time interval', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -184,7 +184,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchkey: 'id',
+            batchKey: 'id',
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -290,7 +290,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchkey: 'id',
+            batchKey: 'id',
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -362,8 +362,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
             type: DigestTypeEnum.BACKOFF,
-            backoffunit: DigestUnitEnum.MINUTES,
-            backoffamount: 5,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
           },
         },
         {

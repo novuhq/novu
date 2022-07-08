@@ -69,16 +69,16 @@ const jobSchema = new Schema(
       unit: {
         type: Schema.Types.String,
       },
-      batchkey: {
+      batchKey: {
         type: Schema.Types.String,
       },
       type: {
         type: Schema.Types.String,
       },
-      backoffunit: {
+      backoffUnit: {
         type: Schema.Types.String,
       },
-      backoffamount: {
+      backoffAmount: {
         type: Schema.Types.Number,
       },
     },

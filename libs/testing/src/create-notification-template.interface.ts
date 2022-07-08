@@ -15,10 +15,10 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
     metadata?: {
       amount?: number;
       unit?: DigestUnitEnum;
-      batchkey?: string;
+      batchKey?: string;
       type: DigestTypeEnum;
-      backoffunit?: DigestUnitEnum;
-      backoffamount?: number;
+      backoffUnit?: DigestUnitEnum;
+      backoffAmount?: number;
     };
   }[];
 }

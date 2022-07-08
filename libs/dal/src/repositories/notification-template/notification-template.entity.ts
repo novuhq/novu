@@ -74,10 +74,10 @@ export class NotificationStepEntity {
   metadata?: {
     amount?: number;
     unit?: DigestUnitEnum;
-    batchkey?: string;
+    batchKey?: string;
     type: DigestTypeEnum;
-    backoffunit?: DigestUnitEnum;
-    backoffamount?: number;
+    backoffUnit?: DigestUnitEnum;
+    backoffAmount?: number;
   };
 }
 

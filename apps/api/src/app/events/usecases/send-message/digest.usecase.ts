@@ -59,10 +59,10 @@ export class Digest extends SendMessageType {
       },
     });
 
-    const batchValue = currentJob?.payload ? currentJob.payload[currentJob?.digest?.batchkey] : undefined;
+    const batchValue = currentJob?.payload ? currentJob.payload[currentJob?.digest?.batchKey] : undefined;
     if (batchValue) {
       jobs = jobs.filter((job) => {
-        return job.payload[currentJob.digest.batchkey] === batchValue;
+        return job.payload[currentJob.digest.batchKey] === batchValue;
       });
     }
 

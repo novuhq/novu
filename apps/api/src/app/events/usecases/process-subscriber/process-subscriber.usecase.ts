@@ -202,7 +202,7 @@ export class ProcessSubscriber {
     const steps = [this.createTriggerStep(command)];
     for (const step of matchedSteps) {
       if (step.template.type === ChannelTypeEnum.DIGEST) {
-        const from = moment().subtract(step.metadata.backoffamount, step.metadata.backoffunit).toDate();
+        const from = moment().subtract(step.metadata.backoffAmount, step.metadata.backoffUnit).toDate();
         const triggerCount = await this.jobRepository.find({
           updatedAt: {
             $gt: from,

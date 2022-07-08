@@ -32,10 +32,10 @@ export class JobEntity {
     events?: any[];
     amount?: number;
     unit?: DigestUnitEnum;
-    batchkey?: string;
+    batchKey?: string;
     type: DigestTypeEnum;
-    backoffunit?: DigestUnitEnum;
-    backoffamount?: number;
+    backoffUnit?: DigestUnitEnum;
+    backoffAmount?: number;
   };
   type?: ChannelTypeEnum;
 }

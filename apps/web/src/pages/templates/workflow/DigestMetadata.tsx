@@ -79,7 +79,7 @@ export const DigestMetadata = ({ control, index }) => {
       >
         <Controller
           control={control}
-          name={`steps.${index}.metadata.batchkey`}
+          name={`steps.${index}.metadata.batchKey`}
           render={({ field }) => {
             return (
               <Input
@@ -87,7 +87,7 @@ export const DigestMetadata = ({ control, index }) => {
                 label="Batch Key"
                 placeholder="Property key on payload"
                 description="A batch key is used to batch notifications"
-                error={errors?.steps ? errors.steps[index]?.metadata?.batchkey?.message : undefined}
+                error={errors?.steps ? errors.steps[index]?.metadata?.batchKey?.message : undefined}
                 type="text"
                 data-test-id="batch-key"
               />
@@ -135,12 +135,12 @@ export const DigestMetadata = ({ control, index }) => {
             <Grid.Col span={4}>
               <Controller
                 control={control}
-                name={`steps.${index}.metadata.backoffamount`}
+                name={`steps.${index}.metadata.backoffAmount`}
                 render={({ field }) => {
                   return (
                     <Input
                       {...field}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.amount?.message : undefined}
+                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffAmount?.message : undefined}
                       min={0}
                       max={100}
                       type="number"
@@ -155,12 +155,12 @@ export const DigestMetadata = ({ control, index }) => {
             <Grid.Col span={8}>
               <Controller
                 control={control}
-                name={`steps.${index}.metadata.backoffunit`}
+                name={`steps.${index}.metadata.backoffUnit`}
                 render={({ field }) => {
                   return (
                     <Select
                       disabled={readonly}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffunit?.message : undefined}
+                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffUnit?.message : undefined}
                       placeholder="Minutes"
                       data={[
                         { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
