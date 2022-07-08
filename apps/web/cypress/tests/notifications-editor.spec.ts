@@ -612,7 +612,7 @@ function addAndEditChannel(channel: Channel, parent?: Parent) {
 function dragAndDrop(channel: Channel, parent?: Parent) {
   const dataTransfer = new DataTransfer();
 
-  cy.wait(1000);
+  cy.wait(2000);
   cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer });
   if (parent) {
     cy.getByTestId(`node-${parent}Selector`).parent().trigger('drop', { dataTransfer });
