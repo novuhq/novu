@@ -27,7 +27,9 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
         </Grid.Col>
         <Grid.Col md={8} sm={6}>
           <div style={{ paddingLeft: 23 }}>
-            {activePage === ActivePageEnum.SETTINGS && <NotificationSettingsForm editMode={editMode} />}
+            {activePage === ActivePageEnum.SETTINGS && (
+              <NotificationSettingsForm editMode={editMode} trigger={trigger} />
+            )}
 
             {template && trigger && activePage === ActivePageEnum.TRIGGER_SNIPPET && (
               <TriggerSnippetTabs trigger={trigger} />
