@@ -7,7 +7,7 @@ import {
   IMessageAction,
   MessageActionStatusEnum,
 } from '@novu/shared';
-import { TextInput, useMantineTheme } from '@mantine/core';
+import { ColorScheme, TextInput, useMantineColorScheme, useMantineTheme } from '@mantine/core';
 import { RemoveCircle } from '../../design-system/icons/general/RemoveCircle';
 import styled from '@emotion/styled';
 import { Button, colors } from '../../design-system';
@@ -93,23 +93,27 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
 }
 
 function AddButtonSection({ onButtonAddClick }: { onButtonAddClick?: () => void }) {
+  const { colorScheme } = useMantineColorScheme();
+
   return (
-    <StyledButton data-test-id="control-add" onClick={onButtonAddClick}>
+    <AddButtonTemplateButton colorScheme={colorScheme} data-test-id="control-add" onClick={onButtonAddClick}>
       <span>+ Add Button</span>
-    </StyledButton>
+    </AddButtonTemplateButton>
   );
 }
 
-const StyledButton = styled.div`
+const AddButtonTemplateButton = styled.div<{ colorScheme: ColorScheme }>`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 44px;
-  border: dashed;
+  height: 30px;
+  border: 1px dashed;
   border-radius: 7px;
-  margin: 14px 0 14px 0;
-  color: ${colors.B60};
+  margin: 15px 0 15px 0;
+  color: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B80 : colors.B60)};
   cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
 `;
 
 const TemplateContainer = styled.div`
@@ -127,6 +131,7 @@ const TemplateContainerWrap = styled.div`
 
 const NotificationButton = styled(Button)<{ buttonStyle }>`
   background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
+  height: 30px;
   position: relative;
   cursor: default;
   justify-content: center;
@@ -143,7 +148,7 @@ const DeleteIcon = styled.div<{ buttonStyle }>`
   position: absolute;
   align-items: center;
   height: 14px;
-  top: 14px;
+  top: 8px;
   right: 14px;
   cursor: pointer;
   path {
@@ -162,5 +167,6 @@ const ButtonInput = styled(TextInput)<{ buttonStyle }>`
     background: transparent;
     color: ${({ buttonStyle }) => buttonStyle.fontColor};
     font-weight: 700;
+    height: 30px;
   }
 `;

@@ -69,7 +69,7 @@ export function InAppWidgetPreview({
           <Container
             fluid
             sx={{
-              padding: '15px 15px 16px',
+              padding: '15px 15px 0',
               borderRadius: '7px',
               backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
               boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
@@ -98,6 +98,9 @@ export function InAppWidgetPreview({
             <Group position="apart">
               <div style={{ width: '100%' }}>
                 <Text weight="bold">{children}</Text>
+                <Text mt={5} color={colors.B60}>
+                  {moment(moment().subtract(5, 'minutes')).fromNow()}
+                </Text>
                 <ActionBlockContainer
                   value={value}
                   onChange={onChange}
@@ -105,9 +108,6 @@ export function InAppWidgetPreview({
                   onRemoveTemplate={onRemoveTemplate}
                   isButtonsTemplateSelected={isButtonsTemplateSelected}
                 />
-                <Text mt={5} color={colors.B60}>
-                  {moment(moment().subtract(5, 'minutes')).fromNow()}
-                </Text>
               </div>
             </Group>
           </Container>

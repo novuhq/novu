@@ -41,7 +41,9 @@ export function ButtonsTemplates(props: IButtonsTemplatesProps) {
                 </TemplateContainer>
               </TemplateContainerWrap>
 
-              {templates.templates.length > templatesIndex + 1 ? <Divider my="sm" /> : null}
+              {templates.templates.length > templatesIndex + 1 ? (
+                <Divider style={{ margin: '15px 0' }} my="sm" />
+              ) : null}
             </>
           );
         })}
@@ -85,13 +87,15 @@ export function TemplateButton(props: ITemplateButton) {
   const buttonText = props.button?.content ? props.button?.content : '';
 
   return (
-    <StyledButton buttonStyle={buttonStyle[props.button.type]} fullWidth>
+    <ActionButton buttonStyle={buttonStyle[props.button.type]} fullWidth>
       {buttonText}
-    </StyledButton>
+    </ActionButton>
   );
 }
 
-const StyledButton = styled(Button)<{ buttonStyle }>`
+const ActionButton = styled(Button)<{ buttonStyle }>`
+  height: 30px;
+  font-size: 12px;
   background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
   color: ${({ buttonStyle }) => buttonStyle.fontColor};
   box-shadow: none;
