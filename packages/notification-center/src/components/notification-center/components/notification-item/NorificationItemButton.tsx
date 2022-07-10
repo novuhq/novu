@@ -6,7 +6,7 @@ import { Button } from '@mantine/core';
 
 interface NotificationButtonProps {
   messageAction: IMessageAction;
-  onNotificationClick: (actionButtonType: ButtonTypeEnum) => void;
+  onActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
   buttonIndex: number;
 }
 export function NotificationButton(props: NotificationButtonProps) {
@@ -18,7 +18,7 @@ export function NotificationButton(props: NotificationButtonProps) {
 
   return (
     <>
-      <ActionButton onClick={() => props.onNotificationClick(button.type)} buttonStyle={buttonStyle}>
+      <ActionButton onClick={() => props.onActionButtonClick(button.type)} buttonStyle={buttonStyle}>
         {buttonText}
       </ActionButton>
     </>

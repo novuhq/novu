@@ -1,23 +1,34 @@
 import styled, { css } from 'styled-components';
-import { IMessage, ButtonTypeEnum } from '@novu/shared';
+import { IMessage, ButtonTypeEnum, IMessageAction, MessageActionStatusEnum } from '@novu/shared';
 import moment from 'moment';
 import { DotsHorizontal } from '../../../../shared/icons';
-import React from 'react';
+import React, { useContext } from 'react';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { ActionContainer } from './ActionContainer';
+import { useNotifications } from '../../../../hooks';
+import { NotificationCenterContext } from '../../../../store/notification-center.context';
 
 export function NotificationListItem({
   notification,
   onClick,
+  onActionButtonClick,
 }: {
   notification: IMessage;
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
+  onActionButtonClick: (message: IMessage) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
+  const { markActionAsDone } = useNotifications();
+  const { notificationItemActionBlock } = useContext(NotificationCenterContext);
 
-  function handleNotificationClick(actionButtonType?: ButtonTypeEnum) {
-    onClick(notification, actionButtonType);
+  function handleNotificationClick() {
+    onClick(notification);
+  }
+
+  async function handleActionButtonClick(actionButtonType?: ButtonTypeEnum) {
+    const message = await markActionAsDone(notification._id, actionButtonType);
+    onActionButtonClick(message);
   }
 
   return (
@@ -34,9 +45,11 @@ export function NotificationListItem({
             __html: notification.content as string,
           }}
         />
-        {notification?.cta?.action ? (
-          <ActionContainer onNotificationClick={handleNotificationClick} action={notification.cta.action} />
-        ) : null}
+        {notificationItemActionBlock && notification?.cta?.action?.status === MessageActionStatusEnum.DONE ? (
+          notificationItemActionBlock(notification?.cta?.action)
+        ) : (
+          <ActionContainerOrNone handleActionButtonClick={handleActionButtonClick} action={notification?.cta?.action} />
+        )}
         <div>
           <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
             {moment(notification.createdAt).fromNow()}
@@ -48,6 +61,16 @@ export function NotificationListItem({
       </SettingsActionWrapper>
     </ItemWrapper>
   );
+}
+
+function ActionContainerOrNone({
+  action,
+  handleActionButtonClick,
+}: {
+  action: IMessageAction;
+  handleActionButtonClick: () => void;
+}) {
+  return <>{action ? <ActionContainer onActionButtonClick={handleActionButtonClick} action={action} /> : null}</>;
 }
 
 const NotificationItemContainer = styled.div`

@@ -8,12 +8,11 @@ import { UnseenCountContext } from '../../../store/unseen-count.context';
 import { useApi } from '../../../hooks/use-api.hook';
 import { useNotifications } from '../../../hooks';
 
-export function Main() {
+export function Main({ onActionButtonClick }: { onActionButtonClick: (message: IMessage) => void }) {
   const { api } = useApi();
   const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
   const {
     markAsSeen: markNotificationAsSeen,
-    markAsActionAsDone,
     fetchNextPage,
     refetch,
     notifications: data,
@@ -33,11 +32,7 @@ export function Main() {
     await fetchNextPage();
   }
 
-  async function onNotificationClicked(notification: IMessage, actionButtonType?: ButtonTypeEnum) {
-    if (actionButtonType) {
-      await markAsActionAsDone(notification._id, actionButtonType);
-    }
-
+  async function onNotificationClicked(notification: IMessage) {
     await markNotificationAsSeen(notification._id);
 
     if (onNotificationClick) {
@@ -73,6 +68,7 @@ export function Main() {
         </div>
       ) : (
         <NotificationsList
+          onActionButtonClick={onActionButtonClick}
           onNotificationClicked={onNotificationClicked}
           notifications={data || []}
           onFetch={fetchNext}

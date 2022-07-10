@@ -58,7 +58,7 @@ export function useNotifications() {
     hasNextPage,
     fetching,
     markAsSeen,
-    markAsActionAsDone: markActionAsDone,
+    markActionAsDone,
     refetch,
   };
 }

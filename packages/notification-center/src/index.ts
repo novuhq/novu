@@ -1,4 +1,4 @@
-import { IMessage, ISubscriberJwt, IOrganizationEntity } from '@novu/shared';
+import { IMessage, ISubscriberJwt, IOrganizationEntity, IMessageAction } from '@novu/shared';
 
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
@@ -39,6 +39,7 @@ export interface INotificationCenterContext {
   isLoading: boolean;
   header: () => JSX.Element;
   footer: () => JSX.Element;
+  notificationItemActionBlock: (messageAction: IMessageAction) => JSX.Element;
 }
 
 export interface INovuProviderContext {

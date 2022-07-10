@@ -6,7 +6,7 @@ import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.
 
 export interface IActionContainerProps {
   action?: IMessageAction;
-  onNotificationClick: (actionButtonType: ButtonTypeEnum) => void;
+  onActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
 }
 
 export function ActionContainer(props: IActionContainerProps) {
@@ -27,7 +27,7 @@ export function ActionContainer(props: IActionContainerProps) {
           ) : (
             buttons?.map((button, buttonIndex) => (
               <NotificationButton
-                onNotificationClick={props.onNotificationClick}
+                onActionButtonClick={props.onActionButtonClick}
                 messageAction={props?.action}
                 buttonIndex={buttonIndex}
                 key={button.type}

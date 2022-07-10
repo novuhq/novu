@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { IMessage } from '@novu/shared';
+import { IMessage, IMessageAction } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
@@ -17,6 +17,8 @@ interface IPopoverNotificationCenterProps {
   footer?: () => JSX.Element;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
+  onActionButtonClick?: (message: IMessage) => void;
+  notificationItemActionBlock?: (messageAction: IMessageAction) => JSX.Element;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -42,6 +44,8 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         footer={props.footer}
         colorScheme={props.colorScheme}
         theme={props.theme}
+        onActionButtonClick={props.onActionButtonClick}
+        notificationItemActionBlock={props.notificationItemActionBlock}
       />
     </Popover>
   );

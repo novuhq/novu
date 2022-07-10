@@ -1,14 +1,14 @@
 import { useAuth } from '../../../hooks';
 import React from 'react';
 import { useQuery } from 'react-query';
-import { IOrganizationEntity } from '@novu/shared';
+import { IOrganizationEntity, IMessage } from '@novu/shared';
 import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { Layout } from './layout/Layout';
 import { Main } from './Main';
 import { useApi } from '../../../hooks/use-api.hook';
 import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
 
-export function AppContent() {
+export function AppContent({ onActionButtonClick }: { onActionButtonClick: (message: IMessage) => void }) {
   const { api } = useApi();
   const { isLoggedIn } = useAuth();
   const { theme, common } = useNovuThemeProvider();
@@ -36,7 +36,7 @@ export function AppContent() {
       <GlobalStyle fontFamily={themeConfig.fontFamily} />
       <Wrap layoutDirection={themeConfig.layout.direction} brandColor={themeConfig.colors.main}>
         <Layout>
-          <Main />
+          <Main onActionButtonClick={onActionButtonClick} />
         </Layout>
       </Wrap>
     </ThemeProvider>

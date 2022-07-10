@@ -9,4 +9,5 @@ export const NotificationCenterContext = React.createContext<INotificationCenter
   isLoading: true,
   header: null,
   footer: null,
+  notificationItemActionBlock: null,
 } as any);
