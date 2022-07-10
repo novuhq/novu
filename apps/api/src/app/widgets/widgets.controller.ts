@@ -71,7 +71,9 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/unseen')
-  async getUnseenCount(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<{ count: number }> {
+  async getUnseenCount(
+    @SubscriberSession() subscriberSession: SubscriberEntity
+  ): Promise<{ count: number; feeds: { _id: string; count: number }[] }> {
     const command = GetUnseenCountCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,

@@ -1,4 +1,14 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -8,12 +18,18 @@ import { CreateFeedCommand } from './usecases/create-feed/create-feed.command';
 import { CreateFeedDto } from './dto/create-feed.dto';
 import { GetFeeds } from './usecases/get-feeds/get-feeds.usecase';
 import { GetFeedsCommand } from './usecases/get-feeds/get-feeds.command';
+import { DeleteFeed } from './usecases/delete-feed/delete-feed.usecase';
+import { DeleteFeedCommand } from './usecases/delete-feed/delete-feed.command';
 
 @Controller('/feeds')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 export class FeedsController {
-  constructor(private createFeedUsecase: CreateFeed, private getFeedsUsecase: GetFeeds) {}
+  constructor(
+    private createFeedUsecase: CreateFeed,
+    private getFeedsUsecase: GetFeeds,
+    private deleteFeedsUsecase: DeleteFeed
+  ) {}
 
   @Post('')
   @Roles(MemberRoleEnum.ADMIN)
@@ -30,12 +46,25 @@ export class FeedsController {
 
   @Get('')
   @Roles(MemberRoleEnum.ADMIN)
-  getNotificationGroups(@UserSession() user: IJwtPayload) {
+  getFeeds(@UserSession() user: IJwtPayload) {
     return this.getFeedsUsecase.execute(
       GetFeedsCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
+      })
+    );
+  }
+
+  @Delete('/:feedId')
+  @Roles(MemberRoleEnum.ADMIN)
+  deleteFeedById(@UserSession() user: IJwtPayload, @Param('feedId') feedId: string) {
+    return this.deleteFeedsUsecase.execute(
+      DeleteFeedCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        feedId,
       })
     );
   }

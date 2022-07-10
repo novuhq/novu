@@ -23,7 +23,7 @@ export function NotificationsListTab({ feedId }: { feedId?: string | string[] })
   const { unseenCount } = useContext(UnseenCountContext);
 
   useEffect(() => {
-    if (!isNaN(unseenCount) && !isFirstRender) {
+    if (!isNaN(unseenCount.count) && !isFirstRender) {
       refetch();
     }
   }, [unseenCount]);

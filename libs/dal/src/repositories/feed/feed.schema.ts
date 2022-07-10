@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
+import * as mongooseDelete from 'mongoose-delete';
 import { schemaOptions } from '../schema-default.options';
 import { FeedEntity } from './feed.entity';
 
@@ -20,6 +21,8 @@ const feedSchema = new Schema(
   },
   schemaOptions
 );
+
+feedSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 interface IFeedDocument extends FeedEntity, Document {
   _id: never;

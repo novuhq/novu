@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, FeedInfo, IAuthContext, INovuProviderContext } from '../../index';
+import { ColorScheme, FeedInfo, IAuthContext, INovuProviderContext, IUnseenCount } from '../../index';
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
@@ -122,8 +122,8 @@ function UnseenProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (socket) {
-      socket.on('unseen_count_changed', (onData: { unseenCount: number }) => {
-        if (!isNaN(onData?.unseenCount)) {
+      socket.on('unseen_count_changed', (onData: { unseenCount: IUnseenCount }) => {
+        if (onData?.unseenCount) {
           setUnseenCount(onData.unseenCount);
         }
       });
