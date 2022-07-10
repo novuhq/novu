@@ -15,6 +15,7 @@ export interface INotificationCenterProps {
   footer?: () => JSX.Element;
   colorScheme: ColorScheme;
   theme?: INovuThemeProvider;
+  tabs?: { name: string; query?: { feedId: string | string[] } }[];
 }
 
 export function NotificationCenter(props: INotificationCenterProps) {
@@ -34,7 +35,7 @@ export function NotificationCenter(props: INotificationCenterProps) {
         }}
       >
         <NovuThemeProvider colorScheme={props.colorScheme} theme={props.theme}>
-          <AppContent />
+          <AppContent tabs={props.tabs} />
         </NovuThemeProvider>
       </NotificationCenterContext.Provider>
     </QueryClientProvider>

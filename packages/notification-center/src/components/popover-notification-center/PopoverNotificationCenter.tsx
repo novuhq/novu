@@ -17,6 +17,7 @@ interface IPopoverNotificationCenterProps {
   footer?: () => JSX.Element;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
+  tabs?: { name: string; query?: { feedId: string | string[] | null } }[];
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -42,6 +43,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         footer={props.footer}
         colorScheme={props.colorScheme}
         theme={props.theme}
+        tabs={props.tabs}
       />
     </Popover>
   );

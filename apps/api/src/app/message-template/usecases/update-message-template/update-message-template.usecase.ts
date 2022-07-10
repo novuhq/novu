@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
+import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
@@ -10,6 +10,7 @@ import { CreateChange } from '../../../change/usecases/create-change.usecase';
 export class UpdateMessageTemplate {
   constructor(
     private messageTemplateRepository: MessageTemplateRepository,
+    private messageRepository: MessageRepository,
     private createChange: CreateChange,
     private changeRepository: ChangeRepository
   ) {}
@@ -59,6 +60,10 @@ export class UpdateMessageTemplate {
     );
 
     const item = await this.messageTemplateRepository.findById(command.templateId);
+
+    if (command.feedId) {
+      await this.messageRepository.updateFeedByMessageTemplateId(command.templateId, command.feedId);
+    }
 
     const changeId = await this.changeRepository.getChangeId(ChangeEntityTypeEnum.MESSAGE_TEMPLATE, item._id);
 

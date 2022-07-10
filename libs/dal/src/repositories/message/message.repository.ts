@@ -14,7 +14,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    feedId?: string,
+    feedId?: string[],
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery: FilterQuery<MessageEntity> = {
@@ -22,8 +22,15 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       _subscriberId: subscriberId,
       channel,
     };
+
+    if (feedId === null) {
+      requestQuery._feedId = { $eq: null };
+    }
+
     if (feedId) {
-      requestQuery._feedId = feedId;
+      requestQuery._feedId = {
+        $in: feedId,
+      };
     }
 
     return await this.find(requestQuery, '', {
@@ -33,13 +40,38 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     });
   }
 
-  async getUnseenCount(environmentId: string, subscriberId: string, channel: ChannelTypeEnum) {
-    return await this.count({
+  async getUnseenCount(
+    environmentId: string,
+    subscriberId: string,
+    channel: ChannelTypeEnum
+  ): Promise<{ count: number; feeds: { _id: string; count: number }[] }> {
+    const result = await this.aggregate([
+      {
+        $match: {
+          _environmentId: Types.ObjectId(environmentId),
+          _subscriberId: Types.ObjectId(subscriberId),
+          seen: false,
+          channel,
+        },
+      },
+      {
+        $group: {
+          _id: '$_feedId',
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+    ]);
+
+    const count = await this.count({
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       seen: false,
       channel,
     });
+
+    return { count, feeds: result };
   }
 
   async changeSeenStatus(subscriberId: string, messageId: string, isSeen: boolean) {
@@ -52,6 +84,19 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
         $set: {
           seen: isSeen,
           lastSeenDate: new Date(),
+        },
+      }
+    );
+  }
+
+  async updateFeedByMessageTemplateId(messageId: string, feedId: string) {
+    return this.update(
+      {
+        _messageTemplateId: messageId,
+      },
+      {
+        $set: {
+          _feedId: feedId,
         },
       }
     );

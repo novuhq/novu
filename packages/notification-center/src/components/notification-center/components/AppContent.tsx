@@ -8,7 +8,7 @@ import { Main } from './Main';
 import { useApi } from '../../../hooks/use-api.hook';
 import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
 
-export function AppContent() {
+export function AppContent({ tabs }: { tabs?: { name: string; query?: { feedId: string | string[] } }[] }) {
   const { api } = useApi();
   const { isLoggedIn } = useAuth();
   const { theme, common } = useNovuThemeProvider();
@@ -36,7 +36,7 @@ export function AppContent() {
       <GlobalStyle fontFamily={themeConfig.fontFamily} />
       <Wrap layoutDirection={themeConfig.layout.direction} brandColor={themeConfig.colors.main}>
         <Layout>
-          <Main />
+          <Main tabs={tabs} />
         </Layout>
       </Wrap>
     </ThemeProvider>

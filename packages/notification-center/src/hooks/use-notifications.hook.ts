@@ -2,7 +2,7 @@ import { useApi } from './use-api.hook';
 import { useEffect, useState } from 'react';
 import { IMessage } from '@novu/shared';
 
-export function useNotifications(feedId: string) {
+export function useNotifications(feedId: string | string[]) {
   const { api } = useApi();
   const [notifications, setNotifications] = useState<IMessage[]>([]);
   const [page, setPage] = useState<number>(0);
@@ -17,8 +17,13 @@ export function useNotifications(feedId: string) {
 
   async function fetchPage(pageToFetch: number, isRefetch = false) {
     setFetching(true);
+    let newNotifications;
 
-    const newNotifications = await api.getNotificationsList(pageToFetch, feedId);
+    if (feedId === null) {
+      newNotifications = await api.getNotificationsList(pageToFetch, null);
+    } else {
+      newNotifications = await api.getNotificationsList(pageToFetch, feedId);
+    }
 
     if (newNotifications?.length < 10) {
       setHasNextPage(false);
