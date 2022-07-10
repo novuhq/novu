@@ -28,17 +28,22 @@ export function NotificationButton(props: NotificationButtonProps) {
 export const ActionButton = styled(MantineButton)<{ clicked?: string; buttonStyle: IButtonStyles }>`
   background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
   color: ${({ buttonStyle }) => buttonStyle.fontColor};
+  font-family: ${({ buttonStyle }) => buttonStyle.fontFamily};
   box-shadow: none;
   display: flex;
   justify-content: center;
   margin-left: 5px;
   margin-right: 5px;
-
+  height: 30px;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 7px;
+  border: 0;
   ${({ clicked }) =>
     clicked === 'true' &&
     `
     pointer-events: none;
-  `}
+  `};
 `;
 
 export function MantineButton({ ...props }) {

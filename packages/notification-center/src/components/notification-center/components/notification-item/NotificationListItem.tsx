@@ -45,16 +45,14 @@ export function NotificationListItem({
             __html: notification.content as string,
           }}
         />
+        <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
+          {moment(notification.createdAt).fromNow()}
+        </TimeMark>
         {notificationItemActionBlock && notification?.cta?.action?.status === MessageActionStatusEnum.DONE ? (
           notificationItemActionBlock(notification?.cta?.action)
         ) : (
           <ActionContainerOrNone handleActionButtonClick={handleActionButtonClick} action={notification?.cta?.action} />
         )}
-        <div>
-          <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
-            {moment(notification.createdAt).fromNow()}
-          </TimeMark>
-        </div>
       </NotificationItemContainer>
       <SettingsActionWrapper style={{ display: 'none' }}>
         <DotsHorizontal />
@@ -115,7 +113,7 @@ const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`
 `;
 
 const ItemWrapper = styled.div<{ unseen?: boolean; novuTheme: INovuTheme }>`
-  padding: 14px 15px 14px 15px;
+  padding: 15px;
   position: relative;
   display: flex;
   line-height: 20px;
