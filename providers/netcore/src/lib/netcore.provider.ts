@@ -26,7 +26,6 @@ export class NetCoreProvider implements IEmailProvider {
     this.netcoreLib = await import('pepipost/lib');
 
     this.netcoreLib.Configuration.apiKey = this.config.apiKey;
-    this.netcoreLib.ConfigService.from = this.config.from;
 
     const controller = this.netcoreLib.MailSendController;
     const body = new this.netcoreLib.Send();
