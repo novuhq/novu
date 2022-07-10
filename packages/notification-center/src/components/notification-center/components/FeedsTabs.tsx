@@ -13,14 +13,17 @@ export function FeedsTabs() {
 
   return (
     <>
-      {feeds ? (
+      {feeds?.length ? (
         <Tabs>
           {feeds.map((feed) => (
             <Tab
               key={feed._id}
               label={
                 <Center inline>
-                  {feed.name} <UnseenBadge unseenCount={unseenCount} />
+                  {feed.name}{' '}
+                  <UnseenBadge
+                    unseenCount={unseenCount?.feeds.find((feedCount) => feedCount._id === feed._id)?.count ?? 0}
+                  />
                 </Center>
               }
             >

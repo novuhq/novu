@@ -19,7 +19,7 @@ export function PromoteChangesPage() {
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
       queryClient.refetchQueries([QueryKeys.changesCount]);
       showNotification({
-        message: 'All changes was promoted',
+        message: 'All changes were promoted',
         color: 'green',
       });
     },

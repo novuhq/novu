@@ -33,13 +33,38 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     });
   }
 
-  async getUnseenCount(environmentId: string, subscriberId: string, channel: ChannelTypeEnum) {
-    return await this.count({
+  async getUnseenCount(
+    environmentId: string,
+    subscriberId: string,
+    channel: ChannelTypeEnum
+  ): Promise<{ count: number; data: { _id: string; count: number }[] }> {
+    const result = await this.aggregate([
+      {
+        $match: {
+          _environmentId: Types.ObjectId(environmentId),
+          _subscriberId: Types.ObjectId(subscriberId),
+          seen: false,
+          channel,
+        },
+      },
+      {
+        $group: {
+          _id: '$_feedId',
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+    ]);
+
+    const count = await this.count({
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       seen: false,
       channel,
     });
+
+    return { count, data: result };
   }
 
   async changeSeenStatus(subscriberId: string, messageId: string, isSeen: boolean) {
