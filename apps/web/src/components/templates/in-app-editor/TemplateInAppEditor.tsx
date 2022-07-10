@@ -113,7 +113,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             render={({ field }) => {
               return (
                 <>
-                  {feeds && (
+                  {feeds?.length ? (
                     <SegmentedControl
                       {...field}
                       disabled={readonly}
@@ -133,7 +133,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                         value: item._id,
                       }))}
                     />
-                  )}
+                  ) : null}
                   <Input
                     placeholder="Add a new feed"
                     value={newFeed}

@@ -1,17 +1,20 @@
 import styled from 'styled-components';
 import { Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
-import React from 'react';
+import React, { useContext } from 'react';
 import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
+import { IFeedsContext } from '../../../../../index';
+import { FeedsContext } from '../../../../../store/feeds.context';
 
 export function Header({ unseenCount }: { unseenCount: number }) {
   const { theme, common } = useNovuThemeProvider();
+  const { feeds } = useContext<IFeedsContext>(FeedsContext);
 
   return (
     <HeaderWrapper>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
         <Text fontColor={theme.header.fontColor}>Notifications </Text>
-        {unseenCount && unseenCount > 0 ? (
+        {!feeds && unseenCount && unseenCount > 0 ? (
           <Badge
             data-test-id="unseen-count-label"
             sx={{
