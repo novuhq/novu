@@ -7,7 +7,7 @@ import { useApi } from '../../../hooks/use-api.hook';
 import { NotificationsList } from './NotificationsList';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
 
-export function NotificationsListTab({ feedId }: { feedId?: string | string[] }) {
+export function NotificationsListTab({ feedId = '' }: { feedId?: string | string[] }) {
   const { api } = useApi();
   const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
   const {
