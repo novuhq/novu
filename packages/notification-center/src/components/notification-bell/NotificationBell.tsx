@@ -28,7 +28,7 @@ export function NotificationBell(props: INotificationBellProps) {
   return (
     <ActionIcon variant="transparent">
       <BellIcon {...headerIconsSettings} />
-      {unseenCount > 0 ? <StyledGradientDot bellColors={bellColors} /> : null}
+      {unseenCount.count > 0 ? <StyledGradientDot bellColors={bellColors} /> : null}
     </ActionIcon>
   );
 }
