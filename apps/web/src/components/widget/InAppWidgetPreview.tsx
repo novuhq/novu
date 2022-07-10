@@ -73,6 +73,19 @@ export function InAppWidgetPreview({
               borderRadius: '7px',
               backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
               boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
+
+              '&:before': {
+                content: '""',
+                position: 'absolute',
+                left: '0',
+                top: '0',
+                right: '0',
+                bottom: '0',
+                width: '5px',
+                borderRadius: ' 7px 0 0 7px',
+                background: colors.vertical,
+              },
+
               ...(readonly
                 ? {
                     backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
