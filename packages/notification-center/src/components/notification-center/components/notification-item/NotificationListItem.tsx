@@ -19,7 +19,7 @@ export function NotificationListItem({
   onActionButtonClick: (message: IMessage) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
-  const { markActionAsDone } = useNotifications();
+  const { markActionAsDone, markAsSeen: markNotificationAsSeen } = useNotifications();
   const { notificationItemActionBlock } = useContext(NotificationCenterContext);
 
   function handleNotificationClick() {
@@ -27,8 +27,12 @@ export function NotificationListItem({
   }
 
   async function handleActionButtonClick(actionButtonType?: ButtonTypeEnum) {
+    await markNotificationAsSeen(notification._id);
     const message = await markActionAsDone(notification._id, actionButtonType);
-    onActionButtonClick(message);
+
+    if (onActionButtonClick) {
+      onActionButtonClick(message);
+    }
   }
 
   return (

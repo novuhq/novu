@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NotificationButton } from './NorificationItemButton';
 import { IMessageAction, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
-import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 
 export interface IActionContainerProps {
   action?: IMessageAction;
@@ -10,10 +9,13 @@ export interface IActionContainerProps {
 }
 
 export function ActionContainer(props: IActionContainerProps) {
-  const { theme } = useNovuThemeProvider();
+  const [clicked, setClicked] = useState<boolean>(props.action.status === MessageActionStatusEnum.DONE);
   const buttons = props?.action?.buttons;
 
-  const clicked = props.action.status === MessageActionStatusEnum.DONE;
+  function handleOnClick(buttonType: ButtonTypeEnum) {
+    props.onActionButtonClick(buttonType);
+    setClicked(true);
+  }
 
   return (
     <>
@@ -23,7 +25,7 @@ export function ActionContainer(props: IActionContainerProps) {
             ? null
             : buttons?.map((button, buttonIndex) => (
                 <NotificationButton
-                  onActionButtonClick={props.onActionButtonClick}
+                  onActionButtonClick={(buttonType) => handleOnClick(buttonType)}
                   messageAction={props?.action}
                   buttonIndex={buttonIndex}
                   key={button.type}

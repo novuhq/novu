@@ -16,9 +16,14 @@ export function NotificationButton(props: NotificationButtonProps) {
 
   const buttonText = button?.content ? button.content : '';
 
+  function handleOnclick(e) {
+    e.stopPropagation();
+    props.onActionButtonClick(button.type);
+  }
+
   return (
     <>
-      <ActionButton onClick={() => props.onActionButtonClick(button.type)} buttonStyle={buttonStyle}>
+      <ActionButton onClick={(e) => handleOnclick(e)} buttonStyle={buttonStyle}>
         {buttonText}
       </ActionButton>
     </>
