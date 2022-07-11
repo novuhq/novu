@@ -11,7 +11,6 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
-import { v4 as uuidv4 } from 'uuid';
 
 const axiosInstance = axios.create();
 
@@ -277,7 +276,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   });
 
   it('should be able to cancel digest', async function () {
-    const id = uuidv4();
+    const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
         {
@@ -353,7 +352,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   });
 
   it('should be able to update existing message on the in-app digest', async function () {
-    const id = uuidv4();
+    const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
         {

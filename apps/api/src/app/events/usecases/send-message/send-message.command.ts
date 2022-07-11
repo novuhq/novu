@@ -1,4 +1,4 @@
-import { IsDefined, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { NotificationStepEntity } from '@novu/dal';
@@ -18,7 +18,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   step: NotificationStepEntity; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  @IsUUID()
+  @IsString()
   @IsDefined()
   transactionId: string;
 
