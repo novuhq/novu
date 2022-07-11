@@ -7,27 +7,31 @@ import { UnseenBadge } from './UnseenBadge';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
 import { Tabs } from './layout/tabs/Tabs';
 
-export function FeedsTabs() {
+export function FeedsTabs({ tabs }: { tabs?: { name: string; query?: { feedId: string | string[] } }[] }) {
   const { feeds } = useContext<IFeedsContext>(FeedsContext);
   const { unseenCount } = useContext(UnseenCountContext);
 
+  const getCount = (feedId) => {
+    const count = unseenCount?.feeds.find((feedCount) => feedCount._id === feedId)?.count;
+
+    return count;
+  };
+
   return (
     <>
-      {feeds?.length ? (
+      {tabs?.length ? (
         <Tabs>
-          {feeds.map((feed) => (
+          {tabs.map((feed, index) => (
             <Tab
-              key={feed._id}
+              key={index}
               label={
                 <Center inline>
                   {feed.name}{' '}
-                  <UnseenBadge
-                    unseenCount={unseenCount?.feeds.find((feedCount) => feedCount._id === feed._id)?.count ?? 0}
-                  />
+                  <UnseenBadge unseenCount={feed.query ? getCount(feed.query?.feedId) : unseenCount.count} />
                 </Center>
               }
             >
-              <NotificationsListTab feedId={feed._id} />
+              <NotificationsListTab feedId={feed.query ? feed.query?.feedId : ''} />
             </Tab>
           ))}
         </Tabs>

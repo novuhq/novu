@@ -14,7 +14,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    feedId?: string,
+    feedId?: string[],
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery: FilterQuery<MessageEntity> = {
@@ -22,8 +22,15 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       _subscriberId: subscriberId,
       channel,
     };
+
+    if (feedId === null) {
+      requestQuery._feedId = { $eq: null };
+    }
+
     if (feedId) {
-      requestQuery._feedId = feedId;
+      requestQuery._feedId = {
+        $in: feedId,
+      };
     }
 
     return await this.find(requestQuery, '', {
@@ -37,7 +44,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum
-  ): Promise<{ count: number; data: { _id: string; count: number }[] }> {
+  ): Promise<{ count: number; feeds: { _id: string; count: number }[] }> {
     const result = await this.aggregate([
       {
         $match: {
@@ -64,7 +71,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       channel,
     });
 
-    return { count, data: result };
+    return { count, feeds: result };
   }
 
   async changeSeenStatus(subscriberId: string, messageId: string, isSeen: boolean) {
@@ -77,6 +84,19 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
         $set: {
           seen: isSeen,
           lastSeenDate: new Date(),
+        },
+      }
+    );
+  }
+
+  async updateFeedByMessageTemplateId(messageId: string, feedId: string) {
+    return this.update(
+      {
+        _messageTemplateId: messageId,
+      },
+      {
+        $set: {
+          _feedId: feedId,
         },
       }
     );

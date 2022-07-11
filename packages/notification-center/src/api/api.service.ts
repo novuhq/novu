@@ -25,8 +25,11 @@ export class ApiService {
     return await this.httpClient.post(`/widgets/messages/${messageId}/seen`, {});
   }
 
-  async getNotificationsList(page: number, feedId: string): Promise<IMessage[]> {
-    return await this.httpClient.get(`/widgets/notifications/feed?page=${page}&feedId=${feedId}`);
+  async getNotificationsList(page: number, feedId: string | string[]): Promise<IMessage[]> {
+    return await this.httpClient.getFullResponse(`/widgets/notifications/feed`, {
+      page,
+      feedId,
+    });
   }
 
   async initializeSession(appId: string, subscriberId: string, hmacHash = null) {

@@ -21,6 +21,14 @@ export class HttpClient {
     return await this.axiosClient.get(url).then((response) => response.data.data);
   }
 
+  async getFullResponse(url: string, params?: { [key: string]: string | string[] | number }) {
+    return await this.axiosClient
+      .get(url, {
+        params,
+      })
+      .then((response) => response.data.data);
+  }
+
   async post(url: string, body = {}) {
     return await this.axiosClient.post(url, body).then((response) => response.data.data);
   }

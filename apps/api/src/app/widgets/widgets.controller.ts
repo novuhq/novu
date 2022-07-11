@@ -47,14 +47,23 @@ export class WidgetsController {
   async getNotificationsFeed(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
-    @Query('feedId') feedId: string
+    @Query('feedId') feedId: string[] | string
   ) {
+    let feedsQuery: string[];
+    if (feedId) {
+      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    }
+
+    if (typeof feedId === 'undefined') {
+      feedsQuery = null;
+    }
+
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
       page,
-      feedId,
+      feedId: feedsQuery,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
