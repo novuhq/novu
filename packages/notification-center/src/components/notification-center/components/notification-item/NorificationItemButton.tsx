@@ -41,6 +41,18 @@ export const ActionButton = styled(MantineButton)<{ buttonStyle: IButtonStyles }
   border: 0;
 `;
 
-export function MantineButton({ ...props }) {
-  return <Button fullWidth {...props} />;
+export function MantineButton({ buttonStyle, ...props }) {
+  return (
+    <Button
+      styles={{
+        filled: {
+          '&:hover': {
+            backgroundColor: buttonStyle.backGroundColor,
+          },
+        },
+      }}
+      fullWidth
+      {...props}
+    />
+  );
 }
