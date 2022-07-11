@@ -25,7 +25,7 @@ export function NotificationButton(props: NotificationButtonProps) {
   );
 }
 
-export const ActionButton = styled(MantineButton)<{ clicked?: string; buttonStyle: IButtonStyles }>`
+export const ActionButton = styled(MantineButton)<{ buttonStyle: IButtonStyles }>`
   background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
   color: ${({ buttonStyle }) => buttonStyle.fontColor};
   font-family: ${({ buttonStyle }) => buttonStyle.fontFamily};
@@ -39,11 +39,6 @@ export const ActionButton = styled(MantineButton)<{ clicked?: string; buttonStyl
   font-size: 12px;
   border-radius: 7px;
   border: 0;
-  ${({ clicked }) =>
-    clicked === 'true' &&
-    `
-    pointer-events: none;
-  `};
 `;
 
 export function MantineButton({ ...props }) {
