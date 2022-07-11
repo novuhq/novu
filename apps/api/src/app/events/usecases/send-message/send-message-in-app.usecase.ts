@@ -50,8 +50,10 @@ export class SendMessageInApp extends SendMessageType {
     }
 
     if (inAppChannel.template.cta?.action?.buttons) {
-      inAppChannel.template.cta?.action.buttons.map((action) => {
-        if (action.content) return contentService.replaceVariables(action.content, messageVariables);
+      inAppChannel.template.cta.action.buttons = inAppChannel.template.cta.action.buttons.map((action) => {
+        if (!action.content) return action;
+
+        return { type: action.type, content: contentService.replaceVariables(action.content, messageVariables) };
       });
     }
 
