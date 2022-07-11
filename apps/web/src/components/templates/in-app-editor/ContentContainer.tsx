@@ -49,7 +49,7 @@ export function ContentContainer({
   }, [value, content]);
 
   useEffect(() => {
-    if (value !== ref.current?.innerHTML) {
+    if (value !== ref.current?.textContent) {
       setContent(value);
     }
   }, [value]);
