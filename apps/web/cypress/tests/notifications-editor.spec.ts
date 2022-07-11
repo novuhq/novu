@@ -608,7 +608,9 @@ type Channel = 'inApp' | 'email' | 'sms' | 'digest';
 type Parent = Channel | 'trigger';
 
 function addAndEditChannel(channel: Channel, parent?: Parent) {
-  cy.getByTestId('workflowButton').click();
+  waitLoadEnv(() => {
+    cy.getByTestId('workflowButton').click();
+  });
   dragAndDrop(channel, parent);
   editChannel(channel);
 }
@@ -636,6 +638,15 @@ function goBack() {
 function fillBasicNotificationDetails(title?: string) {
   cy.getByTestId('title').type(title || 'Test Notification Title');
   cy.getByTestId('description').type('This is a test description for a test title');
+}
+
+function waitLoadEnv(beforeWait: () => void) {
+  cy.intercept('GET', 'http://localhost:1336/v1/environments').as('environments');
+  cy.intercept('GET', 'http://localhost:1336/v1/environments/me').as('environments-me');
+
+  beforeWait();
+
+  cy.wait(['@environments', '@environments-me']);
 }
 
 function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
