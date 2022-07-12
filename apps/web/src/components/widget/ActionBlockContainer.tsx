@@ -110,7 +110,7 @@ const AddButtonTemplateButton = styled.div<{ colorScheme: ColorScheme }>`
   border: 1px dashed;
   border-radius: 7px;
   margin: 15px 0 15px 0;
-  color: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B80 : colors.B60)};
+  color: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B80 : colors.B40)};
   cursor: pointer;
   font-weight: 700;
   font-size: 12px;
