@@ -53,8 +53,9 @@ export class InitializeSession {
     );
 
     this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
-      organizationId: environment._organizationId,
+      _organization: environment._organizationId,
       environmentName: environment.name,
+      _subscriber: subscriber._id,
     });
 
     return {

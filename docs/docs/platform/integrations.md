@@ -23,4 +23,4 @@ For email providers, you will be required to add the following data:
 
 ## Missing a provider?
 
-Novu is an open-source platform, meaning that if you are missing a particular provider you can create the provider best on the guide specified here.
+Novu is an open-source platform, meaning that if you are missing a particular provider you can create one using the guide specified [here](/community/create-provider).

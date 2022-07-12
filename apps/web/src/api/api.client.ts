@@ -42,7 +42,7 @@ export const api = {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
-  delete(url: string, payload) {
+  delete(url: string, payload = {}) {
     return axios
       .delete(`${API_ROOT}${url}`, payload)
       .then((response) => response.data?.data)

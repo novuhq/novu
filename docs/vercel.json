@@ -1,8 +1,9 @@
 {
-  "rewrites": [
+  "redirects": [
     { 
       "source": "/docs/:slug*",
-      "destination": "/:slug*"
+      "destination": "/:slug*",
+      "permanent": true
     }
   ]
 }

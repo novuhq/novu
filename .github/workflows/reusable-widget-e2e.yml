@@ -4,7 +4,10 @@ name: Test E2E WIDGET
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
-
+    secrets:
+      cypress_key:
+        required: false
+        
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -12,6 +15,16 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
+
+    strategy:
+      # when one test fails, DO NOT cancel the other
+      # containers, because this will kill Cypress processes
+      # leaving the Dashboard hanging ...
+      # https://github.com/cypress-io/github-action/issues/48
+      fail-fast: false
+      matrix:
+        # run 3 copies of the current job in parallel
+        containers: [1, 2, 3]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -21,7 +34,8 @@ jobs:
         run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - uses: actions/setup-node@v2
         with:
-          node-version: '16.13.0'
+          node-version: '16.15.1'
+
       - name: Start Redis
         uses: supercharge/redis-github-action@1.2.0
 
@@ -40,7 +54,7 @@ jobs:
 
       - uses: pnpm/action-setup@v2.0.1
         with:
-          version: 6.0.2
+          version: 7.3.0
           run_install: true
 
       - uses: mansagroup/nrwl-nx-action@v2
@@ -63,20 +77,28 @@ jobs:
       - name: Start WS
         run: pnpm start:ws:test &
 
-      # Runs a single command using the runners shell
-      - name: Wait for WS
-        run: npx wait-on --timeout=30000 http://localhost:1340/v1/health-check
+      - name: Install wait-on plugin
+        run: npm i -g wait-on
+
+      - name: Wait on API
+        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
+
+      - name: Wait on WIDGET
+        run: wait-on --timeout=90000 http://localhost:3500
 
       - name: Cypress run
         uses: cypress-io/github-action@v2
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
         with:
           working-directory: apps/widget
           start: pnpm start:api
           wait-on: http://localhost:1336/v1/health-check, http://localhost:3500
           browser: chrome
           install: false
+          record: true
+          parallel: true
           headless: true
           config-file: cypress.config.ts
