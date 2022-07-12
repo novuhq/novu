@@ -18,6 +18,7 @@ import {
   JobRepository,
   JobStatusEnum,
   FeedRepository,
+  ChangeRepository,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -33,6 +34,7 @@ export class UserSession {
   private notificationGroupRepository = new NotificationGroupRepository();
   private jobRepository = new JobRepository();
   private feedRepository = new FeedRepository();
+  private changeRepository: ChangeRepository = new ChangeRepository();
 
   token: string;
 
@@ -268,5 +270,24 @@ export class UserSession {
       });
       timedOut = timeout < +new Date() - startTime;
     } while (runningJobs > 0 && !timedOut);
+  }
+
+  public async applyChanges(where: any = {}) {
+    const changes = await this.changeRepository.find(
+      {
+        _environmentId: this.environment._id,
+        _organizationId: this.organization._id,
+        _parentId: { $exists: false, $eq: null },
+        ...where,
+      },
+      '',
+      {
+        sort: { createdAt: 1 },
+      }
+    );
+
+    for (const change of changes) {
+      await this.testAgent.post(`/v1/changes/${change._id}/apply`);
+    }
   }
 }

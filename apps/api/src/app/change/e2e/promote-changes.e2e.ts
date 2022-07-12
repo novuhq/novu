@@ -18,24 +18,6 @@ describe('Promote changes', () => {
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
 
-  const applyChanges = async () => {
-    const changes = await changeRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-        enabled: false,
-      },
-      '',
-      {
-        sort: { createdAt: 1 },
-      }
-    );
-
-    for (const change of changes) {
-      await session.testAgent.post(`/v1/changes/${change._id}/apply`);
-    }
-  };
-
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
@@ -93,7 +75,9 @@ describe('Promote changes', () => {
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
     const notificationTemplateId = body.data._id;
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const prodVersion = await notificationTemplateRepository.findOne({
       _parentId: notificationTemplateId,
@@ -148,7 +132,9 @@ describe('Promote changes', () => {
 
     body = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(updateData);
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const prodVersion = await notificationTemplateRepository.findOne({
       _parentId: notificationTemplateId,
@@ -167,12 +153,16 @@ describe('Promote changes', () => {
     };
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const notificationTemplateId = body.data._id;
 
     await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const prodVersion = await notificationTemplateRepository.findOne({
       _parentId: notificationTemplateId,
@@ -217,7 +207,9 @@ describe('Promote changes', () => {
       body: { data },
     } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const notificationTemplateId = data._id;
 
@@ -244,7 +236,9 @@ describe('Promote changes', () => {
     const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
     data = body.data;
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const prodVersion = await messageTemplateRepository.findOne({
       _parentId: step._templateId,
@@ -288,7 +282,9 @@ describe('Promote changes', () => {
     let {
       body: { data },
     } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const notificationTemplateId = data._id;
 
@@ -343,7 +339,9 @@ describe('Promote changes', () => {
     const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
     data = body.data;
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const prodVersion = await notificationTemplateRepository.find({
       _parentId: notificationTemplateId,
@@ -429,7 +427,9 @@ describe('Promote changes', () => {
       body: { data },
     } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
     const notificationTemplateId = data._id;
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`);
 

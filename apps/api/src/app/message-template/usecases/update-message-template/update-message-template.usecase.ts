@@ -5,6 +5,8 @@ import { UpdateMessageTemplateCommand } from './update-message-template.command'
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
+import { UpdateChange } from '../../../change/usecases/update-change/update-change';
 
 @Injectable()
 export class UpdateMessageTemplate {
@@ -12,7 +14,8 @@ export class UpdateMessageTemplate {
     private messageTemplateRepository: MessageTemplateRepository,
     private messageRepository: MessageRepository,
     private createChange: CreateChange,
-    private changeRepository: ChangeRepository
+    private changeRepository: ChangeRepository,
+    private updateChange: UpdateChange
   ) {}
 
   async execute(command: UpdateMessageTemplateCommand): Promise<MessageTemplateEntity> {
@@ -78,6 +81,19 @@ export class UpdateMessageTemplate {
         changeId,
       })
     );
+
+    if (command.feedId) {
+      await this.updateChange.execute(
+        UpdateChangeCommand.create({
+          _entityId: command.feedId,
+          type: ChangeEntityTypeEnum.FEED,
+          parentChangeId: command.parentChangeId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        })
+      );
+    }
 
     return item;
   }
