@@ -10,13 +10,11 @@ export function NotificationsList({
   onFetch,
   hasNextPage,
   onNotificationClicked,
-  onActionButtonClick,
 }: {
   notifications: IMessage[] | never;
   onFetch: () => void;
   hasNextPage: boolean;
   onNotificationClicked: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
-  onActionButtonClick: (message: IMessage) => void;
 }) {
   const totalCount = notifications?.length;
 
@@ -32,12 +30,7 @@ export function NotificationsList({
       >
         {notifications.map((notification) => {
           return (
-            <NotificationListItem
-              onActionButtonClick={onActionButtonClick}
-              key={notification._id}
-              notification={notification}
-              onClick={onNotificationClicked}
-            />
+            <NotificationListItem key={notification._id} notification={notification} onClick={onNotificationClicked} />
           );
         })}
       </InfiniteScroll>

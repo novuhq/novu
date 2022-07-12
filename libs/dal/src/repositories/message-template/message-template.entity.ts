@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ICta } from '@novu/shared';
+import { ChannelTypeEnum, IMessageCTA } from '@novu/shared';
 
 export class MessageTemplateEntity {
   _id?: string;
@@ -23,7 +23,7 @@ export class MessageTemplateEntity {
 
   _feedId?: string;
 
-  cta?: ICta;
+  cta?: IMessageCTA;
 
   _parentId?: string;
 }

@@ -12,27 +12,21 @@ import { NotificationCenterContext } from '../../../../store/notification-center
 export function NotificationListItem({
   notification,
   onClick,
-  onActionButtonClick,
 }: {
   notification: IMessage;
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
-  onActionButtonClick: (message: IMessage) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
-  const { markActionAsDone, markAsSeen: markNotificationAsSeen } = useNotifications();
-  const { notificationItemActionBlock } = useContext(NotificationCenterContext);
+  const { markAsSeen: markNotificationAsSeen } = useNotifications();
+  const { onActionClick } = useContext(NotificationCenterContext);
 
   function handleNotificationClick() {
     onClick(notification);
   }
 
-  async function handleActionButtonClick(actionButtonType?: ButtonTypeEnum) {
+  async function handleActionButtonClick(actionButtonType: ButtonTypeEnum) {
     await markNotificationAsSeen(notification._id);
-    const message = await markActionAsDone(notification._id, actionButtonType);
-
-    if (onActionButtonClick) {
-      onActionButtonClick(message);
-    }
+    onActionClick(notification.templateIdentifier, actionButtonType, notification);
   }
 
   return (
@@ -52,11 +46,12 @@ export function NotificationListItem({
         <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
           {moment(notification.createdAt).fromNow()}
         </TimeMark>
-        {notificationItemActionBlock && notification?.cta?.action?.status === MessageActionStatusEnum.DONE ? (
-          notificationItemActionBlock(notification?.cta?.action)
-        ) : (
-          <ActionContainerOrNone handleActionButtonClick={handleActionButtonClick} action={notification?.cta?.action} />
-        )}
+        <ActionWrapper
+          templateIdentifier={notification.templateIdentifier}
+          actionStatus={notification?.cta?.action?.status}
+          ctaAction={notification?.cta?.action}
+          handleActionButtonClick={handleActionButtonClick}
+        />
       </NotificationItemContainer>
       <SettingsActionWrapper style={{ display: 'none' }}>
         <DotsHorizontal />
@@ -65,14 +60,38 @@ export function NotificationListItem({
   );
 }
 
+function ActionWrapper({
+  actionStatus,
+  templateIdentifier,
+  ctaAction,
+  handleActionButtonClick,
+}: {
+  templateIdentifier: string;
+  actionStatus: MessageActionStatusEnum;
+  ctaAction: IMessageAction;
+  handleActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
+}) {
+  const { notificationItemActions } = useContext(NotificationCenterContext);
+
+  return (
+    <>
+      {notificationItemActions && actionStatus === MessageActionStatusEnum.DONE ? (
+        notificationItemActions(templateIdentifier, ctaAction)
+      ) : (
+        <ActionContainerOrNone handleActionButtonClick={handleActionButtonClick} action={ctaAction} />
+      )}
+    </>
+  );
+}
+
 function ActionContainerOrNone({
   action,
   handleActionButtonClick,
 }: {
   action: IMessageAction;
-  handleActionButtonClick: () => void;
+  handleActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
 }) {
-  return <>{action ? <ActionContainer onActionButtonClick={handleActionButtonClick} action={action} /> : null}</>;
+  return <>{action ? <ActionContainer onActionClick={handleActionButtonClick} action={action} /> : null}</>;
 }
 
 const NotificationItemContainer = styled.div`

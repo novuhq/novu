@@ -21,10 +21,16 @@ export class ApiService {
     this.isAuthenticated = false;
   }
 
-  async markActionAsDone(messageId: string, executedType: ButtonTypeEnum): Promise<any> {
+  async updateAction(
+    messageId: string,
+    executedType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ): Promise<any> {
     return await this.httpClient.post(`/widgets/messages/${messageId}/actions/${executedType}`, {
       executedType,
-      status: MessageActionStatusEnum.DONE,
+      status,
+      payload,
     });
   }
 

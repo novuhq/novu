@@ -72,6 +72,7 @@ export class SendMessageInApp extends SendMessageType {
       transactionId: command.transactionId,
       content,
       payload: messagePayload,
+      templateIdentifier: command.identifier,
     });
 
     const count = await this.messageRepository.getUnseenCount(

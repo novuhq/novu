@@ -1,4 +1,4 @@
-import { IMessage, ISubscriberJwt, IOrganizationEntity, IMessageAction } from '@novu/shared';
+import { IMessage, ISubscriberJwt, IOrganizationEntity, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
@@ -36,10 +36,11 @@ export interface INotificationCenterContext {
   onUrlChange: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
+  onActionClick: (identifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   isLoading: boolean;
   header: () => JSX.Element;
   footer: () => JSX.Element;
-  notificationItemActionBlock: (messageAction: IMessageAction) => JSX.Element;
+  notificationItemActions: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
 }
 
 export interface INovuProviderContext {

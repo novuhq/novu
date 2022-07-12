@@ -1,5 +1,5 @@
 import React from 'react';
-import { IMessage, IMessageAction } from '@novu/shared';
+import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenterContext } from '../../store/notification-center.context';
 import { AppContent } from './components';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -13,10 +13,10 @@ export interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  notificationItemActionBlock?: (messageActtion: IMessageAction) => JSX.Element;
+  notificationItemActions?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   colorScheme: ColorScheme;
   theme?: INovuThemeProvider;
-  onActionButtonClick?: (message: IMessage) => void;
+  onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
 }
 
 export function NotificationCenter(props: INotificationCenterProps) {
@@ -30,14 +30,15 @@ export function NotificationCenter(props: INotificationCenterProps) {
           onUrlChange: props.onUrlChange,
           onNotificationClick: props.onNotificationClick,
           onUnseenCountChanged: props.onUnseenCountChanged,
+          onActionClick: props.onActionClick,
           isLoading: !applicationIdentifier,
           header: props.header,
           footer: props.footer,
-          notificationItemActionBlock: props.notificationItemActionBlock,
+          notificationItemActions: props.notificationItemActions,
         }}
       >
         <NovuThemeProvider colorScheme={props.colorScheme} theme={props.theme}>
-          <AppContent onActionButtonClick={props.onActionButtonClick} />
+          <AppContent />
         </NovuThemeProvider>
       </NotificationCenterContext.Provider>
     </QueryClientProvider>

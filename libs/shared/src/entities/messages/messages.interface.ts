@@ -10,16 +10,17 @@ export interface IMessage {
   _notificationId: string;
   _subscriberId: string;
   template?: INotificationTemplate;
+  templateIdentifier?: string;
   content: string | IEmailBlock[];
   channel: ChannelTypeEnum;
   seen: boolean;
   lastSeenDate: string;
   createdAt: string;
-  cta: ICta;
+  cta: IMessageCTA;
   payload: Record<string, unknown>;
 }
 
-export interface ICta {
+export interface IMessageCTA {
   type: ChannelCTATypeEnum;
   data: {
     url?: string;
@@ -31,7 +32,7 @@ export interface IMessageAction {
   status?: MessageActionStatusEnum;
   buttons?: IMessageButton[];
   result: {
-    payload?: any;
+    payload?: Record<string, unknown>;
     type?: ButtonTypeEnum;
   };
 }

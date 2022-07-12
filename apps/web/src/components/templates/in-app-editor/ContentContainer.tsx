@@ -22,7 +22,6 @@ export function ContentContainer({
 
   const handleChange = (e: React.ChangeEvent<HTMLDivElement>) => {
     const textContent = e.target.textContent;
-
     if (ref?.current) {
       ref.current.textContent = textContent;
     }
@@ -35,16 +34,8 @@ export function ContentContainer({
   };
 
   useEffect(() => {
-    if (content && ref?.current) {
-      ref.current.textContent = content as string;
-    }
-  }, [content]);
-
-  useEffect(() => {
-    let showPlaceHolder = content.length === 0;
-
+    let showPlaceHolder = value.length === 0;
     if (value === '<br>') showPlaceHolder = true;
-
     setVisiblePlaceholder(showPlaceHolder);
   }, [value, content]);
 

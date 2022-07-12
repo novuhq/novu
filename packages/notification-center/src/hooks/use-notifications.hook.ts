@@ -1,6 +1,6 @@
 import { useApi } from './use-api.hook';
 import { useEffect, useState } from 'react';
-import { IMessage, ButtonTypeEnum } from '@novu/shared';
+import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 export function useNotifications() {
   const { api } = useApi();
@@ -44,8 +44,13 @@ export function useNotifications() {
     return await api.markMessageAsSeen(messageId);
   }
 
-  async function markActionAsDone(messageId: string, actionButtonType?: ButtonTypeEnum) {
-    return await api.markActionAsDone(messageId, actionButtonType);
+  async function updateAction(
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ) {
+    return await api.updateAction(messageId, actionButtonType, status, payload);
   }
 
   async function refetch() {
@@ -58,7 +63,7 @@ export function useNotifications() {
     hasNextPage,
     fetching,
     markAsSeen,
-    markActionAsDone,
+    updateAction,
     refetch,
   };
 }

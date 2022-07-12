@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ICta } from '@novu/shared';
+import { ChannelTypeEnum, IMessageCTA } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 import { IEmailBlock } from '../message-template';
 import { SubscriberEntity } from '../subscriber';
@@ -23,6 +23,8 @@ export class MessageEntity {
 
   template?: NotificationTemplateEntity;
 
+  templateIdentifier?: string;
+
   createdAt?: string;
 
   content: string | IEmailBlock[];
@@ -39,7 +41,7 @@ export class MessageEntity {
 
   lastSeenDate: string;
 
-  cta: ICta;
+  cta: IMessageCTA;
 
   status: 'sent' | 'error' | 'warning';
 

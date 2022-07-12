@@ -97,7 +97,7 @@ function AddButtonSection({ onButtonAddClick }: { onButtonAddClick?: () => void 
 
   return (
     <AddButtonTemplateButton colorScheme={colorScheme} data-test-id="control-add" onClick={onButtonAddClick}>
-      <span>+ Add Button</span>
+      <span>+ Add Action</span>
     </AddButtonTemplateButton>
   );
 }

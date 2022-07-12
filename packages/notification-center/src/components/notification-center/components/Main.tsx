@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef } from 'react';
-import { ChannelCTATypeEnum, IMessage, ButtonTypeEnum } from '@novu/shared';
+import { ChannelCTATypeEnum, IMessage } from '@novu/shared';
 import styled from 'styled-components';
 import { NotificationsList } from './NotificationsList';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
@@ -8,7 +8,7 @@ import { UnseenCountContext } from '../../../store/unseen-count.context';
 import { useApi } from '../../../hooks/use-api.hook';
 import { useNotifications } from '../../../hooks';
 
-export function Main({ onActionButtonClick }: { onActionButtonClick: (message: IMessage) => void }) {
+export function Main() {
   const { api } = useApi();
   const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
   const {
@@ -68,7 +68,6 @@ export function Main({ onActionButtonClick }: { onActionButtonClick: (message: I
         </div>
       ) : (
         <NotificationsList
-          onActionButtonClick={onActionButtonClick}
           onNotificationClicked={onNotificationClicked}
           notifications={data || []}
           onFetch={fetchNext}

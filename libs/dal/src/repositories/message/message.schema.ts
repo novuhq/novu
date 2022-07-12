@@ -32,6 +32,7 @@ const messageSchema = new Schema(
       ref: 'Subscriber',
       index: true,
     },
+    templateIdentifier: Schema.Types.String,
     email: Schema.Types.String,
     cta: {
       type: {

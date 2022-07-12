@@ -71,6 +71,7 @@ export class SendMessageEmail extends SendMessageType {
       transactionId: command.transactionId,
       email,
       payload: messagePayload,
+      templateIdentifier: command.identifier,
     });
 
     const contentService = new ContentService();

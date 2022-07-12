@@ -1,5 +1,5 @@
 import { ChannelCTATypeEnum, ChannelTypeEnum, IEmailBlock } from '../../entities/message-template';
-import { ICta } from '../../entities/messages';
+import { IMessageCTA } from '../../entities/messages';
 
 export class ChannelCTADto {
   type: ChannelCTATypeEnum;
@@ -16,5 +16,5 @@ export class MessageTemplateDto {
 
   contentType?: 'editor' | 'customHtml';
 
-  cta?: ICta;
+  cta?: IMessageCTA;
 }

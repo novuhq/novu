@@ -5,7 +5,7 @@ import styled from 'styled-components';
 
 export interface IActionContainerProps {
   action?: IMessageAction;
-  onActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
+  onActionClick: (actionButtonType: ButtonTypeEnum) => void;
 }
 
 export function ActionContainer(props: IActionContainerProps) {
@@ -13,7 +13,7 @@ export function ActionContainer(props: IActionContainerProps) {
   const buttons = props?.action?.buttons;
 
   function handleOnClick(buttonType: ButtonTypeEnum) {
-    props.onActionButtonClick(buttonType);
+    props.onActionClick(buttonType);
     setClicked(true);
   }
 
@@ -25,7 +25,7 @@ export function ActionContainer(props: IActionContainerProps) {
             ? null
             : buttons?.map((button, buttonIndex) => (
                 <NotificationButton
-                  onActionButtonClick={(buttonType) => handleOnClick(buttonType)}
+                  onActionClick={(buttonType) => handleOnClick(buttonType)}
                   messageAction={props?.action}
                   buttonIndex={buttonIndex}
                   key={button.type}
