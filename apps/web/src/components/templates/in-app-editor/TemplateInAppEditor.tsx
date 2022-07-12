@@ -1,8 +1,8 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
-import { ActionIcon, Container, Group, SegmentedControl, useMantineTheme } from '@mantine/core';
+import { ActionIcon, Chip, Container, Group, SegmentedControl, Chips, useMantineTheme } from '@mantine/core';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Button, colors, Input, Select, Text } from '../../../design-system';
+import { Button, Checkbox, colors, Input, Select, Text } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { createFeed, deleteFeed, getFeeds } from '../../../api/feeds';
@@ -52,7 +52,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
 
   function selectDefaultFeed() {
     setTimeout(() => {
-      setValue(`steps.${index}.template.feedId`, feeds[0]._id);
+      setValue(`steps.${index}.template.feedId`, '');
     }, 0);
   }
 
@@ -113,27 +113,24 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             render={({ field }) => {
               return (
                 <>
-                  {feeds?.length ? (
-                    <SegmentedControl
-                      {...field}
-                      disabled={readonly}
-                      data={(feeds || []).map((item) => ({
-                        label: (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Text>{item.name}</Text>
-                            <ActionIcon variant="transparent" onClick={() => deleteFeedHandler(item._id)}>
-                              <Trash
-                                style={{
-                                  color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
-                                }}
-                              />
-                            </ActionIcon>
-                          </div>
-                        ),
-                        value: item._id,
-                      }))}
-                    />
-                  ) : null}
+                  <Chips {...field}>
+                    <Chip value="">No Feed</Chip>
+                    {(feeds || []).map((item) => (
+                      <Chip value={item._id}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text>{item.name}</Text>
+                          <ActionIcon variant="transparent" onClick={() => deleteFeedHandler(item._id)}>
+                            <Trash
+                              style={{
+                                color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
+                              }}
+                            />
+                          </ActionIcon>
+                        </div>
+                      </Chip>
+                    ))}
+                  </Chips>
+
                   <Input
                     placeholder="Add a new feed"
                     value={newFeed}

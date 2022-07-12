@@ -96,7 +96,7 @@ export function useTemplateController(templateId: string) {
             ...item,
             template: {
               ...item.template,
-              feedId: item.template._feedId,
+              feedId: item.template._feedId || '',
             },
           };
         }
