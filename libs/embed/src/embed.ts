@@ -6,13 +6,16 @@ import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
-import { SHOW_WIDGET } from './shared/eventTypes';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
 
 class Novu {
   public clientId: string | unknown;
+
+  private backendUrl?: string = '';
+
+  private socketUrl?: string = '';
 
   private debugMode: boolean;
 
@@ -55,6 +58,8 @@ class Novu {
       this.selector = selectorOrOptions.bellSelector;
       this.unseenBadgeSelector = selectorOrOptions.unseenBadgeSelector;
       this.options = selectorOrOptions;
+      this.backendUrl = selectorOrOptions.backendUrl;
+      this.socketUrl = selectorOrOptions.socketUrl;
     }
 
     this.clientId = clientId;
@@ -246,6 +251,8 @@ class Novu {
             type: EventTypes.INIT_IFRAME,
             value: {
               clientId: this.clientId,
+              backendUrl: this.backendUrl,
+              socketUrl: this.socketUrl,
               topHost: window.location.host,
               data: options,
             },
@@ -254,7 +261,7 @@ class Novu {
         );
       };
 
-      iframe.src = `${IFRAME_URL}/${clientId}`;
+      iframe.src = `${IFRAME_URL}/${clientId}?`;
       iframe.id = IFRAME_ID;
       iframe.style.border = 'none';
       (iframe as any).crossorigin = 'anonymous';
@@ -333,6 +340,8 @@ function updateInnerTextCount(element: HTMLElement, count: number) {
 interface IOptions {
   bellSelector: string;
   unseenBadgeSelector: string;
+  backendUrl?: string;
+  socketUrl?: string;
   position?: {
     top?: number | string;
     left?: number | string;

@@ -15,6 +15,8 @@ on:
 jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
+    secrets:
+      cypress_key: ${{ secrets.CYPRESS_WIDGET_KEY }}
 
   # This workflow contains a single job called "build"
   deploy_widget:
@@ -33,8 +35,8 @@ jobs:
         run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - uses: actions/setup-node@v2
         with:
-          node-version: '16.13.0'
-    
+          node-version: '16.15.1'
+
       - name: Cache pnpm modules
         uses: actions/cache@v2
         with:

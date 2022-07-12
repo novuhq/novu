@@ -10,7 +10,6 @@ export const useStyles = createStyles((theme) => {
       background: `${dark ? getGradient(colors.B20) : getGradient(colors.white)} padding-box, ${
         colors.horizontal
       } border-box`,
-      border: '1px solid transparent',
       boxShadow: dark ? shadows.dark : shadows.light,
     },
     button: {
@@ -23,6 +22,7 @@ export const useStyles = createStyles((theme) => {
       backgroundColor: dark ? colors.B17 : colors.B98,
       borderRadius: '7px',
       fontWeight: 700,
+      border: '1px solid transparent',
 
       '&:hover': {
         backgroundColor: dark ? colors.B20 : colors.BGLight,

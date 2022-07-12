@@ -11,7 +11,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { createTemplate, updateTemplate } from '../../api/templates';
+import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
 import { QueryKeys } from '../../api/query.keys';
 import { useTemplateEditor } from './TemplateEditorProvider';
@@ -52,6 +52,8 @@ export function useTemplateController(templateId: string) {
   const navigate = useNavigate();
   const { template, refetch, loading: loadingEditTemplate } = useTemplateFetcher(templateId);
   const client = useQueryClient();
+
+  const deleteTemplate = () => deleteTemplateById(templateId);
 
   const { isLoading, mutateAsync: createNotification } = useMutation<
     INotificationTemplate,
@@ -197,6 +199,7 @@ export function useTemplateController(templateId: string) {
     deleteStep,
     editMode,
     template,
+    deleteTemplate,
     onSubmit,
     isEmbedModalVisible,
     trigger,
