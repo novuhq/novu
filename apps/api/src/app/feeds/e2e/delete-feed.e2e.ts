@@ -5,7 +5,6 @@ import { ChangeRepository, FeedRepository } from '@novu/dal';
 describe('Delete A Feed - /feeds (POST)', async () => {
   let session: UserSession;
   let feedRepository = new FeedRepository();
-  const changeRepository: ChangeRepository = new ChangeRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -76,5 +75,6 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     const feeds = await feedRepository.find({
       name: feed.name,
     });
+    expect(feeds.length).to.equal(0);
   });
 });

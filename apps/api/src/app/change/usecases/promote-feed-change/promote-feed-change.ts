@@ -8,41 +8,24 @@ export class PromoteFeedChange {
 
   async execute(command: PromoteTypeChangeCommand) {
     let item: FeedEntity | undefined = undefined;
-    if (command.item._id) {
+    if (command.item.name) {
       item = await this.feedRepository.findOne({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        _id: command.item._id,
+        name: command.item.name,
       });
     }
-
-    if (item === null) {
-      const items = await this.feedRepository.findDeleted({
-        _organizationId: command.organizationId,
-        _id: command.item._id,
-      });
-      item = items[0];
-    }
-
-    const newItem = command.item as FeedEntity;
 
     if (!item) {
       return this.feedRepository.create({
-        name: newItem.name,
+        name: command.item.name,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       });
     }
 
-    return await this.feedRepository.update(
-      {
-        _id: item._id,
-      },
-      {
-        name: newItem.name,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      }
-    );
+    return await this.feedRepository.delete({
+      _id: item._id,
+    });
   }
 }
