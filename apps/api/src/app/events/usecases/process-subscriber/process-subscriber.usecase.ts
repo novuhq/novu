@@ -203,9 +203,9 @@ export class ProcessSubscriber {
     for (const step of matchedSteps) {
       if (step.template.type === ChannelTypeEnum.DIGEST) {
         const from = moment().subtract(step.metadata.backoffAmount, step.metadata.backoffUnit).toDate();
-        const triggerCount = await this.jobRepository.find({
+        const trigger = await this.jobRepository.findOne({
           updatedAt: {
-            $gt: from,
+            $gte: from,
           },
           _templateId: command.templateId,
           status: JobStatusEnum.COMPLETED,
@@ -213,8 +213,21 @@ export class ProcessSubscriber {
           _environmentId: command.environmentId,
           _subscriberId: subscriberId,
         });
-        if (triggerCount.length === 0) {
+        if (!trigger) {
           continue;
+        }
+        const digest = await this.jobRepository.findOne({
+          updatedAt: {
+            $gte: from,
+          },
+          _templateId: command.templateId,
+          type: ChannelTypeEnum.DIGEST,
+          _environmentId: command.environmentId,
+          _subscriberId: subscriberId,
+        });
+
+        if (digest) {
+          return steps;
         }
         steps.push(step);
         continue;

@@ -5,7 +5,7 @@ import { SendMessageCommand } from '../usecases/send-message/send-message.comman
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 interface IJobEntityExtended extends JobEntity {
   presend?: boolean;
@@ -114,7 +114,7 @@ export class WorkflowQueueService {
     if (data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit) {
       await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
       const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
-      if (data.digest?.updateMode) {
+      if (data.digest?.updateMode && data.digest.type === DigestTypeEnum.REGULAR) {
         const inApps = await this.jobRepository.findInAppsForDigest(data.transactionId, data._subscriberId);
         for (const inApp of inApps) {
           await this.addJob(inApp, true);
