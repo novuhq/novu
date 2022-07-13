@@ -493,9 +493,19 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'first',
     });
 
+    await awaitRunningJobs(0);
+
     await triggerEvent({
       customVar: 'second',
     });
+
+    await awaitRunningJobs(0);
+
+    let messageCount = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messageCount.length).to.equal(2);
 
     await triggerEvent({
       customVar: 'third',
@@ -511,7 +521,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     await awaitRunningJobs(0);
 
-    const messageCount = await messageRepository.find({
+    messageCount = await messageRepository.find({
       _templateId: template._id,
     });
 
