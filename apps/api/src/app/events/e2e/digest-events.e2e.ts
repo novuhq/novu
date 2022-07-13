@@ -535,4 +535,60 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(job.digest.events[0].customVar).to.equal('second');
     expect(job.digest.events[1].customVar).to.equal('third');
   });
+
+  it('should digest with regular strategy and update mode', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.SECONDS,
+            amount: 30,
+            type: DigestTypeEnum.REGULAR,
+            updateMode: true,
+          },
+        },
+        {
+          type: ChannelTypeEnum.IN_APP,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'first',
+    });
+
+    await triggerEvent({
+      customVar: 'second',
+    });
+
+    await triggerEvent({
+      customVar: 'third',
+    });
+
+    await awaitRunningJobs(0);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    const messageCount = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messageCount.length).to.equal(1);
+    const job = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.IN_APP,
+      transactionId: delayedJob.transactionId,
+    });
+
+    expect(job.digest.events.length).to.equal(3);
+  });
 });

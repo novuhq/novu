@@ -170,23 +170,29 @@ export class ProcessSubscriber {
     command: ProcessSubscriberCommand
   ) {
     const steps = [this.createTriggerStep(command)];
-    let digestIsRunning = false;
+    let delayedDigests: JobEntity = null;
     for (const step of matchedSteps) {
-      if (step.template.type !== ChannelTypeEnum.DIGEST && !digestIsRunning) {
+      if (step.template.type !== ChannelTypeEnum.DIGEST) {
+        if (delayedDigests && !delayedDigests.digest.updateMode) {
+          continue;
+        }
+
+        if (delayedDigests && delayedDigests.digest.updateMode && delayedDigests.type !== ChannelTypeEnum.IN_APP) {
+          continue;
+        }
+
         steps.push(step);
         continue;
       }
 
-      const delayedDigests = await this.jobRepository.find({
+      delayedDigests = await this.jobRepository.findOne({
         status: JobStatusEnum.DELAYED,
         _subscriberId: subscriberId,
         _templateId: command.templateId,
         _environmentId: command.environmentId,
       });
 
-      digestIsRunning = delayedDigests.length > 0;
-
-      if (!digestIsRunning) {
+      if (!delayedDigests) {
         steps.push(step);
       }
     }
