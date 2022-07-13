@@ -193,11 +193,8 @@ export class ProcessSubscriber {
       };
 
       if (step.metadata.digestKey) {
-        where = {
-          ...where,
-          digest: {
-            digestKey: step.metadata.digestKey,
-          },
+        where.digest = {
+          digestKey: step.metadata.digestKey,
         };
       }
 
@@ -239,7 +236,7 @@ export class ProcessSubscriber {
           continue;
         }
 
-        let where: any = {
+        let digests = await this.jobRepository.find({
           updatedAt: {
             $gte: from,
           },
@@ -247,26 +244,15 @@ export class ProcessSubscriber {
           type: ChannelTypeEnum.DIGEST,
           _environmentId: command.environmentId,
           _subscriberId: subscriberId,
-        };
+        });
 
-        if (step.metadata.digestKey) {
-          where = {
-            ...where,
-            digest: {
-              digestKey: step.metadata.digestKey,
-            },
-          };
+        if (digests.length > 0 && step.metadata.digestKey) {
+          digests = digests.filter((digest) => {
+            return command.payload[step.metadata.digestKey] === digest.payload[step.metadata.digestKey];
+          });
         }
 
-        let digest = await this.jobRepository.findOne(where);
-
-        if (digest && step.metadata.digestKey) {
-          if (command.payload[step.metadata.digestKey] === digest.payload[step.metadata.digestKey]) {
-            digest = null;
-          }
-        }
-
-        if (digest) {
+        if (digests.length > 0) {
           return steps;
         }
         steps.push(step);

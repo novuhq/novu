@@ -650,5 +650,87 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     expect(messages[0].content).to.include(digests[0].payload.postId);
     expect(messages[1].content).to.include(digests[1].payload.postId);
+    const jobCount = await jobRepository.count({
+      _templateId: template._id,
+    });
+    expect(jobCount).to.equal(6);
+  });
+
+  it('should create multiple digest based on diffrent digestKeys with backoff', async function () {
+    const postId = MessageRepository.createObjectId();
+    const postId2 = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'postId',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{postId}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'first',
+      postId,
+    });
+
+    await triggerEvent({
+      customVar: 'second',
+      postId: postId2,
+    });
+
+    await triggerEvent({
+      customVar: 'fourth',
+      postId,
+    });
+
+    await triggerEvent({
+      customVar: 'third',
+      postId: postId2,
+    });
+
+    await awaitRunningJobs(2);
+
+    let digests = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    expect(digests[0].payload.postId).not.to.equal(digests[1].payload.postId);
+    expect(digests.length).to.equal(2);
+
+    digests = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    for (const digest of digests) {
+      await workflowQueueService.work(digest);
+    }
+
+    await awaitRunningJobs(0);
+
+    const messages = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messages[0].content).to.include(digests[1].payload.postId);
+    expect(messages[1].content).to.include(digests[0].payload.postId);
+    const jobCount = await jobRepository.count({
+      _templateId: template._id,
+    });
+    // this should be 10...
+    expect(jobCount).to.equal(9);
   });
 });
