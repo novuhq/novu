@@ -3,6 +3,7 @@ import { colors, Dropdown } from '../../../design-system';
 import { ActionIcon, MenuItem as DropdownItem } from '@mantine/core';
 import { Mail, Mobile, PlusCircleOutlined, Sms } from '../../../design-system/icons';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Digest } from '../../../design-system/icons/general/Digest';
 
 interface NodeData {
   label: string;
@@ -57,7 +58,7 @@ export default memo(({ data }: { data: NodeData }) => {
         </DropdownItem>
         <DropdownItem
           data-test-id={`add-digest-node`}
-          icon={<Mobile />}
+          icon={<Digest width="25px" height="27px" />}
           onClick={() => addNewNode(ChannelTypeEnum.DIGEST)}
         >
           Digest
