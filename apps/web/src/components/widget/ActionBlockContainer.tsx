@@ -72,9 +72,9 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
             const buttonText = button?.content ? button?.content : '';
 
             return (
-              <NotificationButton buttonStyle={buttonStyle[button.type]} fullWidth key={buttonIndex}>
+              <NotificationButton background={buttonStyle[button.type].backGroundColor} fullWidth key={buttonIndex}>
                 <ButtonInput
-                  buttonStyle={buttonStyle[button.type]}
+                  color={buttonStyle[button.type].fontColor}
                   value={buttonText}
                   onChange={(data) => {
                     handleOnButtonContentChange(data, buttonIndex);
@@ -129,8 +129,8 @@ const TemplateContainerWrap = styled.div`
   border: none;
 `;
 
-const NotificationButton = styled(Button)<{ buttonStyle }>`
-  background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
+const NotificationButton = styled(Button)<{ background }>`
+  background: ${({ background }) => background};
   height: 30px;
   position: relative;
   cursor: default;
@@ -156,7 +156,7 @@ const DeleteIcon = styled.div<{ buttonStyle }>`
   }
 `;
 
-const ButtonInput = styled(TextInput)<{ buttonStyle }>`
+const ButtonInput = styled(TextInput)<{ color }>`
   display: flex;
   align-content: center;
   text-align: center;
@@ -165,7 +165,7 @@ const ButtonInput = styled(TextInput)<{ buttonStyle }>`
   input {
     border: transparent;
     background: transparent;
-    color: ${({ buttonStyle }) => buttonStyle.fontColor};
+    color: ${({ color }) => color};
     font-weight: 700;
     height: 30px;
   }

@@ -82,22 +82,22 @@ interface ITemplateButton {
 
 export function TemplateButton(props: ITemplateButton) {
   const dark = useMantineTheme().colorScheme === 'dark';
-  const buttonStyle = dark ? darkButtonStyle : lightButtonStyle;
+  const buttonStyles = (dark ? darkButtonStyle : lightButtonStyle)[props.button.type];
 
   const buttonText = props.button?.content ? props.button?.content : '';
 
   return (
-    <ActionButton buttonStyle={buttonStyle[props.button.type]} fullWidth>
+    <ActionButton background={buttonStyles.backGroundColor} color={buttonStyles.fontColor} fullWidth>
       {buttonText}
     </ActionButton>
   );
 }
 
-const ActionButton = styled(Button)<{ buttonStyle }>`
+const ActionButton = styled(Button)<{ background: string; color: string }>`
   height: 30px;
   font-size: 12px;
-  background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
-  color: ${({ buttonStyle }) => buttonStyle.fontColor};
+  background: ${({ background }) => background};
+  color: ${({ color }) => color};
   box-shadow: none;
   display: flex;
   justify-content: center;
