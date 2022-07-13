@@ -725,8 +725,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
     });
 
-    expect(messages[0].content).to.include(digests[1].payload.postId);
-    expect(messages[1].content).to.include(digests[0].payload.postId);
+    expect(messages[0].content).to.include.members(digests.map((digest) => digest.payload.postId));
+    expect(messages[1].content).to.include.members(digests.map((digest) => digest.payload.postId));
+
     const jobCount = await jobRepository.count({
       _templateId: template._id,
     });
