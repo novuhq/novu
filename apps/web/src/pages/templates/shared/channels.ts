@@ -38,7 +38,7 @@ export const channels = [
   {
     tabKey: ChannelTypeEnum.DIGEST,
     label: 'Digest',
-    description: 'This sub title will describe things',
+    description: 'Aggregate events triggered to one notification',
     Icon: Digest,
     testId: 'digestSelector',
     channelType: ChannelTypeEnum.DIGEST,
