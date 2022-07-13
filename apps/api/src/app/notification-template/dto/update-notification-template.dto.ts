@@ -29,7 +29,7 @@ export class NotificationStepDto {
   metadata?: {
     amount?: number;
     unit?: DigestUnitEnum;
-    batchKey?: string;
+    digestKey?: string;
     type: DigestTypeEnum;
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;

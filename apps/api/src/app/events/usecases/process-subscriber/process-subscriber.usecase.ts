@@ -185,13 +185,29 @@ export class ProcessSubscriber {
         continue;
       }
 
-      delayedDigests = await this.jobRepository.findOne({
+      let where: any = {
         status: JobStatusEnum.DELAYED,
         _subscriberId: subscriberId,
         _templateId: command.templateId,
         _environmentId: command.environmentId,
-      });
+      };
 
+      if (step.metadata.digestKey) {
+        where = {
+          ...where,
+          digest: {
+            digestKey: step.metadata.digestKey,
+          },
+        };
+      }
+
+      delayedDigests = await this.jobRepository.findOne(where);
+
+      if (delayedDigests && step.metadata.digestKey) {
+        if (command.payload[step.metadata.digestKey] === delayedDigests.payload[step.metadata.digestKey]) {
+          delayedDigests = null;
+        }
+      }
       if (!delayedDigests) {
         steps.push(step);
       }
@@ -222,7 +238,8 @@ export class ProcessSubscriber {
         if (!trigger) {
           continue;
         }
-        const digest = await this.jobRepository.findOne({
+
+        let where: any = {
           updatedAt: {
             $gte: from,
           },
@@ -230,7 +247,24 @@ export class ProcessSubscriber {
           type: ChannelTypeEnum.DIGEST,
           _environmentId: command.environmentId,
           _subscriberId: subscriberId,
-        });
+        };
+
+        if (step.metadata.digestKey) {
+          where = {
+            ...where,
+            digest: {
+              digestKey: step.metadata.digestKey,
+            },
+          };
+        }
+
+        let digest = await this.jobRepository.findOne(where);
+
+        if (digest && step.metadata.digestKey) {
+          if (command.payload[step.metadata.digestKey] === digest.payload[step.metadata.digestKey]) {
+            digest = null;
+          }
+        }
 
         if (digest) {
           return steps;

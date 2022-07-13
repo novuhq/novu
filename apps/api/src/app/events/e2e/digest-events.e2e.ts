@@ -114,7 +114,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(job.digest?.events?.length).to.equal(2);
   });
 
-  it('should digest based on batchKey within time interval', async function () {
+  it('should digest based on digestKey within time interval', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -128,7 +128,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchKey: 'id',
+            digestKey: 'id',
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -163,13 +163,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const jobs = await jobRepository.find({
       _templateId: template._id,
     });
-    const digestJob = jobs.find((job) => job?.digest?.batchKey === 'id');
+    const digestJob = jobs.find((job) => job?.digest?.digestKey === 'id');
     expect(digestJob).not.be.undefined;
     const jobsWithEvents = jobs.filter((item) => item.digest.events.length > 0);
     expect(jobsWithEvents.length).to.equal(1);
   });
 
-  it('should digest based on same batchKey within time interval', async function () {
+  it('should digest based on same digestKey within time interval', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -183,7 +183,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchKey: 'id',
+            digestKey: 'id',
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -289,7 +289,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            batchKey: 'id',
+            digestKey: 'id',
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -590,5 +590,65 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     expect(job.digest.events.length).to.equal(3);
+  });
+
+  it('should create multiple digest based on diffrent digestKeys', async function () {
+    const postId = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'postId',
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{postId}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      postId,
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+      postId: MessageRepository.createObjectId(),
+    });
+
+    let digests = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    expect(digests[0].payload.postId).not.to.equal(digests[1].payload.postId);
+    expect(digests.length).to.equal(2);
+
+    await awaitRunningJobs(2);
+
+    digests = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    for (const digest of digests) {
+      await workflowQueueService.work(digest);
+    }
+
+    await awaitRunningJobs(0);
+
+    const messages = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messages[0].content).to.include(digests[0].payload.postId);
+    expect(messages[1].content).to.include(digests[1].payload.postId);
   });
 });

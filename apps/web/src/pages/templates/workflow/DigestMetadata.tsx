@@ -85,7 +85,7 @@ export const DigestMetadata = ({ control, index }) => {
       >
         <Controller
           control={control}
-          name={`steps.${index}.metadata.batchKey`}
+          name={`steps.${index}.metadata.digestKey`}
           render={({ field }) => {
             return (
               <Input
@@ -93,7 +93,7 @@ export const DigestMetadata = ({ control, index }) => {
                 label="Batch Key"
                 placeholder="Property key on payload"
                 description="A batch key is used to batch notifications"
-                error={errors?.steps ? errors.steps[index]?.metadata?.batchKey?.message : undefined}
+                error={errors?.steps ? errors.steps[index]?.metadata?.digestKey?.message : undefined}
                 type="text"
                 data-test-id="batch-key"
               />

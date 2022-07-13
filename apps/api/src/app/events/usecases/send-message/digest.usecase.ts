@@ -64,10 +64,10 @@ export class Digest extends SendMessageType {
       return job.status !== JobStatusEnum.COMPLETED && job.status !== JobStatusEnum.FAILED;
     });
 
-    const batchValue = currentJob?.payload ? currentJob.payload[currentJob?.digest?.batchKey] : undefined;
+    const batchValue = currentJob?.payload ? currentJob.payload[currentJob?.digest?.digestKey] : undefined;
     if (batchValue) {
       jobs = jobs.filter((job) => {
-        return job.payload[currentJob.digest.batchKey] === batchValue;
+        return job.payload[currentJob.digest.digestKey] === batchValue;
       });
     }
 
