@@ -725,13 +725,26 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
     });
 
-    expect(messages[0].content).to.include.members(digests.map((digest) => digest.payload.postId));
-    expect(messages[1].content).to.include.members(digests.map((digest) => digest.payload.postId));
+    expect(messages.length).to.equal(4);
+
+    const contents: string[] = messages
+      .map((message) => message.content)
+      .reduce((prev, content: string) => {
+        if (prev.includes(content)) {
+          return prev;
+        }
+        prev.push(content);
+
+        return prev;
+      }, [] as string[]);
+
+    expect(contents).to.include(`Hello world ${postId}`);
+    expect(contents).to.include(`Hello world ${postId2}`);
 
     const jobCount = await jobRepository.count({
       _templateId: template._id,
     });
-    // this should be 10...
-    expect(jobCount).to.equal(9);
+
+    expect(jobCount).to.equal(10);
   });
 });
