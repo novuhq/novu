@@ -32,7 +32,7 @@ export function ButtonsTemplates(props: IButtonsTemplatesProps) {
       <TemplatesContainer>
         {templates.templates.map((template: IMessageButton[], templatesIndex) => {
           return (
-            <>
+            <div key={templatesIndex}>
               <TemplateContainerWrap>
                 <TemplateContainer onClick={() => handleOnTemplateClick(templatesIndex)} key={templatesIndex}>
                   {template.map((button: IMessageButton, buttonIndex: number) => {
@@ -44,7 +44,7 @@ export function ButtonsTemplates(props: IButtonsTemplatesProps) {
               {templates.templates.length > templatesIndex + 1 ? (
                 <Divider style={{ margin: '15px 0' }} my="sm" />
               ) : null}
-            </>
+            </div>
           );
         })}
       </TemplatesContainer>
