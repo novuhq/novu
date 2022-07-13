@@ -39,7 +39,24 @@ const messageSchema = new Schema(
         type: Schema.Types.String,
       },
       data: Schema.Types.Mixed,
-      action: Schema.Types.Mixed,
+      action: {
+        status: Schema.Types.String,
+        buttons: [
+          {
+            type: {
+              type: Schema.Types.String,
+            },
+            content: Schema.Types.String,
+            resultContent: Schema.Types.String,
+          },
+        ],
+        result: {
+          payload: Schema.Types.Mixed,
+          type: {
+            type: Schema.Types.String,
+          },
+        },
+      },
     },
     channel: Schema.Types.String,
     content: Schema.Types.Mixed,
