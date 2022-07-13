@@ -7,12 +7,12 @@ import {
   Menu as MantineMenu,
   Container,
 } from '@mantine/core';
-import { useContext, useEffect } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
-import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
-import { useColorScheme } from '@mantine/hooks';
+import { Sun, Moon, Ellipse, Bell, Trash, Mail } from '../../../design-system/icons';
+import { useColorScheme, useLocalStorage } from '@mantine/hooks';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 
 type Props = {};
@@ -27,13 +27,22 @@ const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
-  const browserColorScheme = useColorScheme();
+  // const browserColorScheme = useColorScheme();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
 
+  /*
+   * const [themeStatus, setThemeStatus] = useLocalStorage<String>({
+   *   key: 'mantinetheme',
+   *   defaultValue: 'system',
+   *   getInitialValueInEffect: true,
+   * });
+   */
+  const [themeStatus, setThemeStatus] = useState('');
+
   useEffect(() => {
-    toggleColorScheme(browserColorScheme);
-  }, [browserColorScheme]);
+    setThemeStatus(JSON.parse(localStorage.getItem('mantinetheme') || ''));
+  }, [toggleColorScheme]);
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
@@ -86,7 +95,9 @@ export function HeaderNav({}: Props) {
         />
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()} title="Toggle color scheme">
-            {dark ? <Sun {...headerIconsSettings} /> : <Moon {...headerIconsSettings} />}
+            {(themeStatus === 'system' && <Ellipse {...headerIconsSettings} />) ||
+              (themeStatus === 'light' && <Sun {...headerIconsSettings} />) ||
+              (themeStatus === 'dark' && <Moon {...headerIconsSettings} />)}
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown
