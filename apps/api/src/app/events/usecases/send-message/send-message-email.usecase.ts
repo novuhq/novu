@@ -97,6 +97,7 @@ export class SendMessageEmail extends SendMessageType {
           },
           blocks: isEditorMode ? content : [],
           step: {
+            digest: !!command.events.length,
             events: command.events,
             total_count: command.events.length,
           },
@@ -266,6 +267,7 @@ export class SendMessageEmail extends SendMessageType {
           },
           blocks: [],
           step: {
+            digest: !!command.events.length,
             events: command.events,
             total_count: command.events.length,
           },

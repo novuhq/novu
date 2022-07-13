@@ -52,6 +52,7 @@ export class SendMessageSms extends SendMessageType {
         data: {
           subscriber,
           step: {
+            digest: !!command.events.length,
             events: command.events,
             total_count: command.events.length,
           },
