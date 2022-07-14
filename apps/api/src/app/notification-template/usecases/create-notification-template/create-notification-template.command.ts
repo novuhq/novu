@@ -14,6 +14,7 @@ import {
   BuilderGroupValues,
   ChannelCTATypeEnum,
   IMessageAction,
+  DigestUnitEnum
 } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -86,6 +87,13 @@ class NotificationStepCommand {
   @IsMongoId()
   @IsOptional()
   _id?: string;
+
+  @IsOptional()
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnitEnum;
+    digestKey?: string;
+  };
 }
 
 export class MessageFilter {

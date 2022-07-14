@@ -5,7 +5,8 @@ import {
   NotificationRepository,
   SubscriberRepository,
   SubscriberEntity,
-  IEmailBlock,
+  MessageEntity,
+  IEmailBlock
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, IMessageButton } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -40,13 +41,14 @@ export class SendMessageInApp extends SendMessageType {
       _id: command.subscriberId,
     });
     const inAppChannel: NotificationStepEntity = command.step;
-    const content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber);
+    const content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
 
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
         inAppChannel.template.cta?.data?.url,
         command.payload,
-        subscriber
+        subscriber,
+        command
       );
     }
 
@@ -63,7 +65,7 @@ export class SendMessageInApp extends SendMessageType {
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
 
-    const message = await this.messageRepository.create({
+    const oldMessage = await this.messageRepository.findOne({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -71,12 +73,45 @@ export class SendMessageInApp extends SendMessageType {
       _templateId: notification._templateId,
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
-      cta: inAppChannel.template.cta,
       transactionId: command.transactionId,
-      content,
-      payload: messagePayload,
-      templateIdentifier: command.identifier,
     });
+
+    let message: MessageEntity;
+
+    if (!oldMessage) {
+      message = await this.messageRepository.create({
+        _notificationId: notification._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _subscriberId: command.subscriberId,
+        _templateId: notification._templateId,
+        _messageTemplateId: inAppChannel.template._id,
+        channel: ChannelTypeEnum.IN_APP,
+        cta: inAppChannel.template.cta,
+        transactionId: command.transactionId,
+        content,
+        payload: messagePayload,
+        templateIdentifier: command.identifier,
+      });
+    }
+
+    if (oldMessage) {
+      await this.messageRepository.update(
+        {
+          _id: oldMessage._id,
+        },
+        {
+          $set: {
+            seen: false,
+            cta: inAppChannel.template.cta,
+            content,
+            payload: messagePayload,
+            createdAt: new Date(),
+          },
+        }
+      );
+      message = await this.messageRepository.findById(oldMessage._id);
+    }
 
     const count = await this.messageRepository.getUnseenCount(
       command.environmentId,
@@ -113,13 +148,18 @@ export class SendMessageInApp extends SendMessageType {
     });
   }
 
-  private async compileInAppTemplate(content: string | IEmailBlock[], payload: any, subscriber: SubscriberEntity) {
+  private async compileInAppTemplate(content: string | IEmailBlock[], payload: any, subscriber: SubscriberEntity, command: SendMessageCommand) {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
         customTemplate: content as string,
         data: {
           subscriber,
+          step: {
+            digest: !!command.events.length,
+            events: command.events,
+            total_count: command.events.length,
+          },
           ...payload,
         },
       })

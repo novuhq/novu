@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import {
   ChannelTypeEnum,
+  DigestUnitEnum,
   ICreateNotificationTemplateDto,
   IMessageTemplate,
   INotificationTemplate,
@@ -225,6 +226,12 @@ export interface StepEntity {
   filters?: any[];
 
   active: boolean;
+
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnitEnum;
+    digestKey?: string;
+  };
 }
 
 export interface IForm {

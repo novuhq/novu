@@ -11,12 +11,13 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
+import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
+import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 
 @Injectable()
 export class SendMessageSms extends SendMessageType {
@@ -27,7 +28,8 @@ export class SendMessageSms extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    private integrationRepository: IntegrationRepository
+    private integrationRepository: IntegrationRepository,
+    private compileTemplate: CompileTemplate
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -42,9 +44,23 @@ export class SendMessageSms extends SendMessageType {
       _environmentId: command.environmentId,
       _id: command.subscriberId,
     });
-    const contentService = new ContentService();
-    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
-    const content = contentService.replaceVariables(smsChannel.template.content as string, messageVariables);
+
+    const content = await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        customTemplate: smsChannel.template.content as string,
+        data: {
+          subscriber,
+          step: {
+            digest: !!command.events.length,
+            events: command.events,
+            total_count: command.events.length,
+          },
+          ...command.payload,
+        },
+      })
+    );
+
     const phone = command.payload.phone || subscriber.phone;
 
     const messagePayload = Object.assign({}, command.payload);
