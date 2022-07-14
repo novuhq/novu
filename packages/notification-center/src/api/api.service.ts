@@ -26,7 +26,7 @@ export class ApiService {
   }
 
   async getNotificationsList(page: number, feedId: string | string[]): Promise<IMessage[]> {
-    return await this.httpClient.getFullResponse(`/widgets/notifications/feed`, {
+    return await this.httpClient.get(`/widgets/notifications/feed`, {
       page,
       feedId,
     });

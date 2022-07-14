@@ -17,11 +17,7 @@ export class HttpClient {
     delete this.axiosClient.defaults.headers.common.Authorization;
   }
 
-  async get(url: string) {
-    return await this.axiosClient.get(url).then((response) => response.data.data);
-  }
-
-  async getFullResponse(url: string, params?: { [key: string]: string | string[] | number }) {
+  async get(url: string, params?: { [key: string]: string | string[] | number }) {
     return await this.axiosClient
       .get(url, {
         params,

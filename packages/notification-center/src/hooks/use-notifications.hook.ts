@@ -17,13 +17,7 @@ export function useNotifications(feedId: string | string[]) {
 
   async function fetchPage(pageToFetch: number, isRefetch = false) {
     setFetching(true);
-    let newNotifications;
-
-    if (feedId === null) {
-      newNotifications = await api.getNotificationsList(pageToFetch, null);
-    } else {
-      newNotifications = await api.getNotificationsList(pageToFetch, feedId);
-    }
+    const newNotifications = await api.getNotificationsList(pageToFetch, feedId);
 
     if (newNotifications?.length < 10) {
       setHasNextPage(false);
