@@ -8,7 +8,13 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, ChannelCTATypeEnum } from '@novu/shared';
+import {
+  BuilderFieldOperator,
+  BuilderFieldType,
+  BuilderGroupValues,
+  ChannelCTATypeEnum,
+  DigestUnitEnum,
+} from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageTemplateDto } from '../../dto';
@@ -75,6 +81,13 @@ class NotificationStepCommand {
   @IsMongoId()
   @IsOptional()
   _id?: string;
+
+  @IsOptional()
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnitEnum;
+    digestKey?: string;
+  };
 }
 
 export class MessageFilter {
