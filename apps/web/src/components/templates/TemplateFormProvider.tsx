@@ -62,14 +62,6 @@ const schema = z
                     message: 'Required - Message Content',
                     path: ['content'],
                   });
-                  ctx.addIssue({
-                    code: z.ZodIssueCode.too_small,
-                    minimum: 1,
-                    type: 'string',
-                    inclusive: true,
-                    message: 'Required - Feed',
-                    path: ['feedId'],
-                  });
                 }
                 if (template.type === ChannelTypeEnum.EMAIL && !template.subject) {
                   ctx.addIssue({

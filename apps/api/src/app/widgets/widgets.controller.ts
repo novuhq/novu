@@ -54,7 +54,7 @@ export class WidgetsController {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
     }
 
-    if (typeof feedId === 'undefined') {
+    if (feedId === undefined) {
       feedsQuery = null;
     }
 

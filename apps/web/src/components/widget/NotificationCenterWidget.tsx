@@ -23,7 +23,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
         subscriberId={user?._id as string}
         applicationIdentifier={environment?.identifier as string}
       >
-        <PopoverNotificationCenter colorScheme={colorScheme} onNotificationClick={handlerOnNotificationClick}>
+        <PopoverNotificationCenter tabs={[]} colorScheme={colorScheme} onNotificationClick={handlerOnNotificationClick}>
           {({ unseenCount }) => {
             return <NotificationBell colorScheme={colorScheme} unseenCount={unseenCount} />;
           }}

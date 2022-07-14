@@ -40,6 +40,9 @@ export class UpdateMessageTemplate {
     if (command.feedId) {
       updatePayload._feedId = command.feedId;
     }
+    if (!command.feedId && existingTemplate._feedId) {
+      updatePayload._feedId = null;
+    }
 
     if (command.subject) {
       updatePayload.subject = command.subject;
@@ -61,7 +64,7 @@ export class UpdateMessageTemplate {
 
     const item = await this.messageTemplateRepository.findById(command.templateId);
 
-    if (command.feedId) {
+    if (command.feedId || (!command.feedId && existingTemplate._feedId)) {
       await this.messageRepository.updateFeedByMessageTemplateId(command.templateId, command.feedId);
     }
 
