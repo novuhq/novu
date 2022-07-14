@@ -12,11 +12,11 @@ interface IButtonsTemplatesProps {
 export function ButtonsTemplates(props: IButtonsTemplatesProps) {
   const templates: IButtonTemplates = {
     templates: [
-      [{ type: ButtonTypeEnum.PRIMARY, content: 'Primary Button' }],
-      [{ type: ButtonTypeEnum.SECONDARY, content: 'Secondary Button' }],
+      [{ type: ButtonTypeEnum.PRIMARY, content: 'Primary' }],
+      [{ type: ButtonTypeEnum.SECONDARY, content: 'Secondary' }],
       [
-        { type: ButtonTypeEnum.PRIMARY, content: 'Primary Button' },
-        { type: ButtonTypeEnum.SECONDARY, content: 'Secondary Button' },
+        { type: ButtonTypeEnum.PRIMARY, content: 'Primary' },
+        { type: ButtonTypeEnum.SECONDARY, content: 'Secondary' },
       ],
     ],
   };
