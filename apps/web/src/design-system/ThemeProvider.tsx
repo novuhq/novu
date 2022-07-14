@@ -20,9 +20,13 @@ export function ThemeProvider({ children }: { children: JSX.Element; dark?: Bool
   });
 
   const toggleColorScheme = () => {
-    if (themeStatus === 'system') setThemeStatus('light');
-    else if (themeStatus === 'light') setThemeStatus('dark');
-    else setThemeStatus('system');
+     if (themeStatus === 'system') {
+         setThemeStatus('light');
+     } else if (themeStatus === 'light') {
+         setThemeStatus('dark');
+     } else {
+          setThemeStatus('system');
+      }
   };
 
   useEffect(() => {
