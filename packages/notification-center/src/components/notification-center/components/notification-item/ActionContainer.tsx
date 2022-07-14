@@ -1,25 +1,52 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NotificationButton } from './NorificationItemButton';
-import { ButtonTypeEnum, IMessageAction } from '@novu/shared';
+import { IMessageAction, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import styled from 'styled-components';
 
 export interface IActionContainerProps {
-  actions?: IMessageAction[];
+  action?: IMessageAction;
+  onActionClick: (actionButtonType: ButtonTypeEnum) => void;
 }
 
 export function ActionContainer(props: IActionContainerProps) {
-  const buttons = props?.actions;
+  const [clicked, setClicked] = useState<boolean>(props.action.status === MessageActionStatusEnum.DONE);
+  const buttons = props?.action?.buttons;
 
-  sortButtonsByEnum(buttons);
+  function handleOnClick(buttonType: ButtonTypeEnum) {
+    props.onActionClick(buttonType);
+    setClicked(true);
+  }
 
   return (
     <>
-      {buttons?.map((button) => (
-        <NotificationButton buttonContext={button} key={button.type} />
-      ))}
+      <TemplateContainerWrap>
+        <TemplateContainer>
+          {clicked
+            ? null
+            : buttons?.map((button, buttonIndex) => (
+                <NotificationButton
+                  onActionClick={(buttonType) => handleOnClick(buttonType)}
+                  messageAction={props?.action}
+                  buttonIndex={buttonIndex}
+                  key={button.type}
+                />
+              ))}
+        </TemplateContainer>
+      </TemplateContainerWrap>
     </>
   );
 }
-function sortButtonsByEnum(buttons: IMessageAction[]) {
-  const buttonsEnumOrder = Object.values(ButtonTypeEnum);
-  buttons?.sort((a, b) => buttonsEnumOrder.indexOf(a.type) - buttonsEnumOrder.indexOf(b.type));
-}
+
+const TemplateContainerWrap = styled.div`
+  margin-left: 10px;
+  margin-right: 10px;
+`;
+
+const TemplateContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  max-height: 50px;
+  margin-left: -15px;
+  margin-right: -15px;
+`;

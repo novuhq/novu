@@ -1,42 +1,55 @@
 import styled, { css } from 'styled-components';
-import { IMessage } from '@novu/shared';
+import { IMessage, ButtonTypeEnum, IMessageAction, MessageActionStatusEnum } from '@novu/shared';
 import moment from 'moment';
 import { DotsHorizontal } from '../../../../shared/icons';
-import React from 'react';
+import React, { useContext } from 'react';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { ActionContainer } from './ActionContainer';
+import { NotificationCenterContext } from '../../../../store/notification-center.context';
 
 export function NotificationListItem({
   notification,
   onClick,
 }: {
   notification: IMessage;
-  onClick: (notification: IMessage) => void;
+  onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
+  const { onActionClick } = useContext(NotificationCenterContext);
+
+  function handleNotificationClick() {
+    onClick(notification);
+  }
+
+  async function handleActionButtonClick(actionButtonType: ButtonTypeEnum) {
+    onActionClick(notification.templateIdentifier, actionButtonType, notification);
+  }
 
   return (
     <ItemWrapper
       novuTheme={novuTheme}
       data-test-id="notification-list-item"
       unseen={!notification.seen}
-      onClick={() => onClick(notification)}
+      onClick={() => handleNotificationClick()}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'left' }}>
+      <NotificationItemContainer>
         <TextContent
           data-test-id="notification-content"
           dangerouslySetInnerHTML={{
             __html: notification.content as string,
           }}
         />
-        {notification?.cta?.actions ? <ActionContainer actions={notification.cta.actions} /> : null}
-        <div>
-          <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
-            {moment(notification.createdAt).fromNow()}
-          </TimeMark>
-        </div>
-      </div>
+        <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
+          {moment(notification.createdAt).fromNow()}
+        </TimeMark>
+        <ActionWrapper
+          templateIdentifier={notification.templateIdentifier}
+          actionStatus={notification?.cta?.action?.status}
+          ctaAction={notification?.cta?.action}
+          handleActionButtonClick={handleActionButtonClick}
+        />
+      </NotificationItemContainer>
       <SettingsActionWrapper style={{ display: 'none' }}>
         <DotsHorizontal />
       </SettingsActionWrapper>
@@ -44,9 +57,52 @@ export function NotificationListItem({
   );
 }
 
+function ActionWrapper({
+  actionStatus,
+  templateIdentifier,
+  ctaAction,
+  handleActionButtonClick,
+}: {
+  templateIdentifier: string;
+  actionStatus: MessageActionStatusEnum;
+  ctaAction: IMessageAction;
+  handleActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
+}) {
+  const { notificationItemActions } = useContext(NotificationCenterContext);
+
+  return (
+    <>
+      {notificationItemActions && actionStatus === MessageActionStatusEnum.DONE ? (
+        notificationItemActions(templateIdentifier, ctaAction)
+      ) : (
+        <ActionContainerOrNone handleActionButtonClick={handleActionButtonClick} action={ctaAction} />
+      )}
+    </>
+  );
+}
+
+function ActionContainerOrNone({
+  action,
+  handleActionButtonClick,
+}: {
+  action: IMessageAction;
+  handleActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
+}) {
+  return <>{action ? <ActionContainer onActionClick={handleActionButtonClick} action={action} /> : null}</>;
+}
+
+const NotificationItemContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: normal;
+  width: 100%;
+`;
+
 const TextContent = styled.div`
   line-height: 16px;
 `;
+
 const SettingsActionWrapper = styled.div`
   color: ${({ theme }) => theme.colors.secondaryFontColor};
 `;
@@ -77,7 +133,7 @@ const seenNotificationStyles = css<{ novuTheme: INovuTheme }>`
 `;
 
 const ItemWrapper = styled.div<{ unseen?: boolean; novuTheme: INovuTheme }>`
-  padding: 14px 15px 14px 15px;
+  padding: 15px;
   position: relative;
   display: flex;
   line-height: 20px;

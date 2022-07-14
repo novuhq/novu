@@ -32,15 +32,30 @@ const messageSchema = new Schema(
       ref: 'Subscriber',
       index: true,
     },
+    templateIdentifier: Schema.Types.String,
     email: Schema.Types.String,
     cta: {
       type: {
         type: Schema.Types.String,
       },
       data: Schema.Types.Mixed,
-      actions: {
-        type: Schema.Types.String,
-        content: { text: Schema.Types.String },
+      action: {
+        status: Schema.Types.String,
+        buttons: [
+          {
+            type: {
+              type: Schema.Types.String,
+            },
+            content: Schema.Types.String,
+            resultContent: Schema.Types.String,
+          },
+        ],
+        result: {
+          payload: Schema.Types.Mixed,
+          type: {
+            type: Schema.Types.String,
+          },
+        },
       },
     },
     channel: Schema.Types.String,

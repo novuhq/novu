@@ -10,22 +10,40 @@ export interface IMessage {
   _notificationId: string;
   _subscriberId: string;
   template?: INotificationTemplate;
+  templateIdentifier?: string;
   content: string | IEmailBlock[];
   channel: ChannelTypeEnum;
   seen: boolean;
   lastSeenDate: string;
   createdAt: string;
-  cta: {
-    type: ChannelCTATypeEnum;
-    data: {
-      url?: string;
-    };
-    actions?: IMessageAction[];
-  };
+  cta: IMessageCTA;
   payload: Record<string, unknown>;
 }
 
+export interface IMessageCTA {
+  type: ChannelCTATypeEnum;
+  data: {
+    url?: string;
+  };
+  action?: IMessageAction;
+}
+
 export interface IMessageAction {
+  status?: MessageActionStatusEnum;
+  buttons?: IMessageButton[];
+  result: {
+    payload?: Record<string, unknown>;
+    type?: ButtonTypeEnum;
+  };
+}
+
+export interface IMessageButton {
   type: ButtonTypeEnum;
-  content: { text: string };
+  content: string;
+  resultContent?: string;
+}
+
+export enum MessageActionStatusEnum {
+  PENDING = 'pending',
+  DONE = 'done',
 }

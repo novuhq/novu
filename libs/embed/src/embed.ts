@@ -6,7 +6,6 @@ import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
-import { SHOW_WIDGET } from './shared/eventTypes';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
@@ -230,6 +229,14 @@ class Novu {
               } else if (message.type === 'notification_click') {
                 if (this.listeners.notification_click) {
                   this.listeners.notification_click(message.notification);
+                }
+              } else if (message.type === 'action_click') {
+                if (this.listeners.action_click) {
+                  this.listeners.action_click({
+                    templateIdentifier: message.templateIdentifier,
+                    type: message.resultType,
+                    notification: message.notification,
+                  });
                 }
               }
             },
