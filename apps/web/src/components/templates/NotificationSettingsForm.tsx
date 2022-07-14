@@ -1,13 +1,23 @@
 import { Controller, useFormContext } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useEffect } from 'react';
-import { Grid } from '@mantine/core';
+import { ActionIcon, Grid } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
-import { Input, Select } from '../../design-system';
+import { Input, Select, Tooltip } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
+import { INotificationTrigger } from '@novu/shared';
+import { useClipboard } from '@mantine/hooks';
+import { Check, Copy } from '../../design-system/icons';
 
-export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) => {
+export const NotificationSettingsForm = ({
+  editMode,
+  trigger,
+}: {
+  editMode: boolean;
+  trigger?: INotificationTrigger;
+}) => {
+  const idClipboard = useClipboard({ timeout: 1000 });
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const {
@@ -64,13 +74,14 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
           render={({ field }) => (
             <Input
               {...field}
+              mb={30}
               data-test-id="title"
               disabled={readonly}
               required
               value={field.value || ''}
               error={errors.name?.message}
               label="Notification Name"
-              description="This will be used to identify the notification in the app."
+              description="This will be used to identify the notification in the dashboard."
               placeholder="Notification name goes here..."
             />
           )}
@@ -80,7 +91,6 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
           control={control}
           render={({ field }) => (
             <Input
-              mt={35}
               {...field}
               value={field.value || ''}
               disabled={readonly}
@@ -93,6 +103,24 @@ export const NotificationSettingsForm = ({ editMode }: { editMode: boolean }) =>
         />
       </Grid.Col>
       <Grid.Col md={6} sm={12}>
+        {trigger && (
+          <Input
+            mb={30}
+            data-test-id="trigger-id"
+            disabled={true}
+            value={trigger.identifier || ''}
+            error={errors.name?.message}
+            label="Notification Identifier"
+            description="This will be used to identify the notification template using the API."
+            rightSection={
+              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon variant="transparent" onClick={() => idClipboard.copy(trigger.identifier)}>
+                  {idClipboard.copied ? <Check /> : <Copy />}
+                </ActionIcon>
+              </Tooltip>
+            }
+          />
+        )}
         <Controller
           name="notificationGroup"
           control={control}

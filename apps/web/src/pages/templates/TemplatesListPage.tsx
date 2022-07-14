@@ -21,6 +21,15 @@ function NotificationList() {
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
+      accessor: 'identifier',
+      Header: 'Trigger ID',
+      Cell: ({ triggers }: any) => (
+        <Tooltip label={triggers ? triggers[0].identifier : 'Unknown'}>
+          <Text rows={1}>{triggers ? triggers[0].identifier : 'Unknown'}</Text>
+        </Tooltip>
+      ),
+    },
+    {
       accessor: 'name',
       Header: 'Name',
       Cell: ({ name }: any) => (

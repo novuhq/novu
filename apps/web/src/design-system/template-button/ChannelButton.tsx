@@ -10,6 +10,7 @@ import { When } from '../../components/utils/When';
 import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../store/use-env-controller';
 import { ChannelTypeEnum } from '@novu/shared';
+import { useClickOutside } from '@mantine/hooks';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -91,6 +92,7 @@ export function ChannelButton({
   const [disabled, setDisabled] = useState(initDisabled);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
+  const menuRef = useClickOutside(() => setShowDotMenu(false), ['click', 'mousedown', 'touchstart']);
 
   const { watch } = useFormContext();
 
@@ -153,6 +155,7 @@ export function ChannelButton({
                 }}
               >
                 <Menu
+                  ref={menuRef}
                   shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
                   classNames={menuClasses}
                   withArrow={true}

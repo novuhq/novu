@@ -1,9 +1,9 @@
-import { TermiiSmsProvider, MessageChannel, SmsParams } from './termii.provider';
+import { TermiiSmsProvider, SmsParams } from './termii.provider';
 
 test('should trigger termii library correctly', async () => {
     const provider = new TermiiSmsProvider({
         apiKey: 'SG.',
-        channel: MessageChannel.GENERIC,
+        from: 'TermiiTest'
     })
 
     const spy = jest   

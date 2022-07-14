@@ -52,6 +52,23 @@ To keep the setup simple, we made some choices that may not be optimal for produ
 We strongly recommend that you decouple your database
 before deploying.
 
+### Pointing IFrame embed to custom installation
+
+When using the IFrame embed to attach the notification center rather than the react component, you will need to specify the `backendUrl` and the `socketUrl` when initializing the iframe.
+
+```html
+<script>
+  novu.init('<REPLACE_APPLICATION_ID>', {
+    unseenBadgeSelector: '#unseen-badge',
+    bellSelector: '#notification-bell',
+    backendUrl: 'https://api.example.com',
+    socketUrl: 'https://ws.example.com'
+  }, {
+ 
+  })
+</script>
+```
+
 ## Next steps
 
 - Got a question? [Ask here](https://github.com/novuhq/novu/discussions).

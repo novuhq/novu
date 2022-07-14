@@ -13,6 +13,10 @@ const IFRAME_ID = 'novu-iframe-element';
 class Novu {
   public clientId: string | unknown;
 
+  private backendUrl?: string = '';
+
+  private socketUrl?: string = '';
+
   private debugMode: boolean;
 
   private onloadFunc: (b: any) => void;
@@ -54,6 +58,8 @@ class Novu {
       this.selector = selectorOrOptions.bellSelector;
       this.unseenBadgeSelector = selectorOrOptions.unseenBadgeSelector;
       this.options = selectorOrOptions;
+      this.backendUrl = selectorOrOptions.backendUrl;
+      this.socketUrl = selectorOrOptions.socketUrl;
     }
 
     this.clientId = clientId;
@@ -253,6 +259,8 @@ class Novu {
             type: EventTypes.INIT_IFRAME,
             value: {
               clientId: this.clientId,
+              backendUrl: this.backendUrl,
+              socketUrl: this.socketUrl,
               topHost: window.location.host,
               data: options,
             },
@@ -261,7 +269,7 @@ class Novu {
         );
       };
 
-      iframe.src = `${IFRAME_URL}/${clientId}`;
+      iframe.src = `${IFRAME_URL}/${clientId}?`;
       iframe.id = IFRAME_ID;
       iframe.style.border = 'none';
       (iframe as any).crossorigin = 'anonymous';
@@ -340,6 +348,8 @@ function updateInnerTextCount(element: HTMLElement, count: number) {
 interface IOptions {
   bellSelector: string;
   unseenBadgeSelector: string;
+  backendUrl?: string;
+  socketUrl?: string;
   position?: {
     top?: number | string;
     left?: number | string;

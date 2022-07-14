@@ -8,8 +8,11 @@ npm install @novu/notification-center
 
 ```tsx
 import { NovuProvider, PopoverNotificationCenter, NotificationBell, IMessage } from '@novu/notification-center';
+import { useNavigate } from 'react-router-dom';
 
 function Header() {
+  const navigate = useNavigate();
+  
   function onNotificationClick(notification: IMessage) {
     navigate(notification.cta.data.url);
   }
@@ -108,6 +111,24 @@ function CustomNotificationCenter() {
   );
 }
 ```
+
+## The notification `IMessage` model
+
+When building your custom UI implementation it might be useful to know, how the notification feed model is structured so you can customize the notification items during rendering.
+
+The notifications array returned by the `useNotifications` hook contains an array of `IMessage` objects with the following properties:
+
+| Property            | Type                   |  Description                             |
+|---------------------|------------------------|------------------------------------------|
+| `_id`               | `string`               | A unique Novu message identifier         |
+| `channel`           | `ChannelTypeEnum`      | Use to specify the actual channel of this message (`in_app` will be used here)                          |
+| `seen`              | `boolean`              | Whether the notification item was ready by the user, changed when the user clicks on the notification.  |
+| `lastSeenDate`      | `ISODate`              | When the user has last seen the notification                              |
+| `cta.type`          | `ChannelCTATypeEnum`   | The type of the CTA specified in the admin panel                          |
+| `cta.data.url`      | `string`               | The redirect URL set in the admin panel, can be used to navigate on notification click                          |
+| `content`           | `string`               | An HTML string of the generated notification content with parsed and replaced variables  |
+| `payload`           | `Record<string, unknown>`  | The `payload` object that was passed the notification template was triggered.  |
+| `createdAt`         | `ISODate`              | The creation date of the message                        |
 
 ## Realtime sockets
 
