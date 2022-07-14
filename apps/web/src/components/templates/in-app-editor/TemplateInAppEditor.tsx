@@ -24,8 +24,8 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
     setValue,
     getValues,
   } = useFormContext();
-  const { data: feeds, isLoading: loadingFeeds } = useQuery(QueryKeys.getFeeds, getFeeds);
-  const { mutateAsync: createNewFeed, isLoading: loadingCreateFeed } = useMutation<
+  const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
+  const { mutateAsync: createNewFeed } = useMutation<
     { name: string; _id: string },
     { error: string; message: string; statusCode: number },
     { name: string }
@@ -49,6 +49,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
     const feed = getValues(`steps.${index}.template.feedId`);
     if (feeds?.length && !feed) {
       selectDefaultFeed();
+      setShowFeed(false);
     }
   }, [feeds]);
 
@@ -125,7 +126,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                       onChange={() => {
                         setShowFeed(!showFeed);
                         if (showFeed === true) {
-                          setValue(`steps.${index}.template.feedId`, '');
+                          setValue(`steps.${index}.template.feedId`, '', { shouldDirty: true });
                         }
                       }}
                       sx={{
