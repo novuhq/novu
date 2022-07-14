@@ -1,6 +1,6 @@
 import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import { ChannelTypeEnum } from '@novu/shared';
-import { Digest } from '../../../design-system/icons/general/Digest';
+import { DigestGradient } from '../../../design-system/icons/general/DigestGradient';
 
 export enum StepTypeEnum {
   CHANNEL = 'channel',
@@ -39,7 +39,7 @@ export const channels = [
     tabKey: ChannelTypeEnum.DIGEST,
     label: 'Digest',
     description: 'Aggregate events triggered to one notification',
-    Icon: Digest,
+    Icon: DigestGradient,
     testId: 'digestSelector',
     channelType: ChannelTypeEnum.DIGEST,
     type: StepTypeEnum.ACTION,
