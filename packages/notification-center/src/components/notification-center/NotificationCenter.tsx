@@ -13,7 +13,7 @@ export interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  notificationItemActions?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   colorScheme: ColorScheme;
   theme?: INovuThemeProvider;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
@@ -34,7 +34,7 @@ export function NotificationCenter(props: INotificationCenterProps) {
           isLoading: !applicationIdentifier,
           header: props.header,
           footer: props.footer,
-          notificationItemActions: props.notificationItemActions,
+          actionsResultBlock: props.actionsResultBlock,
         }}
       >
         <NovuThemeProvider colorScheme={props.colorScheme} theme={props.theme}>

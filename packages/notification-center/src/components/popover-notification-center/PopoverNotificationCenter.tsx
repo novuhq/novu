@@ -18,7 +18,7 @@ interface IPopoverNotificationCenterProps {
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
-  notificationItemActions?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -45,7 +45,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         colorScheme={props.colorScheme}
         theme={props.theme}
         onActionClick={props.onActionClick}
-        notificationItemActions={props.notificationItemActions}
+        actionsResultBlock={props.actionsResultBlock}
       />
     </Popover>
   );

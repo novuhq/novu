@@ -47,7 +47,7 @@ export interface INotificationCenterContext {
   isLoading: boolean;
   header: () => JSX.Element;
   footer: () => JSX.Element;
-  notificationItemActions: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
 }
 
 export interface INovuProviderContext {

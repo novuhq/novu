@@ -68,12 +68,12 @@ function ActionWrapper({
   ctaAction: IMessageAction;
   handleActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
 }) {
-  const { notificationItemActions } = useContext(NotificationCenterContext);
+  const { actionsResultBlock } = useContext(NotificationCenterContext);
 
   return (
     <>
-      {notificationItemActions && actionStatus === MessageActionStatusEnum.DONE ? (
-        notificationItemActions(templateIdentifier, ctaAction)
+      {actionsResultBlock && actionStatus === MessageActionStatusEnum.DONE ? (
+        actionsResultBlock(templateIdentifier, ctaAction)
       ) : (
         <ActionContainerOrNone handleActionButtonClick={handleActionButtonClick} action={ctaAction} />
       )}

@@ -41,7 +41,7 @@ function PopoverWrapper() {
       colorScheme={colorScheme}
       onNotificationClick={handlerOnNotificationClick}
       onActionClick={handlerOnActionClick}
-      notificationItemActions={(templateIdentifier: string, messageAction: IMessageAction) => (
+      actionsResultBlock={(templateIdentifier: string, messageAction: IMessageAction) => (
         <CustomAction templateIdentifier={templateIdentifier} messageAction={messageAction} />
       )}
     >
