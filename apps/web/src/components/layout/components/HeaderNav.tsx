@@ -99,8 +99,9 @@ export function HeaderNav({}: Props) {
               `Match System Appearance`
             }
           >
-            {(themeStatus === 'dark' && <Moon {...headerIconsSettings} />) ||
-              (themeStatus === 'light' && <Sun {...headerIconsSettings} />) || <Ellipse {...headerIconsSettings} />}
+            {themeStatus === 'dark' && <Moon {...headerIconsSettings} />}
+            {themeStatus === 'light' && <Sun {...headerIconsSettings} />} 
+            {themeStatus === 'system' && <Ellipse {...headerIconsSettings} />}
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown
