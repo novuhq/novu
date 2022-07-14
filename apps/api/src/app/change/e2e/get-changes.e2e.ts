@@ -8,23 +8,6 @@ describe('Get changes', () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
 
-  const applyChanges = async () => {
-    const changes = await changeRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-      },
-      '',
-      {
-        sort: { createdAt: 1 },
-      }
-    );
-
-    await changes.reduce(async (prev, change) => {
-      await session.testAgent.post(`/v1/changes/${change._id}/apply`);
-    }, Promise.resolve());
-  };
-
   before(async () => {
     session = new UserSession();
     await session.initialize();
@@ -64,7 +47,7 @@ describe('Get changes', () => {
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
-    await applyChanges();
+    await session.applyChanges();
 
     const updateData: UpdateNotificationTemplateDto = {
       name: testTemplate.name,
