@@ -24,14 +24,12 @@ export const DigestMetadata = ({ control, index }) => {
     <>
       <InputWrapper
         label="Time Interval"
-        description="Set the time intervals for the batch"
-        styles={{
-          ...inputStyles,
-        }}
+        description="Once triggered, for how long the digest should collect events"
+        styles={inputStyles}
       >
         <Grid
           sx={{
-            marginBottom: '5px',
+            marginBottom: '2px',
           }}
         >
           <Grid.Col span={4}>
@@ -47,7 +45,7 @@ export const DigestMetadata = ({ control, index }) => {
                     max={100}
                     type="number"
                     data-test-id="time-amount"
-                    placeholder="20"
+                    placeholder="0"
                   />
                 );
               }}
@@ -62,7 +60,7 @@ export const DigestMetadata = ({ control, index }) => {
                   <Select
                     disabled={readonly}
                     error={errors?.steps ? errors.steps[index]?.metadata?.unit?.message : undefined}
-                    placeholder="Minutes"
+                    placeholder="Interval"
                     data={[
                       { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
                       { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
@@ -78,29 +76,6 @@ export const DigestMetadata = ({ control, index }) => {
           </Grid.Col>
         </Grid>
       </InputWrapper>
-      <div
-        style={{
-          marginBottom: '15px',
-        }}
-      >
-        <Controller
-          control={control}
-          name={`steps.${index}.metadata.digestKey`}
-          render={({ field }) => {
-            return (
-              <Input
-                {...field}
-                label="Digest Key"
-                placeholder="Property key on payload"
-                description="A digest key is used to batch notifications"
-                error={errors?.steps ? errors.steps[index]?.metadata?.digestKey?.message : undefined}
-                type="text"
-                data-test-id="batch-key"
-              />
-            );
-          }}
-        />
-      </div>
       <div
         style={{
           marginBottom: '15px',
@@ -127,10 +102,11 @@ export const DigestMetadata = ({ control, index }) => {
           }}
         />
       </div>
+
       <When truthy={type === 'backoff'}>
         <InputWrapper
           label="Backoff Time Interval"
-          description="Set the time intervals for the backoff"
+          description="A digest will only be created if a message was previously sent in this time interval"
           styles={inputStyles}
         >
           <Grid
@@ -151,7 +127,7 @@ export const DigestMetadata = ({ control, index }) => {
                       max={100}
                       type="number"
                       data-test-id="backoff-amount"
-                      placeholder="20"
+                      placeholder="0"
                       required
                     />
                   );
@@ -167,7 +143,7 @@ export const DigestMetadata = ({ control, index }) => {
                     <Select
                       disabled={readonly}
                       error={errors?.steps ? errors.steps[index]?.metadata?.backoffUnit?.message : undefined}
-                      placeholder="Minutes"
+                      placeholder="Interval"
                       data={[
                         { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
                         { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
@@ -208,6 +184,29 @@ export const DigestMetadata = ({ control, index }) => {
           />
         </div>
       </When>
+      <div
+        style={{
+          marginBottom: '15px',
+        }}
+      >
+        <Controller
+          control={control}
+          name={`steps.${index}.metadata.digestKey`}
+          render={({ field }) => {
+            return (
+              <Input
+                {...field}
+                label="Digest Key (Optional)"
+                placeholder="For example: post_id"
+                description="Used to group messages using this payload key, by default only subscriberId is used"
+                error={errors?.steps ? errors.steps[index]?.metadata?.digestKey?.message : undefined}
+                type="text"
+                data-test-id="batch-key"
+              />
+            );
+          }}
+        />
+      </div>
     </>
   );
 };

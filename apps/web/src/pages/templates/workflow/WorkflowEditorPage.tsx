@@ -168,8 +168,13 @@ const WorkflowEditorPage = ({
                         <Close />
                       </ActionIcon>
                     </ButtonWrapper>
-                    <Text mr={10} size="md" color={colors.B60}>
-                      Define the digest's batching parameters
+
+                    <Text mr={10} mt={10} size="md" color={colors.B60}>
+                      Configure the digest parameters. Read more about the digest engine{' '}
+                      <a target={'_blank'} href={'https://docs.novu.co/platform/digest'}>
+                        here
+                      </a>
+                      .
                     </Text>
                   </NavSection>
                   <NavSection>
