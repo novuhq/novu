@@ -19,6 +19,7 @@ import {
   JobStatusEnum,
   FeedRepository,
   ChangeRepository,
+  ChangeEntity,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -272,7 +273,7 @@ export class UserSession {
     } while (runningJobs > 0 && !timedOut);
   }
 
-  public async applyChanges(where: any = {}) {
+  public async applyChanges(where: Partial<ChangeEntity> = {}) {
     const changes = await this.changeRepository.find(
       {
         _environmentId: this.environment._id,
