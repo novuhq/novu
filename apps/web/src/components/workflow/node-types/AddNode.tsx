@@ -59,7 +59,12 @@ export default memo(({ data }: { data: NodeData }) => {
         </DropdownItem>
         <DropdownItem
           data-test-id={`add-digest-node`}
-          icon={<Digest color={theme.colorScheme === 'dark' ? colors.white : colors.B40} />}
+          icon={
+            /* Hack to manage the size of the SVG, which can't be changed with height and width attributes */
+            <div style={{ zoom: 0.65, width: 28, marginLeft: 4 }}>
+              <Digest color={theme.colorScheme === 'dark' ? colors.white : colors.B40} />
+            </div>
+          }
           onClick={() => addNewNode(ChannelTypeEnum.DIGEST)}
         >
           Digest
