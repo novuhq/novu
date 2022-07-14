@@ -1,6 +1,7 @@
 import { useApi } from './use-api.hook';
 import { useEffect, useState } from 'react';
 import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { useNovuContext } from './use-novu-context.hook';
 
 export function useNotifications() {
   const { api } = useApi();
@@ -50,7 +51,22 @@ export function useNotifications() {
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>
   ) {
-    return await api.updateAction(messageId, actionButtonType, status, payload);
+    await api.updateAction(messageId, actionButtonType, status, payload);
+
+    console.log({ notifications });
+    setNotifications([
+      ...notifications.map((message) => {
+        console.log(message, messageId);
+        if (message._id === messageId) {
+          console.log('FOUND MESSAGE TO UPDATE');
+          message.cta.action.status = MessageActionStatusEnum.DONE;
+        }
+
+        return message;
+      }),
+    ]);
+
+    console.log('Updated Notifications');
   }
 
   async function refetch() {
