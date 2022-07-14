@@ -22,6 +22,7 @@ export class NovuModule {
       module: NovuModule,
       providers: [],
       exports: providers,
+      imports: options.imports || [],
     };
   }
 }

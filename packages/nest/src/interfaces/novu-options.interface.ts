@@ -23,7 +23,6 @@ export interface INovuOptionsFactory {
 
 export interface INovuModuleAsyncOptions
   extends Pick<ModuleMetadata, 'imports'> {
-  connectionName?: string;
   useExisting?: Type<INovuOptionsFactory>;
   useClass?: Type<INovuOptionsFactory>;
   useFactory?: (...args: any[]) => Promise<INovuOptions> | INovuOptions;
