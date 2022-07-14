@@ -22,7 +22,9 @@ Will determine how long the digest engine will wait before sending the message o
 
 #### Digest Key
 
-If specified the digest engine will group the events based on the `digestKey` and `subscriberId`, otherwise the digest engine will group the events based on the subscriberId.
+If specified, the digest engine will group the events based on the `digestKey` and `subscriberId`, otherwise the digest engine will group the events based only on the subscriberId.
+
+The digest key might come useful when you want a particular subscriber to get events grouped on a custom field. For example when an actor likes the user's post, you might want to digest based on the `post_id` key.
 
 #### Strategy
 
@@ -33,7 +35,7 @@ The strategy which Novu should use handle the digest step. More details on avail
 Novu allows you to define different digest strategies depending on the actual use-case you are trying to achieve. At this point we allow you to select from 2 strategies:
 
 - Regular Strategy
-- Back-off strategy
+- Back-off Strategy
 
 Let's explore them in detail:
 
