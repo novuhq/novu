@@ -1,4 +1,4 @@
-import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum, IMessageAction } from '@novu/shared';
+import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared';
 import { useMantineColorScheme } from '@mantine/core';
 import React from 'react';
 import { API_ROOT, WS_URL } from '../../config';
@@ -41,31 +41,10 @@ function PopoverWrapper() {
       colorScheme={colorScheme}
       onNotificationClick={handlerOnNotificationClick}
       onActionClick={handlerOnActionClick}
-      actionsResultBlock={(templateIdentifier: string, messageAction: IMessageAction) => (
-        <CustomAction templateIdentifier={templateIdentifier} messageAction={messageAction} />
-      )}
     >
       {({ unseenCount }) => {
         return <NotificationBell colorScheme={colorScheme} unseenCount={unseenCount} />;
       }}
     </PopoverNotificationCenter>
-  );
-}
-
-function CustomAction({
-  templateIdentifier,
-  messageAction,
-}: {
-  templateIdentifier: string;
-  messageAction: IMessageAction;
-}) {
-  const extraData = messageAction?.result?.payload?.extraData
-    ? messageAction.result.payload.extraData
-    : 'NO DATA WAS FOUND IN THE PAYLOAD';
-
-  return (
-    <div>
-      {extraData} - ${templateIdentifier}
-    </div>
   );
 }
