@@ -4,11 +4,10 @@ import { ColorScheme, IAuthContext, INovuProviderContext } from '../../index';
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
-import { useSocket, useUnseenController } from '../../hooks';
+import { useSocket, useUnseenController, NotificationsProvider, useApi } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
-import { useApi } from '../../hooks/use-api.hook';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
 
@@ -49,13 +48,18 @@ export function NovuProvider(props: INovuProviderProps) {
       }}
     >
       <ApiContext.Provider value={{ api }}>
-        <AuthProvider>
-          <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
-            <SocketInitialization>
-              <UnseenProvider>{props.children}</UnseenProvider>
-            </SocketInitialization>
-          </SessionInitialization>
-        </AuthProvider>
+        <NotificationsProvider>
+          <AuthProvider>
+            <SessionInitialization
+              applicationIdentifier={props.applicationIdentifier}
+              subscriberId={props.subscriberId}
+            >
+              <SocketInitialization>
+                <UnseenProvider>{props.children}</UnseenProvider>
+              </SocketInitialization>
+            </SessionInitialization>
+          </AuthProvider>
+        </NotificationsProvider>
       </ApiContext.Provider>
     </NovuContext.Provider>
   );

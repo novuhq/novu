@@ -1,4 +1,11 @@
-import { IMessage, ISubscriberJwt, IOrganizationEntity, IMessageAction, ButtonTypeEnum } from '@novu/shared';
+import {
+  IMessage,
+  ISubscriberJwt,
+  IOrganizationEntity,
+  IMessageAction,
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+} from '@novu/shared';
 
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
@@ -51,6 +58,21 @@ export interface INovuProviderContext {
   socketUrl?: string;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash: string;
+}
+
+export interface INotificationsContext {
+  notifications?: IMessage[];
+  fetchNextPage?: () => void;
+  hasNextPage?: boolean;
+  fetching?: boolean;
+  markAsSeen?: (messageId: string) => Promise<IMessage>;
+  updateAction?: (
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ) => void;
+  refetch?: () => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';
