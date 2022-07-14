@@ -6,7 +6,6 @@ import React, { useContext } from 'react';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { ActionContainer } from './ActionContainer';
-import { useNotifications } from '../../../../hooks';
 import { NotificationCenterContext } from '../../../../store/notification-center.context';
 
 export function NotificationListItem({
@@ -17,7 +16,6 @@ export function NotificationListItem({
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
-  const { markAsSeen: markNotificationAsSeen } = useNotifications();
   const { onActionClick } = useContext(NotificationCenterContext);
 
   function handleNotificationClick() {
@@ -25,7 +23,6 @@ export function NotificationListItem({
   }
 
   async function handleActionButtonClick(actionButtonType: ButtonTypeEnum) {
-    await markNotificationAsSeen(notification._id);
     onActionClick(notification.templateIdentifier, actionButtonType, notification);
   }
 
