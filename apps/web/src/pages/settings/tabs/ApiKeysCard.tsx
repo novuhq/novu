@@ -21,7 +21,7 @@ export const ApiKeysCard = () => {
   return (
     <>
       <ParamContainer>
-        <InputWrapper label="API Key" description={<ApiDiscription />} styles={inputStyles}>
+        <InputWrapper label="API Key" description="Use this API key to interact with the novu API" styles={inputStyles}>
           <Input
             readOnly
             type={'password'}
@@ -63,16 +63,6 @@ export const ApiKeysCard = () => {
     </>
   );
 };
-
-function ApiDiscription() {
-  return (
-    <div>
-      Use this API key to interact with the novu API
-      <br />
-      <a href="#">Regenerate Key</a>
-    </div>
-  );
-}
 
 const ParamContainer = styled.div`
   max-width: 600px;
