@@ -3,30 +3,25 @@ import React from 'react';
 export interface IIconProps {
   width?: string;
   height?: string;
+  color: string;
 }
 /* eslint-disable */
-export function Digest({ width = '30px', height = '31px' }: IIconProps) {
+export function Digest({ width = '24', height = '26', color }: IIconProps) {
   return (
     <svg
+      xmlns="http://www.w3.org/2000/svg"
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        d="M1 19.5L12 25.5L23 19.5M1 13.5L12 19.5L23 13.5M12 1.5L1 7.5L12 13.5L23 7.5L12 1.5Z"
-        stroke="url(#paint0_linear_1981_26278)"
+        d="M1 19L12 25L23 19M1 13L12 19L23 13M12 1L1 7L12 13L23 7L12 1Z"
+        stroke={color}
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
-      <defs>
-        <linearGradient id="paint0_linear_1981_26278" x1="12" y1="25.5" x2="12" y2="1.5" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#14DEEB" />
-          <stop offset="1" stop-color="#446EDC" />
-        </linearGradient>
-      </defs>
     </svg>
   );
 }

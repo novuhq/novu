@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # Environments
 
 Novu runs all your requests in the context of an environment. By default, we will create 2 environments when your account was just created: Development, and production.

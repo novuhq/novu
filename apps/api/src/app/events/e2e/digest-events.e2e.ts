@@ -23,7 +23,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
 
-  const awaitRunningJobs = async (unfinishedjobs = 0) => {
+  const awaitRunningJobs = async (unfinishedJobs = 0) => {
     let runningJobs = 0;
     do {
       runningJobs = await jobRepository.count({
@@ -35,7 +35,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
         },
       });
-    } while (runningJobs > unfinishedjobs);
+    } while (runningJobs > unfinishedJobs);
   };
 
   const triggerEvent = async (payload, transactionId?: string) => {
@@ -112,6 +112,78 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(digestJob.digest.unit).to.equal(DigestUnitEnum.MINUTES);
     const job = jobs.find((item) => item.digest.events.length > 0);
     expect(job.digest?.events?.length).to.equal(2);
+  });
+
+  it('should not have digest prop when not running a digest', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.SMS,
+    });
+
+    expect(message[0].content).to.include('NO_DIGEST_PROP');
+    expect(message[0].content).to.not.include('HAS_DIGEST_PROP');
+  });
+
+  it('should add a digest prop to template compilation', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+    });
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await awaitRunningJobs(2);
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.SMS,
+    });
+
+    expect(message[0].content).to.include('HAS_DIGEST_PROP');
   });
 
   it('should digest based on digestKey within time interval', async function () {

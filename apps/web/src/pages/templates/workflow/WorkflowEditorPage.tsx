@@ -169,7 +169,7 @@ const WorkflowEditorPage = ({
                       </ActionIcon>
                     </ButtonWrapper>
                     <Text mr={10} size="md" color={colors.B60}>
-                      You can drag and drop new steps to the flow
+                      Define the digest's batching parameters
                     </Text>
                   </NavSection>
                   <NavSection>

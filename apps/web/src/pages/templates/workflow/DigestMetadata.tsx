@@ -185,27 +185,29 @@ export const DigestMetadata = ({ control, index }) => {
           </Grid>
         </InputWrapper>
       </When>
-      <div
-        style={{
-          marginBottom: '15px',
-        }}
-      >
-        <Controller
-          control={control}
-          name={`steps.${index}.metadata.updateMode`}
-          render={({ field: { value, ...field } }) => {
-            return (
-              <StyledSwitch
-                {...field}
-                data-test-id="updateMode"
-                disabled={readonly}
-                checked={value}
-                label={`Update in app notifications`}
-              />
-            );
+      <When truthy={false}>
+        <div
+          style={{
+            marginBottom: '15px',
           }}
-        />
-      </div>
+        >
+          <Controller
+            control={control}
+            name={`steps.${index}.metadata.updateMode`}
+            render={({ field: { value, ...field } }) => {
+              return (
+                <StyledSwitch
+                  {...field}
+                  data-test-id="updateMode"
+                  disabled={readonly}
+                  checked={value}
+                  label={`Update in app notifications`}
+                />
+              );
+            }}
+          />
+        </div>
+      </When>
     </>
   );
 };
