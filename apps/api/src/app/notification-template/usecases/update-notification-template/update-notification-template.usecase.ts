@@ -88,7 +88,7 @@ export class UpdateNotificationTemplate {
               userId: command.userId,
               contentType: message.template.contentType,
               cta: message.template.cta,
-              feedId: message.template.feedId,
+              feedId: message.template.feedId ? message.template.feedId : null,
               subject: message.template.subject,
               parentChangeId,
             })

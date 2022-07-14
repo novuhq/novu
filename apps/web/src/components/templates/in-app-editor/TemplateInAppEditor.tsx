@@ -1,17 +1,18 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
-import { ActionIcon, Chip, Container, Group, SegmentedControl, Chips, useMantineTheme } from '@mantine/core';
+import { ActionIcon, Chip, Container, Group, Chips, useMantineTheme } from '@mantine/core';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Button, Checkbox, colors, Input, Select, Text } from '../../../design-system';
+import { Checkbox, colors, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { createFeed, deleteFeed, getFeeds } from '../../../api/feeds';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryKeys } from '../../../api/query.keys';
-import { Trash, PlusCircleOutlined, PlusGradient } from '../../../design-system/icons';
+import { Trash, PlusGradient } from '../../../design-system/icons';
 import { useInputState } from '@mantine/hooks';
 import * as Sentry from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
+import { getOutlineStyles } from '../../../design-system/button/Button.styles';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
@@ -42,6 +43,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
       queryClient.refetchQueries([QueryKeys.getFeeds]);
     },
   });
+  const [showFeed, setShowFeed] = useState(true);
 
   useEffect(() => {
     const feed = getValues(`steps.${index}.template.feedId`);
@@ -113,34 +115,90 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             render={({ field }) => {
               return (
                 <>
-                  <Chips {...field}>
-                    <Chip value="">No Feed</Chip>
+                  <div
+                    style={{
+                      position: 'relative',
+                    }}
+                  >
+                    <Checkbox
+                      checked={showFeed}
+                      onChange={() => {
+                        setShowFeed(!showFeed);
+                        if (showFeed === true) {
+                          setValue(`steps.${index}.template.feedId`, '');
+                        }
+                      }}
+                      sx={{
+                        position: 'absolute',
+                        flexDirection: 'row-reverse',
+                        right: '0px',
+                      }}
+                      styles={{
+                        label: {
+                          marginRight: '10px',
+                        },
+                      }}
+                      label="Use Feeds"
+                    />
+                    <Input
+                      disabled={!showFeed}
+                      label="Add New Feed (optional)"
+                      placeholder="Name your feed..."
+                      value={newFeed}
+                      onChange={setNewFeed}
+                      rightSection={
+                        <ActionIcon variant="transparent" onClick={addNewFeed}>
+                          <PlusGradient />
+                        </ActionIcon>
+                      }
+                    />
+                  </div>
+                  <Chips
+                    size="xl"
+                    radius="md"
+                    {...field}
+                    styles={{
+                      label: {
+                        padding: '0 15px',
+                      },
+                      filled: {
+                        backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
+                        ':hover': {
+                          backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
+                        },
+                      },
+                      iconWrapper: { display: 'none' },
+                      checked: {
+                        ...getOutlineStyles(theme),
+                        color: theme.colorScheme === 'dark' ? theme.white : colors.B40,
+                      },
+                    }}
+                  >
                     {(feeds || []).map((item) => (
-                      <Chip value={item._id}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text>{item.name}</Text>
-                          <ActionIcon variant="transparent" onClick={() => deleteFeedHandler(item._id)}>
-                            <Trash
-                              style={{
-                                color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
-                              }}
-                            />
-                          </ActionIcon>
-                        </div>
+                      <Chip value={item._id} disabled={!showFeed}>
+                        {item.name}
+                        <ActionIcon
+                          disabled={!showFeed}
+                          sx={{
+                            display: 'inline',
+                            float: 'right',
+                            marginTop: '7px',
+                            ':disabled': {
+                              display: 'none',
+                            },
+                          }}
+                          variant="transparent"
+                          onClick={() => deleteFeedHandler(item._id)}
+                        >
+                          <Trash
+                            style={{
+                              color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
+                            }}
+                          />
+                        </ActionIcon>
                       </Chip>
                     ))}
                   </Chips>
-
-                  <Input
-                    placeholder="Add a new feed"
-                    value={newFeed}
-                    onChange={setNewFeed}
-                    rightSection={
-                      <ActionIcon variant="transparent" onClick={addNewFeed}>
-                        <PlusGradient />
-                      </ActionIcon>
-                    }
-                  />
                 </>
               );
             }}
