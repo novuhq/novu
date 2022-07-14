@@ -6,7 +6,7 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
-  IEmailBlock
+  IEmailBlock,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, IMessageButton } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -41,7 +41,12 @@ export class SendMessageInApp extends SendMessageType {
       _id: command.subscriberId,
     });
     const inAppChannel: NotificationStepEntity = command.step;
-    const content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
+    const content = await this.compileInAppTemplate(
+      inAppChannel.template.content,
+      command.payload,
+      subscriber,
+      command
+    );
 
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
@@ -53,13 +58,14 @@ export class SendMessageInApp extends SendMessageType {
     }
 
     if (inAppChannel.template.cta?.action?.buttons) {
-      const testButtons: IMessageButton[] = [];
+      const ctaButtons: IMessageButton[] = [];
+
       for (const action of inAppChannel.template.cta.action.buttons) {
-        const tmpContent = await this.compileInAppTemplate(action.content, command.payload, subscriber);
-        testButtons.push({ type: action.type, content: tmpContent });
+        const buttonContent = await this.compileInAppTemplate(action.content, command.payload, subscriber, command);
+        ctaButtons.push({ type: action.type, content: buttonContent });
       }
 
-      inAppChannel.template.cta.action.buttons = testButtons;
+      inAppChannel.template.cta.action.buttons = ctaButtons;
     }
 
     const messagePayload = Object.assign({}, command.payload);
@@ -148,7 +154,12 @@ export class SendMessageInApp extends SendMessageType {
     });
   }
 
-  private async compileInAppTemplate(content: string | IEmailBlock[], payload: any, subscriber: SubscriberEntity, command: SendMessageCommand) {
+  private async compileInAppTemplate(
+    content: string | IEmailBlock[],
+    payload: any,
+    subscriber: SubscriberEntity,
+    command: SendMessageCommand
+  ) {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
