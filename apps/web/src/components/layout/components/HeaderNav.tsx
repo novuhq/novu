@@ -27,21 +27,17 @@ const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
-  // const browserColorScheme = useColorScheme();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
 
-  /*
-   * const [themeStatus, setThemeStatus] = useLocalStorage<String>({
-   *   key: 'mantinetheme',
-   *   defaultValue: 'system',
-   *   getInitialValueInEffect: true,
-   * });
-   */
-  const [themeStatus, setThemeStatus] = useState('');
+  const [themeStatus, setThemeStatus] = useState('system');
 
   useEffect(() => {
-    setThemeStatus(JSON.parse(localStorage.getItem('mantinetheme') || ''));
+    const localTheme = localStorage.getItem('mantine-theme');
+    if (localTheme) {
+      const stripped = localTheme.replace(/"/g, '');
+      localTheme && setThemeStatus(stripped);
+    }
   }, [toggleColorScheme]);
 
   const profileMenuMantine = [
@@ -94,10 +90,17 @@ export function HeaderNav({}: Props) {
           style={{ maxWidth: 150, maxHeight: 25 }}
         />
         <Group>
-          <ActionIcon variant="transparent" onClick={() => toggleColorScheme()} title="Toggle color scheme">
-            {(themeStatus === 'system' && <Ellipse {...headerIconsSettings} />) ||
-              (themeStatus === 'light' && <Sun {...headerIconsSettings} />) ||
-              (themeStatus === 'dark' && <Moon {...headerIconsSettings} />)}
+          <ActionIcon
+            variant="transparent"
+            onClick={() => toggleColorScheme()}
+            title={
+              (themeStatus === 'dark' && `Dark Theme`) ||
+              (themeStatus === 'light' && `Light Theme`) ||
+              `Match System Appearance`
+            }
+          >
+            {(themeStatus === 'dark' && <Moon {...headerIconsSettings} />) ||
+              (themeStatus === 'light' && <Sun {...headerIconsSettings} />) || <Ellipse {...headerIconsSettings} />}
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown

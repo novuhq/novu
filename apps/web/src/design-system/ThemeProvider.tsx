@@ -9,12 +9,12 @@ declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';
 }
 
-export function ThemeProvider({ children, dark = true }: { children: JSX.Element; dark?: Boolean }) {
+export function ThemeProvider({ children }: { children: JSX.Element; dark?: Boolean }) {
   const [colorScheme, setColorScheme] = useState<ColorScheme>(useColorScheme());
   const preferredColorScheme = useColorScheme();
 
   const [themeStatus, setThemeStatus] = useLocalStorage<String>({
-    key: 'mantinetheme',
+    key: 'mantine-theme',
     defaultValue: 'system',
     getInitialValueInEffect: true,
   });
