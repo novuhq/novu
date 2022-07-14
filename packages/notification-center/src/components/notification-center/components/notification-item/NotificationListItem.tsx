@@ -1,10 +1,11 @@
 import styled, { css } from 'styled-components';
 import { IMessage } from '@novu/shared';
 import moment from 'moment';
-import { DotsHorizontal } from '../../../shared/icons';
+import { DotsHorizontal } from '../../../../shared/icons';
 import React from 'react';
-import { INovuTheme } from '../../../store/novu-theme.context';
-import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
+import { INovuTheme } from '../../../../store/novu-theme.context';
+import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
+import { ActionContainer } from './ActionContainer';
 
 export function NotificationListItem({
   notification,
@@ -29,6 +30,7 @@ export function NotificationListItem({
             __html: notification.content as string,
           }}
         />
+        {notification?.cta?.actions ? <ActionContainer actions={notification.cta.actions} /> : null}
         <div>
           <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
             {moment(notification.createdAt).fromNow()}

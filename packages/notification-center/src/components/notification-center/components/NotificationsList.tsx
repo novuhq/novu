@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { IMessage } from '@novu/shared';
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { NotificationListItem } from './NotificationListItem';
+import { NotificationListItem } from './notification-item/NotificationListItem';
 import { Loader } from './Loader';
 
 export function NotificationsList({
