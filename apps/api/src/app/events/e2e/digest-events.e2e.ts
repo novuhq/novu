@@ -246,10 +246,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     template = await session.createTemplate({
       steps: [
         {
-          type: ChannelTypeEnum.SMS,
-          content: 'Hello world {{customVar}}' as string,
-        },
-        {
           type: ChannelTypeEnum.DIGEST,
           content: '',
           metadata: {
@@ -272,30 +268,29 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     await triggerEvent({
+      customVar: 'Testing of User Name',
+      id,
+    });
+
+    await triggerEvent({
       customVar: 'digest',
-      id: MessageRepository.createObjectId(),
+      id: 'second-batch',
     });
 
-    await awaitRunningJobs(3);
-    const delayedJob = await jobRepository.findOne({
+    await awaitRunningJobs(2);
+
+    const delayedJobs = await jobRepository.find({
       _templateId: template._id,
       type: ChannelTypeEnum.DIGEST,
     });
 
-    const delayedCount = await jobRepository.count({
-      _templateId: template._id,
-      type: ChannelTypeEnum.DIGEST,
-      status: JobStatusEnum.DELAYED,
-    });
+    expect(delayedJobs.length).to.equal(2);
 
-    expect(delayedCount).to.equal(1);
+    for (const job of delayedJobs) {
+      await workflowQueueService.work(job);
+    }
 
-    await workflowQueueService.work(delayedJob);
-    const jobs = await jobRepository.find({
-      _templateId: template._id,
-    });
-    const digestjobs = jobs.find((item) => item.digest.events.length > 0);
-    await workflowQueueService.work(digestjobs);
+    await awaitRunningJobs(0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -303,9 +298,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       channel: ChannelTypeEnum.SMS,
     });
 
-    const message = messages[2];
+    const firstBatch = messages.find((message) => (message.content as string).includes('Hello world 2'));
+    const secondBatch = messages.find((message) => (message.content as string).includes('Hello world 1'));
 
-    expect(message.content).to.equal('Hello world 1');
+    expect(firstBatch).to.be.ok;
+    expect(secondBatch).to.be.ok;
+
+    expect(messages.length).to.equal(2);
   });
 
   it('should digest delayed events', async function () {

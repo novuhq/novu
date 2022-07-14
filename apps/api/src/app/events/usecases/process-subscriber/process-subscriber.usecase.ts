@@ -193,18 +193,11 @@ export class ProcessSubscriber {
       };
 
       if (step.metadata.digestKey) {
-        where.digest = {
-          digestKey: step.metadata.digestKey,
-        };
+        where['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
       }
 
       delayedDigests = await this.jobRepository.findOne(where);
 
-      if (delayedDigests && step.metadata.digestKey) {
-        if (command.payload[step.metadata.digestKey] === delayedDigests.payload[step.metadata.digestKey]) {
-          delayedDigests = null;
-        }
-      }
       if (!delayedDigests) {
         steps.push(step);
       }
