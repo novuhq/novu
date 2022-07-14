@@ -69,7 +69,7 @@ const jobSchema = new Schema(
       unit: {
         type: Schema.Types.String,
       },
-      batchKey: {
+      digestKey: {
         type: Schema.Types.String,
       },
       type: {

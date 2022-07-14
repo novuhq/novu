@@ -185,13 +185,26 @@ export class ProcessSubscriber {
         continue;
       }
 
-      delayedDigests = await this.jobRepository.findOne({
+      let where: any = {
         status: JobStatusEnum.DELAYED,
         _subscriberId: subscriberId,
         _templateId: command.templateId,
         _environmentId: command.environmentId,
-      });
+      };
 
+      if (step.metadata.digestKey) {
+        where.digest = {
+          digestKey: step.metadata.digestKey,
+        };
+      }
+
+      delayedDigests = await this.jobRepository.findOne(where);
+
+      if (delayedDigests && step.metadata.digestKey) {
+        if (command.payload[step.metadata.digestKey] === delayedDigests.payload[step.metadata.digestKey]) {
+          delayedDigests = null;
+        }
+      }
       if (!delayedDigests) {
         steps.push(step);
       }
@@ -209,7 +222,7 @@ export class ProcessSubscriber {
     for (const step of matchedSteps) {
       if (step.template.type === ChannelTypeEnum.DIGEST) {
         const from = moment().subtract(step.metadata.backoffAmount, step.metadata.backoffUnit).toDate();
-        const trigger = await this.jobRepository.findOne({
+        const query = {
           updatedAt: {
             $gte: from,
           },
@@ -218,11 +231,18 @@ export class ProcessSubscriber {
           type: ChannelTypeEnum.TRIGGER,
           _environmentId: command.environmentId,
           _subscriberId: subscriberId,
-        });
+        };
+
+        if (step.metadata.digestKey) {
+          query['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
+        }
+
+        const trigger = await this.jobRepository.findOne(query);
         if (!trigger) {
           continue;
         }
-        const digest = await this.jobRepository.findOne({
+
+        let digests = await this.jobRepository.find({
           updatedAt: {
             $gte: from,
           },
@@ -232,7 +252,13 @@ export class ProcessSubscriber {
           _subscriberId: subscriberId,
         });
 
-        if (digest) {
+        if (digests.length > 0 && step.metadata.digestKey) {
+          digests = digests.filter((digest) => {
+            return command.payload[step.metadata.digestKey] === digest.payload[step.metadata.digestKey];
+          });
+        }
+
+        if (digests.length > 0) {
           return steps;
         }
         steps.push(step);
