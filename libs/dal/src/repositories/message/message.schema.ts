@@ -38,6 +38,10 @@ const messageSchema = new Schema(
         type: Schema.Types.String,
       },
       data: Schema.Types.Mixed,
+      actions: {
+        type: Schema.Types.String,
+        content: { text: Schema.Types.String },
+      },
     },
     channel: Schema.Types.String,
     content: Schema.Types.Mixed,
