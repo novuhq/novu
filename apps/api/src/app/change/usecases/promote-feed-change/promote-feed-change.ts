@@ -19,6 +19,7 @@ export class PromoteFeedChange {
     if (!item) {
       return this.feedRepository.create({
         name: command.item.name,
+        identifier: command.item.name,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       });

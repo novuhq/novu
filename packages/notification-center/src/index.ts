@@ -54,7 +54,7 @@ export interface IUnseenCount {
   feeds: { _id: string; count: number }[];
 }
 
-export type FeedInfo = Pick<IFeedEntity, '_id' | 'name'>;
+export type FeedInfo = Pick<IFeedEntity, '_id' | 'name' | 'identifier'>;
 
 export interface IFeedsContext {
   feeds: FeedInfo[];

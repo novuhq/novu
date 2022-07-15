@@ -49,7 +49,7 @@ export class InitializeSession {
       {
         _environmentId: environment._id,
       },
-      '_id name'
+      '_id name identifier'
     );
 
     this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
