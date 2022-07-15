@@ -100,6 +100,7 @@ export class UpdateNotificationTemplate {
             filters: message.filters,
             _parentId: parentStepId,
             active: message.active,
+            metadata: message.metadata,
           });
         } else {
           const template = await this.createMessageTemplate.execute(
@@ -125,6 +126,7 @@ export class UpdateNotificationTemplate {
             filters: message.filters,
             _parentId: parentStepId,
             active: message.active,
+            metadata: message.metadata,
           });
         }
         parentStepId = stepId;

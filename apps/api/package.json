@@ -110,7 +110,7 @@
     "chai": "^4.2.0",
     "mocha": "^8.1.1",
     "nodemon": "^2.0.3",
-    "sinon": "^9.0.2",
+    "sinon": "^9.2.4",
     "ts-loader": "9.2.8",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "3.11.0",

@@ -5,6 +5,7 @@ import {
   NotificationRepository,
   SubscriberRepository,
   SubscriberEntity,
+  MessageEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -14,6 +15,8 @@ import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.c
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
+import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
+import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -22,7 +25,8 @@ export class SendMessageInApp extends SendMessageType {
     protected messageRepository: MessageRepository,
     private queueService: QueueService,
     protected createLogUsecase: CreateLog,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private compileTemplate: CompileTemplate
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -38,11 +42,24 @@ export class SendMessageInApp extends SendMessageType {
     });
     const inAppChannel: NotificationStepEntity = command.step;
     const contentService = new ContentService();
-
-    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
-    const content = contentService.replaceVariables(inAppChannel.template.content as string, messageVariables);
+    const content = await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        customTemplate: inAppChannel.template.content as string,
+        data: {
+          subscriber,
+          step: {
+            digest: !!command.events.length,
+            events: command.events,
+            total_count: command.events.length,
+          },
+          ...command.payload,
+        },
+      })
+    );
 
     if (inAppChannel.template.cta?.data?.url) {
+      const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
       inAppChannel.template.cta.data.url = contentService.replaceVariables(
         inAppChannel.template.cta?.data?.url,
         messageVariables
@@ -52,7 +69,7 @@ export class SendMessageInApp extends SendMessageType {
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
 
-    const message = await this.messageRepository.create({
+    const oldMessage = await this.messageRepository.findOne({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -61,11 +78,44 @@ export class SendMessageInApp extends SendMessageType {
       _messageTemplateId: inAppChannel.template._id,
       _feedId: inAppChannel.template._feedId,
       channel: ChannelTypeEnum.IN_APP,
-      cta: inAppChannel.template.cta,
       transactionId: command.transactionId,
-      content,
-      payload: messagePayload,
     });
+
+    let message: MessageEntity;
+
+    if (!oldMessage) {
+      message = await this.messageRepository.create({
+        _notificationId: notification._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _subscriberId: command.subscriberId,
+        _templateId: notification._templateId,
+        _messageTemplateId: inAppChannel.template._id,
+        channel: ChannelTypeEnum.IN_APP,
+        cta: inAppChannel.template.cta,
+        transactionId: command.transactionId,
+        content,
+        payload: messagePayload,
+      });
+    }
+
+    if (oldMessage) {
+      await this.messageRepository.update(
+        {
+          _id: oldMessage._id,
+        },
+        {
+          $set: {
+            seen: false,
+            cta: inAppChannel.template.cta,
+            content,
+            payload: messagePayload,
+            createdAt: new Date(),
+          },
+        }
+      );
+      message = await this.messageRepository.findById(oldMessage._id);
+    }
 
     const count = await this.messageRepository.getUnseenCount(
       command.environmentId,

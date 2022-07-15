@@ -1,10 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Queue, Worker, QueueBaseOptions, JobsOptions } from 'bullmq';
+import { Queue, Worker, QueueBaseOptions, JobsOptions, QueueScheduler } from 'bullmq';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { SendMessageCommand } from '../usecases/send-message/send-message.command';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { ChannelTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+
+interface IJobEntityExtended extends JobEntity {
+  presend?: boolean;
+}
 
 @Injectable()
 export class WorkflowQueueService {
@@ -26,6 +31,7 @@ export class WorkflowQueueService {
   private queueNextJob: QueueNextJob;
   @Inject()
   private jobRepository: JobRepository;
+  private readonly queueScheduler: QueueScheduler;
 
   constructor() {
     this.queue = new Queue('standard', {
@@ -36,9 +42,7 @@ export class WorkflowQueueService {
     });
     this.worker = new Worker(
       'standard',
-      async ({ data }: { data: JobEntity }) => {
-        await this.jobRepository.updateStatus(data._id, JobStatusEnum.RUNNING);
-
+      async ({ data }: { data: IJobEntityExtended }) => {
         return await this.work(data);
       },
       {
@@ -54,9 +58,22 @@ export class WorkflowQueueService {
       await this.jobRepository.updateStatus(job.data._id, JobStatusEnum.FAILED);
       await this.jobRepository.setError(job.data._id, e);
     });
+    this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
   }
 
-  private async work(job: JobEntity) {
+  public async work(job: IJobEntityExtended) {
+    if (job.type === ChannelTypeEnum.DIGEST) {
+      const count = await this.jobRepository.count({
+        _id: job._id,
+        status: JobStatusEnum.CANCELED,
+      });
+      if (count > 0) {
+        return;
+      }
+    }
+
+    await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
+
     await this.sendMessage.execute(
       SendMessageCommand.create({
         identifier: job.identifier,
@@ -68,8 +85,13 @@ export class WorkflowQueueService {
         organizationId: job._organizationId,
         userId: job._userId,
         subscriberId: job._subscriberId,
+        jobId: job._id,
+        events: job.digest.events,
       })
     );
+    if (job.presend === true) {
+      return;
+    }
     await this.queueNextJob.execute(
       QueueNextJobCommand.create({
         parentId: job._id,
@@ -80,7 +102,7 @@ export class WorkflowQueueService {
     );
   }
 
-  public async addJob(data: JobEntity | undefined) {
+  public async addJob(data: JobEntity | undefined, presend = false) {
     if (!data) {
       return;
     }
@@ -88,12 +110,43 @@ export class WorkflowQueueService {
       removeOnComplete: true,
       removeOnFail: true,
     };
-    await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
-    if (data.delay) {
-      await this.queue.add(data._id, data, { delay: data.delay, ...options });
+
+    if (data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit) {
+      await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
+      const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
+      if (data.digest?.updateMode) {
+        const inApps = await this.jobRepository.findInAppsForDigest(data.transactionId, data._subscriberId);
+        for (const inApp of inApps) {
+          await this.addJob(inApp, true);
+        }
+      }
+      await this.queue.add(data._id, data, { delay, ...options });
 
       return;
     }
-    await this.queue.add(data._id, data, options);
+    await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
+    await this.queue.add(
+      data._id,
+      {
+        ...data,
+        presend,
+      },
+      options
+    );
+  }
+
+  public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {
+    let delay = 1000 * amount;
+    if (unit === DigestUnitEnum.DAYS) {
+      delay = 60 * 60 * 24 * delay;
+    }
+    if (unit === DigestUnitEnum.HOURS) {
+      delay = 60 * 60 * delay;
+    }
+    if (unit === DigestUnitEnum.MINUTES) {
+      delay = 60 * delay;
+    }
+
+    return delay;
   }
 }

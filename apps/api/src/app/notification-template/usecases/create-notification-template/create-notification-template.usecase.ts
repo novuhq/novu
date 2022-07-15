@@ -73,6 +73,7 @@ export class CreateNotificationTemplate {
         _templateId: template._id,
         filters: message.filters,
         _parentId: parentStepId,
+        metadata: message.metadata,
       });
       parentStepId = stepId;
     }
