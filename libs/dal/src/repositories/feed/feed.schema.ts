@@ -11,7 +11,7 @@ const feedSchema = new Schema(
     identifier: {
       type: Schema.Types.String,
       index: true,
-    }
+    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
