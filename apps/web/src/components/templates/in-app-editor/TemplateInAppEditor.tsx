@@ -122,6 +122,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                     }}
                   >
                     <Checkbox
+                      data-test-id={`use-feeds-checkbox`}
                       checked={showFeed}
                       onChange={() => {
                         setShowFeed(!showFeed);
@@ -142,13 +143,14 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                       label="Use Feeds"
                     />
                     <Input
+                      data-test-id={`create-feed-input`}
                       disabled={!showFeed}
                       label="Add New Feed (optional)"
                       placeholder="Name your feed..."
                       value={newFeed}
                       onChange={setNewFeed}
                       rightSection={
-                        <ActionIcon variant="transparent" onClick={addNewFeed}>
+                        <ActionIcon data-test-id={`add-feed-button`} variant="transparent" onClick={addNewFeed}>
                           <PlusGradient />
                         </ActionIcon>
                       }
@@ -175,8 +177,8 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                       },
                     }}
                   >
-                    {(feeds || []).map((item) => (
-                      <Chip value={item._id} disabled={!showFeed}>
+                    {(feeds || []).map((item, ind) => (
+                      <Chip value={item._id} data-test-id={`feed-button-${ind}`} disabled={!showFeed}>
                         {item.name}
                         <ActionIcon
                           disabled={!showFeed}
