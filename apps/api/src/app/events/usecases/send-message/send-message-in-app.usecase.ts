@@ -76,7 +76,6 @@ export class SendMessageInApp extends SendMessageType {
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: inAppChannel.template._id,
-      _feedId: inAppChannel.template._feedId,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
     });
