@@ -241,8 +241,10 @@ export class UserSession {
   }
 
   async createFeed(name?: string) {
+    name = name ? name : 'Activities';
     const feed = await this.feedRepository.create({
-      name: name ? name : 'Activities',
+      name,
+      identifier: name,
       _environmentId: this.environment._id,
       _organizationId: this.organization._id,
     });

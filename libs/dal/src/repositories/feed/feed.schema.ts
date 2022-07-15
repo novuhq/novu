@@ -8,6 +8,7 @@ import { FeedEntity } from './feed.entity';
 const feedSchema = new Schema(
   {
     name: Schema.Types.String,
+    identifier: Schema.Types.String,
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

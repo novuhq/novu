@@ -14,6 +14,7 @@ export class CreateFeed {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       name: command.name,
+      identifier: command.name,
     });
 
     await this.createChange.execute(

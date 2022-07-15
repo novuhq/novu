@@ -15,8 +15,6 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
     }
   }
 
-  console.log(user?._id);
-
   return (
     <>
       <NovuProvider
@@ -25,24 +23,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
         subscriberId={user?._id as string}
         applicationIdentifier={environment?.identifier as string}
       >
-        <PopoverNotificationCenter
-          tabs={[
-            {
-              name: 'test',
-              query: {
-                feedId: '62cfd6d38516f4fcbb3a3517',
-              },
-            },
-            {
-              name: 'test2',
-              query: {
-                feedId: '62cffb818516f4fcbb3a351a',
-              },
-            },
-          ]}
-          colorScheme={colorScheme}
-          onNotificationClick={handlerOnNotificationClick}
-        >
+        <PopoverNotificationCenter colorScheme={colorScheme} onNotificationClick={handlerOnNotificationClick}>
           {({ unseenCount }) => {
             return <NotificationBell colorScheme={colorScheme} unseenCount={unseenCount} />;
           }}
