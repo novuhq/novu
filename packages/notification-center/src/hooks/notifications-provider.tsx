@@ -1,26 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useApi } from './use-api.hook';
 import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { NotificationsContext } from '../store/notifications.context';
+import { IAuthContext } from '../index';
+import { AuthContext } from '../store/auth.context';
 
-export function NotificationsProvider({
-  isSessionInitialized,
-  children,
-}: {
-  isSessionInitialized: boolean;
-  children: React.ReactNode;
-}) {
+export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { api } = useApi();
   const [notifications, setNotifications] = useState<IMessage[]>([]);
   const [page, setPage] = useState<number>(0);
   const [hasNextPage, setHasNextPage] = useState<boolean>(true);
   const [fetching, setFetching] = useState<boolean>(false);
+  const { token } = useContext<IAuthContext>(AuthContext);
 
   useEffect(() => {
-    if (!api?.isAuthenticated || !isSessionInitialized) return;
+    if (!api?.isAuthenticated || !token) return;
 
     fetchPage(0);
-  }, [api?.isAuthenticated, isSessionInitialized]);
+  }, [api?.isAuthenticated, token]);
 
   async function fetchPage(pageToFetch: number, isRefetch = false) {
     setFetching(true);
