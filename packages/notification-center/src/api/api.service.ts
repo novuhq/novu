@@ -1,4 +1,4 @@
-import { IMessage, HttpClient } from '@novu/shared';
+import { IMessage, HttpClient, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 export class ApiService {
   private httpClient: HttpClient;
@@ -19,6 +19,19 @@ export class ApiService {
     this.httpClient.disposeAuthorizationToken();
 
     this.isAuthenticated = false;
+  }
+
+  async updateAction(
+    messageId: string,
+    executedType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ): Promise<any> {
+    return await this.httpClient.post(`/widgets/messages/${messageId}/actions/${executedType}`, {
+      executedType,
+      status,
+      payload,
+    });
   }
 
   async markMessageAsSeen(messageId: string): Promise<any> {

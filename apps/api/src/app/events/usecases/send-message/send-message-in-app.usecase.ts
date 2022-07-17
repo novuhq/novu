@@ -6,10 +6,10 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
+  IEmailBlock,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, IMessageButton } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { QueueService } from '../../../shared/services/queue';
@@ -41,29 +41,31 @@ export class SendMessageInApp extends SendMessageType {
       _id: command.subscriberId,
     });
     const inAppChannel: NotificationStepEntity = command.step;
-    const contentService = new ContentService();
-    const content = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: inAppChannel.template.content as string,
-        data: {
-          subscriber,
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
-      })
+    const content = await this.compileInAppTemplate(
+      inAppChannel.template.content,
+      command.payload,
+      subscriber,
+      command
     );
 
     if (inAppChannel.template.cta?.data?.url) {
-      const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
-      inAppChannel.template.cta.data.url = contentService.replaceVariables(
+      inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
         inAppChannel.template.cta?.data?.url,
-        messageVariables
+        command.payload,
+        subscriber,
+        command
       );
+    }
+
+    if (inAppChannel.template.cta?.action?.buttons) {
+      const ctaButtons: IMessageButton[] = [];
+
+      for (const action of inAppChannel.template.cta.action.buttons) {
+        const buttonContent = await this.compileInAppTemplate(action.content, command.payload, subscriber, command);
+        ctaButtons.push({ type: action.type, content: buttonContent });
+      }
+
+      inAppChannel.template.cta.action.buttons = ctaButtons;
     }
 
     const messagePayload = Object.assign({}, command.payload);
@@ -97,6 +99,7 @@ export class SendMessageInApp extends SendMessageType {
         transactionId: command.transactionId,
         content,
         payload: messagePayload,
+        templateIdentifier: command.identifier,
       });
     }
 
@@ -151,5 +154,28 @@ export class SendMessageInApp extends SendMessageType {
         unseenCount: count,
       },
     });
+  }
+
+  private async compileInAppTemplate(
+    content: string | IEmailBlock[],
+    payload: any,
+    subscriber: SubscriberEntity,
+    command: SendMessageCommand
+  ) {
+    return await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        customTemplate: content as string,
+        data: {
+          subscriber,
+          step: {
+            digest: !!command.events.length,
+            events: command.events,
+            total_count: command.events.length,
+          },
+          ...payload,
+        },
+      })
+    );
   }
 }

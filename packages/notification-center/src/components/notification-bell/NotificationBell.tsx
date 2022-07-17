@@ -34,7 +34,7 @@ export function NotificationBell(props: INotificationBellProps) {
 }
 
 export function GradientDotWrap({ bellColors, ...props }) {
-  return <GradientDot {...props} bellColors={bellColors} />;
+  return <GradientDot {...props} colors={bellColors} />;
 }
 
 const StyledGradientDot = styled(GradientDotWrap)`

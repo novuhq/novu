@@ -37,7 +37,16 @@ export class UpdateMessageTemplate {
     }
 
     if (command.cta) {
-      updatePayload.cta = command.cta;
+      if (command.cta.type) {
+        updatePayload['cta.type'] = command.cta.type;
+      }
+      if (command.cta.data?.url) {
+        updatePayload['cta.data.url'] = command.cta.data.url;
+      }
+      if (command.cta.action) {
+        updatePayload['cta.action.status'] = command.cta.action.status;
+        updatePayload['cta.action.buttons'] = command.cta.action.buttons;
+      }
     }
 
     if (command.feedId) {

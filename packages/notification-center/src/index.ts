@@ -1,4 +1,12 @@
-import { IMessage, ISubscriberJwt, IOrganizationEntity, IFeedEntity } from '@novu/shared';
+import {
+  IMessage,
+  ISubscriberJwt,
+  IOrganizationEntity,
+  IMessageAction,
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+  IFeedEntity,
+} from '@novu/shared';
 
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
@@ -35,9 +43,11 @@ export interface INotificationCenterContext {
   onUrlChange: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
+  onActionClick: (identifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   isLoading: boolean;
   header: () => JSX.Element;
   footer: () => JSX.Element;
+  actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
 }
 
 export interface INovuProviderContext {
@@ -59,6 +69,21 @@ export type FeedInfo = Pick<IFeedEntity, '_id' | 'name' | 'identifier'>;
 export interface IFeedsContext {
   feeds: FeedInfo[];
   setFeeds: (feeds: FeedInfo[]) => void;
+}
+
+export interface INotificationsContext {
+  notifications?: IMessage[];
+  fetchNextPage?: () => void;
+  hasNextPage?: boolean;
+  fetching?: boolean;
+  markAsSeen?: (messageId: string) => Promise<IMessage>;
+  updateAction?: (
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ) => void;
+  refetch?: () => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';
