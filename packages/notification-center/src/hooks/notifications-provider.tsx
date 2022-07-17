@@ -5,7 +5,7 @@ import { NotificationsContext } from '../store/notifications.context';
 import { IAuthContext } from '../index';
 import { AuthContext } from '../store/auth.context';
 
-export function NotificationsProvider({ children }: { children: React.ReactNode }) {
+export function NotificationsProvider({ children, feedId }: { children: React.ReactNode; feedId: string | string[] }) {
   const { api } = useApi();
   const [notifications, setNotifications] = useState<IMessage[]>([]);
   const [page, setPage] = useState<number>(0);
@@ -22,7 +22,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   async function fetchPage(pageToFetch: number, isRefetch = false) {
     setFetching(true);
 
-    const newNotifications = await api.getNotificationsList(pageToFetch);
+    const newNotifications = await api.getNotificationsList(pageToFetch, feedId);
 
     if (newNotifications?.length < 10) {
       setHasNextPage(false);
