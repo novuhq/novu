@@ -4,11 +4,10 @@ import { ColorScheme, FeedInfo, IAuthContext, INovuProviderContext, IUnseenCount
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
-import { useSocket, useUnseenController } from '../../hooks';
+import { useSocket, useUnseenController, NotificationsProvider, useApi } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
-import { useApi } from '../../hooks/use-api.hook';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
 import { FeedsContext } from '../../store/feeds.context';
@@ -52,9 +51,11 @@ export function NovuProvider(props: INovuProviderProps) {
       <ApiContext.Provider value={{ api }}>
         <AuthProvider>
           <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
-            <SocketInitialization>
-              <UnseenProvider>{props.children}</UnseenProvider>
-            </SocketInitialization>
+            <NotificationsProvider>
+              <SocketInitialization>
+                <UnseenProvider>{props.children}</UnseenProvider>
+              </SocketInitialization>
+            </NotificationsProvider>
           </SessionInitialization>
         </AuthProvider>
       </ApiContext.Provider>
@@ -70,21 +71,23 @@ interface ISessionInitializationProps {
 
 function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
   const { api: apiService } = useApi();
-  const { applyToken, setUser } = useContext<IAuthContext>(AuthContext);
+  const { applyToken, setUser, token } = useContext<IAuthContext>(AuthContext);
   const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
   const [feeds, setFeeds] = useState<FeedInfo[]>(null);
 
   useEffect(() => {
-    if (props.subscriberId && props.applicationIdentifier) {
-      (async (): Promise<void> => {
-        await initSession({
-          clientId: props.applicationIdentifier,
-          data: { subscriberId: props.subscriberId },
-          subscriberHash,
-        });
-      })();
+    if (!token && !api.isAuthenticated) {
+      if (props.subscriberId && props.applicationIdentifier) {
+        (async (): Promise<void> => {
+          await initSession({
+            clientId: props.applicationIdentifier,
+            data: { subscriberId: props.subscriberId },
+            subscriberHash,
+          });
+        })();
+      }
     }
-  }, [props.subscriberId, props.applicationIdentifier]);
+  }, [props.subscriberId, props.applicationIdentifier, api.isAuthenticated]);
 
   async function initSession(payload: { clientId: string; data: { subscriberId: string }; subscriberHash: string }) {
     if ('parentIFrame' in window) {

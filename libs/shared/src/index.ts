@@ -3,7 +3,7 @@ export * from './entities/user';
 export * from './entities/organization';
 export * from './entities/notification-template';
 export * from './entities/environment';
-export * from './entities/messages/messages.interface';
+export * from './entities/messages';
 export * from './entities/feed/feed.interface';
 export * from './types/builder/builder.types';
 export * from './entities/notification';

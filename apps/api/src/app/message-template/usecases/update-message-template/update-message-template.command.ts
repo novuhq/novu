@@ -1,8 +1,7 @@
 import { IsDefined, IsEnum, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
-import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
+import { ChannelTypeEnum, IEmailBlock, IMessageCTA } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { ChannelCTACommand } from '../../../notification-template/usecases/create-notification-template';
 
 export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   static create(data: UpdateMessageTemplateCommand) {
@@ -31,7 +30,7 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @ValidateNested()
-  cta: ChannelCTACommand;
+  cta: IMessageCTA;
 
   @IsOptional()
   feedId: string;
