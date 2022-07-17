@@ -10,9 +10,11 @@ import { Trash } from '../../design-system/icons';
 import { useState } from 'react';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useNavigate } from 'react-router-dom';
+import { useEnvController } from '../../store/use-env-controller';
 
 export const TemplateSettings = ({ activePage, setActivePage, showErrors, templateId }) => {
   const { colorScheme } = useMantineColorScheme();
+  const { readonly } = useEnvController();
 
   const { editMode, template, trigger, deleteTemplate } = useTemplateController(templateId);
   const [toDelete, setToDelete] = useState(false);
@@ -67,6 +69,7 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
                   <DeleteNotificationButton
                     mt={10}
                     variant="outline"
+                    disabled={readonly}
                     data-test-id="delete-notification-button"
                     onClick={onDelete}
                   >
