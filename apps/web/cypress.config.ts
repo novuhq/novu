@@ -6,19 +6,20 @@ export default defineConfig({
   video: false,
   retries: {
     runMode: 2,
-    openMode: 1
+    openMode: 0,
   },
   e2e: {
     setupNodeEvents(on, config) {
+      // eslint-disable-next-line import/extensions
       return require('./cypress/plugins/index.ts')(on, config);
     },
-    baseUrl: "http://localhost:4200",
-    specPattern: 'cypress/tests/**/*.{js,jsx,ts,tsx}'
+    baseUrl: 'http://localhost:4200',
+    specPattern: 'cypress/tests/**/*.{js,jsx,ts,tsx}',
   },
   env: {
-    NODE_ENV: "test",
-    apiUrl: "http://localhost:1336",
-    coverage: false
+    NODE_ENV: 'test',
+    apiUrl: 'http://localhost:1336',
+    coverage: false,
   },
-  projectId: "cayav5",
+  projectId: '293ci7',
 });

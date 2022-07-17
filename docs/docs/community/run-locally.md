@@ -11,7 +11,7 @@ sidebar_position: 1
 - Redis
 - **(Optional)** pnpm - Needed if you want to install new packages
 - **(Optional)** localstack (required only in S3 related modules)
-Need help installing the requirments? Read more [here](https://www.notion.so/novuhq/Dev-Machine-Setup-98d274c80fa249b0b0be75b9a7a72acb#a0e6bf0db22f46d8a2677692f986e366)
+Need help installing the requirments? Read more [here](https://novuhq.notion.site/Dev-Machine-Setup-98d274c80fa249b0b0be75b9a7a72acb#a0e6bf0db22f46d8a2677692f986e366)
 
 ## Setup the project
 
