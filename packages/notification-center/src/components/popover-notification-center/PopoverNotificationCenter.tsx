@@ -32,6 +32,11 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
       return;
     }
     const newTabs = props.tabs.map((tab) => {
+      if (!tab.query) {
+        return {
+          name: tab.name,
+        };
+      }
       const feed = feeds.find((item) => item.identifier === tab.query.identifier);
 
       return {
