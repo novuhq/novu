@@ -2,22 +2,24 @@ import { Control, Controller, useFormContext } from 'react-hook-form';
 import { ActionIcon, Chip, Container, Group, Chips, useMantineTheme } from '@mantine/core';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Checkbox, colors, Input } from '../../../design-system';
+import { Checkbox, colors, Input, Tooltip } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { createFeed, deleteFeed, getFeeds } from '../../../api/feeds';
 import { useEffect, useState } from 'react';
 import { QueryKeys } from '../../../api/query.keys';
-import { Trash, PlusGradient } from '../../../design-system/icons';
-import { useInputState } from '@mantine/hooks';
+import { Trash, PlusGradient, Check, Copy } from '../../../design-system/icons';
+import { useClipboard, useInputState } from '@mantine/hooks';
 import * as Sentry from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
 import { getOutlineStyles } from '../../../design-system/button/Button.styles';
-
+import useStyles from './Chips.styles';
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const theme = useMantineTheme();
+  const { classes } = useStyles();
+  const clipboardIdentifier = useClipboard({ timeout: 1000 });
   const [newFeed, setNewFeed] = useInputState('');
   const {
     formState: { errors },
@@ -68,15 +70,15 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
       setNewFeed('');
 
       setTimeout(() => {
-        setValue(`steps.${index}.template.feedId`, response._id);
+        setValue(`steps.${index}.template.feedId`, response._id, { shouldDirty: true });
       }, 0);
+      setShowFeed(true);
     }
   }
 
   async function deleteFeedHandler(feedId: string) {
     try {
       await deleteFeedById(feedId);
-      selectDefaultFeed();
       showNotification({
         message: 'Feed deleted successfully',
         color: 'green',
@@ -124,6 +126,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                     <Checkbox
                       data-test-id={`use-feeds-checkbox`}
                       checked={showFeed}
+                      disabled={readonly}
                       onChange={() => {
                         setShowFeed(!showFeed);
                         if (showFeed === true) {
@@ -144,7 +147,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                     />
                     <Input
                       data-test-id={`create-feed-input`}
-                      disabled={!showFeed}
+                      disabled={!showFeed || readonly}
                       label="Add New Feed (optional)"
                       placeholder="Name your feed..."
                       value={newFeed}
@@ -156,29 +159,9 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                       }
                     />
                   </div>
-                  <Chips
-                    size="xl"
-                    radius="md"
-                    {...field}
-                    styles={{
-                      label: {
-                        padding: '0 15px',
-                      },
-                      filled: {
-                        backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
-                        ':hover': {
-                          backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
-                        },
-                      },
-                      iconWrapper: { display: 'none' },
-                      checked: {
-                        ...getOutlineStyles(theme),
-                        color: theme.colorScheme === 'dark' ? theme.white : colors.B40,
-                      },
-                    }}
-                  >
+                  <Chips size="xl" radius="md" {...field} classNames={classes}>
                     {(feeds || []).map((item, ind) => (
-                      <Chip value={item._id} data-test-id={`feed-button-${ind}`} disabled={!showFeed}>
+                      <Chip value={item._id} data-test-id={`feed-button-${ind}`} disabled={!showFeed || readonly}>
                         {item.name}
                         <ActionIcon
                           disabled={!showFeed}
@@ -186,7 +169,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                             display: 'inline',
                             float: 'right',
                             marginTop: '7px',
-                            ':disabled': {
+                            '&:disabled': {
                               display: 'none',
                             },
                           }}
@@ -199,6 +182,31 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                             }}
                           />
                         </ActionIcon>
+                        <Tooltip label={clipboardIdentifier.copied ? 'Copied!' : 'Copy Identifier'}>
+                          <ActionIcon
+                            disabled={!showFeed}
+                            sx={{
+                              display: 'inline',
+                              float: 'right',
+                              marginTop: '7px',
+                              ':disabled': {
+                                display: 'none',
+                              },
+                            }}
+                            variant="transparent"
+                            onClick={() => clipboardIdentifier.copy(item.identifier)}
+                          >
+                            {clipboardIdentifier.copied ? (
+                              <Check />
+                            ) : (
+                              <Copy
+                                style={{
+                                  color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
+                                }}
+                              />
+                            )}
+                          </ActionIcon>
+                        </Tooltip>
                       </Chip>
                     ))}
                   </Chips>
