@@ -48,18 +48,15 @@ export function NovuProvider(props: INovuProviderProps) {
       }}
     >
       <ApiContext.Provider value={{ api }}>
-        <NotificationsProvider>
-          <AuthProvider>
-            <SessionInitialization
-              applicationIdentifier={props.applicationIdentifier}
-              subscriberId={props.subscriberId}
-            >
+        <AuthProvider>
+          <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
+            <NotificationsProvider isSessionInitialized={isSessionInitialized}>
               <SocketInitialization>
                 <UnseenProvider>{props.children}</UnseenProvider>
               </SocketInitialization>
-            </SessionInitialization>
-          </AuthProvider>
-        </NotificationsProvider>
+            </NotificationsProvider>
+          </SessionInitialization>
+        </AuthProvider>
       </ApiContext.Provider>
     </NovuContext.Provider>
   );

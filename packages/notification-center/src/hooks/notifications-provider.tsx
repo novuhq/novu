@@ -3,7 +3,13 @@ import { useApi } from './use-api.hook';
 import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { NotificationsContext } from '../store/notifications.context';
 
-export function NotificationsProvider({ children }: { children: React.ReactNode }) {
+export function NotificationsProvider({
+  isSessionInitialized,
+  children,
+}: {
+  isSessionInitialized: boolean;
+  children: React.ReactNode;
+}) {
   const { api } = useApi();
   const [notifications, setNotifications] = useState<IMessage[]>([]);
   const [page, setPage] = useState<number>(0);
@@ -11,10 +17,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const [fetching, setFetching] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!api?.isAuthenticated) return;
+    if (!api?.isAuthenticated || !isSessionInitialized) return;
 
     fetchPage(0);
-  }, [api?.isAuthenticated]);
+  }, [api?.isAuthenticated, isSessionInitialized]);
 
   async function fetchPage(pageToFetch: number, isRefetch = false) {
     setFetching(true);
