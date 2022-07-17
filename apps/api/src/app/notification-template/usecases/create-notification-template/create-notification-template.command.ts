@@ -13,7 +13,8 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   ChannelCTATypeEnum,
-  DigestUnitEnum,
+  IMessageAction,
+  DigestUnitEnum
 } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -60,6 +61,11 @@ export class ChannelCTACommand {
   data: {
     url: string;
   };
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested()
+  action?: IMessageAction[];
 }
 
 class NotificationStepCommand {

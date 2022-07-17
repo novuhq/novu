@@ -78,6 +78,7 @@ export class SendMessageSms extends SendMessageType {
       phone,
       content,
       payload: messagePayload,
+      templateIdentifier: command.identifier,
     });
 
     const integration = await this.integrationRepository.findOne({

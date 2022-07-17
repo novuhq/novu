@@ -16,16 +16,14 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
-import { CreateNotificationTemplateDto } from './dto/create-notification-template.dto';
+import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto, ChangeTemplateStatusDto } from './dto';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
 import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
 import { UpdateNotificationTemplateCommand } from './usecases/update-notification-template/update-notification-template.command';
-import { UpdateNotificationTemplateDto } from './dto/update-notification-template.dto';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
-import { ChangeTemplateStatusDto } from './dto/change-template-status.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 
