@@ -1,15 +1,16 @@
-import { useNotifications } from '../../../hooks';
+import { useNotifications, useApi } from '../../../hooks';
 import React, { useContext, useEffect, useRef } from 'react';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 import image from '../../../images/no-new-notifications.png';
-import { useApi } from '../../../hooks/use-api.hook';
 import { NotificationsList } from './NotificationsList';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
+import { ITab } from './FeedsTabs';
 
-export function NotificationsListTab({ feedId = '' }: { feedId?: string | string[] }) {
+export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();
   const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
+
   const {
     markAsSeen: markNotificationAsSeen,
     fetchNextPage,
@@ -17,7 +18,7 @@ export function NotificationsListTab({ feedId = '' }: { feedId?: string | string
     notifications: data,
     fetching: isLoading,
     hasNextPage,
-  } = useNotifications(feedId);
+  } = useNotifications({ feedId: tab?.name, query: tab?.query });
 
   const isFirstRender = useIsFirstRender();
   const { unseenCount } = useContext(UnseenCountContext);
@@ -27,6 +28,12 @@ export function NotificationsListTab({ feedId = '' }: { feedId?: string | string
       refetch();
     }
   }, [unseenCount]);
+
+  useEffect(() => {
+    if (!data) {
+      refetch();
+    }
+  }, []);
 
   async function fetchNext() {
     await fetchNextPage();

@@ -76,7 +76,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   const [feeds, setFeeds] = useState<FeedInfo[]>(null);
 
   useEffect(() => {
-    if (!token && !api.isAuthenticated) {
+    if ((!token && !api.isAuthenticated) || !feeds) {
       if (props.subscriberId && props.applicationIdentifier) {
         (async (): Promise<void> => {
           await initSession({
@@ -87,7 +87,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
         })();
       }
     }
-  }, [props.subscriberId, props.applicationIdentifier, api.isAuthenticated]);
+  }, [props.subscriberId, props.applicationIdentifier, api.isAuthenticated, feeds]);
 
   async function initSession(payload: { clientId: string; data: { subscriberId: string }; subscriberHash: string }) {
     if ('parentIFrame' in window) {

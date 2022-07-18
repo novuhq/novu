@@ -129,7 +129,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                       disabled={readonly}
                       onChange={() => {
                         setShowFeed(!showFeed);
-                        if (showFeed === true) {
+                        if (showFeed) {
                           setValue(`steps.${index}.template.feedId`, '', { shouldDirty: true });
                         }
                       }}
@@ -160,8 +160,8 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                     />
                   </div>
                   <Chips size="xl" radius="md" {...field} classNames={classes}>
-                    {(feeds || []).map((item, ind) => (
-                      <Chip value={item._id} data-test-id={`feed-button-${ind}`} disabled={!showFeed || readonly}>
+                    {(feeds || []).map((item, feedIndex) => (
+                      <Chip value={item._id} data-test-id={`feed-button-${feedIndex}`} disabled={!showFeed || readonly}>
                         {item.name}
                         <ActionIcon
                           disabled={!showFeed}

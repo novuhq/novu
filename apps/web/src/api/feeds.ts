@@ -1,10 +1,11 @@
 import { api } from './api.client';
+import { FeedEntity } from '@novu/dal';
 
 export async function getFeeds() {
   return api.get(`/v1/feeds`);
 }
 
-export async function createFeed(data: { name: string }) {
+export async function createFeed(data: { name: string }): Promise<FeedEntity> {
   return api.post(`/v1/feeds`, data);
 }
 

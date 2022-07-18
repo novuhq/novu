@@ -33,6 +33,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
     if (!feeds || !props.tabs || feeds?.length === 0 || props.tabs?.length === 0) {
       return;
     }
+
     const newTabs = props.tabs.map((tab) => {
       if (!tab.query) {
         return {

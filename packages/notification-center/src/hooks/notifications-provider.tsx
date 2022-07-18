@@ -5,11 +5,11 @@ import { NotificationsContext } from '../store/notifications.context';
 import { IAuthContext } from '../index';
 import { AuthContext } from '../store/auth.context';
 
-export function NotificationsProvider({ children, feedId }: { children: React.ReactNode; feedId: string | string[] }) {
+export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { api } = useApi();
-  const [notifications, setNotifications] = useState<IMessage[]>([]);
-  const [page, setPage] = useState<number>(0);
-  const [hasNextPage, setHasNextPage] = useState<boolean>(true);
+  const [notifications, setNotifications] = useState<Map<string, IMessage[]>>(new Map());
+  const [page, setPage] = useState<Map<string, number>>(new Map([['', 0]]));
+  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['', true]]));
   const [fetching, setFetching] = useState<boolean>(false);
   const { token } = useContext<IAuthContext>(AuthContext);
 
@@ -19,29 +19,34 @@ export function NotificationsProvider({ children, feedId }: { children: React.Re
     fetchPage(0);
   }, [api?.isAuthenticated, token]);
 
-  async function fetchPage(pageToFetch: number, isRefetch = false) {
+  async function fetchPage(
+    pageToFetch: number,
+    isRefetch = false,
+    feedId?: string,
+    query?: { feedId: string | string[] }
+  ) {
     setFetching(true);
 
-    const newNotifications = await api.getNotificationsList(pageToFetch, feedId);
+    const newNotifications = await api.getNotificationsList(pageToFetch, query?.feedId);
 
     if (newNotifications?.length < 10) {
-      setHasNextPage(false);
+      setHasNextPage(hasNextPage.set(feedId, false));
     }
 
     if (isRefetch) {
-      setNotifications([...newNotifications]);
+      setNotifications(notifications.set(feedId, [...newNotifications]));
     } else {
-      setNotifications([...notifications, ...newNotifications]);
+      setNotifications(notifications.set(feedId, [...notifications.get(feedId), ...newNotifications]));
     }
 
     setFetching(false);
   }
 
-  async function fetchNextPage() {
-    if (!hasNextPage) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    await fetchPage(nextPage);
+  async function fetchNextPage(feedId?: string, query?: { feedId: string | string[] }) {
+    if (!hasNextPage.get(feedId)) return;
+    const nextPage = page.get(feedId) + 1;
+    setPage(page.set(feedId, nextPage));
+    await fetchPage(nextPage, false, feedId, query);
   }
 
   async function markAsSeen(messageId: string): Promise<IMessage> {
@@ -52,23 +57,27 @@ export function NotificationsProvider({ children, feedId }: { children: React.Re
     messageId: string,
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
-    payload?: Record<string, unknown>
+    payload?: Record<string, unknown>,
+    feedId?: string
   ) {
     await api.updateAction(messageId, actionButtonType, status, payload);
 
-    setNotifications([
-      ...notifications.map((message) => {
+    notifications.set(
+      feedId,
+      notifications.get(feedId).map((message) => {
         if (message._id === messageId) {
           message.cta.action.status = MessageActionStatusEnum.DONE;
         }
 
         return message;
-      }),
-    ]);
+      })
+    );
+
+    setNotifications(notifications);
   }
 
-  async function refetch() {
-    await fetchPage(0, true);
+  async function refetch(feedId?: string, query?: { feedId: string | string[] }) {
+    await fetchPage(0, true, feedId, query);
   }
 
   return (

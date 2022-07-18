@@ -72,18 +72,19 @@ export interface IFeedsContext {
 }
 
 export interface INotificationsContext {
-  notifications?: IMessage[];
-  fetchNextPage?: () => void;
-  hasNextPage?: boolean;
+  notifications?: Map<string, IMessage[]>;
+  fetchNextPage?: (feedId?: string, query?: { feedId: string | string[] }) => void;
+  hasNextPage?: Map<string, boolean>;
   fetching?: boolean;
   markAsSeen?: (messageId: string) => Promise<IMessage>;
   updateAction?: (
     messageId: string,
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
-    payload?: Record<string, unknown>
+    payload?: Record<string, unknown>,
+    feedId?: string
   ) => void;
-  refetch?: () => void;
+  refetch?: (feedId?: string, query?: { feedId: string | string[] }) => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';
