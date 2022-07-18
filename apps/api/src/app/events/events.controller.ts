@@ -9,10 +9,17 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ISubscribersDefine } from '@novu/node';
 import { CancelDigest } from './usecases/cancel-digest/cancel-digest.usecase';
 import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.command';
+import { TriggerEventToAllDto } from './dto/trigger-event-to-all.dto';
+import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
+import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 
 @Controller('events')
 export class EventsController {
-  constructor(private triggerEvent: TriggerEvent, private cancelDigestUsecase: CancelDigest) {}
+  constructor(
+    private triggerEvent: TriggerEvent,
+    private cancelDigestUsecase: CancelDigest,
+    private triggerEventToAll: TriggerEventToAll
+  ) {}
 
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
@@ -28,6 +35,22 @@ export class EventsController {
         identifier: body.name,
         payload: body.payload,
         to: mappedSubscribers,
+        transactionId: body.transactionId || uuidv4(),
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/trigger/all')
+  async trackEventToAll(@UserSession() user: IJwtPayload, @Body() body: TriggerEventToAllDto) {
+    return this.triggerEventToAll.execute(
+      TriggerEventToAllCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier: body.name,
+        payload: body.payload,
         transactionId: body.transactionId || uuidv4(),
       })
     );
