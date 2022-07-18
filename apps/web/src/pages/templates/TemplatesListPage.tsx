@@ -9,7 +9,7 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tag, Button, Table, colors, Text } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
-import { Tooltip } from '../../design-system/tooltip/Tooltip';
+import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { useEnvController } from '../../store/use-env-controller';
 

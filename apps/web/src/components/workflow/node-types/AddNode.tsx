@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
 import { colors, Dropdown } from '../../../design-system';
-import { ActionIcon, MenuItem as DropdownItem } from '@mantine/core';
+import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
 import { Mail, Mobile, PlusCircleOutlined, Sms } from '../../../design-system/icons';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Digest } from '../../../design-system/icons/general/Digest';
 
 interface NodeData {
   label: string;
@@ -10,6 +11,7 @@ interface NodeData {
   parentId: string;
 }
 export default memo(({ data }: { data: NodeData }) => {
+  const theme = useMantineTheme();
   const addNewNode = (type) => {
     data.addNewNode(data.parentId, type);
   };
@@ -21,7 +23,7 @@ export default memo(({ data }: { data: NodeData }) => {
         control={
           <ActionIcon
             data-test-id="button-add"
-            styles={(theme) => ({
+            styles={() => ({
               root: {
                 '&:active': {
                   color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
@@ -54,6 +56,18 @@ export default memo(({ data }: { data: NodeData }) => {
           onClick={() => addNewNode(ChannelTypeEnum.IN_APP)}
         >
           In-App
+        </DropdownItem>
+        <DropdownItem
+          data-test-id={`add-digest-node`}
+          icon={
+            /* Hack to manage the size of the SVG, which can't be changed with height and width attributes */
+            <div style={{ zoom: 0.65, width: 28, marginLeft: 4 }}>
+              <Digest color={theme.colorScheme === 'dark' ? colors.white : colors.B40} />
+            </div>
+          }
+          onClick={() => addNewNode(ChannelTypeEnum.DIGEST)}
+        >
+          Digest
         </DropdownItem>
       </Dropdown>
     </div>
