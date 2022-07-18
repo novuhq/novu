@@ -7,13 +7,14 @@ import {
   Menu as MantineMenu,
   Container,
 } from '@mantine/core';
-import { useContext, useState, useEffect } from 'react';
+import { useContext } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Bell, Trash, Mail } from '../../../design-system/icons';
-import { useColorScheme, useLocalStorage } from '@mantine/hooks';
+import StorageTheme from '../../../hooks/use-themeprovider';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
+import { Tooltip } from '../../../design-system';
 
 type Props = {};
 const menuItem = [
@@ -30,15 +31,29 @@ export function HeaderNav({}: Props) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
 
-  const [themeStatus, setThemeStatus] = useState('system');
+  const { themeStatus, setThemeStatus } = StorageTheme();
 
-  useEffect(() => {
-    const localTheme = localStorage.getItem('mantine-theme');
-    if (localTheme) {
-      const stripped = localTheme.replace(/"/g, '');
-      localTheme && setThemeStatus(stripped);
+  const themeTitle = () => {
+    let title = 'Match System Appearance';
+    if (themeStatus === 'dark') {
+      title = `Dark Theme`;
+    } else if (themeStatus === 'light') {
+      title = `Light Theme`;
     }
-  }, [toggleColorScheme]);
+
+    return title;
+  };
+
+  const Icon = () => {
+    if (themeStatus === 'dark') {
+      return <Moon {...headerIconsSettings} />;
+    }
+    if (themeStatus === 'light') {
+      return <Sun {...headerIconsSettings} />;
+    }
+
+    return <Ellipse {...headerIconsSettings} />;
+  };
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
@@ -90,17 +105,8 @@ export function HeaderNav({}: Props) {
           style={{ maxWidth: 150, maxHeight: 25 }}
         />
         <Group>
-          <ActionIcon
-            variant="transparent"
-            onClick={() => toggleColorScheme()}
-            title={
-              (themeStatus === 'dark' && `Dark Theme`) ||
-              (themeStatus === 'light' && `Light Theme`) ||
-              `Match System Appearance`
-            }
-          >
-            {(themeStatus === 'dark' && <Moon {...headerIconsSettings} />) ||
-              (themeStatus === 'light' && <Sun {...headerIconsSettings} />) || <Ellipse {...headerIconsSettings} />}
+          <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
+            <Tooltip label={themeTitle()}>{Icon()}</Tooltip>
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown

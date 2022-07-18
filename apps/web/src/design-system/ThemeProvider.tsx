@@ -3,7 +3,8 @@ import { MantineProvider, Global, ColorSchemeProvider, ColorScheme } from '@mant
 import { NotificationsProvider } from '@mantine/notifications';
 import { mantineConfig } from './config/theme.config';
 import { colors } from './config';
-import { useColorScheme, useLocalStorage } from '@mantine/hooks';
+import { useColorScheme } from '@mantine/hooks';
+import StorageTheme from '../hooks/use-themeprovider';
 
 declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';
@@ -12,24 +13,26 @@ declare module '@mantine/core' {
 export function ThemeProvider({ children }: { children: JSX.Element; dark?: Boolean }) {
   const [colorScheme, setColorScheme] = useState<ColorScheme>(useColorScheme());
   const preferredColorScheme = useColorScheme();
-
-  const [themeStatus, setThemeStatus] = useLocalStorage<String>({
-    key: 'mantine-theme',
-    defaultValue: 'system',
-    getInitialValueInEffect: true,
-  });
+  const { themeStatus, setThemeStatus } = StorageTheme();
 
   const toggleColorScheme = () => {
-    if (themeStatus === 'system') setThemeStatus('light');
-    else if (themeStatus === 'light') setThemeStatus('dark');
-    else setThemeStatus('system');
+    if (themeStatus === 'system') {
+      setThemeStatus('light');
+    } else if (themeStatus === 'light') {
+      setThemeStatus('dark');
+    } else {
+      setThemeStatus('system');
+    }
   };
 
   useEffect(() => {
     if (themeStatus === 'system') {
       setColorScheme(preferredColorScheme);
-    } else if (themeStatus === 'light') setColorScheme('light');
-    else setColorScheme('dark');
+    } else if (themeStatus === 'light') {
+      setColorScheme('light');
+    } else {
+      setColorScheme('dark');
+    }
   }, [themeStatus]);
 
   return (
