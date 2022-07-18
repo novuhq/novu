@@ -236,6 +236,14 @@ class Novu {
                 if (this.listeners.notification_click) {
                   this.listeners.notification_click(message.notification);
                 }
+              } else if (message.type === 'action_click') {
+                if (this.listeners.action_click) {
+                  this.listeners.action_click({
+                    templateIdentifier: message.templateIdentifier,
+                    type: message.resultType,
+                    notification: message.notification,
+                  });
+                }
               }
             },
             enablePublicMethods: true, // Enable methods within iframe hosted page

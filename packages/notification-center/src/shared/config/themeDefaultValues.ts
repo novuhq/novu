@@ -2,6 +2,7 @@ import { colors } from './colors';
 import { shadows } from './shadows';
 import { INotificationBellColors, INovuTheme } from '../../store/novu-theme.context';
 import { ICommonTheme } from '../../store/novu-theme-provider.context';
+import { darkButtonStyle, lightButtonStyle } from '@novu/shared';
 
 export const defaultLightTheme: INovuTheme = {
   layout: {
@@ -26,6 +27,7 @@ export const defaultLightTheme: INovuTheme = {
       notificationItemBeforeBrandColor: colors.vertical,
       timeMarkFontColor: colors.B60,
     },
+    buttons: lightButtonStyle,
   },
   footer: { logoTextColor: 'black', logoPrefixFontColor: colors.B70 },
   loaderColor: colors.vertical,
@@ -54,6 +56,7 @@ export const defaultDarkTheme: INovuTheme = {
       notificationItemBeforeBrandColor: colors.vertical,
       timeMarkFontColor: colors.B60,
     },
+    buttons: darkButtonStyle,
   },
   footer: { logoTextColor: colors.white, logoPrefixFontColor: colors.B40 },
   loaderColor: colors.vertical,

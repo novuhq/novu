@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Templates
 
 A template holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.

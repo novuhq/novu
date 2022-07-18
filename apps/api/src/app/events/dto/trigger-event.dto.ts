@@ -1,4 +1,4 @@
-import { IsDefined, IsObject, IsString } from 'class-validator';
+import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { TriggerRecipientsType } from '@novu/node';
 
 export class TriggerEventDto {
@@ -11,4 +11,8 @@ export class TriggerEventDto {
 
   @IsDefined()
   to: TriggerRecipientsType; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  @IsString()
+  @IsOptional()
+  transactionId: string;
 }
