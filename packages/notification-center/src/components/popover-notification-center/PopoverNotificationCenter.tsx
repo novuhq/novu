@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
@@ -6,8 +6,7 @@ import { Popover } from './components/Popover';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { INovuThemePopoverProvider } from '../../store/novu-theme-provider.context';
 import { useDefaultTheme } from '../../hooks';
-import { ColorScheme, IFeedsContext } from '../../index';
-import { FeedsContext } from '../../store/feeds.context';
+import { ColorScheme, ITab } from '../../index';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -20,40 +19,16 @@ interface IPopoverNotificationCenterProps {
   theme?: INovuThemePopoverProvider;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
-  tabs?: { name: string; query?: { identifier: string | string[] | null } }[];
+  tabs?: ITab[];
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
   const { theme } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
   const { setUnseenCount, unseenCount } = useContext(UnseenCountContext);
-  const { feeds } = useContext<IFeedsContext>(FeedsContext);
-  const [tabs, setTabs] = useState([]);
-
-  useEffect(() => {
-    if (!feeds || !props.tabs || feeds?.length === 0 || props.tabs?.length === 0) {
-      return;
-    }
-
-    const newTabs = props.tabs.map((tab) => {
-      if (!tab.query) {
-        return {
-          name: tab.name,
-        };
-      }
-      const feed = feeds.find((item) => item.identifier === tab.query.identifier);
-
-      return {
-        name: tab.name,
-        query: {
-          feedId: feed?._id,
-        },
-      };
-    });
-    setTabs(newTabs);
-  }, [feeds, props.tabs]);
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
+
     setUnseenCount({ count, feeds: [] });
 
     if (props.onUnseenCountChanged) {
@@ -73,7 +48,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         theme={props.theme}
         onActionClick={props.onActionClick}
         actionsResultBlock={props.actionsResultBlock}
-        tabs={tabs}
+        tabs={props.tabs}
       />
     </Popover>
   );

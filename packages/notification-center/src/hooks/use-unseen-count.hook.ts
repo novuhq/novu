@@ -2,10 +2,12 @@ import { useContext, useEffect, useState } from 'react';
 import { IAuthContext, IUnseenCount } from '../index';
 import { AuthContext } from '../store/auth.context';
 import { useApi } from './use-api.hook';
+import { useNovuContext } from './use-novu-context.hook';
 
 export function useUnseenController() {
   const { api } = useApi();
   const { token } = useContext<IAuthContext>(AuthContext);
+  const { stores } = useNovuContext();
   const [unseenCount, setUnseenCount] = useState<IUnseenCount>({
     count: 0,
     feeds: [],

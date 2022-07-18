@@ -1,11 +1,11 @@
 import {
-  IMessage,
-  ISubscriberJwt,
-  IOrganizationEntity,
-  IMessageAction,
   ButtonTypeEnum,
-  MessageActionStatusEnum,
   IFeedEntity,
+  IMessage,
+  IMessageAction,
+  IOrganizationEntity,
+  ISubscriberJwt,
+  MessageActionStatusEnum,
 } from '@novu/shared';
 
 export * from './components';
@@ -48,6 +48,12 @@ export interface INotificationCenterContext {
   header: () => JSX.Element;
   footer: () => JSX.Element;
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  tabs?: ITab[];
+}
+
+export interface IStore {
+  storeId: string;
+  query?: IStoreQuery;
 }
 
 export interface INovuProviderContext {
@@ -58,7 +64,9 @@ export interface INovuProviderContext {
   socketUrl?: string;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash: string;
+  stores?: IStore[];
 }
+
 export interface IUnseenCount {
   count: number;
   feeds: { _id: string; count: number }[];
@@ -73,7 +81,7 @@ export interface IFeedsContext {
 
 export interface INotificationsContext {
   notifications?: Map<string, IMessage[]>;
-  fetchNextPage?: (feedId?: string, query?: { feedId: string | string[] }) => void;
+  fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
   hasNextPage?: Map<string, boolean>;
   fetching?: boolean;
   markAsSeen?: (messageId: string) => Promise<IMessage>;
@@ -82,9 +90,19 @@ export interface INotificationsContext {
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>,
-    feedId?: string
+    storeId?: string
   ) => void;
-  refetch?: (feedId?: string, query?: { feedId: string | string[] }) => void;
+  refetch?: (storeId?: string, query?: IStoreQuery) => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';
+
+export interface ITab {
+  name: string;
+  storeId: string;
+}
+
+export interface IStoreQuery {
+  feedIdentifier?: string | string[];
+  seen?: boolean;
+}

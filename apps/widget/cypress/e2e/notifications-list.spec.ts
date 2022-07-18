@@ -50,6 +50,9 @@ describe('Notifications List', function () {
     cy.getByTestId('unseen-count-label').contains('9');
   });
 
+  /**
+   * This is skipped because it caught a flaky tests failure when run in cypress run mode
+   */
   it.skip('should lazy-load notifications on scroll', function () {
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,

@@ -14,7 +14,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    feedId?: string[],
+    query: { feedId?: string[]; seen?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery: FilterQuery<MessageEntity> = {
@@ -23,14 +23,18 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       channel,
     };
 
-    if (feedId === null) {
+    if (query.feedId === null) {
       requestQuery._feedId = { $eq: null };
     }
 
-    if (feedId) {
+    if (query.feedId) {
       requestQuery._feedId = {
-        $in: feedId,
+        $in: query.feedId,
       };
+    }
+
+    if (query.seen != null) {
+      requestQuery.seen = query.seen;
     }
 
     return await this.find(requestQuery, '', {
@@ -43,16 +47,33 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
   async getUnseenCount(
     environmentId: string,
     subscriberId: string,
-    channel: ChannelTypeEnum
+    channel: ChannelTypeEnum,
+    query: { feedId?: string[]; seen?: boolean } = {}
   ): Promise<{ count: number; feeds: { _id: string; count: number }[] }> {
+    const requestQuery = {
+      _environmentId: Types.ObjectId(environmentId),
+      _subscriberId: Types.ObjectId(subscriberId),
+      seen: false,
+      channel,
+    };
+
+    if (query.feedId === null) {
+      requestQuery._feedId = { $eq: null };
+    }
+
+    if (query.feedId) {
+      requestQuery._feedId = {
+        $in: query.feedId,
+      };
+    }
+
+    if (query.seen != null) {
+      requestQuery.seen = query.seen;
+    }
+
     const result = await this.aggregate([
       {
-        $match: {
-          _environmentId: Types.ObjectId(environmentId),
-          _subscriberId: Types.ObjectId(subscriberId),
-          seen: false,
-          channel,
-        },
+        $match: requestQuery,
       },
       {
         $group: {
@@ -64,14 +85,14 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       },
     ]);
 
-    const count = await this.count({
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-      seen: false,
-      channel,
-    });
+    return {
+      count: result.reduce((totalCount, item) => {
+        const newCount = (totalCount += item.count);
 
-    return { count, feeds: result };
+        return newCount;
+      }, 0),
+      feeds: result,
+    };
   }
 
   async changeSeenStatus(subscriberId: string, messageId: string, isSeen: boolean) {

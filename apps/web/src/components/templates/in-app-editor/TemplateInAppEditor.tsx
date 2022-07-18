@@ -36,6 +36,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
       queryClient.setQueryData(QueryKeys.getFeeds, [...feeds, data]);
     },
   });
+
   const { mutateAsync: deleteFeedById } = useMutation<
     { name: string; _id: string }[],
     { error: string; message: string; statusCode: number },

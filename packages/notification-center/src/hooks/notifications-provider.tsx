@@ -2,14 +2,16 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useApi } from './use-api.hook';
 import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { NotificationsContext } from '../store/notifications.context';
-import { IAuthContext } from '../index';
+import { IAuthContext, IStoreQuery } from '../index';
 import { AuthContext } from '../store/auth.context';
+import { useNovuContext } from './use-novu-context.hook';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { api } = useApi();
+  const { stores } = useNovuContext();
   const [notifications, setNotifications] = useState<Map<string, IMessage[]>>(new Map());
-  const [page, setPage] = useState<Map<string, number>>(new Map([['', 0]]));
-  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['', true]]));
+  const [page, setPage] = useState<Map<string, number>>(new Map([['general', 0]]));
+  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['general', true]]));
   const [fetching, setFetching] = useState<boolean>(false);
   const { token } = useContext<IAuthContext>(AuthContext);
 
@@ -19,34 +21,37 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     fetchPage(0);
   }, [api?.isAuthenticated, token]);
 
-  async function fetchPage(
-    pageToFetch: number,
-    isRefetch = false,
-    feedId?: string,
-    query?: { feedId: string | string[] }
-  ) {
+  async function fetchPage(pageToFetch: number, isRefetch = false, storeId?: string) {
     setFetching(true);
 
-    const newNotifications = await api.getNotificationsList(pageToFetch, query?.feedId);
+    const newNotifications = await api.getNotificationsList(pageToFetch, getStoreQuery(storeId));
 
     if (newNotifications?.length < 10) {
-      setHasNextPage(hasNextPage.set(feedId, false));
+      setHasNextPage(hasNextPage.set(storeId, false));
+    } else {
+      hasNextPage.set(storeId, true);
+    }
+
+    if (!page.has(storeId)) {
+      page.set(storeId, 0);
     }
 
     if (isRefetch) {
-      setNotifications(notifications.set(feedId, [...newNotifications]));
+      setNotifications(notifications.set(storeId, [...newNotifications]));
     } else {
-      setNotifications(notifications.set(feedId, [...notifications.get(feedId), ...newNotifications]));
+      setNotifications(notifications.set(storeId, [...(notifications.get(storeId) || []), ...newNotifications]));
     }
 
     setFetching(false);
   }
 
-  async function fetchNextPage(feedId?: string, query?: { feedId: string | string[] }) {
-    if (!hasNextPage.get(feedId)) return;
-    const nextPage = page.get(feedId) + 1;
-    setPage(page.set(feedId, nextPage));
-    await fetchPage(nextPage, false, feedId, query);
+  async function fetchNextPage(storeId?: string) {
+    if (!hasNextPage.get(storeId)) return;
+
+    const nextPage = page.get(storeId) + 1;
+    setPage(page.set(storeId, nextPage));
+
+    await fetchPage(nextPage, false, storeId);
   }
 
   async function markAsSeen(messageId: string): Promise<IMessage> {
@@ -58,13 +63,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>,
-    feedId?: string
+    storeId?: string
   ) {
     await api.updateAction(messageId, actionButtonType, status, payload);
 
     notifications.set(
-      feedId,
-      notifications.get(feedId).map((message) => {
+      storeId,
+      notifications.get(storeId).map((message) => {
         if (message._id === messageId) {
           message.cta.action.status = MessageActionStatusEnum.DONE;
         }
@@ -76,8 +81,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     setNotifications(notifications);
   }
 
-  async function refetch(feedId?: string, query?: { feedId: string | string[] }) {
-    await fetchPage(0, true, feedId, query);
+  async function refetch(storeId?: string) {
+    await fetchPage(0, true, storeId);
+  }
+
+  function getStoreQuery(storeId: string) {
+    return stores.find((store) => store.storeId === storeId)?.query;
   }
 
   return (

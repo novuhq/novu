@@ -7,13 +7,14 @@ import { GetUnseenCountCommand } from './get-unseen-count.command';
 export class GetUnseenCount {
   constructor(private messageRepository: MessageRepository) {}
 
-  async execute(command: GetUnseenCountCommand): Promise<{ count: number; feeds: { _id: string; count: number }[] }> {
-    const { count, feeds } = await this.messageRepository.getUnseenCount(
+  async execute(command: GetUnseenCountCommand): Promise<{ count: number }> {
+    const { count } = await this.messageRepository.getUnseenCount(
       command.environmentId,
       command.subscriberId,
-      ChannelTypeEnum.IN_APP
+      ChannelTypeEnum.IN_APP,
+      { feedId: command.feedId, seen: command.seen }
     );
 
-    return { feeds, count };
+    return { count };
   }
 }

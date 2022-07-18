@@ -1,11 +1,12 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FeedsTabs } from './FeedsTabs';
+import { ITab } from '../../../index';
 
-export function Main({ tabs }: { tabs?: { name: string; query?: { feedId: string | string[] } }[] }) {
+export function Main() {
   return (
     <MainWrapper data-test-id="main-wrapper">
-      <FeedsTabs tabs={tabs} />
+      <FeedsTabs />
     </MainWrapper>
   );
 }

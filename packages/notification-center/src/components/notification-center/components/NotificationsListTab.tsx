@@ -5,12 +5,13 @@ import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
-import { ITab } from './FeedsTabs';
+import { ITab } from '../../../index';
 
 export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();
   const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
 
+  const storeId = tab?.storeId || 'default_store';
   const {
     markAsSeen: markNotificationAsSeen,
     fetchNextPage,
@@ -18,7 +19,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     notifications: data,
     fetching: isLoading,
     hasNextPage,
-  } = useNotifications({ feedId: tab?.name, query: tab?.query });
+  } = useNotifications({ storeId: storeId });
 
   const isFirstRender = useIsFirstRender();
   const { unseenCount } = useContext(UnseenCountContext);

@@ -4,8 +4,7 @@ import { NotificationsContext } from '../store/notifications.context';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 interface IUseNotificationsProps {
-  feedId?: string;
-  query?: { feedId: string | string[] };
+  storeId?: string;
 }
 
 export function useNotifications(props?: IUseNotificationsProps) {
@@ -19,13 +18,13 @@ export function useNotifications(props?: IUseNotificationsProps) {
     refetch: mapRefetch,
   } = useContext<INotificationsContext>(NotificationsContext);
 
-  const notifications = mapNotifications.get(props?.feedId);
+  const notifications = mapNotifications.get(props?.storeId);
 
   async function fetchNextPage() {
-    await mapFetchNextPage(props?.feedId, props?.query);
+    await mapFetchNextPage(props?.storeId);
   }
 
-  const hasNextPage = mapHasNextPage.get(props?.feedId);
+  const hasNextPage = mapHasNextPage?.has(props?.storeId) ? mapHasNextPage.get(props?.storeId) : true;
 
   async function updateAction(
     messageId: string,
@@ -33,11 +32,11 @@ export function useNotifications(props?: IUseNotificationsProps) {
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>
   ) {
-    await mapUpdateAction(messageId, actionButtonType, status, payload, props?.feedId);
+    await mapUpdateAction(messageId, actionButtonType, status, payload, props?.storeId);
   }
 
   async function refetch() {
-    await mapRefetch(props?.feedId, props?.query);
+    await mapRefetch(props?.storeId);
   }
 
   return {
