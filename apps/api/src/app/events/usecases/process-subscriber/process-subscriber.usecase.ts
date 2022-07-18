@@ -185,7 +185,7 @@ export class ProcessSubscriber {
         continue;
       }
 
-      let where: any = {
+      const where: any = {
         status: JobStatusEnum.DELAYED,
         _subscriberId: subscriberId,
         _templateId: command.templateId,
