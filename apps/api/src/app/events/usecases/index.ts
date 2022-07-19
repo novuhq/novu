@@ -8,6 +8,8 @@ import { QueueNextJob } from './queue-next-job/queue-next-job.usecase';
 import { Digest } from './send-message/digest.usecase';
 import { CancelDigest } from './cancel-digest/cancel-digest.usecase';
 import { FilterSteps } from './filter-steps/filter-steps.usecase';
+import { FilterStepsBackoff } from './filter-steps/filter-steps-backoff.usecase';
+import { FilterStepsRegular } from './filter-steps/filter-steps-regular.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -20,4 +22,6 @@ export const USE_CASES = [
   Digest,
   CancelDigest,
   FilterSteps,
+  FilterStepsRegular,
+  FilterStepsBackoff,
 ];
