@@ -4,8 +4,10 @@ import { BaseRepository } from '../base-repository';
 import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { NotificationTemplateEntity } from '../notification-template';
+import { FeedRepository } from '../feed';
 
 export class MessageRepository extends BaseRepository<MessageEntity> {
+  private feedRepository = new FeedRepository();
   constructor() {
     super(Message, MessageEntity);
   }
@@ -28,8 +30,17 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     }
 
     if (query.feedId) {
+      const feeds = await this.feedRepository.find(
+        {
+          _environmentId: environmentId,
+          identifier: {
+            $in: query.feedId,
+          },
+        },
+        '_id'
+      );
       requestQuery._feedId = {
-        $in: query.feedId,
+        $in: feeds.map((feed) => feed._id),
       };
     }
 
@@ -62,8 +73,17 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     }
 
     if (query.feedId) {
+      const feeds = await this.feedRepository.find(
+        {
+          _environmentId: environmentId,
+          identifier: {
+            $in: query.feedId,
+          },
+        },
+        '_id'
+      );
       requestQuery._feedId = {
-        $in: query.feedId,
+        $in: feeds.map((feed) => feed._id),
       };
     }
 
