@@ -21,9 +21,8 @@ export class FilterStepsBackoff {
         continue;
       }
 
-      const digests = await this.getDigests(command, step);
-
-      if (digests.length > 0) {
+      const haveDigest = await this.alreadyHaveDigest(command, step);
+      if (haveDigest) {
         return steps;
       }
       steps.push(step);
@@ -55,7 +54,7 @@ export class FilterStepsBackoff {
     return this.jobRepository.findOne(query);
   }
 
-  private async getDigests(command: FilterStepsCommand, step: NotificationStepEntity) {
+  private async alreadyHaveDigest(command: FilterStepsCommand, step: NotificationStepEntity): Promise<boolean> {
     const query = {
       updatedAt: {
         $gte: this.getBackoffDate(step),
@@ -70,6 +69,8 @@ export class FilterStepsBackoff {
       query['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
     }
 
-    return await this.jobRepository.find(query);
+    const digests = await this.jobRepository.find(query);
+
+    return digests.length > 0;
   }
 }
