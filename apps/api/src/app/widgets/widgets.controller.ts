@@ -77,7 +77,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean
-  ): Promise<{ count: number; feeds: { _id: string; count: number }[] }> {
+  ): Promise<{ count: number }> {
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];

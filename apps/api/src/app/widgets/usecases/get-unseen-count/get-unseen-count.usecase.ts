@@ -8,7 +8,7 @@ export class GetUnseenCount {
   constructor(private messageRepository: MessageRepository) {}
 
   async execute(command: GetUnseenCountCommand): Promise<{ count: number }> {
-    const { count } = await this.messageRepository.getUnseenCount(
+    const count = await this.messageRepository.getUnseenCount(
       command.environmentId,
       command.subscriberId,
       ChannelTypeEnum.IN_APP,

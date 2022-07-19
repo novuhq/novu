@@ -29,7 +29,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
 
-    setUnseenCount({ count, feeds: [] });
+    setUnseenCount(count);
 
     if (props.onUnseenCountChanged) {
       props.onUnseenCountChanged(count);

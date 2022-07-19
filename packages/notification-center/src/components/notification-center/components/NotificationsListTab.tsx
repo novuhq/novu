@@ -25,7 +25,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { unseenCount } = useContext(UnseenCountContext);
 
   useEffect(() => {
-    if (!isNaN(unseenCount.count) && !isFirstRender) {
+    if (!isNaN(unseenCount) && !isFirstRender) {
       refetch();
     }
   }, [unseenCount]);
