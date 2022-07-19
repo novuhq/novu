@@ -5,6 +5,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import nodemailer, { Transporter } from 'nodemailer';
+import DKIM from 'nodemailer/lib/dkim';
 
 export class NodemailerProvider implements IEmailProvider {
   id = 'nodemailer';
@@ -21,6 +22,7 @@ export class NodemailerProvider implements IEmailProvider {
       secure: boolean;
       user: string;
       password: string;
+      dkim?: DKIM.Options | undefined;
     }
   ) {
     this.transports = nodemailer.createTransport({
@@ -31,6 +33,7 @@ export class NodemailerProvider implements IEmailProvider {
         user: this.config.user,
         pass: this.config.password,
       },
+      dkim: this.config.dkim,
     });
   }
 
