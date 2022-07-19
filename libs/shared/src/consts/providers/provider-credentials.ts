@@ -240,3 +240,16 @@ export const twilioConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const gupshupConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'User id',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+  },
+];

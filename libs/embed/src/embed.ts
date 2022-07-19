@@ -99,7 +99,7 @@ class Novu {
         wrapper.style.left = `${leftPosition}px`;
       }
 
-      if (_this.options?.position?.left) {
+      if (_this.options?.position?.top) {
         wrapper.style.top = isNaN(_this.options?.position?.top as number)
           ? _this.options?.position?.top
           : `${_this.options?.position?.top}px`;

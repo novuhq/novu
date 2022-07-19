@@ -42,6 +42,7 @@ export class NodemailerProvider implements IEmailProvider {
       to: options.to,
       subject: options.subject,
       html: options.html,
+      text: options.text,
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment?.name,
         content: attachment.file.toString(),
