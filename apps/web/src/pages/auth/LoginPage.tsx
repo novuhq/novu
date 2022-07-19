@@ -12,6 +12,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const queryToken = params.get('token');
+  const source = params.get('source');
 
   useEffect(() => {
     if (queryToken) {
@@ -26,7 +27,7 @@ export default function LoginPage() {
       if (!user.organizationId || !user.environmentId) {
         navigate('/auth/application');
       } else {
-        navigate('/');
+        navigate(source === 'cli' ? '/quickstart' : '/');
       }
     }
   }, [token]);

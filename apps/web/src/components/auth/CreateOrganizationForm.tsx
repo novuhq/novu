@@ -77,7 +77,7 @@ export function CreateOrganization({}: Props) {
     }
 
     setLoading(false);
-    navigate('/');
+    navigate('/quickstart');
   };
 
   return (

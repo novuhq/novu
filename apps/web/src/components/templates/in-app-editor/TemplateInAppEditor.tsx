@@ -27,21 +27,11 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
               />
             )}
           />
-          <Controller
-            name={`steps.${index}.template.content` as any}
-            data-test-id="in-app-content-form-item"
+          <InAppEditorBlock
             control={control}
-            render={({ field }) => {
-              const { ref, ...fieldRefs } = field;
-
-              return (
-                <InAppEditorBlock
-                  {...fieldRefs}
-                  readonly={readonly}
-                  contentPlaceholder="Write your notification content here..."
-                />
-              );
-            }}
+            index={index}
+            readonly={readonly}
+            contentPlaceholder="Write your notification content here..."
           />
         </Group>
       </Container>

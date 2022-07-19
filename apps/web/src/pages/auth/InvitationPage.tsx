@@ -30,7 +30,7 @@ export default function InvitationPage() {
           customDescription={
             <Center inline mb={40} mt={20}>
               <Text size="lg" color={colors.B60}>
-                <p>Your session is currently active, use another broswer or switch to incognito mode.</p>
+                <p>Your session is currently active, use another browser or switch to incognito mode.</p>
                 <p>Log out instead?</p>
               </Text>
             </Center>

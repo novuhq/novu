@@ -3,7 +3,7 @@ export * from './layout/footer/FooterContainer';
 export * from './layout/header/HeaderContainer';
 export * from './Loader';
 export * from './Main';
-export * from './NotificationListItem';
+export * from './notification-item/NotificationListItem';
 export * from './SeenAllBlock';
 export * from './NotificationsList';
 export * from './AppContent';

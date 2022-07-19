@@ -11,6 +11,7 @@ import { PasswordInput, Button, colors, Input, Text } from '../../design-system'
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { showNotification } from '@mantine/notifications';
+import { applyToken } from '../../store/use-auth-controller';
 
 type Props = {
   token?: string;
@@ -55,14 +56,21 @@ export function SignUpForm({ token, email }: Props) {
     }
     const response = await mutateAsync(itemData);
 
-    setToken((response as any).token);
+    /**
+     * We need to call the applyToken to avoid a race condition for accept invite
+     * To get the correct token when sending the request
+     */
+    applyToken((response as any).token);
 
     if (token) {
       const responseInvite = await acceptInvite(token);
 
       setToken(responseInvite);
-
       navigate('/templates');
+
+      return true;
+    } else {
+      setToken((response as any).token);
     }
 
     navigate('/auth/application');

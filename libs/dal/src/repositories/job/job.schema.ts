@@ -18,6 +18,10 @@ const jobSchema = new Schema(
     step: {
       type: Schema.Types.Mixed,
     },
+    _templateId: {
+      type: Schema.Types.String,
+      index: true,
+    },
     transactionId: {
       type: Schema.Types.String,
       index: true,
@@ -56,6 +60,33 @@ const jobSchema = new Schema(
     },
     error: {
       type: Schema.Types.Mixed,
+    },
+    digest: {
+      events: [Schema.Types.Mixed],
+      amount: {
+        type: Schema.Types.Number,
+      },
+      unit: {
+        type: Schema.Types.String,
+      },
+      digestKey: {
+        type: Schema.Types.String,
+      },
+      type: {
+        type: Schema.Types.String,
+      },
+      backoffUnit: {
+        type: Schema.Types.String,
+      },
+      backoffAmount: {
+        type: Schema.Types.Number,
+      },
+      updateMode: {
+        type: Schema.Types.Boolean,
+      },
+    },
+    type: {
+      type: Schema.Types.String,
     },
   },
   schemaOptions
