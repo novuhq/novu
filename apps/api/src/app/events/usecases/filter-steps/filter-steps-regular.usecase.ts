@@ -12,24 +12,15 @@ export class FilterStepsRegular {
     const steps = [FilterSteps.createTriggerStep(command)];
     let delayedDigests: JobEntity = null;
     for (const step of command.steps) {
-      if (step.template.type !== ChannelTypeEnum.DIGEST) {
-        if (delayedDigests && !delayedDigests.digest.updateMode) {
-          continue;
-        }
+      if (step.template.type === ChannelTypeEnum.DIGEST) {
+        delayedDigests = await this.getDigest(command, step);
+      }
 
-        if (delayedDigests && delayedDigests.digest.updateMode && delayedDigests.type !== ChannelTypeEnum.IN_APP) {
-          continue;
-        }
-
-        steps.push(step);
+      if (this.shouldContinue(delayedDigests)) {
         continue;
       }
 
-      delayedDigests = await this.getDigest(command, step);
-
-      if (!delayedDigests) {
-        steps.push(step);
-      }
+      steps.push(step);
     }
 
     return steps;
@@ -48,5 +39,19 @@ export class FilterStepsRegular {
     }
 
     return await this.jobRepository.findOne(where);
+  }
+
+  private shouldContinue(delayedDigests): boolean {
+    if (!delayedDigests) {
+      return false;
+    }
+    if (!delayedDigests.digest.updateMode) {
+      return true;
+    }
+    if (delayedDigests.type !== ChannelTypeEnum.IN_APP) {
+      return true;
+    }
+
+    return false;
   }
 }

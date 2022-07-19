@@ -12,19 +12,19 @@ export class FilterStepsBackoff {
   public async execute(command: FilterStepsCommand): Promise<NotificationStepEntity[]> {
     const steps = [FilterSteps.createTriggerStep(command)];
     for (const step of command.steps) {
-      if (step.template.type === ChannelTypeEnum.DIGEST) {
-        const trigger = await this.getTrigger(command, step);
-        if (!trigger) {
-          continue;
-        }
-
-        const digests = await this.getDigests(command, step);
-
-        if (digests.length > 0) {
-          return steps;
-        }
+      if (step.template.type !== ChannelTypeEnum.DIGEST) {
         steps.push(step);
         continue;
+      }
+      const trigger = await this.getTrigger(command, step);
+      if (!trigger) {
+        continue;
+      }
+
+      const digests = await this.getDigests(command, step);
+
+      if (digests.length > 0) {
+        return steps;
       }
       steps.push(step);
     }
@@ -56,7 +56,7 @@ export class FilterStepsBackoff {
   }
 
   private async getDigests(command: FilterStepsCommand, step: NotificationStepEntity) {
-    let digests = await this.jobRepository.find({
+    const query = {
       updatedAt: {
         $gte: this.getBackoffDate(step),
       },
@@ -64,14 +64,12 @@ export class FilterStepsBackoff {
       type: ChannelTypeEnum.DIGEST,
       _environmentId: command.environmentId,
       _subscriberId: command.subscriberId,
-    });
+    };
 
-    if (digests.length > 0 && step.metadata.digestKey) {
-      digests = digests.filter((digest) => {
-        return command.payload[step.metadata.digestKey] === digest.payload[step.metadata.digestKey];
-      });
+    if (step.metadata.digestKey) {
+      query['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
     }
 
-    return digests;
+    return await this.jobRepository.find(query);
   }
 }

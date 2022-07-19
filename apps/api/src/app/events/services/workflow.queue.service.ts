@@ -136,7 +136,7 @@ export class WorkflowQueueService {
     return delay;
   }
 
-  private async addDigestJob(data, options: JobsOptions): Promise<boolean> {
+  private async addDigestJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
     const isDigest = data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
     if (!isDigest) {
       return false;
