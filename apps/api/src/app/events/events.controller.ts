@@ -42,7 +42,7 @@ export class EventsController {
 
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @Post('/trigger/all')
+  @Post('/trigger/broadcast')
   async trackEventToAll(@UserSession() user: IJwtPayload, @Body() body: TriggerEventToAllDto) {
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
