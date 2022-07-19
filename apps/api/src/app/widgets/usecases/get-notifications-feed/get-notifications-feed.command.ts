@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
@@ -14,7 +14,6 @@ export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
   @IsArray()
   feedId: string[];
 
-  @IsBoolean()
   @IsOptional()
   seen?: boolean;
 }

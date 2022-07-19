@@ -52,7 +52,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen: boolean
+    @Query('seen') seen = undefined
   ) {
     let feedsQuery: string[];
     if (feedId) {
