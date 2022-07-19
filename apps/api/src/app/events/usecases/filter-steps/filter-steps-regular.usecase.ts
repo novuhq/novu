@@ -25,18 +25,7 @@ export class FilterStepsRegular {
         continue;
       }
 
-      const where: any = {
-        status: JobStatusEnum.DELAYED,
-        _subscriberId: command.subscriberId,
-        _templateId: command.templateId,
-        _environmentId: command.environmentId,
-      };
-
-      if (step.metadata.digestKey) {
-        where['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
-      }
-
-      delayedDigests = await this.jobRepository.findOne(where);
+      delayedDigests = await this.getDigest(command, step);
 
       if (!delayedDigests) {
         steps.push(step);
@@ -44,5 +33,20 @@ export class FilterStepsRegular {
     }
 
     return steps;
+  }
+
+  private async getDigest(command: FilterStepsCommand, step: NotificationStepEntity) {
+    const where: any = {
+      status: JobStatusEnum.DELAYED,
+      _subscriberId: command.subscriberId,
+      _templateId: command.templateId,
+      _environmentId: command.environmentId,
+    };
+
+    if (step.metadata.digestKey) {
+      where['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
+    }
+
+    return await this.jobRepository.findOne(where);
   }
 }
