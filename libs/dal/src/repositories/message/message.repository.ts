@@ -50,7 +50,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean } = {}
   ) {
-    const requestQuery = {
+    const requestQuery: FilterQuery<MessageEntity> = {
       _environmentId: Types.ObjectId(environmentId),
       _subscriberId: Types.ObjectId(subscriberId),
       seen: false,
