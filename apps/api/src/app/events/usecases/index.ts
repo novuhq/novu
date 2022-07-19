@@ -7,6 +7,7 @@ import { SendMessageInApp } from './send-message/send-message-in-app.usecase';
 import { QueueNextJob } from './queue-next-job/queue-next-job.usecase';
 import { Digest } from './send-message/digest.usecase';
 import { CancelDigest } from './cancel-digest/cancel-digest.usecase';
+import { FilterSteps } from './filter-steps/filter-steps.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -18,4 +19,5 @@ export const USE_CASES = [
   QueueNextJob,
   Digest,
   CancelDigest,
+  FilterSteps,
 ];
