@@ -1,6 +1,6 @@
 import { useLocalStorage } from '@mantine/hooks';
 
-export default function Themeprovider() {
+export function useLocalThemePreference() {
   const [themeStatus, setThemeStatus] = useLocalStorage<string>({
     key: 'mantine-theme',
     defaultValue: 'system',

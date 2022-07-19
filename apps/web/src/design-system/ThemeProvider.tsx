@@ -4,7 +4,7 @@ import { NotificationsProvider } from '@mantine/notifications';
 import { mantineConfig } from './config/theme.config';
 import { colors } from './config';
 import { useColorScheme } from '@mantine/hooks';
-import StorageTheme from '../hooks/use-themeprovider';
+import { useLocalThemePreference } from '../hooks/use-localThemePreference';
 
 declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';
@@ -13,7 +13,7 @@ declare module '@mantine/core' {
 export function ThemeProvider({ children }: { children: JSX.Element; dark?: Boolean }) {
   const [colorScheme, setColorScheme] = useState<ColorScheme>(useColorScheme());
   const preferredColorScheme = useColorScheme();
-  const { themeStatus, setThemeStatus } = StorageTheme();
+  const { themeStatus, setThemeStatus } = useLocalThemePreference();
 
   const toggleColorScheme = () => {
     if (themeStatus === 'system') {

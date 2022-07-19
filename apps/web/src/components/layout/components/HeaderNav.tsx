@@ -12,7 +12,7 @@ import * as capitalize from 'lodash.capitalize';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Bell, Trash, Mail } from '../../../design-system/icons';
-import StorageTheme from '../../../hooks/use-themeprovider';
+import { useLocalThemePreference } from '../../../hooks/use-localThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 
@@ -31,7 +31,7 @@ export function HeaderNav({}: Props) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
 
-  const { themeStatus, setThemeStatus } = StorageTheme();
+  const { themeStatus, setThemeStatus } = useLocalThemePreference();
 
   const themeTitle = () => {
     let title = 'Match System Appearance';
