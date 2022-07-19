@@ -37,7 +37,7 @@ export function NovuProvider(props: INovuProviderProps) {
     if (api?.isAuthenticated) setIsSessionInitialized(api?.isAuthenticated);
   }, [api?.isAuthenticated]);
 
-  const stores = props.stores;
+  const stores = props.stores ?? [{ storeId: 'default_store' }];
 
   return (
     <NovuContext.Provider

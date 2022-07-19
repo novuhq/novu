@@ -10,8 +10,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const { api } = useApi();
   const { stores } = useNovuContext();
   const [notifications, setNotifications] = useState<Map<string, IMessage[]>>(new Map());
-  const [page, setPage] = useState<Map<string, number>>(new Map([['general', 0]]));
-  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['general', true]]));
+  const [page, setPage] = useState<Map<string, number>>(new Map([['default_store', 0]]));
+  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['default_store', true]]));
   const [fetching, setFetching] = useState<boolean>(false);
   const { token } = useContext<IAuthContext>(AuthContext);
 
