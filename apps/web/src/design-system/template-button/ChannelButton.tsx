@@ -170,26 +170,28 @@ export function ChannelButton({
                     </ActionIcon>
                   }
                 >
-                  <MenuItem
-                    style={{
-                      pointerEvents: 'all',
-                    }}
-                    icon={
-                      <Edit
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                        }}
-                      />
-                    }
-                    data-test-id="edit-step-action"
-                    onClick={() => {
-                      setShowDotMenu(false);
-                      setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
-                    }}
-                  >
-                    Edit Template
-                  </MenuItem>
+                  <When truthy={tabKey !== ChannelTypeEnum.DIGEST}>
+                    <MenuItem
+                      style={{
+                        pointerEvents: 'all',
+                      }}
+                      icon={
+                        <Edit
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                          }}
+                        />
+                      }
+                      data-test-id="edit-step-action"
+                      onClick={() => {
+                        setShowDotMenu(false);
+                        setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
+                      }}
+                    >
+                      Edit Template
+                    </MenuItem>
+                  </When>
                   <MenuItem
                     style={{
                       pointerEvents: 'all',
@@ -201,7 +203,7 @@ export function ChannelButton({
                       onDelete(id || '');
                     }}
                   >
-                    Delete Step
+                    Delete {tabKey !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
                   </MenuItem>
                 </Menu>
               </a>

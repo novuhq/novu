@@ -3,12 +3,12 @@ import { INotificationBellColors } from '../../store/novu-theme.context';
 
 interface IGradientDotProps {
   props?: React.ComponentPropsWithoutRef<'svg'>;
-  bellColors: INotificationBellColors;
+  colors: INotificationBellColors;
 }
 
 /* eslint-disable */
 export function GradientDot(props: IGradientDotProps) {
-  const color = props.bellColors.unseenBadgeColor;
+  const color = props.colors.unseenBadgeColor;
   const regularColor = typeof color === 'string';
 
   return (
@@ -20,7 +20,7 @@ export function GradientDot(props: IGradientDotProps) {
         height="13"
         rx="6.5"
         fill="url(#paint0_linear_1722_2699)"
-        stroke={props.bellColors.unseenBadgeBackgroundColor}
+        stroke={props.colors.unseenBadgeBackgroundColor}
         strokeWidth="3"
       />
       <defs>

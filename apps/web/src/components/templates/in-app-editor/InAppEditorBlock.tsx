@@ -1,89 +1,64 @@
-import { useContext, useEffect, useRef, useState } from 'react';
-import styled from '@emotion/styled';
+import React from 'react';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
-import { colors } from '../../../design-system';
-import { useMantineTheme } from '@mantine/core';
+import { ContentContainer } from './ContentContainer';
+import { Control, Controller } from 'react-hook-form';
+import { IForm } from '../use-template-controller.hook';
 
 export function InAppEditorBlock({
   contentPlaceholder,
-  onChange,
-  value,
+  control,
+  index,
   readonly,
 }: {
   contentPlaceholder: string;
-  value: string;
-  onChange: (data: string) => void;
+  control: Control<IForm>;
+  index: number;
   readonly: boolean;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const theme = useMantineTheme();
-  const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!value);
-  const [content, setContent] = useState<string>(value);
-
-  useEffect(() => {
-    ref.current?.focus();
-  }, [ref]);
-
-  useEffect(() => {
-    let showPlaceHolder = value.length === 0;
-
-    if (value === '<br>') showPlaceHolder = true;
-
-    setVisiblePlaceholder(showPlaceHolder);
-  }, [value, content]);
-
-  useEffect(() => {
-    if (value !== ref.current?.innerHTML) {
-      setContent(value);
-    }
-  }, [value]);
-
-  function onContentChange(data) {
-    onChange(data);
-
-    let showPlaceHolder = !data;
-    if (data === '<br>') showPlaceHolder = true;
-
-    setVisiblePlaceholder(showPlaceHolder);
-  }
-
   return (
-    <InAppWidgetPreview readonly={readonly}>
-      <div style={{ position: 'relative' }}>
-        <div
-          ref={ref}
-          data-test-id="in-app-editor-content-input"
-          contentEditable={!readonly}
-          dangerouslySetInnerHTML={{
-            __html: content,
-          }}
-          onKeyUp={(e: any) => onContentChange(e.target.innerHTML)}
-          suppressContentEditableWarning
-          style={{
-            display: 'inline-block',
-            width: '100%',
-            outline: 'none',
-            backgroundColor: 'transparent',
-            ...(readonly
-              ? {
-                  backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
-                  color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
-                  opacity: 0.6,
-                }
-              : {}),
-          }}
-        />
-        <PlaceHolder show={visiblePlaceholder}>{contentPlaceholder}</PlaceHolder>
-      </div>
-    </InAppWidgetPreview>
+    <Controller
+      name={`steps.${index}.template.cta.action` as any}
+      data-test-id="in-app-content-form-item"
+      control={control}
+      render={({ field }) => {
+        const { ref, ...fieldRefs } = field;
+
+        return (
+          <InAppWidgetPreview {...fieldRefs} readonly={readonly}>
+            <ContentContainerController
+              control={control}
+              index={index}
+              contentPlaceholder={contentPlaceholder}
+              readonly={readonly}
+            />
+          </InAppWidgetPreview>
+        );
+      }}
+    />
   );
 }
 
-const PlaceHolder = styled.div<{ show: boolean }>`
-  position: absolute;
-  z-index: 1;
-  top: 0px;
-  pointer-events: none;
-  display: ${({ show }) => (show ? 'block' : 'none')};
-  opacity: 0.4;
-`;
+function ContentContainerController({
+  contentPlaceholder,
+  control,
+  index,
+  readonly,
+}: {
+  contentPlaceholder: string;
+  control: Control<IForm>;
+  index: number;
+  readonly: boolean;
+}) {
+  return (
+    <Controller
+      name={`steps.${index}.template.content` as any}
+      data-test-id="in-app-content-form-item"
+      control={control}
+      render={({ field }) => {
+        const { ref, ...fieldRefs } = field;
+
+        return <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} />;
+      }}
+    />
+  );
+}
