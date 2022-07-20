@@ -45,7 +45,7 @@ function UnseenBadgeContainer({ storeId }: { storeId: string }) {
 
   useEffect(() => {
     (async () => {
-      const query = stores.find((i) => i.storeId === storeId)?.query || {};
+      const query = stores?.find((i) => i.storeId === storeId)?.query || {};
 
       const { count } = await api.getUnseenCount(query);
 

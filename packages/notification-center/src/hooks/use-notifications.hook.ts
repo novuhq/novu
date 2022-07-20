@@ -18,7 +18,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     refetch: mapRefetch,
   } = useContext<INotificationsContext>(NotificationsContext);
 
-  const notifications = mapNotifications.get(props?.storeId);
+  const notifications = mapNotifications[props?.storeId];
 
   async function fetchNextPage() {
     await mapFetchNextPage(props?.storeId);

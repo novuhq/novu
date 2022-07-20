@@ -67,7 +67,7 @@ export interface INovuProviderContext {
 }
 
 export interface INotificationsContext {
-  notifications?: Map<string, IMessage[]>;
+  notifications?: Record<string, IMessage[]>;
   fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
   hasNextPage?: Map<string, boolean>;
   fetching?: boolean;
