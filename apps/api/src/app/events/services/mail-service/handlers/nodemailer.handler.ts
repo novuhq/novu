@@ -30,7 +30,7 @@ export class NodemailerHandler extends BaseHandler {
       dkim: {
         domainName: credentials.domain,
         keySelector: credentials.accountSid,
-        privateKey: credentials.token,
+        privateKey: credentials.secretKey,
       },
     };
 

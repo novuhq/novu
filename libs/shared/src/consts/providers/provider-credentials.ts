@@ -125,7 +125,7 @@ export const nodemailerConfig: IConfigCredentials[] = [
     type: 'string',
   },
   {
-    key: CredentialsKeyEnum.Token,
+    key: CredentialsKeyEnum.SecretKey,
     displayName: 'DKIM: Private key',
     type: 'string',
   },
