@@ -32,7 +32,6 @@ export class TriggerEvent {
       },
     });
 
-    await this.validateTransactionIdProperty(command);
     await this.validateSubscriberIdProperty(command);
 
     this.logEventTriggered(command);
@@ -177,12 +176,21 @@ export class TriggerEvent {
     return true;
   }
 
-  private async validateTransactionIdProperty(command: TriggerEventCommand): Promise<boolean> {
-    const count = await this.jobRepository.count({
-      transactionId: command.transactionId,
-    });
+  public async validateTransactionIdProperty(
+    transactionId: string,
+    organizationId: string,
+    environmentId: string
+  ): Promise<boolean> {
+    const job = await this.jobRepository.findOne(
+      {
+        transactionId,
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+      },
+      '_id'
+    );
 
-    if (count > 0) {
+    if (job) {
       throw new ApiException(
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );

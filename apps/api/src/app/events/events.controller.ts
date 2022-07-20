@@ -24,8 +24,11 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
-  trackEvent(@UserSession() user: IJwtPayload, @Body() body: TriggerEventDto) {
+  async trackEvent(@UserSession() user: IJwtPayload, @Body() body: TriggerEventDto) {
     const mappedSubscribers = this.mapSubscribers(body);
+    const transactionId = body.transactionId || uuidv4();
+
+    await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
 
     return this.triggerEvent.execute(
       TriggerEventCommand.create({
@@ -35,7 +38,7 @@ export class EventsController {
         identifier: body.name,
         payload: body.payload,
         to: mappedSubscribers,
-        transactionId: body.transactionId || uuidv4(),
+        transactionId,
       })
     );
   }
@@ -44,6 +47,9 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/broadcast')
   async trackEventToAll(@UserSession() user: IJwtPayload, @Body() body: TriggerEventToAllDto) {
+    const transactionId = body.transactionId || uuidv4();
+    await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
+
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
         userId: user._id,
@@ -51,7 +57,7 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
-        transactionId: body.transactionId || uuidv4(),
+        transactionId,
       })
     );
   }
