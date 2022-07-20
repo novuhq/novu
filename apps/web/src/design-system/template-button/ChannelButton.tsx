@@ -56,7 +56,7 @@ const useMenuStyles = createStyles((theme: MantineTheme) => {
     item: {
       borerRadius: '5px',
       color: `${dark ? theme.white : colors.B40} !important`,
-      fontWeight: '400',
+      fontWeight: 400,
       fontSize: '14px',
     },
     itemHovered: {
@@ -312,7 +312,7 @@ const Dropzone = styled.div<{ dark: boolean }>`
   border: 1px dashed ${({ dark }) => (dark ? colors.B30 : colors.B80)};
 `;
 
-const Button = styled(UnstyledButton)`
+const Button: any = styled(UnstyledButton)`
   position: relative;
 
   @media screen and (max-width: 1400px) {

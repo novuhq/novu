@@ -214,8 +214,13 @@ const WorkflowEditorPage = ({
                   <Stack>
                     {channels
                       .filter((channel) => channel.type === StepTypeEnum.CHANNEL)
-                      .map((channel) => (
-                        <DraggableNode channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
+                      .map((channel, index) => (
+                        <DraggableNode
+                          key={index}
+                          channel={channel}
+                          setDragging={setDragging}
+                          onDragStart={onDragStart}
+                        />
                       ))}
                   </Stack>
                 </When>
@@ -234,8 +239,13 @@ const WorkflowEditorPage = ({
                   <Stack>
                     {channels
                       .filter((channel) => channel.type === StepTypeEnum.ACTION)
-                      .map((channel) => (
-                        <DraggableNode channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
+                      .map((channel, index) => (
+                        <DraggableNode
+                          key={index}
+                          channel={channel}
+                          setDragging={setDragging}
+                          onDragStart={onDragStart}
+                        />
                       ))}
                   </Stack>
                 </When>
