@@ -11,8 +11,8 @@ declare module '@mantine/core' {
 }
 
 export function ThemeProvider({ children }: { children: JSX.Element; dark?: Boolean }) {
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(useColorScheme());
   const preferredColorScheme = useColorScheme();
+  const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
   const { themeStatus, setThemeStatus } = useLocalThemePreference();
 
   const toggleColorScheme = () => {
