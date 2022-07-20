@@ -66,7 +66,7 @@ export class NotificationTemplateService {
         content: message.content,
         subject: message.subject,
         name: message.name,
-        _feedId: feeds[0]._id,
+        _feedId: override.noFeedId ? undefined : feeds[0]._id,
         _creatorId: this.userId,
         _organizationId: this.organizationId,
         _environmentId: this.environmentId,

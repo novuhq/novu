@@ -13,7 +13,7 @@ export function UnseenBadge({ unseenCount }: { unseenCount: number }) {
           sx={{
             padding: 0,
             marginLeft: 10,
-            width: 20,
+            width: 25,
             height: 20,
             pointerEvents: 'none',
             border: 'none',
@@ -24,7 +24,7 @@ export function UnseenBadge({ unseenCount }: { unseenCount: number }) {
             fontWeight: 'bold',
             fontSize: '12px',
           }}
-          radius={100}
+          radius={10}
         >
           {unseenCount}
         </Badge>

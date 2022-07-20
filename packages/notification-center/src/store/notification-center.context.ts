@@ -11,4 +11,5 @@ export const NotificationCenterContext = React.createContext<INotificationCenter
   header: null,
   footer: null,
   actionsResultBlock: null,
+  tabs: [],
 } as any);

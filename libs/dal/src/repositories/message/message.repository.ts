@@ -4,8 +4,10 @@ import { BaseRepository } from '../base-repository';
 import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { NotificationTemplateEntity } from '../notification-template';
+import { FeedRepository } from '../feed';
 
 export class MessageRepository extends BaseRepository<MessageEntity> {
+  private feedRepository = new FeedRepository();
   constructor() {
     super(Message, MessageEntity);
   }
@@ -14,7 +16,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    feedId?: string[],
+    query: { feedId?: string[]; seen?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery: FilterQuery<MessageEntity> = {
@@ -23,14 +25,27 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       channel,
     };
 
-    if (feedId === null) {
+    if (query.feedId === null) {
       requestQuery._feedId = { $eq: null };
     }
 
-    if (feedId) {
+    if (query.feedId) {
+      const feeds = await this.feedRepository.find(
+        {
+          _environmentId: environmentId,
+          identifier: {
+            $in: query.feedId,
+          },
+        },
+        '_id'
+      );
       requestQuery._feedId = {
-        $in: feedId,
+        $in: feeds.map((feed) => feed._id),
       };
+    }
+
+    if (query.seen != null) {
+      requestQuery.seen = query.seen;
     }
 
     return await this.find(requestQuery, '', {
@@ -43,35 +58,40 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
   async getUnseenCount(
     environmentId: string,
     subscriberId: string,
-    channel: ChannelTypeEnum
-  ): Promise<{ count: number; feeds: { _id: string; count: number }[] }> {
-    const result = await this.aggregate([
-      {
-        $match: {
-          _environmentId: Types.ObjectId(environmentId),
-          _subscriberId: Types.ObjectId(subscriberId),
-          seen: false,
-          channel,
-        },
-      },
-      {
-        $group: {
-          _id: '$_feedId',
-          count: {
-            $sum: 1,
-          },
-        },
-      },
-    ]);
-
-    const count = await this.count({
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
+    channel: ChannelTypeEnum,
+    query: { feedId?: string[]; seen?: boolean } = {}
+  ) {
+    const requestQuery: FilterQuery<MessageEntity> = {
+      _environmentId: Types.ObjectId(environmentId),
+      _subscriberId: Types.ObjectId(subscriberId),
       seen: false,
       channel,
-    });
+    };
 
-    return { count, feeds: result };
+    if (query.feedId === null) {
+      requestQuery._feedId = { $eq: null };
+    }
+
+    if (query.feedId) {
+      const feeds = await this.feedRepository.find(
+        {
+          _environmentId: environmentId,
+          identifier: {
+            $in: query.feedId,
+          },
+        },
+        '_id'
+      );
+      requestQuery._feedId = {
+        $in: feeds.map((feed) => feed._id),
+      };
+    }
+
+    if (query.seen != null) {
+      requestQuery.seen = query.seen;
+    }
+
+    return await this.count(requestQuery);
   }
 
   async changeSeenStatus(subscriberId: string, messageId: string, isSeen: boolean) {

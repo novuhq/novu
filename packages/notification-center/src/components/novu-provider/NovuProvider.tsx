@@ -1,18 +1,18 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, FeedInfo, IAuthContext, INovuProviderContext, IUnseenCount } from '../../index';
+import { ColorScheme, IAuthContext, INovuProviderContext, IStore } from '../../index';
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
-import { useSocket, useUnseenController, NotificationsProvider, useApi } from '../../hooks';
+import { NotificationsProvider, useApi, useSocket, useUnseenController } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
-import { FeedsContext } from '../../store/feeds.context';
 
 interface INovuProviderProps {
+  stores?: IStore[];
   children: React.ReactNode;
   backendUrl?: string;
   subscriberId?: string;
@@ -36,6 +36,8 @@ export function NovuProvider(props: INovuProviderProps) {
     if (api?.isAuthenticated) setIsSessionInitialized(api?.isAuthenticated);
   }, [api?.isAuthenticated]);
 
+  const stores = props.stores ?? [{ storeId: 'default_store' }];
+
   return (
     <NovuContext.Provider
       value={{
@@ -46,6 +48,7 @@ export function NovuProvider(props: INovuProviderProps) {
         socketUrl: socketUrl,
         onLoad: props.onLoad,
         subscriberHash: props.subscriberHash,
+        stores,
       }}
     >
       <ApiContext.Provider value={{ api }}>
@@ -73,7 +76,6 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   const { api: apiService } = useApi();
   const { applyToken, setUser, token } = useContext<IAuthContext>(AuthContext);
   const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
-  const [feeds, setFeeds] = useState<FeedInfo[]>(null);
 
   useEffect(() => {
     if (!token && !api.isAuthenticated) {
@@ -101,7 +103,6 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
 
     setUser(response.profile);
     applyToken(response.token);
-    setFeeds(response.feeds);
 
     const organizationData = await api.getOrganization();
 
@@ -110,7 +111,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
     }
   }
 
-  return <FeedsContext.Provider value={{ setFeeds, feeds }}>{children}</FeedsContext.Provider>;
+  return children;
 }
 
 function SocketInitialization({ children }: { children: React.ReactNode }) {
@@ -125,7 +126,7 @@ function UnseenProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (socket) {
-      socket.on('unseen_count_changed', (onData: { unseenCount: IUnseenCount }) => {
+      socket.on('unseen_count_changed', (onData: { unseenCount: number }) => {
         if (onData?.unseenCount) {
           setUnseenCount(onData.unseenCount);
         }

@@ -1,23 +1,20 @@
 import { useContext, useEffect, useState } from 'react';
-import { IAuthContext, IUnseenCount } from '../index';
+import { IAuthContext } from '../index';
 import { AuthContext } from '../store/auth.context';
 import { useApi } from './use-api.hook';
 
 export function useUnseenController() {
   const { api } = useApi();
   const { token } = useContext<IAuthContext>(AuthContext);
-  const [unseenCount, setUnseenCount] = useState<IUnseenCount>({
-    count: 0,
-    feeds: [],
-  });
+  const [unseenCount, setUnseenCount] = useState<number>(0);
 
   useEffect(() => {
     if (!token || !api?.isAuthenticated) return;
 
     (async () => {
-      const { count, feeds } = await api.getUnseenCount();
+      const { count } = await api.getUnseenCount();
 
-      setUnseenCount({ count, feeds });
+      setUnseenCount(count);
     })();
   }, [token, api?.isAuthenticated]);
 
