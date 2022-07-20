@@ -17,11 +17,11 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@hookform/resolvers": "^2.9.1",
-    "@mantine/core": "^4.2.12",
-    "@mantine/dropzone": "^4.2.12",
-    "@mantine/hooks": "^4.2.12",
-    "@mantine/notifications": "^4.2.12",
-    "@mantine/prism": "^4.2.12",
+    "@mantine/core": "4.1.1",
+    "@mantine/dropzone": "4.1.1",
+    "@mantine/hooks": "4.2.12",
+    "@mantine/notifications": "4.1.0",
+    "@mantine/prism": "4.1.0",
     "@novu/notification-center": "^0.5.1",
     "@novu/shared": "^0.5.1",
     "@sentry/react": "^6.3.1",
@@ -100,7 +100,7 @@
     "react-error-overlay": "6.0.9",
     "start-server-and-test": "1.11.6",
     "webpack": "4.46.0",
-    "typescript": "4.6.2"
+    "typescript": "4.6.3"
   },
   "scripts": {
     "start": "cross-env PORT=4200 react-app-rewired start",
