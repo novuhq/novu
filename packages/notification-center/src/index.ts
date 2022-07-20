@@ -1,6 +1,5 @@
 import {
   ButtonTypeEnum,
-  IFeedEntity,
   IMessage,
   IMessageAction,
   IOrganizationEntity,
@@ -67,20 +66,8 @@ export interface INovuProviderContext {
   stores?: IStore[];
 }
 
-export interface IUnseenCount {
-  count: number;
-  feeds: { _id: string; count: number }[];
-}
-
-export type FeedInfo = Pick<IFeedEntity, '_id' | 'name' | 'identifier'>;
-
-export interface IFeedsContext {
-  feeds: FeedInfo[];
-  setFeeds: (feeds: FeedInfo[]) => void;
-}
-
 export interface INotificationsContext {
-  notifications?: Map<string, IMessage[]>;
+  notifications?: Record<string, IMessage[]>;
   fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
   hasNextPage?: Map<string, boolean>;
   fetching?: boolean;

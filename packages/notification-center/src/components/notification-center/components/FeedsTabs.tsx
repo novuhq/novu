@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Center, Tab } from '@mantine/core';
 import { NotificationsListTab } from './NotificationsListTab';
-import { INotificationCenterContext, ITab, IStoreQuery, IUnseenCount } from '../../../index';
+import { INotificationCenterContext } from '../../../index';
 import { UnseenBadge } from './UnseenBadge';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
 import { Tabs } from './layout/tabs/Tabs';
@@ -39,18 +39,19 @@ export function FeedsTabs() {
 function UnseenBadgeContainer({ storeId }: { storeId: string }) {
   const { api } = useApi();
   const { stores } = useNovuContext();
+  const { unseenCount: generalUnseenCount } = useContext(UnseenCountContext);
 
   const [unseenCount, setUnseenCount] = useState<number>();
 
   useEffect(() => {
     (async () => {
-      const query = stores.find((i) => i.storeId === storeId)?.query || {};
+      const query = stores?.find((i) => i.storeId === storeId)?.query || {};
 
       const { count } = await api.getUnseenCount(query);
 
       setUnseenCount(count);
     })();
-  }, []);
+  }, [generalUnseenCount]);
 
   return <UnseenBadge unseenCount={unseenCount} />;
 }

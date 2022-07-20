@@ -10,12 +10,12 @@ export function HeaderContainer() {
 
   useEffect(() => {
     if (onUnseenCountChanged) {
-      onUnseenCountChanged(unseenCount.count);
+      onUnseenCountChanged(unseenCount);
     }
-  }, [unseenCount.count, (window as any).parentIFrame]);
+  }, [unseenCount, (window as any).parentIFrame]);
 
   function getHeader() {
-    return header ? header() : <Header unseenCount={unseenCount.count} />;
+    return header ? header() : <Header unseenCount={unseenCount} />;
   }
 
   return <>{getHeader()}</>;

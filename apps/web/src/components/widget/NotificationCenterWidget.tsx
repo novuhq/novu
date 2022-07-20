@@ -8,15 +8,9 @@ import { NotificationBell, NovuProvider, PopoverNotificationCenter, useNotificat
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
   const { environment } = useEnvController();
 
-  const stores = [
-    { storeId: 'seen', query: { seen: true } },
-    { storeId: 'unseen', query: { seen: false } },
-  ];
-
   return (
     <>
       <NovuProvider
-        stores={stores}
         backendUrl={API_ROOT}
         socketUrl={WS_URL}
         subscriberId={user?._id as string}
@@ -42,15 +36,9 @@ function PopoverWrapper() {
     await updateAction(message._id, type, MessageActionStatusEnum.DONE);
   }
 
-  const tabs = [
-    { name: 'Seen', storeId: 'seen' },
-    { name: 'Unseen', storeId: 'unseen' },
-  ];
-
   return (
     <PopoverNotificationCenter
       colorScheme={colorScheme}
-      tabs={tabs}
       onNotificationClick={handlerOnNotificationClick}
       onActionClick={handlerOnActionClick}
     >

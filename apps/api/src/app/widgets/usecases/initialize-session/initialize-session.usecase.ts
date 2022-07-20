@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { EnvironmentRepository, SubscriberEntity, FeedRepository, FeedEntity } from '@novu/dal';
+import { EnvironmentRepository, SubscriberEntity, FeedRepository } from '@novu/dal';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -21,7 +21,6 @@ export class InitializeSession {
   async execute(command: InitializeSessionCommand): Promise<{
     token: string;
     profile: Partial<SubscriberEntity>;
-    feeds: Partial<FeedEntity>[];
   }> {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
@@ -45,13 +44,6 @@ export class InitializeSession {
 
     const subscriber = await this.createSubscriber.execute(commandos);
 
-    const feeds = await this.feedRepository.find(
-      {
-        _environmentId: environment._id,
-      },
-      '_id name identifier'
-    );
-
     this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
       _organization: environment._organizationId,
       environmentName: environment.name,
@@ -66,7 +58,6 @@ export class InitializeSession {
         lastName: subscriber.lastName,
         phone: subscriber.phone,
       },
-      feeds,
     };
   }
 }
