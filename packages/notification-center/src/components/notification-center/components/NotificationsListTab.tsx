@@ -1,15 +1,17 @@
-import { useNotifications } from '../../../hooks';
+import { useNotifications, useApi } from '../../../hooks';
 import React, { useContext, useEffect, useRef } from 'react';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 import image from '../../../images/no-new-notifications.png';
-import { useApi } from '../../../hooks/use-api.hook';
 import { NotificationsList } from './NotificationsList';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
+import { ITab } from '../../../index';
 
-export function NotificationsListTab({ feedId = '' }: { feedId?: string | string[] }) {
+export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();
   const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
+
+  const storeId = tab?.storeId || 'default_store';
   const {
     markAsSeen: markNotificationAsSeen,
     fetchNextPage,
@@ -17,16 +19,22 @@ export function NotificationsListTab({ feedId = '' }: { feedId?: string | string
     notifications: data,
     fetching: isLoading,
     hasNextPage,
-  } = useNotifications(feedId);
+  } = useNotifications({ storeId: storeId });
 
   const isFirstRender = useIsFirstRender();
   const { unseenCount } = useContext(UnseenCountContext);
 
   useEffect(() => {
-    if (!isNaN(unseenCount.count) && !isFirstRender) {
+    if (!isNaN(unseenCount) && !isFirstRender) {
       refetch();
     }
   }, [unseenCount]);
+
+  useEffect(() => {
+    if (!data) {
+      refetch();
+    }
+  }, []);
 
   async function fetchNext() {
     await fetchNextPage();

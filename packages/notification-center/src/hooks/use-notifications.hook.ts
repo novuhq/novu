@@ -1,10 +1,43 @@
 import { useContext } from 'react';
 import { INotificationsContext } from '../index';
 import { NotificationsContext } from '../store/notifications.context';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
-export function useNotifications() {
-  const { notifications, fetchNextPage, hasNextPage, fetching, markAsSeen, updateAction, refetch } =
-    useContext<INotificationsContext>(NotificationsContext);
+interface IUseNotificationsProps {
+  storeId?: string;
+}
+
+export function useNotifications(props?: IUseNotificationsProps) {
+  const {
+    notifications: mapNotifications,
+    fetchNextPage: mapFetchNextPage,
+    hasNextPage: mapHasNextPage,
+    fetching,
+    markAsSeen,
+    updateAction: mapUpdateAction,
+    refetch: mapRefetch,
+  } = useContext<INotificationsContext>(NotificationsContext);
+
+  const notifications = mapNotifications[props?.storeId];
+
+  async function fetchNextPage() {
+    await mapFetchNextPage(props?.storeId);
+  }
+
+  const hasNextPage = mapHasNextPage?.has(props?.storeId) ? mapHasNextPage.get(props?.storeId) : true;
+
+  async function updateAction(
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ) {
+    await mapUpdateAction(messageId, actionButtonType, status, payload, props?.storeId);
+  }
+
+  async function refetch() {
+    await mapRefetch(props?.storeId);
+  }
 
   return {
     notifications,

@@ -1,11 +1,10 @@
 import {
-  IMessage,
-  ISubscriberJwt,
-  IOrganizationEntity,
-  IMessageAction,
   ButtonTypeEnum,
+  IMessage,
+  IMessageAction,
+  IOrganizationEntity,
+  ISubscriberJwt,
   MessageActionStatusEnum,
-  IFeedEntity,
 } from '@novu/shared';
 
 export * from './components';
@@ -48,6 +47,12 @@ export interface INotificationCenterContext {
   header: () => JSX.Element;
   footer: () => JSX.Element;
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  tabs?: ITab[];
+}
+
+export interface IStore {
+  storeId: string;
+  query?: IStoreQuery;
 }
 
 export interface INovuProviderContext {
@@ -58,32 +63,33 @@ export interface INovuProviderContext {
   socketUrl?: string;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash: string;
-}
-export interface IUnseenCount {
-  count: number;
-  feeds: { _id: string; count: number }[];
-}
-
-export type FeedInfo = Pick<IFeedEntity, '_id' | 'name' | 'identifier'>;
-
-export interface IFeedsContext {
-  feeds: FeedInfo[];
-  setFeeds: (feeds: FeedInfo[]) => void;
+  stores?: IStore[];
 }
 
 export interface INotificationsContext {
-  notifications?: IMessage[];
-  fetchNextPage?: () => void;
-  hasNextPage?: boolean;
+  notifications?: Record<string, IMessage[]>;
+  fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
+  hasNextPage?: Map<string, boolean>;
   fetching?: boolean;
   markAsSeen?: (messageId: string) => Promise<IMessage>;
   updateAction?: (
     messageId: string,
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
-    payload?: Record<string, unknown>
+    payload?: Record<string, unknown>,
+    storeId?: string
   ) => void;
-  refetch?: () => void;
+  refetch?: (storeId?: string, query?: IStoreQuery) => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';
+
+export interface ITab {
+  name: string;
+  storeId: string;
+}
+
+export interface IStoreQuery {
+  feedIdentifier?: string | string[];
+  seen?: boolean;
+}

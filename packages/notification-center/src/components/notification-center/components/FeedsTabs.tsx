@@ -1,37 +1,31 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Center, Tab } from '@mantine/core';
 import { NotificationsListTab } from './NotificationsListTab';
-import { IFeedsContext } from '../../../index';
-import { FeedsContext } from '../../../store/feeds.context';
+import { INotificationCenterContext } from '../../../index';
 import { UnseenBadge } from './UnseenBadge';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
 import { Tabs } from './layout/tabs/Tabs';
+import { NotificationCenterContext } from '../../../store/notification-center.context';
+import { useApi, useNovuContext } from '../../../hooks';
 
-export function FeedsTabs({ tabs }: { tabs?: { name: string; query?: { feedId: string | string[] } }[] }) {
-  const { feeds } = useContext<IFeedsContext>(FeedsContext);
-  const { unseenCount } = useContext(UnseenCountContext);
-
-  const getCount = (feedId) => {
-    const count = unseenCount?.feeds.find((feedCount) => feedCount._id === feedId)?.count;
-
-    return count;
-  };
+export function FeedsTabs() {
+  const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
 
   return (
     <>
       {tabs?.length ? (
         <Tabs>
-          {tabs.map((feed, index) => (
+          {tabs.map((tab, index) => (
             <Tab
               key={index}
               label={
                 <Center inline>
-                  {feed.name}{' '}
-                  <UnseenBadge unseenCount={feed.query ? getCount(feed.query?.feedId) : unseenCount.count} />
+                  {tab.name}
+                  <UnseenBadgeContainer storeId={tab.storeId} />
                 </Center>
               }
             >
-              <NotificationsListTab feedId={feed.query ? feed.query?.feedId : ''} />
+              <NotificationsListTab tab={tab} />
             </Tab>
           ))}
         </Tabs>
@@ -40,4 +34,24 @@ export function FeedsTabs({ tabs }: { tabs?: { name: string; query?: { feedId: s
       )}
     </>
   );
+}
+
+function UnseenBadgeContainer({ storeId }: { storeId: string }) {
+  const { api } = useApi();
+  const { stores } = useNovuContext();
+  const { unseenCount: generalUnseenCount } = useContext(UnseenCountContext);
+
+  const [unseenCount, setUnseenCount] = useState<number>();
+
+  useEffect(() => {
+    (async () => {
+      const query = stores?.find((i) => i.storeId === storeId)?.query || {};
+
+      const { count } = await api.getUnseenCount(query);
+
+      setUnseenCount(count);
+    })();
+  }, [generalUnseenCount]);
+
+  return <UnseenBadge unseenCount={unseenCount} />;
 }

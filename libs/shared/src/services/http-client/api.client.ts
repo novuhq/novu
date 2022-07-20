@@ -1,5 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 
+export interface IParamObject {
+  [key: string]: string | string[] | number | boolean;
+}
+
 export class HttpClient {
   private axiosClient: AxiosInstance;
 
@@ -17,7 +21,7 @@ export class HttpClient {
     delete this.axiosClient.defaults.headers.common.Authorization;
   }
 
-  async get(url: string, params?: { [key: string]: string | string[] | number }) {
+  async get(url: string, params?: IParamObject) {
     return await this.axiosClient
       .get(url, {
         params,
