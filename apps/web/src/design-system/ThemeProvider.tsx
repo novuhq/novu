@@ -33,7 +33,7 @@ export function ThemeProvider({ children }: { children: JSX.Element; dark?: Bool
     } else {
       setColorScheme('dark');
     }
-  }, [themeStatus]);
+  }, [themeStatus, preferredColorScheme]);
 
   return (
     <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>

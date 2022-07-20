@@ -52,7 +52,7 @@ export function HeaderNav({}: Props) {
       return <Sun {...headerIconsSettings} />;
     }
 
-    return <Ellipse {...headerIconsSettings} />;
+    return <Ellipse {...headerIconsSettings} height={24} width={24} />;
   };
 
   const profileMenuMantine = [
