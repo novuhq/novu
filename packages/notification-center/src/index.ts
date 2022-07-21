@@ -47,8 +47,15 @@ export interface INotificationCenterContext {
   isLoading: boolean;
   header: () => JSX.Element;
   footer: () => JSX.Element;
+  listItem: ListItem;
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
 }
+
+export type ListItem = (
+  message: IMessage,
+  onActionButtonClick: (actionButtonType: ButtonTypeEnum) => void,
+  onNotificationClick: () => void
+) => JSX.Element;
 
 export interface INovuProviderContext {
   backendUrl?: string;

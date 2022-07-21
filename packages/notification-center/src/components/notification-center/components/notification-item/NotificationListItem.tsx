@@ -16,7 +16,7 @@ export function NotificationListItem({
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
-  const { onActionClick } = useContext(NotificationCenterContext);
+  const { onActionClick, listItem } = useContext(NotificationCenterContext);
 
   function handleNotificationClick() {
     onClick(notification);
@@ -24,6 +24,10 @@ export function NotificationListItem({
 
   async function handleActionButtonClick(actionButtonType: ButtonTypeEnum) {
     onActionClick(notification.templateIdentifier, actionButtonType, notification);
+  }
+
+  if (listItem) {
+    return listItem(notification, handleActionButtonClick, handleNotificationClick);
   }
 
   return (

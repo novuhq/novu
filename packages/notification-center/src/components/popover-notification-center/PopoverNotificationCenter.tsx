@@ -6,7 +6,7 @@ import { Popover } from './components/Popover';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { INovuThemePopoverProvider } from '../../store/novu-theme-provider.context';
 import { useDefaultTheme } from '../../hooks';
-import { ColorScheme } from '../../index';
+import { ColorScheme, ListItem } from '../../index';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -15,6 +15,7 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
+  listItem?: ListItem;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
