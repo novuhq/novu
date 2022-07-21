@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Popover, useMantineTheme, Grid, ColorScheme } from '@mantine/core';
+import { useClipboard } from '@mantine/hooks';
+import styled from '@emotion/styled';
+import * as Sentry from '@sentry/react';
+import { IFeedEntity } from '@novu/shared';
+import { showNotification } from '@mantine/notifications';
 import { FeedChip } from './FeedChip';
 import { colors, shadows, Text, Tooltip, Button } from '../../../design-system';
 import { Copy, Trash } from '../../../design-system/icons';
-import { useClipboard } from '@mantine/hooks';
-import styled from '@emotion/styled';
-import { showNotification } from '@mantine/notifications';
-import * as Sentry from '@sentry/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { deleteFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
@@ -46,7 +47,7 @@ export function FeedItems(props: IFeedItemPopoverProps) {
 
 function FeedPopover(props: IFeedPopoverProps) {
   const [opened, setOpened] = useState(false);
-  const colorScheme = useMantineTheme().colorScheme;
+  const { colorScheme } = useMantineTheme();
 
   return (
     <Popover
@@ -107,7 +108,7 @@ function PopoverActionBlock({
   showFeed: boolean;
   feedItem?: IFeedEntity;
 }) {
-  const colorScheme = useMantineTheme().colorScheme;
+  const { colorScheme } = useMantineTheme();
 
   return (
     <ActionBlockWrapper colorScheme={colorScheme} onMouseLeave={() => setOpened(false)}>
@@ -120,7 +121,7 @@ function PopoverActionBlock({
 function CopyBlock({ showFeed, feedItem }: { showFeed: boolean; feedItem?: IFeedEntity }) {
   const [opened, setOpened] = useState(false);
 
-  const colorScheme = useMantineTheme().colorScheme;
+  const { colorScheme } = useMantineTheme();
   const clipboardIdentifier = useClipboard({ timeout: 1000 });
 
   function handleOnclick() {

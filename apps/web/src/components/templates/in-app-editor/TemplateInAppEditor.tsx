@@ -1,5 +1,6 @@
 import { useInputState } from '@mantine/hooks';
 import { ActionIcon, Container, Group } from '@mantine/core';
+import { IFeedEntity } from '@novu/shared';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
