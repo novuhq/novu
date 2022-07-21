@@ -11,7 +11,6 @@ import { Copy, Trash } from '../../../design-system/icons';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { deleteFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
-import { IFeedEntity } from '@novu/shared';
 
 interface IFeedItemPopoverProps {
   showFeed: boolean;
