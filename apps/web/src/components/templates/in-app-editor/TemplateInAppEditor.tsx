@@ -7,7 +7,7 @@ import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { createFeed, deleteFeed, getFeeds } from '../../../api/feeds';
+import { createFeed, getFeeds } from '../../../api/feeds';
 import { useEffect, useState } from 'react';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
@@ -33,15 +33,6 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
     },
   });
 
-  const { mutateAsync: deleteFeedById } = useMutation<
-    { name: string; _id: string }[],
-    { error: string; message: string; statusCode: number },
-    string
-  >((feedId) => deleteFeed(feedId), {
-    onSuccess: (data) => {
-      queryClient.refetchQueries([QueryKeys.getFeeds]);
-    },
-  });
   const [showFeed, setShowFeed] = useState(true);
 
   useEffect(() => {

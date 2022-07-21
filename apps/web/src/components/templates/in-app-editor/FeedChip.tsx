@@ -61,7 +61,7 @@ const Wrapper = styled.div<{ colorScheme: ColorScheme; showFeed: boolean; select
   display: flex;
   align-items: center;
   width: 100%;
-  height: 45px;
+  height: 100%;
   border-radius: 7px;
   cursor: default;
   justify-content: space-evenly;

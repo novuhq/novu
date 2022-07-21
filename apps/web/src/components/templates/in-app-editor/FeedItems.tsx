@@ -24,7 +24,7 @@ export function FeedItems(props: IFeedItemPopoverProps) {
 
   return (
     <FeedsBlock>
-      <Grid gutter={10}>
+      <Grid gutter={'xs'}>
         {(feeds || []).map((item, feedIndex) => {
           return (
             <Grid.Col span={4}>
@@ -73,9 +73,9 @@ function FeedPopover(props: IFeedPopoverProps) {
       styles={{
         root: {
           width: '100%',
-          height: '1px',
         },
         inner: { margin: 0, padding: 0, height: '95px' },
+        target: { height: '45px' },
         arrow: {
           backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
           height: '-22px',
@@ -132,11 +132,14 @@ function CopyBlock({ showFeed, feedItem }: { showFeed: boolean; feedItem?: IFeed
   }
 
   return (
-    <Row disabled={!showFeed} onClick={handleOnclick}>
+    <Row colorScheme={colorScheme} disabled={!showFeed} onClick={handleOnclick}>
       <Tooltip label={'Copied!'} opened={opened}>
         <Copy
           style={{
             color: colorScheme === 'dark' ? colors.white : colors.B80,
+            width: '25px',
+            height: '25px',
+            marginRight: '13px',
           }}
         />
       </Tooltip>
@@ -154,7 +157,7 @@ function DeleteBlock({
   showFeed: boolean;
   feedItem?: IFeedEntity;
 }) {
-  const theme = useMantineTheme();
+  const { colorScheme } = useMantineTheme();
   const queryClient = useQueryClient();
 
   const { mutateAsync: deleteFeedById } = useMutation<
@@ -186,10 +189,11 @@ function DeleteBlock({
   }
 
   return (
-    <Row disabled={!showFeed} onClick={() => deleteFeedHandler(feedItem?._id || '')}>
+    <Row colorScheme={colorScheme} disabled={!showFeed} onClick={() => deleteFeedHandler(feedItem?._id || '')}>
       <Trash
         style={{
-          color: theme.colorScheme === 'dark' ? colors.white : colors.B80,
+          color: colorScheme === 'dark' ? colors.white : colors.B80,
+          margin: '5px 13px 5px 5px',
         }}
       />
       <Text>Delete Feed</Text>
@@ -208,7 +212,7 @@ const ActionBlockWrapper = styled.div<{ colorScheme: ColorScheme }>`
   box-shadow: ${({ colorScheme }) => (colorScheme === 'dark' ? shadows.dark : shadows.medium)};
 `;
 
-const Row = styled(Button)`
+const Row = styled(Button)<{ colorScheme: ColorScheme }>`
   display: flex;
   justify-content: start;
   align-items: center;
@@ -216,10 +220,11 @@ const Row = styled(Button)`
   margin-right: 5px;
   margin-left: 5px;
 
-  background: ${colors.B20};
+  background: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B20 : colors.white)};
+
   box-shadow: none;
   :hover {
-    background: ${colors.B40};
+    background: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B30 : colors.B98)};
   }
 `;
 
