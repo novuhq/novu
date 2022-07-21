@@ -1,7 +1,7 @@
 import React from 'react';
-import { FeedEntity } from '@novu/dal';
 import styled from '@emotion/styled';
 import { ColorScheme, useMantineTheme } from '@mantine/core';
+import { IFeedEntity } from '@novu/shared';
 import { colors, shadows } from '../../../design-system';
 import { DotsHorizontal } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -10,7 +10,7 @@ interface IFeedItemProps {
   showFeed: boolean;
   index: number;
   setOpened: (hover: boolean) => void;
-  item: FeedEntity;
+  item: IFeedEntity;
   feedIndex: number;
   onEditClick: () => void;
   field: any;
@@ -18,7 +18,7 @@ interface IFeedItemProps {
 }
 
 export function FeedChip(props: IFeedItemProps) {
-  const colorScheme = useMantineTheme().colorScheme;
+  const { colorScheme } = useMantineTheme();
   const { readonly } = useEnvController();
 
   const selectedItem = props.field.value === props.item._id;

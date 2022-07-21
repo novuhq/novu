@@ -1,6 +1,6 @@
 import { useInputState } from '@mantine/hooks';
-import { FeedEntity } from '@novu/dal';
 import { ActionIcon, Container, Group } from '@mantine/core';
+import { IFeedEntity } from '@novu/shared';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
@@ -24,7 +24,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   } = useFormContext();
   const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
-    FeedEntity,
+    IFeedEntity,
     { error: string; message: string; statusCode: number },
     { name: string }
   >(createFeed, {
