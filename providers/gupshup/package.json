@@ -1,7 +1,7 @@
 {
-  "name": "@novu/ses",
+  "name": "@novu/gupshup",
   "version": "0.5.1",
-  "description": "A ses wrapper for novu",
+  "description": "A gupshup wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -21,7 +21,7 @@
     "test:unit": "jest src",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
-    "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
+    "reset-hard": "git clean -dfx && git reset --hard && yarn",
     "prepare-release": "run-s reset-hard test"
   },
   "publishConfig": {
@@ -31,13 +31,12 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@aws-sdk/client-ses": "3.48.0",
-    "@novu/stateless": "^0.5.1",
-    "nodemailer": "^6.6.5"
+    "@novu/stateless": "^0.4.1",
+    "node-fetcher": "0.0.10"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/jest": "27.4.0",
+    "@types/jest": "^27.0.1",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
@@ -50,8 +49,7 @@
     "standard-version": "^9.0.0",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
-    "typedoc": "^0.19.0",
-    "typescript": "^4.4.3"
+    "typedoc": "^0.19.0"
   },
   "files": [
     "build/main",
@@ -82,6 +80,5 @@
     "exclude": [
       "**/*.spec.js"
     ]
-  },
-  "gitHead": "565e5dcbe446aadf9fe53d13100b8cb56c0b1128"
+  }
 }

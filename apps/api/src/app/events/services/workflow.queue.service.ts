@@ -62,14 +62,9 @@ export class WorkflowQueueService {
   }
 
   public async work(job: IJobEntityExtended) {
-    if (job.type === ChannelTypeEnum.DIGEST) {
-      const count = await this.jobRepository.count({
-        _id: job._id,
-        status: JobStatusEnum.CANCELED,
-      });
-      if (count > 0) {
-        return;
-      }
+    const canceled = await this.digestIsCanceled(job);
+    if (canceled) {
+      return;
     }
 
     await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
@@ -111,17 +106,8 @@ export class WorkflowQueueService {
       removeOnFail: true,
     };
 
-    if (data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit) {
-      await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
-      const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
-      if (data.digest?.updateMode) {
-        const inApps = await this.jobRepository.findInAppsForDigest(data.transactionId, data._subscriberId);
-        for (const inApp of inApps) {
-          await this.addJob(inApp, true);
-        }
-      }
-      await this.queue.add(data._id, data, { delay, ...options });
-
+    const digestAdded = await this.addDigestJob(data, options);
+    if (digestAdded) {
       return;
     }
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
@@ -148,5 +134,36 @@ export class WorkflowQueueService {
     }
 
     return delay;
+  }
+
+  private async addDigestJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
+    const isDigest = data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
+    if (!isDigest) {
+      return false;
+    }
+
+    await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
+    const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
+    if (data.digest?.updateMode) {
+      const inApps = await this.jobRepository.findInAppsForDigest(data.transactionId, data._subscriberId);
+      for (const inApp of inApps) {
+        await this.addJob(inApp, true);
+      }
+    }
+    await this.queue.add(data._id, data, { delay, ...options });
+
+    return true;
+  }
+
+  private async digestIsCanceled(job: JobEntity) {
+    if (job.type !== ChannelTypeEnum.DIGEST) {
+      return false;
+    }
+    const count = await this.jobRepository.count({
+      _id: job._id,
+      status: JobStatusEnum.CANCELED,
+    });
+
+    return count > 0;
   }
 }
