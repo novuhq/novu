@@ -137,6 +137,9 @@ function CopyBlock({ showFeed, feedItem }: { showFeed: boolean; feedItem?: IFeed
         <Copy
           style={{
             color: colorScheme === 'dark' ? colors.white : colors.B80,
+            width: '25px',
+            height: '25px',
+            marginRight: '13px',
           }}
         />
       </Tooltip>
@@ -190,6 +193,7 @@ function DeleteBlock({
       <Trash
         style={{
           color: colorScheme === 'dark' ? colors.white : colors.B80,
+          margin: '5px 13px 5px 5px',
         }}
       />
       <Text>Delete Feed</Text>
