@@ -132,7 +132,7 @@ function CopyBlock({ showFeed, feedItem }: { showFeed: boolean; feedItem?: IFeed
   }
 
   return (
-    <Row disabled={!showFeed} onClick={handleOnclick}>
+    <Row colorScheme={colorScheme} disabled={!showFeed} onClick={handleOnclick}>
       <Tooltip label={'Copied!'} opened={opened}>
         <Copy
           style={{
@@ -154,7 +154,7 @@ function DeleteBlock({
   showFeed: boolean;
   feedItem?: IFeedEntity;
 }) {
-  const theme = useMantineTheme();
+  const { colorScheme } = useMantineTheme();
   const queryClient = useQueryClient();
 
   const { mutateAsync: deleteFeedById } = useMutation<
@@ -186,10 +186,10 @@ function DeleteBlock({
   }
 
   return (
-    <Row disabled={!showFeed} onClick={() => deleteFeedHandler(feedItem?._id || '')}>
+    <Row colorScheme={colorScheme} disabled={!showFeed} onClick={() => deleteFeedHandler(feedItem?._id || '')}>
       <Trash
         style={{
-          color: theme.colorScheme === 'dark' ? colors.white : colors.B80,
+          color: colorScheme === 'dark' ? colors.white : colors.B80,
         }}
       />
       <Text>Delete Feed</Text>
@@ -208,7 +208,7 @@ const ActionBlockWrapper = styled.div<{ colorScheme: ColorScheme }>`
   box-shadow: ${({ colorScheme }) => (colorScheme === 'dark' ? shadows.dark : shadows.medium)};
 `;
 
-const Row = styled(Button)`
+const Row = styled(Button)<{ colorScheme: ColorScheme }>`
   display: flex;
   justify-content: start;
   align-items: center;
@@ -216,10 +216,11 @@ const Row = styled(Button)`
   margin-right: 5px;
   margin-left: 5px;
 
-  background: ${colors.B20};
+  background: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B20 : colors.white)};
+
   box-shadow: none;
   :hover {
-    background: ${colors.B40};
+    background: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B30 : colors.B98)};
   }
 `;
 
