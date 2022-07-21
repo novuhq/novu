@@ -5,7 +5,7 @@ You can find the embed code in the `Settings` page within the Admin Panel. It wi
 
 ```html
 <script>
-  (function(n,o,t,i,f) {
+  (function(n,o,t,i,f,m) {
     n[i] = {}, m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
     var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
     var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
