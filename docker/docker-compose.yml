@@ -5,6 +5,8 @@ services:
     container_name: redis
     logging:
       driver: "none"
+    ports:
+      - 6379:6379
   mongodb:
     image: mongo
     container_name: mongodb
@@ -19,7 +21,9 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
-    image: "ghcr.io/novuhq/novu/api:latest"
+    build:
+      dockerfile: "apps/api/Dockerfile"
+      context: "../"
     depends_on:
       - mongodb
       - redis
@@ -42,7 +46,9 @@ services:
     ports:
       - "3000:3000"
   ws:
-    image: "ghcr.io/novuhq/novu/ws:latest"
+    build:
+      dockerfile: "apps/ws/Dockerfile"
+      context: "../"
     depends_on:
       - mongodb
       - redis
@@ -57,9 +63,9 @@ services:
     ports:
       - "3002:3002"
   web:
-    image: "ghcr.io/novuhq/novu/web:latest"
-    depends_on:
-      - api
+    build:
+      dockerfile: "apps/web/Dockerfile"
+      context: "../"
     container_name: web
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
@@ -68,26 +74,5 @@ services:
       REACT_APP_DOCKER_HOSTED_ENV: 'true'
     ports:
       - 4200:4200
-  widget:
-    image: "ghcr.io/novuhq/novu/widget:latest"
-    depends_on:
-      - api
-      - web
-    container_name: widget
-    environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
-    ports:
-      - 4500:4500
-  embed:
-    depends_on:
-      - widget
-    image: "ghcr.io/novuhq/novu/embed:latest"
-    container_name: embed
-    environment:
-      WIDGET_URL: ${WIDGET_URL}
-    ports:
-      - 4701:4701
 volumes:
   mongodb: ~
