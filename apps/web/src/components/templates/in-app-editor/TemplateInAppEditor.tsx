@@ -1,5 +1,4 @@
 import { useInputState } from '@mantine/hooks';
-import { FeedEntity } from '@novu/dal';
 import { ActionIcon, Container, Group } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { IForm } from '../use-template-controller.hook';
@@ -7,11 +6,12 @@ import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { createFeed, deleteFeed, getFeeds } from '../../../api/feeds';
+import { createFeed, getFeeds } from '../../../api/feeds';
 import { useEffect, useState } from 'react';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
+import { IFeedEntity } from '@novu/shared';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
@@ -24,7 +24,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   } = useFormContext();
   const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
-    FeedEntity,
+    IFeedEntity,
     { error: string; message: string; statusCode: number },
     { name: string }
   >(createFeed, {
@@ -33,15 +33,6 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
     },
   });
 
-  const { mutateAsync: deleteFeedById } = useMutation<
-    { name: string; _id: string }[],
-    { error: string; message: string; statusCode: number },
-    string
-  >((feedId) => deleteFeed(feedId), {
-    onSuccess: (data) => {
-      queryClient.refetchQueries([QueryKeys.getFeeds]);
-    },
-  });
   const [showFeed, setShowFeed] = useState(true);
 
   useEffect(() => {

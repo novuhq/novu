@@ -4,13 +4,13 @@ import { FeedChip } from './FeedChip';
 import { colors, shadows, Text, Tooltip, Button } from '../../../design-system';
 import { Copy, Trash } from '../../../design-system/icons';
 import { useClipboard } from '@mantine/hooks';
-import { FeedEntity } from '@novu/dal';
 import styled from '@emotion/styled';
 import { showNotification } from '@mantine/notifications';
 import * as Sentry from '@sentry/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { deleteFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
+import { IFeedEntity } from '@novu/shared';
 
 interface IFeedItemPopoverProps {
   showFeed: boolean;
@@ -20,7 +20,7 @@ interface IFeedItemPopoverProps {
 }
 
 export function FeedItems(props: IFeedItemPopoverProps) {
-  const { data: feeds } = useQuery<FeedEntity[]>(QueryKeys.getFeeds, getFeeds);
+  const { data: feeds } = useQuery<IFeedEntity[]>(QueryKeys.getFeeds, getFeeds);
 
   return (
     <FeedsBlock>
@@ -105,7 +105,7 @@ function PopoverActionBlock({
 }: {
   setOpened: (boolean) => void;
   showFeed: boolean;
-  feedItem?: FeedEntity;
+  feedItem?: IFeedEntity;
 }) {
   const colorScheme = useMantineTheme().colorScheme;
 
@@ -117,7 +117,7 @@ function PopoverActionBlock({
   );
 }
 
-function CopyBlock({ showFeed, feedItem }: { showFeed: boolean; feedItem?: FeedEntity }) {
+function CopyBlock({ showFeed, feedItem }: { showFeed: boolean; feedItem?: IFeedEntity }) {
   const [opened, setOpened] = useState(false);
 
   const colorScheme = useMantineTheme().colorScheme;
@@ -152,13 +152,13 @@ function DeleteBlock({
 }: {
   setOpened: (boolean) => void;
   showFeed: boolean;
-  feedItem?: FeedEntity;
+  feedItem?: IFeedEntity;
 }) {
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
 
   const { mutateAsync: deleteFeedById } = useMutation<
-    FeedEntity[],
+    IFeedEntity[],
     { error: string; message: string; statusCode: number },
     string
   >((feedId) => deleteFeed(feedId), {
@@ -232,6 +232,6 @@ interface IFeedPopoverProps {
   showFeed: boolean;
   feedIndex: number;
   index: number;
-  item: FeedEntity;
+  item: IFeedEntity;
   field: any;
 }

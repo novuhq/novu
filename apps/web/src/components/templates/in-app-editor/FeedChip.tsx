@@ -1,16 +1,16 @@
 import React from 'react';
-import { FeedEntity } from '@novu/dal';
 import styled from '@emotion/styled';
 import { ColorScheme, useMantineTheme } from '@mantine/core';
 import { colors, shadows } from '../../../design-system';
 import { DotsHorizontal } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
+import { IFeedEntity } from '@novu/shared';
 
 interface IFeedItemProps {
   showFeed: boolean;
   index: number;
   setOpened: (hover: boolean) => void;
-  item: FeedEntity;
+  item: IFeedEntity;
   feedIndex: number;
   onEditClick: () => void;
   field: any;
