@@ -2,8 +2,9 @@ import styled, { css } from 'styled-components';
 import { IMessage } from '@novu/shared';
 import moment from 'moment';
 import { DotsHorizontal } from '../../../shared/icons';
-import React from 'react';
+import React, { useContext } from 'react';
 import { INovuTheme } from '../../../store/novu-theme.context';
+import { I18NContext } from '../../../store/i18n.context';
 import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
 
 export function NotificationListItem({
@@ -14,6 +15,7 @@ export function NotificationListItem({
   onClick: (notification: IMessage) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
+  const { lang } = useContext(I18NContext);
 
   return (
     <ItemWrapper
@@ -31,7 +33,7 @@ export function NotificationListItem({
         />
         <div>
           <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
-            {moment(notification.createdAt).fromNow()}
+            {moment(notification.createdAt).locale(lang).fromNow()}
           </TimeMark>
         </div>
       </div>

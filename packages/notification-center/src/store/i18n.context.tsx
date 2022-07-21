@@ -2,9 +2,12 @@ import React from 'react';
 import { I18NLanguage, ITranslationEntry, TRANSLATIONS } from '../lang';
 
 export const I18NContext = React.createContext<ITranslationEntry>({
-  markAllAsRead: '',
-  notifications: '',
-  poweredBy: '',
+  translations: {
+    markAllAsRead: '',
+    notifications: '',
+    poweredBy: '',
+  },
+  lang: '',
 });
 
 interface INovuI18NProviderProps {
@@ -12,14 +15,13 @@ interface INovuI18NProviderProps {
   children: JSX.Element;
 }
 
-export function NovuI18NProvider({ i18n, ...props }: INovuI18NProviderProps) {
+export function NovuI18NProvider({ i18n = 'en', ...props }: INovuI18NProviderProps) {
   const i18nEntry = React.useMemo<ITranslationEntry>(() => {
-    if (!i18n) {
-      return TRANSLATIONS.en;
-    }
-
     if (typeof i18n === 'string') {
-      return TRANSLATIONS[i18n];
+      return {
+        translations: TRANSLATIONS[i18n],
+        lang: i18n,
+      };
     }
 
     return i18n;

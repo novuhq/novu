@@ -1,15 +1,18 @@
 export interface ITranslationEntry {
-  readonly notifications: string;
-  readonly markAllAsRead: string;
-  readonly poweredBy: string;
+  readonly translations: {
+    readonly notifications: string;
+    readonly markAllAsRead: string;
+    readonly poweredBy: string;
+  };
+  readonly lang: string;
 }
 
-export type I18NLanguage = 'en';
-
-export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
+export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry['translations']> = {
   en: {
     notifications: 'Notifications',
     markAllAsRead: 'Mark all as read',
     poweredBy: 'Powered By',
   },
 };
+
+export type I18NLanguage = 'en';

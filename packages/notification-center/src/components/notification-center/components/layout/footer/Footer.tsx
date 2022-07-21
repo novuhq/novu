@@ -7,11 +7,11 @@ import { INovuTheme } from '../../../../../store/novu-theme.context';
 
 export function Footer() {
   const { theme } = useNovuThemeProvider();
-  const i18n = useContext(I18NContext);
+  const { translations } = useContext(I18NContext);
 
   return (
     <FooterWrapper>
-      <Text theme={theme}>{i18n.poweredBy} </Text>
+      <Text theme={theme}>{translations.poweredBy} </Text>
       <a
         rel="noreferrer"
         target="_blank"
