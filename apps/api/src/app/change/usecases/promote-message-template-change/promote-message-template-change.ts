@@ -16,6 +16,7 @@ export class PromoteMessageTemplateChange {
 
     const feedDev = await this.feedRepository.findOne({
       _id: newItem._feedId,
+      _organizationId: command.organizationId,
     });
 
     const feed = await this.feedRepository.findOne({

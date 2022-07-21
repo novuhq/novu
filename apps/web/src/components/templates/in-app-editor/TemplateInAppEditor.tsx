@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
+import { showNotification } from '@mantine/notifications';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
@@ -51,6 +52,15 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
 
   async function addNewFeed() {
     if (newFeed) {
+      const exists = feeds.filter((feed) => feed.name === newFeed);
+      if (exists.length) {
+        showNotification({
+          message: 'You already have a feed with this name! ',
+          color: 'red',
+        });
+
+        return;
+      }
       const response = await createNewFeed({
         name: newFeed,
       });
