@@ -21,11 +21,10 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     return this.mapEntity(item);
   }
 
-  async findById(id: string, organizationId: string, environmentId: string) {
+  async findById(id: string, organizationId: string) {
     const item = await NotificationTemplate.findOne({
       _id: id,
       _organizationId: organizationId,
-      _environmentId: environmentId,
     }).populate('steps.template');
 
     return this.mapEntity(item);
