@@ -119,6 +119,21 @@ export const nodemailerConfig: IConfigCredentials[] = [
     displayName: 'Secure',
     type: 'boolean',
   },
+  {
+    key: CredentialsKeyEnum.Domain,
+    displayName: 'DKIM: Domain name',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'DKIM: Private key',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.AccountSid,
+    displayName: 'DKIM: Key selector',
+    type: 'string',
+  },
   ...mailConfigBase,
 ];
 
@@ -239,4 +254,17 @@ export const twilioConfig: IConfigCredentials[] = [
     type: 'string',
   },
   ...smsConfigBase,
+];
+
+export const gupshupConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'User id',
+    type: 'string',
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+  },
 ];

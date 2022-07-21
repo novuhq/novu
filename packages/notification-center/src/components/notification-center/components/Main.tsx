@@ -5,8 +5,7 @@ import { NotificationsList } from './NotificationsList';
 import { NotificationCenterContext } from '../../../store/notification-center.context';
 import image from '../../../images/no-new-notifications.png';
 import { UnseenCountContext } from '../../../store/unseen-count.context';
-import { useApi } from '../../../hooks/use-api.hook';
-import { useNotifications } from '../../../hooks';
+import { useApi, useNotifications } from '../../../hooks';
 
 export function Main() {
   const { api } = useApi();

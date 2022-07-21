@@ -56,7 +56,7 @@ const useMenuStyles = createStyles((theme: MantineTheme) => {
     item: {
       borerRadius: '5px',
       color: `${dark ? theme.white : colors.B40} !important`,
-      fontWeight: '400',
+      fontWeight: 400,
       fontSize: '14px',
     },
     itemHovered: {
@@ -170,26 +170,28 @@ export function ChannelButton({
                     </ActionIcon>
                   }
                 >
-                  <MenuItem
-                    style={{
-                      pointerEvents: 'all',
-                    }}
-                    icon={
-                      <Edit
-                        style={{
-                          width: '20px',
-                          height: '20px',
-                        }}
-                      />
-                    }
-                    data-test-id="edit-step-action"
-                    onClick={() => {
-                      setShowDotMenu(false);
-                      setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
-                    }}
-                  >
-                    Edit Template
-                  </MenuItem>
+                  <When truthy={tabKey !== ChannelTypeEnum.DIGEST}>
+                    <MenuItem
+                      style={{
+                        pointerEvents: 'all',
+                      }}
+                      icon={
+                        <Edit
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                          }}
+                        />
+                      }
+                      data-test-id="edit-step-action"
+                      onClick={() => {
+                        setShowDotMenu(false);
+                        setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
+                      }}
+                    >
+                      Edit Template
+                    </MenuItem>
+                  </When>
                   <MenuItem
                     style={{
                       pointerEvents: 'all',
@@ -201,7 +203,7 @@ export function ChannelButton({
                       onDelete(id || '');
                     }}
                   >
-                    Delete Step
+                    Delete {tabKey !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
                   </MenuItem>
                 </Menu>
               </a>
@@ -310,7 +312,7 @@ const Dropzone = styled.div<{ dark: boolean }>`
   border: 1px dashed ${({ dark }) => (dark ? colors.B30 : colors.B80)};
 `;
 
-const Button = styled(UnstyledButton)`
+const Button: any = styled(UnstyledButton)`
   position: relative;
 
   @media screen and (max-width: 1400px) {

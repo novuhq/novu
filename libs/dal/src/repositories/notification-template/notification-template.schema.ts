@@ -68,6 +68,29 @@ const notificationTemplateSchema = new Schema(
         _parentId: {
           type: Schema.Types.ObjectId,
         },
+        metadata: {
+          amount: {
+            type: Schema.Types.Number,
+          },
+          unit: {
+            type: Schema.Types.String,
+          },
+          digestKey: {
+            type: Schema.Types.String,
+          },
+          type: {
+            type: Schema.Types.String,
+          },
+          backoffUnit: {
+            type: Schema.Types.String,
+          },
+          backoffAmount: {
+            type: Schema.Types.Number,
+          },
+          updateMode: {
+            type: Schema.Types.Boolean,
+          },
+        },
       },
     ],
     _environmentId: {
