@@ -1,25 +1,21 @@
+import { useInputState } from '@mantine/hooks';
+import { ActionIcon, Container, Group } from '@mantine/core';
+import { IFeedEntity } from '@novu/shared';
 import { Control, Controller, useFormContext } from 'react-hook-form';
-import { ActionIcon, Chip, Container, Group, Chips, useMantineTheme } from '@mantine/core';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Checkbox, colors, Input, Tooltip } from '../../../design-system';
+import { Checkbox, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { createFeed, deleteFeed, getFeeds } from '../../../api/feeds';
 import { useEffect, useState } from 'react';
 import { QueryKeys } from '../../../api/query.keys';
-import { Trash, PlusGradient, Check, Copy } from '../../../design-system/icons';
-import { useClipboard, useInputState } from '@mantine/hooks';
-import * as Sentry from '@sentry/react';
-import { showNotification } from '@mantine/notifications';
-import { getOutlineStyles } from '../../../design-system/button/Button.styles';
-import useStyles from './Chips.styles';
+import { PlusGradient } from '../../../design-system/icons';
+import { FeedItems } from './FeedItems';
+
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
-  const theme = useMantineTheme();
-  const { classes } = useStyles();
-  const clipboardIdentifier = useClipboard({ timeout: 1000 });
   const [newFeed, setNewFeed] = useInputState('');
   const {
     formState: { errors },
@@ -28,7 +24,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   } = useFormContext();
   const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
-    { name: string; _id: string },
+    IFeedEntity,
     { error: string; message: string; statusCode: number },
     { name: string }
   >(createFeed, {
@@ -74,23 +70,6 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
         setValue(`steps.${index}.template.feedId`, response._id, { shouldDirty: true });
       }, 0);
       setShowFeed(true);
-    }
-  }
-
-  async function deleteFeedHandler(feedId: string) {
-    try {
-      await deleteFeedById(feedId);
-      showNotification({
-        message: 'Feed deleted successfully',
-        color: 'green',
-      });
-    } catch (e: any) {
-      Sentry.captureException(e);
-
-      showNotification({
-        message: e.message || 'Un-expected error occurred',
-        color: 'red',
-      });
     }
   }
 
@@ -160,57 +139,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                       }
                     />
                   </div>
-                  <Chips size="xl" radius="md" {...field} classNames={classes}>
-                    {(feeds || []).map((item, feedIndex) => (
-                      <Chip value={item._id} data-test-id={`feed-button-${feedIndex}`} disabled={!showFeed || readonly}>
-                        {item.name}
-                        <ActionIcon
-                          disabled={!showFeed}
-                          sx={{
-                            display: 'inline',
-                            float: 'right',
-                            marginTop: '7px',
-                            '&:disabled': {
-                              display: 'none',
-                            },
-                          }}
-                          variant="transparent"
-                          onClick={() => deleteFeedHandler(item._id)}
-                        >
-                          <Trash
-                            style={{
-                              color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
-                            }}
-                          />
-                        </ActionIcon>
-                        <Tooltip label={clipboardIdentifier.copied ? 'Copied!' : 'Copy Identifier'}>
-                          <ActionIcon
-                            disabled={!showFeed}
-                            sx={{
-                              display: 'inline',
-                              float: 'right',
-                              marginTop: '7px',
-                              ':disabled': {
-                                display: 'none',
-                              },
-                            }}
-                            variant="transparent"
-                            onClick={() => clipboardIdentifier.copy(item.identifier)}
-                          >
-                            {clipboardIdentifier.copied ? (
-                              <Check />
-                            ) : (
-                              <Copy
-                                style={{
-                                  color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
-                                }}
-                              />
-                            )}
-                          </ActionIcon>
-                        </Tooltip>
-                      </Chip>
-                    ))}
-                  </Chips>
+                  <FeedItems field={field} index={index} showFeed={showFeed} setValue={setValue} />
                 </>
               );
             }}
