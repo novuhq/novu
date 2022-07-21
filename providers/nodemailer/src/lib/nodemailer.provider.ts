@@ -5,6 +5,7 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import nodemailer, { Transporter } from 'nodemailer';
+import DKIM from 'nodemailer/lib/dkim';
 
 export class NodemailerProvider implements IEmailProvider {
   id = 'nodemailer';
@@ -21,8 +22,15 @@ export class NodemailerProvider implements IEmailProvider {
       secure: boolean;
       user: string;
       password: string;
+      dkim?: DKIM.SingleKeyOptions | undefined;
     }
   ) {
+    let dkim = this.config.dkim;
+
+    if (!dkim.domainName || !dkim.privateKey || !dkim.keySelector) {
+      dkim = undefined;
+    }
+
     this.transports = nodemailer.createTransport({
       host: this.config.host,
       port: this.config.port,
@@ -31,6 +39,7 @@ export class NodemailerProvider implements IEmailProvider {
         user: this.config.user,
         pass: this.config.password,
       },
+      dkim,
     });
   }
 
@@ -42,9 +51,10 @@ export class NodemailerProvider implements IEmailProvider {
       to: options.to,
       subject: options.subject,
       html: options.html,
+      text: options.text,
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment?.name,
-        content: attachment.file.toString(),
+        content: attachment.file,
         contentType: attachment.mime,
       })),
     });

@@ -68,7 +68,7 @@ const StyledContentWrapper = styled.div`
   padding-right: 10px;
 `;
 
-const Button = styled(UnstyledButton)`
+const Button: any = styled(UnstyledButton)`
   position: relative;
   margin-bottom: 0;
 
