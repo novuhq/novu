@@ -24,7 +24,7 @@ export function FeedItems(props: IFeedItemPopoverProps) {
 
   return (
     <FeedsBlock>
-      <Grid gutter={10}>
+      <Grid gutter={'xs'}>
         {(feeds || []).map((item, feedIndex) => {
           return (
             <Grid.Col span={4}>
@@ -73,9 +73,9 @@ function FeedPopover(props: IFeedPopoverProps) {
       styles={{
         root: {
           width: '100%',
-          height: '1px',
         },
         inner: { margin: 0, padding: 0, height: '95px' },
+        target: { height: '45px' },
         arrow: {
           backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
           height: '-22px',
