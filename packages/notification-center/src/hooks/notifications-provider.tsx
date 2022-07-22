@@ -35,15 +35,22 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     if (!page.has(storeId)) {
       setPage(page.set(storeId, 0));
     }
+
     if (isRefetch) {
       notifications[storeId] = newNotifications;
       setNotifications(notifications);
     } else {
-      notifications[storeId] = [...(notifications[storeId] || []), ...newNotifications];
+      notifications[storeId] = unique([...(notifications[storeId] || []), ...newNotifications], '_id');
       setNotifications(notifications);
     }
 
     setFetching(false);
+  }
+
+  function unique(array: IMessage[], key: string) {
+    const set = new Set();
+
+    return array.filter((item) => !set.has(item[key]) && set.add(item[key]));
   }
 
   async function fetchNextPage(storeId = 'default_store') {

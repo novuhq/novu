@@ -39,6 +39,7 @@ describe('Notifications List', function () {
     });
 
     cy.getByTestId('unseen-count-label').contains('8');
+
     cy.getByTestId('notification-list-item').should('have.length', 8);
 
     cy.task('createNotifications', {
