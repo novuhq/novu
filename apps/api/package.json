@@ -78,7 +78,7 @@
     "moment": "^2.29.1",
     "nanoid": "^3.1.20",
     "nest-raven": "8.2.0",
-    "newrelic": "^7.4.0",
+    "newrelic": "7.4.0",
     "passport": "0.6.0",
     "passport-github2": "^0.1.12",
     "passport-jwt": "^4.0.0",
