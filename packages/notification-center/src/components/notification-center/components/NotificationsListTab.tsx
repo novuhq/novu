@@ -21,11 +21,10 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     hasNextPage,
   } = useNotifications({ storeId: storeId });
 
-  const isFirstRender = useIsFirstRender();
   const { unseenCount } = useContext(UnseenCountContext);
 
   useEffect(() => {
-    if (!isNaN(unseenCount) && !isFirstRender) {
+    if (!isNaN(unseenCount)) {
       refetch();
     }
   }, [unseenCount]);
@@ -85,13 +84,3 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     </>
   );
 }
-
-export const useIsFirstRender = () => {
-  const isFirstRenderRef = useRef(true);
-
-  useEffect(() => {
-    isFirstRenderRef.current = false;
-  }, []);
-
-  return isFirstRenderRef.current;
-};
