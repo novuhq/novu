@@ -141,6 +141,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                       value={newFeed}
                       onChange={setNewFeed}
                       description={
+                        // eslint-disable-next-line max-len
                         'Feeds can be used to display specific notifications in multiple tabs or sections when fetching in-app notifications'
                       }
                       rightSection={
