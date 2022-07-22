@@ -27,7 +27,7 @@ export function FeedItems(props: IFeedItemPopoverProps) {
       <Grid gutter={'xs'}>
         {(feeds || []).map((item, feedIndex) => {
           return (
-            <Grid.Col span={4}>
+            <Grid.Col span={4} key={item._id}>
               <FeedPopover
                 field={props.field}
                 item={item}
