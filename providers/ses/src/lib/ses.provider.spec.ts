@@ -29,5 +29,5 @@ test('should trigger ses library correctly', async () => {
   const response = await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
-  expect(response.id).toEqual(mockResponse.MessageId);
+  expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
 });

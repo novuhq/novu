@@ -4,9 +4,9 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import { Message, MessageAttachment, MessageHeaders } from 'emailjs';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { SESConfig } from './ses.config';
+import nodemailer from 'nodemailer';
 
 export class SESEmailProvider implements IEmailProvider {
   id = 'ses';
@@ -31,41 +31,25 @@ export class SESEmailProvider implements IEmailProvider {
     subject,
     attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const attachmentsPayload: MessageAttachment[] = [
-      { data: html, alternative: true },
-    ];
-
-    if (attachments && Array.isArray(attachments) && attachments.length) {
-      attachmentsPayload.push(
-        ...attachments?.map((attachment) => ({
-          name: attachment?.name,
-          data: attachment.file.toString(),
-          type: attachment.mime,
-        }))
-      );
-    }
-
-    const messagePayload: Partial<MessageHeaders> = {
-      from: from || this.config.from,
-      to,
-      text,
-      subject,
-      attachment: attachmentsPayload,
-    };
-
-    const message = new Message(messagePayload);
-
-    const rawMessage = await message.readAsync();
-    const command = new SendRawEmailCommand({
-      RawMessage: {
-        Data: new Uint8Array(Buffer.from(rawMessage, 'utf8')),
-      },
+    const transporter = nodemailer.createTransport({
+      SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
 
-    const result = await this.ses.send(command);
+    const info = await transporter.sendMail({
+      from: from || this.config.from,
+      to: to,
+      subject: subject,
+      html: html,
+      text: text,
+      attachments: attachments?.map((attachment) => ({
+        filename: attachment?.name,
+        content: attachment.file,
+        contentType: attachment.mime,
+      })),
+    });
 
     return {
-      id: result?.MessageId,
+      id: info?.messageId,
       date: new Date().toISOString(),
     };
   }
