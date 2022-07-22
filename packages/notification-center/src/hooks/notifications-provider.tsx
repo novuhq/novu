@@ -18,7 +18,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!api?.isAuthenticated || !token) return;
 
-    fetchPage(0);
+    fetchPage(0, true);
   }, [api?.isAuthenticated, token]);
 
   async function fetchPage(pageToFetch: number, isRefetch = false, storeId = 'default_store') {
@@ -40,17 +40,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       notifications[storeId] = newNotifications;
       setNotifications(notifications);
     } else {
-      notifications[storeId] = unique([...(notifications[storeId] || []), ...newNotifications], '_id');
+      notifications[storeId] = [...(notifications[storeId] || []), ...newNotifications];
       setNotifications(notifications);
     }
 
     setFetching(false);
-  }
-
-  function unique(array: IMessage[], key: string) {
-    const set = new Set();
-
-    return array.filter((item) => !set.has(item[key]) && set.add(item[key]));
   }
 
   async function fetchNextPage(storeId = 'default_store') {
