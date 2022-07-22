@@ -93,6 +93,13 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
               />
             )}
           />
+
+          <InAppEditorBlock
+            control={control}
+            index={index}
+            readonly={readonly}
+            contentPlaceholder="Write your notification content here..."
+          />
           <Controller
             name={`steps.${index}.template.feedId` as any}
             control={control}
@@ -133,6 +140,9 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                       placeholder="Name your feed..."
                       value={newFeed}
                       onChange={setNewFeed}
+                      description={
+                        'Feeds can be used to display specific notifications in multiple tabs or sections when fetching in-app notifications'
+                      }
                       rightSection={
                         <ActionIcon data-test-id={`add-feed-button`} variant="transparent" onClick={addNewFeed}>
                           <PlusGradient />
@@ -144,13 +154,6 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                 </>
               );
             }}
-          />
-
-          <InAppEditorBlock
-            control={control}
-            index={index}
-            readonly={readonly}
-            contentPlaceholder="Write your notification content here..."
           />
         </Group>
       </Container>

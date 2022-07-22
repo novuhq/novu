@@ -24,7 +24,7 @@ export function FeedItems(props: IFeedItemPopoverProps) {
 
   return (
     <FeedsBlock>
-      <Grid gutter={'xs'}>
+      <Grid gutter={'xs'} grow>
         {(feeds || []).map((item, feedIndex) => {
           return (
             <Grid.Col span={4}>
