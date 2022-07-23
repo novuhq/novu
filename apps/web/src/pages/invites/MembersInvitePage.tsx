@@ -7,9 +7,9 @@ import * as capitalize from 'lodash.capitalize';
 import { Avatar, Container, Divider, Group, Text } from '@mantine/core';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { getOrganizationMembers, inviteMember } from '../../api/organization';
+import { getOrganizationMembers, inviteMember, removeMember } from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, colors, Input, Tag } from '../../design-system';
+import { Button, Input, Tag } from '../../design-system';
 import { Invite } from '../../design-system/icons';
 import useStyles from '../../design-system/config/text.styles';
 
@@ -40,6 +40,25 @@ export function MembersInvitePage() {
     });
 
     form.resetFields(['email']);
+  }
+
+  async function removeMemberClick(member) {
+    await removeMember(member._id)
+      .then((result) => {
+        showNotification({
+          message: `Successful member deletion.`,
+          color: 'green',
+        });
+        refetch();
+
+        return result;
+      })
+      .catch((err) => {
+        showNotification({
+          message: err.message,
+          color: 'red',
+        });
+      });
   }
 
   return (
@@ -88,6 +107,9 @@ export function MembersInvitePage() {
                   ) : (
                     <Tag>Member</Tag>
                   )}
+                  <span onClick={() => removeMemberClick(member)}>
+                    <Tag css={{ cursor: 'pointer' }}>X</Tag>
+                  </span>
                 </div>
               </ActionsSider>
               <Divider className={classes.seperator} />
