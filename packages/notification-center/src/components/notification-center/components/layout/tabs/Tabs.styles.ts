@@ -4,13 +4,17 @@ import { ICommonTheme } from '../../../../../store/novu-theme-provider.context';
 import { colors } from '../../../../../shared/config/colors';
 
 export default createStyles(
-  (theme: MantineTheme, { novuTheme, common }: { novuTheme: INovuTheme; common: ICommonTheme }, getRef) => {
+  (
+    theme: MantineTheme,
+    { novuTheme, common, colorScheme }: { novuTheme: INovuTheme; common: ICommonTheme; colorScheme: 'light' | 'dark' },
+    getRef
+  ) => {
     const tabLabel = getRef('tabLabel');
     const tabIcon = getRef('tabIcon');
 
     return {
       tabsListWrapper: {
-        borderBottom: '1px solid ' + (theme.colorScheme === 'dark' ? colors.B20 : colors.B98),
+        borderBottom: '1px solid ' + (colorScheme === 'dark' ? colors.B20 : colors.B98),
       },
       tabsList: {
         gap: '30px',
