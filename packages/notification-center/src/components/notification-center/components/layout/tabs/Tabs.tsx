@@ -4,8 +4,8 @@ import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provid
 import React from 'react';
 
 export function Tabs({ children }: { children: React.ReactNode }) {
-  const { theme: novuTheme, common } = useNovuThemeProvider();
-  const { classes } = useStyles({ novuTheme, common });
+  const { theme: novuTheme, common, colorScheme } = useNovuThemeProvider();
+  const { classes } = useStyles({ novuTheme, common, colorScheme });
 
   return (
     <MantineTabs variant="unstyled" classNames={classes}>
