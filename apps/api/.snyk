@@ -1,0 +1,22 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.0
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  'npm:hawk:20160119':
+    - '@novu/gupshup > node-fetcher > request > hawk':
+        patched: '2022-07-24T18:16:56.817Z'
+  'npm:http-signature:20150122':
+    - '@novu/gupshup > node-fetcher > request > http-signature':
+        patched: '2022-07-24T18:16:56.817Z'
+  'npm:mime:20170907':
+    - '@novu/gupshup > node-fetcher > request > mime':
+        patched: '2022-07-24T18:16:56.817Z'
+    - '@novu/gupshup > node-fetcher > request > form-data > mime':
+        patched: '2022-07-24T18:16:56.817Z'
+  'npm:qs:20140806-1':
+    - '@novu/gupshup > node-fetcher > request > qs':
+        patched: '2022-07-24T18:16:56.817Z'
+  'npm:request:20160119':
+    - '@novu/gupshup > node-fetcher > request':
+        patched: '2022-07-24T18:16:56.817Z'
