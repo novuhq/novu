@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.4.1",
-    "node-fetcher": "0.0.10"
+    "node-fetch": "^3.2.9"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
