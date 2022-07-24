@@ -64,20 +64,21 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     messageId: string,
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
-    payload?: Record<string, unknown>,
-    storeId = 'default_store'
+    payload?: Record<string, unknown>
   ) {
     await api.updateAction(messageId, actionButtonType, status, payload);
 
-    notifications[storeId] = notifications[storeId].map((message) => {
-      if (message._id === messageId) {
-        message.cta.action.status = MessageActionStatusEnum.DONE;
-      }
+    for (const storeId in notifications) {
+      notifications[storeId] = notifications[storeId].map((message) => {
+        if (message._id === messageId) {
+          message.cta.action.status = MessageActionStatusEnum.DONE;
+        }
 
-      return message;
-    });
+        return message;
+      });
+    }
 
-    setNotifications(notifications);
+    setNotifications(Object.assign({}, notifications));
   }
 
   async function refetch(storeId = 'default_store') {
