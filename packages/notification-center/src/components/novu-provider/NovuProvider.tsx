@@ -127,7 +127,7 @@ function UnseenProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (socket) {
       socket.on('unseen_count_changed', (onData: { unseenCount: number }) => {
-        if (onData?.unseenCount) {
+        if (!isNaN(onData?.unseenCount)) {
           setUnseenCount(onData.unseenCount);
         }
       });

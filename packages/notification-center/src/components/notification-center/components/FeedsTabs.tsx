@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Center, Tab } from '@mantine/core';
+import styled from 'styled-components';
 import { NotificationsListTab } from './NotificationsListTab';
 import { INotificationCenterContext } from '../../../index';
 import { UnseenBadge } from './UnseenBadge';
@@ -19,10 +20,10 @@ export function FeedsTabs() {
             <Tab
               key={index}
               label={
-                <Center inline>
+                <TabLabelWrapper>
                   {tab.name}
                   <UnseenBadgeContainer storeId={tab.storeId} />
-                </Center>
+                </TabLabelWrapper>
               }
             >
               <NotificationsListTab tab={tab} />
@@ -35,6 +36,12 @@ export function FeedsTabs() {
     </>
   );
 }
+
+const TabLabelWrapper = styled.div`
+  margin-bottom: 13px;
+  min-height: 22px;
+  line-height: 19px;
+`;
 
 function UnseenBadgeContainer({ storeId }: { storeId: string }) {
   const { api } = useApi();

@@ -1,4 +1,4 @@
-import { createStyles, MantineTheme } from '@mantine/core';
+import { Badge, createStyles, MantineTheme } from '@mantine/core';
 import { INovuTheme } from '../../../../../store/novu-theme.context';
 import { ICommonTheme } from '../../../../../store/novu-theme-provider.context';
 import { colors } from '../../../../../shared/config/colors';
@@ -9,19 +9,33 @@ export default createStyles(
     const tabIcon = getRef('tabIcon');
 
     return {
+      tabsListWrapper: {
+        borderBottom: '1px solid ' + (theme.colorScheme === 'dark' ? colors.B20 : colors.B98),
+      },
       tabsList: {
         gap: '30px',
         padding: '15px',
+        paddingBottom: 0,
       },
 
       tabControl: {
         marginBottom: '0',
         padding: '0px',
-        height: '30px',
+        height: '36px',
+        [`.mantine-Badge-root`]: {
+          background: 'transparent',
+          border: '1px solid ' + colors.B60,
+          color: colors.B60,
+        },
       },
 
       tabActive: {
         width: 'auto',
+        [`.mantine-Badge-root`]: {
+          background: novuTheme.header?.badgeColor,
+          border: 'none',
+          color: novuTheme.header?.badgeTextColor,
+        },
         [`& .${tabLabel}`]: {
           color: novuTheme.header?.fontColor,
 
@@ -29,7 +43,6 @@ export default createStyles(
             content: '""',
             display: 'block',
             height: '2px',
-            marginTop: '10px',
             background: novuTheme.header?.badgeColor,
             borderRadius: '10px',
           },

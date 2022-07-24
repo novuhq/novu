@@ -58,13 +58,14 @@ const Wrapper = styled.div<{ colorScheme: ColorScheme; showFeed: boolean; select
     opacity: 0.4;  
   `}
 
+  padding: 0 15px;
   display: flex;
   align-items: center;
   width: 100%;
   height: 100%;
   border-radius: 7px;
   cursor: default;
-  justify-content: space-evenly;
+  justify-content: space-between;
   box-shadow: ${({ colorScheme }) => (colorScheme === 'dark' ? shadows.dark : shadows.medium)};
   background: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.B17 : colors.white)};
 

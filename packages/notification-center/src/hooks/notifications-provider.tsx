@@ -18,7 +18,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!api?.isAuthenticated || !token) return;
 
-    fetchPage(0);
+    fetchPage(0, true);
   }, [api?.isAuthenticated, token]);
 
   async function fetchPage(pageToFetch: number, isRefetch = false, storeId = 'default_store') {
@@ -35,6 +35,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     if (!page.has(storeId)) {
       setPage(page.set(storeId, 0));
     }
+
     if (isRefetch) {
       notifications[storeId] = newNotifications;
       setNotifications(notifications);
