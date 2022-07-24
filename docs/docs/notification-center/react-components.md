@@ -416,7 +416,7 @@ After specifying the `stores` prop, you can use the `storeId` property to intera
 
 :::tip
 
-To get all notifications without `feedIdentifier` specified, specify `null` as the `feedIdentifier` value.
+By specifying only a storeId, without a query, you could get all notifications.
 
 :::
 
