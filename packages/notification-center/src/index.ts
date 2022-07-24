@@ -80,6 +80,7 @@ export interface INotificationsContext {
     storeId?: string
   ) => void;
   refetch?: (storeId?: string, query?: IStoreQuery) => void;
+  disposeDefault?: () => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';

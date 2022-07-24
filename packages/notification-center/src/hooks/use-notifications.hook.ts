@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { INotificationsContext } from '../index';
 import { NotificationsContext } from '../store/notifications.context';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
@@ -16,9 +16,14 @@ export function useNotifications(props?: IUseNotificationsProps) {
     markAsSeen,
     updateAction: mapUpdateAction,
     refetch: mapRefetch,
+    disposeDefault,
   } = useContext<INotificationsContext>(NotificationsContext);
 
   const notifications = mapNotifications[props?.storeId];
+
+  useEffect(() => {
+    if (props?.storeId) disposeDefault();
+  }, []);
 
   async function fetchNextPage() {
     await mapFetchNextPage(props?.storeId);
