@@ -5,7 +5,7 @@ export interface IIconProps {
   height?: string;
 }
 /* eslint-disable */
-export function DigestGradient({ width = '30px', height = '31px' }: IIconProps) {
+export function DigestGradient({ width = '30', height = '31' }: IIconProps) {
   return (
     <svg
       width={width}
