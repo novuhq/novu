@@ -115,6 +115,7 @@ export function ChannelButton({
 
   return (
     <Button
+      type={'button'}
       onMouseEnter={() => setPopoverOpened(true)}
       onMouseLeave={() => setPopoverOpened(false)}
       data-test-id={testId}
