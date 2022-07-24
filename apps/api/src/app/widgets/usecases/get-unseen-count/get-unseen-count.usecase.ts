@@ -11,11 +11,10 @@ export class GetUnseenCount {
     const count = await this.messageRepository.getUnseenCount(
       command.environmentId,
       command.subscriberId,
-      ChannelTypeEnum.IN_APP
+      ChannelTypeEnum.IN_APP,
+      { feedId: command.feedId, seen: command.seen }
     );
 
-    return {
-      count,
-    };
+    return { count };
   }
 }

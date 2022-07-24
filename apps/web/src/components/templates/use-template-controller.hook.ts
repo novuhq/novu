@@ -92,6 +92,15 @@ export function useTemplateController(templateId: string) {
             },
           };
         }
+        if (item.template.type === ChannelTypeEnum.IN_APP) {
+          return {
+            ...item,
+            template: {
+              ...item.template,
+              feedId: item.template._feedId || '',
+            },
+          };
+        }
 
         return item;
       });

@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, IAuthContext, INovuProviderContext } from '../../index';
+import { ColorScheme, IAuthContext, INovuProviderContext, IStore } from '../../index';
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
-import { useSocket, useUnseenController, NotificationsProvider, useApi } from '../../hooks';
+import { NotificationsProvider, useApi, useSocket, useUnseenController } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
@@ -12,6 +12,7 @@ import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
 
 interface INovuProviderProps {
+  stores?: IStore[];
   children: React.ReactNode;
   backendUrl?: string;
   subscriberId?: string;
@@ -35,6 +36,8 @@ export function NovuProvider(props: INovuProviderProps) {
     if (api?.isAuthenticated) setIsSessionInitialized(api?.isAuthenticated);
   }, [api?.isAuthenticated]);
 
+  const stores = props.stores ?? [{ storeId: 'default_store' }];
+
   return (
     <NovuContext.Provider
       value={{
@@ -45,6 +48,7 @@ export function NovuProvider(props: INovuProviderProps) {
         socketUrl: socketUrl,
         onLoad: props.onLoad,
         subscriberHash: props.subscriberHash,
+        stores,
       }}
     >
       <ApiContext.Provider value={{ api }}>

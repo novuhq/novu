@@ -288,6 +288,9 @@ describe('Notifications Creator', function () {
       cy.wait(1000);
       editChannel('inApp');
 
+      cy.getByTestId('feed-button-0').should('be.checked');
+      cy.getByTestId('feed-button-1').click({ force: true });
+
       cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
       cy.getByTestId('submit-btn').click();
 
@@ -296,6 +299,18 @@ describe('Notifications Creator', function () {
       cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
         matchCase: false,
       });
+      waitLoadTemplatePage(() => {
+        cy.visit('/templates/edit/' + template._id);
+      });
+      waitLoadEnv(() => {
+        cy.getByTestId('workflowButton').click();
+      });
+      editChannel('inApp');
+      cy.getByTestId('feed-button-1').should('be.checked');
+      cy.getByTestId('create-feed-input').type('test4');
+      cy.getByTestId('add-feed-button').click();
+      cy.wait(1000);
+      cy.getByTestId('feed-button-2').should('be.checked');
     });
 
     it('should update notification active status', function () {
@@ -523,7 +538,7 @@ describe('Notifications Creator', function () {
       });
     });
 
-    it('should be able to delete a step', function () {
+    it.only('should be able to delete a step', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
@@ -539,7 +554,9 @@ describe('Notifications Creator', function () {
       cy.getByTestId('submit-btn').click();
       cy.visit('/templates/edit/' + template._id);
 
-      cy.getByTestId('workflowButton').click();
+      waitLoadEnv(() => {
+        cy.getByTestId('workflowButton').click();
+      });
       cy.get('.react-flow__node').should('have.length', 3);
     });
 
