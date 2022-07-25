@@ -49,7 +49,7 @@ Building a notification system is hard, at first it seems like just sending an e
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
-## 🚀 Getting Started
+## 🚀 Getting Started Testing
 
 We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
 
