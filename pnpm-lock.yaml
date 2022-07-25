@@ -117,14 +117,14 @@ importers:
       '@nestjs/testing': 9.0.2
       '@novu/dal': ^0.6.0
       '@novu/emailjs': ^0.6.0
-      '@novu/gupshup': ^0.6.0
+      '@novu/gupshup': ^0.6.1
       '@novu/mailgun': ^0.6.0
       '@novu/mailjet': ^0.6.0
       '@novu/mandrill': ^0.6.0
       '@novu/node': ^0.6.0
-      '@novu/nodemailer': ^0.6.0
+      '@novu/nodemailer': ^0.6.1
       '@novu/plivo': ^0.6.0
-      '@novu/postmark': ^0.6.0
+      '@novu/postmark': ^0.6.1
       '@novu/sendgrid': ^0.6.0
       '@novu/sendinblue': ^0.6.0
       '@novu/ses': ^0.6.0
@@ -132,8 +132,8 @@ importers:
       '@novu/sms77': ^0.6.0
       '@novu/sns': ^0.6.0
       '@novu/stateless': ^0.6.0
-      '@novu/telnyx': ^0.6.0
-      '@novu/termii': ^0.6.0
+      '@novu/telnyx': ^0.6.1
+      '@novu/termii': ^0.6.1
       '@novu/testing': ^0.6.0
       '@novu/twilio': ^0.6.0
       '@sendgrid/mail': ^7.6.0
@@ -314,7 +314,7 @@ importers:
       '@mantine/notifications': 4.1.0
       '@mantine/prism': 4.1.0
       '@novu/dal': ^0.6.0
-      '@novu/notification-center': ^0.6.0
+      '@novu/notification-center': ^0.6.1
       '@novu/shared': ^0.6.0
       '@novu/testing': ^0.6.0
       '@sentry/react': ^6.3.1
@@ -492,7 +492,7 @@ importers:
       '@mantine/hooks': ^4.1.0
       '@novu/dal': ^0.6.0
       '@novu/embed': ^0.6.0
-      '@novu/notification-center': ^0.6.0
+      '@novu/notification-center': ^0.6.1
       '@novu/shared': ^0.6.0
       '@novu/testing': ^0.6.0
       '@testing-library/jest-dom': ^5.11.4
@@ -681,7 +681,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_wdmtdr6xr4lx76g2tka7eacpca
+      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
       ts-loader: 8.3.0_ub35lyjrfansgnglcfaofeaefe
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -44550,6 +44550,40 @@ packages:
     dependencies:
       tslib: 1.14.1
 
+  /ts-jest/27.1.4_2zv7k5h6rtkokmofpwrobdeggm:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.5
+      typescript: 4.3.5
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.4_5g3crurro3jv6nrzzkwgwgc56i:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -44687,41 +44721,6 @@ packages:
       make-error: 1.3.6
       semver: 7.3.5
       typescript: 4.1.3
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_wdmtdr6xr4lx76g2tka7eacpca:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@babel/core': 7.18.5
-      '@types/jest': 27.4.1
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.5
-      typescript: 4.3.5
       yargs-parser: 20.2.9
     dev: true
 
