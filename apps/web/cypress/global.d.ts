@@ -1,5 +1,6 @@
 /// <reference types="cypress" />
 
+type IMountType = import('cypress/react').mount;
 type ICreateNotificationTemplateDto = import('@novu/shared').ICreateNotificationTemplateDto;
 
 declare namespace Cypress {
@@ -29,5 +30,7 @@ declare namespace Cypress {
       disableLocalStorage?: boolean;
       partialTemplate?: Partial<ICreateNotificationTemplateDto>;
     }): Chainable<Response>;
+
+    mount: typeof IMountType;
   }
 }
