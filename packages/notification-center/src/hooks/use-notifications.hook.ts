@@ -18,13 +18,15 @@ export function useNotifications(props?: IUseNotificationsProps) {
     refetch: mapRefetch,
   } = useContext<INotificationsContext>(NotificationsContext);
 
-  const notifications = mapNotifications[props?.storeId];
+  const storeId = props?.storeId ? props?.storeId : 'default_store';
+
+  const notifications = mapNotifications[storeId];
 
   async function fetchNextPage() {
-    await mapFetchNextPage(props?.storeId);
+    await mapFetchNextPage(storeId);
   }
 
-  const hasNextPage = mapHasNextPage?.has(props?.storeId) ? mapHasNextPage.get(props?.storeId) : true;
+  const hasNextPage = mapHasNextPage?.has(storeId) ? mapHasNextPage.get(storeId) : true;
 
   async function updateAction(
     messageId: string,
@@ -32,11 +34,11 @@ export function useNotifications(props?: IUseNotificationsProps) {
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>
   ) {
-    await mapUpdateAction(messageId, actionButtonType, status, payload, props?.storeId);
+    await mapUpdateAction(messageId, actionButtonType, status, payload, storeId);
   }
 
   async function refetch() {
-    await mapRefetch(props?.storeId);
+    await mapRefetch(storeId);
   }
 
   return {
