@@ -1,6 +1,6 @@
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, Tabs } from '../../design-system';
+import { Button, colors, Tabs } from '../../design-system';
 import PageMeta from '../../components/layout/components/PageMeta';
 import styled from '@emotion/styled';
 import { useEnvironmentChanges } from '../../api/hooks/use-environment-changes';
@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
 import { showNotification } from '@mantine/notifications';
+import { Check } from '../../design-system/icons/general/Check';
 
 export function PromoteChangesPage() {
   const { changes = [], isLoadingChanges, history, isLoadingHistory } = useEnvironmentChanges();
@@ -19,8 +20,17 @@ export function PromoteChangesPage() {
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
       queryClient.refetchQueries([QueryKeys.changesCount]);
       showNotification({
-        message: 'All changes was promoted',
-        color: 'green',
+        message: 'All changes were promoted',
+        autoClose: false,
+        icon: <Check />,
+        styles: {
+          icon: {
+            width: '22px',
+            height: '22px',
+            marginRight: '10px',
+            backgroundColor: 'blue',
+          },
+        },
       });
     },
   });
