@@ -1,4 +1,4 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
+import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ChannelTypeEnum, IEmailBlock, IMessageCTA } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -27,6 +27,10 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @ValidateNested()
   cta: IMessageCTA;
+
+  @IsOptional()
+  @IsString()
+  feedId: string;
 
   @IsMongoId()
   parentChangeId: string;
