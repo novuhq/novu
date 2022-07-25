@@ -141,11 +141,15 @@ function Header() {
 ```
 
 The `i18n` prop can accept 2 different types of values
+
 - 2 letter language string
+
   ```tsx
   i18n="en" // We currently only support English
   ```
+
 - Translation object
+
   ```tsx
   i18n={{
     // Make sure that the following is a proper 2 letter language code,
@@ -425,4 +429,3 @@ A table of IThemeLayout properties:
 
 Note: unseenBadgeColor is of a type : string | {stopColor : string, stopColorOffset : sting}, so if you would like one
 color badge you can use a string of the color and not the object in order to create gradient.
-
