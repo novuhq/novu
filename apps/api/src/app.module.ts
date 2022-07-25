@@ -1,4 +1,4 @@
-import { DynamicModule, Module, OnModuleInit } from '@nestjs/common';
+import { DynamicModule, Inject, Module, OnModuleInit } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -24,6 +24,7 @@ import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
 import { FeedsModule } from './app/feeds/feeds.module';
+import { ClientProxy, ClientsModule, Transport } from '@nestjs/microservices';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   OrganizationModule,
@@ -45,6 +46,21 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   ChangeModule,
   SubscribersModule,
   FeedsModule,
+  ClientsModule.register([
+    {
+      name: 'WS_SERVICE',
+      transport: Transport.KAFKA,
+      options: {
+        client: {
+          clientId: 'hero',
+          brokers: ['localhost:9092'],
+        },
+        consumer: {
+          groupId: 'my-kafka-consumer',
+        },
+      },
+    },
+  ]),
 ];
 
 const providers = [];
@@ -68,6 +84,12 @@ if (process.env.NODE_ENV === 'test') {
   controllers: [],
   providers,
 })
-export class AppModule {
-  constructor(private queueService: QueueService) {}
+export class AppModule implements OnModuleInit {
+  constructor(@Inject('WS_SERVICE') private client: ClientProxy) {}
+
+  async onModuleInit() {
+    await this.client.connect();
+
+    this.client.send('my-first-topic', 'Hello Kafka');
+  }
 }

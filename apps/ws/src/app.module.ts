@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { SocketModule } from './socket/socket.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 const modules = [SharedModule, HealthModule, SocketModule];
 
