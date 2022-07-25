@@ -5,10 +5,12 @@ import React, { useContext } from 'react';
 import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
 import { INotificationCenterContext } from '../../../../../index';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
+import { I18NContext } from '../../../../../store/i18n.context';
 
 export function Header({ unseenCount }: { unseenCount: number }) {
   const { theme, common } = useNovuThemeProvider();
   const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { translations } = useContext(I18NContext);
 
   return (
     <HeaderWrapper>
@@ -36,7 +38,7 @@ export function Header({ unseenCount }: { unseenCount: number }) {
           </Badge>
         ) : null}
       </div>
-      <MarkReadAction style={{ display: 'none' }}>Mark all as read</MarkReadAction>
+      <MarkReadAction style={{ display: 'none' }}>{translations.markAllAsRead}</MarkReadAction>
     </HeaderWrapper>
   );
 }

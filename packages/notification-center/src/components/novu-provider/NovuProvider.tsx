@@ -10,6 +10,8 @@ import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
+import { NovuI18NProvider } from '../../store/i18n.context';
+import { I18NLanguage, ITranslationEntry } from '../../lang';
 
 interface INovuProviderProps {
   stores?: IStore[];
@@ -21,6 +23,7 @@ interface INovuProviderProps {
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash?: string;
+  i18n?: I18NLanguage | ITranslationEntry;
 }
 
 let api: ApiService;
@@ -56,7 +59,9 @@ export function NovuProvider(props: INovuProviderProps) {
           <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
             <NotificationsProvider>
               <SocketInitialization>
-                <UnseenProvider>{props.children}</UnseenProvider>
+                <NovuI18NProvider i18n={props.i18n}>
+                  <UnseenProvider>{props.children}</UnseenProvider>
+                </NovuI18NProvider>
               </SocketInitialization>
             </NotificationsProvider>
           </SessionInitialization>
