@@ -14,7 +14,7 @@ import {
   BuilderGroupValues,
   ChannelCTATypeEnum,
   IMessageAction,
-  DigestUnitEnum
+  DigestUnitEnum,
 } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';

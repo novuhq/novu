@@ -4,7 +4,7 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
-import { Digest } from './digest.usecase';
+import { Digest } from './digest/digest.usecase';
 
 @Injectable()
 export class SendMessage {

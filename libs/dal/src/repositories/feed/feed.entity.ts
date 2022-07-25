@@ -3,6 +3,8 @@ export class FeedEntity {
 
   name: string;
 
+  identifier: string;
+
   _environmentId: string;
 
   _organizationId: string;

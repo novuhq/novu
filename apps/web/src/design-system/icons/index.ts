@@ -3,6 +3,7 @@ export { Team } from './general/Team';
 export { Settings } from './general/Settings';
 export { Bolt } from './general/Bolt';
 export { Moon } from './general/Moon';
+export { Ellipse } from './general/Ellipse';
 export { DotsHorizontal } from './general/DotsHorizontal';
 export { DotsHorizontalOutlined } from './general/DotsHorizontalOutlined';
 export { EyeShield } from './general/EyeShield';

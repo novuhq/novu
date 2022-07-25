@@ -14,9 +14,5 @@ export function HeaderContainer() {
     }
   }, [unseenCount, (window as any).parentIFrame]);
 
-  function getHeader() {
-    return header ? header() : <Header unseenCount={unseenCount} />;
-  }
-
-  return <>{getHeader()}</>;
+  return header ? header() : <Header unseenCount={unseenCount} />;
 }

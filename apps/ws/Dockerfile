@@ -12,6 +12,8 @@ COPY apps/ws ./apps/ws
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
 COPY libs/testing ./libs/testing
+COPY packages/stateless ./packages/stateless
+COPY packages/node ./packages/node
 
 COPY tsconfig.json .
 COPY tsconfig.base.json .
@@ -19,6 +21,7 @@ COPY tsconfig.base.json .
 COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
+COPY .npmrc .
 
 RUN pnpm install
 RUN pnpm build:ws

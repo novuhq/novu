@@ -48,12 +48,24 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/feed')
-  async getNotificationsFeed(@SubscriberSession() subscriberSession: SubscriberEntity, @Query('page') page: number) {
+  async getNotificationsFeed(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query('page') page: number,
+    @Query('feedIdentifier') feedId: string[] | string,
+    @Query('seen') seen = undefined
+  ) {
+    let feedsQuery: string[];
+    if (feedId) {
+      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    }
+
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
       page,
+      feedId: feedsQuery,
+      seen,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -61,11 +73,22 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/unseen')
-  async getUnseenCount(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<{ count: number }> {
+  async getUnseenCount(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query('feedIdentifier') feedId: string[] | string,
+    @Query('seen') seen: boolean
+  ): Promise<{ count: number }> {
+    let feedsQuery: string[];
+    if (feedId) {
+      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    }
+
     const command = GetUnseenCountCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
+      feedId: feedsQuery,
+      seen,
     });
 
     return await this.genUnseenCountUsecase.execute(command);
