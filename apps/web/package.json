@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
@@ -19,7 +19,7 @@
     "@mantine/hooks": "4.2.12",
     "@mantine/notifications": "4.1.0",
     "@mantine/prism": "4.1.0",
-    "@novu/notification-center": "^0.6.0",
+    "@novu/notification-center": "^0.6.1",
     "@novu/shared": "^0.6.0",
     "@sentry/react": "^6.3.1",
     "@sentry/tracing": "^6.3.1",
