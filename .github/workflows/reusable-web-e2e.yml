@@ -87,6 +87,7 @@ jobs:
              echo "Trying again. Try #$counter"
              ((counter++))
           done
+          sleep 1
           aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
 
       # Runs a single command using the runners shell
