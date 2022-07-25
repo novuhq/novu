@@ -48,7 +48,7 @@ export class WorkflowQueueService {
       {
         ...this.bullConfig,
         lockDuration: 90000,
-        concurrency: 5000,
+        concurrency: 100,
       }
     );
     this.worker.on('completed', async (job) => {
