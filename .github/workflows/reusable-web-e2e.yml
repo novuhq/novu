@@ -87,6 +87,7 @@ jobs:
              echo "Trying again. Try #$counter"
              ((counter++))
           done
+          sleep 1
           aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
 
       # Runs a single command using the runners shell
@@ -100,7 +101,7 @@ jobs:
       - name: Start Client
         run: pnpm start:web &
 
-      - name: Cypress run
+      - name: Cypress run e2e
         uses: cypress-io/github-action@v2
         env:
           NODE_ENV: test
@@ -112,6 +113,22 @@ jobs:
           wait-on: http://localhost:1336/v1/health-check
           browser: chrome
           headless: true
+          record: true
+          parallel: true
+          install: false
+          config-file: cypress.config.ts
+
+      - name: Cypress run component tests
+        uses: cypress-io/github-action@v2
+        env:
+          NODE_ENV: test
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
+        with:
+          working-directory: apps/web
+          browser: chrome
+          headless: true
+          component: true
           record: true
           parallel: true
           install: false
