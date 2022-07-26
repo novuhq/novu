@@ -121,7 +121,7 @@ export function MembersInvitePage() {
                       onClick={() => removeMemberClick(member)}
                       icon={<Trash />}
                     >
-                      Remove Row
+                      Remove Member
                     </DropdownItem>
                   </Dropdown>
                 </div>
