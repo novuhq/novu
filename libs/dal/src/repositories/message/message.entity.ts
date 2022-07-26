@@ -31,6 +31,8 @@ export class MessageEntity {
 
   transactionId: string;
 
+  subject?: string;
+
   channel: ChannelTypeEnum;
 
   seen: boolean;

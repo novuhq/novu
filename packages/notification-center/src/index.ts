@@ -7,6 +7,8 @@ import {
   MessageActionStatusEnum,
 } from '@novu/shared';
 
+export { IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
+
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
 export * from './hooks/use-socket.hook';
