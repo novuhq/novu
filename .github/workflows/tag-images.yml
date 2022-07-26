@@ -125,8 +125,8 @@ jobs:
           uses: jacobtomlinson/gha-find-replace@v2
           with:
             include: docker/docker-compose.yml
-            find: "image: \"ghcr.io/novuhq/novu/api:.*"
-            replace: "image: \"ghcr.io/novuhq/novu/api:${{ inputs.version}}"
+            find: "ghcr.io/novuhq/novu/api:.*"
+            replace: "ghcr.io/novuhq/novu/api:${{ inputs.version}}"
             regex: true
 
       - name: Push changes
