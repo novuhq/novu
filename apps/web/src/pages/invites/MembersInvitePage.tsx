@@ -43,22 +43,21 @@ export function MembersInvitePage() {
   }
 
   async function removeMemberClick(member) {
-    await removeMember(member._id)
-      .then((result) => {
-        showNotification({
-          message: `Successful member deletion.`,
-          color: 'green',
-        });
-        refetch();
+    try {
+      await removeMember(member._id);
 
-        return result;
-      })
-      .catch((err) => {
-        showNotification({
-          message: err.message,
-          color: 'red',
-        });
+      showNotification({
+        message: `Successful member deletion.`,
+        color: 'green',
       });
+
+      refetch();
+    } catch (err: any) {
+      showNotification({
+        message: err.message,
+        color: 'red',
+      });
+    }
   }
 
   return (
