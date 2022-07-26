@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 80
     environment: Production
     permissions:
-      contents: write
+      contents: read
       packages: write
       deployments: write
     steps:
@@ -34,22 +34,6 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-
-
-      - name: Find and Replace
-        uses: jacobtomlinson/gha-find-replace@v2
-        with:
-          include: docker/docker-compose.yml
-          find: "ghcr.io/novuhq/novu/api:.*"
-          replace: "ghcr.io/novuhq/novu/api:${{ inputs.version}}"
-          regex: true
-
-      - name: Push changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
-
 
       - name: Tag API
         env:
@@ -120,7 +104,6 @@ jobs:
           docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
           docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
           echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION"
-
 
       - name: Tag SDK
         env:
