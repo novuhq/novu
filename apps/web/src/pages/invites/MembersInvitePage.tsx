@@ -1,7 +1,7 @@
 import { Form } from 'antd';
 import { useMutation, useQuery } from 'react-query';
 import styled from 'styled-components';
-import { MemberStatusEnum } from '@novu/shared';
+import { MemberRoleEnum, MemberStatusEnum, IUserEntity } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import * as capitalize from 'lodash.capitalize';
 import { Avatar, Container, Divider, Group, Text, MenuItem as DropdownItem } from '@mantine/core';
@@ -12,6 +12,7 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { Button, Dropdown, Input, Tag } from '../../design-system';
 import { DotsHorizontal, Invite, Trash } from '../../design-system/icons';
 import useStyles from '../../design-system/config/text.styles';
+import { getUser } from '../../api/user';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
@@ -27,6 +28,8 @@ export function MembersInvitePage() {
     { error: string; message: string; statusCode: number },
     string
   >((email) => inviteMember(email));
+
+  const { data: user, refetch: refetchUser } = useQuery<IUserEntity>('/v1/users/me', getUser);
 
   async function onSubmit({ email }) {
     if (!email) return;
@@ -58,6 +61,12 @@ export function MembersInvitePage() {
         color: 'red',
       });
     }
+  }
+
+  function isEnableDots(currentMember): boolean {
+    const myRoles = members?.find((memberEntity) => memberEntity._userId == user?._id)?.roles || [];
+
+    return user?._id != currentMember._userId && myRoles.includes(MemberRoleEnum.ADMIN);
   }
 
   return (
@@ -108,22 +117,29 @@ export function MembersInvitePage() {
                   )}
                 </div>
               </ActionsSider>
-              <Dropdown
-                control={
-                  <div style={{ cursor: 'pointer', marginLeft: 10 }}>
-                    <DotsHorizontal></DotsHorizontal>
-                  </div>
-                }
-              >
-                <DropdownItem
-                  key="removeBtn"
-                  data-test-id="remove-row-btn"
-                  onClick={() => removeMemberClick(member)}
-                  icon={<Trash />}
-                >
-                  Remove Member
-                </DropdownItem>
-              </Dropdown>
+              {isEnableDots(member) ? (
+                <div>
+                  <Dropdown
+                    control={
+                      <div style={{ cursor: 'pointer', marginLeft: 10 }}>
+                        <DotsHorizontal></DotsHorizontal>
+                      </div>
+                    }
+                  >
+                    <DropdownItem
+                      key="removeBtn"
+                      data-test-id="remove-row-btn"
+                      onClick={() => removeMemberClick(member)}
+                      icon={<Trash />}
+                    >
+                      Remove Member
+                    </DropdownItem>
+                  </Dropdown>
+                </div>
+              ) : (
+                <div></div>
+              )}
+
               <Divider className={classes.seperator} />
             </MemberRowWrapper>
           );
