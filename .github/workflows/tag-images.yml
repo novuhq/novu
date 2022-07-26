@@ -13,7 +13,6 @@ jobs:
   tag_images:
     runs-on: ubuntu-latest
     timeout-minutes: 80
-    environment: Development
     permissions:
       contents: read
       packages: write
