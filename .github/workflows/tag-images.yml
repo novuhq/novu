@@ -4,10 +4,11 @@ name: Tag Docker Version
 # events but only for the master branch
 on:
   workflow_dispatch:
-    version:
-      description: 'The version to tag docker images'
-      required: true
-      type: string
+    inputs:
+      version:
+        description: 'The version to tag docker images'
+        required: true
+        type: string
 
 jobs:
   tag_images:
