@@ -1,0 +1,61 @@
+name: Deploy DEV API
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch:
+    version:
+      description: 'The version to tag docker images'
+      required: true
+      type: string
+
+jobs:
+  deploy_dev_api:
+    runs-on: ubuntu-latest
+    needs: test_api
+    timeout-minutes: 80
+    environment: Development
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Setup kernel for react native, increase watchers
+        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.15.1'
+
+      - name: Tag API
+        id: build-image
+        env:
+          REGISTERY_OWNER: novuhq
+          DOCKER_NAME: novu/api
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DOCKER_VERSION: ${{ inputs.version }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker pull ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
+          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION"
+
+      - name: Tag WS
+        id: build-image
+        env:
+          REGISTERY_OWNER: novuhq
+          DOCKER_NAME: novu/ws
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DOCKER_VERSION: ${{ inputs.version }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker pull ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
+          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION"
