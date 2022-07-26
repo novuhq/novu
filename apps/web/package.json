@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
@@ -19,7 +19,7 @@
     "@mantine/hooks": "4.2.12",
     "@mantine/notifications": "4.1.0",
     "@mantine/prism": "4.1.0",
-    "@novu/notification-center": "^0.6.1",
+    "@novu/notification-center": "^0.6.2",
     "@novu/shared": "^0.6.0",
     "@sentry/react": "^6.3.1",
     "@sentry/tracing": "^6.3.1",
@@ -80,8 +80,8 @@
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/runtime": "^7.14.6",
-    "@novu/dal": "^0.6.0",
-    "@novu/testing": "^0.6.0",
+    "@novu/dal": "^0.6.2",
+    "@novu/testing": "^0.6.2",
     "@storybook/addon-actions": "^6.4.14",
     "@storybook/addon-essentials": "^6.4.14",
     "@storybook/addon-links": "^6.4.14",
