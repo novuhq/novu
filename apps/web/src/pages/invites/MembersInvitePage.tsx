@@ -4,14 +4,15 @@ import styled from 'styled-components';
 import { MemberStatusEnum } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import * as capitalize from 'lodash.capitalize';
-import { Avatar, Container, Divider, Group, Text } from '@mantine/core';
+import { Avatar, Container, Divider, Group, Text, MenuItem as DropdownItem } from '@mantine/core';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { getOrganizationMembers, inviteMember, removeMember } from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, Input, Tag } from '../../design-system';
-import { Invite } from '../../design-system/icons';
+import { Button, Dropdown, Input, Tag } from '../../design-system';
+import { Invite, Trash } from '../../design-system/icons';
 import useStyles from '../../design-system/config/text.styles';
+import { ThreeDot } from '../../design-system/dropdown/ThreeDot';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
@@ -106,9 +107,23 @@ export function MembersInvitePage() {
                   ) : (
                     <Tag>Member</Tag>
                   )}
-                  <span onClick={() => removeMemberClick(member)}>
-                    <Tag css={{ cursor: 'pointer' }}>X</Tag>
-                  </span>
+
+                  <Dropdown
+                    control={
+                      <div>
+                        <ThreeDot></ThreeDot>
+                      </div>
+                    }
+                  >
+                    <DropdownItem
+                      key="removeBtn"
+                      data-test-id="remove-row-btn"
+                      onClick={() => removeMemberClick(member)}
+                      icon={<Trash />}
+                    >
+                      Remove Row
+                    </DropdownItem>
+                  </Dropdown>
                 </div>
               </ActionsSider>
               <Divider className={classes.seperator} />
