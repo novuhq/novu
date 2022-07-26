@@ -35,6 +35,8 @@
     "@novu/shared": "^0.6.0",
     "@novu/testing": "^0.6.0",
     "@sentry/node": "^6.3.3",
+    "amqp-connection-manager": "^4.1.3",
+    "amqplib": "^0.10.0",
     "bull": "^4.4.0",
     "class-transformer": "^0.5.1",
     "dotenv": "^8.2.0",

@@ -46,21 +46,6 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   ChangeModule,
   SubscribersModule,
   FeedsModule,
-  ClientsModule.register([
-    {
-      name: 'WS_SERVICE',
-      transport: Transport.KAFKA,
-      options: {
-        client: {
-          clientId: 'hero',
-          brokers: ['localhost:9092'],
-        },
-        consumer: {
-          groupId: 'my-kafka-consumer',
-        },
-      },
-    },
-  ]),
 ];
 
 const providers = [];
@@ -83,13 +68,8 @@ if (process.env.NODE_ENV === 'test') {
   imports: modules,
   controllers: [],
   providers,
+  exports: [],
 })
 export class AppModule implements OnModuleInit {
-  constructor(@Inject('WS_SERVICE') private client: ClientProxy) {}
-
-  async onModuleInit() {
-    await this.client.connect();
-
-    this.client.send('my-first-topic', 'Hello Kafka');
-  }
+  async onModuleInit() {}
 }

@@ -1,6 +1,16 @@
 version: '3.1'
 
 services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
     image: "localstack/localstack:0.12.7"
@@ -40,4 +50,3 @@ services:
       test: "bash -c 'redis-cli ping'"
       retries: 5
       interval: 10s
-    

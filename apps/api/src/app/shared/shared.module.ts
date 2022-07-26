@@ -21,6 +21,7 @@ import { AnalyticsService } from './services/analytics/analytics.service';
 import { MailService } from './services/mail/mail.service';
 import { QueueService } from './services/queue';
 import { StorageService } from './services/storage/storage.service';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 const DAL_MODELS = [
   UserRepository,
@@ -75,8 +76,22 @@ const PROVIDERS = [
 ];
 
 @Module({
-  imports: [],
+  imports: [
+    ClientsModule.register([
+      {
+        name: 'WS_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://localhost:5672'],
+          queue: 'socket_queue',
+          queueOptions: {
+            durable: false,
+          },
+        },
+      },
+    ]),
+  ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS],
+  exports: [...PROVIDERS, ClientsModule],
 })
 export class SharedModule {}

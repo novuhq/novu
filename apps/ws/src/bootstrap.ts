@@ -16,27 +16,18 @@ if (process.env.SENTRY_DSN) {
 }
 
 export async function bootstrap() {
-  /*
   const app = await NestFactory.create(AppModule);
-*/
 
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-    transport: Transport.KAFKA,
+  await app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
     options: {
-      client: {
-        brokers: ['localhost:9092'],
-      },
-      consumer: {
-        groupId: 'my-kafka-consumer',
+      urls: ['amqp://localhost:5672'],
+      queue: 'socket_queue',
+      queueOptions: {
+        durable: false,
       },
     },
   });
-
-  app.listen(() => {
-    console.log('Started ');
-  });
-
-  /*
 
   app.enableCors({
     origin: '*',
@@ -47,5 +38,6 @@ export async function bootstrap() {
 
   app.useWebSocketAdapter(new RedisIoAdapter(app));
 
-  await app.listen(process.env.PORT);*/
+  await app.startAllMicroservices();
+  await app.listen(process.env.PORT);
 }

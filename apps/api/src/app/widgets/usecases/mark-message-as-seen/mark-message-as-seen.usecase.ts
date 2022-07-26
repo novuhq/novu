@@ -5,13 +5,15 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkMessageAsSeenCommand } from './mark-message-as-seen.command';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class MarkMessageAsSeen {
   constructor(
     private messageRepository: MessageRepository,
     private queueService: QueueService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    @Inject('WS_SERVICE') private client: ClientProxy
   ) {}
 
   async execute(command: MarkMessageAsSeenCommand): Promise<MessageEntity> {
@@ -23,12 +25,9 @@ export class MarkMessageAsSeen {
       ChannelTypeEnum.IN_APP
     );
 
-    this.queueService.wsSocketQueue.add({
-      event: 'unseen_count_changed',
+    this.client.emit('unseen_count_changed', {
       userId: command.subscriberId,
-      payload: {
-        unseenCount: count,
-      },
+      unseenCount: count,
     });
 
     const message = await this.messageRepository.findById(command.messageId);
