@@ -12,5 +12,6 @@
     "sourceMap": true,
     "outDir": "dist",
     "emitDeclarationOnly": true,
+    "preserveConstEnums": true
   }
 }
