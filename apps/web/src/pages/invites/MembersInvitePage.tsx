@@ -110,7 +110,7 @@ export function MembersInvitePage() {
               </ActionsSider>
               <Dropdown
                 control={
-                  <div style={{ cursor: 'pointer' }}>
+                  <div style={{ cursor: 'pointer', marginLeft: 10 }}>
                     <DotsHorizontal></DotsHorizontal>
                   </div>
                 }
