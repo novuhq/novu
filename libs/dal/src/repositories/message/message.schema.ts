@@ -34,6 +34,7 @@ const messageSchema = new Schema(
     },
     templateIdentifier: Schema.Types.String,
     email: Schema.Types.String,
+    subject: Schema.Types.String,
     cta: {
       type: {
         type: Schema.Types.String,
