@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 80
     environment: Production
     permissions:
-      contents: read
+      contents: write
       packages: write
       deployments: write
     steps:
