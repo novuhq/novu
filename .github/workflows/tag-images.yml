@@ -121,3 +121,16 @@ jobs:
           docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
           echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$DOCKER_VERSION"
 
+      - name: Find and Replace
+          uses: jacobtomlinson/gha-find-replace@v2
+          with:
+            include: docker/docker-compose.yml
+            find: "image: \"ghcr.io/novuhq/novu/api:.*"
+            replace: "image: \"ghcr.io/novuhq/novu/api:${{ inputs.version}}"
+            regex: true
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
