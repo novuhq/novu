@@ -10,9 +10,8 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import { getOrganizationMembers, inviteMember, removeMember } from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Button, Dropdown, Input, Tag } from '../../design-system';
-import { Invite, Trash } from '../../design-system/icons';
+import { DotsHorizontal, Invite, Trash } from '../../design-system/icons';
 import useStyles from '../../design-system/config/text.styles';
-import { ThreeDot } from '../../design-system/dropdown/ThreeDot';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
@@ -107,25 +106,24 @@ export function MembersInvitePage() {
                   ) : (
                     <Tag>Member</Tag>
                   )}
-
-                  <Dropdown
-                    control={
-                      <div>
-                        <ThreeDot></ThreeDot>
-                      </div>
-                    }
-                  >
-                    <DropdownItem
-                      key="removeBtn"
-                      data-test-id="remove-row-btn"
-                      onClick={() => removeMemberClick(member)}
-                      icon={<Trash />}
-                    >
-                      Remove Member
-                    </DropdownItem>
-                  </Dropdown>
                 </div>
               </ActionsSider>
+              <Dropdown
+                control={
+                  <div style={{ cursor: 'pointer' }}>
+                    <DotsHorizontal></DotsHorizontal>
+                  </div>
+                }
+              >
+                <DropdownItem
+                  key="removeBtn"
+                  data-test-id="remove-row-btn"
+                  onClick={() => removeMemberClick(member)}
+                  icon={<Trash />}
+                >
+                  Remove Member
+                </DropdownItem>
+              </Dropdown>
               <Divider className={classes.seperator} />
             </MemberRowWrapper>
           );
