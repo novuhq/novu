@@ -1,32 +1,26 @@
 import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
-import { v4 as uuidv4 } from 'uuid';
 import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
-import { UserSession } from '../shared/framework/user.decorator';
 import { TriggerEventDto } from './dto/trigger-event.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ISubscribersDefine } from '@novu/node';
+import { MessagePattern } from '@nestjs/microservices';
 
-@Controller('events')
-export class EventsController {
+@Controller()
+export class TriggerEngineController {
   constructor(private triggerEvent: TriggerEvent) {}
 
-  @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
-  @Post('/trigger')
-  trackEvent(@UserSession() user: IJwtPayload, @Body() body: TriggerEventDto) {
-    const mappedSubscribers = this.mapSubscribers(body);
+  @MessagePattern('trigger_event')
+  processTrigger(job) {
+    const mappedSubscribers = this.mapSubscribers(job);
 
     return this.triggerEvent.execute(
       TriggerEventCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        identifier: body.name,
-        payload: body.payload,
+        userId: job.userId,
+        environmentId: job.environmentId,
+        organizationId: job.organizationId,
+        identifier: job.identifier,
+        payload: job.payload,
         to: mappedSubscribers,
-        transactionId: body.transactionId || uuidv4(),
+        transactionId: job.transactionId,
       })
     );
   }

@@ -18,9 +18,7 @@ import {
   FeedRepository,
 } from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
-import { MailService } from './services/mail/mail.service';
 import { QueueService } from './services/queue';
-import { StorageService } from './services/storage/storage.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
 const DAL_MODELS = [
@@ -61,7 +59,6 @@ const PROVIDERS = [
     },
   },
   ...DAL_MODELS,
-  StorageService,
   {
     provide: ANALYTICS_SERVICE,
     useFactory: async () => {
@@ -72,7 +69,6 @@ const PROVIDERS = [
       return analyticsService;
     },
   },
-  MailService,
 ];
 
 @Module({
@@ -92,11 +88,11 @@ const PROVIDERS = [
     ]),
     ClientsModule.register([
       {
-        name: 'TRIGGER_SERVICE',
+        name: 'SUBSCRIBERS_SERVICE',
         transport: Transport.RMQ,
         options: {
           urls: ['amqp://localhost:5672'],
-          queue: 'trigger_engine_queue',
+          queue: 'subscribers_queue',
           queueOptions: {
             durable: false,
           },

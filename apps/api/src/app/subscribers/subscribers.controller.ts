@@ -10,6 +10,7 @@ import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
 import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
+import { MessagePattern } from '@nestjs/microservices';
 
 @Controller('/subscribers')
 export class SubscribersController {
@@ -29,6 +30,22 @@ export class SubscribersController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         page: page ? Number(page) : 0,
+      })
+    );
+  }
+
+  @MessagePattern('create_subscriber')
+  async createSubscriberEvent(body) {
+    return await this.createSubscriberUsecase.execute(
+      CreateSubscriberCommand.create({
+        environmentId: body.environmentId,
+        organizationId: body.organizationId,
+        subscriberId: body.subscriberId,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        email: body.email,
+        phone: body.phone,
+        avatar: body.avatar,
       })
     );
   }

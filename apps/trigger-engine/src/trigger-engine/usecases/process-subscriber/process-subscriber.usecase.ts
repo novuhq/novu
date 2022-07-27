@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   NotificationRepository,
   SubscriberRepository,
@@ -9,23 +9,24 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
-import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { ISubscribersDefine } from '@novu/node';
 import { FilterSteps } from '../filter-steps/filter-steps.usecase';
 import { FilterStepsCommand } from '../filter-steps/filter-steps.command';
+import { ClientProxy } from '@nestjs/microservices';
+import { rejects } from 'assert';
 
 @Injectable()
 export class ProcessSubscriber {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
-    private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private filterSteps: FilterSteps
+    private filterSteps: FilterSteps,
+    @Inject('SUBSCRIBERS_SERVICE') private client: ClientProxy
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
@@ -98,19 +99,31 @@ export class ProcessSubscriber {
     return await this.createOrUpdateSubscriber(command, subscriberPayload);
   }
 
-  private async createOrUpdateSubscriber(command: ProcessSubscriberCommand, subscriberPayload) {
-    return await this.createSubscriberUsecase.execute(
-      CreateSubscriberCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: subscriberPayload?.subscriberId,
-        email: subscriberPayload?.email,
-        firstName: subscriberPayload?.firstName,
-        lastName: subscriberPayload?.lastName,
-        phone: subscriberPayload?.phone,
-        avatar: subscriberPayload?.avatar,
-      })
-    );
+  private async createOrUpdateSubscriber(
+    command: ProcessSubscriberCommand,
+    subscriberPayload
+  ): Promise<SubscriberEntity> {
+    return await new Promise((resolve) => {
+      this.client
+        .send<SubscriberEntity>('create_subscriber', {
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: subscriberPayload?.subscriberId,
+          firstName: subscriberPayload?.firstName,
+          lastName: subscriberPayload?.lastName,
+          email: subscriberPayload?.email,
+          phone: subscriberPayload?.phone,
+          avatar: subscriberPayload?.avatar,
+        })
+        .subscribe(
+          (response) => {
+            resolve(response);
+          },
+          (error) => {
+            rejects(error);
+          }
+        );
+    });
   }
 
   private subscriberNeedUpdate(subscriber: SubscriberEntity, subscriberPayload: ISubscribersDefine): boolean {

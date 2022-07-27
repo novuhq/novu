@@ -6,59 +6,63 @@ import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
+import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
 import { matchMessageWithFilters } from './message-filter.matcher';
+import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class TriggerEvent {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createLogUsecase: CreateLog,
+    private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    @Inject('TRIGGER_SERVICE') private client: ClientProxy
+    private workflowQueueService: WorkflowQueueService,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: TriggerEventCommand) {
-    Sentry.addBreadcrumb({
-      message: 'Sending trigger',
-      data: {
-        triggerIdentifier: command.identifier,
-      },
-    });
-
-    await this.validateTransactionIdProperty(command);
-    await this.validateSubscriberIdProperty(command);
-
-    this.logEventTriggered(command);
-
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
       command.identifier
     );
 
-    if (!template) {
-      return this.logTemplateNotFound(command);
+    const jobs: JobEntity[][] = [];
+
+    for (const subscriberToTrigger of command.to) {
+      jobs.push(
+        await this.processSubscriber.execute(
+          ProcessSubscriberCommand.create({
+            identifier: command.identifier,
+            payload: command.payload,
+            to: subscriberToTrigger,
+            transactionId: command.transactionId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.organizationId,
+            templateId: template._id,
+          })
+        )
+      );
     }
 
-    if (!template.active || template.draft) {
-      return this.logTemplateNotActive(command, template);
-    }
+    const steps = matchMessageWithFilters(template.steps, command.payload);
 
-    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
-      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
-    } else {
-      this.client.emit('trigger_event', {
-        userId: command.userId,
-        identifier: command.identifier,
-        payload: command.payload,
-        to: command.to,
-        transactionId: command.transactionId,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
+    this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
+      _template: template._id,
+      _organization: command.organizationId,
+      channels: steps.map((step) => step.template?.type),
+      smsChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.SMS)?.length,
+      emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
+      inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
+    });
+
+    for (const job of jobs) {
+      const firstJob = await this.jobRepository.storeJobs(job);
+      await this.workflowQueueService.addJob(firstJob);
     }
 
     return {

@@ -1,42 +1,105 @@
 version: "3"
 services:
-  kafka-ui:
-    container_name: kafka-ui
-    image: provectuslabs/kafka-ui:latest
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    logging:
+      driver: "none"
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    logging:
+      driver: "none"
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - mongodb:/data/db
     ports:
-      - "8080:8080"
+      - 27017:27017
+    restart: unless-stopped
+  api:
+    image: "ghcr.io/novuhq/novu/api:latest"
     depends_on:
-      - zookeeper
-      - kafka
+      - mongodb
+      - redis
+      - rabbitmq
+    container_name: api
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-      KAFKA_CLUSTERS_0_JMXPORT: 9997
-  zookeeper:
-    image: confluentinc/cp-zookeeper:5.2.4
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      NODE_ENV: ${NODE_ENV}
+      API_ROOT_URL: ${API_ROOT_URL}
+      PORT: ${API_PORT}
+      FRONT_BASE_URL: ${FRONT_BASE_URL}
+      MONGO_URL: ${MONGO_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB_INDEX: 2
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_REGION: ${S3_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      JWT_SECRET: ${JWT_SECRET}
     ports:
-      - "2181:2181"
-  kafka:
-    image: confluentinc/cp-kafka:5.3.1
+      - "3000:3000"
+  ws:
+    image: "ghcr.io/novuhq/novu/ws:latest"
     depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-      - "9997:9997"
+      - mongodb
+      - redis
+      - rabbitmq
+    container_name: ws
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      JMX_PORT: 9997
-      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka -Dcom.sun.management.jmxremote.rmi.port=9997
-
+      PORT: ${WS_PORT}
+      NODE_ENV: ${NODE_ENV}
+      MONGO_URL: ${MONGO_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3002:3002"
+  web:
+    image: "ghcr.io/novuhq/novu/web:latest"
+    depends_on:
+      - api
+    container_name: web
+    environment:
+      REACT_APP_API_URL: ${API_ROOT_URL}
+      REACT_APP_ENVIRONMENT: ${NODE_ENV}
+      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
+      REACT_APP_DOCKER_HOSTED_ENV: 'true'
+    ports:
+      - 4200:4200
+  widget:
+    image: "ghcr.io/novuhq/novu/widget:latest"
+    depends_on:
+      - api
+      - web
+    container_name: widget
+    environment:
+      REACT_APP_API_URL: ${API_ROOT_URL}
+      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      REACT_APP_ENVIRONMENT: ${NODE_ENV}
+    ports:
+      - 4500:4500
+  embed:
+    depends_on:
+      - widget
+    image: "ghcr.io/novuhq/novu/embed:latest"
+    container_name: embed
+    environment:
+      WIDGET_URL: ${WIDGET_URL}
+    ports:
+      - 4701:4701
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
 
 volumes:
   mongodb: ~
