@@ -14,7 +14,7 @@ export function Dropdown({ children, ...props }: IDropdownProps) {
   const { classes, theme } = useStyles();
   const defaultDesign = {
     withArrow: true,
-    transition: 'pop',
+    transitionDuration: 0,
     radius: 7,
     gutter: 10,
     shadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,

@@ -47,6 +47,9 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
           {type === ChangeEntityTypeEnum.NOTIFICATION_GROUP && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Notification Group Change</Text>
           )}
+          {type === ChangeEntityTypeEnum.FEED && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Feed Change</Text>
+          )}
           <Text data-test-id="change-content" rows={1} mt={5}>
             {templateName}
             {messageType ? `, ${messageType}` : null}

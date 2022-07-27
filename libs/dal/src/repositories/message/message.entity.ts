@@ -31,6 +31,8 @@ export class MessageEntity {
 
   transactionId: string;
 
+  subject?: string;
+
   channel: ChannelTypeEnum;
 
   seen: boolean;
@@ -42,6 +44,8 @@ export class MessageEntity {
   lastSeenDate: string;
 
   cta: IMessageCTA;
+
+  _feedId: string;
 
   status: 'sent' | 'error' | 'warning';
 

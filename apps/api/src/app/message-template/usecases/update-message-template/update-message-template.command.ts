@@ -32,6 +32,9 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   cta: IMessageCTA;
 
+  @IsOptional()
+  feedId: string;
+
   @IsMongoId()
   parentChangeId: string;
 }

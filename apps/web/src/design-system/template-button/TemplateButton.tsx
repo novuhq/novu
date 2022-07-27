@@ -47,6 +47,7 @@ export function TemplateButton({
   return (
     <>
       <Button
+        type={'button'}
         onMouseEnter={() => setPopoverOpened(true)}
         onMouseLeave={() => setPopoverOpened(false)}
         onClick={async (e) => {

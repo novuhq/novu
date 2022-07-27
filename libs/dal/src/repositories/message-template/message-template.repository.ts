@@ -6,4 +6,11 @@ export class MessageTemplateRepository extends BaseRepository<MessageTemplateEnt
   constructor() {
     super(MessageTemplate, MessageTemplateEntity);
   }
+
+  async getMessageTemplatesByFeed(environmentId: string, feedId: string) {
+    return await this.find({
+      _environmentId: environmentId,
+      _feedId: feedId,
+    });
+  }
 }

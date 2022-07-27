@@ -71,8 +71,7 @@ jobs:
           ((counter++))
         done
         docker-compose logs --tail="all"
-        aws --endpoint-url=http://localhost:4566 s3 mb s3://novu-test
-
+        aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
 
       # Runs a single command using the runners shell
     - name: Build API
