@@ -5,6 +5,7 @@
   },
   "no-inline-html": false,
   "first-line-heading": false,
+  "no-trailing-spaces": false,
   "single-title":false,
   "commands-show-output": false,
   "proper-names": {

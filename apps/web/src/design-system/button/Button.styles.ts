@@ -13,12 +13,12 @@ const getFilledDisabledStyles = (theme) => ({
   backgroundImage: theme.colorScheme === 'dark' ? getGradient(colors.B20) : getGradient(colors.B98),
 });
 
-const getFilledStyles = (theme) => ({
+export const getFilledStyles = (theme) => ({
   border: 'transparent',
   boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.color,
 });
 
-const getOutlineStyles = (theme) => {
+export const getOutlineStyles = (theme) => {
   const dark = theme.colorScheme === 'dark';
 
   return {

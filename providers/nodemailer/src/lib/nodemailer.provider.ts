@@ -27,7 +27,7 @@ export class NodemailerProvider implements IEmailProvider {
   ) {
     let dkim = this.config.dkim;
 
-    if (!dkim.domainName || !dkim.privateKey || !dkim.keySelector) {
+    if (!dkim?.domainName || !dkim?.privateKey || !dkim?.keySelector) {
       dkim = undefined;
     }
 

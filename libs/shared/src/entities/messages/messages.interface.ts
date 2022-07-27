@@ -17,6 +17,7 @@ export interface IMessage {
   lastSeenDate: string;
   createdAt: string;
   cta: IMessageCTA;
+  _feedId: string;
   payload: Record<string, unknown>;
 }
 
