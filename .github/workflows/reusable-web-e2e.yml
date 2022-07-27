@@ -112,7 +112,6 @@ jobs:
           start: pnpm start:api
           wait-on: http://localhost:1336/v1/health-check
           browser: chrome
-          headless: true
           record: true
           parallel: true
           install: false
@@ -127,7 +126,6 @@ jobs:
         with:
           working-directory: apps/web
           browser: chrome
-          headless: true
           component: true
           record: true
           parallel: true
