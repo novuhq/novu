@@ -83,7 +83,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
-    if (!token && !api.isAuthenticated) {
+    if (!api.isAuthenticated) {
       if (props.subscriberId && props.applicationIdentifier) {
         (async (): Promise<void> => {
           await initSession({
