@@ -12,7 +12,8 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { Button, Dropdown, Input, Tag } from '../../design-system';
 import { DotsHorizontal, Invite, Trash } from '../../design-system/icons';
 import useStyles from '../../design-system/config/text.styles';
-import { getUser } from '../../api/user';
+import { useContext } from 'react';
+import { AuthContext } from '../../store/authContext';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
@@ -29,7 +30,7 @@ export function MembersInvitePage() {
     string
   >((email) => inviteMember(email));
 
-  const { data: user, refetch: refetchUser } = useQuery<IUserEntity>('/v1/users/me', getUser);
+  const { currentUser } = useContext(AuthContext);
 
   async function onSubmit({ email }) {
     if (!email) return;
@@ -63,10 +64,12 @@ export function MembersInvitePage() {
     }
   }
 
-  function isEnableDots(currentMember): boolean {
-    const myRoles = members?.find((memberEntity) => memberEntity._userId == user?._id)?.roles || [];
+  function isEnableMemberActions(currentMember): boolean {
+    const myRoles = members?.find((memberEntity) => memberEntity._userId == currentUser?._id)?.roles || [];
+    const isNotMyself = currentUser?._id != currentMember._userId;
+    const isAllowedToRemove = myRoles.includes(MemberRoleEnum.ADMIN);
 
-    return user?._id != currentMember._userId && myRoles.includes(MemberRoleEnum.ADMIN);
+    return isNotMyself && isAllowedToRemove;
   }
 
   return (
@@ -117,7 +120,7 @@ export function MembersInvitePage() {
                   )}
                 </div>
               </ActionsSider>
-              {isEnableDots(member) ? (
+              {isEnableMemberActions(member) ? (
                 <div>
                   <Dropdown
                     control={
@@ -136,9 +139,7 @@ export function MembersInvitePage() {
                     </DropdownItem>
                   </Dropdown>
                 </div>
-              ) : (
-                <div></div>
-              )}
+              ) : null}
 
               <Divider className={classes.seperator} />
             </MemberRowWrapper>
