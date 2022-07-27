@@ -1,13 +1,14 @@
 import styled from 'styled-components';
-import { Badge } from '@mantine/core';
+import { ActionIcon, Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
 import React, { useContext } from 'react';
 import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
 import { INotificationCenterContext } from '../../../../../index';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { I18NContext } from '../../../../../store/i18n.context';
+import { Cogs } from '../../../../../shared/icons';
 
-export function Header({ unseenCount }: { unseenCount: number }) {
+export function Header({ unseenCount, setShowSettings }: { unseenCount: number; setShowSettings: (boolean) => void }) {
   const { theme, common } = useNovuThemeProvider();
   const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { translations } = useContext(I18NContext);
@@ -37,6 +38,11 @@ export function Header({ unseenCount }: { unseenCount: number }) {
             {unseenCount}
           </Badge>
         ) : null}
+      </div>
+      <div>
+        <ActionIcon variant="transparent" onClick={() => setShowSettings(true)}>
+          <Cogs style={{ color: theme?.notificationItem?.seen?.timeMarkFontColor }} />
+        </ActionIcon>
       </div>
       <MarkReadAction style={{ display: 'none' }}>{translations.markAllAsRead}</MarkReadAction>
     </HeaderWrapper>

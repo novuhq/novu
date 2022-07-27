@@ -3,6 +3,7 @@ export interface ITranslationEntry {
     readonly notifications: string;
     readonly markAllAsRead: string;
     readonly poweredBy: string;
+    readonly settings: string;
   };
   readonly lang: string;
 }
@@ -12,6 +13,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry['translations'
     notifications: 'Notifications',
     markAllAsRead: 'Mark all as read',
     poweredBy: 'Powered By',
+    settings: 'Settings',
   },
 };
 
