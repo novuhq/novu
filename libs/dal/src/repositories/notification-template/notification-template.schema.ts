@@ -16,6 +16,10 @@ const notificationTemplateSchema = new Schema(
       type: Schema.Types.Boolean,
       default: true,
     },
+    critical: {
+      type: Schema.Types.Boolean,
+      default: true,
+    },
     _notificationGroupId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationGroup',
