@@ -7,6 +7,7 @@ import { useNovuContext } from '../../../../hooks';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { UserPreference } from '../user-preference/UserPreference';
+import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
@@ -16,9 +17,12 @@ export function Layout({ children }: { children: JSX.Element }) {
   return (
     <LayoutWrapper theme={theme}>
       {showSettings ? (
-        <ContentWrapper>
-          <UserPreference setShowSettings={setShowSettings} />
-        </ContentWrapper>
+        <>
+          <UserPreferenceHeader setShowSettings={setShowSettings} />
+          <ContentWrapper>
+            <UserPreference />
+          </ContentWrapper>
+        </>
       ) : (
         <>
           <Header setShowSettings={setShowSettings} />

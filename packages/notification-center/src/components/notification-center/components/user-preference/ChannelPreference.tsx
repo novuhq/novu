@@ -1,57 +1,34 @@
 import React from 'react';
-import { Text } from './UserPreference';
+import { Text, TextBlock } from './UserPreference';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { Switch } from '@mantine/core';
 import { getChannel } from './channels';
+import styled from 'styled-components';
 
 export function ChannelPreference({ type, active }) {
-  const channel = getChannel(type);
+  const { label, description, Icon } = getChannel(type);
   const { theme } = useNovuThemeProvider();
   const baseTheme = theme?.notificationItem?.unseen;
+  const primaryColor = baseTheme.fontColor;
+  const secondaryColor = baseTheme.timeMarkFontColor;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0px',
-        gap: '20px',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          padding: '0px',
-          gap: '15px',
-        }}
-      >
-        {channel.icon}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            padding: '0px',
-            gap: '5px',
-          }}
-        >
-          <Text size={'md'} color={baseTheme.fontColor}>
-            {channel.label}
+    <ChannelItemWrapper>
+      <LeftContentWrapper>
+        <Icon style={{ color: active ? primaryColor : secondaryColor }} />
+        <TextBlock>
+          <Text size={'md'} color={active ? primaryColor : secondaryColor}>
+            {label}
           </Text>
-          <Text size={'sm'} color={baseTheme.timeMarkFontColor}>
-            {channel.description}
+          <Text size={'sm'} color={secondaryColor}>
+            {description}
           </Text>
-        </div>
-      </div>
+        </TextBlock>
+      </LeftContentWrapper>
       <Switch
         styles={{
           input: {
-            backgroundColor: baseTheme.timeMarkFontColor,
+            backgroundColor: secondaryColor,
             width: '40px',
             height: '24px',
             border: 'transparent',
@@ -67,6 +44,21 @@ export function ChannelPreference({ type, active }) {
         }}
         checked={active}
       />
-    </div>
+    </ChannelItemWrapper>
   );
 }
+
+const ChannelItemWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const LeftContentWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 15px;
+`;
