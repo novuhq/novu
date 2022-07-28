@@ -26,4 +26,4 @@ export const WIDGET_EMEBED_PATH = process.env.REACT_APP_WIDGET_EMBED_PATH || 'ht
 
 export const IS_DOCKER_HOSTED = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
-export const INTERCOM_APP_ID = window._env_.INTERCOM_APP_ID;
+export const INTERCOM_APP_ID = process.env.REACT_APP_INTERCOM_APP_ID;

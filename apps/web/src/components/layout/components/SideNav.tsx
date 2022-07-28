@@ -7,6 +7,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { useIntercom } from 'react-use-intercom';
+import { INTERCOM_APP_ID } from '../../../config';
 
 type Props = {};
 
@@ -18,7 +19,6 @@ export function SideNav({}: Props) {
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
-  const { boot } = useIntercom();
 
   useEffect(() => {
     setOpened(readonly);
@@ -26,10 +26,6 @@ export function SideNav({}: Props) {
       navigate('/');
     }
   }, [readonly]);
-
-  useEffect(() => {
-    boot();
-  }, []);
 
   const menuItems = [
     {
