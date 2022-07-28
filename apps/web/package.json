@@ -65,6 +65,7 @@
     "react-scripts": "^5.0.1",
     "react-syntax-highlighter": "^15.4.3",
     "react-table": "^7.7.0",
+    "react-use-intercom": "^2.0.0",
     "storybook-dark-mode": "^1.0.8",
     "styled-components": "^5.2.1",
     "typescript": "4.5.4",

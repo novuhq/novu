@@ -376,6 +376,7 @@ importers:
       react-scripts: ^5.0.1
       react-syntax-highlighter: ^15.4.3
       react-table: ^7.7.0
+      react-use-intercom: ^2.0.0
       start-server-and-test: 1.11.6
       storybook-dark-mode: ^1.0.8
       styled-components: ^5.2.1
@@ -449,6 +450,7 @@ importers:
       react-scripts: 5.0.1_onuug4kq2gvxd5lmx5qmfis2oi
       react-syntax-highlighter: 15.5.0_react@17.0.2
       react-table: 7.7.0_react@17.0.2
+      react-use-intercom: 2.0.0_sfoxds7t5ydpegc3knd667wn6m
       storybook-dark-mode: 1.0.9_la3mwacrnx4fdpsr33k2i72zzy
       styled-components: 5.3.5_fane7jikarojcev26y27hpbhu4
       typescript: 4.5.4
@@ -20442,7 +20444,7 @@ packages:
     resolution: {integrity: sha512-O0yuUDnZeQDL+ncNGlJ78BiO4jnYI3bvMsD5prT0/nsgijG/LpNBIr63gTjVTNsiGkgQhiyCShTgxt8oXOrklA==}
     engines: {node: '>=4'}
     dependencies:
-      tslib: 2.3.1
+      tslib: 2.4.0
 
   /astral-regex/2.0.0:
     resolution: {integrity: sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==}
@@ -25567,7 +25569,7 @@ packages:
       prop-types: 15.8.1
       react: 17.0.2
       react-is: 17.0.2
-      tslib: 2.3.1
+      tslib: 2.4.0
 
   /duplexer/0.1.2:
     resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
@@ -37159,7 +37161,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.6.3
+      ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -40502,6 +40504,17 @@ packages:
       dom-helpers: 5.2.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /react-use-intercom/2.0.0_sfoxds7t5ydpegc3knd667wn6m:
+    resolution: {integrity: sha512-DSm79RtGHAQyZ4WfBFuNMWtmpyLjWt6jhrhFwfMmy/eIvvCeJ+5wMdPMGXBn2+qzLDyhV0fqo3vNsqR4EvFqHw==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     dev: false
