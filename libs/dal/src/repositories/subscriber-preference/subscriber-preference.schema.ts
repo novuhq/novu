@@ -41,10 +41,11 @@ const subscriberPreferenceSchema = new Schema(
   schemaOptions
 );
 
-export interface IUserDocument extends SubscriberPreferenceEntity, Document {
+export interface ISubscriberPreferenceDocument extends SubscriberPreferenceEntity, Document {
   _id: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const SubscriberPreference =
-  mongoose.models.User || mongoose.model<IUserDocument>('SubscriberPreference', subscriberPreferenceSchema);
+  mongoose.models.User ||
+  mongoose.model<ISubscriberPreferenceDocument>('SubscriberPreference', subscriberPreferenceSchema);
