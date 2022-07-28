@@ -39,6 +39,16 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     return this.mapEntities(items);
   }
 
+  async getActiveList(organizationId: string, environmentId: string, active?: boolean) {
+    const items = await NotificationTemplate.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      active: active,
+    }).populate('notificationGroup');
+
+    return this.mapEntities(items);
+  }
+
   async delete(query: FilterQuery<NotificationTemplateEntity & Document>) {
     const item = await this.findOne({ _id: query._id });
     if (!item) throw new DalException(`Could not find notification template with id ${query._id}`);
