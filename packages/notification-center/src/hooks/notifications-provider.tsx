@@ -85,18 +85,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     await fetchPage(0, true, storeId);
   }
 
-  function disposeDefault() {
-    const storeId = 'default_store';
-    delete notifications[storeId];
-  }
-
   function getStoreQuery(storeId: string) {
     return stores?.find((store) => store.storeId === storeId)?.query || {};
   }
 
   return (
     <NotificationsContext.Provider
-      value={{ notifications, fetchNextPage, hasNextPage, fetching, markAsSeen, updateAction, refetch, disposeDefault }}
+      value={{ notifications, fetchNextPage, hasNextPage, fetching, markAsSeen, updateAction, refetch }}
     >
       {children}
     </NotificationsContext.Provider>
