@@ -6,8 +6,6 @@ import { useEnvController } from '../../../store/use-env-controller';
 import React, { useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
-import { useIntercom } from 'react-use-intercom';
-import { INTERCOM_APP_ID } from '../../../config';
 
 type Props = {};
 
