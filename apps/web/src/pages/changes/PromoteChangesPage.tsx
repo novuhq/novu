@@ -8,8 +8,8 @@ import { ChangesTable } from '../../components/changes/ChangesTableLayout';
 import { useMutation, useQueryClient } from 'react-query';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
-import { showNotification } from '@mantine/notifications';
-import { Check } from '../../design-system/icons/general/Check';
+import { show } from '../../components/utils/SuccessOrError';
+import { message } from 'antd';
 
 export function PromoteChangesPage() {
   const { changes = [], isLoadingChanges, history, isLoadingHistory } = useEnvironmentChanges();
@@ -19,19 +19,7 @@ export function PromoteChangesPage() {
       queryClient.refetchQueries([QueryKeys.currentUnpromotedChanges]);
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
       queryClient.refetchQueries([QueryKeys.changesCount]);
-      showNotification({
-        message: 'All changes were promoted',
-        autoClose: false,
-        icon: <Check />,
-        styles: {
-          icon: {
-            width: '22px',
-            height: '22px',
-            marginRight: '10px',
-            backgroundColor: 'blue',
-          },
-        },
-      });
+      show('success', 'All changes were promoted');
     },
   });
 
