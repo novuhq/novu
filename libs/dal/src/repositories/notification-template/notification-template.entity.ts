@@ -19,6 +19,8 @@ export class NotificationTemplateEntity {
 
   draft: boolean;
 
+  critical: boolean;
+
   tags: string[];
 
   steps: NotificationStepEntity[];

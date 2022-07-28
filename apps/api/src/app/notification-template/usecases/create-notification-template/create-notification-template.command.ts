@@ -51,6 +51,9 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsBoolean()
   draft: boolean;
+
+  @IsBoolean()
+  critical: boolean;
 }
 
 export class ChannelCTACommand {
