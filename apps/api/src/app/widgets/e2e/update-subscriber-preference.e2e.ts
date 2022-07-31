@@ -48,11 +48,10 @@ describe('GET /widget/subscriber-preference', function () {
     await session.awaitRunningJobs(template._id);
 
     const updateData = {
-      templateId: template._id,
       enabled: false,
     };
 
-    await updateSubscriberPreference(updateData, subscriberToken);
+    await updateSubscriberPreference(updateData, subscriberToken, template._id);
 
     const response = await getSubscriberPreference(subscriberToken);
 
@@ -60,10 +59,7 @@ describe('GET /widget/subscriber-preference', function () {
 
     expect(data.preference.enabled).to.equal(false);
     expect(data.preference.channels.email).to.equal(true);
-    expect(data.preference.channels.sms).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(true);
-    expect(data.preference.channels.direct).to.equal(true);
-    expect(data.preference.channels.push).to.equal(true);
   });
 
   it('should update user preference', async function () {
@@ -73,21 +69,19 @@ describe('GET /widget/subscriber-preference', function () {
     await session.awaitRunningJobs(template._id);
 
     const createData = {
-      templateId: template._id,
       enabled: true,
     };
 
-    await updateSubscriberPreference(createData, subscriberToken);
+    await updateSubscriberPreference(createData, subscriberToken, template._id);
 
     const updateDataEmailFalse = {
-      templateId: template._id,
       channel: {
         type: ChannelTypeEnum.EMAIL,
         enabled: false,
       },
     };
 
-    await updateSubscriberPreference(updateDataEmailFalse, subscriberToken);
+    await updateSubscriberPreference(updateDataEmailFalse, subscriberToken, template._id);
 
     const response = (await getSubscriberPreference(subscriberToken)).data.data[0];
 
@@ -108,16 +102,15 @@ describe('GET /widget/subscriber-preference', function () {
         enabled: true,
       };
 
-      await updateSubscriberPreference(createData, subscriberToken);
+      await updateSubscriberPreference(createData, subscriberToken, template._id);
 
       const updateDataEmailFalse = {
-        templateId: template._id,
         channel: {},
       } as UpdateSubscriberPreferenceBodyDto;
 
       let responseMessage = '';
       try {
-        await updateSubscriberPreference(updateDataEmailFalse, subscriberToken);
+        await updateSubscriberPreference(updateDataEmailFalse, subscriberToken, template._id);
       } catch (e) {
         responseMessage = 'In order to make an update you need to provider channel or enabled';
       }
@@ -127,8 +120,12 @@ describe('GET /widget/subscriber-preference', function () {
   );
 });
 
-async function updateSubscriberPreference(data: UpdateSubscriberPreferenceBodyDto, subscriberToken: string) {
-  return await axios.post(`http://localhost:${process.env.PORT}/v1/widgets/subscriber-preference`, data, {
+async function updateSubscriberPreference(
+  data: UpdateSubscriberPreferenceBodyDto,
+  subscriberToken: string,
+  templateId: string
+) {
+  return await axios.put(`http://localhost:${process.env.PORT}/v1/widgets/preference/${templateId}`, data, {
     headers: {
       Authorization: `Bearer ${subscriberToken}`,
     },

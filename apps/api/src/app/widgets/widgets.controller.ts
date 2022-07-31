@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { SessionInitializeBodyDto } from './dtos/session-initialize.dto';
@@ -163,16 +163,17 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/subscriber-preference')
+  @Put('/preference/:templateId')
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('templateId') templateId: string,
     @Body() body: UpdateSubscriberPreferenceBodyDto
   ) {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
-      templateId: body.templateId,
+      templateId: templateId,
       channel: body.channel,
       enabled: body.enabled,
     });
