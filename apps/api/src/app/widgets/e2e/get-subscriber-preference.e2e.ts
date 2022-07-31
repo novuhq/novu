@@ -59,3 +59,11 @@ describe('GET /widget/notifications/feed', function () {
     expect(data.preference.channels.push).to.equal(true);
   });
 });
+
+export async function getSubscriberPreference(subscriberToken: string) {
+  return await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/subscriber-preference`, {
+    headers: {
+      Authorization: `Bearer ${subscriberToken}`,
+    },
+  });
+}
