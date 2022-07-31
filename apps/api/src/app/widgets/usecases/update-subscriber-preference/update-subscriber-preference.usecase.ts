@@ -31,7 +31,7 @@ export class UpdateSubscriberPreference {
 
     const updatePayload: Partial<SubscriberPreferenceEntity> = {};
 
-    if (command.enabled || command.enabled === false) {
+    if (command.enabled != null) {
       updatePayload.enabled = command.enabled;
     }
 

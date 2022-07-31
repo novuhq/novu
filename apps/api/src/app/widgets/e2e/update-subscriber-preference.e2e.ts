@@ -45,8 +45,6 @@ describe('GET /widget/subscriber-preference', function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
-    await session.awaitRunningJobs(template._id);
-
     const updateData = {
       enabled: false,
     };
