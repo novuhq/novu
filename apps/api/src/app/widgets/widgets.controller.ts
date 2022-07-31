@@ -18,6 +18,8 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
+import { GetSubscriberPreference } from './usecases/get-subscriber-preference/get-subscriber-preference.usecase';
+import { GetSubscriberPreferenceCommand } from './usecases/get-subscriber-preference/get-subscriber-preference.command';
 
 @Controller('/widgets')
 export class WidgetsController {
@@ -28,6 +30,7 @@ export class WidgetsController {
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
+    private getSubscriberPreferenceUsecase: GetSubscriberPreference,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -141,6 +144,18 @@ export class WidgetsController {
     });
 
     return await this.getOrganizationUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/subscriber-preference')
+  async GetUserPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
+    const command = GetSubscriberPreferenceCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession._id,
+      environmentId: subscriberSession._environmentId,
+    });
+
+    return await this.getSubscriberPreferenceUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
