@@ -31,6 +31,7 @@ export function ProviderCard({
       active={brightCard}
       data-test-id="integration-provider-card"
       onClick={() => {
+        if (provider.comingSoon) return;
         if (provider.connected) {
           handleOnClickSettings();
         } else {
@@ -51,7 +52,7 @@ export function ProviderCard({
 
         <CardFooter>
           {!provider.connected ? (
-            <StyledButton fullWidth variant={'outline'} theme={colorScheme}>
+            <StyledButton fullWidth variant={'outline'} theme={colorScheme} disabled={provider.comingSoon}>
               Connect
             </StyledButton>
           ) : (

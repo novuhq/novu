@@ -83,6 +83,7 @@ export class SendMessageSms extends SendMessageType {
       transactionId: command.transactionId,
       phone,
       content,
+      providerId: integration.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,

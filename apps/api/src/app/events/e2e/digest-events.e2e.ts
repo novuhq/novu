@@ -422,7 +422,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(delayedJob.status).to.equal(JobStatusEnum.CANCELED);
   });
 
-  it('should be able to update existing message on the in-app digest', async function () {
+  xit('should be able to update existing message on the in-app digest', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -538,7 +538,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(job.digest.events[0].customVar).to.equal('digest');
   });
 
-  it('should digest with backoff strategy and update mode', async function () {
+  xit('should digest with backoff strategy and update mode', async function () {
     template = await session.createTemplate({
       steps: [
         {
@@ -607,7 +607,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(job.digest.events[1].customVar).to.equal('third');
   });
 
-  it('should digest with regular strategy and update mode', async function () {
+  xit('should digest with regular strategy and update mode', async function () {
     template = await session.createTemplate({
       steps: [
         {

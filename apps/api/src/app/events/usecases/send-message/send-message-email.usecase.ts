@@ -93,6 +93,7 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
+      providerId: integration.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,

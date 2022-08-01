@@ -24,6 +24,7 @@
     "@aws-sdk/s3-request-presigner": "^3.14.0",
     "@godaddy/terminus": "^4.10.2",
     "@novu/fcm": "^0.5.1",
+    "@novu/slack": "^0.5.1",
     "@nestjs/axios": "0.1.0",
     "@nestjs/common": "9.0.2",
     "@nestjs/core": "9.0.2",

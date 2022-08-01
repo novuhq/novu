@@ -137,9 +137,26 @@ export function ActivitiesPage() {
               <Tag data-test-id="row-sms-channel">Push</Tag>
             </Tooltip>
           ) : null}
+          {channel === ChannelTypeEnum.DIRECT ? (
+            <Tooltip label="Delivered on Direct Channel">
+              <Tag data-test-id="row-direct-channel">Direct</Tag>
+            </Tooltip>
+          ) : null}
         </>
       ),
     },
+    {
+      accessor: 'providerId',
+      Header: 'Provider',
+      Cell: ({ providerId }: any) => {
+        return (
+          <Text data-test-id="provider-id" rows={1}>
+            {providerId ? capitalize(providerId) : ''}
+          </Text>
+        );
+      },
+    },
+
     {
       accessor: 'createdAt',
       Header: 'Sent On',

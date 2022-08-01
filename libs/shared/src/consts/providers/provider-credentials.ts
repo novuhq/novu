@@ -295,6 +295,27 @@ export const twilioConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const slackConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Id',
+    type: 'string',
+    required: false,
+  },
+];
+
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ProjectName,

@@ -95,6 +95,36 @@ export class ProcessSubscriber {
     if (subscriber && !this.subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;
     }
+    if (subscriberPayload.subscriberId) {
+      return await this.createSubscriberUsecase.execute(
+        CreateSubscriberCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: subscriberPayload.subscriberId,
+          email: subscriberPayload.email,
+          firstName: subscriberPayload.firstName,
+          lastName: subscriberPayload.lastName,
+          phone: subscriberPayload.phone,
+        })
+      );
+    }
+    await this.createLogUsecase.execute(
+      CreateLogCommand.create({
+        transactionId: command.transactionId,
+        status: LogStatusEnum.ERROR,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        text: 'Subscriber not found',
+        userId: command.userId,
+        code: LogCodeEnum.SUBSCRIBER_NOT_FOUND,
+        templateId: command.templateId,
+        raw: {
+          payload: command.payload,
+          subscriber: subscriberPayload,
+          triggerIdentifier: command.identifier,
+        },
+      })
+    );
 
     return await this.createOrUpdateSubscriber(command, subscriberPayload);
   }
@@ -110,7 +140,6 @@ export class ProcessSubscriber {
         lastName: subscriberPayload?.lastName,
         phone: subscriberPayload?.phone,
         avatar: subscriberPayload?.avatar,
-        notificationIdentifiers: subscriberPayload?.notificationIdentifiers,
       })
     );
   }
@@ -121,9 +150,7 @@ export class ProcessSubscriber {
       (subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
       (subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
       (subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar) ||
-      (subscriberPayload?.notificationIdentifiers &&
-        subscriber?.notificationIdentifiers !== subscriberPayload?.notificationIdentifiers)
+      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
     );
   }
 

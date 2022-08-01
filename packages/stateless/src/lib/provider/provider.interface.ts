@@ -24,7 +24,7 @@ export interface ISmsOptions {
   attachments?: IAttachmentOptions[];
 }
 export interface IPushOptions {
-  target: string;
+  target: string[];
   title: string;
   content: string;
   payload: object;
@@ -45,7 +45,7 @@ export interface IPushOptions {
 }
 
 export interface IDirectOptions {
-  channelId: string;
+  webhookUrl: string;
   content: string;
 }
 
@@ -68,7 +68,6 @@ export interface ISmsProvider extends IProvider {
 
 export interface IDirectProvider extends IProvider {
   sendMessage(options: IDirectOptions): Promise<ISendMessageSuccessResponse>;
-
   channelType: ChannelTypeEnum.DIRECT;
 }
 

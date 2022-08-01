@@ -66,6 +66,8 @@ const messageSchema = new Schema(
     channel: Schema.Types.String,
     content: Schema.Types.Mixed,
     phone: Schema.Types.String,
+    directWebhookUrl: Schema.Types.String,
+    providerId: Schema.Types.String,
     notificationIdentifiers: [Schema.Types.Array],
     title: Schema.Types.String,
     seen: {

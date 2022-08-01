@@ -8,6 +8,8 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
 import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
+import { UpdateSubscriberChannelDto } from './dto/update-subscriber-channel.dto';
+import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
 
@@ -16,6 +18,7 @@ export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
     private updateSubscriberUsecase: UpdateSubscriber,
+    private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscribersUsecase: GetSubscribers
   ) {}
@@ -47,7 +50,6 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
-        notificationIdentifiers: body.notificationIdentifiers,
       })
     );
   }
@@ -70,7 +72,25 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
-        notificationIdentifiers: body.notificationIdentifiers,
+      })
+    );
+  }
+
+  @Put('/:subscriberId/credentials')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async updateSubscriberChannel(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberChannelDto
+  ) {
+    return await this.updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        providerId: body.providerId,
+        credentials: body.credentials,
       })
     );
   }

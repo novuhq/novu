@@ -4,6 +4,7 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
+import { SendMessageDirect } from './send-message-direct.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
 
@@ -13,6 +14,7 @@ export class SendMessage {
     private sendMessageEmail: SendMessageEmail,
     private sendMessageSms: SendMessageSms,
     private sendMessageInApp: SendMessageInApp,
+    private sendMessageDirect: SendMessageDirect,
     private sendMessagePush: SendMessagePush,
     private digest: Digest
   ) {}
@@ -25,6 +27,8 @@ export class SendMessage {
         return await this.sendMessageInApp.execute(command);
       case ChannelTypeEnum.EMAIL:
         return await this.sendMessageEmail.execute(command);
+      case ChannelTypeEnum.DIRECT:
+        return await this.sendMessageDirect.execute(command);
       case ChannelTypeEnum.PUSH:
         return await this.sendMessagePush.execute(command);
       case ChannelTypeEnum.DIGEST:

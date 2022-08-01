@@ -1,32 +1,4 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-# Push Notifications
-
-Novu can be used to deliver push notifications to your customers devices. Both Mobile and Web push notifications are supported.
-
-:::caution
-
-How the users device identifiers are stored are subject to change!
-
-:::
-
-You can save a user's notification/device identifiers with the subscriber entity.
-
-```ts
-await novu.subscribers.identify(user.id, {
-  email: user.email,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  phone: user.phone,
-  avatar: user.profile_avatar,
-
-  // This must a be a array of device identifiers (string) specific to the provider.
-  notificationIdentifiers: user.device_ids,
-});
-```
-
-## Firebase Cloud Messages
+# Firebase Cloud Messages
 
 Firebase Cloud Messages is a free notification delivery service provided by Google Firebase.
 
@@ -35,6 +7,8 @@ To enable the FCM integration, you need to get your service account key from the
 After that, manually get the values from the JSON to the right fields. You can use a tool like [JSON Formatter](https://jsonformatter.curiousconcept.com/) to get the values more easily.
 
 The overrides field supports all [NotificationMessagePayload](https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.notificationmessagepayload.md#notificationmessagepayload_interface) values, example below.
+
+Device/notification identifiers can be set by using [Subscriber Credentials](/platform/subscribers#updating-subscriber-credentials) or by using the `deviceIdentifiers` field in overrides.
 
 <Tabs>
   <TabItem value="nodejs" label="Node.js" default>

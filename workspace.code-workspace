@@ -77,8 +77,16 @@
       "path": "providers/twilio"
     },
     {
+      "name": "🔔 @novu/termii",
+      "path": "providers/termii"
+    },
+    {
       "name": "🔔 @novu/fcm",
       "path": "providers/fcm"
+    },
+    {
+      "name": "🔔 @novu/slack",
+      "path": "providers/slack"
     }
   ],
   "settings": {

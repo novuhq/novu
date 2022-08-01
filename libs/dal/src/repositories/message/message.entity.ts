@@ -41,6 +41,10 @@ export class MessageEntity {
 
   phone?: string;
 
+  directWebhookUrl?: string;
+
+  providerId?: string;
+
   notificationIdentifiers?: string[];
 
   title?: string;

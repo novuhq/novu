@@ -20,6 +20,7 @@ export interface INovuOptions {
     | IDirectProvider
     | IPushProvider
   )[];
+
   templates: ITemplate[];
 }
 

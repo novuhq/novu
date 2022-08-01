@@ -38,10 +38,6 @@ export class UpdateSubscriber {
       updatePayload.avatar = command.avatar;
     }
 
-    if (command.notificationIdentifiers != null) {
-      updatePayload.notificationIdentifiers = command.notificationIdentifiers;
-    }
-
     await this.subscriberRepository.update(
       {
         _id: foundSubscriber,

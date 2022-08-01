@@ -37,6 +37,7 @@ export class FcmPushProvider implements IPushProvider {
   async sendMessage(
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
+    delete (options.overrides as any).notificationIdentifiers;
     const res = await this.messaging.sendToDevice(options.target, {
       notification: {
         title: options.title,

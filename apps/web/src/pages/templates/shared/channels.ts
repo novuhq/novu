@@ -45,6 +45,14 @@ export const channels = [
     type: StepTypeEnum.ACTION,
   },
   {
+    tabKey: ChannelTypeEnum.DIRECT,
+    label: 'Direct',
+    description: 'Send a direct message',
+    Icon: SmsGradient,
+    testId: 'directSelector',
+    channelType: ChannelTypeEnum.DIRECT,
+  },
+  {
     tabKey: ChannelTypeEnum.PUSH,
     label: 'Push',
     description: "Send an Push Notification to a user's device",

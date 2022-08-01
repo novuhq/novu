@@ -22,7 +22,7 @@ test('should trigger fcm correctly', async () => {
   await provider.sendMessage({
     title: 'Test',
     content: 'Test push',
-    target: 'tester',
+    target: ['tester'],
     payload: {
       sound: 'test_sound',
     },
