@@ -25,7 +25,7 @@ export class UpdateSubscriberPreference {
         _subscriberId: command.subscriberId,
         _templateId: command.templateId,
         enabled: command.enabled !== false,
-        channels: channelObj.hasOwnProperty('undefined') ? null : channelObj,
+        channels: command.channel?.type ? channelObj : null,
       });
     }
 

@@ -123,7 +123,7 @@ async function updateSubscriberPreference(
   subscriberToken: string,
   templateId: string
 ) {
-  return await axios.put(`http://localhost:${process.env.PORT}/v1/widgets/preference/${templateId}`, data, {
+  return await axios.patch(`http://localhost:${process.env.PORT}/v1/widgets/preference/${templateId}`, data, {
     headers: {
       Authorization: `Bearer ${subscriberToken}`,
     },
