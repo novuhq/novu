@@ -48,6 +48,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         theme={props.theme}
         onActionClick={props.onActionClick}
         actionsResultBlock={props.actionsResultBlock}
+        listItem={props.listItem}
       />
     </Popover>
   );
