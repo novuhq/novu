@@ -6,7 +6,6 @@ import { expect } from 'chai';
 describe('GET /widget/notifications/feed', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
-  let subscriberId: string;
 
   beforeEach(async () => {
     session = new UserSession();
@@ -18,9 +17,6 @@ describe('GET /widget/notifications/feed', function () {
   });
 
   it('should fetch a default user preference', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-
     const response = await getSubscriberPreference(session.subscriberToken);
 
     const data = response.data.data[0];
