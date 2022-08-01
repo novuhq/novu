@@ -9,11 +9,7 @@ import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 describe('GET /widget/subscriber-preference', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
-  let subscriberToken: string;
   let subscriberId: string;
-  let subscriberProfile: {
-    _id: string;
-  } = null;
 
   beforeEach(async () => {
     session = new UserSession();
@@ -23,37 +19,16 @@ describe('GET /widget/subscriber-preference', function () {
     template = await session.createTemplate({
       noFeedId: true,
     });
-
-    const { body } = await session.testAgent
-      .post('/v1/widgets/session/initialize')
-      .send({
-        applicationIdentifier: session.environment.identifier,
-        subscriberId,
-        firstName: 'Test',
-        lastName: 'User',
-        email: 'test@example.com',
-      })
-      .expect(201);
-
-    const { token, profile } = body.data;
-
-    subscriberToken = token;
-    subscriberProfile = profile;
   });
 
   it('should create user preference', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-
-    await session.awaitRunningJobs(template._id);
-
     const updateData = {
       enabled: false,
     };
 
-    await updateSubscriberPreference(updateData, subscriberToken, template._id);
+    await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
-    const response = await getSubscriberPreference(subscriberToken);
+    const response = await getSubscriberPreference(session.subscriberToken);
 
     const data = response.data.data[0];
 
@@ -72,7 +47,7 @@ describe('GET /widget/subscriber-preference', function () {
       enabled: true,
     };
 
-    await updateSubscriberPreference(createData, subscriberToken, template._id);
+    await updateSubscriberPreference(createData, session.subscriberToken, template._id);
 
     const updateDataEmailFalse = {
       channel: {
@@ -81,9 +56,9 @@ describe('GET /widget/subscriber-preference', function () {
       },
     };
 
-    await updateSubscriberPreference(updateDataEmailFalse, subscriberToken, template._id);
+    await updateSubscriberPreference(updateDataEmailFalse, session.subscriberToken, template._id);
 
-    const response = (await getSubscriberPreference(subscriberToken)).data.data[0];
+    const response = (await getSubscriberPreference(session.subscriberToken)).data.data[0];
 
     expect(response.preference.enabled).to.equal(true);
     expect(response.preference.channels.email).to.equal(false);
@@ -102,7 +77,7 @@ describe('GET /widget/subscriber-preference', function () {
         enabled: true,
       };
 
-      await updateSubscriberPreference(createData, subscriberToken, template._id);
+      await updateSubscriberPreference(createData, session.subscriberToken, template._id);
 
       const updateDataEmailFalse = {
         channel: {},
@@ -110,7 +85,7 @@ describe('GET /widget/subscriber-preference', function () {
 
       let responseMessage = '';
       try {
-        await updateSubscriberPreference(updateDataEmailFalse, subscriberToken, template._id);
+        await updateSubscriberPreference(updateDataEmailFalse, session.subscriberToken, template._id);
       } catch (e) {
         responseMessage = 'In order to make an update you need to provider channel or enabled';
       }
@@ -125,7 +100,7 @@ async function updateSubscriberPreference(
   subscriberToken: string,
   templateId: string
 ) {
-  return await axios.put(`http://localhost:${process.env.PORT}/v1/widgets/preference/${templateId}`, data, {
+  return await axios.patch(`http://localhost:${process.env.PORT}/v1/widgets/preference/${templateId}`, data, {
     headers: {
       Authorization: `Bearer ${subscriberToken}`,
     },

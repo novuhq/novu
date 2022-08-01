@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { SessionInitializeBodyDto } from './dtos/session-initialize.dto';
@@ -151,7 +151,7 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Get('/subscriber-preference')
+  @Get('/preferences')
   async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
     const command = GetSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -163,7 +163,7 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Put('/preference/:templateId')
+  @Patch('/preference/:templateId')
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('templateId') templateId: string,

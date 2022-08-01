@@ -25,13 +25,13 @@ export class UpdateSubscriberPreference {
         _subscriberId: command.subscriberId,
         _templateId: command.templateId,
         enabled: command.enabled !== false,
-        channels: channelObj.hasOwnProperty('undefined') ? null : channelObj,
+        channels: command.channel?.type ? channelObj : null,
       });
     }
 
     const updatePayload: Partial<SubscriberPreferenceEntity> = {};
 
-    if (command.enabled || command.enabled === false) {
+    if (command.enabled != null) {
       updatePayload.enabled = command.enabled;
     }
 

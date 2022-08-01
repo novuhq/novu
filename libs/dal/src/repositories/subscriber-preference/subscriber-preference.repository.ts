@@ -7,7 +7,7 @@ export class SubscriberPreferenceRepository extends BaseRepository<SubscriberPre
     super(SubscriberPreference, SubscriberPreferenceEntity);
   }
 
-  async findAll(
+  async findSubscriberPreferences(
     environmentId: string,
     subscriberId: string,
     templatesIds: string[]
