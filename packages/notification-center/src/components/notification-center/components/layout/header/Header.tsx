@@ -7,8 +7,9 @@ import { INotificationCenterContext } from '../../../../../index';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { I18NContext } from '../../../../../store/i18n.context';
 import { Cogs } from '../../../../../shared/icons';
+import { Screens } from '../Layout';
 
-export function Header({ unseenCount, setShowSettings }: { unseenCount: number; setShowSettings: (boolean) => void }) {
+export function Header({ unseenCount, setScreen }: { unseenCount: number; setScreen: (Screens) => void }) {
   const { theme, common } = useNovuThemeProvider();
   const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { translations } = useContext(I18NContext);
@@ -40,7 +41,7 @@ export function Header({ unseenCount, setShowSettings }: { unseenCount: number; 
         ) : null}
       </div>
       <div>
-        <ActionIcon variant="transparent" onClick={() => setShowSettings(true)}>
+        <ActionIcon variant="transparent" onClick={() => setScreen(Screens.SETTINGS)}>
           <Cogs style={{ color: theme?.notificationItem?.seen?.timeMarkFontColor }} />
         </ActionIcon>
       </div>

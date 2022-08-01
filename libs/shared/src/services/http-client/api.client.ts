@@ -32,4 +32,8 @@ export class HttpClient {
   async post(url: string, body = {}) {
     return await this.axiosClient.post(url, body).then((response) => response.data.data);
   }
+
+  async put(url: string, body = {}) {
+    return await this.axiosClient.put(url, body).then((response) => response.data.data);
+  }
 }

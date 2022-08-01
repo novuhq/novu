@@ -9,26 +9,33 @@ import { INovuTheme } from '../../../../store/novu-theme.context';
 import { UserPreference } from '../user-preference/UserPreference';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 
+export enum Screens {
+  NOTIFICATIONS = 'notifications',
+  SETTINGS = 'settings',
+}
+
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
   const { theme } = useNovuThemeProvider();
-  const [showSettings, setShowSettings] = useState(false);
+  const [screen, setScreen] = useState<Screens>(Screens.NOTIFICATIONS);
 
   return (
     <LayoutWrapper theme={theme}>
-      {showSettings ? (
+      {screen === Screens.SETTINGS && (
         <>
-          <UserPreferenceHeader setShowSettings={setShowSettings} />
+          <UserPreferenceHeader setScreen={setScreen} />
           <ContentWrapper>
             <UserPreference />
           </ContentWrapper>
         </>
-      ) : (
+      )}
+      {screen === Screens.NOTIFICATIONS && (
         <>
-          <Header setShowSettings={setShowSettings} />
+          <Header setScreen={setScreen} />
           <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
         </>
       )}
+
       <Footer />
     </LayoutWrapper>
   );

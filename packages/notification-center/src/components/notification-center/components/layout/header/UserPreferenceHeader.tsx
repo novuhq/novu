@@ -3,13 +3,14 @@ import { ArrowLeft } from '../../../../../shared/icons';
 import React from 'react';
 import styled from 'styled-components';
 import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
+import { Screens } from '../Layout';
 
-export function UserPreferenceHeader({ setShowSettings }: { setShowSettings: (boolean) => void }) {
+export function UserPreferenceHeader({ setScreen }: { setScreen: (Screens) => void }) {
   const { theme } = useNovuThemeProvider();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-      <ActionIcon variant="transparent" onClick={() => setShowSettings(false)}>
+      <ActionIcon variant="transparent" onClick={() => setScreen(Screens.NOTIFICATIONS)}>
         <ArrowLeft style={{ marginLeft: '15px', color: theme.header.fontColor }} />
       </ActionIcon>
       <Title fontColor={theme.header.fontColor}>Settings</Title>

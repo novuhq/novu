@@ -68,4 +68,12 @@ export class ApiService {
   async getOrganization() {
     return this.httpClient.get('/widgets/organization');
   }
+
+  async getUserPreference() {
+    return this.httpClient.get('/widgets/subscriber-preference');
+  }
+
+  async updateSubscriberPreference(templateId: string, channelType: string, enabled: boolean): Promise<any> {
+    return await this.httpClient.put(`/widgets/preference/${templateId}`, { channel: { type: channelType, enabled } });
+  }
 }
