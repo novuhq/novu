@@ -117,27 +117,27 @@ export function ConnectIntegrationForm({
                 isNeededToHide(credential.key) ? (
                   <PasswordInput
                     label={credential.displayName}
-                    required
+                    required={credential.required}
                     placeholder={credential.displayName}
                     description={credential.description ?? ''}
                     data-test-id={credential.key}
                     error={errors[credential.key]?.message}
                     {...field}
                     {...register(credential.key, {
-                      required: `Please enter a ${credential.displayName.toLowerCase()}`,
+                      required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
                     })}
                   />
                 ) : (
                   <Input
                     label={credential.displayName}
-                    required
+                    required={credential.required}
                     placeholder={credential.displayName}
                     description={credential.description ?? ''}
                     data-test-id={credential.key}
                     error={errors[credential.key]?.message}
                     {...field}
                     {...register(credential.key, {
-                      required: `Please enter a ${credential.displayName.toLowerCase()}`,
+                      required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
                     })}
                   />
                 )

@@ -1,6 +1,6 @@
 {
   "name": "@novu/ws",
-  "version": "0.5.1",
+  "version": "0.6.2",
   "description": "",
   "author": "",
   "private": true,
@@ -21,7 +21,6 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "jsonwebtoken": "8.5.1",
     "@godaddy/terminus": "^4.3.1",
     "@nestjs/common": "^7.6.17",
     "@nestjs/core": "^7.6.17",
@@ -31,14 +30,15 @@
     "@nestjs/swagger": "^4.8.0",
     "@nestjs/terminus": "^7.2.0",
     "@nestjs/websockets": "^7.6.17",
-    "@novu/dal": "^0.5.1",
-    "@novu/shared": "^0.5.1",
-    "@novu/testing": "^0.5.1",
+    "@novu/dal": "^0.6.2",
+    "@novu/shared": "^0.6.0",
+    "@novu/testing": "^0.6.2",
     "@sentry/node": "^6.3.3",
     "bull": "^4.4.0",
     "class-transformer": "^0.5.1",
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",
+    "jsonwebtoken": "8.5.1",
     "lodash": "^4.17.15",
     "nest-raven": "^7.2.0",
     "reflect-metadata": "^0.1.13",
@@ -65,7 +65,7 @@
     "ts-loader": "^8.0.8",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "4.0.5"
+    "typescript": "4.3.5"
   },
   "workspaces": {
     "nohoist": [

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import {
   ChannelTypeEnum,
+  DigestUnitEnum,
   ICreateNotificationTemplateDto,
   IMessageTemplate,
   INotificationTemplate,
@@ -11,7 +12,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { createTemplate, updateTemplate } from '../../api/templates';
+import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
 import { QueryKeys } from '../../api/query.keys';
 import { useTemplateEditor } from './TemplateEditorProvider';
@@ -53,6 +54,8 @@ export function useTemplateController(templateId: string) {
   const { template, refetch, loading: loadingEditTemplate } = useTemplateFetcher(templateId);
   const client = useQueryClient();
 
+  const deleteTemplate = () => deleteTemplateById(templateId);
+
   const { isLoading, mutateAsync: createNotification } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
@@ -86,6 +89,15 @@ export function useTemplateController(templateId: string) {
               ...item.template,
               htmlContent: item.template.content as string,
               content: [],
+            },
+          };
+        }
+        if (item.template.type === ChannelTypeEnum.IN_APP) {
+          return {
+            ...item,
+            template: {
+              ...item.template,
+              feedId: item.template._feedId || '',
             },
           };
         }
@@ -188,6 +200,7 @@ export function useTemplateController(templateId: string) {
     deleteStep,
     editMode,
     template,
+    deleteTemplate,
     onSubmit,
     isEmbedModalVisible,
     trigger,
@@ -222,6 +235,12 @@ export interface StepEntity {
   filters?: any[];
 
   active: boolean;
+
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnitEnum;
+    digestKey?: string;
+  };
 }
 
 export interface IForm {

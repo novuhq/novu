@@ -1,3 +1,4 @@
+import { ChannelTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import { NotificationStepEntity } from '../notification-template';
 
 export enum JobStatusEnum {
@@ -6,6 +7,8 @@ export enum JobStatusEnum {
   RUNNING = 'running',
   COMPLETED = 'completed',
   FAILED = 'failed',
+  DELAYED = 'delayed',
+  CANCELED = 'canceled',
 }
 
 export class JobEntity {
@@ -27,4 +30,17 @@ export class JobEntity {
   status: JobStatusEnum;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error?: any;
+  createdAt?: string;
+  _templateId: string;
+  digest?: {
+    events?: any[];
+    amount?: number;
+    unit?: DigestUnitEnum;
+    digestKey?: string;
+    type: DigestTypeEnum;
+    backoffUnit?: DigestUnitEnum;
+    backoffAmount?: number;
+    updateMode?: boolean;
+  };
+  type?: ChannelTypeEnum;
 }

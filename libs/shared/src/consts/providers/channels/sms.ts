@@ -1,6 +1,14 @@
 import { IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
-import { nexmoConfig, plivoConfig, sms77Config, snsConfig, telnyxConfig, twilioConfig } from '../provider-credentials';
+import {
+  gupshupConfig,
+  nexmoConfig,
+  plivoConfig,
+  sms77Config,
+  snsConfig,
+  telnyxConfig,
+  twilioConfig,
+} from '../provider-credentials';
 
 export const smsProviders: IProviderConfig[] = [
   {
@@ -51,5 +59,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: twilioConfig,
     docReference: 'https://www.twilio.com/docs',
     logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
+  },
+  {
+    id: 'gupshup',
+    displayName: 'Gupshup',
+    channel: ChannelTypeEnum.SMS,
+    credentials: gupshupConfig,
+    docReference: 'https://docs.gupshup.io/docs/send-single-message',
+    logoFileName: { light: 'gupshup.png', dark: 'gupshup.png' },
   },
 ];

@@ -23,6 +23,8 @@ import { QueueService } from './app/shared/services/queue';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
+import { FeedsModule } from './app/feeds/feeds.module';
+
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   OrganizationModule,
   SharedModule,
@@ -42,6 +44,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   IntegrationModule,
   ChangeModule,
   SubscribersModule,
+  FeedsModule,
 ];
 
 const providers = [];

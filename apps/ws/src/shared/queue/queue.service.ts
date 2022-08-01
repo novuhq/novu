@@ -17,6 +17,9 @@ export class QueueService {
       keepAlive: 30000,
       family: 4,
     },
+    defaultJobOptions: {
+      removeOnComplete: true,
+    },
   };
 
   public wsSocketQueue: Queue<IWsQueuePayload> = new Bull(WS_SOCKET_QUEUE, this.bullConfig) as Queue;

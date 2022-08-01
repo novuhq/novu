@@ -1,12 +1,78 @@
-import { Control, Controller } from 'react-hook-form';
-import { Container, Group } from '@mantine/core';
+import { useInputState } from '@mantine/hooks';
+import { ActionIcon, Container, Group } from '@mantine/core';
+import { IFeedEntity } from '@novu/shared';
+import { Control, Controller, useFormContext } from 'react-hook-form';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Input } from '../../../design-system';
+import { Checkbox, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { createFeed, getFeeds } from '../../../api/feeds';
+import { useEffect, useState } from 'react';
+import { QueryKeys } from '../../../api/query.keys';
+import { PlusGradient } from '../../../design-system/icons';
+import { FeedItems } from './FeedItems';
+import { showNotification } from '@mantine/notifications';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
+  const queryClient = useQueryClient();
   const { readonly } = useEnvController();
+  const [newFeed, setNewFeed] = useInputState('');
+  const {
+    formState: { errors },
+    setValue,
+    getValues,
+  } = useFormContext();
+  const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
+  const { mutateAsync: createNewFeed } = useMutation<
+    IFeedEntity,
+    { error: string; message: string; statusCode: number },
+    { name: string }
+  >(createFeed, {
+    onSuccess: (data) => {
+      queryClient.setQueryData(QueryKeys.getFeeds, [...feeds, data]);
+    },
+  });
+
+  const [showFeed, setShowFeed] = useState(true);
+
+  useEffect(() => {
+    const feed = getValues(`steps.${index}.template.feedId`);
+    if (feeds?.length && !feed) {
+      selectDefaultFeed();
+      setShowFeed(false);
+    }
+  }, [feeds]);
+
+  function selectDefaultFeed() {
+    setTimeout(() => {
+      setValue(`steps.${index}.template.feedId`, '');
+    }, 0);
+  }
+
+  async function addNewFeed() {
+    if (newFeed) {
+      const exists = feeds.filter((feed) => feed.name === newFeed);
+      if (exists.length) {
+        showNotification({
+          message: 'You already have a feed with this name! ',
+          color: 'red',
+        });
+
+        return;
+      }
+      const response = await createNewFeed({
+        name: newFeed,
+      });
+
+      setNewFeed('');
+
+      setTimeout(() => {
+        setValue(`steps.${index}.template.feedId`, response._id, { shouldDirty: true });
+      }, 0);
+      setShowFeed(true);
+    }
+  }
 
   return (
     <>
@@ -27,19 +93,66 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
               />
             )}
           />
+
+          <InAppEditorBlock
+            control={control}
+            index={index}
+            readonly={readonly}
+            contentPlaceholder="Write your notification content here..."
+          />
           <Controller
-            name={`steps.${index}.template.content` as any}
-            data-test-id="in-app-content-form-item"
+            name={`steps.${index}.template.feedId` as any}
             control={control}
             render={({ field }) => {
-              const { ref, ...fieldRefs } = field;
-
               return (
-                <InAppEditorBlock
-                  {...fieldRefs}
-                  readonly={readonly}
-                  contentPlaceholder="Write your notification content here..."
-                />
+                <>
+                  <div
+                    style={{
+                      position: 'relative',
+                    }}
+                  >
+                    <Checkbox
+                      data-test-id={`use-feeds-checkbox`}
+                      checked={showFeed}
+                      disabled={readonly}
+                      onChange={() => {
+                        setShowFeed(!showFeed);
+                        if (showFeed) {
+                          setValue(`steps.${index}.template.feedId`, '', { shouldDirty: true });
+                        }
+                      }}
+                      sx={{
+                        position: 'absolute',
+                        flexDirection: 'row-reverse',
+                        right: '0px',
+                      }}
+                      styles={{
+                        label: {
+                          marginRight: '10px',
+                        },
+                      }}
+                      label="Use Feeds"
+                    />
+                    <Input
+                      data-test-id={`create-feed-input`}
+                      disabled={!showFeed || readonly}
+                      label="Add New Feed (optional)"
+                      placeholder="Name your feed..."
+                      value={newFeed}
+                      onChange={setNewFeed}
+                      description={
+                        // eslint-disable-next-line max-len
+                        'Feeds can be used to display specific notifications in multiple tabs or sections when fetching in-app notifications'
+                      }
+                      rightSection={
+                        <ActionIcon data-test-id={`add-feed-button`} variant="transparent" onClick={addNewFeed}>
+                          <PlusGradient />
+                        </ActionIcon>
+                      }
+                    />
+                  </div>
+                  <FeedItems field={field} index={index} showFeed={showFeed} setValue={setValue} />
+                </>
               );
             }}
           />

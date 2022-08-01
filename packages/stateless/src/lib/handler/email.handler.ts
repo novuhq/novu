@@ -40,6 +40,17 @@ export class EmailHandler {
       );
     }
 
+    let text = '';
+
+    if (typeof this.message.textTemplate === 'string') {
+      text = compileTemplate(this.message.textTemplate, templatePayload);
+    } else if (typeof this.message.textTemplate === 'function') {
+      text = compileTemplate(
+        await this.message.textTemplate(templatePayload),
+        templatePayload
+      );
+    }
+
     let subjectParsed;
 
     if (typeof this.message.subject === 'string') {
@@ -77,6 +88,7 @@ export class EmailHandler {
       subject,
       html,
       attachments,
+      text,
     });
   }
 }

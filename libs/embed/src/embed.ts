@@ -99,7 +99,7 @@ class Novu {
         wrapper.style.left = `${leftPosition}px`;
       }
 
-      if (_this.options?.position?.left) {
+      if (_this.options?.position?.top) {
         wrapper.style.top = isNaN(_this.options?.position?.top as number)
           ? _this.options?.position?.top
           : `${_this.options?.position?.top}px`;
@@ -235,6 +235,14 @@ class Novu {
               } else if (message.type === 'notification_click') {
                 if (this.listeners.notification_click) {
                   this.listeners.notification_click(message.notification);
+                }
+              } else if (message.type === 'action_click') {
+                if (this.listeners.action_click) {
+                  this.listeners.action_click({
+                    templateIdentifier: message.templateIdentifier,
+                    type: message.resultType,
+                    notification: message.notification,
+                  });
                 }
               }
             },

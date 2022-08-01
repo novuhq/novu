@@ -4,6 +4,8 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   DIRECT = 'direct',
   PUSH = 'push',
+  DIGEST = 'digest',
+  TRIGGER = 'trigger',
 }
 
 export enum ChannelCTATypeEnum {

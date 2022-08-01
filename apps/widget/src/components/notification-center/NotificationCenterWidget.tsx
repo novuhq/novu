@@ -1,5 +1,5 @@
 import { NotificationCenter, NovuProvider } from '@novu/notification-center';
-import { IMessage, IOrganizationEntity } from '@novu/shared';
+import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 import React, { useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
 import { API_URL, WS_URL } from '../../config';
@@ -9,6 +9,7 @@ interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
+  onActionClick: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   applicationIdentifier: string | undefined;
 }
 
@@ -78,6 +79,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
             onNotificationClick={props.onNotificationClick}
             onUrlChange={props.onUrlChange}
             onUnseenCountChanged={props.onUnseenCountChanged}
+            onActionClick={props.onActionClick}
           />
         </NovuProvider>
       )}

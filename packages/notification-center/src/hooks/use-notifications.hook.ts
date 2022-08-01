@@ -1,51 +1,44 @@
-import { useApi } from './use-api.hook';
-import { useEffect, useState } from 'react';
-import { IMessage } from '@novu/shared';
+import { useContext } from 'react';
+import { INotificationsContext } from '../index';
+import { NotificationsContext } from '../store/notifications.context';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
-export function useNotifications() {
-  const { api } = useApi();
-  const [notifications, setNotifications] = useState<IMessage[]>([]);
-  const [page, setPage] = useState<number>(0);
-  const [hasNextPage, setHasNextPage] = useState<boolean>(true);
-  const [fetching, setFetching] = useState<boolean>(false);
+interface IUseNotificationsProps {
+  storeId?: string;
+}
 
-  useEffect(() => {
-    if (!api?.isAuthenticated) return;
+export function useNotifications(props?: IUseNotificationsProps) {
+  const {
+    notifications: mapNotifications,
+    fetchNextPage: mapFetchNextPage,
+    hasNextPage: mapHasNextPage,
+    fetching,
+    markAsSeen,
+    updateAction: mapUpdateAction,
+    refetch: mapRefetch,
+  } = useContext<INotificationsContext>(NotificationsContext);
 
-    fetchPage(0);
-  }, [api?.isAuthenticated]);
+  const storeId = props?.storeId ? props?.storeId : 'default_store';
 
-  async function fetchPage(pageToFetch: number, isRefetch = false) {
-    setFetching(true);
-
-    const newNotifications = await api.getNotificationsList(pageToFetch);
-
-    if (newNotifications?.length < 10) {
-      setHasNextPage(false);
-    }
-
-    if (isRefetch) {
-      setNotifications([...newNotifications]);
-    } else {
-      setNotifications([...notifications, ...newNotifications]);
-    }
-
-    setFetching(false);
-  }
+  const notifications = mapNotifications[storeId];
 
   async function fetchNextPage() {
-    if (!hasNextPage) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    await fetchPage(nextPage);
+    await mapFetchNextPage(storeId);
   }
 
-  async function markAsSeen(messageId: string) {
-    return await api.markMessageAsSeen(messageId);
+  const hasNextPage = mapHasNextPage?.has(storeId) ? mapHasNextPage.get(storeId) : true;
+
+  async function updateAction(
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ) {
+    await mapUpdateAction(messageId, actionButtonType, status, payload, storeId);
   }
 
   async function refetch() {
-    await fetchPage(0, true);
+    await mapRefetch(storeId);
   }
 
   return {
@@ -54,6 +47,7 @@ export function useNotifications() {
     hasNextPage,
     fetching,
     markAsSeen,
+    updateAction,
     refetch,
   };
 }

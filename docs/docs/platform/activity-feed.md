@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Activity Feed
 
 Novu provides a notification activity feed that monitors every outgoing message associated with its relevant metadata.
