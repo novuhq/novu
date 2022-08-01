@@ -44,7 +44,7 @@ export class EmailHandler {
 
     if (typeof this.message.textTemplate === 'string') {
       text = compileTemplate(this.message.textTemplate, templatePayload);
-    } else {
+    } else if (typeof this.message.textTemplate === 'function') {
       text = compileTemplate(
         await this.message.textTemplate(templatePayload),
         templatePayload
