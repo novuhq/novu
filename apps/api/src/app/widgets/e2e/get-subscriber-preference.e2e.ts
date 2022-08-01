@@ -21,24 +21,17 @@ describe('GET /widget/notifications/feed', function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/preferences`, {
-      headers: {
-        Authorization: `Bearer ${session.subscriberToken}`,
-      },
-    });
+    const response = await getSubscriberPreference(session.subscriberToken);
 
     const data = response.data.data[0];
 
     expect(data.preference.channels.email).to.equal(true);
-    expect(data.preference.channels.sms).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(true);
-    expect(data.preference.channels.direct).to.equal(true);
-    expect(data.preference.channels.push).to.equal(true);
   });
 });
 
 export async function getSubscriberPreference(subscriberToken: string) {
-  return await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/subscriber-preference`, {
+  return await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/preferences`, {
     headers: {
       Authorization: `Bearer ${subscriberToken}`,
     },
