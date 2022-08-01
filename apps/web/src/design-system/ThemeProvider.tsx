@@ -3,7 +3,6 @@ import { MantineProvider, Global, ColorSchemeProvider, ColorScheme } from '@mant
 import { NotificationsProvider } from '@mantine/notifications';
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
-import { NONAME } from 'dns';
 import { useColorScheme } from '@mantine/hooks';
 import { useLocalThemePreference } from '../hooks/use-localThemePreference';
 
@@ -65,7 +64,6 @@ export function ThemeProvider({ children }: { children: JSX.Element; dark?: Bool
               width: '22px',
               height: '22px',
               marginRight: '10px',
-              backgroundColor: 'red',
             },
           }),
         }}
