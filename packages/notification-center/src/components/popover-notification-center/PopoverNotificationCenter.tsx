@@ -1,12 +1,12 @@
 import React, { useContext } from 'react';
-import { IMessage } from '@novu/shared';
+import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { INovuThemePopoverProvider } from '../../store/novu-theme-provider.context';
 import { useDefaultTheme } from '../../hooks';
-import { ColorScheme } from '../../index';
+import { ColorScheme, ITab } from '../../index';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -17,6 +17,9 @@ interface IPopoverNotificationCenterProps {
   footer?: () => JSX.Element;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
+  onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
+  actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  tabs?: ITab[];
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -25,6 +28,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
+
     setUnseenCount(count);
 
     if (props.onUnseenCountChanged) {
@@ -42,6 +46,9 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         footer={props.footer}
         colorScheme={props.colorScheme}
         theme={props.theme}
+        onActionClick={props.onActionClick}
+        actionsResultBlock={props.actionsResultBlock}
+        tabs={props.tabs}
       />
     </Popover>
   );

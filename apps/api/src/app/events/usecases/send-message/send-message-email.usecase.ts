@@ -10,11 +10,11 @@ import {
   OrganizationRepository,
   MessageEntity,
   NotificationEntity,
+  OrganizationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
-import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
@@ -51,7 +51,7 @@ export class SendMessageEmail extends SendMessageType {
       _environmentId: command.environmentId,
       _id: command.subscriberId,
     });
-    const organization = await this.organizationRepository.findById(command.organizationId);
+    const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
     const email = command.payload.email || subscriber.email;
 
     Sentry.addBreadcrumb({
@@ -59,8 +59,24 @@ export class SendMessageEmail extends SendMessageType {
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
-    const content: string | IEmailBlock[] = this.getContent(isEditorMode, emailChannel, command, subscriber);
     const overrides = command.overrides[integration.providerId] || {};
+
+    const subject = await this.renderContent(
+      emailChannel.template.subject,
+      emailChannel.template.subject,
+      organization,
+      subscriber,
+      command
+    );
+
+    const content: string | IEmailBlock[] = await this.getContent(
+      isEditorMode,
+      emailChannel,
+      command,
+      subscriber,
+      subject,
+      organization
+    );
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -73,16 +89,14 @@ export class SendMessageEmail extends SendMessageType {
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
       content,
+      subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
       payload: messagePayload,
       overrides,
+      templateIdentifier: command.identifier,
     });
-
-    const contentService = new ContentService();
-    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
-    const subject = contentService.replaceVariables(emailChannel.template.subject, messageVariables);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -95,6 +109,11 @@ export class SendMessageEmail extends SendMessageType {
             color: organization.branding?.color || '#f47373',
           },
           blocks: isEditorMode ? content : [],
+          step: {
+            digest: !!command.events.length,
+            events: command.events,
+            total_count: command.events.length,
+          },
           ...command.payload,
         },
       })
@@ -208,28 +227,59 @@ export class SendMessageEmail extends SendMessageType {
     }
   }
 
-  private getContent(
+  private async getContent(
     isEditorMode,
     emailChannel,
     command: SendMessageCommand,
-    subscriber: SubscriberEntity
-  ): string | IEmailBlock[] {
+    subscriber: SubscriberEntity,
+    subject,
+    organization: OrganizationEntity
+  ): Promise<string | IEmailBlock[]> {
     if (isEditorMode) {
-      const contentService = new ContentService();
-      const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
       const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
       for (const block of content) {
         /*
          * We need to trim the content in order to avoid mail provider like GMail
          * to display the mail with `[Message clipped]` footer.
          */
-        block.content = contentService.replaceVariables(block.content, messageVariables).trim();
-        block.url = contentService.replaceVariables(block.url, messageVariables);
+        block.content = await this.renderContent(block.content, subject, organization, subscriber, command);
+        block.content = block.content.trim();
+        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command);
       }
 
       return content;
     }
 
     return emailChannel.template.content;
+  }
+
+  private async renderContent(
+    content: string,
+    subject,
+    organization: OrganizationEntity,
+    subscriber,
+    command: SendMessageCommand
+  ) {
+    return await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        customTemplate: content as string,
+        data: {
+          subject,
+          branding: {
+            logo: organization.branding?.logo,
+            color: organization.branding?.color || '#f47373',
+          },
+          blocks: [],
+          step: {
+            digest: !!command.events.length,
+            events: command.events,
+            total_count: command.events.length,
+          },
+          subscriber,
+          ...command.payload,
+        },
+      })
+    );
   }
 }

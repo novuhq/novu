@@ -1,10 +1,18 @@
-import { IMessage, ISubscriberJwt, IOrganizationEntity } from '@novu/shared';
+import {
+  ButtonTypeEnum,
+  IMessage,
+  IMessageAction,
+  IOrganizationEntity,
+  ISubscriberJwt,
+  MessageActionStatusEnum,
+} from '@novu/shared';
+
+export { IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
 
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
 export * from './hooks/use-socket.hook';
 export * from './hooks/use-notifications.hook';
-export { IMessage } from '@novu/shared';
 
 export interface IAuthContext {
   applyToken: (token: string | null) => void;
@@ -36,9 +44,17 @@ export interface INotificationCenterContext {
   onUrlChange: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
+  onActionClick: (identifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   isLoading: boolean;
   header: () => JSX.Element;
   footer: () => JSX.Element;
+  actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  tabs?: ITab[];
+}
+
+export interface IStore {
+  storeId: string;
+  query?: IStoreQuery;
 }
 
 export interface INovuProviderContext {
@@ -49,6 +65,33 @@ export interface INovuProviderContext {
   socketUrl?: string;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash: string;
+  stores?: IStore[];
+}
+
+export interface INotificationsContext {
+  notifications?: Record<string, IMessage[]>;
+  fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
+  hasNextPage?: Map<string, boolean>;
+  fetching?: boolean;
+  markAsSeen?: (messageId: string) => Promise<IMessage>;
+  updateAction?: (
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>,
+    storeId?: string
+  ) => void;
+  refetch?: (storeId?: string, query?: IStoreQuery) => void;
 }
 
 export declare type ColorScheme = 'light' | 'dark';
+
+export interface ITab {
+  name: string;
+  storeId: string;
+}
+
+export interface IStoreQuery {
+  feedIdentifier?: string | string[];
+  seen?: boolean;
+}

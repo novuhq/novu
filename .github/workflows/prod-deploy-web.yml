@@ -15,6 +15,8 @@ on:
 jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
+    secrets:
+      cypress_key: ${{ secrets.CYPRESS_WEB_KEY }}
 
   # This workflow contains a single job called "build"
   deploy_web:
@@ -56,6 +58,7 @@ jobs:
         working-directory: apps/web
         run: |
           touch .env
+          echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
           echo REACT_APP_API_URL="https://api.novu.co" >> .env
           echo REACT_APP_WS_URL="https://ws.novu.co" >> .env
           echo REACT_APP_WIDGET_EMBED_PATH="https://embed.novu.co/embed.umd.min.js" >> .env
@@ -69,6 +72,7 @@ jobs:
 
       - name: Build
         env:
+          REACT_APP_INTERCOM_APP_ID: ${{ secrets.INTERCOM_APP_ID }}
           REACT_APP_API_URL: https://api.novu.co
           REACT_APP_WS_URL: https://ws.novu.co
           REACT_APP_WIDGET_EMBED_PATH: https://embed.novu.co/embed.umd.min.js

@@ -15,7 +15,7 @@ describe('User Sign-up and Login', function () {
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
       cy.getByTestId('submit-btn').click();
-      cy.location('pathname').should('equal', '/templates');
+      cy.location('pathname').should('equal', '/quickstart');
     });
   });
 

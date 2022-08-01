@@ -55,6 +55,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
+    await session.awaitRunningJobs(template._id);
+
     await new Promise((resolve) => setTimeout(resolve, 100));
     const logs = await logRepository.find({
       _environmentId: session.environment._id,
@@ -152,9 +154,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(statuses.includes(JobStatusEnum.RUNNING)).true;
     expect(statuses.includes(JobStatusEnum.PENDING)).true;
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
-    jobs = await jobRepository.find({});
+    jobs = await jobRepository.find({
+      _templateId: template._id,
+    });
     statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
 
     expect(statuses.length).to.equal(0);
@@ -206,7 +210,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
@@ -278,7 +282,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -317,7 +321,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -364,7 +368,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const message = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
@@ -384,7 +388,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -408,7 +412,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await sendTrigger(session, template, newSubscriberIdInAppNotification);
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -434,7 +438,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       steps: [
         {
           name: 'Message Name',
-          subject: 'Test email subject',
+          subject: 'Test email {{nested.subject}}',
           type: ChannelTypeEnum.EMAIL,
           content: [
             {
@@ -446,9 +450,13 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       ],
     });
 
-    await sendTrigger(session, template, newSubscriberIdInAppNotification);
+    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
+      nested: {
+        subject: 'a subject nested',
+      },
+    });
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -464,6 +472,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const block = message.content[0] as IEmailBlock;
 
     expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
+    expect(message.subject).to.equal('Test email a subject nested');
   });
 });
 
@@ -478,7 +487,12 @@ async function createTemplate(session, channelType) {
   });
 }
 
-async function sendTrigger(session, template, newSubscriberIdInAppNotification: string) {
+async function sendTrigger(
+  session,
+  template,
+  newSubscriberIdInAppNotification: string,
+  payload: Record<string, unknown> = {}
+) {
   await axiosInstance.post(
     `${session.serverUrl}/v1/events/trigger`,
     {
@@ -486,6 +500,7 @@ async function sendTrigger(session, template, newSubscriberIdInAppNotification: 
       to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],
       payload: {
         organizationName: 'Umbrella Corp',
+        ...payload,
       },
     },
     {

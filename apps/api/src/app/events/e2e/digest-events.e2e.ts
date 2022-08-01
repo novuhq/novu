@@ -1,0 +1,821 @@
+import {
+  MessageRepository,
+  NotificationTemplateEntity,
+  SubscriberEntity,
+  JobRepository,
+  JobStatusEnum,
+} from '@novu/dal';
+import { UserSession, SubscribersService } from '@novu/testing';
+
+import { expect } from 'chai';
+import { ChannelTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import axios from 'axios';
+import { WorkflowQueueService } from '../services/workflow.queue.service';
+
+const axiosInstance = axios.create();
+
+describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', function () {
+  let session: UserSession;
+  let template: NotificationTemplateEntity;
+  let subscriber: SubscriberEntity;
+  let subscriberService: SubscribersService;
+  const jobRepository = new JobRepository();
+  let workflowQueueService: WorkflowQueueService;
+  const messageRepository = new MessageRepository();
+
+  const awaitRunningJobs = async (unfinishedJobs = 0) => {
+    let runningJobs = 0;
+    do {
+      runningJobs = await jobRepository.count({
+        type: {
+          $nin: [ChannelTypeEnum.DIGEST],
+        },
+        _templateId: template._id,
+        status: {
+          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
+        },
+      });
+    } while (runningJobs > unfinishedJobs);
+  };
+
+  const triggerEvent = async (payload, transactionId?: string) => {
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        transactionId,
+        name: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload,
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+  };
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+    template = await session.createTemplate();
+    subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    subscriber = await subscriberService.createSubscriber();
+    workflowQueueService = session.testServer.getService(WorkflowQueueService);
+  });
+
+  it('should digest events within time interval', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+    });
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await awaitRunningJobs(2);
+    await workflowQueueService.work(delayedJob);
+
+    const jobs = await jobRepository.find({
+      _templateId: template._id,
+    });
+
+    const digestJob = jobs.find((job) => job.step.template.type === ChannelTypeEnum.DIGEST);
+    expect(digestJob.digest.amount).to.equal(5);
+    expect(digestJob.digest.unit).to.equal(DigestUnitEnum.MINUTES);
+    const job = jobs.find((item) => item.digest.events.length > 0);
+    expect(job.digest?.events?.length).to.equal(2);
+  });
+
+  it('should not have digest prop when not running a digest', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.SMS,
+    });
+
+    expect(message[0].content).to.include('NO_DIGEST_PROP');
+    expect(message[0].content).to.not.include('HAS_DIGEST_PROP');
+  });
+
+  it('should add a digest prop to template compilation', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+    });
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await awaitRunningJobs(2);
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.SMS,
+    });
+
+    expect(message[0].content).to.include('HAS_DIGEST_PROP');
+  });
+
+  it('should digest based on digestKey within time interval', async function () {
+    const id = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'id',
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      id,
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+    });
+
+    await triggerEvent({
+      customVar: 'haj',
+      id,
+    });
+
+    await awaitRunningJobs(3);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+    await workflowQueueService.work(delayedJob);
+
+    const jobs = await jobRepository.find({
+      _templateId: template._id,
+    });
+    const digestJob = jobs.find((job) => job?.digest?.digestKey === 'id');
+    expect(digestJob).not.be.undefined;
+    const jobsWithEvents = jobs.filter((item) => item.digest.events.length > 0);
+    expect(jobsWithEvents.length).to.equal(1);
+  });
+
+  it('should digest based on same digestKey within time interval', async function () {
+    const id = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'id',
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      id,
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      id,
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+      id: 'second-batch',
+    });
+
+    await awaitRunningJobs(2);
+
+    const delayedJobs = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    expect(delayedJobs.length).to.equal(2);
+
+    for (const job of delayedJobs) {
+      await workflowQueueService.work(job);
+    }
+
+    await awaitRunningJobs(0);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: ChannelTypeEnum.SMS,
+    });
+
+    const firstBatch = messages.find((message) => (message.content as string).includes('Hello world 2'));
+    const secondBatch = messages.find((message) => (message.content as string).includes('Hello world 1'));
+
+    expect(firstBatch).to.be.ok;
+    expect(secondBatch).to.be.ok;
+
+    expect(messages.length).to.equal(2);
+  });
+
+  it('should digest delayed events', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.SECONDS,
+            amount: 1,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await awaitRunningJobs(0);
+
+    const jobs = await jobRepository.find({
+      _templateId: template._id,
+      status: {
+        $ne: JobStatusEnum.COMPLETED,
+      },
+    });
+
+    expect(jobs.length).to.equal(0);
+  });
+
+  it('should be able to cancel digest', async function () {
+    const id = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'id',
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent(
+      {
+        customVar: 'Testing of User Name',
+      },
+      id
+    );
+
+    try {
+      await triggerEvent(
+        {
+          customVar: 'Testing of User Name',
+        },
+        id
+      );
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.response.data.message).to.equal(
+        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
+      );
+    }
+
+    await awaitRunningJobs(1);
+    await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    let delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await workflowQueueService.work(delayedJob);
+
+    const pendingJobs = await jobRepository.count({
+      _templateId: template._id,
+      status: JobStatusEnum.PENDING,
+      transactionId: id,
+    });
+
+    expect(pendingJobs).to.equal(1);
+
+    delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+      transactionId: id,
+    });
+    expect(delayedJob.status).to.equal(JobStatusEnum.CANCELED);
+  });
+
+  it('should be able to update existing message on the in-app digest', async function () {
+    const id = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            updateMode: true,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.IN_APP,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent(
+      {
+        customVar: 'Testing of User Name',
+      },
+      id
+    );
+    await awaitRunningJobs(1);
+
+    const oldMessage = await messageRepository.findOne({
+      channel: ChannelTypeEnum.IN_APP,
+      _templateId: template._id,
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+      transactionId: id,
+    });
+
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.findOne({
+      channel: ChannelTypeEnum.IN_APP,
+      _templateId: template._id,
+    });
+
+    expect(oldMessage.content).to.equal('Hello world 0');
+    expect(message.content).to.equal('Hello world 2');
+  });
+
+  it('should digest with backoff strategy', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: ChannelTypeEnum.IN_APP,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await awaitRunningJobs(0);
+
+    await triggerEvent({
+      customVar: 'digest',
+    });
+
+    await awaitRunningJobs(1);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    const pendingJobs = await jobRepository.find({
+      _templateId: template._id,
+      status: {
+        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED],
+      },
+    });
+
+    expect(pendingJobs.length).to.equal(1);
+    const pendingJob = pendingJobs[0];
+
+    await workflowQueueService.work(delayedJob);
+    await awaitRunningJobs(0);
+    const job = await jobRepository.findById(pendingJob._id);
+
+    expect(job.digest.events.length).to.equal(1);
+    expect(job.digest.events[0].customVar).to.equal('digest');
+  });
+
+  it('should digest with backoff strategy and update mode', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.SECONDS,
+            amount: 30,
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.SECONDS,
+            backoffAmount: 10,
+            updateMode: true,
+          },
+        },
+        {
+          type: ChannelTypeEnum.IN_APP,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'first',
+    });
+
+    await awaitRunningJobs(0);
+
+    await triggerEvent({
+      customVar: 'second',
+    });
+
+    await awaitRunningJobs(0);
+
+    let messageCount = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messageCount.length).to.equal(2);
+
+    await triggerEvent({
+      customVar: 'third',
+    });
+
+    await awaitRunningJobs(1);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    messageCount = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messageCount.length).to.equal(2);
+    const job = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.IN_APP,
+      transactionId: delayedJob.transactionId,
+    });
+
+    expect(job.digest.events[0].customVar).to.equal('second');
+    expect(job.digest.events[1].customVar).to.equal('third');
+  });
+
+  it('should digest with regular strategy and update mode', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.SECONDS,
+            amount: 30,
+            type: DigestTypeEnum.REGULAR,
+            updateMode: true,
+          },
+        },
+        {
+          type: ChannelTypeEnum.IN_APP,
+          content: 'Hello world {{step.events.length}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'first',
+    });
+
+    await triggerEvent({
+      customVar: 'second',
+    });
+
+    await triggerEvent({
+      customVar: 'third',
+    });
+
+    await awaitRunningJobs(0);
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    const messageCount = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messageCount.length).to.equal(1);
+    const job = await jobRepository.findOne({
+      _templateId: template._id,
+      type: ChannelTypeEnum.IN_APP,
+      transactionId: delayedJob.transactionId,
+    });
+
+    expect(job.digest.events.length).to.equal(3);
+  });
+
+  it('should create multiple digest based on diffrent digestKeys', async function () {
+    const postId = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'postId',
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{postId}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      postId,
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+      postId: MessageRepository.createObjectId(),
+    });
+
+    let digests = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    expect(digests[0].payload.postId).not.to.equal(digests[1].payload.postId);
+    expect(digests.length).to.equal(2);
+
+    await awaitRunningJobs(2);
+
+    digests = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    for (const digest of digests) {
+      await workflowQueueService.work(digest);
+    }
+
+    await awaitRunningJobs(0);
+
+    const messages = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messages[0].content).to.include(digests[0].payload.postId);
+    expect(messages[1].content).to.include(digests[1].payload.postId);
+    const jobCount = await jobRepository.count({
+      _templateId: template._id,
+    });
+    expect(jobCount).to.equal(6);
+  });
+
+  it('should create multiple digest based on diffrent digestKeys with backoff', async function () {
+    const postId = MessageRepository.createObjectId();
+    const postId2 = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: ChannelTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'postId',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: ChannelTypeEnum.SMS,
+          content: 'Hello world {{postId}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'first',
+      postId,
+    });
+
+    await triggerEvent({
+      customVar: 'second',
+      postId: postId2,
+    });
+
+    await triggerEvent({
+      customVar: 'fourth',
+      postId,
+    });
+
+    await triggerEvent({
+      customVar: 'third',
+      postId: postId2,
+    });
+
+    await awaitRunningJobs(2);
+
+    let digests = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    expect(digests[0].payload.postId).not.to.equal(digests[1].payload.postId);
+    expect(digests.length).to.equal(2);
+
+    digests = await jobRepository.find({
+      _templateId: template._id,
+      type: ChannelTypeEnum.DIGEST,
+    });
+
+    for (const digest of digests) {
+      await workflowQueueService.work(digest);
+    }
+
+    await awaitRunningJobs(0);
+
+    const messages = await messageRepository.find({
+      _templateId: template._id,
+    });
+
+    expect(messages.length).to.equal(4);
+
+    const contents: string[] = messages
+      .map((message) => message.content)
+      .reduce((prev, content: string) => {
+        if (prev.includes(content)) {
+          return prev;
+        }
+        prev.push(content);
+
+        return prev;
+      }, [] as string[]);
+
+    expect(contents).to.include(`Hello world ${postId}`);
+    expect(contents).to.include(`Hello world ${postId2}`);
+
+    const jobCount = await jobRepository.count({
+      _templateId: template._id,
+    });
+
+    expect(jobCount).to.equal(10);
+  });
+});

@@ -1,4 +1,4 @@
-import { IsDefined, IsString, IsUUID } from 'class-validator';
+import { IsDefined, IsString } from 'class-validator';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { ISubscribersDefine } from '@novu/node';
@@ -21,7 +21,7 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   to: ISubscribersDefine[]; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  @IsUUID()
+  @IsString()
   @IsDefined()
   transactionId: string;
 }

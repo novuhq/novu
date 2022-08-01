@@ -32,6 +32,7 @@ export class TriggerEvent {
       },
     });
 
+    await this.validateTransactionIdProperty(command);
     await this.validateSubscriberIdProperty(command);
 
     this.logEventTriggered(command);
@@ -70,7 +71,11 @@ export class TriggerEvent {
     }
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
+
     this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
+      _template: template._id,
+      _organization: command.organizationId,
+      channels: steps.map((step) => step.template?.type),
       smsChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.SMS)?.length,
       emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
       inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
@@ -89,6 +94,7 @@ export class TriggerEvent {
     return {
       acknowledged: true,
       status: 'processed',
+      transactionId: command.transactionId,
     };
   }
 
@@ -164,11 +170,30 @@ export class TriggerEvent {
       const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
       if (!subscriberIdExists) {
-        await this.logSubscriberIdMissing(command);
+        this.logSubscriberIdMissing(command);
+
         throw new ApiException(
           'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
         );
       }
+    }
+
+    return true;
+  }
+
+  private async validateTransactionIdProperty(command: TriggerEventCommand): Promise<boolean> {
+    const found = await this.jobRepository.findOne(
+      {
+        transactionId: command.transactionId,
+        _environmentId: command.environmentId,
+      },
+      '_id'
+    );
+
+    if (found) {
+      throw new ApiException(
+        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
+      );
     }
 
     return true;

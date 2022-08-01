@@ -4,6 +4,7 @@ interface IQueryKeys {
   changesCount: string;
   myEnvironments: string;
   currentEnvironment: string;
+  getFeeds: string;
 }
 
 export const QueryKeys: IQueryKeys = Object.freeze({
@@ -12,4 +13,5 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   changesCount: 'changesCount',
   myEnvironments: 'myEnvironments',
   currentEnvironment: 'currentEnvironment',
+  getFeeds: 'getFeeds',
 });

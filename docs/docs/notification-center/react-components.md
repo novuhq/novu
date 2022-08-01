@@ -112,23 +112,100 @@ function CustomNotificationCenter() {
 }
 ```
 
+:::tip
+
+If you only wish to modify some parts of the existing Novu component UI, you can easily override the: Header, Footer, and NotificationItem blocks including the notification actions block.
+
+:::
+
+## Customize the UI language
+
+If you want to use a language other than english for the UI, the `NovuProvider` component can accept an optional `i18n` prop.
+
+```tsx
+import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
+
+function Header() {
+  return (
+    <NovuProvider
+        subscriberId={'USER_ID'}
+        applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}
+        i18n="en"
+      >
+      <PopoverNotificationCenter>
+        {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
+      </PopoverNotificationCenter>
+    </NovuProvider>
+  );
+}
+```
+
+The `i18n` prop can accept 2 different types of values
+
+- 2 letter language string
+
+  ```tsx
+  i18n="en" // We currently only support English
+  ```
+
+- Translation object
+
+  ```tsx
+  i18n={{
+    // Make sure that the following is a proper 2 letter language code,
+    // since this is used by moment.js in order to calculate the relative time for each notification
+    lang: "de",
+    
+    translations: {
+      poweredBy: "unterstützt von",
+      markAllAsRead: "Alles als gelesen markieren",
+      notifications: "Benachrichtigungen",
+    },
+  }}
+  ```
+
 ## The notification `IMessage` model
 
 When building your custom UI implementation it might be useful to know, how the notification feed model is structured so you can customize the notification items during rendering.
 
 The notifications array returned by the `useNotifications` hook contains an array of `IMessage` objects with the following properties:
 
-| Property            | Type                   |  Description                             |
-|---------------------|------------------------|------------------------------------------|
-| `_id`               | `string`               | A unique Novu message identifier         |
-| `channel`           | `ChannelTypeEnum`      | Use to specify the actual channel of this message (`in_app` will be used here)                          |
-| `seen`              | `boolean`              | Whether the notification item was ready by the user, changed when the user clicks on the notification.  |
-| `lastSeenDate`      | `ISODate`              | When the user has last seen the notification                              |
-| `cta.type`          | `ChannelCTATypeEnum`   | The type of the CTA specified in the admin panel                          |
-| `cta.data.url`      | `string`               | The redirect URL set in the admin panel, can be used to navigate on notification click                          |
-| `content`           | `string`               | An HTML string of the generated notification content with parsed and replaced variables  |
-| `payload`           | `Record<string, unknown>`  | The `payload` object that was passed the notification template was triggered.  |
-| `createdAt`         | `ISODate`              | The creation date of the message                        |
+| Property                    | Type                       | Description                                                                                            |
+|-----------------------------|----------------------------|--------------------------------------------------------------------------------------------------------|
+| `_id`                       | `string`                   | A unique Novu message identifier                                                                       |
+| `channel`                   | `ChannelTypeEnum`          | Use to specify the actual channel of this message (`in_app` will be used here)                         |
+| `seen`                      | `boolean`                  | Whether the notification item was ready by the user, changed when the user clicks on the notification  |
+| `lastSeenDate`              | `ISODate`                  | When the user has last seen the notification                                                           |
+| `content`                   | `string`                   | An HTML string of the generated notification content with parsed and replaced variables                |
+| `templateIdentifier`        | `string`                   | A unique Novu template identifier                                                                      |
+| `payload`                   | `Record<string, unknown>`  | The `payload` object that was passed the notification template was triggered.                          |
+| `createdAt`                 | `ISODate`                  | The creation date of the message                                                                       |
+| `cta.type`                  | `ChannelCTATypeEnum`       | The type of the CTA specified in the admin panel                                                       |
+| `cta.data.url`              | `string`                   | The redirect URL set in the admin panel, can be used to navigate on notification click                 |
+| `cta.action.status`         | `boolean`                  | Indication whether the action occurred                                                                 |
+| `cta.action.buttons`        | `IMessageButton[]`         | Array of action buttons                                                                                |
+| `cta.action.result.payload` | `Record<string, unknown>`  | Payload object that send on updateAction method in useNotifications hook                               |
+| `cta.action.result.type`    | `ButtonTypeEnum`           | Type of the button                                                                                     |
+
+### IMessageButton
+
+| Property   | Type             | Description        |
+|------------|------------------|--------------------|
+| `type`     | `ButtonTypeEnum` | Button type enum   |
+| `content`  | `string`         | Button inner text  |
+
+### ChannelCTATypeEnum
+
+| Property     | Value    |
+|--------------|----------|
+| `REDIRECT`   | redirect |
+
+### ButtonTypeEnum
+
+| Property    | Value     |
+|-------------|-----------|
+| `PRIMARY`   | primary   |
+| `SECONDARY` | secondary |
 
 ## Realtime sockets
 
@@ -165,6 +242,64 @@ function CustomNotificationCenter() {
   return <></>;
 }
 ```
+
+## Notification actions
+
+By adding action buttons on the in-app template in the editor you will need to add a matching behaviour on what happens after the user clicks on the action.
+
+Let's look at an example:
+
+```tsx
+import { NovuProvider, useSocket, useNotifications, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
+
+export function App() {
+  return (
+    <>
+      <NovuProvider
+        subscriberId={'USER_ID'}
+        applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}>
+        <PopoverWrapper />
+      </NovuProvider>
+    </>
+  );
+}
+
+function PopoverWrapper() {
+  const { updateAction } = useNotifications();
+
+  function handlerOnNotificationClick(message: IMessage) {
+    if (message?.cta?.data?.url) {
+      window.location.href = message.cta.data.url;
+    }
+  }
+
+  async function handlerOnActionClick(templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) {
+    if (templateIdentifier === "friend-request") {
+      if (type === 'primary') {
+        /** Call your API to accept the friend request here **/
+
+        /** And than update novu that this actions has been taken, so the user won't see the button again **/
+        await updateAction(message._id, type, MessageActionStatusEnum.DONE);  
+      }
+      
+    }
+  }
+
+  return (
+    <PopoverNotificationCenter
+      onNotificationClick={handlerOnNotificationClick}
+      onActionClick={handlerOnActionClick}
+    >
+      {({ unseenCount }) => {
+        return <NotificationBell unseenCount={unseenCount} />;
+      }}
+    </PopoverNotificationCenter>
+  );
+}
+
+```
+
+Novu manages the state of the actions, so you can actually specify if the user has already performed the actions so you can know when the actions should be hidden.
 
 ## HMAC Encryption
 
@@ -258,16 +393,24 @@ A table of IThemeLayout properties:
 
 ### `IThemeNotificationListItem` customization properties
 
-| Property                                  | Default Value - Light Theme                     | Default Value - Dark Theme                      |
-|-------------------------------------------|-------------------------------------------------|-------------------------------------------------|
-| `seen.fontColor`                          | `#828299`                                       | `#FFFFFF`                                       |  
-| `seen.background`                         | `#F5F8FA`                                       | `#23232B`                                       |  
-| `seen.timeMarkFontColor`                  | `#BEBECC`                                       | `#525266`                                       |
-| `unseen.fontColor`                        | `#828299`                                       | `#FFFFFF`                                       |
-| `unseen.background`                       | `#FFFFFF`                                       | `#292933`                                       |
-| `unseen.boxShadow`                        | `0px 5px 15px rgba(122, 133, 153, 0.25)`        | `0px 5px 20px rgba(0, 0, 0, 0.2)`               |
-| `unseen.notificationItemBeforeBrandColor` | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)` | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)` |
-| `unseen.timeMarkFontColor`                | `#828299`                                       | `#828299`                                       |
+| Property                                  | Default Value - Light Theme                               | Default Value - Dark Theme                                |
+|-------------------------------------------|-----------------------------------------------------------|-----------------------------------------------------------|
+| `seen.fontColor`                          | `#828299`                                                 | `#FFFFFF`                                                 |  
+| `seen.background`                         | `#F5F8FA`                                                 | `#23232B`                                                 |  
+| `seen.timeMarkFontColor`                  | `#BEBECC`                                                 | `#525266`                                                 |
+| `unseen.fontColor`                        | `#828299`                                                 | `#FFFFFF`                                                 |
+| `unseen.background`                       | `#FFFFFF`                                                 | `#292933`                                                 |
+| `unseen.boxShadow`                        | `0px 5px 15px rgba(122, 133, 153, 0.25)`                  | `0px 5px 20px rgba(0, 0, 0, 0.2)`                         |
+| `unseen.notificationItemBeforeBrandColor` | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)`           | `linear-gradient(0deg,#FF512F 0%,#DD2476 100%)`           |
+| `unseen.timeMarkFontColor`                | `#828299`                                                 | `#828299`                                                 |
+| `buttons.primary.backGroundColor`         | `linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)` | `linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)` |
+| `buttons.primary.fontColor`               | `#FFFFFF`                                                 | `#FFFFFF`                                                 |
+| `buttons.primary.removeCircleColor`       | `white`                                                   | `white`                                                   |
+| `buttons.primary.fontFamily`              | `Lato`                                                    | `Lato`                                                    |
+| `buttons.secondary.backGroundColor`       | `#F5F8FA`                                                 | `#3D3D4D`                                                 |
+| `buttons.secondary.fontColor`             | `#525266`                                                 | `#FFFFFF`                                                 |
+| `buttons.secondary.removeCircleColor`     | `#525266`                                                 | `#525266`                                                 |
+| `buttons.secondary.fontFamily`            | `Lato`                                                    | `Lato`                                                    |
 
 ### `IThemeFooter` customization properties
 
@@ -286,3 +429,65 @@ A table of IThemeLayout properties:
 
 Note: unseenBadgeColor is of a type : string | {stopColor : string, stopColorOffset : sting}, so if you would like one
 color badge you can use a string of the color and not the object in order to create gradient.
+
+## Multiple tab layout
+
+Novu allows to create a multi-tab experience for a notification center, in a way you can fetch the notifications feed using a filtered query.
+
+### Defining a stores
+
+To create multiple stores you can use the prop `stores` on the `NovuProvider` component. Each store has `storeId` property that will be used to interact with information related to this store.
+
+```tsx
+<NovuProvider
+    stores={[
+      { storeId: 'invites', query: { feedIdentifier: 'invites' } },
+      { storeId: 'activity', query: { feedIdentifier: 'activity' } },
+    ]}
+    backendUrl={API_ROOT}
+    socketUrl={WS_URL}
+    subscriberId={user?._id}
+    applicationIdentifier={environment?.identifier}
+  >
+  <PopoverWrapper />
+</NovuProvider>
+```
+
+Using the `query` object multiple fields can be passed for feed API:
+
+- `feedIdentifier` - Can be configured and created on the WEB UI
+- `seen` - Identifies if the notification has been seen or not
+
+After specifying the `stores` prop, you can use the `storeId` property to interact with the store. 
+
+:::tip
+
+By specifying only a storeId, without a query, you could get all notifications.
+
+:::
+
+#### Using the `useNotifications` hook
+
+```tsx
+  import { useNotifications } from '@novu/core';
+  
+  const { notifications } = useNotifications({ storeId });
+```
+
+#### Using `tabs` prop on the notification center
+
+```tsx
+<PopoverNotificationCenter
+      tabs={[
+        { name: 'Invites', storeId: 'invites' },
+        { name: 'Activity', storeId: 'activity' },
+      ]}
+      colorScheme={colorScheme}
+      onNotificationClick={handlerOnNotificationClick}
+      onActionClick={handlerOnActionClick}
+    >
+    {({ unseenCount }) => {
+      return <NotificationBell colorScheme={colorScheme} unseenCount={unseenCount} />;
+    }}
+</PopoverNotificationCenter>
+```

@@ -47,7 +47,7 @@ function QuickStart() {
       </div>
       <Center>
         <Text my={40} color={colors.B60}>
-          <div onClick={onDismissOnboarding} data-test-id="dismiss-onboarding-btn">
+          <div onClick={onDismissOnboarding} style={{ cursor: 'pointer' }} data-test-id="dismiss-onboarding-btn">
             Don't show onboarding guide
           </div>
         </Text>

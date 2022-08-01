@@ -15,4 +15,8 @@ export class TriggerEventDto {
 
   @IsDefined()
   to: TriggerRecipientsType; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  @IsString()
+  @IsOptional()
+  transactionId: string;
 }

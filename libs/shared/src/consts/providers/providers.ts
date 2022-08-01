@@ -16,6 +16,7 @@ import {
   telnyxConfig,
   twilioConfig,
   termiiConfig,
+  gupshupConfig,
 } from './provider-credentials';
 import { ChannelTypeEnum } from '../../entities/message-template';
 import { IProviderConfig } from './provider.interface';
@@ -157,5 +158,13 @@ export const providers: IProviderConfig[] = [
     credentials: fcmConfig,
     docReference: 'https://docs.novu.co/channels/push#firebase-cloud-messages',
     logoFileName: { light: 'fcm.svg', dark: 'fcm.svg' },
+  },
+  {
+    id: 'gupshup',
+    displayName: 'Gupshup',
+    channel: ChannelTypeEnum.SMS,
+    credentials: gupshupConfig,
+    docReference: 'https://docs.gupshup.io/docs/send-single-message',
+    logoFileName: { light: 'gupshup.png', dark: 'gupshup.png' },
   },
 ];

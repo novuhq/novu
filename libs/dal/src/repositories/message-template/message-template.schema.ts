@@ -22,6 +22,7 @@ const messageTemplateSchema = new Schema(
         type: Schema.Types.String,
       },
       data: Schema.Types.Mixed,
+      action: Schema.Types.Mixed,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,
@@ -34,6 +35,10 @@ const messageTemplateSchema = new Schema(
     _creatorId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+    },
+    _feedId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Feed',
     },
     _parentId: {
       type: Schema.Types.ObjectId,

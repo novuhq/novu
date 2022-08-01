@@ -80,11 +80,17 @@ export function ActivitiesPage() {
       accessor: 'template',
       Header: 'Template Name',
       Cell: ({ template }: any) => (
-        <Tooltip label={template.name}>
-          <Text data-test-id="row-template-name" rows={1}>
-            {template.name}
-          </Text>
-        </Tooltip>
+        <>
+          {template ? (
+            <Tooltip label={template.name}>
+              <Text data-test-id="row-template-name" rows={1}>
+                {template.name}
+              </Text>
+            </Tooltip>
+          ) : (
+            'Deleted Template'
+          )}
+        </>
       ),
     },
     {

@@ -61,7 +61,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       }
     );
 
-    await session.awaitRunningJobs();
+    await session.awaitRunningJobs(newTemplate._id);
 
     const message = await messageRepository._model.find({
       _environmentId: session.environment._id,

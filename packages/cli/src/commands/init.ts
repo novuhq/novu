@@ -182,7 +182,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 }
 
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
-  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}`;
+  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}&source=cli`;
 
   const steps = [
     {
@@ -221,7 +221,7 @@ function storeDashboardData(
   decodedToken,
   applicationIdentifier: string
 ) {
-  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
 
   const tmpPayload: { key: string; value: string }[] = [
     { key: 'embedPath', value: EMBED_PATH },
@@ -287,7 +287,7 @@ async function checkExistingEnvironment(config: ConfigService): Promise<IEnviron
 
 async function handleExistingSession(result: string, config: ConfigService) {
   if (result === 'visitDashboard') {
-    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
 
     await open(dashboardURL);
   } else if (result === 'exit') {
