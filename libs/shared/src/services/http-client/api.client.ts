@@ -33,7 +33,7 @@ export class HttpClient {
     return await this.axiosClient.post(url, body).then((response) => response.data.data);
   }
 
-  async put(url: string, body = {}) {
-    return await this.axiosClient.put(url, body).then((response) => response.data.data);
+  async patch(url: string, body = {}) {
+    return await this.axiosClient.patch(url, body).then((response) => response.data.data);
   }
 }
