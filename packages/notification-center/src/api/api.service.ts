@@ -1,4 +1,5 @@
-import { IMessage, HttpClient, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { IMessage, HttpClient, ButtonTypeEnum, MessageActionStatusEnum, IParamObject } from '@novu/shared';
+import { IStoreQuery } from '../index';
 
 export class ApiService {
   private httpClient: HttpClient;
@@ -38,8 +39,11 @@ export class ApiService {
     return await this.httpClient.post(`/widgets/messages/${messageId}/seen`, {});
   }
 
-  async getNotificationsList(page: number): Promise<IMessage[]> {
-    return await this.httpClient.get(`/widgets/notifications/feed?page=${page}`);
+  async getNotificationsList(page: number, query: IStoreQuery = {}): Promise<IMessage[]> {
+    return await this.httpClient.get(`/widgets/notifications/feed`, {
+      page,
+      ...query,
+    });
   }
 
   async initializeSession(appId: string, subscriberId: string, hmacHash = null) {
@@ -57,8 +61,8 @@ export class ApiService {
     });
   }
 
-  async getUnseenCount() {
-    return await this.httpClient.get('/widgets/notifications/unseen');
+  async getUnseenCount(query: IStoreQuery = {}) {
+    return await this.httpClient.get('/widgets/notifications/unseen', query as unknown as IParamObject);
   }
 
   async getOrganization() {

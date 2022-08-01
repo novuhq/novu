@@ -118,6 +118,52 @@ If you only wish to modify some parts of the existing Novu component UI, you can
 
 :::
 
+## Customize the UI language
+
+If you want to use a language other than english for the UI, the `NovuProvider` component can accept an optional `i18n` prop.
+
+```tsx
+import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
+
+function Header() {
+  return (
+    <NovuProvider
+        subscriberId={'USER_ID'}
+        applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}
+        i18n="en"
+      >
+      <PopoverNotificationCenter>
+        {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
+      </PopoverNotificationCenter>
+    </NovuProvider>
+  );
+}
+```
+
+The `i18n` prop can accept 2 different types of values
+
+- 2 letter language string
+
+  ```tsx
+  i18n="en" // We currently only support English
+  ```
+
+- Translation object
+
+  ```tsx
+  i18n={{
+    // Make sure that the following is a proper 2 letter language code,
+    // since this is used by moment.js in order to calculate the relative time for each notification
+    lang: "de",
+    
+    translations: {
+      poweredBy: "unterstützt von",
+      markAllAsRead: "Alles als gelesen markieren",
+      notifications: "Benachrichtigungen",
+    },
+  }}
+  ```
+
 ## The notification `IMessage` model
 
 When building your custom UI implementation it might be useful to know, how the notification feed model is structured so you can customize the notification items during rendering.
@@ -383,3 +429,65 @@ A table of IThemeLayout properties:
 
 Note: unseenBadgeColor is of a type : string | {stopColor : string, stopColorOffset : sting}, so if you would like one
 color badge you can use a string of the color and not the object in order to create gradient.
+
+## Multiple tab layout
+
+Novu allows to create a multi-tab experience for a notification center, in a way you can fetch the notifications feed using a filtered query.
+
+### Defining a stores
+
+To create multiple stores you can use the prop `stores` on the `NovuProvider` component. Each store has `storeId` property that will be used to interact with information related to this store.
+
+```tsx
+<NovuProvider
+    stores={[
+      { storeId: 'invites', query: { feedIdentifier: 'invites' } },
+      { storeId: 'activity', query: { feedIdentifier: 'activity' } },
+    ]}
+    backendUrl={API_ROOT}
+    socketUrl={WS_URL}
+    subscriberId={user?._id}
+    applicationIdentifier={environment?.identifier}
+  >
+  <PopoverWrapper />
+</NovuProvider>
+```
+
+Using the `query` object multiple fields can be passed for feed API:
+
+- `feedIdentifier` - Can be configured and created on the WEB UI
+- `seen` - Identifies if the notification has been seen or not
+
+After specifying the `stores` prop, you can use the `storeId` property to interact with the store. 
+
+:::tip
+
+By specifying only a storeId, without a query, you could get all notifications.
+
+:::
+
+#### Using the `useNotifications` hook
+
+```tsx
+  import { useNotifications } from '@novu/core';
+  
+  const { notifications } = useNotifications({ storeId });
+```
+
+#### Using `tabs` prop on the notification center
+
+```tsx
+<PopoverNotificationCenter
+      tabs={[
+        { name: 'Invites', storeId: 'invites' },
+        { name: 'Activity', storeId: 'activity' },
+      ]}
+      colorScheme={colorScheme}
+      onNotificationClick={handlerOnNotificationClick}
+      onActionClick={handlerOnActionClick}
+    >
+    {({ unseenCount }) => {
+      return <NotificationBell colorScheme={colorScheme} unseenCount={unseenCount} />;
+    }}
+</PopoverNotificationCenter>
+```

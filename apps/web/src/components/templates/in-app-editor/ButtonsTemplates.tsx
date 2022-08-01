@@ -34,7 +34,11 @@ export function ButtonsTemplates(props: IButtonsTemplatesProps) {
           return (
             <div key={templatesIndex}>
               <TemplateContainerWrap>
-                <TemplateContainer onClick={() => handleOnTemplateClick(templatesIndex)} key={templatesIndex}>
+                <TemplateContainer
+                  data-test-id={'template-container-click-area'}
+                  onClick={() => handleOnTemplateClick(templatesIndex)}
+                  key={templatesIndex}
+                >
                   {template.map((button: IMessageButton, buttonIndex: number) => {
                     return <TemplateButton key={templatesIndex + buttonIndex} button={button} />;
                   })}

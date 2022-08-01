@@ -3,7 +3,7 @@ import { Loader } from '../Loader';
 import { HeaderContainer as Header } from './header/HeaderContainer';
 import { FooterContainer as Footer } from './footer/FooterContainer';
 import React from 'react';
-import { useNovuContext } from 'packages/notification-center/src/hooks';
+import { useNovuContext } from '../../../../hooks';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 

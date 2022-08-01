@@ -438,7 +438,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       steps: [
         {
           name: 'Message Name',
-          subject: 'Test email subject',
+          subject: 'Test email {{nested.subject}}',
           type: ChannelTypeEnum.EMAIL,
           content: [
             {
@@ -450,7 +450,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       ],
     });
 
-    await sendTrigger(session, template, newSubscriberIdInAppNotification);
+    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
+      nested: {
+        subject: 'a subject nested',
+      },
+    });
 
     await session.awaitRunningJobs(template._id);
 
@@ -468,6 +472,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const block = message.content[0] as IEmailBlock;
 
     expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
+    expect(message.subject).to.equal('Test email a subject nested');
   });
 });
 
@@ -482,7 +487,12 @@ async function createTemplate(session, channelType) {
   });
 }
 
-async function sendTrigger(session, template, newSubscriberIdInAppNotification: string) {
+async function sendTrigger(
+  session,
+  template,
+  newSubscriberIdInAppNotification: string,
+  payload: Record<string, unknown> = {}
+) {
   await axiosInstance.post(
     `${session.serverUrl}/v1/events/trigger`,
     {
@@ -490,6 +500,7 @@ async function sendTrigger(session, template, newSubscriberIdInAppNotification: 
       to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],
       payload: {
         organizationName: 'Umbrella Corp',
+        ...payload,
       },
     },
     {

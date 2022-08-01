@@ -17,6 +17,9 @@ import {
   NotificationGroupRepository,
   JobRepository,
   JobStatusEnum,
+  FeedRepository,
+  ChangeRepository,
+  ChangeEntity,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -31,6 +34,8 @@ export class UserSession {
   private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
   private jobRepository = new JobRepository();
+  private feedRepository = new FeedRepository();
+  private changeRepository: ChangeRepository = new ChangeRepository();
 
   token: string;
 
@@ -79,6 +84,8 @@ export class UserSession {
         this.apiKey = this.environment.apiKeys[0].key;
 
         await this.createIntegration();
+        await this.createFeed();
+        await this.createFeed('New');
       }
     }
 
@@ -233,6 +240,18 @@ export class UserSession {
     }
   }
 
+  async createFeed(name?: string) {
+    name = name ? name : 'Activities';
+    const feed = await this.feedRepository.create({
+      name,
+      identifier: name,
+      _environmentId: this.environment._id,
+      _organizationId: this.organization._id,
+    });
+
+    return feed;
+  }
+
   async triggerEvent(triggerName: string, to: TriggerRecipientsType, payload = {}) {
     await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
@@ -254,5 +273,24 @@ export class UserSession {
         },
       });
     } while (runningJobs > 0);
+  }
+
+  public async applyChanges(where: Partial<ChangeEntity> = {}) {
+    const changes = await this.changeRepository.find(
+      {
+        _environmentId: this.environment._id,
+        _organizationId: this.organization._id,
+        _parentId: { $exists: false, $eq: null },
+        ...where,
+      },
+      '',
+      {
+        sort: { createdAt: 1 },
+      }
+    );
+
+    for (const change of changes) {
+      await this.testAgent.post(`/v1/changes/${change._id}/apply`);
+    }
   }
 }

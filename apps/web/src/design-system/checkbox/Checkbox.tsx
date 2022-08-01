@@ -1,8 +1,8 @@
 import React, { ChangeEvent } from 'react';
-import { Checkbox as MantineCheckbox } from '@mantine/core';
+import { Checkbox as MantineCheckbox, CheckboxProps } from '@mantine/core';
 import useStyles from './Checkbox.styles';
 
-interface CheckboxProps {
+interface ICheckboxProps extends CheckboxProps {
   checked?: boolean;
   disabled?: boolean;
   label?: string;
@@ -13,7 +13,13 @@ interface CheckboxProps {
  * Checkbox Component
  *
  */
-export function Checkbox({ label = 'Default Checkbox', checked, onChange, disabled = false, ...props }: CheckboxProps) {
+export function Checkbox({
+  label = 'Default Checkbox',
+  checked,
+  onChange,
+  disabled = false,
+  ...props
+}: ICheckboxProps) {
   const { classes } = useStyles({ disabled });
 
   return (
