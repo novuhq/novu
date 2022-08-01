@@ -4,9 +4,10 @@ import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.comm
 
 @Injectable()
 export class GetSubscriberPreference {
-  private notificationTemplateRepository = new NotificationTemplateRepository();
-
-  constructor(private subscriberPreferenceRepository: SubscriberPreferenceRepository) {}
+  constructor(
+    private subscriberPreferenceRepository: SubscriberPreferenceRepository,
+    private notificationTemplateRepository: NotificationTemplateRepository
+  ) {}
 
   async execute(command: GetSubscriberPreferenceCommand): Promise<any> {
     const templateList = await this.notificationTemplateRepository.getActiveList(
@@ -17,7 +18,7 @@ export class GetSubscriberPreference {
 
     const templatesIds = templateList.map((template) => template._id);
 
-    const subscriberPreferences = await this.subscriberPreferenceRepository.findAll(
+    const subscriberPreferences = await this.subscriberPreferenceRepository.findSubscriberPreferences(
       command.environmentId,
       command.subscriberId,
       templatesIds

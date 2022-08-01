@@ -151,7 +151,7 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Get('/subscriber-preference')
+  @Get('/preferences')
   async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
     const command = GetSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
