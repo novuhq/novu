@@ -474,6 +474,56 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
     expect(message.subject).to.equal('Test email a subject nested');
   });
+
+  it('should broadcast trigger to all subscribers', async () => {
+    subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    await subscriberService.createSubscriber();
+    await subscriberService.createSubscriber();
+
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    template = await createTemplate(session, channelType);
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email subject',
+          type: ChannelTypeEnum.EMAIL,
+          content: [
+            {
+              type: 'text',
+              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger/broadcast`,
+      {
+        name: template.triggers[0].identifier,
+        payload: {
+          organizationName: 'Umbrella Corp',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+    await session.awaitRunningJobs(template._id);
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      channel: channelType,
+    });
+    expect(messages.length).to.equal(3);
+    const isUnique = (value, index, self) => self.indexOf(value) === index;
+    const subscriberIds = messages.map((message) => message._subscriberId).filter(isUnique);
+    expect(subscriberIds.length).to.equal(3);
+  });
 });
 
 async function createTemplate(session, channelType) {

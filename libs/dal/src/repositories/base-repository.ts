@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToClass } from 'class-transformer';
-import { Document, FilterQuery, Model, Types } from 'mongoose';
+import { Document, FilterQuery, Model, QueryCursor, Types } from 'mongoose';
 
 export class BaseRepository<T> {
   public _model: Model<any & Document>;
@@ -55,6 +55,22 @@ export class BaseRepository<T> {
       .exec();
 
     return this.mapEntities(data);
+  }
+
+  async *findBatch(
+    query: FilterQuery<T & Document>,
+    select = '',
+    options: { limit?: number; sort?: any; skip?: number } = {},
+    batchSize = 500
+  ) {
+    for await (const doc of this._model
+      .find(query, select, {
+        sort: options.sort || null,
+      })
+      .batchSize(batchSize)
+      .cursor()) {
+      yield this.mapEntities(doc);
+    }
   }
 
   async create(data: Partial<T>): Promise<T> {
