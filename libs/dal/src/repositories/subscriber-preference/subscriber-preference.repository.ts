@@ -6,4 +6,17 @@ export class SubscriberPreferenceRepository extends BaseRepository<SubscriberPre
   constructor() {
     super(SubscriberPreference, SubscriberPreferenceEntity);
   }
+
+  async findSubscriberPreferences(
+    environmentId: string,
+    subscriberId: string,
+    templatesIds: string[]
+  ): Promise<SubscriberPreferenceEntity[]> {
+    return await this.find({
+      _subscriberId: subscriberId,
+      _templateId: {
+        $in: templatesIds,
+      },
+    });
+  }
 }

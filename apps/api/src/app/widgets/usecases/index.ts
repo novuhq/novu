@@ -5,6 +5,7 @@ import { GetNotificationsFeed } from './get-notifications-feed/get-notifications
 import { InitializeSession } from './initialize-session/initialize-session.usecase';
 import { GetWidgetSettings } from './get-widget-settings/get-widget-settings.usecase';
 import { UpdateMessageActions } from './mark-action-as-done/update-message-actions.usecause';
+import { GetSubscriberPreference } from './get-subscriber-preference/get-subscriber-preference.usecase';
 
 export const USE_CASES = [
   GetOrganizationData,
@@ -14,5 +15,6 @@ export const USE_CASES = [
   GetNotificationsFeed,
   InitializeSession,
   GetWidgetSettings,
+  GetSubscriberPreference,
   //
 ];
