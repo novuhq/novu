@@ -20,7 +20,6 @@ interface IPopoverNotificationCenterProps {
   theme?: INovuThemePopoverProvider;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
-  tabs?: ITab[];
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -49,7 +48,6 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         theme={props.theme}
         onActionClick={props.onActionClick}
         actionsResultBlock={props.actionsResultBlock}
-        tabs={props.tabs}
       />
     </Popover>
   );
