@@ -45,6 +45,9 @@ export class UpdateNotificationTemplate {
     if (command.notificationGroupId) {
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
+    if (command.critical != null) {
+      updatePayload.critical = command.critical;
+    }
 
     const parentChangeId: string = await this.changeRepository.getChangeId(
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
