@@ -194,6 +194,7 @@ export class SendMessageEmail extends SendMessageType {
     try {
       await mailHandler.send(mailData);
     } catch (error) {
+      console.error(error);
       Sentry.captureException(error?.response?.body || error?.response || error);
       this.messageRepository.updateMessageStatus(
         message._id,

@@ -15,6 +15,7 @@ import {
   telnyxConfig,
   twilioConfig,
   termiiConfig,
+  netCoreConfig,
   gupshupConfig,
 } from './provider-credentials';
 import { ChannelTypeEnum } from '../../entities/message-template';
@@ -76,6 +77,14 @@ export const providers: IProviderConfig[] = [
     credentials: sendgridConfig,
     docReference: 'https://docs.sendgrid.com/',
     logoFileName: { light: 'sendgrid.png', dark: 'sendgrid.png' },
+  },
+  {
+    id: 'netcore',
+    displayName: 'NetCore',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: netCoreConfig,
+    docReference: 'https://netcorecloud.com/email/email-api/',
+    logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
   },
   {
     id: 'sendinblue',

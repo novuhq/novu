@@ -9,6 +9,7 @@ import {
   PostmarkHandler,
   SendinblueHandler,
   SESHandler,
+  NetCoreHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -16,6 +17,7 @@ export class MailFactory {
   handlers: IMailHandler[] = [
     new SendgridHandler(),
     new MailgunHandler(),
+    new NetCoreHandler(),
     new EmailJsHandler(),
     new MailjetHandler(),
     new MandrillHandler(),
