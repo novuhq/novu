@@ -6,7 +6,6 @@ import { expect } from 'chai';
 describe('GET /widget/notifications/feed', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
-  let subscriberId: string;
 
   beforeEach(async () => {
     session = new UserSession();
@@ -18,14 +17,7 @@ describe('GET /widget/notifications/feed', function () {
   });
 
   it('should fetch a default user preference', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/preferences`, {
-      headers: {
-        Authorization: `Bearer ${session.subscriberToken}`,
-      },
-    });
+    const response = await getSubscriberPreference(session.subscriberToken);
 
     const data = response.data.data[0];
 
@@ -38,7 +30,7 @@ describe('GET /widget/notifications/feed', function () {
 });
 
 export async function getSubscriberPreference(subscriberToken: string) {
-  return await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/subscriber-preference`, {
+  return await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/preferences`, {
     headers: {
       Authorization: `Bearer ${subscriberToken}`,
     },

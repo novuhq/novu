@@ -104,11 +104,11 @@ export class UserSession {
       }
     }
 
-    const { token, profile } = await this.initializeWidgetSession();
-
-    this.subscriberToken = token;
-
-    this.subscriberProfile = profile;
+    if (!options.noOrganization && !options.noEnvironment) {
+      const { token, profile } = await this.initializeWidgetSession();
+      this.subscriberToken = token;
+      this.subscriberProfile = profile;
+    }
   }
 
   private async initializeWidgetSession() {
@@ -119,8 +119,8 @@ export class UserSession {
       .send({
         applicationIdentifier: this.environment.identifier,
         subscriberId,
-        firstName: 'Test',
-        lastName: 'User',
+        firstName: 'Widget User',
+        lastName: 'Test',
         email: 'test@example.com',
       })
       .expect(201);
