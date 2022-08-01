@@ -80,6 +80,7 @@ export class SendMessageInApp extends SendMessageType {
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
+      _feedId: inAppChannel.template._feedId,
     });
 
     let message: MessageEntity;
@@ -94,6 +95,7 @@ export class SendMessageInApp extends SendMessageType {
         _messageTemplateId: inAppChannel.template._id,
         channel: ChannelTypeEnum.IN_APP,
         cta: inAppChannel.template.cta,
+        _feedId: inAppChannel.template._feedId,
         transactionId: command.transactionId,
         content,
         payload: messagePayload,

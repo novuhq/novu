@@ -69,6 +69,7 @@ export class TriggerEvent {
     }
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
+
     this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
       _template: template._id,
       _organization: command.organizationId,
@@ -166,7 +167,8 @@ export class TriggerEvent {
       const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
       if (!subscriberIdExists) {
-        await this.logSubscriberIdMissing(command);
+        this.logSubscriberIdMissing(command);
+
         throw new ApiException(
           'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
         );
@@ -181,7 +183,7 @@ export class TriggerEvent {
     organizationId: string,
     environmentId: string
   ): Promise<boolean> {
-    const job = await this.jobRepository.findOne(
+    const found = await this.jobRepository.findOne(
       {
         transactionId,
         _organizationId: organizationId,
@@ -190,7 +192,7 @@ export class TriggerEvent {
       '_id'
     );
 
-    if (job) {
+    if (found) {
       throw new ApiException(
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );

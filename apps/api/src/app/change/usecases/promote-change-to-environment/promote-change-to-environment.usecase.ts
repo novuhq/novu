@@ -7,6 +7,7 @@ import { PromoteNotificationTemplateChange } from '../promote-notification-templ
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
 import { applyDiff } from 'recursive-diff';
+import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
 
 @Injectable()
 export class PromoteChangeToEnvironment {
@@ -15,7 +16,8 @@ export class PromoteChangeToEnvironment {
     private environmentRepository: EnvironmentRepository,
     private promoteNotificationTemplateChange: PromoteNotificationTemplateChange,
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
-    private promoteNotificationGroupChange: PromoteNotificationGroupChange
+    private promoteNotificationGroupChange: PromoteNotificationGroupChange,
+    private promoteFeedChange: PromoteFeedChange
   ) {}
 
   async execute(command: PromoteChangeToEnvironmentCommand) {
@@ -46,6 +48,9 @@ export class PromoteChangeToEnvironment {
         break;
       case ChangeEntityTypeEnum.NOTIFICATION_GROUP:
         await this.promoteNotificationGroupChange.execute(typeCommand);
+        break;
+      case ChangeEntityTypeEnum.FEED:
+        await this.promoteFeedChange.execute(typeCommand);
         break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);

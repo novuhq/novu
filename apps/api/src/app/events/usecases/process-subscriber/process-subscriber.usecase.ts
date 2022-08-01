@@ -50,7 +50,7 @@ export class ProcessSubscriber {
       })
     );
 
-    await this.createLogUsecase.execute(
+    this.createLogUsecase.execute(
       CreateLogCommand.create({
         transactionId: command.transactionId,
         status: LogStatusEnum.INFO,

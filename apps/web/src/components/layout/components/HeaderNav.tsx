@@ -7,7 +7,7 @@ import {
   Menu as MantineMenu,
   Container,
 } from '@mantine/core';
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
@@ -15,6 +15,8 @@ import { Sun, Moon, Ellipse, Bell, Trash, Mail } from '../../../design-system/ic
 import { useLocalThemePreference } from '../../../hooks/use-localThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
+import { INTERCOM_APP_ID } from '../../../config';
+import { useIntercom } from 'react-use-intercom';
 
 type Props = {};
 const menuItem = [
@@ -29,9 +31,26 @@ const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+  const { themeStatus, setThemeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
 
-  const { themeStatus, setThemeStatus } = useLocalThemePreference();
+  if (INTERCOM_APP_ID) {
+    const { boot } = useIntercom();
+
+    useEffect(() => {
+      if (currentUser && currentOrganization) {
+        boot({
+          email: currentUser?.email,
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          createdAt: currentUser?.createdAt,
+          company: {
+            name: currentOrganization?.name,
+            companyId: currentOrganization?._id as string,
+          },
+        });
+      }
+    }, [currentUser, currentOrganization]);
+  }
 
   const themeTitle = () => {
     let title = 'Match System Appearance';

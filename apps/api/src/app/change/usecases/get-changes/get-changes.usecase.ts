@@ -5,6 +5,7 @@ import {
   MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationTemplateRepository,
+  FeedRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { GetChangesCommand } from './get-changes.command';
@@ -27,7 +28,8 @@ export class GetChanges {
     private changeRepository: ChangeRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
-    private notificationGroupRepository: NotificationGroupRepository
+    private notificationGroupRepository: NotificationGroupRepository,
+    private feedRepository: FeedRepository
   ) {}
 
   async execute(command: GetChangesCommand): Promise<IChangeViewEntity[]> {
@@ -48,6 +50,9 @@ export class GetChanges {
       }
       if (change.type === ChangeEntityTypeEnum.NOTIFICATION_GROUP) {
         item = await this.getTemplateDataForNotificationGroup(change._entityId, command.environmentId);
+      }
+      if (change.type === ChangeEntityTypeEnum.FEED) {
+        item = await this.getTemplateDataForFeed(change._entityId, command.environmentId);
       }
 
       list.push({
@@ -120,6 +125,30 @@ export class GetChanges {
       Logger.error(`Could not find notification group for id ${entityId}`);
 
       return {};
+    }
+
+    return {
+      templateName: item.name,
+    };
+  }
+
+  private async getTemplateDataForFeed(
+    entityId: string,
+    environmentId: string
+  ): Promise<IViewEntity | Record<string, unknown>> {
+    let item = await this.feedRepository.findOne({
+      _environmentId: environmentId,
+      _id: entityId,
+    });
+
+    if (!item) {
+      const items = await this.feedRepository.findDeleted({ _id: entityId, _environmentId: environmentId });
+      item = items[0];
+      if (!item) {
+        Logger.error(`Could not find feed for id ${entityId}`);
+
+        return {};
+      }
     }
 
     return {
