@@ -44,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.5.1",
+    "@novu/stateless": "^0.6.0",
     "pepipost": "^5.0.0"
   },
   "devDependencies": {

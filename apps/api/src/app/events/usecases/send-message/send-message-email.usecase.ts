@@ -15,7 +15,6 @@ import {
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
-import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
@@ -55,9 +54,13 @@ export class SendMessageEmail extends SendMessageType {
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
-    const contentService = new ContentService();
-    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
-    const subject = contentService.replaceVariables(emailChannel.template.subject, messageVariables);
+    const subject = await this.renderContent(
+      emailChannel.template.subject,
+      emailChannel.template.subject,
+      organization,
+      subscriber,
+      command
+    );
 
     const content: string | IEmailBlock[] = await this.getContent(
       isEditorMode,
@@ -79,6 +82,7 @@ export class SendMessageEmail extends SendMessageType {
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
       content,
+      subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
@@ -231,17 +235,15 @@ export class SendMessageEmail extends SendMessageType {
     organization: OrganizationEntity
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode) {
-      const contentService = new ContentService();
-      const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
       const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
       for (const block of content) {
         /*
          * We need to trim the content in order to avoid mail provider like GMail
          * to display the mail with `[Message clipped]` footer.
          */
-        block.content = await this.renderBlockContent(block.content, subject, organization, subscriber, command);
+        block.content = await this.renderContent(block.content, subject, organization, subscriber, command);
         block.content = block.content.trim();
-        block.url = contentService.replaceVariables(block.url, messageVariables);
+        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command);
       }
 
       return content;
@@ -250,7 +252,7 @@ export class SendMessageEmail extends SendMessageType {
     return emailChannel.template.content;
   }
 
-  private async renderBlockContent(
+  private async renderContent(
     content: string,
     subject,
     organization: OrganizationEntity,

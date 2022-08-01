@@ -179,7 +179,9 @@ const WorkflowEditorPage = ({
                   </NavSection>
                   <NavSection>
                     {steps.map((i, index) => {
-                      return index === activeStep ? <DigestMetadata control={control} index={index} /> : null;
+                      return index === activeStep ? (
+                        <DigestMetadata key={index} control={control} index={index} />
+                      ) : null;
                     })}
                   </NavSection>
                 </When>
@@ -214,8 +216,13 @@ const WorkflowEditorPage = ({
                   <Stack>
                     {channels
                       .filter((channel) => channel.type === StepTypeEnum.CHANNEL)
-                      .map((channel) => (
-                        <DraggableNode channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
+                      .map((channel, index) => (
+                        <DraggableNode
+                          key={index}
+                          channel={channel}
+                          setDragging={setDragging}
+                          onDragStart={onDragStart}
+                        />
                       ))}
                   </Stack>
                 </When>
@@ -234,8 +241,13 @@ const WorkflowEditorPage = ({
                   <Stack>
                     {channels
                       .filter((channel) => channel.type === StepTypeEnum.ACTION)
-                      .map((channel) => (
-                        <DraggableNode channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
+                      .map((channel, index) => (
+                        <DraggableNode
+                          key={index}
+                          channel={channel}
+                          setDragging={setDragging}
+                          onDragStart={onDragStart}
+                        />
                       ))}
                   </Stack>
                 </When>

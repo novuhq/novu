@@ -73,6 +73,7 @@ jobs:
       # Runs a single command using the runners shell
       - name: Build
         env:
+          REACT_APP_INTERCOM_APP_ID: ${{ secrets.INTERCOM_APP_ID }}
           REACT_APP_API_URL: https://dev.api.novu.co
           REACT_APP_WS_URL: https://dev.ws.novu.co
           REACT_APP_WIDGET_EMBED_PATH: https://dev.embed.novu.co/embed.umd.min.js

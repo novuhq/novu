@@ -56,7 +56,7 @@ const useMenuStyles = createStyles((theme: MantineTheme) => {
     item: {
       borerRadius: '5px',
       color: `${dark ? theme.white : colors.B40} !important`,
-      fontWeight: '400',
+      fontWeight: 400,
       fontSize: '14px',
     },
     itemHovered: {
@@ -114,143 +114,142 @@ export function ChannelButton({
   }, [dragging, showDotMenu]);
 
   return (
-    <>
-      <Button
-        onMouseEnter={() => setPopoverOpened(true)}
-        onMouseLeave={() => setPopoverOpened(false)}
-        data-test-id={testId}
-        className={cx(classes.button, { [classes.active]: active })}
-        sx={{
-          backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
-        }}
-      >
-        <When truthy={showDropZone}>
-          <Dropzone data-test-id="dropzone-area" dark={theme.colorScheme === 'dark'}>
-            Place your next step here
-          </Dropzone>
-        </When>
-        <ButtonWrapper>
-          <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
-            <StyledContentWrapper>
-              <Text {...disabledColor} weight="bold">
-                {label}
-              </Text>
-            </StyledContentWrapper>
-          </LeftContainerWrapper>
+    <Button
+      type={'button'}
+      onMouseEnter={() => setPopoverOpened(true)}
+      onMouseLeave={() => setPopoverOpened(false)}
+      data-test-id={testId}
+      className={cx(classes.button, { [classes.active]: active })}
+      sx={{
+        backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
+      }}
+    >
+      <When truthy={showDropZone}>
+        <Dropzone data-test-id="dropzone-area" dark={theme.colorScheme === 'dark'}>
+          Place your next step here
+        </Dropzone>
+      </When>
+      <ButtonWrapper>
+        <LeftContainerWrapper>
+          <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
+          <StyledContentWrapper>
+            <Text {...disabledColor} weight="bold">
+              {label}
+            </Text>
+          </StyledContentWrapper>
+        </LeftContainerWrapper>
 
-          <ActionWrapper>
-            {action && !readonly && (
-              <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
-            )}
-            <When truthy={showDots && !readonlyEnv}>
-              <a
+        <ActionWrapper>
+          {action && !readonly && (
+            <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
+          )}
+          <When truthy={showDots && !readonlyEnv}>
+            <Menu
+              ref={menuRef}
+              shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
+              classNames={menuClasses}
+              withArrow={true}
+              opened={showDotMenu}
+              control={
+                <ActionIcon
+                  variant="transparent"
+                  data-test-id="step-actions-dropdown"
+                  style={{ pointerEvents: 'all' }}
+                  component="span"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowDotMenu(!showDotMenu);
+                  }}
+                >
+                  <DotsHorizontal
+                    style={{
+                      color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
+                    }}
+                  />
+                </ActionIcon>
+              }
+            >
+              <When truthy={tabKey !== ChannelTypeEnum.DIGEST}>
+                <MenuItem
+                  key="edit"
+                  style={{
+                    pointerEvents: 'all',
+                  }}
+                  icon={
+                    <Edit
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                      }}
+                    />
+                  }
+                  data-test-id="edit-step-action"
+                  onClick={() => {
+                    setShowDotMenu(false);
+                    setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
+                  }}
+                >
+                  Edit Template
+                </MenuItem>
+              </When>
+              <MenuItem
+                key="delete"
                 style={{
                   pointerEvents: 'all',
                 }}
-                href="/"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowDotMenu(!showDotMenu);
+                icon={<Trash />}
+                data-test-id="delete-step-action"
+                onClick={() => {
+                  setShowDotMenu(false);
+                  onDelete(id || '');
                 }}
               >
-                <Menu
-                  ref={menuRef}
-                  shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
-                  classNames={menuClasses}
-                  withArrow={true}
-                  opened={showDotMenu}
-                  control={
-                    <ActionIcon variant="transparent" data-test-id="step-actions-dropdown">
-                      <DotsHorizontal
-                        style={{
-                          color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
-                        }}
-                      />
-                    </ActionIcon>
-                  }
-                >
-                  <When truthy={tabKey !== ChannelTypeEnum.DIGEST}>
-                    <MenuItem
-                      style={{
-                        pointerEvents: 'all',
-                      }}
-                      icon={
-                        <Edit
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                          }}
-                        />
-                      }
-                      data-test-id="edit-step-action"
-                      onClick={() => {
-                        setShowDotMenu(false);
-                        setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
-                      }}
-                    >
-                      Edit Template
-                    </MenuItem>
-                  </When>
-                  <MenuItem
-                    style={{
-                      pointerEvents: 'all',
-                    }}
-                    icon={<Trash />}
-                    data-test-id="delete-step-action"
-                    onClick={() => {
-                      setShowDotMenu(false);
-                      onDelete(id || '');
-                    }}
-                  >
-                    Delete {tabKey !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
-                  </MenuItem>
-                </Menu>
-              </a>
-            </When>
-          </ActionWrapper>
-        </ButtonWrapper>
+                Delete {tabKey !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
+              </MenuItem>
+            </Menu>
+          </When>
+        </ActionWrapper>
+      </ButtonWrapper>
 
-        {errors && (
-          <Popover
-            styles={{
-              root: {
-                position: 'absolute',
-                right: 0,
-                top: 'calc(50% - 1px)',
-              },
-              inner: {
-                padding: '12px 15px 14px',
-              },
-              arrow: {
-                backgroundColor: colors.error,
-                height: '7px',
-                border: 'none',
-                margin: '0px',
-              },
-              body: {
-                backgroundColor: colors.error,
-                position: 'relative',
-                color: colors.white,
-                border: 'none',
-                marginTop: '1px',
-              },
-            }}
-            withArrow
-            opened={popoverOpened}
-            transition="rotate-left"
-            transitionDuration={250}
-            gutter={theme.spacing.xs}
-            mb={20}
-            placement="center"
-            position="right"
-            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
-          >
-            {errors || 'Something is missing here'}
-          </Popover>
-        )}
-      </Button>
-    </>
+      {errors && (
+        <Popover
+          styles={{
+            root: {
+              position: 'absolute',
+              right: 0,
+              top: 'calc(50% - 1px)',
+            },
+            inner: {
+              padding: '12px 15px 14px',
+            },
+            arrow: {
+              backgroundColor: colors.error,
+              height: '7px',
+              border: 'none',
+              margin: '0px',
+            },
+            body: {
+              backgroundColor: colors.error,
+              position: 'relative',
+              color: colors.white,
+              border: 'none',
+              marginTop: '1px',
+            },
+          }}
+          withArrow
+          opened={popoverOpened}
+          transition="rotate-left"
+          transitionDuration={250}
+          gutter={theme.spacing.xs}
+          mb={20}
+          placement="center"
+          position="right"
+          target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+        >
+          {errors || 'Something is missing here'}
+        </Popover>
+      )}
+    </Button>
   );
 }
 
@@ -312,7 +311,7 @@ const Dropzone = styled.div<{ dark: boolean }>`
   border: 1px dashed ${({ dark }) => (dark ? colors.B30 : colors.B80)};
 `;
 
-const Button = styled(UnstyledButton)`
+const Button: any = styled(UnstyledButton)`
   position: relative;
 
   @media screen and (max-width: 1400px) {

@@ -34,6 +34,7 @@ const messageSchema = new Schema(
     },
     templateIdentifier: Schema.Types.String,
     email: Schema.Types.String,
+    subject: Schema.Types.String,
     cta: {
       type: {
         type: Schema.Types.String,
@@ -57,6 +58,10 @@ const messageSchema = new Schema(
           },
         },
       },
+    },
+    _feedId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Feed',
     },
     channel: Schema.Types.String,
     content: Schema.Types.Mixed,
