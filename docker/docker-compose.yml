@@ -23,6 +23,7 @@ services:
     depends_on:
       - mongodb
       - redis
+      - rabbitmq
     container_name: api
     environment:
       NODE_ENV: ${NODE_ENV}
@@ -46,6 +47,7 @@ services:
     depends_on:
       - mongodb
       - redis
+      - rabbitmq
     container_name: ws
     environment:
       PORT: ${WS_PORT}
@@ -89,5 +91,15 @@ services:
       WIDGET_URL: ${WIDGET_URL}
     ports:
       - 4701:4701
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+
 volumes:
   mongodb: ~

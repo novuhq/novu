@@ -1,4 +1,4 @@
-import { DynamicModule, Module, OnModuleInit } from '@nestjs/common';
+import { DynamicModule, Inject, Module, OnModuleInit } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -19,7 +19,6 @@ import { StorageModule } from './app/storage/storage.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { InvitesModule } from './app/invites/invites.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
-import { QueueService } from './app/shared/services/queue';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
@@ -67,7 +66,8 @@ if (process.env.NODE_ENV === 'test') {
   imports: modules,
   controllers: [],
   providers,
+  exports: [],
 })
-export class AppModule {
-  constructor(private queueService: QueueService) {}
+export class AppModule implements OnModuleInit {
+  async onModuleInit() {}
 }

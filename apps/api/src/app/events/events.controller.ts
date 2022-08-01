@@ -7,12 +7,10 @@ import { TriggerEventDto } from './dto/trigger-event.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ISubscribersDefine } from '@novu/node';
-import { CancelDigest } from './usecases/cancel-digest/cancel-digest.usecase';
-import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.command';
 
 @Controller('events')
 export class EventsController {
-  constructor(private triggerEvent: TriggerEvent, private cancelDigestUsecase: CancelDigest) {}
+  constructor(private triggerEvent: TriggerEvent) {}
 
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
@@ -29,23 +27,6 @@ export class EventsController {
         payload: body.payload,
         to: mappedSubscribers,
         transactionId: body.transactionId || uuidv4(),
-      })
-    );
-  }
-
-  @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
-  @Delete('/trigger/:transactionId')
-  async cancelDigest(
-    @UserSession() user: IJwtPayload,
-    @Param('transactionId') transactionId: string
-  ): Promise<boolean> {
-    return await this.cancelDigestUsecase.execute(
-      CancelDigestCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        transactionId,
       })
     );
   }

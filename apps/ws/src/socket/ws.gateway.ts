@@ -28,7 +28,9 @@ export class WSGateway implements OnGatewayConnection {
       return this.disconnect(connection);
     }
 
-    return await connection.join(subscriber._id);
+    const connectionData = await connection.join(subscriber._id);
+
+    return connectionData;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -17,6 +17,7 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -26,7 +27,8 @@ export class SendMessageInApp extends SendMessageType {
     private queueService: QueueService,
     protected createLogUsecase: CreateLog,
     private subscriberRepository: SubscriberRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    @Inject('WS_SERVICE') private client: ClientProxy
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -147,12 +149,9 @@ export class SendMessageInApp extends SendMessageType {
       })
     );
 
-    await this.queueService.wsSocketQueue.add({
-      event: 'unseen_count_changed',
+    this.client.emit('unseen_count_changed', {
       userId: command.subscriberId,
-      payload: {
-        unseenCount: count,
-      },
+      unseenCount: count,
     });
   }
 

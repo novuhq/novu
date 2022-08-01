@@ -18,6 +18,7 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -35,12 +36,23 @@ if (process.env.SENTRY_DSN) {
 validateEnv();
 
 export async function bootstrap(expressApp?): Promise<INestApplication> {
-  let app;
+  let app: INestApplication;
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   } else {
     app = await NestFactory.create(AppModule);
   }
+
+  await app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: ['amqp://localhost:5672'],
+      queue: 'subscribers_queue',
+      queueOptions: {
+        durable: false,
+      },
+    },
+  });
 
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.Handlers.requestHandler());
@@ -81,6 +93,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
     SwaggerModule.setup('api', app, document);
   }
+
+  await app.startAllMicroservices();
 
   if (expressApp) {
     await app.init();

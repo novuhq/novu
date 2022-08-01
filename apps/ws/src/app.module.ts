@@ -1,7 +1,6 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
@@ -23,7 +22,7 @@ if (process.env.SENTRY_DSN) {
 @Module({
   imports: modules,
   exports: [SocketModule],
-  controllers: [AppController],
+  controllers: [],
   providers,
 })
 export class AppModule {}

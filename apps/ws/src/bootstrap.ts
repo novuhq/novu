@@ -5,6 +5,7 @@ import { RedisIoAdapter } from './shared/framework/redis.adapter';
 import { version } from '../package.json';
 
 import { AppModule } from './app.module';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -17,6 +18,17 @@ if (process.env.SENTRY_DSN) {
 export async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  await app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: ['amqp://localhost:5672'],
+      queue: 'socket_queue',
+      queueOptions: {
+        durable: false,
+      },
+    },
+  });
+
   app.enableCors({
     origin: '*',
     preflightContinue: false,
@@ -26,5 +38,6 @@ export async function bootstrap() {
 
   app.useWebSocketAdapter(new RedisIoAdapter(app));
 
+  await app.startAllMicroservices();
   await app.listen(process.env.PORT);
 }
