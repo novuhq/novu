@@ -120,6 +120,51 @@ describe('Notifications Creator', function () {
       cy.getByTestId('trigger-snippet-btn').click();
       cy.location('pathname').should('equal', '/templates');
     });
+    it('should create multiline in-app notification, send it and receive', function () {
+      waitLoadTemplatePage(() => {
+        cy.visit('/templates/create');
+      });
+      cy.getByTestId('title').type('Test Notification Title');
+      cy.getByTestId('description').type('This is a test description for a test title');
+      cy.get('body').click();
+
+      addAndEditChannel('inApp');
+
+      // put the multiline notification message
+      cy.getByTestId('in-app-editor-content-input')
+        .type('{{firstName}} someone assigned you to {{taskName}}', {
+          parseSpecialCharSequences: false,
+        })
+        .type('{enter}Please check it.');
+      cy.getByTestId('inAppRedirect').type('/example/test');
+      cy.getByTestId('submit-btn').click();
+
+      cy.getByTestId('trigger-snippet-btn').click();
+
+      // trigger the notification
+      cy.eventsTrigger(
+        {
+          name: 'test-notification-title',
+          to: {
+            subscriberId: this.session.user.id,
+            email: this.session.user.email,
+          },
+          payload: {},
+        },
+        this.session.environment.apiKeys[0].key
+      ).then(() => {
+        // click on the notifications bell
+        cy.getByTestId('notification-bell').click();
+        // check the notification
+        cy.getByTestId('notifications-scroll-area')
+          .getByTestId('notification-content')
+          .first()
+          .then(($el) => {
+            expect($el[0].innerText).to.contain('\n');
+            expect($el[0].innerText).to.contain('Please check it.');
+          });
+      });
+    });
     it('should create email notification', function () {
       waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
@@ -266,7 +311,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
     });
 
-    it('should edit notification', function () {
+    it.skip('should edit notification', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
@@ -538,7 +583,7 @@ describe('Notifications Creator', function () {
       });
     });
 
-    it.only('should be able to delete a step', function () {
+    it('should be able to delete a step', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
