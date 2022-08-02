@@ -166,9 +166,12 @@ export class ProcessSubscriber {
     const preference = (await this.buildSubscriberPreferenceTemplateUsecase.execute(buildCommand)).preference;
     const channels = preference.channels;
 
-    return template.steps.filter(
-      (step) =>
-        preference.enabled && Object.keys(channels).filter((channelKey) => channels[channelKey] === step.template.type)
+    return template.steps.filter((step) => preference.enabled && this.stepPreferred(channels, step));
+  }
+
+  private stepPreferred(channels, step) {
+    return (
+      Object.keys(channels).some((channelKey) => channelKey === step.template.type) && channels[step.template.type]
     );
   }
 }
