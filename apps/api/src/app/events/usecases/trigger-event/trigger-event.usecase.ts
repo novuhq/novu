@@ -32,7 +32,6 @@ export class TriggerEvent {
       },
     });
 
-    await this.validateTransactionIdProperty(command);
     await this.validateSubscriberIdProperty(command);
 
     this.logEventTriggered(command);
@@ -182,11 +181,16 @@ export class TriggerEvent {
     return true;
   }
 
-  private async validateTransactionIdProperty(command: TriggerEventCommand): Promise<boolean> {
+  public async validateTransactionIdProperty(
+    transactionId: string,
+    organizationId: string,
+    environmentId: string
+  ): Promise<boolean> {
     const found = await this.jobRepository.findOne(
       {
-        transactionId: command.transactionId,
-        _environmentId: command.environmentId,
+        transactionId,
+        _organizationId: organizationId,
+        _environmentId: environmentId,
       },
       '_id'
     );

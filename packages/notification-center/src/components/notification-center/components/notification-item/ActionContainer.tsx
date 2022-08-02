@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { NotificationButton } from './NorificationItemButton';
 import { IMessageAction, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
@@ -9,25 +9,18 @@ export interface IActionContainerProps {
 }
 
 export function ActionContainer({ action, onActionClick }: IActionContainerProps) {
-  const [clicked, setClicked] = useState<boolean>(action.status === MessageActionStatusEnum.DONE);
+  const status = action?.status;
   const buttons = action?.buttons;
-
-  useEffect(() => {
-    if (action?.status) {
-      setClicked(action?.status === MessageActionStatusEnum.DONE);
-    }
-  }, [action.status]);
 
   function handleOnClick(buttonType: ButtonTypeEnum) {
     onActionClick(buttonType);
-    setClicked(true);
   }
 
   return (
     <>
       <TemplateContainerWrap>
         <TemplateContainer>
-          {clicked
+          {status === MessageActionStatusEnum.DONE
             ? null
             : buttons?.map((button, buttonIndex) => (
                 <NotificationButton

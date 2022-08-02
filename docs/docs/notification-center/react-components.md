@@ -491,3 +491,28 @@ By specifying only a storeId, without a query, you could get all notifications.
     }}
 </PopoverNotificationCenter>
 ```
+
+#### Custom Notification Item component
+
+```tsx
+<PopoverNotificationCenter
+      
+      colorScheme={colorScheme}
+      onNotificationClick={handlerOnNotificationClick}
+      onActionClick={handlerOnActionClick}
+      listItem={(notification, handleActionButtonClick, handleNotificationClick) => {
+        return (
+          <a href='/' onClick={(e) => {
+            e.preventDefault();
+            handleNotificationClick();
+          }}>
+            {notification.content}
+          </a>
+        );
+      }}
+    >
+    {({ unseenCount }) => {
+      return <NotificationBell colorScheme={colorScheme} unseenCount={unseenCount} />;
+    }}
+</PopoverNotificationCenter>
+```

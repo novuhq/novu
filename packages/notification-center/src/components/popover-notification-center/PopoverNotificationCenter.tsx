@@ -6,7 +6,7 @@ import { Popover } from './components/Popover';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { INovuThemePopoverProvider } from '../../store/novu-theme-provider.context';
 import { useDefaultTheme } from '../../hooks';
-import { ColorScheme, ITab } from '../../index';
+import { ColorScheme, ListItem } from '../../index';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -15,11 +15,11 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
+  listItem?: ListItem;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
-  tabs?: ITab[];
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -48,7 +48,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         theme={props.theme}
         onActionClick={props.onActionClick}
         actionsResultBlock={props.actionsResultBlock}
-        tabs={props.tabs}
+        listItem={props.listItem}
       />
     </Popover>
   );
