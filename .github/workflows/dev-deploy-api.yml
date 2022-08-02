@@ -45,6 +45,10 @@ jobs:
         with:
           mongodb-version: 4.2.8
 
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.3.0
+          run_install: false
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
