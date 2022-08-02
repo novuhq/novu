@@ -9,7 +9,7 @@ import { INovuTheme } from '../../../../store/novu-theme.context';
 import { UserPreference } from '../user-preference/UserPreference';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 
-export enum Screens {
+export enum ScreensEnum {
   NOTIFICATIONS = 'notifications',
   SETTINGS = 'settings',
 }
@@ -17,11 +17,11 @@ export enum Screens {
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
   const { theme } = useNovuThemeProvider();
-  const [screen, setScreen] = useState<Screens>(Screens.NOTIFICATIONS);
+  const [screen, setScreen] = useState<ScreensEnum>(ScreensEnum.NOTIFICATIONS);
 
   return (
     <LayoutWrapper theme={theme}>
-      {screen === Screens.SETTINGS && (
+      {screen === ScreensEnum.SETTINGS && (
         <>
           <UserPreferenceHeader setScreen={setScreen} />
           <ContentWrapper>
@@ -29,7 +29,7 @@ export function Layout({ children }: { children: JSX.Element }) {
           </ContentWrapper>
         </>
       )}
-      {screen === Screens.NOTIFICATIONS && (
+      {screen === ScreensEnum.NOTIFICATIONS && (
         <>
           <Header setScreen={setScreen} />
           <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>

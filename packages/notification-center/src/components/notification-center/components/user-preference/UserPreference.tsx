@@ -7,11 +7,13 @@ import { getChannel } from './channels';
 import { useApi } from '../../../../hooks';
 import { IUserPreferenceSettings } from '../../../../index';
 import { accordionStyles, Text, TextBlock } from './styles';
+import { IPreferenceChannels } from '@novu/shared';
 
 export function UserPreference() {
   const { theme, common } = useNovuThemeProvider();
   const { api } = useApi();
   const [settings, setSettings] = useState<IUserPreferenceSettings[]>([]);
+  const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
   const baseTheme = theme?.notificationItem?.unseen;
 
   useEffect(() => {
@@ -31,6 +33,28 @@ export function UserPreference() {
           const channelsKeys = Object.keys(item?.preference?.channels);
           const channelsPreference = item?.preference?.channels;
 
+          const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
+            setLoadingUpdate(true);
+            const result = await api.updateSubscriberPreference(item.template._id, type, checked);
+
+            setSettings((prev) => {
+              return prev.map((workflow, i) => {
+                if (i === index) {
+                  return {
+                    template: workflow.template,
+                    preference: {
+                      ...result,
+                    },
+                  };
+                }
+
+                return workflow;
+              });
+            });
+
+            setLoadingUpdate(false);
+          };
+
           return (
             <Accordion.Item
               key={index}
@@ -47,10 +71,9 @@ export function UserPreference() {
                   <ChannelPreference
                     key={key}
                     type={key}
-                    index={index}
-                    setSettings={setSettings}
-                    templateId={item.template?._id}
                     active={channelsPreference[key]}
+                    disabled={loadingUpdate}
+                    handleUpdateChannelPreference={handleUpdateChannelPreference}
                   />
                 ))}
               </ChannelsWrapper>
@@ -75,7 +98,7 @@ function WorkflowHeader({ label, channels, theme }) {
   );
 }
 
-function getEnabledChannels(channels) {
+function getEnabledChannels(channels: IPreferenceChannels) {
   const keys = Object.keys(channels);
   const list = keys.filter((key) => channels[key]).map((channel) => getChannel(channel).label);
 

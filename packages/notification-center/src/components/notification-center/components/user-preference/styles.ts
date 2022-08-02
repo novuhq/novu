@@ -29,14 +29,20 @@ export const accordionStyles = (baseTheme, font) => {
 export const switchStyles = (baseTheme) => {
   return {
     input: {
-      backgroundColor: baseTheme.timeMarkFontColor,
-      width: '40px',
+      background: baseTheme.timeMarkFontColor,
+      width: '41px',
       height: '24px',
       border: 'transparent',
       '&::before': {
         border: 'transparent',
         width: '20px',
         height: '20px',
+      },
+      '&:disabled': {
+        opacity: 0.3,
+      },
+      '&:disabled:not(:checked)': {
+        background: baseTheme.timeMarkFontColor,
       },
       '&:checked': {
         background: baseTheme.notificationItemBeforeBrandColor,
