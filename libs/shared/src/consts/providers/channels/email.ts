@@ -3,6 +3,7 @@ import {
   mailjetConfig,
   mailJsConfig,
   mandrillConfig,
+  netCoreConfig,
   nodemailerConfig,
   postmarkConfig,
   sendgridConfig,
@@ -84,5 +85,13 @@ export const emailProviders: IProviderConfig[] = [
     credentials: sesConfig,
     docReference: 'https://docs.aws.amazon.com/ses/index.html',
     logoFileName: { light: 'ses.svg', dark: 'ses.svg' },
+  },
+  {
+    id: 'netcore',
+    displayName: 'NetCore',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: netCoreConfig,
+    docReference: 'https://netcorecloud.com/email/email-api/',
+    logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
   },
 ];
