@@ -1,7 +1,7 @@
 import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum, IMessage } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum, IMessage } from '@novu/shared';
 
 describe('Get activity feed - /activity (GET)', async () => {
   let session: UserSession;
@@ -13,7 +13,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
-    smsOnlyTemplate = await session.createChannelTemplate(ChannelTypeEnum.SMS);
+    smsOnlyTemplate = await session.createChannelTemplate(StepTypeEnum.SMS);
     subscriberId = SubscriberRepository.createObjectId();
     await session.testAgent
       .post('/v1/widgets/session/initialize')

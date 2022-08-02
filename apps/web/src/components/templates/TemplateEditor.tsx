@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { useActiveIntegrations } from '../../api/hooks';
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
@@ -18,7 +18,7 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
       {activePage === ActivePageEnum.SMS && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === ChannelTypeEnum.SMS && activeStep === index ? (
+            return message.template.type === StepTypeEnum.SMS && activeStep === index ? (
               <TemplateSMSEditor
                 key={message._id}
                 control={control}
@@ -33,7 +33,7 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
       {activePage === ActivePageEnum.EMAIL && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === ChannelTypeEnum.EMAIL && activeStep === index ? (
+            return message.template.type === StepTypeEnum.EMAIL && activeStep === index ? (
               <EmailMessagesCards
                 key={message._id}
                 variables={trigger?.variables || []}
@@ -49,7 +49,7 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
       {activePage === ActivePageEnum.IN_APP && (
         <>
           {steps.map((message, index) => {
-            return message.template.type === ChannelTypeEnum.IN_APP && activeStep === index ? (
+            return message.template.type === StepTypeEnum.IN_APP && activeStep === index ? (
               <TemplateInAppEditor key={message._id} errors={errors} control={control} index={index} />
             ) : null;
           })}
@@ -58,7 +58,7 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
       {activePage === ActivePageEnum.PUSH && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === ChannelTypeEnum.PUSH && activeStep === index ? (
+            return message.template.type === StepTypeEnum.PUSH && activeStep === index ? (
               <TemplatePushEditor
                 key={message._id}
                 control={control}
@@ -75,7 +75,7 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
       {activePage === ActivePageEnum.DIRECT && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === ChannelTypeEnum.DIRECT && activeStep === index ? (
+            return message.template.type === StepTypeEnum.DIRECT && activeStep === index ? (
               <TemplateDirectEditor
                 key={index}
                 errors={errors}

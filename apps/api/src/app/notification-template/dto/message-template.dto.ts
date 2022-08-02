@@ -1,5 +1,5 @@
 import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { ChannelTypeEnum, IEmailBlock, ChannelCTATypeEnum, IMessageCTA } from '@novu/shared';
+import { StepTypeEnum, IEmailBlock, ChannelCTATypeEnum, IMessageCTA } from '@novu/shared';
 
 class ChannelCTADto {
   @IsEnum(ChannelCTATypeEnum)
@@ -13,8 +13,8 @@ class ChannelCTADto {
 
 export class MessageTemplateDto {
   @IsOptional()
-  @IsEnum(ChannelTypeEnum)
-  type: ChannelTypeEnum;
+  @IsEnum(StepTypeEnum)
+  type: StepTypeEnum;
 
   @IsDefined()
   content: string | IEmailBlock[];

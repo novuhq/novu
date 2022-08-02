@@ -1,6 +1,6 @@
 import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { Inject, Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -75,11 +75,11 @@ export class TriggerEvent {
       _template: template._id,
       _organization: command.organizationId,
       channels: steps.map((step) => step.template?.type),
-      smsChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.SMS)?.length,
-      emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
-      inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
-      directChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.DIRECT)?.length,
-      pushChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.PUSH)?.length,
+      smsChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.SMS)?.length,
+      emailChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.EMAIL)?.length,
+      inAppChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.IN_APP)?.length,
+      directChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.DIRECT)?.length,
+      pushChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.PUSH)?.length,
     });
 
     for (const job of jobs) {

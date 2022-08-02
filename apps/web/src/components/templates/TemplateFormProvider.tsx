@@ -3,7 +3,7 @@ import { FieldArrayProvider } from './FieldArrayProvider';
 import { IForm } from './use-template-controller.hook';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ChannelTypeEnum, DigestTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum } from '@novu/shared';
 
 const schema = z
   .object({
@@ -85,7 +85,7 @@ const schema = z
           })
           .passthrough()
           .superRefine((step: any, ctx) => {
-            if (step.template.type !== ChannelTypeEnum.DIGEST) {
+            if (step.template.type !== StepTypeEnum.DIGEST) {
               return;
             }
 

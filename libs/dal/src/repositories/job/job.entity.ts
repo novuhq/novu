@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
+import { StepTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import { NotificationStepEntity } from '../notification-template';
 
 export enum JobStatusEnum {
@@ -42,5 +42,5 @@ export class JobEntity {
     backoffAmount?: number;
     updateMode?: boolean;
   };
-  type?: ChannelTypeEnum;
+  type?: StepTypeEnum;
 }

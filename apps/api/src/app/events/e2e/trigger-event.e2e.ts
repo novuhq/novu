@@ -12,7 +12,7 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum, IEmailBlock } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
 
@@ -260,7 +260,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await session.createTemplate({
       steps: [
         {
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Hello world {{customVar}}' as string,
         },
       ],
@@ -299,7 +299,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await session.createTemplate({
       steps: [
         {
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Welcome to {{organizationName}}' as string,
         },
       ],
@@ -346,7 +346,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await session.createTemplate({
       steps: [
         {
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Hello world {{firstName}}' as string,
         },
       ],
@@ -439,7 +439,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         {
           name: 'Message Name',
           subject: 'Test email {{nested.subject}}',
-          type: ChannelTypeEnum.EMAIL,
+          type: StepTypeEnum.EMAIL,
           content: [
             {
               type: 'text',
@@ -489,7 +489,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         {
           name: 'Message Name',
           subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          type: StepTypeEnum.EMAIL,
           content: [
             {
               type: 'text',

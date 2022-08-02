@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { colors, Dropdown } from '../../../design-system';
 import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
 import { Mail, Mobile, PlusCircleOutlined, Sms } from '../../../design-system/icons';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { Digest } from '../../../design-system/icons/general/Digest';
 
 interface NodeData {
@@ -54,6 +54,13 @@ export default memo(({ data }: { data: NodeData }) => {
           Push
         </DropdownItem>
         <DropdownItem
+          data-test-id={`add-direct-node`}
+          icon={<Sms />}
+          onClick={() => addNewNode(ChannelTypeEnum.DIRECT)}
+        >
+          Direct
+        </DropdownItem>
+        <DropdownItem
           data-test-id={`add-in-app-node`}
           icon={<Mobile />}
           onClick={() => addNewNode(ChannelTypeEnum.IN_APP)}
@@ -68,7 +75,7 @@ export default memo(({ data }: { data: NodeData }) => {
               <Digest color={theme.colorScheme === 'dark' ? colors.white : colors.B40} />
             </div>
           }
-          onClick={() => addNewNode(ChannelTypeEnum.DIGEST)}
+          onClick={() => addNewNode(StepTypeEnum.DIGEST)}
         >
           Digest
         </DropdownItem>

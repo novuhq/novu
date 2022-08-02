@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
@@ -21,17 +21,17 @@ export class SendMessage {
 
   public async execute(command: SendMessageCommand) {
     switch (command.step.template.type) {
-      case ChannelTypeEnum.SMS:
+      case StepTypeEnum.SMS:
         return await this.sendMessageSms.execute(command);
-      case ChannelTypeEnum.IN_APP:
+      case StepTypeEnum.IN_APP:
         return await this.sendMessageInApp.execute(command);
-      case ChannelTypeEnum.EMAIL:
+      case StepTypeEnum.EMAIL:
         return await this.sendMessageEmail.execute(command);
-      case ChannelTypeEnum.DIRECT:
+      case StepTypeEnum.DIRECT:
         return await this.sendMessageDirect.execute(command);
-      case ChannelTypeEnum.PUSH:
+      case StepTypeEnum.PUSH:
         return await this.sendMessagePush.execute(command);
-      case ChannelTypeEnum.DIGEST:
+      case StepTypeEnum.DIGEST:
         return await this.digest.execute(command);
     }
   }

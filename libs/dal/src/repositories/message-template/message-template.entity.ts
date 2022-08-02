@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IMessageCTA } from '@novu/shared';
+import { StepTypeEnum, IMessageCTA } from '@novu/shared';
 
 export class MessageTemplateEntity {
   _id?: string;
@@ -9,7 +9,7 @@ export class MessageTemplateEntity {
 
   _creatorId: string;
 
-  type: ChannelTypeEnum;
+  type: StepTypeEnum;
 
   content: string | IEmailBlock[];
 

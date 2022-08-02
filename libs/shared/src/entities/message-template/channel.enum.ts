@@ -4,6 +4,14 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   DIRECT = 'direct',
   PUSH = 'push',
+}
+
+export enum StepTypeEnum {
+  IN_APP = 'in_app',
+  EMAIL = 'email',
+  SMS = 'sms',
+  DIRECT = 'direct',
+  PUSH = 'push',
   DIGEST = 'digest',
   TRIGGER = 'trigger',
 }
