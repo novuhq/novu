@@ -59,6 +59,7 @@ export class EventsController {
         identifier: body.name,
         payload: body.payload,
         transactionId,
+        overrides: body.overrides || {},
       })
     );
   }

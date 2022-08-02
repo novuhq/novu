@@ -11,4 +11,8 @@ export class TriggerEventToAllDto {
   @IsString()
   @IsOptional()
   transactionId: string;
+
+  @IsObject()
+  @IsOptional()
+  overrides: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
