@@ -8,7 +8,7 @@ import { ChangesTable } from '../../components/changes/ChangesTableLayout';
 import { useMutation, useQueryClient } from 'react-query';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
-import { showCheckOrError } from '../../components/utils/Notifications';
+import { successMessage } from '../../components/utils/Notifications';
 
 export function PromoteChangesPage() {
   const { changes = [], isLoadingChanges, history, isLoadingHistory } = useEnvironmentChanges();
@@ -18,7 +18,7 @@ export function PromoteChangesPage() {
       queryClient.refetchQueries([QueryKeys.currentUnpromotedChanges]);
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
       queryClient.refetchQueries([QueryKeys.changesCount]);
-      showCheckOrError('error', 'All changes were promoted');
+      successMessage('error', 'All changes were promoted');
     },
   });
 
