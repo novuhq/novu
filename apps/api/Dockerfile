@@ -1,16 +1,19 @@
 ARG PNPM_VERSION=7.3.0
 
 FROM nikolaik/python-nodejs:python3.10-nodejs16-slim as dev_base
-WORKDIR /usr/src/app
-
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@${PNPM_VERSION}
+
+WORKDIR /usr/src/app
 
 # ------- DEV BUILD ----------
 FROM dev_base AS dev
 ARG PACKAGE_PATH
 
 COPY ./meta .
+COPY ./deps .
+COPY ./pkg .
+
 RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
  pnpm install --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
@@ -21,8 +24,6 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
  # (in node_modules/.pnpm), and that causes pnpm to fall back on copying the files.
  # And that's fine!, except pnpm emits many warnings of this, so here we filter those out.
 
-COPY ./deps .
-COPY ./pkg .
 
 RUN NODE_ENV=production pnpm build:api
 
@@ -49,7 +50,12 @@ ARG PACKAGE_PATH
 
 ENV CI=true
 
+WORKDIR /usr/src/app
+
 COPY ./meta .
+
+# Get the build artifacts that only include dist folders
+COPY --from=assets /usr/src/app .
 
 RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
  pnpm install --filter "{${PACKAGE_PATH}}..."\
@@ -58,9 +64,5 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
      --prod\
  | grep -v "cross-device link not permitted\|Falling back to copying packages from store"
 
-# Get the build artifacts that only include dist folders
-COPY --from=assets /usr/src/app /usr/src/app
-
 WORKDIR /usr/src/app/apps/api
-
 CMD [ "pm2-runtime", "dist/src/main.js" ]
