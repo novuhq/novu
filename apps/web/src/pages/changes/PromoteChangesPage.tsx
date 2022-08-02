@@ -18,7 +18,7 @@ export function PromoteChangesPage() {
       queryClient.refetchQueries([QueryKeys.currentUnpromotedChanges]);
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
       queryClient.refetchQueries([QueryKeys.changesCount]);
-      successMessage('error', 'All changes were promoted');
+      successMessage('All changes were promoted');
     },
   });
 

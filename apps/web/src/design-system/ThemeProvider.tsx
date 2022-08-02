@@ -64,7 +64,6 @@ export function ThemeProvider({ children }: { children: JSX.Element; dark?: Bool
               width: '22px',
               height: '22px',
               marginRight: '10px',
-              color: 'yellow !important',
             },
           }),
         }}
