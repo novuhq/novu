@@ -98,7 +98,7 @@ const corsOptionsDelegate = function (req, callback) {
     origin: false as boolean | string | string[],
     preflightContinue: false,
     allowedHeaders: ['Content-Type', 'Authorization', 'sentry-trace'],
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
   if (['dev', 'test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url)) {
