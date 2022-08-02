@@ -52,7 +52,7 @@ jobs:
         
       - name: Install root dependencies
         run: pnpm --filter novuhq install
-        
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
@@ -63,7 +63,7 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          cd apps/api && npm run docker:build
+          cd apps/api && DOCKER_BUILDKIT=1 npm run docker:build
           docker tag novu-api ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
           docker tag novu-api ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
