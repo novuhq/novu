@@ -22,3 +22,8 @@ export const USE_CASES = [
   BuildSubscriberPreferenceTemplate,
   //
 ];
+
+export const EXPORT_USE_CASES = [
+  BuildSubscriberPreferenceTemplate,
+  //
+];
