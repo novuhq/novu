@@ -49,6 +49,10 @@ jobs:
         with:
           version: 7.3.0
           run_install: false
+        
+      - name: Install root dependencies
+        run: pnpm --filter novuhq install
+        
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
