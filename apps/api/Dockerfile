@@ -1,12 +1,9 @@
 ARG PNPM_VERSION=7.3.0
 
-FROM node:16-buster-slim as prod_base
-RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@${PNPM_VERSION}
-
 FROM nikolaik/python-nodejs:python3.10-nodejs16-slim as dev_base
 WORKDIR /usr/src/app
 
+RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@${PNPM_VERSION}
 
 # ------- DEV BUILD ----------
@@ -47,7 +44,7 @@ WORKDIR /usr/src/app
 RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
-FROM prod_base AS prod
+FROM dev_base AS prod
 ARG PACKAGE_PATH
 
 ENV CI=true
