@@ -35,7 +35,7 @@ export class BuildSubscriberPreferenceTemplate {
       currSubscriberPreference = await this.subscriberPreferenceRepository.findOne({
         _environmentId: command.environmentId,
         _subscriberId: command.subscriberId,
-        _templatesId: command.template._id,
+        _templateId: command.template._id,
       });
     }
 
