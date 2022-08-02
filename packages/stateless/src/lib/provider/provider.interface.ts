@@ -51,6 +51,7 @@ export interface IDirectOptions {
 
 export interface ISendMessageSuccessResponse {
   id?: string;
+  ids?: string[];
   date?: string;
 }
 
