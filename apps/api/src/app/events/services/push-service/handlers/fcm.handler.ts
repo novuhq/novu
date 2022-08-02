@@ -10,8 +10,8 @@ export class FCMHandler extends BasePushHandler {
 
   buildProvider(credentials: ICredentials) {
     this.provider = new FcmPushProvider({
-      projectName: credentials.projectName,
-      user: credentials.user,
+      projectId: credentials.projectName,
+      email: credentials.user,
       secretKey: credentials.secretKey,
     });
   }

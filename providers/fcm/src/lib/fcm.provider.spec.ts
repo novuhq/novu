@@ -6,8 +6,8 @@ test('should trigger fcm correctly', async () => {
 
   const provider = new FcmPushProvider({
     secretKey: '--BEGIN PRIVATE KEY--abc',
-    projectName: 'test',
-    user: 'test@iam.firebase.google.com',
+    projectId: 'test',
+    email: 'test@iam.firebase.google.com',
   });
 
   const spy = jest
