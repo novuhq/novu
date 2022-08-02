@@ -33,7 +33,11 @@ const DraggableNode = ({ channel, setDragging, onDragStart }) => (
     }}
     draggable
   >
-    <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
+    <DragButton
+      Icon={channel.Icon}
+      description={channel.type === NodeTypeEnum.ACTION ? channel.description : ''}
+      label={channel.label}
+    />
   </div>
 );
 
@@ -207,13 +211,13 @@ const WorkflowEditorPage = ({
               <StyledNav data-test-id="drag-side-menu">
                 <NavSection>
                   <Title size={2}>Steps to add</Title>
-                  <Text color={colors.B60} mt={10}>
-                    <When truthy={!readonly}>You can drag and drop new steps to the flow</When>
+                  <Text color={colors.B60} mt={5}>
+                    <When truthy={!readonly}>Drag and drop new steps to the canvas</When>
                     <When truthy={readonly}>You can not drag and drop new steps in Production</When>
                   </Text>
                 </NavSection>
                 <When truthy={!readonly}>
-                  <Stack>
+                  <Stack spacing={18}>
                     {channels
                       .filter((channel) => channel.type === NodeTypeEnum.CHANNEL)
                       .map((channel, index) => (
@@ -228,17 +232,17 @@ const WorkflowEditorPage = ({
                 </When>
                 <NavSection
                   style={{
-                    marginTop: '30px',
+                    marginTop: '15px',
                   }}
                 >
                   <Title size={2}>Actions</Title>
-                  <Text color={colors.B60} mt={10}>
+                  <Text color={colors.B60} mt={5}>
                     <When truthy={!readonly}>Add actions to the flow</When>
                     <When truthy={readonly}>You can not drag and drop new actions in Production</When>
                   </Text>
                 </NavSection>
                 <When truthy={!readonly}>
-                  <Stack>
+                  <Stack spacing={18}>
                     {channels
                       .filter((channel) => channel.type === NodeTypeEnum.ACTION)
                       .map((channel, index) => (
