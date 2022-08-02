@@ -11,12 +11,13 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, PushProviderIdEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { PushFactory } from '../../services/push-service/push.factory';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
+import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
+import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 
 @Injectable()
 export class SendMessagePush extends SendMessageType {
@@ -27,7 +28,8 @@ export class SendMessagePush extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    private integrationRepository: IntegrationRepository
+    private integrationRepository: IntegrationRepository,
+    private compileTemplate: CompileTemplate
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -47,10 +49,38 @@ export class SendMessagePush extends SendMessageType {
       _environmentId: command.environmentId,
       _id: command.subscriberId,
     });
-    const contentService = new ContentService();
-    const messageVariables = contentService.buildMessageVariables(command.payload, subscriber);
-    const content = contentService.replaceVariables(pushChannel.template.content as string, messageVariables);
-    const title = contentService.replaceVariables(pushChannel.template.title as string, messageVariables);
+
+    const content = await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        customTemplate: pushChannel.template.content as string,
+        data: {
+          subscriber,
+          step: {
+            digest: !!command.events.length,
+            events: command.events,
+            total_count: command.events.length,
+          },
+          ...command.payload,
+        },
+      })
+    );
+
+    const title = await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        templateId: 'custom',
+        customTemplate: pushChannel.template.title as string,
+        data: {
+          subscriber,
+          step: {
+            digest: !!command.events.length,
+            events: command.events,
+            total_count: command.events.length,
+          },
+          ...command.payload,
+        },
+      })
+    );
     const overrides = command.overrides[integration.providerId] || {};
     const pushChannels = subscriber.channels.filter((chan) =>
       Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
