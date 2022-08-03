@@ -9,7 +9,7 @@ import {
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { LogCodeEnum, LogStatusEnum, IPreferenceChannels } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -164,14 +164,23 @@ export class ProcessSubscriber {
     });
 
     const preference = (await this.buildSubscriberPreferenceTemplateUsecase.execute(buildCommand)).preference;
-    const channels = preference.channels;
 
-    return template.steps.filter((step) => preference.enabled && this.stepPreferred(channels, step));
+    return template.steps.filter((step) => this.actionStep(step) || this.stepPreferred(preference, step));
   }
 
-  private stepPreferred(channels, step) {
-    return (
-      Object.keys(channels).some((channelKey) => channelKey === step.template.type) && channels[step.template.type]
+  private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, step: NotificationStepEntity) {
+    const templatePreferred = preference.enabled;
+
+    const channelPreferred = Object.keys(preference.channels).some(
+      (channelKey) => channelKey === step.template.type && preference.channels[step.template.type]
     );
+
+    return templatePreferred && channelPreferred;
+  }
+
+  private actionStep(step) {
+    const channels = ['in_app', 'email', 'sms', 'push', 'direct'];
+
+    return !channels.some((channel) => channel === step.template.type);
   }
 }
