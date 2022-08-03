@@ -142,28 +142,22 @@ describe('Notifications Creator', function () {
       cy.getByTestId('trigger-snippet-btn').click();
 
       // trigger the notification
-      cy.eventsTrigger(
-        {
-          name: 'test-notification-title',
-          to: {
-            subscriberId: this.session.user.id,
-            email: this.session.user.email,
-          },
-          payload: {},
-        },
-        this.session.environment.apiKeys[0].key
-      ).then(() => {
-        // click on the notifications bell
-        cy.getByTestId('notification-bell').click();
-        // check the notification
-        cy.getByTestId('notifications-scroll-area')
-          .getByTestId('notification-content')
-          .first()
-          .then(($el) => {
-            expect($el[0].innerText).to.contain('\n');
-            expect($el[0].innerText).to.contain('Please check it.');
-          });
+      cy.task('createNotifications', {
+        identifier: 'test-notification-title',
+        token: this.session.token,
+        subscriberId: this.session.user.id,
       });
+
+      // click on the notifications bell
+      cy.getByTestId('notification-bell').click();
+      // check the notification
+      cy.getByTestId('notifications-scroll-area')
+        .getByTestId('notification-content')
+        .first()
+        .then(($el) => {
+          expect($el[0].innerText).to.contain('\n');
+          expect($el[0].innerText).to.contain('Please check it.');
+        });
     });
     it('should create email notification', function () {
       waitLoadTemplatePage(() => {
