@@ -9,10 +9,14 @@ export class FCMHandler extends BasePushHandler {
   }
 
   buildProvider(credentials: ICredentials) {
+    if (!credentials.user) {
+      throw Error('Config is not valid for fcm');
+    }
+    const config = JSON.parse(credentials.user);
     this.provider = new FcmPushProvider({
-      projectId: credentials.projectName,
-      email: credentials.user,
-      secretKey: credentials.secretKey,
+      projectId: config.project_id,
+      email: config.client_email,
+      secretKey: config.private_key,
     });
   }
 }

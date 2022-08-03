@@ -328,22 +328,10 @@ export const slackConfig: IConfigCredentials[] = [
 
 export const fcmConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.ProjectName,
-    displayName: 'Service Account Project Name',
-    type: 'string',
-    required: false,
-  },
-  {
     key: CredentialsKeyEnum.User,
-    displayName: 'Service Account Client Email',
-    type: 'string',
-    required: false,
-  },
-  {
-    key: CredentialsKeyEnum.SecretKey,
-    displayName: 'Service Account Private Key',
-    type: 'string',
-    required: false,
+    displayName: 'Service Account',
+    type: 'text',
+    required: true,
   },
   ...pushConfigBase,
 ];

@@ -25,16 +25,6 @@ Device/notification identifiers can be set by using [Subscriber Credentials](/pl
     payload: {
       abc: 'def',
     },
-    overrides: {
-      fcm: {
-        notificationIdentifiers: ['abcda...'], // Override subscriberId notification/device identifiers 
-        badge: 1, // iOS: The value of the badge on the home screen app icon, if 0 then the badge is removed.
-        clickAction: 'clickity', // Android: Action associated with a user click on the notification.
-        color: '#ff00ff', // Android: Hex color of the notification
-        icon: 'myicon', // Android: Drawable resource id of icon, Web: URL to icon
-        sound: 'custom_sound', // Android: name of custom notification sound
-      },
-    }
   })
   ```
 

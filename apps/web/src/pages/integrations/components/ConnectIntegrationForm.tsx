@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, ICredentialsDto, CredentialsKeyEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
 import { useMutation } from 'react-query';
 import { showNotification } from '@mantine/notifications';
 import { Image, useMantineColorScheme } from '@mantine/core';
-import { Button, colors, Input, PasswordInput, Switch, Text } from '../../../design-system';
+import { Button, colors, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
+import { IntegrationInput } from './IntegrationInput';
 
 export function ConnectIntegrationForm({
   provider,
@@ -108,40 +109,14 @@ export function ConnectIntegrationForm({
             here.
           </a>
         </InlineDiv>
-        {provider?.credentials.map((credential) => (
+        {provider?.credentials.map((credential: IConfigCredentials) => (
           <InputWrapper key={credential.key}>
             <Controller
               name={credential.key}
               control={control}
-              render={({ field }) =>
-                isNeededToHide(credential.key) ? (
-                  <PasswordInput
-                    label={credential.displayName}
-                    required={credential.required}
-                    placeholder={credential.displayName}
-                    description={credential.description ?? ''}
-                    data-test-id={credential.key}
-                    error={errors[credential.key]?.message}
-                    {...field}
-                    {...register(credential.key, {
-                      required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
-                    })}
-                  />
-                ) : (
-                  <Input
-                    label={credential.displayName}
-                    required={credential.required}
-                    placeholder={credential.displayName}
-                    description={credential.description ?? ''}
-                    data-test-id={credential.key}
-                    error={errors[credential.key]?.message}
-                    {...field}
-                    {...register(credential.key, {
-                      required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
-                    })}
-                  />
-                )
-              }
+              render={({ field }) => (
+                <IntegrationInput credential={credential} errors={errors} field={field} register={register} />
+              )}
             />
           </InputWrapper>
         ))}
@@ -163,18 +138,6 @@ export function ConnectIntegrationForm({
       </ColumnDiv>
     </Form>
   );
-}
-
-function isNeededToHide(keyString: CredentialsKeyEnum): boolean {
-  const hideParams: CredentialsKeyEnum[] = [
-    CredentialsKeyEnum.ApiKey,
-    CredentialsKeyEnum.SecretKey,
-    CredentialsKeyEnum.Token,
-    CredentialsKeyEnum.Secure,
-    CredentialsKeyEnum.Password,
-  ];
-
-  return hideParams.some((param) => param === keyString);
 }
 
 const StyledText = styled(Text)`

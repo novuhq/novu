@@ -70,11 +70,6 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
       logo: 'https://evilcorp.com/logo.png',
     },
   },
-  overrides: {
-    fcm: {
-      color: '#ffffff',
-    },
-  },
 });
 ```
 
