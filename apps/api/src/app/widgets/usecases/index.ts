@@ -7,6 +7,7 @@ import { GetWidgetSettings } from './get-widget-settings/get-widget-settings.use
 import { UpdateMessageActions } from './mark-action-as-done/update-message-actions.usecause';
 import { GetSubscriberPreference } from './get-subscriber-preference/get-subscriber-preference.usecase';
 import { UpdateSubscriberPreference } from './update-subscriber-preference/update-subscriber-preference.usecase';
+import { BuildSubscriberPreferenceTemplate } from './build-subscriber-preference-template';
 
 export const USE_CASES = [
   GetOrganizationData,
@@ -18,5 +19,6 @@ export const USE_CASES = [
   GetWidgetSettings,
   GetSubscriberPreference,
   UpdateSubscriberPreference,
+  BuildSubscriberPreferenceTemplate,
   //
 ];
