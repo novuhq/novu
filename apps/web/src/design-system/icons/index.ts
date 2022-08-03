@@ -46,5 +46,6 @@ export { SmsGradient } from './gradient/SmsGradient';
 export { TapeGradient } from './gradient/TapeGradient';
 export { BoltGradient } from './gradient/BoltGradient';
 export { ConnectGradient } from './gradient/ConnectGradient';
+export { DirectGradient } from './gradient/DirectGradient';
 
 export { Github } from './social/Github';

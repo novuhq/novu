@@ -1,4 +1,4 @@
-import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
+import { BellGradient, DirectGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { DigestGradient } from '../../../design-system/icons/general/DigestGradient';
 
@@ -12,7 +12,7 @@ export const channels = [
     tabKey: ChannelTypeEnum.IN_APP,
     label: 'In-App',
     description: 'Send notifications to the in-app notification center',
-    Icon: MobileGradient,
+    Icon: BellGradient,
     testId: 'inAppSelector',
     channelType: StepTypeEnum.IN_APP,
     type: NodeTypeEnum.CHANNEL,
@@ -48,7 +48,7 @@ export const channels = [
     tabKey: ChannelTypeEnum.DIRECT,
     label: 'Direct',
     description: 'Send a direct message',
-    Icon: SmsGradient,
+    Icon: DirectGradient,
     testId: 'directSelector',
     channelType: StepTypeEnum.DIRECT,
     type: NodeTypeEnum.CHANNEL,
