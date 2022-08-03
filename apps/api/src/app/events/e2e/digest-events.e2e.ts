@@ -818,4 +818,97 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     expect(jobCount).to.equal(10);
   });
+
+  it('should add a digest prop to direct template compilation', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: StepTypeEnum.DIRECT,
+          content: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+    });
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: StepTypeEnum.DIGEST,
+    });
+
+    await awaitRunningJobs(2);
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.DIRECT,
+    });
+
+    expect(message[0].content).to.include('HAS_DIGEST_PROP');
+  });
+
+  it('should add a digest prop to push template compilation', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: StepTypeEnum.PUSH,
+          title: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}',
+          content: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+    });
+
+    await triggerEvent({
+      customVar: 'digest',
+    });
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: StepTypeEnum.DIGEST,
+    });
+
+    await awaitRunningJobs(2);
+    await workflowQueueService.work(delayedJob);
+
+    await awaitRunningJobs(0);
+
+    const message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.PUSH,
+    });
+
+    expect(message[0].content).to.include('HAS_DIGEST_PROP');
+  });
 });

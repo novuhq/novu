@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { SubscriberRepository } from '@novu/dal';
-import { DirectProviderIdEnum } from '@novu/shared';
+import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class SubscribersService {
   private subscriberRepository = new SubscriberRepository();
@@ -21,6 +21,11 @@ export class SubscribersService {
           _integrationId: 'integrationId_slack',
           providerId: DirectProviderIdEnum.Slack,
           credentials: { webhookUrl: 'webhookUrl' },
+        },
+        {
+          _integrationId: 'integrationId_fcm',
+          providerId: PushProviderIdEnum.FCM,
+          credentials: { notificationIdentifiers: ['identifier'] },
         },
       ],
     });

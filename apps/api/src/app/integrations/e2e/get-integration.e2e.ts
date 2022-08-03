@@ -13,7 +13,7 @@ describe('Get Integrations - /integrations (GET)', function () {
   it('should get newly created integration', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    expect(integrations.length).to.equal(4);
+    expect(integrations.length).to.equal(5);
 
     const integration = integrations.find((integrationItem) => integrationItem.channel === 'email');
 

@@ -47,5 +47,16 @@ export class IntegrationService {
     };
 
     await this.integrationRepository.create(directDiscordPayload);
+
+    const pushFcmPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'fcm',
+      channel: ChannelTypeEnum.PUSH,
+      credentials: { applicationId: 'secret_123', notificationIdentifiers: ['test'] },
+      active: true,
+    };
+
+    await this.integrationRepository.create(pushFcmPayload);
   }
 }
