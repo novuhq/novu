@@ -17,6 +17,15 @@ Cypress.Commands.add('seed', () => {
   return cy.request('POST', `${Cypress.env('apiUrl')}/v1/testing/seed`, {});
 });
 
+Cypress.Commands.add('eventsTrigger', (body: Cypress.RequestBody, apiKey: string) => {
+  return cy.request({
+    method: 'POST',
+    url: `${Cypress.env('apiUrl')}/v1/events/trigger`,
+    body,
+    headers: { 'Content-Type': 'application/json', Authorization: `ApiKey ${apiKey}` },
+  });
+});
+
 Cypress.Commands.add(
   'initializeSession',
   (settings: { disableLocalStorage?: boolean } = { disableLocalStorage: false }) => {

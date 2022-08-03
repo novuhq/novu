@@ -16,6 +16,8 @@ declare namespace Cypress {
 
     seed(): Chainable<any>;
 
+    eventsTrigger(body: Cypress.RequestBody, apiKey: string): Chainable<any>;
+
     clear(): Chainable<any>;
     /**
      * Logs-in user by using UI
