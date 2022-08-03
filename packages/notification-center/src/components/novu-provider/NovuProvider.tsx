@@ -11,7 +11,7 @@ import { ApiService } from '../../api/api.service';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
 import { NovuI18NProvider } from '../../store/i18n.context';
-import { I18NLanguage, ITranslationEntry } from '../../lang';
+import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
 
 interface INovuProviderProps {
   stores?: IStore[];
