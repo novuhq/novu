@@ -1,17 +1,17 @@
 /* eslint-disable max-len */
-import { I18NContext } from '../../../../../store/i18n.context';
 import React, { useContext } from 'react';
 import styled from 'styled-components';
 import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
 import { INovuTheme } from '../../../../../store/novu-theme.context';
+import { useTranslations } from '../../../../../hooks/use-translations';
 
 export function Footer() {
   const { theme } = useNovuThemeProvider();
-  const { translations } = useContext(I18NContext);
+  const { t } = useTranslations();
 
   return (
     <FooterWrapper>
-      <Text theme={theme}>{translations.poweredBy} </Text>
+      <Text theme={theme}>{t('poweredBy')} </Text>
       <a
         rel="noreferrer"
         target="_blank"
