@@ -1,8 +1,9 @@
 # Slack
 
 On some channels as the Direct one, the user will need to add his provider integration credentials in order to provide Novu the right authorization to send the notification by his behave.
+<!-- @djabarovgeorge did you mean `on their behalf` ? sorry, not sure I understand.-->
 
-We will provide the basic flow that the user need to perform in order to successfully send notification via direct channel.
+We will provide the basic flow that the user needs to perform in order to successfully send notifications via the Direct channel.
 
 1. Go to slack API client <https://api.slack.com/apps>
 2. Create new application.
@@ -29,8 +30,8 @@ where you will send a POST request to URL `https://slack.com/api/oauth.v2.access
 
 - subscriberId is a custom identifier used when identifying your users within the Novu platform.
 - providerId is a unique provider identifier, we recommend using our DirectProviderIdEnum in our case its Slack.
-- credentials are the argument you need to be authentication with your provider workspace. At this point, we support direct messages through webhook, so a webhookUrl is needed to be provided.
+- credentials are the argument you need to be authentication with your provider workspace. At this point, we support direct messages through webhook, so a webhookUrl is needed.
 
 <!-- markdownlint-disable MD029 -->
-10. You all set up and ready to send your first direct message via our `@novu/node` package novu.trigger or the API.
+10. You are all set up and ready to send your first direct message via our `@novu/node` package novu.trigger or the API!
 <!-- markdownlint-enable MD029 -->
