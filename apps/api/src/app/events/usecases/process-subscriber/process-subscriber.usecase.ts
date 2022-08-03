@@ -9,7 +9,7 @@ import {
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { LogCodeEnum, LogStatusEnum, IPreferenceChannels } from '@novu/shared';
+import { LogCodeEnum, LogStatusEnum, IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -179,7 +179,7 @@ export class ProcessSubscriber {
   }
 
   private actionStep(step) {
-    const channels = ['in_app', 'email', 'sms', 'push', 'direct'];
+    const channels = [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS, 'push', 'direct'];
 
     return !channels.some((channel) => channel === step.template.type);
   }
