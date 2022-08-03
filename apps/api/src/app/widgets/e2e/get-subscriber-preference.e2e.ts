@@ -22,10 +22,7 @@ describe('GET /widget/notifications/feed', function () {
     const data = response.data.data[0];
 
     expect(data.preference.channels.email).to.equal(true);
-    expect(data.preference.channels.sms).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(true);
-    expect(data.preference.channels.direct).to.equal(true);
-    expect(data.preference.channels.push).to.equal(true);
   });
 });
 

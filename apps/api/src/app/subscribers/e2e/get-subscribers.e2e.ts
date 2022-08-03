@@ -35,9 +35,9 @@ describe('Get Subscribers - /subscribers (GET)', function () {
       },
     });
 
-    const { data: body } = response;
-    expect(body.data.length).to.equal(2);
-    const subscriber = filterOutInitialSessionUsers(body)[0];
+    const filteredData = filterOutInitialSessionUsers(response.data);
+    expect(filteredData.length).to.equal(1);
+    const subscriber = filteredData[0];
     expect(subscriber.subscriberId).to.equal('123');
   });
 });

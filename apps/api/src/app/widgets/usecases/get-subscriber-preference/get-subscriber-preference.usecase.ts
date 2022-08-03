@@ -1,63 +1,73 @@
 import { Injectable } from '@nestjs/common';
-import { SubscriberPreferenceRepository, NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
+import { MessageTemplateRepository, NotificationTemplateRepository, SubscriberPreferenceRepository } from '@novu/dal';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
+import { IPreferenceChannels } from '@novu/shared';
+import {
+  BuildSubscriberPreferenceTemplateCommand,
+  BuildSubscriberPreferenceTemplate,
+} from '../build-subscriber-preference-template';
 
 @Injectable()
 export class GetSubscriberPreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private messageTemplateRepository: MessageTemplateRepository,
+    private buildSubscriberPreferenceTemplateUsecase: BuildSubscriberPreferenceTemplate
   ) {}
 
-  async execute(command: GetSubscriberPreferenceCommand): Promise<any> {
+  async execute(command: GetSubscriberPreferenceCommand): Promise<IGetSubscriberPreferenceResponse[]> {
     const templateList = await this.notificationTemplateRepository.getActiveList(
       command.organizationId,
       command.environmentId,
       true
     );
 
-    const templatesIds = templateList.map((template) => template._id);
+    const subscriberPreferences = await this.querySubscriberPreference(
+      templateList.map((temp) => temp._id),
+      command
+    );
 
-    const subscriberPreferences = await this.subscriberPreferenceRepository.findSubscriberPreferences(
+    const result: IGetSubscriberPreferenceResponse[] = [];
+
+    for (const template of templateList) {
+      {
+        const buildCommand = BuildSubscriberPreferenceTemplateCommand.create({
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          environmentId: command.environmentId,
+          subscriberPreferences,
+          template,
+        });
+
+        const templateSubscriberPreference = await this.buildSubscriberPreferenceTemplateUsecase.execute(buildCommand);
+
+        result.push(templateSubscriberPreference);
+      }
+    }
+
+    return result;
+  }
+
+  private async querySubscriberPreference(templatesIds: string[], command: GetSubscriberPreferenceCommand) {
+    return await this.subscriberPreferenceRepository.findSubscriberPreferences(
       command.environmentId,
       command.subscriberId,
       templatesIds
     );
-
-    const preferences = templateList.map((template) => {
-      const currSubscriberPreference = subscriberPreferences.find(
-        (preference) => preference._templateId === template._id
-      );
-
-      if (currSubscriberPreference) {
-        return { template: template, preference: currSubscriberPreference };
-      }
-
-      /*
-       * check template default fallback
-       * add here the template(or fallback) is critical as well
-       */
-
-      return getNoSettingFallback(template);
-    });
-
-    /*
-     * check what param the client need
-     * and create response interface
-     * remove useless params on repo query
-     */
-
-    return preferences;
   }
 }
 
-function getNoSettingFallback(template: NotificationTemplateEntity) {
-  // add here the template(or fallback) is critical as well
-  return {
-    template: template,
-    preference: {
-      enabled: true,
-      channels: { email: true, sms: true, in_app: true, direct: true, push: true },
-    },
+export interface IGetSubscriberPreferenceResponse {
+  template: IGetSubscriberPreferenceTemplateResponse;
+  preference: {
+    enabled: boolean;
+    channels: IPreferenceChannels;
   };
+}
+
+export interface IGetSubscriberPreferenceTemplateResponse {
+  _id: string;
+  name: string;
+  critical: boolean;
 }
