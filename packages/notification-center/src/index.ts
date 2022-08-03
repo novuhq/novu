@@ -5,6 +5,8 @@ import {
   IOrganizationEntity,
   ISubscriberJwt,
   MessageActionStatusEnum,
+  INotificationTemplate,
+  IPreferenceChannels,
 } from '@novu/shared';
 
 export { IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
@@ -94,4 +96,9 @@ export interface ITab {
 export interface IStoreQuery {
   feedIdentifier?: string | string[];
   seen?: boolean;
+}
+
+export interface IUserPreferenceSettings {
+  template: INotificationTemplate;
+  preference: { enabled: boolean; channels: IPreferenceChannels };
 }
