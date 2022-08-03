@@ -22,6 +22,8 @@ export { CheckCircleOutlined } from './general/CheckCircleOutlined';
 export { Repeat } from './general/Repeat';
 export { Sms } from './general/Sms';
 export { Mobile } from './general/Mobile';
+export { Direct } from './general/Direct';
+export { InApp } from './general/InApp';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
