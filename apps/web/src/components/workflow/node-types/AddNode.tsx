@@ -44,14 +44,14 @@ export default memo(({ data }: { data: NodeData }) => {
           </ActionIcon>
         }
       >
-        <DropdownItem data-test-id={`add-sms-node`} icon={<Sms />} onClick={() => addNewNode(StepTypeEnum.SMS)}>
-          SMS
+        <DropdownItem data-test-id={`add-in-app-node`} icon={<InApp />} onClick={() => addNewNode(StepTypeEnum.IN_APP)}>
+          In-App
         </DropdownItem>
         <DropdownItem data-test-id={`add-email-node`} icon={<Mail />} onClick={() => addNewNode(StepTypeEnum.EMAIL)}>
           Email
         </DropdownItem>
-        <DropdownItem data-test-id={`add-push-node`} icon={<Mobile />} onClick={() => addNewNode(StepTypeEnum.PUSH)}>
-          Push
+        <DropdownItem data-test-id={`add-sms-node`} icon={<Sms />} onClick={() => addNewNode(StepTypeEnum.SMS)}>
+          SMS
         </DropdownItem>
         <DropdownItem
           data-test-id={`add-direct-node`}
@@ -60,8 +60,8 @@ export default memo(({ data }: { data: NodeData }) => {
         >
           Direct
         </DropdownItem>
-        <DropdownItem data-test-id={`add-in-app-node`} icon={<InApp />} onClick={() => addNewNode(StepTypeEnum.IN_APP)}>
-          In-App
+        <DropdownItem data-test-id={`add-push-node`} icon={<Mobile />} onClick={() => addNewNode(StepTypeEnum.PUSH)}>
+          Push
         </DropdownItem>
         <DropdownItem
           data-test-id={`add-digest-node`}
