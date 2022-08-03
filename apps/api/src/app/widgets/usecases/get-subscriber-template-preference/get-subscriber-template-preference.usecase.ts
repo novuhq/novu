@@ -4,40 +4,31 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   SubscriberPreferenceRepository,
-  SubscriberPreferenceEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IPreferenceChannels } from '@novu/shared';
-import { BuildSubscriberPreferenceTemplateCommand } from './build-subscriber-preference-template.command';
 import {
   IGetSubscriberPreferenceResponse,
   IGetSubscriberPreferenceTemplateResponse,
 } from '../get-subscriber-preference/get-subscriber-preference.usecase';
+import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 @Injectable()
-export class BuildSubscriberPreferenceTemplate {
+export class GetSubscriberTemplatePreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository
   ) {}
 
-  async execute(command: BuildSubscriberPreferenceTemplateCommand): Promise<IGetSubscriberPreferenceResponse> {
+  async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<IGetSubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
 
-    let currSubscriberPreference: SubscriberPreferenceEntity;
-
-    if (command?.subscriberPreferences) {
-      currSubscriberPreference = command?.subscriberPreferences.find(
-        (preference) => preference._templateId === command.template._id
-      );
-    } else {
-      currSubscriberPreference = await this.subscriberPreferenceRepository.findOne({
-        _environmentId: command.environmentId,
-        _subscriberId: command.subscriberId,
-        _templateId: command.template._id,
-      });
-    }
+    const currSubscriberPreference = await this.subscriberPreferenceRepository.findOne({
+      _environmentId: command.environmentId,
+      _subscriberId: command.subscriberId,
+      _templateId: command.template._id,
+    });
 
     const responseTemplate = mapResponseTemplate(command.template);
 
@@ -54,7 +45,7 @@ export class BuildSubscriberPreferenceTemplate {
     return getNoSettingFallback(responseTemplate, activeChannels);
   }
 
-  private async queryActiveChannels(command: BuildSubscriberPreferenceTemplateCommand): Promise<ChannelTypeEnum[]> {
+  private async queryActiveChannels(command: GetSubscriberTemplatePreferenceCommand): Promise<ChannelTypeEnum[]> {
     const messageIds = command.template.steps.filter((step) => step.active === true).map((step) => step._templateId);
 
     const messageTemplates = await this.messageTemplateRepository.find({

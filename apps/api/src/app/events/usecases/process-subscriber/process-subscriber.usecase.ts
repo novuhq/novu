@@ -18,9 +18,9 @@ import { ISubscribersDefine } from '@novu/node';
 import { FilterSteps } from '../filter-steps/filter-steps.usecase';
 import { FilterStepsCommand } from '../filter-steps/filter-steps.command';
 import {
-  BuildSubscriberPreferenceTemplate,
-  BuildSubscriberPreferenceTemplateCommand,
-} from '../../../widgets/usecases/build-subscriber-preference-template';
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+} from '../../../widgets/usecases/get-subscriber-template-preference';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -31,7 +31,7 @@ export class ProcessSubscriber {
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private filterSteps: FilterSteps,
-    private buildSubscriberPreferenceTemplateUsecase: BuildSubscriberPreferenceTemplate
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
@@ -156,14 +156,14 @@ export class ProcessSubscriber {
     subscriberId: string,
     template: NotificationTemplateEntity
   ): Promise<NotificationStepEntity[]> {
-    const buildCommand = BuildSubscriberPreferenceTemplateCommand.create({
+    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: organizationId,
       subscriberId: subscriberId,
       environmentId: environmentId,
       template,
     });
 
-    const preference = (await this.buildSubscriberPreferenceTemplateUsecase.execute(buildCommand)).preference;
+    const preference = (await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand)).preference;
 
     return template.steps.filter((step) => this.actionStep(step) || this.stepPreferred(preference, step));
   }
