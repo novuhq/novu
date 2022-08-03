@@ -3,9 +3,9 @@ import { MessageTemplateRepository, NotificationTemplateRepository, SubscriberPr
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import { IPreferenceChannels } from '@novu/shared';
 import {
-  BuildSubscriberPreferenceTemplateCommand,
-  BuildSubscriberPreferenceTemplate,
-} from '../build-subscriber-preference-template';
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+} from '../get-subscriber-template-preference';
 
 @Injectable()
 export class GetSubscriberPreference {
@@ -13,7 +13,7 @@ export class GetSubscriberPreference {
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
-    private buildSubscriberPreferenceTemplateUsecase: BuildSubscriberPreferenceTemplate
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
   ) {}
 
   async execute(command: GetSubscriberPreferenceCommand): Promise<IGetSubscriberPreferenceResponse[]> {
@@ -23,38 +23,24 @@ export class GetSubscriberPreference {
       true
     );
 
-    const subscriberPreferences = await this.querySubscriberPreference(
-      templateList.map((temp) => temp._id),
-      command
-    );
-
     const result: IGetSubscriberPreferenceResponse[] = [];
 
     for (const template of templateList) {
       {
-        const buildCommand = BuildSubscriberPreferenceTemplateCommand.create({
+        const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           environmentId: command.environmentId,
-          subscriberPreferences,
           template,
         });
 
-        const templateSubscriberPreference = await this.buildSubscriberPreferenceTemplateUsecase.execute(buildCommand);
+        const templateSubscriberPreference = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
 
         result.push(templateSubscriberPreference);
       }
     }
 
     return result;
-  }
-
-  private async querySubscriberPreference(templatesIds: string[], command: GetSubscriberPreferenceCommand) {
-    return await this.subscriberPreferenceRepository.findSubscriberPreferences(
-      command.environmentId,
-      command.subscriberId,
-      templatesIds
-    );
   }
 }
 

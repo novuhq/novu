@@ -2,7 +2,7 @@ import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/stateless';
+import { ChannelTypeEnum } from '@novu/shared';
 import { UpdateSubscriberPreferenceBodyDto } from '../dtos/user-preference.dto';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
@@ -95,7 +95,7 @@ describe('GET /widget/subscriber-preference', function () {
   );
 });
 
-async function updateSubscriberPreference(
+export async function updateSubscriberPreference(
   data: UpdateSubscriberPreferenceBodyDto,
   subscriberToken: string,
   templateId: string
