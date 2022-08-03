@@ -61,7 +61,6 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
  pnpm install --filter "{${PACKAGE_PATH}}..."\
      --frozen-lockfile\
      --unsafe-perm\
-     --prod\
  | grep -v "cross-device link not permitted\|Falling back to copying packages from store"
 
 WORKDIR /usr/src/app/apps/api
