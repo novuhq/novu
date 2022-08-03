@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from './axios.client';
 import { API_ROOT } from '../config';
 
 export const api = {
