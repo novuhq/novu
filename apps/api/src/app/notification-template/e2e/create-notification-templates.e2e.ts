@@ -1,6 +1,12 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { ChannelCTATypeEnum, ChannelTypeEnum, INotificationTemplate, TriggerTypeEnum } from '@novu/shared';
+import {
+  ChannelCTATypeEnum,
+  ChannelTypeEnum,
+  StepTypeEnum,
+  INotificationTemplate,
+  TriggerTypeEnum,
+} from '@novu/shared';
 import * as moment from 'moment';
 import { CreateNotificationTemplateDto } from '../dto';
 import { ChangeRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
@@ -30,7 +36,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -120,7 +126,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
           template: {
             name: 'Message Name',
             content: 'Test Template',
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             cta: {
               type: ChannelCTATypeEnum.REDIRECT,
               data: {
@@ -161,7 +167,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
           template: {
             name: 'Message Name',
             content: 'Test Template {{name}} {{lastName}}',
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             cta: {
               type: ChannelCTATypeEnum.REDIRECT,
               data: {
@@ -222,7 +228,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
       steps: [
         {
           template: {
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             content: 'Test Template',
             cta: {
               type: ChannelCTATypeEnum.REDIRECT,
@@ -234,7 +240,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
         },
         {
           template: {
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             content: 'Test Template',
             cta: {
               type: ChannelCTATypeEnum.REDIRECT,

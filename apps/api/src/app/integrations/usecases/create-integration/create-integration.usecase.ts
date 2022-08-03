@@ -3,6 +3,7 @@ import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/da
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
+import { ChannelTypeEnum } from '@novu/shared';
 
 @Injectable()
 export class CreateIntegration {
@@ -24,7 +25,7 @@ export class CreateIntegration {
         active: command.active,
       });
 
-      if (command.active) {
+      if (command.active && command.channel !== ChannelTypeEnum.DIRECT) {
         await this.deactivateSimilarChannelIntegrations.execute({
           environmentId: command.environmentId,
           organizationId: command.organizationId,

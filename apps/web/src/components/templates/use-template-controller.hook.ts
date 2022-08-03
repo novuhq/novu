@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import {
-  ChannelTypeEnum,
   DigestUnitEnum,
   ICreateNotificationTemplateDto,
   IMessageTemplate,
   INotificationTemplate,
   IUpdateNotificationTemplate,
+  StepTypeEnum,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
@@ -82,7 +82,7 @@ export function useTemplateController(templateId: string) {
       };
 
       formValues.steps = (template.steps as StepEntity[]).map((item) => {
-        if (item.template.type === ChannelTypeEnum.EMAIL && item.template?.contentType === 'customHtml') {
+        if (item.template.type === StepTypeEnum.EMAIL && item.template?.contentType === 'customHtml') {
           return {
             ...item,
             template: {
@@ -92,7 +92,7 @@ export function useTemplateController(templateId: string) {
             },
           };
         }
-        if (item.template.type === ChannelTypeEnum.IN_APP) {
+        if (item.template.type === StepTypeEnum.IN_APP) {
           return {
             ...item,
             template: {
@@ -119,7 +119,7 @@ export function useTemplateController(templateId: string) {
   const onSubmit = async (data: IForm) => {
     let stepsToSave = data.steps as StepEntity[];
     stepsToSave = stepsToSave.map((step: StepEntity) => {
-      if (step.template.type === ChannelTypeEnum.EMAIL && step.template.contentType === 'customHtml') {
+      if (step.template.type === StepTypeEnum.EMAIL && step.template.contentType === 'customHtml') {
         step.template.content = step.template.htmlContent as string;
       }
 
@@ -176,7 +176,7 @@ export function useTemplateController(templateId: string) {
     navigate('/templates');
   };
 
-  const addStep = (channelType: ChannelTypeEnum, id: string) => {
+  const addStep = (channelType: StepTypeEnum, id: string) => {
     steps.append({
       _id: id,
       template: {

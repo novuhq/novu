@@ -38,6 +38,11 @@ export class SendMessageSms extends SendMessageType {
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
     });
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      channel: ChannelTypeEnum.SMS,
+      active: true,
+    });
     const smsChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -62,6 +67,7 @@ export class SendMessageSms extends SendMessageType {
     );
 
     const phone = command.payload.phone || subscriber.phone;
+    const overrides = command.overrides[integration.providerId] || {};
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -77,18 +83,14 @@ export class SendMessageSms extends SendMessageType {
       transactionId: command.transactionId,
       phone,
       content,
+      providerId: integration.providerId,
       payload: messagePayload,
+      overrides,
       templateIdentifier: command.identifier,
     });
 
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.SMS,
-      active: true,
-    });
-
     if (phone && integration) {
-      await this.sendMessage(phone, integration, content, message, command, notification);
+      await this.sendMessage(phone, integration, content, message, command, notification, overrides);
 
       return;
     }
@@ -159,7 +161,8 @@ export class SendMessageSms extends SendMessageType {
     content,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    overrides: object
   ) {
     try {
       const smsHandler = this.smsFactory.getHandler(integration);

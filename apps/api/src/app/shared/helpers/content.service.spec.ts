@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { ContentService } from './content.service';
 import { INotificationTemplateStep } from '@novu/shared';
 
@@ -74,7 +74,7 @@ describe('ContentService', function () {
       const variables = contentService.extractMessageVariables([
         {
           template: {
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             subject: 'Test',
             content: 'Text',
           },
@@ -88,7 +88,7 @@ describe('ContentService', function () {
       const variables = contentService.extractMessageVariables([
         {
           template: {
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
             subject: 'Test {{firstName}}',
             content: [],
           },
@@ -103,14 +103,14 @@ describe('ContentService', function () {
       const variables = contentService.extractSubscriberMessageVariables([
         {
           template: {
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             subject: 'Test',
             content: 'Text',
           },
         },
         {
           template: {
-            type: ChannelTypeEnum.SMS,
+            type: StepTypeEnum.SMS,
             content: 'Text',
           },
         },
@@ -124,14 +124,14 @@ describe('ContentService', function () {
       const variables = contentService.extractSubscriberMessageVariables([
         {
           template: {
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
             subject: 'Test',
             content: 'Text',
           },
         },
         {
           template: {
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             content: 'Text',
           },
         },
@@ -145,7 +145,7 @@ describe('ContentService', function () {
       const messages = [
         {
           template: {
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
             subject: 'Test {{firstName}}',
             content: [
               {
@@ -162,7 +162,7 @@ describe('ContentService', function () {
         },
         {
           template: {
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
             subject: 'Test {{email}}',
             content: [
               {
@@ -194,7 +194,7 @@ describe('ContentService', function () {
       const variables = contentService.extractMessageVariables([
         {
           template: {
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             content: '{{customVariables}}',
           },
         },

@@ -65,6 +65,7 @@ export class NotificationTemplateService {
         cta: message.cta,
         content: message.content,
         subject: message.subject,
+        title: message.title,
         name: message.name,
         _feedId: override.noFeedId ? undefined : feeds[0]._id,
         _creatorId: this.userId,
@@ -92,7 +93,7 @@ export class NotificationTemplateService {
       description: faker.commerce.productDescription().slice(0, 90),
       triggers: [
         {
-          identifier: faker.datatype.uuid(),
+          identifier: `test-event-${faker.datatype.uuid()}`,
           type: 'event',
           variables: [{ name: 'firstName' }, { name: 'lastName' }, { name: 'urlVariable' }],
         },

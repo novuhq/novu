@@ -15,7 +15,6 @@ export function CardStatusBar({ active }: { active: boolean }) {
 
 const StyledText = styled(Text)`
   display: inline-block;
-
   margin: 0 6px;
 `;
 
@@ -29,16 +28,23 @@ const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
     return !active
       ? `
       ${StyledText},
-      svg {
-        color: ${colors.B40};
-        fill: ${colors.B40};
-      }  
+      {
+       color: ${colors.B40};
+        svg {
+          fill: ${colors.B40};
+        }  
+      }
     `
       : `${StyledText},
-      svg {
-        color: red;
-        fill: url(#paint0_linear_1062_464);
-      }`;
+      {
+      background: -webkit-linear-gradient(#DD2476, #FF512F);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+        svg {
+          fill: url(#paint0_linear_1062_464);
+        }
+      }
+      `;
   }}
 `;
 

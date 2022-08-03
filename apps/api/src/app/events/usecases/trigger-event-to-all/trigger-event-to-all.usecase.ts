@@ -46,6 +46,7 @@ export class TriggerEventToAll {
           subscriberId: item.subscriberId,
         })),
         transactionId: command.transactionId,
+        overrides: command.overrides,
       })
     );
   }

@@ -20,7 +20,7 @@ import styled from '@emotion/styled';
 import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
 import { StepEntity } from '../templates/use-template-controller.hook';
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { v4 as uuid4 } from 'uuid';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/use-env-controller';
@@ -55,7 +55,7 @@ export function FlowEditor({
   onDelete: (id: string) => void;
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
-  addStep: (channelType: ChannelTypeEnum, id: string) => void;
+  addStep: (channelType: StepTypeEnum, id: string) => void;
   templateId: string;
   dragging: boolean;
   errors: any;

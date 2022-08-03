@@ -25,6 +25,10 @@ const Header = ({ activePage, editMode }: { editMode: boolean; activePage: Activ
     return <>{'Edit Email Template'}</>;
   }
 
+  if (activePage === ActivePageEnum.PUSH) {
+    return <>{'Edit Push Template'}</>;
+  }
+
   if (activePage === ActivePageEnum.IN_APP) {
     return <>{'Edit Notification Template'}</>;
   }

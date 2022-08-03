@@ -60,6 +60,10 @@ export class UpdateMessageTemplate {
       updatePayload.subject = command.subject;
     }
 
+    if (command.title) {
+      updatePayload.title = command.title;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }

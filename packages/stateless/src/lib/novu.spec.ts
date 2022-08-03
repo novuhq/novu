@@ -9,6 +9,7 @@ test('should register an SMS provider and return it', async () => {
     channelType: ChannelTypeEnum.SMS,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    setSubscriberCredentials: () => '123',
   };
 
   await novu.registerProvider('sms', template);
@@ -26,6 +27,7 @@ test('should call 2 hooks together', async () => {
     channelType: ChannelTypeEnum.SMS as ChannelTypeEnum,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    setSubscriberCredentials: () => '123',
   };
 
   await novu.registerProvider('sms', template);

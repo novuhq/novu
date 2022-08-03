@@ -15,6 +15,7 @@ export class ChangeEntity {
 
   type: ChangeEntityTypeEnum;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   change: any;
 
   createdAt: string;

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto } from '../../notification-template/dto';
 import { FeedRepository } from '@novu/dal';
 
@@ -46,7 +46,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: 'This is a sample text block',
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             feedId: feed._id,
           },
         },
@@ -77,7 +77,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
           template: {
             name: 'Message Name',
             content: 'This is a sample text block',
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
           },
         },
       ],

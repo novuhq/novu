@@ -22,6 +22,8 @@ export { CheckCircleOutlined } from './general/CheckCircleOutlined';
 export { Repeat } from './general/Repeat';
 export { Sms } from './general/Sms';
 export { Mobile } from './general/Mobile';
+export { Direct } from './general/Direct';
+export { InApp } from './general/InApp';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
@@ -46,5 +48,6 @@ export { SmsGradient } from './gradient/SmsGradient';
 export { TapeGradient } from './gradient/TapeGradient';
 export { BoltGradient } from './gradient/BoltGradient';
 export { ConnectGradient } from './gradient/ConnectGradient';
+export { DirectGradient } from './gradient/DirectGradient';
 
 export { Github } from './social/Github';

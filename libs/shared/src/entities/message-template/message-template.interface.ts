@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, ChannelTypeEnum } from './channel.enum';
+import { ChannelCTATypeEnum, StepTypeEnum } from './channel.enum';
 
 export interface IEmailBlock {
   type: 'text' | 'button';
@@ -13,7 +13,7 @@ export interface IMessageTemplate {
   _id?: string;
   subject?: string;
   name?: string;
-  type: ChannelTypeEnum;
+  type: StepTypeEnum;
   contentType?: 'editor' | 'customHtml';
   content: string | IEmailBlock[];
   cta?: {

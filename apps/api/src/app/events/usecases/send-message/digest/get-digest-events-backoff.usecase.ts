@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum } from '@novu/dal';
 import { SendMessageCommand } from '../send-message.command';
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { GetDigestEvents } from './get-digest-events.usecase';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class GetDigestEventsBackoff extends GetDigestEvents {
       },
       _templateId: currentJob._templateId,
       status: JobStatusEnum.COMPLETED,
-      type: ChannelTypeEnum.TRIGGER,
+      type: StepTypeEnum.TRIGGER,
       _environmentId: command.environmentId,
       _subscriberId: command.subscriberId,
     });

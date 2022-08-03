@@ -38,7 +38,7 @@ describe('Create Integration - /integration (POST)', function () {
   it('should create the sms and email integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    expect(integrations.length).to.equal(2);
+    expect(integrations.length).to.equal(5);
 
     const emailIntegration = integrations.find((i) => i.channel.toString() === 'email');
     const smsIntegration = integrations.find((i) => i.channel.toString() === 'sms');
@@ -106,7 +106,5 @@ async function insertIntegrationTwice(
     payload.channel = 'sms';
   }
 
-  const body = await session.testAgent.post('/v1/integrations').send(payload);
-
-  return body;
+  return await session.testAgent.post('/v1/integrations').send(payload);
 }

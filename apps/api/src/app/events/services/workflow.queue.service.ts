@@ -5,7 +5,7 @@ import { SendMessageCommand } from '../usecases/send-message/send-message.comman
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { ChannelTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { StepTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 interface IJobEntityExtended extends JobEntity {
   presend?: boolean;
@@ -73,6 +73,7 @@ export class WorkflowQueueService {
       SendMessageCommand.create({
         identifier: job.identifier,
         payload: job.payload ? job.payload : {},
+        overrides: job.overrides ? job.overrides : {},
         step: job.step,
         transactionId: job.transactionId,
         notificationId: job._notificationId,
@@ -137,7 +138,7 @@ export class WorkflowQueueService {
   }
 
   private async addDigestJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
-    const isDigest = data.type === ChannelTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
+    const isDigest = data.type === StepTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
     if (!isDigest) {
       return false;
     }
@@ -156,7 +157,7 @@ export class WorkflowQueueService {
   }
 
   private async digestIsCanceled(job: JobEntity) {
-    if (job.type !== ChannelTypeEnum.DIGEST) {
+    if (job.type !== StepTypeEnum.DIGEST) {
       return false;
     }
     const count = await this.jobRepository.count({

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum, JobRepository, NotificationStepEntity } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { FilterStepsCommand } from './filter-steps.command';
 import * as moment from 'moment';
 import { FilterSteps } from './filter-steps.usecase';
@@ -12,7 +12,7 @@ export class FilterStepsBackoff {
   public async execute(command: FilterStepsCommand): Promise<NotificationStepEntity[]> {
     const steps = [FilterSteps.createTriggerStep(command)];
     for (const step of command.steps) {
-      if (step.template.type !== ChannelTypeEnum.DIGEST) {
+      if (step.template.type !== StepTypeEnum.DIGEST) {
         steps.push(step);
         continue;
       }
@@ -42,7 +42,7 @@ export class FilterStepsBackoff {
       },
       _templateId: command.templateId,
       status: JobStatusEnum.COMPLETED,
-      type: ChannelTypeEnum.TRIGGER,
+      type: StepTypeEnum.TRIGGER,
       _environmentId: command.environmentId,
       _subscriberId: command.subscriberId,
     };
@@ -60,7 +60,7 @@ export class FilterStepsBackoff {
         $gte: this.getBackoffDate(step),
       },
       _templateId: command.templateId,
-      type: ChannelTypeEnum.DIGEST,
+      type: StepTypeEnum.DIGEST,
       _environmentId: command.environmentId,
       _subscriberId: command.subscriberId,
     };

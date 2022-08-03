@@ -1,7 +1,7 @@
 import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum, IMessage } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum, IMessage } from '@novu/shared';
 
 describe('Get activity feed - /activity (GET)', async () => {
   let session: UserSession;
@@ -13,7 +13,7 @@ describe('Get activity feed - /activity (GET)', async () => {
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
-    smsOnlyTemplate = await session.createChannelTemplate(ChannelTypeEnum.SMS);
+    smsOnlyTemplate = await session.createChannelTemplate(StepTypeEnum.SMS);
     subscriberId = SubscriberRepository.createObjectId();
     await session.testAgent
       .post('/v1/widgets/session/initialize')
@@ -100,7 +100,7 @@ describe('Get activity feed - /activity (GET)', async () => {
 
   it('should filter by email', async function () {
     await session.triggerEvent(
-      smsOnlyTemplate.triggers[0].identifier,
+      template.triggers[0].identifier,
       {
         subscriberId: SubscriberRepository.createObjectId(),
         email: 'test@email.coms',
@@ -134,10 +134,10 @@ describe('Get activity feed - /activity (GET)', async () => {
       }
     );
 
-    const { body } = await session.testAgent.get(`/v1/activity?page=0&search=test@email.coms`);
+    const { body } = await session.testAgent.get(`/v1/activity?page=0&emails=test@email.coms`);
     const activities: IMessage[] = body.data;
 
     expect(activities.length).to.equal(1);
-    expect(activities[0]._templateId).to.equal(smsOnlyTemplate._id);
+    expect(activities[0]._templateId).to.equal(template._id);
   });
 });

@@ -13,6 +13,7 @@ export interface ICredentialsDto {
   token?: string;
   from?: string;
   senderName?: string;
+  projectName?: string;
 }
 export interface IConstructIntegrationDto {
   credentials: ICredentialsDto;

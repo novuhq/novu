@@ -3,7 +3,7 @@ import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
 import { CreateLog } from '../../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from '../send-message.command';
 import { SendMessageType } from '../send-message-type.usecase';
-import { ChannelTypeEnum, DigestTypeEnum } from '@novu/shared';
+import { StepTypeEnum, DigestTypeEnum } from '@novu/shared';
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 
@@ -60,7 +60,7 @@ export class Digest extends SendMessageType {
     });
 
     return nextJobs.filter((job) => {
-      if (job.type === ChannelTypeEnum.IN_APP && job.status === JobStatusEnum.COMPLETED) {
+      if (job.type === StepTypeEnum.IN_APP && job.status === JobStatusEnum.COMPLETED) {
         return true;
       }
 

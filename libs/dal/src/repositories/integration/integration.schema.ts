@@ -32,6 +32,9 @@ const integrationSchema = new Schema(
       token: Schema.Types.String,
       from: Schema.Types.String,
       senderName: Schema.Types.String,
+      applicationId: Schema.Types.String,
+      clientId: Schema.Types.String,
+      projectName: Schema.Types.String,
     },
 
     active: {
