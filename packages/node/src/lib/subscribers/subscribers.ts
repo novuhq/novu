@@ -16,6 +16,10 @@ export class Subscribers {
     });
   }
 
+  async get(subscriberId: string) {
+    return await this.http.get(`/subscribers/${subscriberId}`);
+  }
+
   async identify(subscriberId: string, data: ISubscriberPayload) {
     return await this.http.post(`/subscribers`, {
       subscriberId,

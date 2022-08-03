@@ -10,6 +10,8 @@ import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
 import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
+import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
+import { GetSubscriberCommand } from './usecases/get-subscriber';
 
 @Controller('/subscribers')
 export class SubscribersController {
@@ -17,7 +19,8 @@ export class SubscribersController {
     private createSubscriberUsecase: CreateSubscriber,
     private updateSubscriberUsecase: UpdateSubscriber,
     private removeSubscriberUsecase: RemoveSubscriber,
-    private getSubscribersUsecase: GetSubscribers
+    private getSubscribersUsecase: GetSubscribers,
+    private getSubscriberUseCase: GetSubscriber
   ) {}
 
   @Get('')
@@ -29,6 +32,19 @@ export class SubscribersController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         page: page ? Number(page) : 0,
+      })
+    );
+  }
+
+  @Get('/:subscriberId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async getSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+    return await this.getSubscriberUseCase.execute(
+      GetSubscriberCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
       })
     );
   }
