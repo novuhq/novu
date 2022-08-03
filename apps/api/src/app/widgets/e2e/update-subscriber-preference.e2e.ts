@@ -2,8 +2,7 @@ import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/shared';
-import { UpdateSubscriberPreferenceBodyDto } from '../dtos/user-preference.dto';
+import { ChannelTypeEnum, IUpdateSubscriberPreferenceDto } from '@novu/shared';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
 describe('GET /widget/subscriber-preference', function () {
@@ -81,7 +80,7 @@ describe('GET /widget/subscriber-preference', function () {
 
       const updateDataEmailFalse = {
         channel: {},
-      } as UpdateSubscriberPreferenceBodyDto;
+      } as IUpdateSubscriberPreferenceDto;
 
       let responseMessage = '';
       try {
@@ -96,7 +95,7 @@ describe('GET /widget/subscriber-preference', function () {
 });
 
 export async function updateSubscriberPreference(
-  data: UpdateSubscriberPreferenceBodyDto,
+  data: IUpdateSubscriberPreferenceDto,
   subscriberToken: string,
   templateId: string
 ) {

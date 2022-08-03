@@ -1,11 +1,9 @@
-import { NotificationTemplateEntity, SubscriberEntity, MessageRepository } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, IUpdateSubscriberPreferenceDto } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
-import { SubscriberRepository } from '@novu/dal';
-import { UpdateSubscriberPreferenceBodyDto } from '../../widgets/dtos/user-preference.dto';
 
 const axiosInstance = axios.create();
 
@@ -161,7 +159,7 @@ async function triggerEvent(session, template, payload) {
 }
 
 async function updateSubscriberPreference(
-  data: UpdateSubscriberPreferenceBodyDto,
+  data: IUpdateSubscriberPreferenceDto,
   subscriberToken: string,
   templateId: string
 ) {

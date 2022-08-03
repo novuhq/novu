@@ -21,8 +21,8 @@ import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/upda
 import { GetSubscriberPreference } from './usecases/get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberPreferenceCommand } from './usecases/get-subscriber-preference/get-subscriber-preference.command';
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference/update-subscriber-preference.command';
-import { UpdateSubscriberPreferenceBodyDto } from './dtos/user-preference.dto';
 import { UpdateSubscriberPreference } from './usecases/update-subscriber-preference/update-subscriber-preference.usecase';
+import { UpdateSubscriberPreferenceDto } from './dtos/update-subscriber-preference.dto';
 
 @Controller('/widgets')
 export class WidgetsController {
@@ -167,7 +167,7 @@ export class WidgetsController {
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('templateId') templateId: string,
-    @Body() body: UpdateSubscriberPreferenceBodyDto
+    @Body() body: UpdateSubscriberPreferenceDto
   ) {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
