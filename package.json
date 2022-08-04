@@ -29,6 +29,7 @@
     "start:docker:web": "cross-env nx run-many --target=start:docker --projects=@novu/web",
     "start:docker:embed": "cross-env nx run-many --target=start:docker --projects=@novu/embed",
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
+    "docker:build": "pnpm -r --if-present --parallel docker:build",
     "build": "nx run-many --target=build --all",
     "build:api": "nx build @novu/api",
     "build:ws": "nx build @novu/ws",
@@ -44,7 +45,8 @@
     "start:e2e:api": "cd apps/api && pnpm start:test",
     "g:module": "hygen module new --name=$npm_config_name",
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
-    "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env"
+    "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env",
+    "pnpm-context": "node scripts/pnpm-context.mjs"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
@@ -90,7 +92,13 @@
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",
-    "typescript": "4.6.2"
+    "typescript": "4.6.2",
+    "globby": "^12.0.2",
+    "meow": "^10.1.1",
+    "mississippi": "^4.0.0",
+    "tar": "^6.1.11",
+    "@pnpm/filter-workspace-packages": "^4.1.11",
+    "@pnpm/logger": "^4.0.0"
   },
   "workspaces": {
     "packages": [

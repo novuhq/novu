@@ -29,6 +29,7 @@ export function FeedChip(props: IFeedItemProps) {
       showFeed={props.showFeed}
       colorScheme={colorScheme}
       readonly={readonly}
+      data-test-id={`feed-button-${props.feedIndex}${selectedItem ? '-checked' : ''}`}
       onClick={() => {
         props.setValue(`steps.${props.index}.template.feedId`, props?.item?._id || '', { shouldDirty: true });
       }}
