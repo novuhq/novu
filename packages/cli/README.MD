@@ -100,6 +100,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### 💌 Email
 
 - [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
+- [x] [Netcore](https://github.com/novuhq/novu/tree/main/providers/netcore)
 - [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
 - [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
 - [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)

@@ -1,7 +1,6 @@
 /**
  * @type {Cypress.PluginConfig}
  */
-const injectReactScriptsDevServer = require('@cypress/react/plugins/react-scripts');
 import { DalService, NotificationTemplateEntity, UserRepository } from '@novu/dal';
 import { UserSession, SubscribersService, NotificationTemplateService, NotificationsService } from '@novu/testing';
 
@@ -89,6 +88,4 @@ module.exports = (on, config) => {
       };
     },
   });
-
-  injectReactScriptsDevServer(on, config);
 };
