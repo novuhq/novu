@@ -10,7 +10,7 @@ export function UserPreferenceHeader({ setScreen }: { setScreen: (screen: Screen
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-      <ActionIcon variant="transparent" onClick={() => setScreen(ScreensEnum.NOTIFICATIONS)}>
+      <ActionIcon data-test-id="go-back-btn" variant="transparent" onClick={() => setScreen(ScreensEnum.NOTIFICATIONS)}>
         <ArrowLeft style={{ marginLeft: '15px', color: theme.header.fontColor }} />
       </ActionIcon>
       <Title fontColor={theme.header.fontColor}>Settings</Title>

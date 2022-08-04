@@ -41,7 +41,11 @@ export function Header({ unseenCount, setScreen }: { unseenCount: number; setScr
         ) : null}
       </div>
       <div>
-        <ActionIcon variant="transparent" onClick={() => setScreen(ScreensEnum.SETTINGS)}>
+        <ActionIcon
+          data-test-id="user-preference-cog"
+          variant="transparent"
+          onClick={() => setScreen(ScreensEnum.SETTINGS)}
+        >
           <Cogs style={{ color: theme?.notificationItem?.seen?.timeMarkFontColor }} />
         </ActionIcon>
       </div>

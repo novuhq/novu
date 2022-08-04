@@ -30,7 +30,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
   };
 
   return (
-    <ChannelItemWrapper>
+    <ChannelItemWrapper data-test-id="channel-preference-item">
       <LeftContentWrapper>
         <Icon style={{ color: active ? primaryColor : secondaryColor }} />
         <TextBlock>
@@ -45,6 +45,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
       <SwitchWrapper>
         <LoadingOverlay
           visible={isLoading}
+          data-test-id="channel-preference-item-loader"
           loaderProps={{
             size: 'xs',
             color:
@@ -57,6 +58,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
           sx={{ justifyContent: active ? 'right' : 'left', marginLeft: '2.5px', marginRight: '2px' }}
         />
         <Switch
+          data-test-id="channel-preference-item-toggle"
           styles={switchStyles(baseTheme)}
           disabled={disabled && !isLoading}
           checked={active}
