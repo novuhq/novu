@@ -11,7 +11,7 @@ test('should trigger nexmo library correctly', async () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     .spyOn(provider.vonageClient.message, 'sendSms')
-    .mockImplementation(async (a, b, c, d, cb) => {
+    .mockImplementation(async (_a, _b, _c, _d, cb) => {
       cb(null, {
         'message-count': 1,
         messages: [
@@ -20,7 +20,7 @@ test('should trigger nexmo library correctly', async () => {
             to: '1',
             'message-price': '1',
             'remaining-balance': '1',
-            status: '0' as any,
+            status: '0' as never,
             'account-ref': '1',
             network: '1',
           },
