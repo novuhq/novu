@@ -51,7 +51,15 @@ The test will run a new instance of Novu against the test db and run the tests a
 ### Web
 
 To run the front end tests for the web project using cypress you will need to install localstack in order for all the tests to pass.
-Run the tests using:
+The cypress test perform and E2E test, meaning that you will have to run the API service in the appropriate test environment. 
+To run the services in test env you can use:
+
+```shell
+npm run start:e2e:api
+npm run start:ws:test
+```
+
+Run the cypress test suite using:
 
 ```shell
 cd apps/web && npm run cypress:run
