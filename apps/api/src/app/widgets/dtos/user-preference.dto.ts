@@ -1,5 +1,5 @@
 import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
-import { ChannelTypeEnum } from '@novu/stateless';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export class UpdateSubscriberPreferenceBodyDto {
   @ValidateNested()

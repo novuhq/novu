@@ -100,7 +100,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: ChannelTypeEnum.DIGEST,
     });
 
+    expect(delayedJob).to.be.ok;
+
     await awaitRunningJobs(2);
+
     await workflowQueueService.work(delayedJob);
 
     const jobs = await jobRepository.find({

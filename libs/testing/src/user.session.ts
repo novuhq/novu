@@ -42,6 +42,8 @@ export class UserSession {
 
   subscriberToken: string;
 
+  subscriberId: string;
+
   subscriberProfile: {
     _id: string;
   } = null;
@@ -112,13 +114,13 @@ export class UserSession {
   }
 
   private async initializeWidgetSession() {
-    const subscriberId = SubscriberRepository.createObjectId();
+    this.subscriberId = SubscriberRepository.createObjectId();
 
     const { body } = await this.testAgent
       .post('/v1/widgets/session/initialize')
       .send({
         applicationIdentifier: this.environment.identifier,
-        subscriberId,
+        subscriberId: this.subscriberId,
         firstName: 'Widget User',
         lastName: 'Test',
         email: 'test@example.com',
