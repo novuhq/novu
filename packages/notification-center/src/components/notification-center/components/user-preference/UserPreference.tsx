@@ -44,12 +44,7 @@ export function UserPreference() {
               setSettings((prev) => {
                 return prev.map((workflow, i) => {
                   if (i === index) {
-                    return {
-                      template: workflow.template,
-                      preference: {
-                        ...result,
-                      },
-                    };
+                    return result;
                   }
 
                   return workflow;
