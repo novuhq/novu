@@ -1,4 +1,5 @@
 import { EN } from './languages/en';
+import { FI } from './languages/fi';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -13,6 +14,7 @@ export interface ITranslationEntry {
 
 export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
+  fi: FI,
 };
 
 /**
@@ -23,4 +25,4 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * - For English use "en"
  * - For French use "fr"
  */
-export type I18NLanguage = 'en';
+export type I18NLanguage = 'en' | 'fi';
