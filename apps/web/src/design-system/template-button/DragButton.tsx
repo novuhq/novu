@@ -33,7 +33,7 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
             </IconWrapper>
             <StyledContentWrapper>
               <Text weight="bold">{label}</Text>
-              <When truthy={description.length > 0}>
+              <When truthy={description}>
                 <Text mt={3} color={colors.B60}>
                   {description}
                 </Text>

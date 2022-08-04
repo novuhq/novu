@@ -23,7 +23,7 @@ export class ActivityController {
     @UserSession() user: IJwtPayload,
     @Query('channels') channels: ChannelTypeEnum[] | ChannelTypeEnum,
     @Query('templates') templates: string[] | string,
-    @Query('emails') emails: string,
+    @Query('emails') emails: string | string[],
     @Query('search') search: string,
     @Query('page') page = 0
   ) {

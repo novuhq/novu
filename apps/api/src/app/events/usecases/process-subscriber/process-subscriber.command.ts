@@ -16,7 +16,7 @@ export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsDefined()
-  overrides: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  overrides: Record<string, unknown>;
 
   @IsDefined()
   to: ISubscribersDefine; // eslint-disable-line @typescript-eslint/no-explicit-any

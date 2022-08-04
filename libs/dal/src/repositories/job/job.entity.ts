@@ -17,7 +17,7 @@ export class JobEntity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  overrides: any;
+  overrides: Record<string, unknown>;
   step: NotificationStepEntity;
   transactionId: string;
   _notificationId: string;

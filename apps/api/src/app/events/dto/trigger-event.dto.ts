@@ -11,7 +11,7 @@ export class TriggerEventDto {
 
   @IsObject()
   @IsOptional()
-  overrides: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  overrides: Record<string, unknown>;
 
   @IsDefined()
   to: TriggerRecipientsType; // eslint-disable-line @typescript-eslint/no-explicit-any

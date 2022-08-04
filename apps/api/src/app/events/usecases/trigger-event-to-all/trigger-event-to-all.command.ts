@@ -20,5 +20,5 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
 
   @IsObject()
   @IsOptional()
-  overrides: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  overrides: Record<string, unknown>;
 }
