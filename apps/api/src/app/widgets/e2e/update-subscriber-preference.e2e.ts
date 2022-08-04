@@ -56,12 +56,14 @@ describe('GET /widget/subscriber-preference', function () {
       },
     };
 
-    await updateSubscriberPreference(updateDataEmailFalse, session.subscriberToken, template._id);
-
-    const response = (await getSubscriberPreference(session.subscriberToken)).data.data[0];
+    const response = (await updateSubscriberPreference(updateDataEmailFalse, session.subscriberToken, template._id))
+      .data.data[0];
 
     expect(response.preference.enabled).to.equal(true);
     expect(response.preference.channels.email).to.equal(false);
+    expect(response.preference.channels.in_app).to.equal(true);
+    expect(response.preference.channels.sms).to.be.not.ok;
+    expect(response.preference.channels.direct).to.be.not.ok;
   });
   it(
     'should not update empty object should throw exception if ' +

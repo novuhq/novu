@@ -16,14 +16,14 @@ export class GetSubscriberPreference {
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
   ) {}
 
-  async execute(command: GetSubscriberPreferenceCommand): Promise<IGetSubscriberPreferenceResponse[]> {
+  async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
     const templateList = await this.notificationTemplateRepository.getActiveList(
       command.organizationId,
       command.environmentId,
       true
     );
 
-    const result: IGetSubscriberPreferenceResponse[] = [];
+    const result: ISubscriberPreferenceResponse[] = [];
 
     for (const template of templateList) {
       {
@@ -44,7 +44,7 @@ export class GetSubscriberPreference {
   }
 }
 
-export interface IGetSubscriberPreferenceResponse {
+export interface ISubscriberPreferenceResponse {
   template: IGetSubscriberPreferenceTemplateResponse;
   preference: {
     enabled: boolean;

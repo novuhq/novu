@@ -8,8 +8,8 @@ import {
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IPreferenceChannels } from '@novu/shared';
 import {
-  IGetSubscriberPreferenceResponse,
   IGetSubscriberPreferenceTemplateResponse,
+  ISubscriberPreferenceResponse,
 } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
@@ -21,7 +21,7 @@ export class GetSubscriberTemplatePreference {
     private messageTemplateRepository: MessageTemplateRepository
   ) {}
 
-  async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<IGetSubscriberPreferenceResponse> {
+  async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
 
     const currSubscriberPreference = await this.subscriberPreferenceRepository.findOne({
@@ -76,7 +76,7 @@ function filterActiveChannels(channels: IPreferenceChannels, activeChannels: Cha
 function getNoSettingFallback(
   template: IGetSubscriberPreferenceTemplateResponse,
   activeChannels: ChannelTypeEnum[]
-): IGetSubscriberPreferenceResponse {
+): ISubscriberPreferenceResponse {
   return {
     template,
     preference: {
