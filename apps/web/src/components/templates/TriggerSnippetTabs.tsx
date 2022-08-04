@@ -4,24 +4,26 @@ import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
+  const subscriberVariables = [{ name: 'subscriberId' }, ...(trigger.subscriberVariables || [])];
+
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
 const novu = new Novu('<API_KEY>');
 
 novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
   to: { 
-    subscriberId: '<REPLACE_WITH_USER_ID>' ${trigger.subscriberVariables
+    ${subscriberVariables
       ?.map((variable) => {
-        return `${variable.name}: "<REPLACE_WITH_DATA>",`;
+        return `${variable.name}: '<REPLACE_WITH_DATA>'`;
       })
-      .join(' ')}
+      .join(',\n    ')}
   },
   payload: {
     ${trigger.variables
       .map((variable) => {
-        return `${variable.name}: "<REPLACE_WITH_DATA>",`;
+        return `${variable.name}: '<REPLACE_WITH_DATA>'`;
       })
-      .join('\n    ')} 
+      .join(',\n    ')} 
   }
 });
 `;
@@ -32,19 +34,18 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
      --data-raw '{
         "name": "${trigger.identifier?.replace(/'/g, "\\'")}",
         "to" : {
-            "subscriberId": "<REPLACE_WITH_USER_ID>"
-            ${trigger.subscriberVariables
-      ?.map((variable) => {
-        return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
-      })
-      .join(',\n            ')} 
+            ${subscriberVariables
+              ?.map((variable) => {
+                return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
+              })
+              .join(',\n            ')} 
         },
         "payload": {
             ${trigger.variables
-      .map((variable) => {
-        return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
-      })
-      .join(',\n            ')}
+              .map((variable) => {
+                return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
+              })
+              .join(',\n            ')}
         }
     }'
   `;
