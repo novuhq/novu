@@ -1,5 +1,8 @@
 import { AxiosInstance } from 'axios';
-import { ISubscriberPayload } from './subscriber.interface';
+import {
+  ISubscriberPayload,
+  IUpdateSubscriberPreferencePayload,
+} from './subscriber.interface';
 
 export class Subscribers {
   private readonly http: AxiosInstance;
@@ -25,6 +28,19 @@ export class Subscribers {
 
   async update(subscriberId: string, data: ISubscriberPayload) {
     return await this.http.put(`/subscribers/${subscriberId}`, {
+      ...data,
+    });
+  }
+
+  async getPreference() {
+    return await this.http.get(`/subscribers/preferences`);
+  }
+
+  async updatePreference(
+    templateId: string,
+    data: IUpdateSubscriberPreferencePayload
+  ) {
+    return await this.http.patch(`/subscribers/preference/${templateId}`, {
       ...data,
     });
   }

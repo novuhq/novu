@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -8,8 +8,13 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
 import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
-import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
+import { GetSubscribers } from './usecases/get-subscribers';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
+import { GetSubscriberPreferenceCommand } from '../widgets/usecases/get-subscriber-preference/get-subscriber-preference.command';
+import { GetSubscriberPreference } from '../widgets/usecases/get-subscriber-preference/get-subscriber-preference.usecase';
+import { UpdateSubscriberPreferenceDto } from '../widgets/dtos/update-subscriber-preference.dto';
+import { UpdateSubscriberPreferenceCommand } from '../widgets/usecases/update-subscriber-preference/update-subscriber-preference.command';
+import { UpdateSubscriberPreference } from '../widgets/usecases/update-subscriber-preference/update-subscriber-preference.usecase';
 
 @Controller('/subscribers')
 export class SubscribersController {
@@ -17,7 +22,9 @@ export class SubscribersController {
     private createSubscriberUsecase: CreateSubscriber,
     private updateSubscriberUsecase: UpdateSubscriber,
     private removeSubscriberUsecase: RemoveSubscriber,
-    private getSubscribersUsecase: GetSubscribers
+    private getSubscribersUsecase: GetSubscribers,
+    private getSubscriberPreferenceUsecase: GetSubscriberPreference,
+    private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference
   ) {}
 
   @Get('')
@@ -84,5 +91,38 @@ export class SubscribersController {
         subscriberId,
       })
     );
+  }
+
+  @Get('/preferences')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async getSubscriberPreference(@UserSession() user: IJwtPayload) {
+    const command = GetSubscriberPreferenceCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: user._id,
+      environmentId: user.environmentId,
+    });
+
+    return await this.getSubscriberPreferenceUsecase.execute(command);
+  }
+
+  @Patch('/preference/:templateId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async updateSubscriberPreference(
+    @UserSession() user: IJwtPayload,
+    @Param('templateId') templateId: string,
+    @Body() body: UpdateSubscriberPreferenceDto
+  ) {
+    const command = UpdateSubscriberPreferenceCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: user._id,
+      environmentId: user.environmentId,
+      templateId: templateId,
+      channel: body.channel,
+      enabled: body.enabled,
+    });
+
+    return await this.updateSubscriberPreferenceUsecase.execute(command);
   }
 }
