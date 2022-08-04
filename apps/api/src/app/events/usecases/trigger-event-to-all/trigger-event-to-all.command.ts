@@ -20,5 +20,5 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
 
   @IsObject()
   @IsOptional()
-  overrides: Record<string, unknown>;
+  overrides: Record<string, Record<string, unknown>>;
 }

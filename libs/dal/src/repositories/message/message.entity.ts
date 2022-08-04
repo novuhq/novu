@@ -66,5 +66,5 @@ export class MessageEntity {
 
   payload: Record<string, unknown>;
 
-  overrides: Record<string, Record<string, unknown>>;
+  overrides: Record<string, unknown>;
 }

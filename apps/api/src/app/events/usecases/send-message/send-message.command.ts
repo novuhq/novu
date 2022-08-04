@@ -16,7 +16,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsDefined()
-  overrides: Record<string, unknown>;
+  overrides: Record<string, Record<string, unknown>>;
 
   @IsDefined()
   step: NotificationStepEntity; // eslint-disable-line @typescript-eslint/no-explicit-any
