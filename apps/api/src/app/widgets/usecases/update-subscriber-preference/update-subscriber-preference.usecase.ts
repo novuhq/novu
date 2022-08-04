@@ -1,13 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { SubscriberPreferenceRepository, SubscriberPreferenceEntity } from '@novu/dal';
+import { SubscriberPreferenceEntity, SubscriberPreferenceRepository } from '@novu/dal';
 import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetSubscriberPreferenceCommand } from '../get-subscriber-preference/get-subscriber-preference.command';
+import {
+  GetSubscriberPreference,
+  ISubscriberPreferenceResponse,
+} from '../get-subscriber-preference/get-subscriber-preference.usecase';
 
 @Injectable()
 export class UpdateSubscriberPreference {
-  constructor(private subscriberPreferenceRepository: SubscriberPreferenceRepository) {}
+  constructor(
+    private subscriberPreferenceRepository: SubscriberPreferenceRepository,
+    private getSubscriberPreferenceUsecase: GetSubscriberPreference
+  ) {}
 
-  async execute(command: UpdateSubscriberPreferenceCommand): Promise<SubscriberPreferenceEntity> {
+  async execute(command: UpdateSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
     const userPreference = await this.subscriberPreferenceRepository.findOne({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
@@ -19,7 +27,7 @@ export class UpdateSubscriberPreference {
       const channelObj = {} as Record<'email' | 'sms' | 'in_app' | 'direct' | 'push', boolean>;
       channelObj[command.channel?.type] = command.channel?.enabled;
 
-      return await this.subscriberPreferenceRepository.create({
+      await this.subscriberPreferenceRepository.create({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _subscriberId: command.subscriberId,
@@ -27,6 +35,14 @@ export class UpdateSubscriberPreference {
         enabled: command.enabled !== false,
         channels: command.channel?.type ? channelObj : null,
       });
+
+      const getSubscriberPreferenceCommand = GetSubscriberPreferenceCommand.create({
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        environmentId: command.environmentId,
+      });
+
+      return await this.getSubscriberPreferenceUsecase.execute(getSubscriberPreferenceCommand);
     }
 
     const updatePayload: Partial<SubscriberPreferenceEntity> = {};
@@ -55,11 +71,12 @@ export class UpdateSubscriberPreference {
       }
     );
 
-    return await this.subscriberPreferenceRepository.findOne({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      _subscriberId: command.subscriberId,
-      _templateId: command.templateId,
+    const getSubscriberPreferenceCommand = GetSubscriberPreferenceCommand.create({
+      organizationId: command.organizationId,
+      subscriberId: command.subscriberId,
+      environmentId: command.environmentId,
     });
+
+    return await this.getSubscriberPreferenceUsecase.execute(getSubscriberPreferenceCommand);
   }
 }
