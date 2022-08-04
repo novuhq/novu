@@ -10,11 +10,11 @@ import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
 import { GetSubscribers } from './usecases/get-subscribers';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
-import { GetSubscriberPreferenceCommand } from '../widgets/usecases/get-subscriber-preference/get-subscriber-preference.command';
-import { GetSubscriberPreference } from '../widgets/usecases/get-subscriber-preference/get-subscriber-preference.usecase';
 import { UpdateSubscriberPreferenceDto } from '../widgets/dtos/update-subscriber-preference.dto';
-import { UpdateSubscriberPreferenceCommand } from '../widgets/usecases/update-subscriber-preference/update-subscriber-preference.command';
-import { UpdateSubscriberPreference } from '../widgets/usecases/update-subscriber-preference/update-subscriber-preference.usecase';
+import { UpdateSubscriberPreferenceCommand } from '../widgets/usecases/update-subscriber-preference';
+import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
+import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
+import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
 
 @Controller('/subscribers')
 export class SubscribersController {
@@ -23,8 +23,8 @@ export class SubscribersController {
     private updateSubscriberUsecase: UpdateSubscriber,
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscribersUsecase: GetSubscribers,
-    private getSubscriberPreferenceUsecase: GetSubscriberPreference,
-    private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference
+    private getPreferenceUsecase: GetPreferences,
+    private updatePreferenceUsecase: UpdatePreference
   ) {}
 
   @Get('')
@@ -93,36 +93,37 @@ export class SubscribersController {
     );
   }
 
-  @Get('/preferences')
+  @Get('/:subscriberId/preferences')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async getSubscriberPreference(@UserSession() user: IJwtPayload) {
-    const command = GetSubscriberPreferenceCommand.create({
+  async getSubscriberPreference(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+    const command = GetPreferencesCommand.create({
       organizationId: user.organizationId,
-      subscriberId: user._id,
+      subscriberId: subscriberId,
       environmentId: user.environmentId,
     });
 
-    return await this.getSubscriberPreferenceUsecase.execute(command);
+    return await this.getPreferenceUsecase.execute(command);
   }
 
-  @Patch('/preference/:templateId')
+  @Patch('/:subscriberId/preference/:templateId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   async updateSubscriberPreference(
     @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
     @Param('templateId') templateId: string,
     @Body() body: UpdateSubscriberPreferenceDto
   ) {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: user.organizationId,
-      subscriberId: user._id,
+      subscriberId: subscriberId,
       environmentId: user.environmentId,
       templateId: templateId,
       channel: body.channel,
       enabled: body.enabled,
     });
 
-    return await this.updateSubscriberPreferenceUsecase.execute(command);
+    return await this.updatePreferenceUsecase.execute(command);
   }
 }

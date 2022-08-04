@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, IUpdateSubscriberPreferenceDto } from '@novu/shared';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
-describe('GET /widget/subscriber-preference', function () {
+describe('PATCH /widget/subscriber-preference', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
   let subscriberId: string;
@@ -37,11 +37,6 @@ describe('GET /widget/subscriber-preference', function () {
   });
 
   it('should update user preference', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-
-    await session.awaitRunningJobs(template._id);
-
     const createData = {
       enabled: true,
     };

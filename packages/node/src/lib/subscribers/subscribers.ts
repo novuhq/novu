@@ -27,22 +27,26 @@ export class Subscribers {
   }
 
   async update(subscriberId: string, data: ISubscriberPayload) {
-    return await this.http.put(`/subscribers/${subscriberId}`, {
+    return await this.http.put(`/${subscriberId}/subscribers`, {
       ...data,
     });
   }
 
-  async getPreference() {
-    return await this.http.get(`/subscribers/preferences`);
+  async getPreference(subscriberId: string) {
+    return await this.http.get(`/subscribers/${subscriberId}/preferences`);
   }
 
   async updatePreference(
+    subscriberId: string,
     templateId: string,
     data: IUpdateSubscriberPreferencePayload
   ) {
-    return await this.http.patch(`/subscribers/preference/${templateId}`, {
-      ...data,
-    });
+    return await this.http.patch(
+      `/subscribers/${subscriberId}/preference/${templateId}`,
+      {
+        ...data,
+      }
+    );
   }
 
   async delete(subscriberId: string) {

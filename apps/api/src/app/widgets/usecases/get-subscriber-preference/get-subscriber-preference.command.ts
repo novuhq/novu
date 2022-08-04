@@ -5,4 +5,5 @@ export class GetSubscriberPreferenceCommand extends EnvironmentWithSubscriber {
   static create(data: GetSubscriberPreferenceCommand) {
     return CommandHelper.create<GetSubscriberPreferenceCommand>(GetSubscriberPreferenceCommand, data);
   }
+  subscriberId: string;
 }
