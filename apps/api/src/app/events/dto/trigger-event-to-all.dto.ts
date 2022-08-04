@@ -11,4 +11,8 @@ export class TriggerEventToAllDto {
   @IsString()
   @IsOptional()
   transactionId: string;
+
+  @IsObject()
+  @IsOptional()
+  overrides: Record<string, Record<string, unknown>>;
 }

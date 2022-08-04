@@ -2,7 +2,7 @@ import { NotificationTemplateEntity, SubscriberEntity, MessageRepository } from 
 import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
 import { SubscriberRepository } from '@novu/dal';
 
@@ -29,17 +29,17 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       steps: [
         {
           active: true,
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Welcome to {{organizationName}}' as string,
         },
         {
           active: true,
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Welcome to {{organizationName}}' as string,
         },
         {
           active: false,
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Welcome to {{organizationName}}' as string,
         },
       ],

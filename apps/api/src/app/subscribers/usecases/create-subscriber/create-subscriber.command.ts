@@ -1,4 +1,5 @@
-import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
+import { IChannelSettings } from '@novu/dal';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
