@@ -1,7 +1,6 @@
 # Slack
 
 On some channels as the Direct one, the user will need to add his provider integration credentials in order to provide Novu the right authorization to send the notification by his behave.
-<!-- @djabarovgeorge did you mean `on their behalf` ? sorry, not sure I understand.-->
 
 We will provide the basic flow that the user needs to perform in order to successfully send notifications via the Direct channel.
 
