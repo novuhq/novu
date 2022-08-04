@@ -57,7 +57,7 @@ describe('GET /widget/subscriber-preference', function () {
     };
 
     const response = (await updateSubscriberPreference(updateDataEmailFalse, session.subscriberToken, template._id))
-      .data.data[0];
+      .data.data;
 
     expect(response.preference.enabled).to.equal(true);
     expect(response.preference.channels.email).to.equal(false);
