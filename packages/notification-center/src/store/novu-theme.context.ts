@@ -1,4 +1,5 @@
 import React from 'react';
+import { IStyleButtons } from '@novu/shared';
 import { ColorScheme } from '../index';
 import { ICommonTheme } from './novu-theme-provider.context';
 
@@ -59,6 +60,7 @@ export interface IThemeNotificationListItem {
     notificationItemBeforeBrandColor?: string;
     timeMarkFontColor?: string;
   };
+  buttons: IStyleButtons;
 }
 
 export interface IThemeFooter {

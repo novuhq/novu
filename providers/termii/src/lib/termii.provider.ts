@@ -4,7 +4,12 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import { SmsParams, MessageChannel, SmsJsonResponse, AnyObject } from '../types/sms';
+import {
+  SmsParams,
+  MessageChannel,
+  SmsJsonResponse,
+  AnyObject,
+} from '../types/sms';
 
 if (!globalThis.fetch) {
   // eslint-disable-next-line global-require
@@ -16,15 +21,14 @@ export * from '../types/sms';
 export class TermiiSmsProvider implements ISmsProvider {
   public static readonly BASE_URL = 'https://api.ng.termii.com/api/sms/send';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  id='termii';
+  id = 'termii';
 
   constructor(
     private config: {
       apiKey: string;
       from?: string;
     }
-  ) {
-  }
+  ) {}
 
   async sendMessage(
     options: ISmsOptions
@@ -43,15 +47,15 @@ export class TermiiSmsProvider implements ISmsProvider {
       headers: {
         'Content-Type': ['application/json'],
       },
-      body: JSON.stringify(params)
-    }
+      body: JSON.stringify(params),
+    };
 
-    const response = await fetch(TermiiSmsProvider.BASE_URL, opts)
-    const body = await response.json() as SmsJsonResponse;
+    const response = await fetch(TermiiSmsProvider.BASE_URL, opts);
+    const body = (await response.json()) as SmsJsonResponse;
 
     return {
       id: body.message_id,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
     };
   }
 }

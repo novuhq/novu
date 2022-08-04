@@ -15,6 +15,9 @@ import { GetOrganizationData } from './usecases/get-organization-data/get-organi
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
+import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
 
 @Controller('/widgets')
 export class WidgetsController {
@@ -23,6 +26,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
+    private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
@@ -44,12 +48,24 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/feed')
-  async getNotificationsFeed(@SubscriberSession() subscriberSession: SubscriberEntity, @Query('page') page: number) {
+  async getNotificationsFeed(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query('page') page: number,
+    @Query('feedIdentifier') feedId: string[] | string,
+    @Query('seen') seen = undefined
+  ) {
+    let feedsQuery: string[];
+    if (feedId) {
+      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    }
+
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
       page,
+      feedId: feedsQuery,
+      seen,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -57,11 +73,22 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/unseen')
-  async getUnseenCount(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<{ count: number }> {
+  async getUnseenCount(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query('feedIdentifier') feedId: string[] | string,
+    @Query('seen') seen: boolean
+  ): Promise<{ count: number }> {
+    let feedsQuery: string[];
+    if (feedId) {
+      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    }
+
     const command = GetUnseenCountCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
       environmentId: subscriberSession._environmentId,
+      feedId: feedsQuery,
+      seen,
     });
 
     return await this.genUnseenCountUsecase.execute(command);
@@ -81,6 +108,27 @@ export class WidgetsController {
     });
 
     return await this.markMessageAsSeenUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/:messageId/actions/:type')
+  async markActionAsSeen(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('messageId') messageId: string,
+    @Param('type') type: ButtonTypeEnum,
+    @Body() body: { payload: any; status: MessageActionStatusEnum } // eslint-disable-line @typescript-eslint/no-explicit-any
+  ): Promise<MessageEntity> {
+    return await this.updateMessageActionsUsecase.execute(
+      UpdateMessageActionsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession._id,
+        environmentId: subscriberSession._environmentId,
+        messageId,
+        type,
+        payload: body.payload,
+        status: body.status,
+      })
+    );
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

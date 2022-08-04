@@ -88,6 +88,7 @@ export class UpdateNotificationTemplate {
               userId: command.userId,
               contentType: message.template.contentType,
               cta: message.template.cta,
+              feedId: message.template.feedId ? message.template.feedId : null,
               subject: message.template.subject,
               parentChangeId,
             })
@@ -99,6 +100,7 @@ export class UpdateNotificationTemplate {
             filters: message.filters,
             _parentId: parentStepId,
             active: message.active,
+            metadata: message.metadata,
           });
         } else {
           const template = await this.createMessageTemplate.execute(
@@ -111,6 +113,7 @@ export class UpdateNotificationTemplate {
               contentType: message.template.contentType,
               userId: command.userId,
               cta: message.template.cta,
+              feedId: message.template.feedId,
               subject: message.template.subject,
               parentChangeId,
             })
@@ -123,6 +126,7 @@ export class UpdateNotificationTemplate {
             filters: message.filters,
             _parentId: parentStepId,
             active: message.active,
+            metadata: message.metadata,
           });
         }
         parentStepId = stepId;

@@ -1,18 +1,20 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, IAuthContext, INovuProviderContext } from '../../index';
+import { ColorScheme, IAuthContext, INovuProviderContext, IStore } from '../../index';
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
-import { useSocket, useUnseenController } from '../../hooks';
+import { NotificationsProvider, useApi, useSocket, useUnseenController } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
-import { useApi } from '../../hooks/use-api.hook';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
+import { NovuI18NProvider } from '../../store/i18n.context';
+import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
 
 interface INovuProviderProps {
+  stores?: IStore[];
   children: React.ReactNode;
   backendUrl?: string;
   subscriberId?: string;
@@ -21,6 +23,7 @@ interface INovuProviderProps {
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash?: string;
+  i18n?: I18NLanguage | ITranslationEntry;
 }
 
 let api: ApiService;
@@ -36,6 +39,8 @@ export function NovuProvider(props: INovuProviderProps) {
     if (api?.isAuthenticated) setIsSessionInitialized(api?.isAuthenticated);
   }, [api?.isAuthenticated]);
 
+  const stores = props.stores ?? [{ storeId: 'default_store' }];
+
   return (
     <NovuContext.Provider
       value={{
@@ -46,14 +51,19 @@ export function NovuProvider(props: INovuProviderProps) {
         socketUrl: socketUrl,
         onLoad: props.onLoad,
         subscriberHash: props.subscriberHash,
+        stores,
       }}
     >
       <ApiContext.Provider value={{ api }}>
         <AuthProvider>
           <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
-            <SocketInitialization>
-              <UnseenProvider>{props.children}</UnseenProvider>
-            </SocketInitialization>
+            <NotificationsProvider>
+              <SocketInitialization>
+                <NovuI18NProvider i18n={props.i18n}>
+                  <UnseenProvider>{props.children}</UnseenProvider>
+                </NovuI18NProvider>
+              </SocketInitialization>
+            </NotificationsProvider>
           </SessionInitialization>
         </AuthProvider>
       </ApiContext.Provider>
@@ -73,7 +83,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
-    if (props.subscriberId && props.applicationIdentifier) {
+    if (props?.subscriberId && props?.applicationIdentifier) {
       (async (): Promise<void> => {
         await initSession({
           clientId: props.applicationIdentifier,
@@ -82,7 +92,7 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
         });
       })();
     }
-  }, [props.subscriberId, props.applicationIdentifier]);
+  }, [props?.subscriberId, props?.applicationIdentifier]);
 
   async function initSession(payload: { clientId: string; data: { subscriberId: string }; subscriberHash: string }) {
     if ('parentIFrame' in window) {

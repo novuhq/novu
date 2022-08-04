@@ -69,6 +69,7 @@ export class TriggerEvent {
     }
 
     const steps = matchMessageWithFilters(template.steps, command.payload);
+
     this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
       _template: template._id,
       _organization: command.organizationId,
@@ -90,6 +91,7 @@ export class TriggerEvent {
     return {
       acknowledged: true,
       status: 'processed',
+      transactionId: command.transactionId,
     };
   }
 
@@ -165,11 +167,35 @@ export class TriggerEvent {
       const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
       if (!subscriberIdExists) {
-        await this.logSubscriberIdMissing(command);
+        this.logSubscriberIdMissing(command);
+
         throw new ApiException(
           'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
         );
       }
+    }
+
+    return true;
+  }
+
+  public async validateTransactionIdProperty(
+    transactionId: string,
+    organizationId: string,
+    environmentId: string
+  ): Promise<boolean> {
+    const found = await this.jobRepository.findOne(
+      {
+        transactionId,
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+      },
+      '_id'
+    );
+
+    if (found) {
+      throw new ApiException(
+        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
+      );
     }
 
     return true;

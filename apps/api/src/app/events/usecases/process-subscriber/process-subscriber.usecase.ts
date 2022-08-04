@@ -6,14 +6,16 @@ import {
   SubscriberEntity,
   JobEntity,
   JobStatusEnum,
+  NotificationStepEntity,
 } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
-import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { ISubscribersDefine } from '@novu/node';
+import { FilterSteps } from '../filter-steps/filter-steps.usecase';
+import { FilterStepsCommand } from '../filter-steps/filter-steps.command';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -22,7 +24,8 @@ export class ProcessSubscriber {
     private notificationRepository: NotificationRepository,
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private filterSteps: FilterSteps
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
@@ -35,12 +38,19 @@ export class ProcessSubscriber {
 
     const notification = await this.createNotification(command, template._id, subscriber);
 
-    const steps = matchMessageWithFilters(
-      template.steps.filter((step) => step.active === true),
-      command.payload
+    const steps: NotificationStepEntity[] = await this.filterSteps.execute(
+      FilterStepsCommand.create({
+        subscriberId: subscriber._id,
+        payload: command.payload,
+        steps: template.steps,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        templateId: template._id,
+      })
     );
 
-    await this.createLogUsecase.execute(
+    this.createLogUsecase.execute(
       CreateLogCommand.create({
         transactionId: command.transactionId,
         status: LogStatusEnum.INFO,
@@ -67,6 +77,9 @@ export class ProcessSubscriber {
         _userId: command.userId,
         _subscriberId: subscriber._id,
         status: JobStatusEnum.PENDING,
+        _templateId: notification._templateId,
+        digest: step.metadata,
+        type: step.template.type,
       };
     });
   }

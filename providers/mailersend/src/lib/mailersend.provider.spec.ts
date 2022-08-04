@@ -21,6 +21,7 @@ test('should trigger mailerSend with expected parameters', async () => {
   const spy = jest
     .spyOn(provider, 'sendMessage')
     .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
     });
   const response = await provider.sendMessage(mockNovuMessage);
@@ -46,6 +47,7 @@ test('should trigger mailerSend correctly', async () => {
   const spy = jest
     .spyOn(MailerSend.prototype, 'request')
     .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
     });
   const response = await provider.sendMessage(mockNovuMessage);

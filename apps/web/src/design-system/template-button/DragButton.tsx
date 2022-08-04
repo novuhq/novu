@@ -17,6 +17,7 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
   return (
     <>
       <Button
+        type={'button'}
         sx={{
           background: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
           border: `1px dashed ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
@@ -68,7 +69,7 @@ const StyledContentWrapper = styled.div`
   padding-right: 10px;
 `;
 
-const Button = styled(UnstyledButton)`
+const Button: any = styled(UnstyledButton)`
   position: relative;
   margin-bottom: 0;
 

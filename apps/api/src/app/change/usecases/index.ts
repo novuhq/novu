@@ -7,6 +7,8 @@ import { GetChanges } from './get-changes/get-changes.usecase';
 import { BulkApplyChange } from './bulk-apply-change/bulk-apply-change.usecase';
 import { CountChanges } from './count-changes/count-changes.usecase';
 import { PromoteNotificationGroupChange } from './promote-notification-group-change/promote-notification-group-change';
+import { UpdateChange } from './update-change/update-change';
+import { PromoteFeedChange } from './promote-feed-change/promote-feed-change';
 export const USE_CASES = [
   CreateChange,
   PromoteChangeToEnvironment,
@@ -17,4 +19,6 @@ export const USE_CASES = [
   BulkApplyChange,
   CountChanges,
   PromoteNotificationGroupChange,
+  PromoteFeedChange,
+  UpdateChange,
 ];

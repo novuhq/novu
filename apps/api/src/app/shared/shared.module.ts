@@ -15,11 +15,12 @@ import {
   IntegrationRepository,
   ChangeRepository,
   JobRepository,
+  FeedRepository,
 } from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { MailService } from './services/mail/mail.service';
 import { QueueService } from './services/queue';
-import { StorageService } from './services/storage/storage.service';
+import { GCSStorageService, S3StorageService, StorageService } from './services/storage/storage.service';
 
 const DAL_MODELS = [
   UserRepository,
@@ -36,6 +37,7 @@ const DAL_MODELS = [
   IntegrationRepository,
   ChangeRepository,
   JobRepository,
+  FeedRepository,
 ];
 
 const dalService = new DalService();
@@ -58,7 +60,10 @@ const PROVIDERS = [
     },
   },
   ...DAL_MODELS,
-  StorageService,
+  {
+    provide: StorageService,
+    useClass: process.env.STORAGE_SERVICE === 'GCS' ? GCSStorageService : S3StorageService,
+  },
   {
     provide: ANALYTICS_SERVICE,
     useFactory: async () => {

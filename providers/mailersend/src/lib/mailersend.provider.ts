@@ -6,6 +6,7 @@ import {
 } from '@novu/stateless';
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
+
 export class MailersendEmailProvider implements IEmailProvider {
   readonly id = 'mailersend';
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import {
   ChannelTypeEnum,
+  DigestUnitEnum,
   ICreateNotificationTemplateDto,
   IMessageTemplate,
   INotificationTemplate,
@@ -88,6 +89,15 @@ export function useTemplateController(templateId: string) {
               ...item.template,
               htmlContent: item.template.content as string,
               content: [],
+            },
+          };
+        }
+        if (item.template.type === ChannelTypeEnum.IN_APP) {
+          return {
+            ...item,
+            template: {
+              ...item.template,
+              feedId: item.template._feedId || '',
             },
           };
         }
@@ -225,6 +235,12 @@ export interface StepEntity {
   filters?: any[];
 
   active: boolean;
+
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnitEnum;
+    digestKey?: string;
+  };
 }
 
 export interface IForm {

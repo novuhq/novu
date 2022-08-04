@@ -62,6 +62,7 @@ export class CreateNotificationTemplate {
           userId: command.userId,
           cta: message.template.cta,
           subject: message.template.subject,
+          feedId: message.template.feedId,
           parentChangeId,
         })
       );
@@ -72,6 +73,7 @@ export class CreateNotificationTemplate {
         _templateId: template._id,
         filters: message.filters,
         _parentId: parentStepId,
+        metadata: message.metadata,
       });
       parentStepId = stepId;
     }
