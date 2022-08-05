@@ -75,4 +75,26 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('error-alert-banner').contains('Wrong credentials');
     });
   });
+
+  describe('Logout', function () {
+    beforeEach(function () {
+      cy.task('clearDatabase');
+      cy.seed();
+    });
+
+    it('should logout user when auth token is expired', function () {
+      // login the user
+      cy.visit('/auth/login');
+      cy.getByTestId('email').type('test-user-1@example.com');
+      cy.getByTestId('password').type('123qwe!@#');
+      cy.getByTestId('submit-btn').click();
+
+      // setting current time in future, to simulate expired token
+      var todaysDate = new Date();
+      todaysDate.setDate(todaysDate.getDate() + 30); // iat - exp = 30 days
+      cy.clock(todaysDate);
+
+      cy.visit('/templates');
+    })
+  })
 });

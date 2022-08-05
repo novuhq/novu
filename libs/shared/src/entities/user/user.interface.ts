@@ -17,4 +17,5 @@ export interface IJwtPayload {
   organizationId?: string;
   environmentId?: string;
   roles?: string[];
+  exp: number;
 }

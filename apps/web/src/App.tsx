@@ -194,6 +194,11 @@ function RequiredAuth({ children }: any) {
     window.location.reload();
   }
 
+  // Logout if token.exp is in the past (expired)
+  if (payload && payload.exp && payload.exp <= Date.now() / 1000) {
+    logout();
+  }
+
   if (!getToken()) {
     return <Navigate to="/auth/login" replace />;
   } else if (!jwtHasKey('organizationId') || !jwtHasKey('environmentId')) {
