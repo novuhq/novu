@@ -13,7 +13,7 @@ const envFileMapper = {
 };
 const selectedEnvFile = envFileMapper[process.env.NODE_ENV] || '.env';
 
-const path = `${__dirname}/../${selectedEnvFile}`;
+const path = `${__dirname}/src/${selectedEnvFile}`;
 
 const { error } = dotenv.config({ path });
 if (error && !process.env.LAMBDA_TASK_ROOT) throw error;

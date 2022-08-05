@@ -92,7 +92,7 @@
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",
-    "typescript": "4.6.2",
+    "typescript": "4.3.5",
     "globby": "^12.0.2",
     "meow": "^10.1.1",
     "mississippi": "^4.0.0",

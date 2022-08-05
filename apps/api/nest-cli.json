@@ -26,6 +26,18 @@
     ],
     "plugins": [
       "@nestjs/swagger"
-    ]
+    ],
+    "webpack": true
+  },
+  "projects": {
+    "dal": {
+      "type": "library",
+      "root": "../../../libs/dal",
+      "entryFile": "index",
+      "sourceRoot": "../../../libs/dal/src",
+      "compilerOptions": {
+        "tsConfigPath": "../../../libs/dal/tsconfig.build.json"
+      }
+    }
   }
 }
