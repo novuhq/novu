@@ -197,6 +197,8 @@ function RequiredAuth({ children }: any) {
   // Logout if token.exp is in the past (expired)
   if (payload && payload.exp && payload.exp <= Date.now() / 1000) {
     logout();
+
+    return null;
   }
 
   if (!getToken()) {
