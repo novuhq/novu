@@ -19,10 +19,9 @@ export const Security = () => {
   >(updateWidgetSettings);
 
   useEffect(() => {
-    if (environment?.widget?.notificationCenterEncryption) {
-      setIsHmacEnabled(environment.widget.notificationCenterEncryption);
-    }
-  }, []);
+    const isHmacEnabledEnv = environment?.widget?.notificationCenterEncryption ?? false;
+    setIsHmacEnabled(isHmacEnabledEnv);
+  }, [environment]);
 
   async function handlerSwitchChange() {
     const newIsHmacEnabled = !isHmacEnabled;
