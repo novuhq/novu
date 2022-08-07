@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as moment from 'moment';
 
-describe('Password reset - /auth/reset (POST)', async () => {
+describe.only('Password reset - /auth/reset (POST)', async () => {
   let session: UserSession;
   const userRepository = new UserRepository();
 
