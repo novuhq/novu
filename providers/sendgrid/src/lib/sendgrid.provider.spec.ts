@@ -1,4 +1,4 @@
-import sendgridMail from '@sendgrid/mail';
+import sendgridMail, { MailService } from '@sendgrid/mail';
 import { SendgridEmailProvider } from './sendgrid.provider';
 
 const mockConfig = {
@@ -18,10 +18,12 @@ const mockNovuMessage = {
 
 test('should trigger sendgrid correctly', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
-  const spy = jest.spyOn(sendgridMail, 'send').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return {} as any;
-  });
+  const spy = jest
+    .spyOn(MailService.prototype, 'send')
+    .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return {} as any;
+    });
 
   await provider.sendMessage(mockNovuMessage);
 

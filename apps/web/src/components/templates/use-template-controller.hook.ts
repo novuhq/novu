@@ -17,6 +17,7 @@ import { useTemplateFetcher } from './use-template.fetcher';
 import { QueryKeys } from '../../api/query.keys';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { useFieldArrayContext } from './FieldArrayProvider';
+import { successMessage } from '../../utils/notifications';
 
 export function useTemplateController(templateId: string) {
   const {
@@ -157,10 +158,7 @@ export function useTemplateController(templateId: string) {
         reset(payload);
         setIsDirty(false);
         await client.refetchQueries(QueryKeys.changesCount);
-        showNotification({
-          message: 'Template saved successfully',
-          color: 'green',
-        });
+        successMessage('Template saved successfully');
       }
     } catch (e: any) {
       Sentry.captureException(e);
