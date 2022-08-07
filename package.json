@@ -10,6 +10,7 @@
     "setup:project": "npx pnpm@7.3.0 i && node scripts/setup-env-files.js && npx pnpm build",
     "commit": "cz",
     "nx": "nx",
+    "lint-staged": "lint-staged",
     "generate:provider": "npx hygen provider new",
     "lint": "nx run-many --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
