@@ -1,5 +1,6 @@
 describe('Notifications List', function () {
   beforeEach(function () {
+    cy.intercept('**/notifications/feed?page=0').as('getNotifications');
     cy.initializeSession()
       .as('session')
       .then((session: any) => {
@@ -19,6 +20,7 @@ describe('Notifications List', function () {
   });
 
   it('should show list of current notifications', function () {
+    cy.wait('@getNotifications');
     cy.getByTestId('notification-list-item').should('have.length', 5);
     cy.getByTestId('notification-list-item')
       .first()

@@ -9,7 +9,6 @@ describe('User Preferences', function () {
         res.body.data[0].preference.channels.push = false;
         res.body.data[1].template.critical = false;
 
-        console.log('res', res);
         res.send({ body: res.body });
       });
     });
@@ -42,7 +41,7 @@ describe('User Preferences', function () {
     cy.getByTestId('notification-list-item').should('have.length', 1);
   });
 
-  it('should not send in app after user disables in app channel', function () {
+  it.skip('should not send in app after user disables in app channel', function () {
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
