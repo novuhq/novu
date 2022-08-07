@@ -22,8 +22,8 @@ export class AnalyticsService {
     if (!this.analyticsEnabled) return;
 
     this.mixpanel.people.set(distinctId, {
-      $first_name: user.firstName,
-      $last_name: user.lastName,
+      $first_name: user.firstName || '',
+      $last_name: user.lastName || '',
       $created: user.createdAt || new Date(),
       $email: user.email,
       userId: user._id,
@@ -33,7 +33,7 @@ export class AnalyticsService {
   setValue(userId: string, propertyName: string, value: string | number) {
     if (!this.analyticsEnabled) return;
 
-    this.mixpanel.people.set(userId, propertyName, value);
+    this.mixpanel.people.set(userId, propertyName, value || '');
   }
 
   track(name: string, userId: string, data: Record<string, unknown> = {}) {
