@@ -1,26 +1,20 @@
 describe('Notifications List', function () {
   beforeEach(function () {
-    cy.intercept('**/notifications/feed?page=0').as('getNotifications');
     cy.initializeSession()
       .as('session')
       .then((session: any) => {
         cy.wait(500);
 
-        return cy
-          .task('createNotifications', {
-            identifier: session.templates[0].triggers[0].identifier,
-            token: session.token,
-            subscriberId: session.subscriber.subscriberId,
-            count: 5,
-          })
-          .then(() => {
-            return cy.initializeWidget(session);
-          });
+        return cy.task('createNotifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 5,
+        });
       });
   });
 
   it('should show list of current notifications', function () {
-    cy.wait('@getNotifications');
     cy.getByTestId('notification-list-item').should('have.length', 5);
     cy.getByTestId('notification-list-item')
       .first()
@@ -33,7 +27,6 @@ describe('Notifications List', function () {
   });
 
   it('should update real time for new notifications', function () {
-    cy.wait('@getNotifications');
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
@@ -51,7 +44,7 @@ describe('Notifications List', function () {
       subscriberId: this.session.subscriber.subscriberId,
       count: 1,
     });
-    cy.wait('@getNotifications');
+
     cy.getByTestId('unseen-count-label').contains('9');
   });
 
@@ -82,7 +75,6 @@ describe('Notifications List', function () {
   });
 
   it('toggle seen state on click of notification', function () {
-    cy.wait('@getNotifications');
     cy.getByTestId('unseen-count-label').contains('5');
     cy.intercept('**/messages/**/seen').as('seenRequest');
     cy.getByTestId('notification-list-item').first().click();
