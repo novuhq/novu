@@ -33,6 +33,7 @@ describe('Notifications List', function () {
   });
 
   it('should update real time for new notifications', function () {
+    cy.wait('@getNotifications');
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
@@ -80,6 +81,7 @@ describe('Notifications List', function () {
   });
 
   it('toggle seen state on click of notification', function () {
+    cy.wait('@getNotifications');
     cy.getByTestId('unseen-count-label').contains('5');
     cy.intercept('**/messages/**/seen').as('seenRequest');
     cy.getByTestId('notification-list-item').first().click();
