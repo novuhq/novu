@@ -6,7 +6,7 @@ sidebar_position: 1
 
 ## Requirements
 
-- Node.js version v14.19.3
+- Node.js version v16.15.1
 - MongoDB
 - Redis
 - **(Optional)** pnpm - Needed if you want to install new packages
