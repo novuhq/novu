@@ -1,5 +1,6 @@
 import { EN } from './languages/en';
 import { FI } from './languages/fi';
+import { FR } from './languages/fr';
 import { HI } from './languages/hi';
 import { SP } from './languages/sp';
 
@@ -18,7 +19,8 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
   fi: FI,
   hi: HI,
-  sp: SP
+  sp: SP,
+  fr: FR
 };
 
 /**
@@ -29,5 +31,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * - For English use "en"
  * - For French use "fr"
  * - For Hindi use "hi"
+ * - For Spanish use "sp"
+ * - For French use "fr"
  */
-export type I18NLanguage = 'en' | 'fi' | 'hi' | 'sp';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'sp' | 'fr';
