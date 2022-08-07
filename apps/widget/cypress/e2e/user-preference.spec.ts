@@ -23,20 +23,6 @@ describe('User Preferences', function () {
       });
     });
     cy.initializeSession().as('session');
-    // .then((session: any) => {
-    //   cy.wait(500);
-    //
-    //   return cy
-    //     .task('createNotifications', {
-    //       identifier: session.templates[0].triggers[0].identifier,
-    //       token: session.token,
-    //       subscriberId: session.subscriber.subscriberId,
-    //       count: 1,
-    //     })
-    //     .then(() => {
-    //       return cy.initializeWidget(session);
-    //     });
-    // });
   });
 
   it('should navigate between notifications and user preference screens', function () {
@@ -64,7 +50,6 @@ describe('User Preferences', function () {
       count: 1,
     });
 
-    // cy.intercept('**/notifications/feed?page=0').as('getNotifications');
     cy.wait('@getNotifications');
     cy.getByTestId('notification-list-item').should('have.length', 1);
 
