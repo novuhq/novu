@@ -120,6 +120,9 @@ notificationTemplateSchema.virtual('steps.template', {
   justOne: true,
 });
 
+notificationTemplateSchema.path('steps').schema.set('toJSON', { virtuals: true });
+notificationTemplateSchema.path('steps').schema.set('toObject', { virtuals: true });
+
 notificationTemplateSchema.virtual('notificationGroup', {
   ref: 'NotificationGroup',
   localField: '_notificationGroupId',

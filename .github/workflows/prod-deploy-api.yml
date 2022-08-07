@@ -41,6 +41,14 @@ jobs:
         with:
           mongodb-version: 4.2.8
 
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.3.0
+          run_install: false
+
+      - name: Install root dependencies
+        run: pnpm --filter novuhq install
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
@@ -51,11 +59,14 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/api/Dockerfile .
+          cd apps/api && DOCKER_BUILDKIT=1 npm run docker:build
+          docker tag novu-api ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
+          docker tag novu-api ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
+          docker tag novu-api ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          
           docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1337/v1/health-check | grep 'ok'
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
+
           docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
           docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
