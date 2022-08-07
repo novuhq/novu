@@ -93,6 +93,7 @@ export class UpdateNotificationTemplate {
               cta: message.template.cta,
               feedId: message.template.feedId ? message.template.feedId : null,
               subject: message.template.subject,
+              title: message.template.title,
               parentChangeId,
             })
           );
@@ -118,6 +119,7 @@ export class UpdateNotificationTemplate {
               cta: message.template.cta,
               feedId: message.template.feedId,
               subject: message.template.subject,
+              title: message.template.title,
               parentChangeId,
             })
           );

@@ -80,11 +80,17 @@ export function ActivitiesPage() {
       accessor: 'template',
       Header: 'Template Name',
       Cell: ({ template }: any) => (
-        <Tooltip label={template.name}>
-          <Text data-test-id="row-template-name" rows={1}>
-            {template.name}
-          </Text>
-        </Tooltip>
+        <>
+          {template ? (
+            <Tooltip label={template.name}>
+              <Text data-test-id="row-template-name" rows={1}>
+                {template.name}
+              </Text>
+            </Tooltip>
+          ) : (
+            'Deleted Template'
+          )}
+        </>
       ),
     },
     {
@@ -99,9 +105,10 @@ export function ActivitiesPage() {
     {
       accessor: 'recipient',
       Header: 'Recipient',
-      Cell: ({ channel, email, phone }: any) => (
+      Cell: ({ channel, email, phone, notificationIdentifiers }: any) => (
         <Text rows={1}>
-          {channel === ChannelTypeEnum.EMAIL ? email : ''} {channel === ChannelTypeEnum.SMS ? phone : ''}
+          {channel === ChannelTypeEnum.EMAIL ? email : ''} {channel === ChannelTypeEnum.SMS ? phone : ''}{' '}
+          {channel === ChannelTypeEnum.PUSH ? notificationIdentifiers.join(',') : ''}
         </Text>
       ),
     },
@@ -125,9 +132,31 @@ export function ActivitiesPage() {
               <Tag data-test-id="row-sms-channel">SMS</Tag>
             </Tooltip>
           ) : null}
+          {channel === ChannelTypeEnum.PUSH ? (
+            <Tooltip label="Delivered on Push Channel">
+              <Tag data-test-id="row-sms-channel">Push</Tag>
+            </Tooltip>
+          ) : null}
+          {channel === ChannelTypeEnum.DIRECT ? (
+            <Tooltip label="Delivered on Direct Channel">
+              <Tag data-test-id="row-direct-channel">Direct</Tag>
+            </Tooltip>
+          ) : null}
         </>
       ),
     },
+    {
+      accessor: 'providerId',
+      Header: 'Provider',
+      Cell: ({ providerId }: any) => {
+        return (
+          <Text data-test-id="provider-id" rows={1}>
+            {providerId ? capitalize(providerId) : ''}
+          </Text>
+        );
+      },
+    },
+
     {
       accessor: 'createdAt',
       Header: 'Sent On',
@@ -158,6 +187,7 @@ export function ActivitiesPage() {
                     { value: ChannelTypeEnum.SMS, label: 'SMS' },
                     { value: ChannelTypeEnum.EMAIL, label: 'Email' },
                     { value: ChannelTypeEnum.IN_APP, label: 'In-App' },
+                    { value: ChannelTypeEnum.PUSH, label: 'Push' },
                   ]}
                   data-test-id="activities-filter"
                   {...field}

@@ -1,9 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useApi } from './use-api.hook';
 import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { NotificationsContext } from '../store/notifications.context';
-import { IAuthContext } from '../index';
-import { AuthContext } from '../store/auth.context';
 import { useNovuContext } from './use-novu-context.hook';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
@@ -13,13 +11,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const [page, setPage] = useState<Map<string, number>>(new Map([['default_store', 0]]));
   const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['default_store', true]]));
   const [fetching, setFetching] = useState<boolean>(false);
-  const { token } = useContext<IAuthContext>(AuthContext);
-
-  useEffect(() => {
-    if (!api?.isAuthenticated || !token) return;
-
-    fetchPage(0, true);
-  }, [api?.isAuthenticated, token]);
 
   async function fetchPage(pageToFetch: number, isRefetch = false, storeId = 'default_store') {
     setFetching(true);
@@ -64,20 +55,21 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     messageId: string,
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
-    payload?: Record<string, unknown>,
-    storeId = 'default_store'
+    payload?: Record<string, unknown>
   ) {
     await api.updateAction(messageId, actionButtonType, status, payload);
 
-    notifications[storeId] = notifications[storeId].map((message) => {
-      if (message._id === messageId) {
-        message.cta.action.status = MessageActionStatusEnum.DONE;
-      }
+    for (const storeId in notifications) {
+      notifications[storeId] = notifications[storeId].map((message) => {
+        if (message._id === messageId) {
+          message.cta.action.status = MessageActionStatusEnum.DONE;
+        }
 
-      return message;
-    });
+        return message;
+      });
+    }
 
-    setNotifications(notifications);
+    setNotifications(Object.assign({}, notifications));
   }
 
   async function refetch(storeId = 'default_store') {

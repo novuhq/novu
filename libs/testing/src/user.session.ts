@@ -6,7 +6,7 @@ import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 import { TriggerRecipientsType } from '@novu/node';
 
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   UserRepository,
@@ -231,7 +231,7 @@ export class UserSession {
     return await service.createIntegration(this.environment._id, this.organization._id);
   }
 
-  async createChannelTemplate(channel: ChannelTypeEnum) {
+  async createChannelTemplate(channel: StepTypeEnum) {
     const service = new NotificationTemplateService(this.user._id, this.organization._id, this.environment._id);
 
     return await service.createTemplate({
@@ -239,7 +239,7 @@ export class UserSession {
         {
           type: channel,
           content:
-            channel === ChannelTypeEnum.EMAIL
+            channel === StepTypeEnum.EMAIL
               ? [
                   {
                     type: 'text',
@@ -299,7 +299,7 @@ export class UserSession {
     do {
       runningJobs = await this.jobRepository.count({
         type: {
-          $nin: [ChannelTypeEnum.DIGEST],
+          $nin: [StepTypeEnum.DIGEST],
         },
         _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
         status: {

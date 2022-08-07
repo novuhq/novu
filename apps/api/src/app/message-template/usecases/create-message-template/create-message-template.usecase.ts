@@ -23,6 +23,7 @@ export class CreateMessageTemplate {
       content: command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content,
       contentType: command.contentType,
       subject: command.subject,
+      title: command.title,
       type: command.type,
       _feedId: command.feedId ? command.feedId : null,
       _organizationId: command.organizationId,

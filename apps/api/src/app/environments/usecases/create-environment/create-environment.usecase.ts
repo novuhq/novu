@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import * as hat from 'hat';
 import { nanoid } from 'nanoid';
+// eslint-disable-next-line max-len
 import { CreateNotificationGroupCommand } from '../../../notification-groups/usecases/create-notification-group/create-notification-group.command';
 import { CreateNotificationGroup } from '../../../notification-groups/usecases/create-notification-group/create-notification-group.usecase';
 import { CreateEnvironmentCommand } from './create-environment.command';

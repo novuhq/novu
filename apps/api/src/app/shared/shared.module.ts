@@ -21,7 +21,7 @@ import {
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { MailService } from './services/mail/mail.service';
 import { QueueService } from './services/queue';
-import { StorageService } from './services/storage/storage.service';
+import { GCSStorageService, S3StorageService, StorageService } from './services/storage/storage.service';
 
 const DAL_MODELS = [
   UserRepository,
@@ -62,7 +62,10 @@ const PROVIDERS = [
     },
   },
   ...DAL_MODELS,
-  StorageService,
+  {
+    provide: StorageService,
+    useClass: process.env.STORAGE_SERVICE === 'GCS' ? GCSStorageService : S3StorageService,
+  },
   {
     provide: ANALYTICS_SERVICE,
     useFactory: async () => {

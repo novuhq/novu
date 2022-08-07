@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ChangeRepository,
   NotificationTemplateRepository,
@@ -5,7 +6,7 @@ import {
   NotificationGroupRepository,
   EnvironmentRepository,
 } from '@novu/dal';
-import { ChannelCTATypeEnum, ChannelTypeEnum, ChangeEntityTypeEnum } from '@novu/shared';
+import { ChannelCTATypeEnum, StepTypeEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto } from '../../notification-template/dto';
@@ -52,7 +53,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -98,7 +99,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -183,7 +184,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -259,7 +260,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -362,7 +363,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -403,7 +404,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {

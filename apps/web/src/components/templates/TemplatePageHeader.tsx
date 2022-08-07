@@ -8,6 +8,7 @@ import { When } from '../utils/When';
 import { EditorPreviewSwitch } from './EditorPreviewSwitch';
 import { useStatusChangeControllerHook } from './use-status-change-controller.hook';
 import { useTemplateController } from './use-template-controller.hook';
+import { Direct } from '../../design-system/icons/general/Direct';
 
 const Header = ({ activePage, editMode }: { editMode: boolean; activePage: ActivePageEnum }) => {
   if (activePage === ActivePageEnum.SETTINGS) {
@@ -23,6 +24,14 @@ const Header = ({ activePage, editMode }: { editMode: boolean; activePage: Activ
 
   if (activePage === ActivePageEnum.EMAIL) {
     return <>{'Edit Email Template'}</>;
+  }
+
+  if (activePage === ActivePageEnum.PUSH) {
+    return <>{'Edit Push Template'}</>;
+  }
+
+  if (activePage === ActivePageEnum.DIRECT) {
+    return <>{'Edit Direct Template'}</>;
   }
 
   if (activePage === ActivePageEnum.IN_APP) {

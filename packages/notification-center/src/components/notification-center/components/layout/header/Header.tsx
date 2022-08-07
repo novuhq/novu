@@ -5,19 +5,19 @@ import React, { useContext } from 'react';
 import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
 import { INotificationCenterContext } from '../../../../../index';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
-import { I18NContext } from '../../../../../store/i18n.context';
+import { useTranslations } from '../../../../../hooks/use-translations';
 import { Cogs } from '../../../../../shared/icons';
 import { ScreensEnum } from '../Layout';
 
 export function Header({ unseenCount, setScreen }: { unseenCount: number; setScreen: (screen: ScreensEnum) => void }) {
   const { theme, common } = useNovuThemeProvider();
   const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
-  const { translations } = useContext(I18NContext);
+  const { t } = useTranslations();
 
   return (
     <HeaderWrapper>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-        <Text fontColor={theme.header.fontColor}>Notifications </Text>
+        <Text fontColor={theme.header.fontColor}>{t('notifications')}</Text>
         {!tabs && unseenCount && unseenCount > 0 ? (
           <Badge
             data-test-id="unseen-count-label"
@@ -45,7 +45,7 @@ export function Header({ unseenCount, setScreen }: { unseenCount: number; setScr
           <Cogs style={{ color: theme?.notificationItem?.seen?.timeMarkFontColor }} />
         </ActionIcon>
       </div>
-      <MarkReadAction style={{ display: 'none' }}>{translations.markAllAsRead}</MarkReadAction>
+      <MarkReadAction style={{ display: 'none' }}>{t('markAllAsRead')}</MarkReadAction>
     </HeaderWrapper>
   );
 }

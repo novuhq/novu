@@ -27,4 +27,23 @@ export enum CredentialsKeyEnum {
   From = 'from',
   // eslint-disable-next-line @typescript-eslint/naming-convention
   SenderName = 'senderName',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ApplicationId = 'applicationId',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ClientId = 'clientId',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ProjectName = 'projectName',
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum DirectProviderIdEnum {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  Slack = 'slack',
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  Discord = 'discord',
+}
+
+export enum PushProviderIdEnum {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  FCM = 'fcm',
 }
