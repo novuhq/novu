@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 import { useNovuContext } from '../../../../hooks';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { INovuTheme } from '../../../../store/novu-theme.context';
-import { UserPreference } from '../user-preference/UserPreference';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
+import { UserPreferenceScreen } from '../user-preference/UserPreferenceScreen';
 
 export enum ScreensEnum {
   NOTIFICATIONS = 'notifications',
@@ -25,7 +25,7 @@ export function Layout({ children }: { children: JSX.Element }) {
         <>
           <UserPreferenceHeader setScreen={setScreen} />
           <ContentWrapper>
-            <UserPreference />
+            <UserPreferenceScreen />
           </ContentWrapper>
         </>
       )}
