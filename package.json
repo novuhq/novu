@@ -94,7 +94,7 @@
     "lint-staged": "^10.5.4",
     "meow": "^10.1.1",
     "mississippi": "^4.0.0",
-    "pnpm": "^7.5.0",
+    "pnpm": "^6.34.0",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "stop-only": "^3.1.2",
@@ -135,7 +135,6 @@
     }
   },
   "engines": {
-    "pnpm": ">=7.0.0",
     "node": ">=13.0.0 <17.0.0"
   },
   "dependencies": {
