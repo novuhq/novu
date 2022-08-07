@@ -134,6 +134,10 @@
       "path": "./node_modules/cz-conventional-changelog"
     }
   },
+  "engines": {
+    "pnpm": ">=7.0.0",
+    "node": ">=13.0.0 <17.0.0"
+  },
   "dependencies": {
     "nx": "^14.4.0"
   }
