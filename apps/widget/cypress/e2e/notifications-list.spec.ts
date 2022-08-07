@@ -51,6 +51,7 @@ describe('Notifications List', function () {
       subscriberId: this.session.subscriber.subscriberId,
       count: 1,
     });
+    cy.wait('@getNotifications');
     cy.getByTestId('unseen-count-label').contains('9');
   });
 

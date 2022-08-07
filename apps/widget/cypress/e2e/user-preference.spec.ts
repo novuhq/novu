@@ -112,7 +112,7 @@ describe('User Preferences', function () {
       });
     });
     cy.wait('@getNotifications');
-    console.log('bla');
+
     cy.getByTestId('user-preference-cog').click();
     cy.wait(1000);
     openWorkflowItemByIndex(0)
