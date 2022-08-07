@@ -1,25 +1,24 @@
-import React, { useContext, useEffect, useState } from 'react';
-import styled from 'styled-components';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
-import { Accordion } from '@mantine/core';
-import { ChannelPreference } from './ChannelPreference';
-import { getChannel } from './channels';
 import { useApi } from '../../../../hooks';
-import { IAuthContext, IUserPreferenceSettings } from '../../../../index';
+import { Accordion } from '@mantine/core';
 import { accordionStyles, Text, TextBlock } from './styles';
-import { IPreferenceChannels } from '@novu/shared';
+import { ChannelPreference } from './ChannelPreference';
+import React, { useContext, useEffect, useState } from 'react';
+import { IAuthContext, IUserPreferenceSettings } from '../../../../index';
+import styled from 'styled-components';
+import { getChannel } from './channels';
 import { AuthContext } from '../../../../store/auth.context';
 
-export function UserPreference() {
+export function UserPreferenceScreen() {
   const { theme, common } = useNovuThemeProvider();
-  const { api } = useApi();
+  const baseTheme = theme?.notificationItem?.unseen;
   const { token } = useContext<IAuthContext>(AuthContext);
+  const { api } = useApi();
   const [settings, setSettings] = useState<IUserPreferenceSettings[]>([]);
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
-  const baseTheme = theme?.notificationItem?.unseen;
 
   useEffect(() => {
-    if (!token || !api?.isAuthenticated) return;
+    if (!api?.isAuthenticated || !token) return;
 
     (async () => {
       const result = await api.getUserPreference();
@@ -102,7 +101,7 @@ function WorkflowHeader({ label, channels, theme }) {
   );
 }
 
-function getEnabledChannels(channels: IPreferenceChannels) {
+function getEnabledChannels(channels) {
   const keys = Object.keys(channels);
   const list = keys.filter((key) => channels[key]).map((channel) => getChannel(channel).label);
 

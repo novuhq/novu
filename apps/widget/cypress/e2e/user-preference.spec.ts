@@ -1,5 +1,6 @@
 describe('User Preferences', function () {
   beforeEach(function () {
+    cy.intercept('**/notifications/feed?page=0').as('getNotifications');
     cy.intercept('**/preferences', (r) => {
       r.continue((res) => {
         if (!res.body?.data) return;
@@ -8,10 +9,34 @@ describe('User Preferences', function () {
         res.body.data[0].preference.channels.push = false;
         res.body.data[1].template.critical = false;
 
+        console.log('res', res);
+        res.send({ body: res.body });
+      });
+    });
+    cy.intercept('**/preference/**', (r) => {
+      r.continue((res) => {
+        if (!res.body?.data) return;
+
+        res.body.data.template.critical = false;
+
         res.send({ body: res.body });
       });
     });
     cy.initializeSession().as('session');
+    // .then((session: any) => {
+    //   cy.wait(500);
+    //
+    //   return cy
+    //     .task('createNotifications', {
+    //       identifier: session.templates[0].triggers[0].identifier,
+    //       token: session.token,
+    //       subscriberId: session.subscriber.subscriberId,
+    //       count: 1,
+    //     })
+    //     .then(() => {
+    //       return cy.initializeWidget(session);
+    //     });
+    // });
   });
 
   it('should navigate between notifications and user preference screens', function () {
@@ -39,7 +64,7 @@ describe('User Preferences', function () {
       count: 1,
     });
 
-    cy.intercept('**/notifications/feed?page=0').as('getNotifications');
+    // cy.intercept('**/notifications/feed?page=0').as('getNotifications');
     cy.wait('@getNotifications');
     cy.getByTestId('notification-list-item').should('have.length', 1);
 
@@ -77,6 +102,7 @@ describe('User Preferences', function () {
       cy.getByTestId('channel-preference-item').should('have.length', 3);
       cy.getByTestId('channel-preference-item-toggle').eq(0).should('be.checked');
       cy.getByTestId('channel-preference-item-toggle').eq(0).click();
+      cy.wait(1000);
 
       cy.getByTestId('channel-preference-item-toggle').eq(0).should('not.be.checked');
       cy.getByTestId('workflow-active-channels').should('not.contain', 'Email');
@@ -101,9 +127,10 @@ describe('User Preferences', function () {
         request.reply();
       });
     });
-
+    cy.wait('@getNotifications');
+    console.log('bla');
     cy.getByTestId('user-preference-cog').click();
-
+    cy.wait(1000);
     openWorkflowItemByIndex(0)
       .within(() => {
         cy.getByTestId('channel-preference-item-toggle').first().click();
