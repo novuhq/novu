@@ -5,7 +5,6 @@ import {
   IOrganizationEntity,
   ISubscriberJwt,
   MessageActionStatusEnum,
-  INotificationTemplate,
   IPreferenceChannels,
 } from '@novu/shared';
 
@@ -106,6 +105,6 @@ export interface IStoreQuery {
 }
 
 export interface IUserPreferenceSettings {
-  template: INotificationTemplate;
+  template: { _id: string; name: string; critical: boolean };
   preference: { enabled: boolean; channels: IPreferenceChannels };
 }
