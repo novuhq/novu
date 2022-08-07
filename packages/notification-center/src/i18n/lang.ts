@@ -2,6 +2,9 @@ import { EN } from './languages/en';
 import { FI } from './languages/fi';
 import { HI } from './languages/hi';
 import { SP } from './languages/sp';
+import { IT } from './languages/it';
+import { BN } from './languages/bn';
+import { RU } from './languages/ru';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -18,7 +21,10 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
   fi: FI,
   hi: HI,
-  sp: SP
+  sp: SP,
+  it: IT,
+  bn: BN,
+  ru: RU,
 };
 
 /**
@@ -29,5 +35,8 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * - For English use "en"
  * - For French use "fr"
  * - For Hindi use "hi"
+ * - For Italian use "it"
+ * - For Bengali use "bn"
+ * - For Russian use "ru"
  */
-export type I18NLanguage = 'en' | 'fi' | 'hi' | 'sp';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'sp' | 'it' | 'bn' | 'ru';
