@@ -1,5 +1,7 @@
 import { EN } from './languages/en';
 import { FI } from './languages/fi';
+import { HI } from './languages/hi';
+import { SP } from './languages/sp';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -15,6 +17,8 @@ export interface ITranslationEntry {
 export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
   fi: FI,
+  hi: HI,
+  sp: SP
 };
 
 /**
@@ -24,5 +28,6 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * For example:
  * - For English use "en"
  * - For French use "fr"
+ * - For Hindi use "hi"
  */
-export type I18NLanguage = 'en' | 'fi';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'sp';
