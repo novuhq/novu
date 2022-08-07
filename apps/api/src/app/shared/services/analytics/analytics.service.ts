@@ -2,6 +2,7 @@ import * as MixpanelInstance from 'mixpanel';
 
 import { Mixpanel } from 'mixpanel';
 import { UserEntity } from '@novu/dal';
+import { OrganizationEntity } from '@novu/dal';
 
 export class AnalyticsService {
   private mixpanel: Mixpanel;
@@ -10,6 +11,14 @@ export class AnalyticsService {
     if (process.env.MIXPANEL_TOKEN) {
       this.mixpanel = MixpanelInstance.init(process.env.MIXPANEL_TOKEN);
     }
+  }
+
+  upsertGroup(organizationId: string, organization: OrganizationEntity) {
+    if (!this.analyticsEnabled) return;
+
+    this.mixpanel.groups.set('_organization', organizationId, {
+      $name: organization.name,
+    });
   }
 
   alias(distinctId: string, userId: string) {
