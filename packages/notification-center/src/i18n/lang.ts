@@ -7,6 +7,7 @@ export interface ITranslationContent {
   readonly notifications: string;
   readonly markAllAsRead: string;
   readonly poweredBy: string;
+  readonly settings?: string;
 }
 
 export interface ITranslationEntry {
