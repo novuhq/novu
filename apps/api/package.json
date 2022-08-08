@@ -27,6 +27,7 @@
     "@google-cloud/storage": "^6.2.3",
     "@novu/fcm": "^0.5.1",
     "@novu/slack": "^0.5.1",
+    "@novu/discord": "^0.5.1",
     "@nestjs/axios": "0.1.0",
     "@nestjs/common": "9.0.2",
     "@nestjs/core": "9.0.2",

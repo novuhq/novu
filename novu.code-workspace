@@ -41,6 +41,10 @@
       "path": "libs/shared"
     },
     {
+      "name": "📦 @novu/testing",
+      "path": "libs/testing"
+    },
+    {
       "name": "📦 @novu/stateless",
       "path": "packages/stateless"
     },
@@ -87,6 +91,10 @@
     {
       "name": "🔔 @novu/slack",
       "path": "providers/slack"
+    },
+    {
+      "name": "🔔 @novu/discord",
+      "path": "providers/discord"
     }
   ],
   "settings": {

@@ -1,5 +1,5 @@
 import { useMantineTheme } from '@mantine/core';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFormState } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { colors, TemplateButton, Text } from '../../design-system';
 import { BellGradient, ConnectGradient, TapeGradient } from '../../design-system/icons';
@@ -16,9 +16,7 @@ export function TemplatesSideBar({
   showTriggerSection: boolean;
   showErrors: boolean;
 }) {
-  const {
-    formState: { errors },
-  } = useFormContext();
+  const { errors }: any = useFormState();
 
   const theme = useMantineTheme();
   const textColor = theme.colorScheme === 'dark' ? colors.B40 : colors.B70;

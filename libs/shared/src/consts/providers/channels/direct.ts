@@ -16,9 +16,8 @@ export const directProviders: IProviderConfig[] = [
     id: DirectProviderIdEnum.Discord,
     displayName: 'Discord',
     channel: ChannelTypeEnum.DIRECT,
-    credentials: {} as IConfigCredentials[],
+    credentials: [] as IConfigCredentials[],
     docReference: 'https://discord.com/developers/docs/intro',
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
-    comingSoon: true,
   },
 ];
