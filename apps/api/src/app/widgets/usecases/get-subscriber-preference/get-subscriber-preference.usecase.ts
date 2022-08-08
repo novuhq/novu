@@ -33,7 +33,6 @@ export class GetSubscriberPreference {
 
     this.analyticsService.track('Fetch User Preferences - [Notification Center]', command.organizationId, {
       _organization: command.organizationId,
-      _subscriber: command.subscriberId,
       templatesSize: templateList.length,
     });
 

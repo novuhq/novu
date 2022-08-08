@@ -80,9 +80,7 @@ export class UpdateSubscriberPreference {
 
     this.analyticsService.track('Update User Preference - [Notification Center]', command.organizationId, {
       _organization: command.organizationId,
-      _subscriber: command.subscriberId,
       _template: command.templateId,
-      ...updatePayload,
     });
 
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
