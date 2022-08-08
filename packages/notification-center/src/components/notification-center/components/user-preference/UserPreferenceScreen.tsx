@@ -1,36 +1,21 @@
-import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
-import { useApi } from '../../../../hooks';
+import React, { useState } from 'react';
 import { Accordion } from '@mantine/core';
+import styled from 'styled-components';
+import { useNovuThemeProvider, useSubscriberPreference } from '../../../../hooks';
 import { accordionStyles, Text, TextBlock } from './styles';
 import { ChannelPreference } from './ChannelPreference';
-import React, { useContext, useEffect, useState } from 'react';
-import { IAuthContext, IUserPreferenceSettings } from '../../../../index';
-import styled from 'styled-components';
 import { getChannel } from './channels';
-import { AuthContext } from '../../../../store/auth.context';
 
 export function UserPreferenceScreen() {
   const { theme, common } = useNovuThemeProvider();
+  const { preferences, updatePreference } = useSubscriberPreference();
   const baseTheme = theme?.notificationItem?.unseen;
-  const { token } = useContext<IAuthContext>(AuthContext);
-  const { api } = useApi();
-  const [settings, setSettings] = useState<IUserPreferenceSettings[]>([]);
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!api?.isAuthenticated || !token) return;
-
-    (async () => {
-      const result = await api.getUserPreference();
-
-      setSettings(result);
-    })();
-  }, [api?.isAuthenticated, token]);
 
   return (
     <div style={{ padding: '15px' }}>
       <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
-        {settings
+        {preferences
           ?.filter((item) => !item.template.critical)
           .map((item, index) => {
             const channelsKeys = Object.keys(item?.preference?.channels);
@@ -38,18 +23,7 @@ export function UserPreferenceScreen() {
 
             const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
               setLoadingUpdate(true);
-              const result = await api.updateSubscriberPreference(item.template._id, type, checked);
-
-              setSettings((prev) => {
-                return prev.map((workflow, i) => {
-                  if (i === index) {
-                    return result;
-                  }
-
-                  return workflow;
-                });
-              });
-
+              await updatePreference(item, type, checked, index);
               setLoadingUpdate(false);
             };
 
@@ -111,6 +85,6 @@ function getEnabledChannels(channels) {
 const ChannelsWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 0px;
+  padding: 0;
   gap: 20px;
 `;
