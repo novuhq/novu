@@ -6,7 +6,7 @@ import { accordionStyles, Text, TextBlock } from './styles';
 import { ChannelPreference } from './ChannelPreference';
 import { getChannel } from './channels';
 
-export function UserPreferenceScreen() {
+export function SubscriberPreference() {
   const { theme, common } = useNovuThemeProvider();
   const { preferences, updatePreference } = useSubscriberPreference();
   const baseTheme = theme?.notificationItem?.unseen;
