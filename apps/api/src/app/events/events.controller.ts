@@ -3,15 +3,16 @@ import { IJwtPayload } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
 import { UserSession } from '../shared/framework/user.decorator';
-import { TriggerEventDto } from './dto/trigger-event.dto';
+import { TriggerEventRequestDto } from './dto/trigger-event-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ISubscribersDefine } from '@novu/node';
 import { CancelDigest } from './usecases/cancel-digest/cancel-digest.usecase';
 import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.command';
-import { TriggerEventToAllDto } from './dto/trigger-event-to-all.dto';
+import { TriggerEventToAllRequestDto } from './dto/trigger-event-to-all-request.dto';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
+import { TriggerEventResponseDto } from './dto/trigger-event-response.dto';
 
 @Controller('events')
 export class EventsController {
@@ -24,7 +25,10 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
-  async trackEvent(@UserSession() user: IJwtPayload, @Body() body: TriggerEventDto) {
+  async trackEvent(
+    @UserSession() user: IJwtPayload,
+    @Body() body: TriggerEventRequestDto
+  ): Promise<TriggerEventResponseDto | string> {
     const mappedSubscribers = this.mapSubscribers(body);
     const transactionId = body.transactionId || uuidv4();
 
@@ -47,7 +51,10 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/broadcast')
-  async trackEventToAll(@UserSession() user: IJwtPayload, @Body() body: TriggerEventToAllDto) {
+  async trackEventToAll(
+    @UserSession() user: IJwtPayload,
+    @Body() body: TriggerEventToAllRequestDto
+  ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
 
@@ -81,7 +88,7 @@ export class EventsController {
     );
   }
 
-  private mapSubscribers(body: TriggerEventDto): ISubscribersDefine[] {
+  private mapSubscribers(body: TriggerEventRequestDto): ISubscribersDefine[] {
     const subscribers = Array.isArray(body.to) ? body.to : [body.to];
 
     return subscribers.map((subscriber) => {

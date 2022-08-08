@@ -2,7 +2,7 @@ import { DirectProviderIdEnum, IUpdateSubscriberChannelDto, PushProviderIdEnum }
 import { IsDefined, IsObject, IsString } from 'class-validator';
 import { IChannelCredentialsCommand } from '../usecases/update-subscriber-channel';
 
-export class UpdateSubscriberChannelDto implements IUpdateSubscriberChannelDto {
+export class UpdateSubscriberChannelRequestDto implements IUpdateSubscriberChannelDto {
   @IsString()
   @IsDefined()
   providerId: DirectProviderIdEnum | PushProviderIdEnum;

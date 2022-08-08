@@ -6,14 +6,17 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
-import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
-import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
-import { UpdateSubscriberChannelDto } from './dto/update-subscriber-channel.dto';
+import { CreateSubscriberBodyRequestDto } from './dto/create-subscriber-request.dto';
+import { UpdateSubscriberRequestDto } from './dto/update-subscriber-request.dto';
+import { UpdateSubscriberChannelRequestDto } from './dto/update-subscriber-channel-request.dto';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber';
+import { SubscriberResponseDto } from './dto/subscriber-response.dto';
+import { SubscribersResponseDto } from './dto/subscribers-response.dto';
+import { DeleteSubscriberResponseDto } from './dto/delete-subscriber-response.dto';
 
 @Controller('/subscribers')
 export class SubscribersController {
@@ -29,7 +32,7 @@ export class SubscribersController {
   @Get('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0) {
+  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
@@ -42,7 +45,10 @@ export class SubscribersController {
   @Get('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async getSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+  async getSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<SubscriberResponseDto> {
     return await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
         environmentId: user.environmentId,
@@ -55,7 +61,10 @@ export class SubscribersController {
   @Post('/')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async createSubscriber(@UserSession() user: IJwtPayload, @Body() body: CreateSubscriberBodyDto) {
+  async createSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Body() body: CreateSubscriberBodyRequestDto
+  ): Promise<SubscriberResponseDto> {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
         environmentId: user.environmentId,
@@ -76,8 +85,8 @@ export class SubscribersController {
   async updateSubscriber(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: UpdateSubscriberBodyDto
-  ) {
+    @Body() body: UpdateSubscriberRequestDto
+  ): Promise<SubscriberResponseDto> {
     return await this.updateSubscriberUsecase.execute(
       UpdateSubscriberCommand.create({
         environmentId: user.environmentId,
@@ -98,8 +107,8 @@ export class SubscribersController {
   async updateSubscriberChannel(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: UpdateSubscriberChannelDto
-  ) {
+    @Body() body: UpdateSubscriberChannelRequestDto
+  ): Promise<SubscriberResponseDto> {
     return await this.updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         environmentId: user.environmentId,
@@ -114,7 +123,10 @@ export class SubscribersController {
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async removeSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+  async removeSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<DeleteSubscriberResponseDto> {
     return await this.removeSubscriberUsecase.execute(
       RemoveSubscriberCommand.create({
         environmentId: user.environmentId,

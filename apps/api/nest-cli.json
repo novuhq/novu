@@ -25,7 +25,13 @@
       }
     ],
     "plugins": [
-      "@nestjs/swagger"
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": true,
+          "introspectComments": true
+        }
+      }
     ],
     "webpack": true
   },

@@ -1,6 +1,6 @@
 import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 
-export class CreateSubscriberBodyDto {
+export class CreateSubscriberBodyRequestDto {
   @IsString()
   @IsDefined()
   subscriberId: string;
