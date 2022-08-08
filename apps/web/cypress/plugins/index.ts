@@ -9,16 +9,20 @@ module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
   on('task', {
-    async createNotifications({ identifier, token, count = 1, environmentId, organizationId }) {
-      const subscriberService = new SubscribersService(organizationId, environmentId);
-      const subscriber = await subscriberService.createSubscriber();
+    async createNotifications({ identifier, token, count = 1, subscriberId, environmentId, organizationId }) {
+      let subId = subscriberId;
+      if (!subId) {
+        const subscribersService = new SubscribersService(organizationId, environmentId);
+        const subscriber = await subscribersService.createSubscriber();
+        subId = subscriber.subscriberId;
+      }
 
       const triggerIdentifier = identifier;
       const service = new NotificationsService(token);
 
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < count; i++) {
-        await service.triggerEvent(triggerIdentifier, subscriber.subscriberId, {});
+        await service.triggerEvent(triggerIdentifier, subId, {});
       }
 
       return 'ok';
