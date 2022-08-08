@@ -13,7 +13,7 @@ test('should trigger fcm correctly', async () => {
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    .spyOn(provider.messaging, 'sendToDevice')
+    .spyOn(provider.messaging, 'sendMulticast')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
@@ -30,11 +30,11 @@ test('should trigger fcm correctly', async () => {
   expect(app.initializeApp).toHaveBeenCalledTimes(1);
   expect(app.cert).toHaveBeenCalledTimes(1);
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith('tester', {
+  expect(spy).toHaveBeenCalledWith({
     notification: {
       title: 'Test',
       body: 'Test push',
-      sound: 'test_sound',
     },
+    tokens: ['tester'],
   });
 });

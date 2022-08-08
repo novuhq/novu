@@ -37,7 +37,7 @@ export class FcmPushProvider implements IPushProvider {
   async sendMessage(
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
-    delete (options.overrides as any).notificationIdentifiers;
+    delete (options.overrides as any)?.notificationIdentifiers;
     const res = await this.messaging.sendMulticast({
       tokens: options.target,
       notification: {
@@ -48,7 +48,7 @@ export class FcmPushProvider implements IPushProvider {
     });
 
     return {
-      ids: res.responses.map((response) => response.messageId),
+      ids: res?.responses?.map((response) => response.messageId),
       date: new Date().toISOString(),
     };
   }

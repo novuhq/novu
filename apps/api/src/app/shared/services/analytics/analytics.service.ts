@@ -2,6 +2,7 @@ import * as MixpanelInstance from 'mixpanel';
 
 import { Mixpanel } from 'mixpanel';
 import { UserEntity } from '@novu/dal';
+import { OrganizationEntity } from '@novu/dal';
 
 export class AnalyticsService {
   private mixpanel: Mixpanel;
@@ -10,6 +11,14 @@ export class AnalyticsService {
     if (process.env.MIXPANEL_TOKEN) {
       this.mixpanel = MixpanelInstance.init(process.env.MIXPANEL_TOKEN);
     }
+  }
+
+  upsertGroup(organizationId: string, organization: OrganizationEntity) {
+    if (!this.analyticsEnabled) return;
+
+    this.mixpanel.groups.set('_organization', organizationId, {
+      $name: organization.name,
+    });
   }
 
   alias(distinctId: string, userId: string) {
@@ -22,8 +31,8 @@ export class AnalyticsService {
     if (!this.analyticsEnabled) return;
 
     this.mixpanel.people.set(distinctId, {
-      $first_name: user.firstName,
-      $last_name: user.lastName,
+      $first_name: user.firstName || '',
+      $last_name: user.lastName || '',
       $created: user.createdAt || new Date(),
       $email: user.email,
       userId: user._id,
@@ -33,7 +42,7 @@ export class AnalyticsService {
   setValue(userId: string, propertyName: string, value: string | number) {
     if (!this.analyticsEnabled) return;
 
-    this.mixpanel.people.set(userId, propertyName, value);
+    this.mixpanel.people.set(userId, propertyName, value || '');
   }
 
   track(name: string, userId: string, data: Record<string, unknown> = {}) {
