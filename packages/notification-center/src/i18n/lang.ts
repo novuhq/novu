@@ -8,10 +8,11 @@ export interface ITranslationContent {
   readonly notifications: string;
   readonly markAllAsRead: string;
   readonly poweredBy: string;
+  readonly settings: string;
 }
 
 export interface ITranslationEntry {
-  readonly translations: ITranslationContent;
+  readonly translations: Partial<ITranslationContent>;
   readonly lang: string;
 }
 
