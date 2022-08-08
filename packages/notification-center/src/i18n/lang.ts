@@ -20,6 +20,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   fi: FI,
   hi: HI,
   gj: GJ,
+  ru: RU,
   sp: SP
 };
 
@@ -32,4 +33,4 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * - For French use "fr"
  * - For Hindi use "hi"
  */
-export type I18NLanguage = 'en' | 'fi' | 'hi' | 'gj' | 'sp';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'gj' | 'ru' | 'sp';
