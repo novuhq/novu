@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateRepository,
@@ -11,6 +11,8 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../get-subscriber-template-preference';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class GetSubscriberPreference {
@@ -18,7 +20,8 @@ export class GetSubscriberPreference {
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
-    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
@@ -27,6 +30,12 @@ export class GetSubscriberPreference {
       command.environmentId,
       true
     );
+
+    this.analyticsService.track('Fetch User Preferences - [Notification Center]', command.organizationId, {
+      _organization: command.organizationId,
+      _subscriber: command.subscriberId,
+      templatesSize: templateList.length,
+    });
 
     return await Promise.all(templateList.map(async (template) => this.getTemplatePreference(template, command)));
   }

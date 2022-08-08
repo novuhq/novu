@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { SubscriberPreferenceEntity, SubscriberPreferenceRepository, NotificationTemplateRepository } from '@novu/dal';
 import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -7,13 +7,16 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../get-subscriber-template-preference';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class UpdateSubscriberPreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private getSubscriberTemplatePreference: GetSubscriberTemplatePreference,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse> {
@@ -74,6 +77,13 @@ export class UpdateSubscriberPreference {
         $set: updatePayload,
       }
     );
+
+    this.analyticsService.track('Update User Preference - [Notification Center]', command.organizationId, {
+      _organization: command.organizationId,
+      _subscriber: command.subscriberId,
+      _template: command.templateId,
+      ...updatePayload,
+    });
 
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
 
