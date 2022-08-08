@@ -60,4 +60,6 @@ export class UpdateNotificationTemplateDto implements ICreateNotificationTemplat
   notificationGroupId: string;
 
   active?: boolean;
+
+  critical?: boolean;
 }

@@ -5,16 +5,12 @@ describe('Notifications List', function () {
       .then((session: any) => {
         cy.wait(500);
 
-        return cy
-          .task('createNotifications', {
-            identifier: session.templates[0].triggers[0].identifier,
-            token: session.token,
-            subscriberId: session.subscriber.subscriberId,
-            count: 5,
-          })
-          .then(() => {
-            return cy.initializeWidget(session);
-          });
+        return cy.task('createNotifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 5,
+        });
       });
   });
 
@@ -48,6 +44,7 @@ describe('Notifications List', function () {
       subscriberId: this.session.subscriber.subscriberId,
       count: 1,
     });
+
     cy.getByTestId('unseen-count-label').contains('9');
   });
 

@@ -79,6 +79,7 @@ export function useTemplateController(templateId: string) {
         name: template.name,
         description: template.description as string,
         tags: template.tags,
+        critical: template.critical,
         steps: [],
       };
 
@@ -131,6 +132,7 @@ export function useTemplateController(templateId: string) {
       name: data.name,
       description: data.description,
       tags: data.tags,
+      critical: data.critical,
       steps: stepsToSave,
     };
 
@@ -246,6 +248,7 @@ export interface IForm {
   name: string;
   description: string;
   tags: string[];
+  critical: boolean;
   steps: StepEntity[];
 }
 

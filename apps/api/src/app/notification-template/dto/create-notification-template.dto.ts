@@ -71,4 +71,8 @@ export class CreateNotificationTemplateDto implements ICreateNotificationTemplat
   @IsBoolean()
   @IsOptional()
   draft?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  critical?: boolean;
 }

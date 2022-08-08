@@ -14,4 +14,6 @@ export interface ICreateNotificationTemplateDto {
   active?: boolean;
 
   draft?: boolean;
+
+  critical?: boolean;
 }

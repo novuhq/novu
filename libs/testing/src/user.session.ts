@@ -20,6 +20,7 @@ import {
   FeedRepository,
   ChangeRepository,
   ChangeEntity,
+  SubscriberRepository,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -38,6 +39,14 @@ export class UserSession {
   private changeRepository: ChangeRepository = new ChangeRepository();
 
   token: string;
+
+  subscriberToken: string;
+
+  subscriberId: string;
+
+  subscriberProfile: {
+    _id: string;
+  } = null;
 
   notificationGroups: NotificationGroupEntity[] = [];
 
@@ -96,6 +105,31 @@ export class UserSession {
         await this.updateOrganizationDetails();
       }
     }
+
+    if (!options.noOrganization && !options.noEnvironment) {
+      const { token, profile } = await this.initializeWidgetSession();
+      this.subscriberToken = token;
+      this.subscriberProfile = profile;
+    }
+  }
+
+  private async initializeWidgetSession() {
+    this.subscriberId = SubscriberRepository.createObjectId();
+
+    const { body } = await this.testAgent
+      .post('/v1/widgets/session/initialize')
+      .send({
+        applicationIdentifier: this.environment.identifier,
+        subscriberId: this.subscriberId,
+        firstName: 'Widget User',
+        lastName: 'Test',
+        email: 'test@example.com',
+      })
+      .expect(201);
+
+    const { token, profile } = body.data;
+
+    return { token, profile };
   }
 
   private shouldUseTestServer() {
