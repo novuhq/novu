@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { MessageTemplateRepository, NotificationTemplateRepository, SubscriberPreferenceRepository } from '@novu/dal';
+import {
+  MessageTemplateRepository,
+  NotificationTemplateRepository,
+  SubscriberPreferenceRepository,
+  NotificationTemplateEntity,
+} from '@novu/dal';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import { IPreferenceChannels } from '@novu/shared';
 import {
@@ -23,24 +28,18 @@ export class GetSubscriberPreference {
       true
     );
 
-    const result: ISubscriberPreferenceResponse[] = [];
+    return await Promise.all(templateList.map(async (template) => this.getTemplatePreference(template, command)));
+  }
 
-    for (const template of templateList) {
-      {
-        const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          environmentId: command.environmentId,
-          template,
-        });
+  async getTemplatePreference(template: NotificationTemplateEntity, command: GetSubscriberPreferenceCommand) {
+    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
+      organizationId: command.organizationId,
+      subscriberId: command.subscriberId,
+      environmentId: command.environmentId,
+      template,
+    });
 
-        const templateSubscriberPreference = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
-
-        result.push(templateSubscriberPreference);
-      }
-    }
-
-    return result;
+    return await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
   }
 }
 
