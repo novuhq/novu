@@ -5,5 +5,7 @@ A Discord direct provider library for [@novu/node](https://github.com/novuhq/nov
 ## Usage
 
 ```javascript
-    FILL IN THE INITIALIZATION USAGE
+import { DiscordProvider } from '@novu/discord';
+
+const provider = new DiscordProvider({});
 ```
