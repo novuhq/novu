@@ -1,6 +1,7 @@
 import { EN } from './languages/en';
 import { FI } from './languages/fi';
 import { HI } from './languages/hi';
+import { RU } from './languages/ru';
 import { SP } from './languages/sp';
 import { GJ } from './languages/gj';
 
