@@ -1,6 +1,6 @@
+import React from 'react';
 import { ActionIcon } from '@mantine/core';
 import { ArrowLeft } from '../../../../../shared/icons';
-import React from 'react';
 import styled from 'styled-components';
 import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
 import { ScreensEnum } from '../Layout';
