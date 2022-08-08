@@ -5,6 +5,8 @@ import { SP } from './languages/sp';
 import { IT } from './languages/it';
 import { BN } from './languages/bn';
 import { RU } from './languages/ru';
+import { FA } from './languages/fa';
+import { AR } from './languages/ar';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -25,6 +27,8 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   it: IT,
   bn: BN,
   ru: RU,
+  ar: AR,
+  fa: FA
 };
 
 /**
@@ -38,5 +42,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * - For Italian use "it"
  * - For Bengali use "bn"
  * - For Russian use "ru"
+ * - For Arabic use "ar"
+ * - For Persian use "fa"
  */
-export type I18NLanguage = 'en' | 'fi' | 'hi' | 'sp' | 'it' | 'bn' | 'ru';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'sp' | 'it' | 'bn' | 'ru' | 'ar' | 'fa';
