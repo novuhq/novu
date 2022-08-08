@@ -10,7 +10,6 @@ interface NodeData {
   index: number;
   testId: string;
   onDelete: (id: string) => void;
-  showDropZone: boolean;
   error: string;
   setActivePage: (string) => void;
   active: boolean;
@@ -27,7 +26,6 @@ export default memo(
       <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
         <ChannelButton
           setActivePage={data.setActivePage}
-          showDropZone={data.showDropZone}
           errors={data.error}
           onDelete={data.onDelete}
           tabKey={data.tabKey}

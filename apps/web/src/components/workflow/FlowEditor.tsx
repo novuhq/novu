@@ -85,9 +85,6 @@ export function FlowEditor({
       setNodes([
         {
           ...initialNodes[0],
-          data: {
-            showDropZone: dragging,
-          },
         },
       ]);
     }
@@ -97,9 +94,6 @@ export function FlowEditor({
           ...initialNodes[0],
           position: {
             ...nodes[0].position,
-          },
-          data: {
-            showDropZone: nodes.length === 2 && dragging,
           },
         },
       ]);
@@ -118,7 +112,6 @@ export function FlowEditor({
             ...getChannel(step.template.type),
             active: step.active,
             index: nodes.length,
-            showDropZone: i === steps.length - 1 && dragging,
             error: getChannelErrors(i, errors),
             onDelete,
             setActivePage,
@@ -147,11 +140,12 @@ export function FlowEditor({
           label: '',
           addNewNode,
           parentId,
+          showDropZone: dragging,
         },
         className: 'nodrag',
         isConnectable: false,
         parentNode: parentId,
-        position: { x: 85, y: 90 },
+        position: { x: 0, y: 90 },
       };
       setNodes((nds) => nds.concat(addNodeButton));
     }
@@ -212,7 +206,8 @@ export function FlowEditor({
       event.preventDefault();
 
       const type = event.dataTransfer.getData('application/reactflow');
-      const parentId = event.target.dataset.id;
+      const parentId = nodes[nodes.length - 2].id;
+      const dropId = event.target.dataset.id;
 
       if (typeof type === 'undefined' || !type || typeof parentId === 'undefined') {
         return;
@@ -220,7 +215,8 @@ export function FlowEditor({
 
       const parentNode = reactFlowInstance?.getNode(parentId);
 
-      if (typeof parentNode === 'undefined' || parentId === '2') {
+      // dropId !== 2 condition will active only DropZone and will inactive other nodes
+      if (typeof parentNode === 'undefined' || dropId !== '2') {
         return;
       }
 
@@ -266,10 +262,14 @@ export default FlowEditor;
 
 const Wrapper = styled.div<{ dark: boolean }>`
   background: ${({ dark }) => (dark ? colors.B15 : colors.B98)};
-  .react-flow__node {
+  .react-flow__node.react-flow__node-channelNode,
+  .react-flow__node.react-flow__node-triggerNode {
     width: 200px;
     height: 75px;
     cursor: pointer;
+  }
+  .react-flow__node.react-flow__node-addNode {
+    width: 200px;
   }
   .react-flow__handle.connectable {
     cursor: pointer;
