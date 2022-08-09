@@ -1,8 +1,9 @@
 import styled from '@emotion/styled';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMantineTheme } from '@mantine/core';
-import { colors } from '../../../design-system';
 import { IEmailBlock } from '@novu/shared';
+
+import { colors } from '../../../design-system';
 
 export function ContentContainer({
   contentPlaceholder,
@@ -17,30 +18,11 @@ export function ContentContainer({
 }) {
   const theme = useMantineTheme();
   const ref = useRef<HTMLDivElement>(null);
-  const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!value);
+  const showPlaceHolder = value.length === 0;
   const [content, setContent] = useState<string | IEmailBlock[]>(value);
 
-  const handleChange = (e: React.ChangeEvent<HTMLDivElement>) => {
-    const textContent = e.target.textContent;
-    if (ref?.current) {
-      ref.current.textContent = textContent;
-    }
-
-    let showPlaceHolder = !textContent;
-    if (textContent === '<br>') showPlaceHolder = true;
-    setVisiblePlaceholder(showPlaceHolder);
-
-    onChange(textContent);
-  };
-
   useEffect(() => {
-    let showPlaceHolder = value.length === 0;
-    if (value === '<br>') showPlaceHolder = true;
-    setVisiblePlaceholder(showPlaceHolder);
-  }, [value, content]);
-
-  useEffect(() => {
-    if (value !== ref.current?.textContent) {
+    if (ref.current && value !== ref.current?.innerHTML) {
       setContent(value);
     }
   }, [value]);
@@ -54,7 +36,7 @@ export function ContentContainer({
         dangerouslySetInnerHTML={{
           __html: content as string,
         }}
-        onKeyUp={(e: any) => handleChange(e)}
+        onKeyUp={(e: any) => onChange(e.target.innerHTML)}
         suppressContentEditableWarning
         style={{
           display: 'inline-block',
@@ -70,7 +52,7 @@ export function ContentContainer({
             : {}),
         }}
       />
-      <PlaceHolder show={visiblePlaceholder}>{contentPlaceholder}</PlaceHolder>
+      <PlaceHolder show={showPlaceHolder}>{contentPlaceholder}</PlaceHolder>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Injectable, Logger, Scope } from '@nestjs/common';
+import { Inject, Injectable, Logger, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { MemberRoleEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
@@ -11,6 +11,8 @@ import { GetOrganization } from '../get-organization/get-organization.usecase';
 import { AddMemberCommand } from '../membership/add-member/add-member.command';
 import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -23,7 +25,8 @@ export class CreateOrganization {
     private readonly queueService: QueueService,
     private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
-    private readonly createEnvironmentUsecase: CreateEnvironment
+    private readonly createEnvironmentUsecase: CreateEnvironment,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
@@ -60,11 +63,7 @@ export class CreateOrganization {
       })
     );
 
-    /*
-     * Comment because the design of the process needs to be rethought
-     *
-     * await this.sendWelcomeEmail(user, organization);
-     */
+    this.analyticsService.upsertGroup(organization._id, organization);
 
     const organizationAfterChanges = await this.getOrganizationUsecase.execute(
       GetOrganizationCommand.create({
