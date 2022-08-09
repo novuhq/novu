@@ -11,12 +11,13 @@ export function useSubscriberPreference() {
   useEffect(() => {
     if (!api?.isAuthenticated || !token) return;
 
-    (async () => {
-      const result = await api.getUserPreference();
-
-      setPreferences(result);
-    })();
+    getUserPreference();
   }, [api?.isAuthenticated, token]);
+
+  async function getUserPreference() {
+    const result = await api.getUserPreference();
+    setPreferences(result);
+  }
 
   async function updatePreference(
     preferenceItem: IUserPreferenceSettings,
