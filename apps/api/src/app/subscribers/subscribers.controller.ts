@@ -5,18 +5,20 @@ import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-sub
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { IJwtPayload } from '@novu/shared';
-import { CreateSubscriberBodyRequestDto } from './dto/create-subscriber-request.dto';
-import { UpdateSubscriberRequestDto } from './dto/update-subscriber-request.dto';
-import { UpdateSubscriberChannelRequestDto } from './dto/update-subscriber-channel-request.dto';
+import {
+  CreateSubscriberBodyRequestDto,
+  DeleteSubscriberResponseDto,
+  IJwtPayload,
+  SubscriberResponseDto,
+  SubscribersResponseDto,
+  UpdateSubscriberChannelRequestDto,
+  UpdateSubscriberRequestDto,
+} from '@novu/shared';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber';
-import { SubscriberResponseDto } from './dto/subscriber-response.dto';
-import { SubscribersResponseDto } from './dto/subscribers-response.dto';
-import { DeleteSubscriberResponseDto } from './dto/delete-subscriber-response.dto';
 
 @Controller('/subscribers')
 export class SubscribersController {
