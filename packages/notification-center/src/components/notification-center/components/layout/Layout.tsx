@@ -3,11 +3,10 @@ import { Loader } from '../Loader';
 import { HeaderContainer as Header } from './header/HeaderContainer';
 import { FooterContainer as Footer } from './footer/FooterContainer';
 import React, { useState } from 'react';
-import { useNovuContext } from '../../../../hooks';
-import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
+import { useNovuContext, useNovuThemeProvider } from '../../../../hooks';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
-import { UserPreferenceScreen } from '../user-preference/UserPreferenceScreen';
+import { SubscriberPreference } from '../user-preference/SubscriberPreference';
 
 export enum ScreensEnum {
   NOTIFICATIONS = 'notifications',
@@ -25,7 +24,7 @@ export function Layout({ children }: { children: JSX.Element }) {
         <>
           <UserPreferenceHeader setScreen={setScreen} />
           <ContentWrapper>
-            <UserPreferenceScreen />
+            <SubscriberPreference />
           </ContentWrapper>
         </>
       )}
