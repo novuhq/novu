@@ -11,7 +11,7 @@ import { ScreensEnum } from '../Layout';
 
 export function Header({ unseenCount, setScreen }: { unseenCount: number; setScreen: (screen: ScreensEnum) => void }) {
   const { theme, common } = useNovuThemeProvider();
-  const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
 
   return (
@@ -40,7 +40,7 @@ export function Header({ unseenCount, setScreen }: { unseenCount: number; setScr
           </Badge>
         ) : null}
       </div>
-      <div>
+      <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
         <ActionIcon
           data-test-id="user-preference-cog"
           variant="transparent"
