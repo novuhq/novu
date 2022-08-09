@@ -1,11 +1,7 @@
 import { IsDefined, IsObject, IsOptional } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class CompileTemplateCommand {
-  static create(data: CompileTemplateCommand) {
-    return CommandHelper.create<CompileTemplateCommand>(CompileTemplateCommand, data);
-  }
-
+export class CompileTemplateCommand extends BaseCommand {
   @IsDefined()
   templateId: 'basic' | 'custom';
 

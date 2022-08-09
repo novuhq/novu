@@ -1,7 +1,3 @@
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class CreateSessionCommand {
-  static create(data: CreateSessionCommand) {
-    return CommandHelper.create(CreateSessionCommand, data);
-  }
-}
+export class CreateSessionCommand extends BaseCommand {}
