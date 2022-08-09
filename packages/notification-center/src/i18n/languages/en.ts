@@ -5,6 +5,7 @@ export const EN: ITranslationEntry = {
     notifications: 'Notifications',
     markAllAsRead: 'Mark all as read',
     poweredBy: 'Powered By',
+    settings: 'Settings',
   },
   lang: 'en',
 };
