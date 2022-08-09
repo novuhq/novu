@@ -87,6 +87,7 @@ export class CreateNotificationTemplate {
       active: command.active,
       draft: command.draft,
       critical: command.critical,
+      preferenceSettings: command.preferenceSettings,
       tags: command.tags,
       description: command.description,
       steps: templateSteps,

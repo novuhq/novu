@@ -15,6 +15,7 @@ import {
   ChannelCTATypeEnum,
   IMessageAction,
   DigestUnitEnum,
+  IPreferenceChannels,
 } from '@novu/shared';
 import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -54,6 +55,9 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsBoolean()
   critical: boolean;
+
+  @IsOptional()
+  preferenceSettings?: IPreferenceChannels;
 }
 
 export class ChannelCTACommand {

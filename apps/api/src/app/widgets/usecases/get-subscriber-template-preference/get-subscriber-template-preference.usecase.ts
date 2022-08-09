@@ -37,7 +37,10 @@ export class GetSubscriberTemplatePreference {
         template: responseTemplate,
         preference: {
           enabled: currSubscriberPreference.enabled,
-          channels: filterActiveChannels(currSubscriberPreference.channels, activeChannels),
+          channels: filterActiveChannels(
+            currSubscriberPreference.channels,
+            getDefaultFromTemplate(activeChannels, command.template.preferenceSettings)
+          ),
         },
       };
     }
@@ -61,12 +64,26 @@ export class GetSubscriberTemplatePreference {
   }
 }
 
-function filterActiveChannels(channels: IPreferenceChannels, activeChannels: ChannelTypeEnum[]): IPreferenceChannels {
-  const filteredChannels = Object.assign({}, channels);
-
-  for (const key in channels) {
+function getDefaultFromTemplate(activeChannels: ChannelTypeEnum[], defaults: IPreferenceChannels) {
+  const filteredChannels = Object.assign({}, defaults);
+  for (const key in defaults) {
     if (!activeChannels.some((channel) => channel === key)) {
       delete filteredChannels[key];
+    }
+  }
+
+  return filteredChannels;
+}
+
+function filterActiveChannels(channels: IPreferenceChannels, defaults: IPreferenceChannels): IPreferenceChannels {
+  const filteredChannels = {};
+  const channelsKeys = Object.keys(channels);
+
+  for (const key in defaults) {
+    if (!channelsKeys.some((channel) => channel === key)) {
+      filteredChannels[key] = defaults[key];
+    } else {
+      filteredChannels[key] = channels[key];
     }
   }
 
@@ -82,8 +99,14 @@ function getNoSettingFallback(
     preference: {
       enabled: true,
       channels: filterActiveChannels(
-        { email: true, sms: true, in_app: true, direct: true, push: true },
-        activeChannels
+        {},
+        getDefaultFromTemplate(activeChannels, {
+          email: true,
+          sms: true,
+          in_app: true,
+          direct: true,
+          push: true,
+        })
       ),
     },
   };
