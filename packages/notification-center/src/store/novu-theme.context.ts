@@ -24,6 +24,7 @@ export interface INovuTheme {
   header?: IThemeHeader;
   popover?: IThemePopover;
   notificationItem?: IThemeNotificationListItem;
+  preferenceItem?: IThemePreferenceItem;
   footer?: IThemeFooter;
   loaderColor?: string;
 }
@@ -61,6 +62,20 @@ export interface IThemeNotificationListItem {
     timeMarkFontColor?: string;
   };
   buttons: IStyleButtons;
+}
+
+export interface IThemePreferenceItem {
+  accordion?: {
+    background?: string;
+    fontColor?: string;
+    boxShadow?: string;
+    icon?: { active?: string; inactive?: string };
+  };
+  switch?: {
+    background?: string;
+    backgroundChecked?: string;
+    backgroundUnchecked?: string;
+  };
 }
 
 export interface IThemeFooter {

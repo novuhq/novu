@@ -9,7 +9,7 @@ import { getChannel } from './channels';
 export function SubscriberPreference() {
   const { theme, common } = useNovuThemeProvider();
   const { preferences, updatePreference } = useSubscriberPreference();
-  const baseTheme = theme?.notificationItem?.unseen;
+  const baseTheme = theme?.preferenceItem;
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
 
   return (
