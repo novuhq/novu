@@ -60,7 +60,8 @@
     "less-loader": "4.1.0",
     "start-server-and-test": "1.11.6",
     "typescript": "4.6.2",
-    "webpack-dev-server": "4.9.2"
+    "webpack-dev-server": "4.9.2",
+    "@nestjs/swagger": "6.0.5"
   },
   "scripts": {
     "start": "craco start",

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
+import { IJwtPayload, TriggerEventResponseDto } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -12,7 +12,6 @@ import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.comm
 import { TriggerEventToAllRequestDto } from './dto/trigger-event-to-all-request.dto';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
-import { TriggerEventResponseDto } from './dto/trigger-event-response.dto';
 
 @Controller('events')
 export class EventsController {
