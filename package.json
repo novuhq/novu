@@ -10,6 +10,7 @@
     "setup:project": "npx pnpm@7.3.0 i && node scripts/setup-env-files.js && npx pnpm build",
     "commit": "cz",
     "nx": "nx",
+    "lint-staged": "lint-staged",
     "generate:provider": "npx hygen provider new",
     "lint": "nx run-many --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
@@ -60,6 +61,8 @@
     "@nrwl/tao": "13.8.5",
     "@nrwl/workspace": "13.8.5",
     "@octokit/core": "^3.6.0",
+    "@pnpm/filter-workspace-packages": "^4.1.11",
+    "@pnpm/logger": "^4.0.0",
     "@types/jest": "27.4.0",
     "@types/node": "16.11.7",
     "@typescript-eslint/eslint-plugin": "^5.28.0",
@@ -83,22 +86,21 @@
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-react": "7.29.4",
     "eslint-plugin-react-hooks": "^4.4.0",
+    "globby": "^12.0.2",
     "husky": "^8.0.1",
     "hygen": "^6.2.0",
     "jira-prepare-commit-msg": "1.5.2",
     "lerna": "5.1.6",
     "lint-staged": "^10.5.4",
-    "pnpm": "^6.32.3",
-    "prettier": "^2.6.2",
-    "rimraf": "^3.0.2",
-    "ts-node": "^9.1.1",
-    "typescript": "4.6.2",
-    "globby": "^12.0.2",
     "meow": "^10.1.1",
     "mississippi": "^4.0.0",
+    "pnpm": "^6.34.0",
+    "prettier": "^2.6.2",
+    "rimraf": "^3.0.2",
+    "stop-only": "^3.1.2",
     "tar": "^6.1.11",
-    "@pnpm/filter-workspace-packages": "^4.1.11",
-    "@pnpm/logger": "^4.0.0"
+    "ts-node": "^9.1.1",
+    "typescript": "4.6.2"
   },
   "workspaces": {
     "packages": [
@@ -108,12 +110,23 @@
       "providers/*"
     ]
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "lint-staged": {
+    "apps/**/*.{ts,tsx,json}": [
+      "prettier --ignore-path ./.prettierignore --write",
+      "stop-only --file"
+    ],
     "packages/**/*.{ts,json}": [
-      "prettier --ignore-path ./.prettierignore --write"
+      "prettier --ignore-path ./.prettierignore --write",
+      "stop-only --file"
     ],
     "providers/**/*.{ts,json}": [
-      "prettier --ignore-path ./.prettierignore --write"
+      "prettier --ignore-path ./.prettierignore --write",
+      "stop-only --file"
     ]
   },
   "config": {
@@ -121,7 +134,10 @@
       "path": "./node_modules/cz-conventional-changelog"
     }
   },
+  "engines": {
+    "node": ">=13.0.0 <17.0.0"
+  },
   "dependencies": {
-    "nx": "^14.4.0"
+    "nx": "^14.5.4"
   }
 }
