@@ -18,7 +18,7 @@
     "fix:lint": "eslint src --ext .ts --fix",
     "test": "run-s build test:*",
     "test:lint": "eslint src --ext .ts",
-    "test:unit": "echo 'Tests Missing'",
+    "test:unit": "jest src",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
     "reset-hard": "git clean -dfx && git reset --hard && yarn",
@@ -32,9 +32,10 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.4.1",
-    "node-fetch": "^3.2.9"
+    "node-fetch": "^3.2.10"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.13.15",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/jest": "^27.0.1",
     "codecov": "^3.5.0",

@@ -16,15 +16,10 @@ import {
   IMessageAction,
   DigestUnitEnum,
 } from '@novu/shared';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageTemplateDto } from '../../dto';
 
 export class CreateNotificationTemplateCommand extends EnvironmentWithUserCommand {
-  static create(data: CreateNotificationTemplateCommand) {
-    return CommandHelper.create(CreateNotificationTemplateCommand, data);
-  }
-
   @IsMongoId()
   @IsDefined()
   notificationGroupId: string;

@@ -1,13 +1,8 @@
 import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class CreateLogCommand extends EnvironmentWithUserCommand {
-  static create(data: CreateLogCommand) {
-    return CommandHelper.create<CreateLogCommand>(CreateLogCommand, data);
-  }
-
   @IsDefined()
   @IsString()
   transactionId: string;
