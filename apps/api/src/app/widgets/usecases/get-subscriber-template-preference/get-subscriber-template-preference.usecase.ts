@@ -38,7 +38,7 @@ export class GetSubscriberTemplatePreference {
         preference: {
           enabled: currSubscriberPreference.enabled,
           channels: filterActiveChannels(
-            currSubscriberPreference.channels,
+            currSubscriberPreference?.channels ?? {},
             getDefaultFromTemplate(activeChannels, command.template.preferenceSettings)
           ),
         },
