@@ -1,5 +1,4 @@
 import { IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { DirectProviderIdEnum, ISubscriberChannel, IChannelCredentials, PushProviderIdEnum } from '@novu/shared';
 
@@ -14,9 +13,6 @@ export class IChannelCredentialsCommand implements IChannelCredentials {
 }
 
 export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements ISubscriberChannel {
-  static create(data: UpdateSubscriberChannelCommand) {
-    return CommandHelper.create(UpdateSubscriberChannelCommand, data);
-  }
   @IsString()
   subscriberId: string;
 
