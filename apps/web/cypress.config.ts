@@ -17,9 +17,28 @@ export default defineConfig({
       on(
         'file:preprocessor',
         webpackPreprocessor({
-          resolve: {
-            alias: {
-              '@nestjs/swagger': path.resolve(__dirname, './node_modules/@nestjs/swagger/dist/extra/swagger-shim.js'),
+          webpackOptions: {
+            mode: 'development',
+            module: {
+              rules: [
+                {
+                  test: /\.jsx?$/,
+                  exclude: [/node_modules/],
+                  use: [
+                    {
+                      loader: 'babel-loader',
+                      options: {
+                        presets: ['@babel/preset-env'],
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            resolve: {
+              alias: {
+                '@nestjs/swagger': path.resolve(__dirname, './node_modules/@nestjs/swagger/dist/extra/swagger-shim.js'),
+              },
             },
           },
         })
