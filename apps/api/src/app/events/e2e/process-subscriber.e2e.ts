@@ -3,7 +3,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { ISubscribersDefine } from '@novu/node';
+import { ISubscribersDefine } from '@novu/shared';
 import { SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberPreferenceBodyDto } from '../../widgets/dtos/user-preference.dto';
 

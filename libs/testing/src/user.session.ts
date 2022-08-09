@@ -4,9 +4,8 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
-import { TriggerRecipientsType } from '@novu/node';
 
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, TriggerRecipientsType } from '@novu/shared';
 import {
   UserEntity,
   UserRepository,

@@ -1,6 +1,9 @@
 import { AxiosInstance } from 'axios';
-import { ISubscriberPayload, ISubscribers } from './subscriber.interface';
-import { IChannelCredentials } from '@novu/shared';
+import {
+  IChannelCredentials,
+  ISubscriberPayload,
+  ISubscribers,
+} from '@novu/shared';
 
 export class Subscribers implements ISubscribers {
   private readonly http: AxiosInstance;

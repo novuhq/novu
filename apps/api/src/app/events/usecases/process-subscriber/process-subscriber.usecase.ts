@@ -14,7 +14,7 @@ import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
-import { ISubscribersDefine } from '@novu/node';
+import { ISubscribersDefine } from '@novu/shared';
 import { FilterSteps } from '../filter-steps/filter-steps.usecase';
 import { FilterStepsCommand } from '../filter-steps/filter-steps.command';
 import {

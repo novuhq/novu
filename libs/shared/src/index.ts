@@ -15,4 +15,6 @@ export * from './dto';
 export * from './consts';
 export * from './ui';
 export * from './services';
+export * from './interfaces';
+
 //

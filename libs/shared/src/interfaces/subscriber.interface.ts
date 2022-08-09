@@ -1,14 +1,11 @@
-import { IChannelCredentials } from '@novu/shared';
+import { IChannelCredentials } from '../dto';
+import { ChannelTypeEnum } from '../entities/message-template';
 
 export interface ISubscribers {
   identify(subscriberId: string, data: ISubscriberPayload);
   update(subscriberId: string, data: ISubscriberPayload);
   delete(subscriberId: string);
-  setCredentials(
-    subscriberId: string,
-    providerId: string,
-    credentials: IChannelCredentials
-  );
+  setCredentials(subscriberId: string, providerId: string, credentials: IChannelCredentials);
 }
 
 export interface ISubscriberPayload {
@@ -24,20 +21,11 @@ export interface ISubscribersDefine extends ISubscriberPayload {
   subscriberId: string;
 }
 
-export enum ChannelTypeEnum {
-  EMAIL = 'email',
-  SMS = 'sms',
-  DIRECT = 'direct',
-  PUSH = 'push',
-}
-
 export type TriggerRecipientsTypeArray = string[] | ISubscribersDefine[];
 
 export type TriggerRecipientsTypeSingle = string | ISubscribersDefine;
 
-export type TriggerRecipientsType =
-  | TriggerRecipientsTypeSingle
-  | TriggerRecipientsTypeArray;
+export type TriggerRecipientsType = TriggerRecipientsTypeSingle | TriggerRecipientsTypeArray;
 
 export interface ITriggerPayloadOptions {
   payload: ITriggerPayload;
@@ -59,14 +47,7 @@ export interface ITriggerPayload {
 }
 
 export type ITriggerOverrides = {
-  [key in
-    | 'emailjs'
-    | 'mailgun'
-    | 'nodemailer'
-    | 'plivo'
-    | 'postmark'
-    | 'sendgrid'
-    | 'twilio']: object;
+  [key in 'emailjs' | 'mailgun' | 'nodemailer' | 'plivo' | 'postmark' | 'sendgrid' | 'twilio']: object;
 } & {
   [key in 'fcm']: ITriggerOverrideFCM;
 };

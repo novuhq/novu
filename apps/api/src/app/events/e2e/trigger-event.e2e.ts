@@ -14,7 +14,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum, StepTypeEnum, IEmailBlock } from '@novu/shared';
 import axios from 'axios';
-import { ISubscribersDefine } from '@novu/node';
+import { ISubscribersDefine } from '@novu/shared';
 
 const axiosInstance = axios.create();
 
