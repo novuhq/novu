@@ -26,7 +26,7 @@ export class FcmPushProvider implements IPushProvider {
         credential: cert({
           projectId: this.config.projectId,
           clientEmail: this.config.email,
-          privateKey: JSON.parse(`"${this.config.secretKey}"`),
+          privateKey: this.config.secretKey,
         }),
       },
       crypto.randomBytes(4).toString()

@@ -1,17 +1,19 @@
 import { EN } from './languages/en';
 import { FI } from './languages/fi';
 import { HI } from './languages/hi';
+import { RU } from './languages/ru';
 import { SP } from './languages/sp';
+import { GJ } from './languages/gj';
 
 export interface ITranslationContent {
   readonly notifications: string;
   readonly markAllAsRead: string;
   readonly poweredBy: string;
-  readonly settings?: string;
+  readonly settings: string;
 }
 
 export interface ITranslationEntry {
-  readonly translations: ITranslationContent;
+  readonly translations: Partial<ITranslationContent>;
   readonly lang: string;
 }
 
@@ -19,6 +21,8 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
   fi: FI,
   hi: HI,
+  gj: GJ,
+  ru: RU,
   sp: SP,
 };
 
@@ -31,4 +35,4 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * - For French use "fr"
  * - For Hindi use "hi"
  */
-export type I18NLanguage = 'en' | 'fi' | 'hi' | 'sp';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'gj' | 'ru' | 'sp';

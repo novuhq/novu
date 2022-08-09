@@ -27,6 +27,7 @@ describe('Notifications List', function () {
   });
 
   it('should update real time for new notifications', function () {
+    cy.intercept('**/notifications/feed?page=0').as('getNotifications');
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
@@ -34,6 +35,7 @@ describe('Notifications List', function () {
       count: 3,
     });
 
+    cy.wait('@getNotifications');
     cy.getByTestId('unseen-count-label').contains('8');
 
     cy.getByTestId('notification-list-item').should('have.length', 8);

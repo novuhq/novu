@@ -11,7 +11,7 @@ describe('Notifications Creator', function () {
       fillBasicNotificationDetails('Test drag and drop channel');
       cy.getByTestId('workflowButton').click();
       dragAndDrop('inApp');
-      dragAndDrop('inApp', 'inApp');
+      dragAndDrop('inApp');
 
       cy.getByTestId('node-inAppSelector').last().parent().click();
       cy.getByTestId('edit-template-channel').click();
@@ -24,7 +24,7 @@ describe('Notifications Creator', function () {
       fillBasicNotificationDetails('Test only drop on last node');
       cy.getByTestId('workflowButton').click();
       dragAndDrop('inApp');
-      dragAndDrop('email', 'trigger');
+      dragAndDrop('email');
       cy.getByTestId('node-emailSelector').should('not.exist');
       cy.get('.react-flow__node').should('have.length', 3);
     });
@@ -69,7 +69,7 @@ describe('Notifications Creator', function () {
       });
       goBack();
 
-      dragAndDrop('email', 'inApp');
+      dragAndDrop('email');
       editChannel('email');
       cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
         parseSpecialCharSequences: false,
@@ -212,7 +212,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('description').type('This is a test description for a test title');
       cy.get('body').click();
 
-      addAndEditChannel('email', 'trigger');
+      addAndEditChannel('email');
 
       cy.getByTestId('email-editor').getByTestId('editor-row').click();
       cy.getByTestId('control-add').click();
@@ -243,7 +243,7 @@ describe('Notifications Creator', function () {
 
       goBack();
 
-      dragAndDrop('digest', 'email');
+      dragAndDrop('digest');
 
       cy.clickWorkflowNode(`node-digestSelector`);
 
@@ -383,7 +383,7 @@ describe('Notifications Creator', function () {
       cy.get('.mantine-Switch-input').click();
       cy.getByTestId(`close-side-menu-btn`).click();
 
-      dragAndDrop('inApp', 'email');
+      dragAndDrop('inApp');
 
       cy.clickWorkflowNode(`node-inAppSelector`);
       cy.get('.mantine-Switch-input').should('have.value', 'on');
@@ -620,7 +620,7 @@ describe('Notifications Creator', function () {
         cy.visit('/templates/edit/' + template._id);
       });
       cy.getByTestId('workflowButton').click();
-      dragAndDrop('sms', 'email');
+      dragAndDrop('sms');
 
       editChannel('sms');
       cy.getByTestId('smsNotificationContent').type('new content for sms');
@@ -661,27 +661,23 @@ describe('Notifications Creator', function () {
 });
 
 type Channel = 'inApp' | 'email' | 'sms' | 'digest';
-type Parent = Channel | 'trigger';
 
-function addAndEditChannel(channel: Channel, parent?: Parent) {
+function addAndEditChannel(channel: Channel) {
   waitLoadEnv(() => {
     cy.getByTestId('workflowButton').click();
   });
-  dragAndDrop(channel, parent);
+  dragAndDrop(channel);
   editChannel(channel);
 }
 
-function dragAndDrop(channel: Channel, parent?: Parent) {
+function dragAndDrop(channel: Channel) {
   const dataTransfer = new DataTransfer();
 
   cy.wait(2000);
   cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer });
-  if (parent) {
-    cy.getByTestId(`node-${parent}Selector`).parent().trigger('drop', { dataTransfer });
-  } else {
-    cy.getByTestId('node-triggerSelector').parent().trigger('drop', { dataTransfer });
-  }
+  cy.getByTestId('addNodeButton').parent().trigger('drop', { dataTransfer });
 }
+
 function editChannel(channel: Channel) {
   cy.clickWorkflowNode(`node-${channel}Selector`);
   cy.getByTestId('edit-template-channel').click();
