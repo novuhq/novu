@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { ActionIcon, Grid } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
-import { Input, Select, Tooltip } from '../../design-system';
+import { Checkbox, Input, Select, Tooltip } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
 import { INotificationTrigger } from '@novu/shared';
 import { useClipboard } from '@mantine/hooks';
@@ -146,6 +146,19 @@ export const NotificationSettingsForm = ({
               </>
             );
           }}
+        />
+        <Controller
+          name="critical"
+          control={control}
+          render={({ field }) => (
+            <Checkbox
+              {...field}
+              checked={field.value || false}
+              disabled={readonly}
+              data-test-id="critical"
+              label="Critical Workflow"
+            />
+          )}
         />
       </Grid.Col>
     </Grid>

@@ -11,6 +11,7 @@ export interface INotificationTemplate {
   tags: string[];
   draft: boolean;
   active: boolean;
+  critical: boolean;
   createdAt?: string;
   updatedAt?: string;
   steps: INotificationTemplateStep[];
