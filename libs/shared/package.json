@@ -22,11 +22,6 @@
     "axios": "^0.26.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.13.2",
-    "@nestjs/swagger": "6.0.5",
-    "@nestjs/microservices": "9.0.8",
-    "@nestjs/common": "9.0.8",
-    "cache-manager": "4.1.0",
-    "@nestjs/core": "9.0.8",
     "mixpanel": "^0.13.0"
   },
   "devDependencies": {
