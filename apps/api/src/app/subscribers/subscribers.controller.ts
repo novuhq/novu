@@ -11,7 +11,7 @@ import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
 import { GetSubscribers } from './usecases/get-subscribers';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
 import { UpdateSubscriberPreferenceDto } from '../widgets/dtos/update-subscriber-preference.dto';
-import { UpdateSubscriberPreferenceCommand } from '../widgets/usecases/update-subscriber-preference';
+import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';

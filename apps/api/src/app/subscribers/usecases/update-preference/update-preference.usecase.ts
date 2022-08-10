@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
-import {
-  UpdateSubscriberPreference,
-  UpdateSubscriberPreferenceCommand,
-} from '../../../widgets/usecases/update-subscriber-preference';
+import { UpdateSubscriberPreference, UpdateSubscriberPreferenceCommand } from '../update-subscriber-preference';
 import { UpdatePreferenceCommand } from './update-preference.command';
 
 @Injectable()

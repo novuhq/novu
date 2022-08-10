@@ -18,10 +18,12 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { GetSubscriberPreference } from './usecases/get-subscriber-preference/get-subscriber-preference.usecase';
-import { GetSubscriberPreferenceCommand } from './usecases/get-subscriber-preference/get-subscriber-preference.command';
-import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference/update-subscriber-preference.command';
-import { UpdateSubscriberPreference } from './usecases/update-subscriber-preference/update-subscriber-preference.usecase';
+import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.usecase';
+import { GetSubscriberPreferenceCommand } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.command';
+import {
+  UpdateSubscriberPreferenceCommand,
+  UpdateSubscriberPreference,
+} from '../subscribers/usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceDto } from './dtos/update-subscriber-preference.dto';
 
 @Controller('/widgets')

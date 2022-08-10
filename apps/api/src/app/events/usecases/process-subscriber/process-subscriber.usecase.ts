@@ -20,7 +20,7 @@ import { FilterStepsCommand } from '../filter-steps/filter-steps.command';
 import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
-} from '../../../widgets/usecases/get-subscriber-template-preference';
+} from '../../../subscribers/usecases/get-subscriber-template-preference';
 
 @Injectable()
 export class ProcessSubscriber {
