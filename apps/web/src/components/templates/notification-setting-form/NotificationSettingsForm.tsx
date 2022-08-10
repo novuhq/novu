@@ -1,15 +1,15 @@
+import { useEffect } from 'react';
+import { ActionIcon, Grid } from '@mantine/core';
+import { useClipboard } from '@mantine/hooks';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { useEffect } from 'react';
-import { ActionIcon, Grid, InputWrapper } from '@mantine/core';
-import { getNotificationGroups } from '../../api/notifications';
-import { api } from '../../api/api.client';
-import { Checkbox, Input, Select, Tooltip } from '../../design-system';
-import { useEnvController } from '../../store/use-env-controller';
 import { INotificationTrigger } from '@novu/shared';
-import { useClipboard } from '@mantine/hooks';
-import { Check, Copy } from '../../design-system/icons';
-import { inputStyles } from '../../design-system/config/inputs.styles';
+import { getNotificationGroups } from '../../../api/notifications';
+import { api } from '../../../api/api.client';
+import { Checkbox, Input, Select, Tooltip } from '../../../design-system';
+import { Check, Copy } from '../../../design-system/icons';
+import { useEnvController } from '../../../store/use-env-controller';
+import { TemplatePreference } from './TemplatePreference';
 
 export const NotificationSettingsForm = ({
   editMode,
@@ -107,37 +107,7 @@ export const NotificationSettingsForm = ({
           name="preferenceSettings"
           control={control}
           render={({ field }) => {
-            const preferences = field.value;
-
-            const mock = { channel: true };
-
-            const data = preferences ? preferences : mock;
-
-            function handleCheckboxChange(e, channelType) {
-              const newData = Object.assign({}, preferences);
-              newData[channelType] = e.currentTarget.checked;
-              field.onChange(newData);
-            }
-
-            return (
-              <InputWrapper label="Template default" description="Description here" styles={inputStyles}>
-                <Grid>
-                  {Object.keys(data).map((key) => {
-                    return (
-                      <Grid.Col span={3}>
-                        <Checkbox
-                          checked={data[key] || false}
-                          disabled={readonly}
-                          data-test-id={`preference-${key}`}
-                          label={key}
-                          onChange={(e) => handleCheckboxChange(e, key)}
-                        />
-                      </Grid.Col>
-                    );
-                  })}
-                </Grid>
-              </InputWrapper>
-            );
+            return <TemplatePreference {...field} />;
           }}
         />
       </Grid.Col>
