@@ -48,9 +48,13 @@
       "name": "📦 @novu/stateless",
       "path": "packages/stateless"
     },
-     {
+    {
       "name": "📦 @novu/node",
       "path": "packages/node"
+    },
+    {
+      "name": "📦 @novu/notification-center",
+      "path": "packages/notification-center"
     },
     {
       "name": "🔔 @novu/emailjs",
