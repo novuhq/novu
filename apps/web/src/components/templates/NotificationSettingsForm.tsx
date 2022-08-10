@@ -1,7 +1,7 @@
 import { Controller, useFormContext } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { useEffect } from 'react';
-import { ActionIcon, Grid } from '@mantine/core';
+import { ActionIcon, Grid, InputWrapper } from '@mantine/core';
 import { getNotificationGroups } from '../../api/notifications';
 import { api } from '../../api/api.client';
 import { Checkbox, Input, Select, Tooltip } from '../../design-system';
@@ -9,6 +9,7 @@ import { useEnvController } from '../../store/use-env-controller';
 import { INotificationTrigger } from '@novu/shared';
 import { useClipboard } from '@mantine/hooks';
 import { Check, Copy } from '../../design-system/icons';
+import { inputStyles } from '../../design-system/config/inputs.styles';
 
 export const NotificationSettingsForm = ({
   editMode,
@@ -94,12 +95,50 @@ export const NotificationSettingsForm = ({
               {...field}
               value={field.value || ''}
               disabled={readonly}
+              mb={30}
               data-test-id="description"
               description="Write an internal description of when and how this notification will be used."
               label="Notification Description"
               placeholder="Describe your notification..."
             />
           )}
+        />
+        <Controller
+          name="preferenceSettings"
+          control={control}
+          render={({ field }) => {
+            const preferences = field.value;
+
+            const mock = { channel: true };
+
+            const data = preferences ? preferences : mock;
+
+            function handleCheckboxChange(e, channelType) {
+              const newData = Object.assign({}, preferences);
+              newData[channelType] = e.currentTarget.checked;
+              field.onChange(newData);
+            }
+
+            return (
+              <InputWrapper label="Template default" description="Description here" styles={inputStyles}>
+                <Grid>
+                  {Object.keys(data).map((key) => {
+                    return (
+                      <Grid.Col span={3}>
+                        <Checkbox
+                          checked={data[key] || false}
+                          disabled={readonly}
+                          data-test-id={`preference-${key}`}
+                          label={key}
+                          onChange={(e) => handleCheckboxChange(e, key)}
+                        />
+                      </Grid.Col>
+                    );
+                  })}
+                </Grid>
+              </InputWrapper>
+            );
+          }}
         />
       </Grid.Col>
       <Grid.Col md={6} sm={12}>
