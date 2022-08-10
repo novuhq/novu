@@ -2,6 +2,7 @@ import { EN } from './languages/en';
 import { FI } from './languages/fi';
 import { FR } from './languages/fr';
 import { HI } from './languages/hi';
+import { IT } from './languages/it';
 import { RU } from './languages/ru';
 import { SP } from './languages/sp';
 import { FA } from './languages/fa';
@@ -23,6 +24,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
   fi: FI,
   hi: HI,
+  it: IT,
   ar: AR,
   fa: FA
   fr: FR
@@ -39,4 +41,4 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * - For English use "en"
  * - For French use "fr"
  */
-export type I18NLanguage = 'en' | 'fi' | 'hi' | 'gj' | 'ru' | 'sp' | 'ar' | 'fa' | 'fr';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'it' | 'gj' | 'ru' | 'sp' | 'ar' | 'fa' | 'fr';
