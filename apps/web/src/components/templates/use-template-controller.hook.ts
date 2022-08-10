@@ -6,6 +6,7 @@ import {
   INotificationTemplate,
   IUpdateNotificationTemplate,
   StepTypeEnum,
+  IPreferenceChannels,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
@@ -80,6 +81,7 @@ export function useTemplateController(templateId: string) {
         description: template.description as string,
         tags: template.tags,
         critical: template.critical,
+        preferenceSettings: template.preferenceSettings,
         steps: [],
       };
 
@@ -133,6 +135,7 @@ export function useTemplateController(templateId: string) {
       description: data.description,
       tags: data.tags,
       critical: data.critical,
+      preferenceSettings: data.preferenceSettings,
       steps: stepsToSave,
     };
 
@@ -250,6 +253,7 @@ export interface IForm {
   tags: string[];
   critical: boolean;
   steps: StepEntity[];
+  preferenceSettings: IPreferenceChannels;
 }
 
 const defaultFormValues = {
