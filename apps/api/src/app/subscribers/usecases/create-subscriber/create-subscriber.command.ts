@@ -1,13 +1,7 @@
-import { IsArray, IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
-import { IChannelSettings } from '@novu/dal';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class CreateSubscriberCommand extends EnvironmentCommand {
-  static create(data: CreateSubscriberCommand) {
-    return CommandHelper.create(CreateSubscriberCommand, data);
-  }
-
   @IsString()
   @IsDefined()
   subscriberId: string;

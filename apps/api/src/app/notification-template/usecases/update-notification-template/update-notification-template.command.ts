@@ -1,13 +1,8 @@
 import { IsArray, IsBoolean, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { NotificationStepDto } from '../../dto';
 
 export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
-  static create(data: UpdateNotificationTemplateCommand) {
-    return CommandHelper.create<UpdateNotificationTemplateCommand>(UpdateNotificationTemplateCommand, data);
-  }
-
   @IsDefined()
   @IsMongoId()
   templateId: string;

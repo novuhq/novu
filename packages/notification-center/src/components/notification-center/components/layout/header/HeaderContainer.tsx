@@ -1,5 +1,4 @@
-import { useContext, useEffect } from 'react';
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Header } from './Header';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { UnseenCountContext } from '../../../../../store/unseen-count.context';
