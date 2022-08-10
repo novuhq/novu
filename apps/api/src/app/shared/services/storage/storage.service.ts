@@ -2,6 +2,13 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { URL } from 'url';
 import { Storage } from '@google-cloud/storage';
+import {
+  StorageSharedKeyCredential,
+  BlobSASPermissions,
+  BlobServiceClient,
+  generateBlobSASQueryParameters,
+  SASProtocol,
+} from '@azure/storage-blob';
 
 export interface IFilePath {
   path: string;
@@ -9,7 +16,10 @@ export interface IFilePath {
 }
 
 export abstract class StorageService {
-  abstract getSignedUrl(key: string, contentType: string): Promise<{ signedUrl: string; path: string }>;
+  abstract getSignedUrl(
+    key: string,
+    contentType: string
+  ): Promise<{ signedUrl: string; path: string; additionalHeaders: object }>;
 }
 
 export class S3StorageService implements StorageService {
@@ -33,6 +43,7 @@ export class S3StorageService implements StorageService {
     return {
       signedUrl,
       path: `${parsedUrl.origin}${parsedUrl.pathname}`,
+      additionalHeaders: {},
     };
   }
 }
@@ -56,6 +67,48 @@ export class GCSStorageService implements StorageService {
     return {
       signedUrl,
       path: `${process.env.GCS_DOMAIN}${parsedUrl.pathname}`,
+      additionalHeaders: {},
+    };
+  }
+}
+
+export class AzureBlobStorageService implements StorageService {
+  private sharedKeyCredential = new StorageSharedKeyCredential(
+    process.env.AZURE_ACCOUNT_NAME,
+    process.env.AZURE_ACCOUNT_KEY
+  );
+  private blobServiceClient = new BlobServiceClient(
+    process.env.AZURE_HOST_NAME || `https://${process.env.AZURE_ACCOUNT_NAME}.blob.core.windows.net`,
+    this.sharedKeyCredential
+  );
+
+  async getSignedUrl(key: string, contentType: string) {
+    const containerName = process.env.AZURE_CONTAINER_NAME || 'novu';
+    const blobName = key;
+    const containerClient = this.blobServiceClient.getContainerClient(containerName);
+    const blobClient = containerClient.getBlobClient(blobName);
+    const blobSAS = generateBlobSASQueryParameters(
+      {
+        containerName,
+        blobName,
+        permissions: BlobSASPermissions.parse('racwd'),
+        startsOn: new Date(),
+        expiresOn: new Date(new Date().valueOf() + 60 * 60 * 1000), // 60 minutes
+        protocol: SASProtocol.HttpsAndHttp,
+        contentType: contentType,
+      },
+      this.sharedKeyCredential
+    ).toString();
+
+    const signedUrl = `${blobClient.url}?${blobSAS}`;
+    const additionalHeaders = {
+      'x-ms-blob-type': 'BlockBlob',
+    };
+
+    return {
+      signedUrl,
+      path: `${blobClient.url}`,
+      additionalHeaders: additionalHeaders,
     };
   }
 }
