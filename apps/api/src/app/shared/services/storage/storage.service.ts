@@ -43,7 +43,6 @@ export class S3StorageService implements StorageService {
     return {
       signedUrl,
       path: `${parsedUrl.origin}${parsedUrl.pathname}`,
-      additionalHeaders: {},
     };
   }
 }
@@ -67,7 +66,6 @@ export class GCSStorageService implements StorageService {
     return {
       signedUrl,
       path: `${process.env.GCS_DOMAIN}${parsedUrl.pathname}`,
-      additionalHeaders: {},
     };
   }
 }
