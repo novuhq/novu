@@ -1,35 +1,36 @@
 import styled from 'styled-components';
+import { IThemePreferenceItem } from '../../../../store/novu-theme.context';
 
-export const accordionStyles = (baseTheme, font) => {
+export const accordionStyles = (baseTheme: IThemePreferenceItem, font: string) => {
   return {
     item: {
       borderBottom: 'none',
-      boxShadow: baseTheme.boxShadow,
-      backgroundColor: baseTheme.background,
+      boxShadow: baseTheme.accordion.boxShadow,
+      backgroundColor: baseTheme.accordion.background,
       marginBottom: '15px',
       borderRadius: '7px',
     },
     content: {
-      color: baseTheme.fontColor,
+      color: baseTheme.accordion.fontColor,
       fontFamily: font,
     },
     control: {
       fontFamily: font,
       '&:hover': {
-        backgroundColor: baseTheme.background,
+        backgroundColor: baseTheme.accordion.background,
         borderRadius: '7px',
       },
     },
     icon: {
-      color: baseTheme.timeMarkFontColor,
+      color: baseTheme.accordion.icon.inactive,
     },
   };
 };
 
-export const switchStyles = (baseTheme) => {
+export const switchStyles = (baseTheme: IThemePreferenceItem) => {
   return {
     input: {
-      background: baseTheme.timeMarkFontColor,
+      background: baseTheme.switch.background,
       width: '41px',
       height: '24px',
       border: 'transparent',
@@ -42,10 +43,10 @@ export const switchStyles = (baseTheme) => {
         opacity: 0.3,
       },
       '&:disabled:not(:checked)': {
-        background: baseTheme.timeMarkFontColor,
+        background: baseTheme.switch?.backgroundUnchecked,
       },
       '&:checked': {
-        background: baseTheme.notificationItemBeforeBrandColor,
+        background: baseTheme.switch?.backgroundChecked,
       },
     },
   };
@@ -63,7 +64,7 @@ export const Text = styled.div<{ color: string; size: 'sm' | 'md' | 'lg' }>`
 export const TextBlock = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 0px;
+  padding: 0;
   gap: 5px;
   align-items: flex-start;
 `;

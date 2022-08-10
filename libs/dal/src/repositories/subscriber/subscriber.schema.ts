@@ -28,6 +28,7 @@ const subscriberSchema = new Schema(
 );
 
 subscriberSchema.index({ _environmentId: 1, userId: 1 });
+subscriberSchema.index({ _environmentId: 1, subscriberId: 1 });
 
 subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 

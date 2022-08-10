@@ -1,12 +1,7 @@
 import { IsDefined, IsHexColor, IsOptional, IsUrl } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { AuthenticatedCommand } from '../../../shared/commands/authenticated.command';
 
 export class UpdateBrandingDetailsCommand extends AuthenticatedCommand {
-  static create(data: UpdateBrandingDetailsCommand) {
-    return CommandHelper.create<UpdateBrandingDetailsCommand>(UpdateBrandingDetailsCommand, data);
-  }
-
   @IsDefined()
   public readonly id: string;
 
