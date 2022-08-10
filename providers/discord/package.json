@@ -1,7 +1,7 @@
 {
-  "name": "@novu/gupshup",
-  "version": "0.6.1",
-  "description": "A gupshup wrapper for novu",
+  "name": "@novu/discord",
+  "version": "0.5.1",
+  "description": "A discord wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -31,11 +31,10 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.4.1",
-    "node-fetch": "^3.2.10"
+    "@novu/stateless": "^0.6.0",
+    "axios": "^0.27.2"
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.13.15",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/jest": "^27.0.1",
     "codecov": "^3.5.0",
