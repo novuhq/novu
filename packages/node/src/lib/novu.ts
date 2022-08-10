@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
 import { EventEmitter } from 'events';
 import { INovu, INovuConfiguration } from './novu.interface';
-import { ITriggerPayloadOptions } from '@novu/shared';
+import { ITriggerPayloadOptions } from './subscribers/subscriber.interface';
 
 export class Novu extends EventEmitter implements INovu {
   private readonly apiKey?: string;

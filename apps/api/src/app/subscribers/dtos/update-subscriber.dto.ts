@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DirectProviderIdEnum, PushProviderIdEnum } from '../../consts';
+import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class IChannelCredentials {
   @ApiProperty()

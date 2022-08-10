@@ -1,20 +1,16 @@
 import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
-import {
-  IJwtPayload,
-  TriggerEventRequestDto,
-  TriggerEventResponseDto,
-  TriggerEventToAllRequestDto,
-} from '@novu/shared';
+import { IJwtPayload } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
 import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ISubscribersDefine } from '@novu/shared';
+import { ISubscribersDefine } from '@novu/node';
 import { CancelDigest } from './usecases/cancel-digest/cancel-digest.usecase';
 import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.command';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
+import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
 
 @Controller('events')
 export class EventsController {

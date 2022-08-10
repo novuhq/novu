@@ -3,7 +3,7 @@ import {
   IChannelCredentials,
   ISubscriberPayload,
   ISubscribers,
-} from '@novu/shared';
+} from './subscriber.interface';
 
 export class Subscribers implements ISubscribers {
   private readonly http: AxiosInstance;

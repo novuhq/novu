@@ -1,6 +1,6 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
-import { TriggerRecipientsType } from '../../interfaces';
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { TriggerRecipientsType } from '@novu/node';
 
 export class SubscriberPayloadDto {
   @ApiProperty()
@@ -50,7 +50,7 @@ export class TriggerEventRequestDto {
     ],
   })
   @IsDefined()
-  to: TriggerRecipientsType; // eslint-disable-line @typescript-eslint/no-explicit-any
+  to: TriggerRecipientsType;
 
   @ApiProperty()
   @IsString()

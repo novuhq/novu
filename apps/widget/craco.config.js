@@ -12,18 +12,4 @@ module.exports = {
       ],
     ],
   },
-  webpack: {
-    configure: (webpackConfig) => {
-      return {
-        ...webpackConfig,
-        resolve: {
-          ...webpackConfig.resolve,
-          alias: {
-            ...webpackConfig.alias,
-            '@nestjs/swagger': path.resolve(__dirname, './node_modules/@nestjs/swagger/dist/extra/swagger-shim.js'),
-          },
-        },
-      };
-    },
-  },
 };

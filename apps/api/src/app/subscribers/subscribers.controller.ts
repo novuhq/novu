@@ -5,15 +5,15 @@ import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-sub
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
+import { IJwtPayload } from '@novu/shared';
 import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
-  IJwtPayload,
   SubscriberResponseDto,
   SubscribersResponseDto,
   UpdateSubscriberChannelRequestDto,
   UpdateSubscriberRequestDto,
-} from '@novu/shared';
+} from './dtos';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
 import { GetSubscribersCommand } from './usecases/get-subscribers';

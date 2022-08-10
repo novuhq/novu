@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DirectProviderIdEnum, PushProviderIdEnum } from '../../consts';
 import { IChannelCredentials } from './update-subscriber.dto';
+import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class IChannelSettings {
   @ApiProperty()

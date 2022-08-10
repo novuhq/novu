@@ -1,5 +1,5 @@
 import { IsDefined, IsString } from 'class-validator';
-import { ISubscribersDefine } from '@novu/shared';
+import { ISubscribersDefine } from '@novu/node';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {

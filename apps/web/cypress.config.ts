@@ -1,6 +1,4 @@
 import { defineConfig } from 'cypress';
-const webpackPreprocessor = require('@cypress/webpack-preprocessor');
-const path = require('path');
 
 export default defineConfig({
   viewportHeight: 700,
@@ -14,36 +12,6 @@ export default defineConfig({
 
   e2e: {
     setupNodeEvents(on, config) {
-      on(
-        'file:preprocessor',
-        webpackPreprocessor({
-          webpackOptions: {
-            mode: 'development',
-            module: {
-              rules: [
-                {
-                  test: /\.jsx?$/,
-                  exclude: [/node_modules/],
-                  use: [
-                    {
-                      loader: 'babel-loader',
-                      options: {
-                        presets: ['@babel/preset-env'],
-                      },
-                    },
-                  ],
-                },
-              ],
-            },
-            resolve: {
-              alias: {
-                '@nestjs/swagger': path.resolve(__dirname, './node_modules/@nestjs/swagger/dist/extra/swagger-shim.js'),
-              },
-            },
-          },
-        })
-      );
-
       // eslint-disable-next-line import/extensions
       return require('./cypress/plugins/index.ts')(on, config);
     },
