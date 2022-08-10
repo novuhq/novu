@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Accordion } from '@mantine/core';
+import { Accordion, Divider } from '@mantine/core';
 import styled from 'styled-components';
 import { useNovuThemeProvider, useSubscriberPreference } from '../../../../hooks';
 import { accordionStyles, Text, TextBlock } from './styles';
@@ -9,7 +9,7 @@ import { getChannel } from './channels';
 export function SubscriberPreference() {
   const { theme, common } = useNovuThemeProvider();
   const { preferences, updatePreference } = useSubscriberPreference();
-  const baseTheme = theme?.preferenceItem;
+  const baseTheme = theme?.userPreferences;
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
 
   return (
@@ -33,13 +33,14 @@ export function SubscriberPreference() {
                 data-test-id="workflow-list-item"
                 label={
                   <WorkflowHeader
-                    theme={theme}
+                    theme={baseTheme}
                     label={item.template?.name}
                     channels={getEnabledChannels(channelsPreference)}
                   />
                 }
               >
                 <ChannelsWrapper>
+                  <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
                   {channelsKeys.map((key) => (
                     <ChannelPreference
                       key={key}
@@ -61,14 +62,10 @@ export function SubscriberPreference() {
 function WorkflowHeader({ label, channels, theme }) {
   return (
     <TextBlock>
-      <Text size={'lg'} color={theme.header.fontColor}>
+      <Text size={'lg'} color={theme?.accordion?.fontColor}>
         {label}
       </Text>
-      <Text
-        data-test-id="workflow-active-channels"
-        size={'sm'}
-        color={theme?.notificationItem?.unseen.timeMarkFontColor}
-      >
+      <Text data-test-id="workflow-active-channels" size={'sm'} color={theme?.accordion?.secondaryFontColor}>
         {channels}
       </Text>
     </TextBlock>

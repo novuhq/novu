@@ -4,7 +4,7 @@ import { LoadingOverlay, Switch } from '@mantine/core';
 import chroma from 'chroma-js';
 import { getChannel } from './channels';
 import styled from 'styled-components';
-import { switchStyles, Text, TextBlock } from './styles';
+import { switchStyles, Text } from './styles';
 import { getLinearGradientColorStopValues } from '../../../../shared/utils/getLinearGradientColorStopValues';
 
 interface IChannelPreferenceProps {
@@ -14,12 +14,12 @@ interface IChannelPreferenceProps {
   disabled: boolean;
 }
 export function ChannelPreference({ type, active, disabled, handleUpdateChannelPreference }: IChannelPreferenceProps) {
-  const { label, description, Icon } = getChannel(type);
+  const { label, Icon } = getChannel(type);
   const { theme } = useNovuThemeProvider();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const baseTheme = theme?.preferenceItem;
-  const primaryColor = baseTheme?.accordion?.icon.active;
-  const secondaryColor = baseTheme?.accordion?.icon.inactive;
+  const baseTheme = theme?.userPreferences;
+  const iconColor = baseTheme?.accordionItem?.icon;
+  const fontColor = baseTheme?.accordionItem?.fontColor;
 
   const updateChannel = async (checked: boolean) => {
     setIsLoading(true);
@@ -32,15 +32,10 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
   return (
     <ChannelItemWrapper data-test-id="channel-preference-item">
       <LeftContentWrapper>
-        <Icon style={{ color: active ? primaryColor : secondaryColor }} />
-        <TextBlock>
-          <Text size={'md'} color={active ? primaryColor : secondaryColor}>
-            {label}
-          </Text>
-          <Text size={'sm'} color={secondaryColor}>
-            {description}
-          </Text>
-        </TextBlock>
+        <Icon style={{ color: active ? iconColor.active : iconColor.inactive }} />
+        <Text size={'md'} color={active ? fontColor.active : fontColor.inactive}>
+          {label}
+        </Text>
       </LeftContentWrapper>
       <SwitchWrapper>
         <LoadingOverlay
