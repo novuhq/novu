@@ -19,7 +19,7 @@ export abstract class StorageService {
   abstract getSignedUrl(
     key: string,
     contentType: string
-  ): Promise<{ signedUrl: string; path: string; additionalHeaders: object }>;
+  ): Promise<{ signedUrl: string; path: string; additionalHeaders?: Record<string, string> }>;
 }
 
 export class S3StorageService implements StorageService {

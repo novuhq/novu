@@ -45,6 +45,17 @@ const DAL_MODELS = [
   FeedRepository,
 ];
 
+function getStorageServiceClass() {
+  switch (process.env.STORAGE_SERVICE) {
+    case 'GCS':
+      return GCSStorageService;
+    case 'AZURE':
+      return AzureBlobStorageService;
+    default:
+      return S3StorageService;
+  }
+}
+
 const dalService = new DalService();
 
 export const ANALYTICS_SERVICE = 'AnalyticsService';
@@ -67,12 +78,7 @@ const PROVIDERS = [
   ...DAL_MODELS,
   {
     provide: StorageService,
-    useClass:
-      process.env.STORAGE_SERVICE === 'GCS'
-        ? GCSStorageService
-        : process.env.STORAGE_SERVICE === 'AZURE'
-        ? AzureBlobStorageService
-        : S3StorageService,
+    useClass: getStorageServiceClass(),
   },
   {
     provide: ANALYTICS_SERVICE,

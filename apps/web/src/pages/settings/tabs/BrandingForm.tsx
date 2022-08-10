@@ -72,7 +72,7 @@ export function BrandingForm({
     const contentTypeHeaders = {
       'Content-Type': file.type,
     };
-    const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders);
+    const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
     await axios.put(signedUrl, file, {
       headers: mergedHeaders,
       transformRequest: [
