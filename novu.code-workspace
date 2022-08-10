@@ -57,12 +57,44 @@
       "path": "packages/notification-center"
     },
     {
+      "name": "🔔 @novu/discord",
+      "path": "providers/discord"
+    },
+    {
       "name": "🔔 @novu/emailjs",
       "path": "providers/emailjs"
     },
     {
+      "name": "🔔 @novu/fcm",
+      "path": "providers/fcm"
+    },
+    {
+      "name": "🔔 @novu/gupshup",
+      "path": "providers/gupshup"
+    },
+    {
+      "name": "🔔 @novu/mailersend",
+      "path": "providers/mailersend"
+    },
+    {
       "name": "🔔 @novu/mailgun",
       "path": "providers/mailgun"
+    },
+    {
+      "name": "🔔 @novu/mailjet",
+      "path": "providers/mailjet"
+    },
+    {
+      "name": "🔔 @novu/mandrill",
+      "path": "providers/mandrill"
+    },
+    {
+      "name": "🔔 @novu/netcore",
+      "path": "providers/netcore"
+    },
+    {
+      "name": "🔔 @novu/nexmo",
+      "path": "providers/nexmo"
     },
     {
       "name": "🔔 @novu/nodemailer",
@@ -81,24 +113,36 @@
       "path": "providers/sendgrid"
     },
     {
-      "name": "🔔 @novu/twilio",
-      "path": "providers/twilio"
+      "name": "🔔 @novu/sendinblue",
+      "path": "providers/sendinblue"
     },
     {
-      "name": "🔔 @novu/termii",
-      "path": "providers/termii"
-    },
-    {
-      "name": "🔔 @novu/fcm",
-      "path": "providers/fcm"
+      "name": "🔔 @novu/ses",
+      "path": "providers/ses"
     },
     {
       "name": "🔔 @novu/slack",
       "path": "providers/slack"
     },
     {
-      "name": "🔔 @novu/discord",
-      "path": "providers/discord"
+      "name": "🔔 @novu/sms77",
+      "path": "providers/sms77"
+    },
+    {
+      "name": "🔔 @novu/sns",
+      "path": "providers/sns"
+    },
+    {
+      "name": "🔔 @novu/telnyx",
+      "path": "providers/telnyx"
+    },
+    {
+      "name": "🔔 @novu/termii",
+      "path": "providers/termii"
+    },
+    {
+      "name": "🔔 @novu/twilio",
+      "path": "providers/twilio"
     }
   ],
   "settings": {

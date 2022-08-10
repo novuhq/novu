@@ -1,5 +1,5 @@
 import { MailersendEmailProvider } from './mailersend.provider';
-import MailerSend from 'mailersend';
+import MailerSend, { Attachment, Recipient } from 'mailersend';
 
 const mockConfig = {
   apiKey: 'SG.1234',
@@ -55,17 +55,30 @@ test('should trigger mailerSend correctly', async () => {
   expect(spy).toBeCalledWith('/email', {
     method: 'POST',
     body: {
-      to: [{ email: 'test@test1.com' }, { email: 'test@test2.com' }],
+      to: [
+        { email: 'test@test1.com' } as Recipient,
+        { email: 'test@test2.com' } as Recipient,
+      ],
       subject: mockNovuMessage.subject,
       html: mockNovuMessage.html,
       text: mockNovuMessage.text,
-      from: { email: mockNovuMessage.from },
+      from: { email: mockNovuMessage.from, name: undefined },
       attachments: [
         {
           content: Buffer.from('ZEdWemRBPT0=').toString(),
           filename: 'test.txt',
-        },
+        } as Attachment,
       ],
     },
+    bcc: undefined,
+    cc: undefined,
+    personalization: undefined,
+    reply_to: {
+      email: undefined,
+      name: undefined,
+    },
+    tags: undefined,
+    template_id: undefined,
+    variables: undefined,
   });
 });
