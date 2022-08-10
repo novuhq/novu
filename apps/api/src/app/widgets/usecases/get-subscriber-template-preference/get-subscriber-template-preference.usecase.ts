@@ -23,6 +23,14 @@ export class GetSubscriberTemplatePreference {
 
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
+    const preferenceSettings = command.template.preferenceSettings ?? {
+      email: true,
+      sms: true,
+      in_app: true,
+      direct: true,
+      push: true,
+    };
+    const templateDefaultsFiltered = getDefaultFromTemplate(activeChannels, preferenceSettings);
 
     const currSubscriberPreference = await this.subscriberPreferenceRepository.findOne({
       _environmentId: command.environmentId,
@@ -37,15 +45,12 @@ export class GetSubscriberTemplatePreference {
         template: responseTemplate,
         preference: {
           enabled: currSubscriberPreference.enabled,
-          channels: filterActiveChannels(
-            currSubscriberPreference?.channels ?? {},
-            getDefaultFromTemplate(activeChannels, command.template.preferenceSettings)
-          ),
+          channels: filterActiveChannels(currSubscriberPreference?.channels ?? {}, templateDefaultsFiltered),
         },
       };
     }
 
-    return getNoSettingFallback(responseTemplate, activeChannels);
+    return getNoSettingFallback(responseTemplate, templateDefaultsFiltered);
   }
 
   private async queryActiveChannels(command: GetSubscriberTemplatePreferenceCommand): Promise<ChannelTypeEnum[]> {
@@ -64,7 +69,7 @@ export class GetSubscriberTemplatePreference {
   }
 }
 
-function getDefaultFromTemplate(activeChannels: ChannelTypeEnum[], defaults: IPreferenceChannels) {
+function getDefaultFromTemplate(activeChannels: ChannelTypeEnum[], defaults: IPreferenceChannels): IPreferenceChannels {
   const filteredChannels = Object.assign({}, defaults);
   for (const key in defaults) {
     if (!activeChannels.some((channel) => channel === key)) {
@@ -92,22 +97,13 @@ function filterActiveChannels(channels: IPreferenceChannels, defaults: IPreferen
 
 function getNoSettingFallback(
   template: IGetSubscriberPreferenceTemplateResponse,
-  activeChannels: ChannelTypeEnum[]
+  defaults: IPreferenceChannels
 ): ISubscriberPreferenceResponse {
   return {
     template,
     preference: {
       enabled: true,
-      channels: filterActiveChannels(
-        {},
-        getDefaultFromTemplate(activeChannels, {
-          email: true,
-          sms: true,
-          in_app: true,
-          direct: true,
-          push: true,
-        })
-      ),
+      channels: filterActiveChannels({}, defaults),
     },
   };
 }
