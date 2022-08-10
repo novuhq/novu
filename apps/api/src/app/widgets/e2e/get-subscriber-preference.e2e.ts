@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 
-describe('GET /widget/notifications/feed', function () {
+describe('GET /widget/preferences', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
 
@@ -23,6 +23,19 @@ describe('GET /widget/notifications/feed', function () {
 
     expect(data.preference.channels.email).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(true);
+  });
+
+  it('should fetch according to template preferences defaults ', async function () {
+    const templateDefaultSettings = await session.createTemplate({
+      preferenceSettingsOverride: { email: true, direct: true, push: true, sms: true, in_app: false },
+      noFeedId: true,
+    });
+    const response = await getSubscriberPreference(session.subscriberToken);
+
+    const data = response.data.data.find((pref) => pref.template._id === templateDefaultSettings._id);
+
+    expect(data.preference.channels.email).to.equal(true);
+    expect(data.preference.channels.in_app).to.equal(false);
   });
 });
 
