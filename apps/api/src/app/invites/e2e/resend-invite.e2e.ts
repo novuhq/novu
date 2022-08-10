@@ -1,55 +1,46 @@
-import { OrganizationRepository, MemberRepository, MemberEntity } from '@novu/dal';
+import { MemberRepository, MemberEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 describe('Resend invite - /invites/resend (POST)', async () => {
   let session: UserSession;
-  let invitedUserSession: UserSession;
   let invitee: MemberEntity;
-  const organizationRepository = new OrganizationRepository();
   const memberRepository = new MemberRepository();
 
   async function setup() {
     session = new UserSession();
-    invitedUserSession = new UserSession();
-    await invitedUserSession.initialize({
-      noOrganization: true,
-      noEnvironment: true,
-    });
-
     await session.initialize();
 
-    await session.testAgent.post('/v1/invites/bulk').send({
-      invitees: [
-        {
-          email: 'asdas@dasdas.com',
-        },
-      ],
-    });
+    await session.testAgent
+      .post('/v1/invites/bulk')
+      .send({
+        invitees: [
+          {
+            email: 'asdas@dasdas.com',
+          },
+        ],
+      })
+      .expect(201);
 
     const members = await memberRepository.getOrganizationMembers(session.organization._id);
     invitee = members.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
   }
 
   describe('Valid resend invite flow', async () => {
-    let response;
-
     before(async () => {
       await setup();
 
       const members = await memberRepository.getOrganizationMembers(session.organization._id);
       const invitee = members.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
 
-      const { body } = await invitedUserSession.testAgent
-        .post('/v1/invites/resend', { memberId: invitee._id })
-        .expect(201);
+      const { body } = await session.testAgent.post('/v1/invites/resend').send({ memberId: invitee._id }).expect(201);
 
-      response = body.data;
+      console.log(body);
     });
 
     it('should change the inviter id', async () => {
-      const member = await memberRepository.findMemberByUserId(session.organization._id, invitee._id);
+      const member = await memberRepository.findMemberById(session.organization._id, invitee._id);
 
       expect(member.invite._inviterId).to.equal(session.user._id);
     });
@@ -62,23 +53,26 @@ describe('Resend invite - /invites/resend (POST)', async () => {
 
     it('should reject if member already active', async () => {
       expect(invitee.memberStatus).to.eq(MemberStatusEnum.INVITED);
-      await memberRepository.update(invitee, { memberStatus: MemberStatusEnum.ACTIVE });
+      await memberRepository.update({ _id: invitee._id }, { memberStatus: MemberStatusEnum.ACTIVE });
 
-      expect(invitee.memberStatus).to.eq(MemberStatusEnum.ACTIVE);
+      const { body } = await session.testAgent.post('/v1/invites/resend').send({ memberId: invitee._id }).expect(400);
 
-      const { body } = await invitedUserSession.testAgent
-        .post('/v1/invites/resend', { memberId: invitee._id })
-        .expect(400);
-
-      expect(body.message).to.contain('active');
+      expect(body.message).to.exist;
+      expect(body.message).to.equal('Member already active');
+      expect(body.error).to.equal('Bad Request');
     });
 
     it('should reject if member id invalid', async () => {
       expect(invitee.memberStatus).to.eq(MemberStatusEnum.INVITED);
 
-      const { body } = await invitedUserSession.testAgent.post('/v1/invites/resend', { memberId: 123 }).expect(400);
+      const { body } = await session.testAgent
+        .post('/v1/invites/resend')
+        .send({ memberId: '5fdedb7c25ab1352eef88f60' })
+        .expect(400);
 
-      expect(body.message).to.contain('not found');
+      expect(body.message.length).to.exist;
+      expect(body.message).to.equal('Member not found');
+      expect(body.error).to.equal('Bad Request');
     });
   });
 });

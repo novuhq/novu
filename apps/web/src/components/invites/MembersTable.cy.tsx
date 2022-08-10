@@ -107,7 +107,7 @@ it('should call callbacks when template resend invite member clicked', function 
   );
 
   cy.getByTestId('actions-row-btn').click();
-  cy.getByTestId('resend-invite-row-btn').click();
+  cy.getByTestId('resend-invite-btn').click();
   cy.get('@resendInviteSpy').should('have.been.calledWith', anotherMember);
 });
 
@@ -134,5 +134,5 @@ it('should hide resend invite member when member is already active clicked', fun
   );
 
   cy.getByTestId('actions-row-btn').click();
-  cy.getByTestId('resend-invite-row-btn').should('not.be.exist');
+  cy.getByTestId('resend-invite-btn').should('not.be.exist');
 });

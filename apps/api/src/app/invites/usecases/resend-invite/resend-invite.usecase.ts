@@ -20,7 +20,10 @@ export class ResendInvite {
     const organization = await this.organizationRepository.findById(command.organizationId);
     if (!organization) throw new ApiException('No organization found');
 
-    const foundInvitee = await this.memberRepository.findById(command.memberId);
+    const foundInvitee = await this.memberRepository.findOne({
+      _id: command.memberId,
+      _organizationId: command.organizationId,
+    });
     if (!foundInvitee) throw new ApiException('Member not found');
     if (foundInvitee.memberStatus !== MemberStatusEnum.INVITED) throw new ApiException('Member already active');
 
