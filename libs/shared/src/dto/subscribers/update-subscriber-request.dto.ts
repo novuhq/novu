@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsOptional, IsString } from 'class-validator';
-import { ISubscriberChannel, IUpdateSubscriberDto } from './update-subscriber.dto';
+import { ISubscriberChannel } from './update-subscriber.dto';
 
-export class UpdateSubscriberRequestDto implements IUpdateSubscriberDto {
+export class UpdateSubscriberRequestDto {
   @ApiProperty()
   @IsEmail()
   @IsOptional()
@@ -31,4 +31,9 @@ export class UpdateSubscriberRequestDto implements IUpdateSubscriberDto {
   @ApiPropertyOptional()
   @IsOptional()
   channel: ISubscriberChannel;
+
+  @ApiPropertyOptional({
+    type: [ISubscriberChannel],
+  })
+  channels?: ISubscriberChannel[];
 }

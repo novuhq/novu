@@ -1,39 +1,21 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DirectProviderIdEnum, PushProviderIdEnum } from '../../consts';
-
-export interface IUpdateSubscriberDto {
-  subscriberId?: string;
-
-  firstName?: string;
-
-  lastName?: string;
-
-  email?: string;
-
-  phone?: string;
-
-  avatar?: string;
-
-  channels?: ISubscriberChannel[];
-}
 
 export class IChannelCredentials {
   @ApiProperty()
   webhookUrl?: string;
-  @ApiProperty()
+  @ApiPropertyOptional()
   notificationIdentifiers?: string[];
 }
 
 export class ISubscriberChannel {
-  @ApiProperty()
+  @ApiProperty({
+    enum: { ...DirectProviderIdEnum, ...PushProviderIdEnum },
+  })
   providerId: DirectProviderIdEnum | PushProviderIdEnum;
 
-  @ApiProperty()
-  credentials: IChannelCredentials;
-}
-
-export interface IUpdateSubscriberChannelDto {
-  providerId: DirectProviderIdEnum | PushProviderIdEnum;
-
+  @ApiProperty({
+    type: IChannelCredentials,
+  })
   credentials: IChannelCredentials;
 }

@@ -6,7 +6,7 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
-  CreateSubscriberBodyRequestDto,
+  CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
   IJwtPayload,
   SubscriberResponseDto,
@@ -65,7 +65,7 @@ export class SubscribersController {
   @UseGuards(JwtAuthGuard)
   async createSubscriber(
     @UserSession() user: IJwtPayload,
-    @Body() body: CreateSubscriberBodyRequestDto
+    @Body() body: CreateSubscriberRequestDto
   ): Promise<SubscriberResponseDto> {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({

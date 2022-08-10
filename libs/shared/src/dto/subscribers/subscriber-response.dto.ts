@@ -1,22 +1,22 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { DirectProviderIdEnum, PushProviderIdEnum } from '../../consts';
 import { IChannelCredentials } from './update-subscriber.dto';
 
 export class IChannelSettings {
   @ApiProperty()
   _integrationId: string;
 
-  /**
-   * @example slack
-   */
-  @ApiProperty()
-  providerId: string;
+  @ApiProperty({
+    enum: { ...DirectProviderIdEnum, ...PushProviderIdEnum },
+  })
+  providerId: DirectProviderIdEnum | PushProviderIdEnum;
 
   @ApiProperty()
   credentials: IChannelCredentials;
 }
 
 export class SubscriberResponseDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
   _id?: string;
 
   @ApiProperty()
@@ -28,16 +28,18 @@ export class SubscriberResponseDto {
   @ApiProperty()
   email: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   phone?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   avatar?: string;
 
   @ApiProperty()
   subscriberId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    type: [IChannelSettings],
+  })
   channels?: IChannelSettings[];
 
   @ApiProperty()
