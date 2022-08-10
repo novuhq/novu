@@ -55,30 +55,27 @@ test('should trigger mailerSend correctly', async () => {
   expect(spy).toBeCalledWith('/email', {
     method: 'POST',
     body: {
+      from: { email: mockNovuMessage.from, name: undefined },
       to: [
         { email: 'test@test1.com' } as Recipient,
         { email: 'test@test2.com' } as Recipient,
       ],
-      subject: mockNovuMessage.subject,
-      html: mockNovuMessage.html,
-      text: mockNovuMessage.text,
-      from: { email: mockNovuMessage.from, name: undefined },
+      cc: undefined,
+      bcc: undefined,
+      reply_to: { email: undefined, name: undefined },
       attachments: [
         {
           content: Buffer.from('ZEdWemRBPT0=').toString(),
           filename: 'test.txt',
         } as Attachment,
       ],
+      subject: mockNovuMessage.subject,
+      text: mockNovuMessage.text,
+      html: mockNovuMessage.html,
+      template_id: undefined,
+      variables: undefined,
+      personalization: undefined,
+      tags: undefined,
     },
-    bcc: undefined,
-    cc: undefined,
-    personalization: undefined,
-    reply_to: {
-      email: undefined,
-      name: undefined,
-    },
-    tags: undefined,
-    template_id: undefined,
-    variables: undefined,
   });
 });
