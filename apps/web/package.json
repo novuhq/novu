@@ -117,6 +117,7 @@
     "start:dev": "pnpm start",
     "cypress:run": "cross-env NODE_ENV=test cypress run",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
+    "cypress:run:components": "cross-env NODE_ENV=test cypress run --component",
     "start:api": "cd ../../ && pnpm start:e2e:api",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public",
