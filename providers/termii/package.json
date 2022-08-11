@@ -32,9 +32,10 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.6.0",
-    "node-fetch": "^2.6.6"
+    "node-fetch": "^3.2.10"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.13.15",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/jest": "^27.0.1",
     "codecov": "^3.5.0",
