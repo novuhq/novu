@@ -26,10 +26,7 @@ jobs:
           version: 6.0.2
           run_install: true
 
-      - uses: mansagroup/nrwl-nx-action@v2
-        with:
-          targets: lint
-          projects: "@novu/docs"
-          nxCloud: true
+      - name: Lint
+        run: pnpm run nx lint @novu/docs
 
       - run: pnpm build

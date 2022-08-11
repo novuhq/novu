@@ -57,10 +57,8 @@ jobs:
           version: 7.3.0
           run_install: true
 
-      - uses: mansagroup/nrwl-nx-action@v2
-        with:
-          targets: lint
-          projects: '@novu/widget'
+      - name: Lint
+        run: pnpm run nx lint @novu/widget
 
       # Runs a single command using the runners shell
       - name: Build

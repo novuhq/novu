@@ -60,10 +60,8 @@ jobs:
           version: 7.3.0
           run_install: true
 
-      - uses: mansagroup/nrwl-nx-action@v2
-        with:
-          targets: lint
-          projects: "@novu/web"
+      - name: Lint
+        run: pnpm run nx lint @novu/web
 
       - name: Start Local Stack
         env:
