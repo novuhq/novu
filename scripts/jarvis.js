@@ -4,8 +4,10 @@ const { spawn } = require('child_process');
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
 
-console.log({ nodeModulesExist, envInitialized });
 if (!nodeModulesExist || !envInitialized) {
+  console.log(
+    'Looks like its the first time running this project on your machine. We will start by installing pnpm depependencies'
+  );
   const spawn = require('child_process').spawn;
 
   const isWindows = process.platform === 'win32';
@@ -31,8 +33,7 @@ if (!nodeModulesExist || !envInitialized) {
 
     console.log('FINISHED!');
   });
-
-  } else {
+} else {
   const inquirer = require('inquirer');
   const shell = require('shelljs');
   const waitPort = require('wait-port');
