@@ -49,7 +49,7 @@
     "superagent-defaults": "^0.1.14",
     "supertest": "^6.0.0",
     "twilio": "^3.72.0",
-    "typescript": "4.6.3",
+    "typescript": "4.3.5",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
@@ -64,7 +64,7 @@
     "nodemon": "^2.0.15",
     "ts-node": "^10.5.0",
     "tsconfig-paths": "3.11.0",
-    "typescript": "4.6.3"
+    "typescript": "4.3.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
