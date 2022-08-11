@@ -5,7 +5,7 @@ import axios from 'axios';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
 import { SubscriberRepository } from '@novu/dal';
-import { UpdateSubscriberPreferenceBodyDto } from '../../widgets/dtos/user-preference.dto';
+import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 
 const axiosInstance = axios.create();
 
@@ -161,7 +161,7 @@ async function triggerEvent(session, template, payload) {
 }
 
 async function updateSubscriberPreference(
-  data: UpdateSubscriberPreferenceBodyDto,
+  data: UpdateSubscriberPreferenceRequestDto,
   subscriberToken: string,
   templateId: string
 ) {

@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
-import { UpdateSubscriberPreferenceBodyDto } from '../dtos/user-preference.dto';
+import { UpdateSubscriberPreferenceRequestDto } from '../dtos/update-subscriber-preference-request.dto';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
 describe('PATCH /widgets/preference/:templateId', function () {
@@ -74,7 +74,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
 
       const updateDataEmailFalse = {
         channel: {},
-      } as UpdateSubscriberPreferenceBodyDto;
+      } as UpdateSubscriberPreferenceRequestDto;
 
       let responseMessage = '';
       try {
@@ -111,7 +111,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
 });
 
 export async function updateSubscriberPreference(
-  data: UpdateSubscriberPreferenceBodyDto,
+  data: UpdateSubscriberPreferenceRequestDto,
   subscriberToken: string,
   templateId: string
 ) {

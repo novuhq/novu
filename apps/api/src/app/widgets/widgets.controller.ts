@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
-import { SessionInitializeBodyDto } from './dtos/session-initialize.dto';
+import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
 import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
 import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';
 import { GetNotificationsFeed } from './usecases/get-notifications-feed/get-notifications-feed.usecase';
@@ -21,9 +21,12 @@ import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/upda
 import { GetSubscriberPreference } from './usecases/get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberPreferenceCommand } from './usecases/get-subscriber-preference/get-subscriber-preference.command';
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference/update-subscriber-preference.command';
-import { UpdateSubscriberPreferenceBodyDto } from './dtos/user-preference.dto';
+import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 import { UpdateSubscriberPreference } from './usecases/update-subscriber-preference/update-subscriber-preference.usecase';
 import { ApiTags } from '@nestjs/swagger';
+import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
+import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
+import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
 
 @Controller('/widgets')
 @ApiTags('Widgets')
@@ -41,7 +44,7 @@ export class WidgetsController {
   ) {}
 
   @Post('/session/initialize')
-  async sessionInitialize(@Body() body: SessionInitializeBodyDto) {
+  async sessionInitialize(@Body() body: SessionInitializeRequestDto): Promise<SessionInitializeResponseDto> {
     return await this.initializeSessionUsecase.execute(
       InitializeSessionCommand.create({
         subscriberId: body.subscriberId,
@@ -61,7 +64,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen = undefined
+    @Query('seen') seen: boolean | undefined = undefined
   ) {
     let feedsQuery: string[];
     if (feedId) {
@@ -86,7 +89,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean
-  ): Promise<{ count: number }> {
+  ): Promise<UnseenCountResponse> {
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -169,8 +172,8 @@ export class WidgetsController {
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('templateId') templateId: string,
-    @Body() body: UpdateSubscriberPreferenceBodyDto
-  ) {
+    @Body() body: UpdateSubscriberPreferenceRequestDto
+  ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
