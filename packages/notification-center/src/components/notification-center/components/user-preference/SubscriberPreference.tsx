@@ -9,9 +9,10 @@ import image from '../../../../images/no-settings.png';
 
 export function SubscriberPreference() {
   const { theme, common } = useNovuThemeProvider();
-  const { preferences, updatePreference, fetching: isLoading } = useSubscriberPreference();
+  const { preferences: data, updatePreference, fetching: isLoading } = useSubscriberPreference();
   const baseTheme = theme?.userPreferences;
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
+  const preferences = data?.filter((item) => !item.template.critical);
 
   return (
     <>
@@ -30,45 +31,43 @@ export function SubscriberPreference() {
       )}
       <div style={{ padding: '15px' }}>
         <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
-          {preferences
-            ?.filter((item) => !item.template.critical)
-            .map((item, index) => {
-              const channelsKeys = Object.keys(item?.preference?.channels);
-              const channelsPreference = item?.preference?.channels;
+          {preferences?.map((item, index) => {
+            const channelsKeys = Object.keys(item?.preference?.channels);
+            const channelsPreference = item?.preference?.channels;
 
-              const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
-                setLoadingUpdate(true);
-                await updatePreference(item, type, checked, index);
-                setLoadingUpdate(false);
-              };
+            const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
+              setLoadingUpdate(true);
+              await updatePreference(item, type, checked, index);
+              setLoadingUpdate(false);
+            };
 
-              return (
-                <Accordion.Item
-                  key={index}
-                  data-test-id="workflow-list-item"
-                  label={
-                    <WorkflowHeader
-                      theme={baseTheme}
-                      label={item.template?.name}
-                      channels={getEnabledChannels(channelsPreference)}
+            return (
+              <Accordion.Item
+                key={index}
+                data-test-id="workflow-list-item"
+                label={
+                  <WorkflowHeader
+                    theme={baseTheme}
+                    label={item.template?.name}
+                    channels={getEnabledChannels(channelsPreference)}
+                  />
+                }
+              >
+                <ChannelsWrapper>
+                  <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
+                  {channelsKeys.map((key) => (
+                    <ChannelPreference
+                      key={key}
+                      type={key}
+                      active={channelsPreference[key]}
+                      disabled={loadingUpdate}
+                      handleUpdateChannelPreference={handleUpdateChannelPreference}
                     />
-                  }
-                >
-                  <ChannelsWrapper>
-                    <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
-                    {channelsKeys.map((key) => (
-                      <ChannelPreference
-                        key={key}
-                        type={key}
-                        active={channelsPreference[key]}
-                        disabled={loadingUpdate}
-                        handleUpdateChannelPreference={handleUpdateChannelPreference}
-                      />
-                    ))}
-                  </ChannelsWrapper>
-                </Accordion.Item>
-              );
-            })}
+                  ))}
+                </ChannelsWrapper>
+              </Accordion.Item>
+            );
+          })}
         </Accordion>
       </div>
     </>
