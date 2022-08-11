@@ -20,10 +20,12 @@ import { GetFeeds } from './usecases/get-feeds/get-feeds.usecase';
 import { GetFeedsCommand } from './usecases/get-feeds/get-feeds.command';
 import { DeleteFeed } from './usecases/delete-feed/delete-feed.usecase';
 import { DeleteFeedCommand } from './usecases/delete-feed/delete-feed.command';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('/feeds')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
+@ApiTags('Feeds')
 export class FeedsController {
   constructor(
     private createFeedUsecase: CreateFeed,

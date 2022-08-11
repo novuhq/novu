@@ -23,8 +23,10 @@ import { GetSubscriberPreferenceCommand } from './usecases/get-subscriber-prefer
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference/update-subscriber-preference.command';
 import { UpdateSubscriberPreferenceBodyDto } from './dtos/user-preference.dto';
 import { UpdateSubscriberPreference } from './usecases/update-subscriber-preference/update-subscriber-preference.usecase';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('/widgets')
+@ApiTags('Widgets')
 export class WidgetsController {
   constructor(
     private initializeSessionUsecase: InitializeSession,

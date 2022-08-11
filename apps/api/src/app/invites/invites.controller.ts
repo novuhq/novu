@@ -22,9 +22,11 @@ import { InviteMember } from './usecases/invite-member/invite-member.usecase';
 import { BulkInvite } from './usecases/bulk-invite/bulk-invite.usecase';
 import { AcceptInvite } from './usecases/accept-invite/accept-invite.usecase';
 import { GetInvite } from './usecases/get-invite/get-invite.usecase';
+import { ApiTags } from '@nestjs/swagger';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('/invites')
+@ApiTags('Invites')
 export class InvitesController {
   constructor(
     private inviteMemberUsecase: InviteMember,

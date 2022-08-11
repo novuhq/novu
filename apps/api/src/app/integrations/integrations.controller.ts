@@ -26,10 +26,12 @@ import { UpdateIntegrationCommand } from './usecases/update-integration/update-i
 import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
+@ApiTags('Integrations')
 export class IntegrationsController {
   constructor(
     private getIntegrationsUsecase: GetIntegrations,

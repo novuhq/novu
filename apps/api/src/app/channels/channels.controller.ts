@@ -7,10 +7,12 @@ import { UpdateMailSettings } from './usecases/update-mail-settings/update-mail-
 import { UpdateMailSettingsCommand } from './usecases/update-mail-settings/update-mail-settings.command';
 import { UpdateSmsSettings } from './usecases/update-sms-settings/update-sms-settings.usecase';
 import { UpdateSmsSettingsCommand } from './usecases/update-sms-settings/update-sms-settings.command';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('/channels')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
+@ApiTags('Channels')
 export class ChannelsController {
   constructor(
     private updateMailSettingsUsecase: UpdateMailSettings,

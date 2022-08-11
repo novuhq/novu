@@ -36,9 +36,11 @@ import { PasswordResetRequest } from './usecases/password-reset-request/password
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
 import { ApiException } from '../shared/exceptions/api.exception';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiTags('Auth')
 export class AuthController {
   constructor(
     private userRepository: UserRepository,

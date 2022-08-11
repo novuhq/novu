@@ -30,10 +30,12 @@ import { ChangeMemberRoleCommand } from './usecases/membership/membership/change
 import { ChangeMemberRole } from './usecases/membership/membership/change-member-role/change-member-role.usecase';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
+@ApiTags('Organizations')
 export class OrganizationController {
   constructor(
     private createOrganizationUsecase: CreateOrganization,
