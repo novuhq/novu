@@ -32,11 +32,13 @@ describe('Resend invite - /invites/resend (POST)', async () => {
       await setup();
 
       const members = await memberRepository.getOrganizationMembers(session.organization._id);
-      const invitee = members.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
 
-      const { body } = await session.testAgent.post('/v1/invites/resend').send({ memberId: invitee._id }).expect(201);
+      const invitedMember = members.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
 
-      console.log(body);
+      const { body } = await session.testAgent
+        .post('/v1/invites/resend')
+        .send({ memberId: invitedMember._id })
+        .expect(201);
     });
 
     it('should change the inviter id', async () => {
