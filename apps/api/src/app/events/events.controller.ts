@@ -11,9 +11,10 @@ import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.comm
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('events')
+@ApiTags('Event')
 export class EventsController {
   constructor(
     private triggerEvent: TriggerEvent,
@@ -24,8 +25,20 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
-  @ApiResponse({
+  @ApiOkResponse({
     type: TriggerEventResponseDto,
+    content: {
+      '200': {
+        example: {
+          acknowledged: true,
+          status: 'processed',
+          transactionId: 'd2239acb-e879-4bdb-ab6f-365b43278d8f',
+        },
+      },
+    },
+  })
+  @ApiOperation({
+    description: 'Trigger event to send notifications to subscribers',
   })
   async trackEvent(
     @UserSession() user: IJwtPayload,
@@ -53,8 +66,20 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/broadcast')
-  @ApiResponse({
+  @ApiOkResponse({
     type: TriggerEventResponseDto,
+    content: {
+      '200': {
+        example: {
+          acknowledged: true,
+          status: 'processed',
+          transactionId: 'd2239acb-e879-4bdb-ab6f-365b43278d8f',
+        },
+      },
+    },
+  })
+  @ApiOperation({
+    description: 'Trigger event to send notifications to all subscribers',
   })
   async trackEventToAll(
     @UserSession() user: IJwtPayload,
@@ -79,8 +104,11 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Delete('/trigger/:transactionId')
-  @ApiResponse({
+  @ApiOkResponse({
     type: Boolean,
+  })
+  @ApiOperation({
+    description: 'Cancel trigger with workflow containing running digest node',
   })
   async cancelDigest(
     @UserSession() user: IJwtPayload,

@@ -1,5 +1,5 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
-import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { TriggerRecipientsType } from '@novu/node';
 
 export class SubscriberPayloadDto {
@@ -18,20 +18,28 @@ export class SubscriberPayloadDto {
 @ApiExtraModels(SubscriberPayloadDto)
 export class TriggerEventRequestDto {
   @ApiProperty({
-    description: 'Name of your notification',
+    description: 'Trigger identifire of your notification',
   })
   @IsString()
   @IsDefined()
   name: string;
 
   @ApiProperty({
-    description: 'payload with data to be used inside of message templates',
+    description: 'Oayload with data to be used inside of message templates',
+    example: {
+      name: 'Novu',
+    },
   })
   @IsObject()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Overrides for push notification settings',
+    example: {
+      fcm: {
+        color: '#fff',
+      },
+    },
   })
   @IsObject()
   @IsOptional()

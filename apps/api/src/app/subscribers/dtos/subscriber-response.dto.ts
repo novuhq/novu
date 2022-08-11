@@ -39,7 +39,9 @@ export class SubscriberResponseDto {
   @ApiPropertyOptional()
   avatar?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Your internal identifire for subscriber',
+  })
   subscriberId: string;
 
   @ApiPropertyOptional({
@@ -48,13 +50,9 @@ export class SubscriberResponseDto {
   })
   channels?: IChannelSettings[];
 
-  @ApiProperty({
-    description: 'Id of your organization inside of Novu',
-  })
+  @ApiProperty()
   _organizationId: string;
 
-  @ApiProperty({
-    description: 'Id of your environment inside of your organization in Novu',
-  })
+  @ApiProperty()
   _environmentId: string;
 }

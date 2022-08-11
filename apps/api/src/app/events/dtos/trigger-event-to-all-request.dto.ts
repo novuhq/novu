@@ -1,9 +1,9 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TriggerEventToAllRequestDto {
   @ApiProperty({
-    description: 'Name of your notification',
+    description: 'Trigger identifire of your notification',
   })
   @IsString()
   @IsDefined()
@@ -11,12 +11,20 @@ export class TriggerEventToAllRequestDto {
 
   @ApiProperty({
     description: 'payload with data to be used inside of message templates',
+    example: {
+      name: 'Novu',
+    },
   })
   @IsObject()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Overrides for push notification settings',
+    example: {
+      fcm: {
+        color: '#fff',
+      },
+    },
   })
   @IsObject()
   @IsOptional()

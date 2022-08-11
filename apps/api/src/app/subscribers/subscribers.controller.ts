@@ -19,9 +19,10 @@ import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecas
 import { GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('/subscribers')
+@ApiTags('Subscribers')
 export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
@@ -35,8 +36,11 @@ export class SubscribersController {
   @Get('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse({
+  @ApiOkResponse({
     type: SubscribersResponseDto,
+  })
+  @ApiOperation({
+    description: 'Get subscribers paginated',
   })
   async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
     return await this.getSubscribersUsecase.execute(
@@ -51,8 +55,11 @@ export class SubscribersController {
   @Get('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse({
+  @ApiOkResponse({
     type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    description: 'Get subscriber by your internal id for subscriber',
   })
   async getSubscriber(
     @UserSession() user: IJwtPayload,
@@ -70,8 +77,11 @@ export class SubscribersController {
   @Post('/')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse({
+  @ApiCreatedResponse({
     type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    description: 'Create subscriber with your internal id for subscriber',
   })
   async createSubscriber(
     @UserSession() user: IJwtPayload,
@@ -94,8 +104,11 @@ export class SubscribersController {
   @Put('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse({
+  @ApiOkResponse({
     type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    description: 'Update subscriber with your internal id for subscriber',
   })
   async updateSubscriber(
     @UserSession() user: IJwtPayload,
@@ -119,8 +132,11 @@ export class SubscribersController {
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse({
+  @ApiOkResponse({
     type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    description: 'Update subscribers channel details with your internal id for subscriber',
   })
   async updateSubscriberChannel(
     @UserSession() user: IJwtPayload,
@@ -141,8 +157,11 @@ export class SubscribersController {
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiResponse({
+  @ApiOkResponse({
     type: DeleteSubscriberResponseDto,
+  })
+  @ApiOperation({
+    description: 'Delete subscriber with your internal id for subscriber',
   })
   async removeSubscriber(
     @UserSession() user: IJwtPayload,

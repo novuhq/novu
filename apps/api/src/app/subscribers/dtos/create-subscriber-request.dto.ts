@@ -3,7 +3,7 @@ import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class CreateSubscriberRequestDto {
   @ApiProperty({
-    description: 'Id for your subscriber',
+    description: 'Your internal identifire for subscriber',
   })
   @IsString()
   @IsDefined()
