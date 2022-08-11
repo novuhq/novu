@@ -21,12 +21,13 @@ import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.
 import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-change.command';
 import { CountChanges } from './usecases/count-changes/count-changes.usecase';
 import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Changes')
+@ApiExcludeController()
 export class ChangesController {
   constructor(
     private applyChange: ApplyChange,

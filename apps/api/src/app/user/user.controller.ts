@@ -8,10 +8,11 @@ import { IGetMyProfileDto } from './dtos/get-my-profile';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UpdateOnBoardingCommand } from './usecases/update-on-boarding/update-on-boarding.command';
 import { UpdateOnBoardingUsecase } from './usecases/update-on-boarding/update-on-boarding.usecase';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/users')
 @ApiTags('Users')
+@ApiExcludeController()
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 export class UsersController {

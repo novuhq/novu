@@ -8,10 +8,11 @@ import { GetActivityStats } from './usecases/get-activity-stats/get-activity-sta
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
 import { GetActivityGraphStats } from './usecases/get-acticity-graph-states/get-acticity-graph-states.usecase';
 import { GetActivityGraphStatsCommand } from './usecases/get-acticity-graph-states/get-acticity-graph-states.command';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/activity')
 @ApiTags('Activity')
+@ApiExcludeController()
 export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
