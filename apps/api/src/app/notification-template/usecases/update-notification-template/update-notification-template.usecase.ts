@@ -49,6 +49,10 @@ export class UpdateNotificationTemplate {
       updatePayload.critical = command.critical;
     }
 
+    if (command.preferenceSettings) {
+      updatePayload.preferenceSettings = command.preferenceSettings;
+    }
+
     const parentChangeId: string = await this.changeRepository.getChangeId(
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
       existingTemplate._id
