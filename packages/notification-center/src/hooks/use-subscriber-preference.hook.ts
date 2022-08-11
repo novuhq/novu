@@ -5,9 +5,9 @@ import { AuthContext } from '../store/auth.context';
 
 export function useSubscriberPreference() {
   const [preferences, setPreferences] = useState<IUserPreferenceSettings[]>([]);
-  const [fetching, setFetching] = useState<boolean>(false);
   const { api } = useApi();
   const { token } = useContext<IAuthContext>(AuthContext);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!api?.isAuthenticated || !token) return;
@@ -16,10 +16,10 @@ export function useSubscriberPreference() {
   }, [api?.isAuthenticated, token]);
 
   async function getUserPreference() {
-    setFetching(true);
+    setLoading(true);
     const result = await api.getUserPreference();
     setPreferences(result);
-    setFetching(false);
+    setLoading(false);
   }
 
   async function updatePreference(
@@ -44,6 +44,6 @@ export function useSubscriberPreference() {
   return {
     preferences,
     updatePreference,
-    fetching,
+    loading,
   };
 }

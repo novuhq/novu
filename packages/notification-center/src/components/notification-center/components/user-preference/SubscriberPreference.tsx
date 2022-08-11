@@ -9,14 +9,14 @@ import image from '../../../../images/no-settings.png';
 
 export function SubscriberPreference() {
   const { theme, common } = useNovuThemeProvider();
-  const { preferences: data, updatePreference, fetching: isLoading } = useSubscriberPreference();
+  const { preferences: data, updatePreference, loading } = useSubscriberPreference();
   const baseTheme = theme?.userPreferences;
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
   const preferences = data?.filter((item) => !item.template.critical);
 
   return (
     <>
-      {!isLoading && preferences?.length === 0 && (
+      {!loading && preferences?.length === 0 && (
         <div
           style={{
             textAlign: 'center',
