@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { ActionIcon, Grid } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { Controller, useFormContext } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { INotificationTrigger } from '@novu/shared';
 import { getNotificationGroups } from '../../../api/notifications';
@@ -10,6 +9,7 @@ import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
 import { TemplatePreference } from './TemplatePreference';
+import { Controller, useFormContext } from 'react-hook-form';
 
 export const NotificationSettingsForm = ({
   editMode,
