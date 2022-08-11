@@ -76,6 +76,22 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
       .setTitle('novu API')
       .setDescription('The novu API description')
       .setVersion('1.0')
+      .addTag('Activity')
+      .addTag('Auth')
+      .addTag('Changes')
+      .addTag('Channels')
+      .addTag('Environments')
+      .addTag('Event')
+      .addTag('Feeds')
+      .addTag('Integrations')
+      .addTag('Invites')
+      .addTag('Notification groups')
+      .addTag('Notification templates')
+      .addTag('Organizations')
+      .addTag('Storage')
+      .addTag('Subscribers')
+      .addTag('Users')
+      .addTag('Widgets')
       .build();
     const document = SwaggerModule.createDocument(app, options);
 
