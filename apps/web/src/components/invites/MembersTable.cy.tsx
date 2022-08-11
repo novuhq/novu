@@ -65,3 +65,31 @@ it('should hide remove buttons if missing roles', function () {
 
   cy.get('[data-test-id="actions-row-btn"]').should('not.be.exist');
 });
+
+it('should show loading state when is loading', function () {
+  const onRemoveMember = cy.spy().as('removeSpy');
+  const anotherMember = { _userId: 2, user: { email: 'another-test@email.com' }, roles: [MemberRoleEnum.ADMIN] };
+  const members = [{ _userId: 1, user: { email: 'test@email.com' }, roles: [MemberRoleEnum.ADMIN] }, anotherMember];
+
+  cy.mount(
+    <TestWrapper>
+      <MembersTable members={members} currentUser={{ _id: 1 }} onRemoveMember={onRemoveMember} loading={true} />
+    </TestWrapper>
+  );
+
+  cy.get('.mantine-LoadingOverlay-root').should('be.exist');
+});
+
+it('should not show loading state when is not loading', function () {
+  const onRemoveMember = cy.spy().as('removeSpy');
+  const anotherMember = { _userId: 2, user: { email: 'another-test@email.com' }, roles: [MemberRoleEnum.ADMIN] };
+  const members = [{ _userId: 1, user: { email: 'test@email.com' }, roles: [MemberRoleEnum.ADMIN] }, anotherMember];
+
+  cy.mount(
+    <TestWrapper>
+      <MembersTable members={members} currentUser={{ _id: 1 }} onRemoveMember={onRemoveMember} loading={false} />
+    </TestWrapper>
+  );
+
+  cy.get('.mantine-LoadingOverlay-root').should('not.be.exist');
+});
