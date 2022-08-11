@@ -22,6 +22,9 @@ import { InviteMember } from './usecases/invite-member/invite-member.usecase';
 import { BulkInvite } from './usecases/bulk-invite/bulk-invite.usecase';
 import { AcceptInvite } from './usecases/accept-invite/accept-invite.usecase';
 import { GetInvite } from './usecases/get-invite/get-invite.usecase';
+import { ResendInviteDto } from '../organization/dtos/resend-invite.dto';
+import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
+import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 import { ApiTags } from '@nestjs/swagger';
 
 @UseInterceptors(ClassSerializerInterceptor)
@@ -32,7 +35,8 @@ export class InvitesController {
     private inviteMemberUsecase: InviteMember,
     private bulkInviteUsecase: BulkInvite,
     private acceptInviteUsecase: AcceptInvite,
-    private getInvite: GetInvite
+    private getInvite: GetInvite,
+    private resendInviteUsecase: ResendInvite
   ) {}
 
   @Get('/:inviteToken')
@@ -70,6 +74,26 @@ export class InvitesController {
     });
 
     await this.inviteMemberUsecase.execute(command);
+
+    return {
+      success: true,
+    };
+  }
+
+  @Post('/resend')
+  @Roles(MemberRoleEnum.ADMIN)
+  @UseGuards(AuthGuard('jwt'))
+  async resendInviteMember(
+    @UserSession() user: IJwtPayload,
+    @Body() body: ResendInviteDto
+  ): Promise<{ success: boolean }> {
+    const command = ResendInviteCommand.create({
+      userId: user._id,
+      organizationId: user.organizationId,
+      memberId: body.memberId,
+    });
+
+    await this.resendInviteUsecase.execute(command);
 
     return {
       success: true,
