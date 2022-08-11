@@ -46,7 +46,7 @@ export function useAuthController() {
       enabled: Boolean(
         isLoggedIn &&
           axios.defaults.headers.common.Authorization &&
-          jwtDecode<IJwtPayload>(axios.defaults.headers.common.Authorization?.split(' ')[1])?.organizationId
+          jwtDecode<IJwtPayload>((axios.defaults.headers.common.Authorization as string)?.split(' ')[1])?.organizationId
       ),
     }
   );
