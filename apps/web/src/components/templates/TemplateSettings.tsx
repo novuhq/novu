@@ -1,6 +1,6 @@
 import { Grid, useMantineColorScheme } from '@mantine/core';
 import { Button, colors } from '../../design-system';
-import { NotificationSettingsForm } from './NotificationSettingsForm';
+import { NotificationSettingsForm } from './notification-setting-form/NotificationSettingsForm';
 import { TemplatesSideBar } from './TemplatesSideBar';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import styled from '@emotion/styled';
