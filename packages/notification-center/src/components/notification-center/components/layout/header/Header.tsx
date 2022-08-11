@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { ActionIcon, Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
 import React, { useContext } from 'react';
-import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
+import { useNovuThemeProvider } from '../../../../../hooks';
 import { INotificationCenterContext } from '../../../../../index';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { useTranslations } from '../../../../../hooks/use-translations';
@@ -46,7 +46,7 @@ export function Header({ unseenCount, setScreen }: { unseenCount: number; setScr
           variant="transparent"
           onClick={() => setScreen(ScreensEnum.SETTINGS)}
         >
-          <Cogs style={{ color: theme?.notificationItem?.seen?.timeMarkFontColor }} />
+          <Cogs style={{ color: theme?.userPreferences?.settingsButtonColor }} />
         </ActionIcon>
       </div>
       <MarkReadAction style={{ display: 'none' }}>{t('markAllAsRead')}</MarkReadAction>
