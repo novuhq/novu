@@ -62,8 +62,8 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     query: { feedId?: string[]; seen?: boolean } = {}
   ) {
     const requestQuery: FilterQuery<MessageEntity> = {
-      _environmentId: Types.ObjectId(environmentId),
-      _subscriberId: Types.ObjectId(subscriberId),
+      _environmentId: new Types.ObjectId(environmentId),
+      _subscriberId: new Types.ObjectId(subscriberId),
       seen: false,
       channel,
     };
@@ -158,7 +158,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       {
         $match: {
           createdAt: { $gte: date },
-          _environmentId: Types.ObjectId(environmentId),
+          _environmentId: new Types.ObjectId(environmentId),
         },
       },
       {
@@ -177,7 +177,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
 
   async getFeed(
     environmentId: string,
-    query: { channels?: ChannelTypeEnum[]; templates?: string[]; subscriberId?: string } = {},
+    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[]; subscriberId?: string } = {},
     skip = 0,
     limit = 10
   ) {
@@ -194,6 +194,12 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     if (query?.templates) {
       requestQuery._templateId = {
         $in: query.templates,
+      };
+    }
+
+    if (query?.emails) {
+      requestQuery.email = {
+        $in: query.emails,
       };
     }
 

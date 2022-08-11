@@ -49,6 +49,10 @@ export class UpdateNotificationTemplate {
       updatePayload.critical = command.critical;
     }
 
+    if (command.preferenceSettings) {
+      updatePayload.preferenceSettings = command.preferenceSettings;
+    }
+
     const parentChangeId: string = await this.changeRepository.getChangeId(
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
       existingTemplate._id
@@ -93,6 +97,7 @@ export class UpdateNotificationTemplate {
               cta: message.template.cta,
               feedId: message.template.feedId ? message.template.feedId : null,
               subject: message.template.subject,
+              title: message.template.title,
               parentChangeId,
             })
           );
@@ -118,6 +123,7 @@ export class UpdateNotificationTemplate {
               cta: message.template.cta,
               feedId: message.template.feedId,
               subject: message.template.subject,
+              title: message.template.title,
               parentChangeId,
             })
           );

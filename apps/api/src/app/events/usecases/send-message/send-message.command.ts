@@ -1,13 +1,8 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { NotificationStepEntity } from '@novu/dal';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
-  static create(data: SendMessageCommand) {
-    return CommandHelper.create(SendMessageCommand, data);
-  }
-
   @IsDefined()
   @IsString()
   identifier: string;
@@ -16,7 +11,10 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsDefined()
-  step: NotificationStepEntity; // eslint-disable-line @typescript-eslint/no-explicit-any
+  overrides: Record<string, Record<string, unknown>>;
+
+  @IsDefined()
+  step: NotificationStepEntity;
 
   @IsString()
   @IsDefined()

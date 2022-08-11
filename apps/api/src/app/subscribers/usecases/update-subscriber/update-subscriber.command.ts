@@ -1,12 +1,8 @@
 import { IsEmail, IsOptional, IsString } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { IUpdateSubscriberDto } from '@novu/shared';
 
-export class UpdateSubscriberCommand extends EnvironmentCommand {
-  static create(data: UpdateSubscriberCommand) {
-    return CommandHelper.create(UpdateSubscriberCommand, data);
-  }
-
+export class UpdateSubscriberCommand extends EnvironmentCommand implements IUpdateSubscriberDto {
   @IsString()
   subscriberId: string;
 

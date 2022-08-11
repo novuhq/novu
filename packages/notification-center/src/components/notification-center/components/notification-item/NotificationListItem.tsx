@@ -7,7 +7,7 @@ import { INovuTheme } from '../../../../store/novu-theme.context';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { ActionContainer } from './ActionContainer';
 import { NotificationCenterContext } from '../../../../store/notification-center.context';
-import { I18NContext } from '../../../../store/i18n.context';
+import { useTranslations } from '../../../../hooks/use-translations';
 
 export function NotificationListItem({
   notification,
@@ -17,8 +17,8 @@ export function NotificationListItem({
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
-  const { onActionClick } = useContext(NotificationCenterContext);
-  const { lang } = useContext(I18NContext);
+  const { onActionClick, listItem } = useContext(NotificationCenterContext);
+  const { lang } = useTranslations();
 
   function handleNotificationClick() {
     onClick(notification);
@@ -26,6 +26,10 @@ export function NotificationListItem({
 
   async function handleActionButtonClick(actionButtonType: ButtonTypeEnum) {
     onActionClick(notification.templateIdentifier, actionButtonType, notification);
+  }
+
+  if (listItem) {
+    return listItem(notification, handleActionButtonClick, handleNotificationClick);
   }
 
   return (

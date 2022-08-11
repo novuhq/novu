@@ -5,7 +5,7 @@ import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.c
 import { SendMessageCommand } from './send-message.command';
 
 export abstract class SendMessageType {
-  constructor(protected messageRepository: MessageRepository, protected createLogUsecase: CreateLog) {}
+  protected constructor(protected messageRepository: MessageRepository, protected createLogUsecase: CreateLog) {}
 
   public abstract execute(command: SendMessageCommand);
 

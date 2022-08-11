@@ -1,5 +1,5 @@
 import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
-import { ICreateNotificationTemplateDto, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
+import { ICreateNotificationTemplateDto, DigestUnitEnum, DigestTypeEnum, IPreferenceChannels } from '@novu/shared';
 import { MessageFilter } from './create-notification-template.dto';
 import { MessageTemplateDto } from './message-template.dto';
 
@@ -62,4 +62,6 @@ export class UpdateNotificationTemplateDto implements ICreateNotificationTemplat
   active?: boolean;
 
   critical?: boolean;
+
+  preferenceSettings?: IPreferenceChannels;
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
+import { useNovuThemeProvider } from '../../../../hooks';
 import { LoadingOverlay, Switch } from '@mantine/core';
 import chroma from 'chroma-js';
 import { getChannel } from './channels';
@@ -17,9 +17,9 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
   const { label, description, Icon } = getChannel(type);
   const { theme } = useNovuThemeProvider();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const baseTheme = theme?.notificationItem?.unseen;
-  const primaryColor = baseTheme.fontColor;
-  const secondaryColor = baseTheme.timeMarkFontColor;
+  const baseTheme = theme?.preferenceItem;
+  const primaryColor = baseTheme?.accordion?.icon.active;
+  const secondaryColor = baseTheme?.accordion?.icon.inactive;
 
   const updateChannel = async (checked: boolean) => {
     setIsLoading(true);
@@ -30,7 +30,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
   };
 
   return (
-    <ChannelItemWrapper>
+    <ChannelItemWrapper data-test-id="channel-preference-item">
       <LeftContentWrapper>
         <Icon style={{ color: active ? primaryColor : secondaryColor }} />
         <TextBlock>
@@ -45,6 +45,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
       <SwitchWrapper>
         <LoadingOverlay
           visible={isLoading}
+          data-test-id="channel-preference-item-loader"
           loaderProps={{
             size: 'xs',
             color:
@@ -57,6 +58,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
           sx={{ justifyContent: active ? 'right' : 'left', marginLeft: '2.5px', marginRight: '2px' }}
         />
         <Switch
+          data-test-id="channel-preference-item-toggle"
           styles={switchStyles(baseTheme)}
           disabled={disabled && !isLoading}
           checked={active}

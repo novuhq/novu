@@ -2,6 +2,8 @@ import { CreateSubscriber } from './create-subscriber';
 import { UpdateSubscriber } from './update-subscriber';
 import { RemoveSubscriber } from './remove-subscriber';
 import { GetSubscribers } from './get-subscribers';
+import { UpdateSubscriberChannel } from './update-subscriber-channel';
+import { GetSubscriber } from './get-subscriber';
 import { GetSubscriberPreference } from './get-subscriber-preference/get-subscriber-preference.usecase';
 import { UpdateSubscriberPreference } from './update-subscriber-preference';
 import { GetSubscriberTemplatePreference } from './get-subscriber-template-preference';
@@ -13,6 +15,8 @@ export const USE_CASES = [
   UpdateSubscriber,
   RemoveSubscriber,
   GetSubscribers,
+  UpdateSubscriberChannel,
+  GetSubscriber,
   GetSubscriberPreference,
   UpdateSubscriberPreference,
   GetSubscriberTemplatePreference,

@@ -112,7 +112,7 @@ describe('test use of novu node package', () => {
     );
   });
 
-  test('should update subscriber correctly', async () => {
+  test('should delete subscriber correctly', async () => {
     mockedAxios.delete.mockResolvedValue({});
 
     await novu.subscribers.delete('test-delete-subscriber');

@@ -97,6 +97,28 @@ const notificationTemplateSchema = new Schema(
         },
       },
     ],
+    preferenceSettings: {
+      email: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+      sms: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+      in_app: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+      direct: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+      push: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -123,6 +145,9 @@ notificationTemplateSchema.virtual('steps.template', {
   foreignField: '_id',
   justOne: true,
 });
+
+notificationTemplateSchema.path('steps').schema.set('toJSON', { virtuals: true });
+notificationTemplateSchema.path('steps').schema.set('toObject', { virtuals: true });
 
 notificationTemplateSchema.virtual('notificationGroup', {
   ref: 'NotificationGroup',

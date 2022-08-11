@@ -9,7 +9,7 @@ import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
 import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../store/use-env-controller';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { useClickOutside } from '@mantine/hooks';
 
 const capitalize = (text: string) => {
@@ -31,7 +31,6 @@ interface ITemplateButtonProps {
   showDots?: boolean;
   id?: string | undefined;
   onDelete?: (id: string) => void;
-  showDropZone?: boolean;
   dragging?: boolean;
   setActivePage?: (string) => void;
   disabled?: boolean;
@@ -79,7 +78,6 @@ export function ChannelButton({
   showDots = true,
   id = undefined,
   onDelete = () => {},
-  showDropZone = false,
   dragging = false,
   setActivePage = (page: string) => {},
   disabled: initDisabled,
@@ -124,11 +122,6 @@ export function ChannelButton({
         backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
       }}
     >
-      <When truthy={showDropZone}>
-        <Dropzone data-test-id="dropzone-area" dark={theme.colorScheme === 'dark'}>
-          Place your next step here
-        </Dropzone>
-      </When>
       <ButtonWrapper>
         <LeftContainerWrapper>
           <IconWrapper className={classes.linkIcon}>{Icon ? <Icon {...disabledProp} /> : null}</IconWrapper>
@@ -169,7 +162,7 @@ export function ChannelButton({
                 </ActionIcon>
               }
             >
-              <When truthy={tabKey !== ChannelTypeEnum.DIGEST}>
+              <When truthy={tabKey !== StepTypeEnum.DIGEST}>
                 <MenuItem
                   key="edit"
                   style={{
@@ -204,7 +197,7 @@ export function ChannelButton({
                   onDelete(id || '');
                 }}
               >
-                Delete {tabKey !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
+                Delete {tabKey !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
               </MenuItem>
             </Menu>
           </When>
@@ -294,21 +287,6 @@ const ButtonWrapper = styled.div`
 
 const StyledContentWrapper = styled.div`
   padding-right: 10px;
-`;
-
-const Dropzone = styled.div<{ dark: boolean }>`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
-  color: ${({ dark }) => (dark ? colors.B98 : colors.B17)};
-  border-radius: 7px;
-  text-align: center;
-  line-height: 75px;
-  z-index: 1000000;
-  border: 1px dashed ${({ dark }) => (dark ? colors.B30 : colors.B80)};
 `;
 
 const Button: any = styled(UnstyledButton)`

@@ -1,6 +1,6 @@
 import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { Inject, Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -32,7 +32,6 @@ export class TriggerEvent {
       },
     });
 
-    await this.validateTransactionIdProperty(command);
     await this.validateSubscriberIdProperty(command);
 
     this.logEventTriggered(command);
@@ -58,6 +57,7 @@ export class TriggerEvent {
           ProcessSubscriberCommand.create({
             identifier: command.identifier,
             payload: command.payload,
+            overrides: command.overrides,
             to: subscriberToTrigger,
             transactionId: command.transactionId,
             environmentId: command.environmentId,
@@ -75,9 +75,11 @@ export class TriggerEvent {
       _template: template._id,
       _organization: command.organizationId,
       channels: steps.map((step) => step.template?.type),
-      smsChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.SMS)?.length,
-      emailChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.EMAIL)?.length,
-      inAppChannel: !!steps.filter((step) => step.template.type === ChannelTypeEnum.IN_APP)?.length,
+      smsChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.SMS)?.length,
+      emailChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.EMAIL)?.length,
+      inAppChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.IN_APP)?.length,
+      directChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.DIRECT)?.length,
+      pushChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.PUSH)?.length,
     });
 
     for (const job of jobs) {
@@ -179,11 +181,16 @@ export class TriggerEvent {
     return true;
   }
 
-  private async validateTransactionIdProperty(command: TriggerEventCommand): Promise<boolean> {
+  public async validateTransactionIdProperty(
+    transactionId: string,
+    organizationId: string,
+    environmentId: string
+  ): Promise<boolean> {
     const found = await this.jobRepository.findOne(
       {
-        transactionId: command.transactionId,
-        _environmentId: command.environmentId,
+        transactionId,
+        _organizationId: organizationId,
+        _environmentId: environmentId,
       },
       '_id'
     );

@@ -1,10 +1,12 @@
 import { AxiosInstance } from 'axios';
 import {
   ISubscriberPayload,
+  ISubscribers,
   IUpdateSubscriberPreferencePayload,
 } from './subscriber.interface';
+import { IChannelCredentials } from '@novu/shared';
 
-export class Subscribers {
+export class Subscribers implements ISubscribers {
   private readonly http: AxiosInstance;
 
   constructor(http: AxiosInstance) {
@@ -17,6 +19,10 @@ export class Subscribers {
         page,
       },
     });
+  }
+
+  async get(subscriberId: string) {
+    return await this.http.get(`/subscribers/${subscriberId}`);
   }
 
   async identify(subscriberId: string, data: ISubscriberPayload) {
@@ -47,6 +53,19 @@ export class Subscribers {
         ...data,
       }
     );
+  }
+
+  async setCredentials(
+    subscriberId: string,
+    providerId: string,
+    credentials: IChannelCredentials
+  ) {
+    return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
+      providerId,
+      credentials: {
+        ...credentials,
+      },
+    });
   }
 
   async delete(subscriberId: string) {

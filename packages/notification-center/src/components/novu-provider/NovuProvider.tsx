@@ -11,7 +11,7 @@ import { ApiService } from '../../api/api.service';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
 import { NovuI18NProvider } from '../../store/i18n.context';
-import { I18NLanguage, ITranslationEntry } from '../../lang';
+import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
 
 interface INovuProviderProps {
   stores?: IStore[];
@@ -79,22 +79,20 @@ interface ISessionInitializationProps {
 
 function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
   const { api: apiService } = useApi();
-  const { applyToken, setUser, token } = useContext<IAuthContext>(AuthContext);
+  const { applyToken, setUser } = useContext<IAuthContext>(AuthContext);
   const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
-    if (!token && !api.isAuthenticated) {
-      if (props.subscriberId && props.applicationIdentifier) {
-        (async (): Promise<void> => {
-          await initSession({
-            clientId: props.applicationIdentifier,
-            data: { subscriberId: props.subscriberId },
-            subscriberHash,
-          });
-        })();
-      }
+    if (props?.subscriberId && props?.applicationIdentifier) {
+      (async (): Promise<void> => {
+        await initSession({
+          clientId: props.applicationIdentifier,
+          data: { subscriberId: props.subscriberId },
+          subscriberHash,
+        });
+      })();
     }
-  }, [props.subscriberId, props.applicationIdentifier, api.isAuthenticated]);
+  }, [props?.subscriberId, props?.applicationIdentifier]);
 
   async function initSession(payload: { clientId: string; data: { subscriberId: string }; subscriberHash: string }) {
     if ('parentIFrame' in window) {

@@ -40,6 +40,11 @@ export class SendMessageEmail extends SendMessageType {
   }
 
   public async execute(command: SendMessageCommand) {
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+    });
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -53,6 +58,8 @@ export class SendMessageEmail extends SendMessageType {
       message: 'Sending Email',
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
+
+    const overrides = command.overrides[integration.providerId] || {};
 
     const subject = await this.renderContent(
       emailChannel.template.subject,
@@ -86,7 +93,9 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
+      providerId: integration.providerId,
       payload: messagePayload,
+      overrides,
       templateIdentifier: command.identifier,
     });
 
@@ -110,12 +119,6 @@ export class SendMessageEmail extends SendMessageType {
         },
       })
     );
-
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.EMAIL,
-      active: true,
-    });
 
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>
@@ -194,6 +197,7 @@ export class SendMessageEmail extends SendMessageType {
     try {
       await mailHandler.send(mailData);
     } catch (error) {
+      console.error(error);
       Sentry.captureException(error?.response?.body || error?.response || error);
       this.messageRepository.updateMessageStatus(
         message._id,

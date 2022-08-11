@@ -71,7 +71,7 @@ module.exports = {
       { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
       { blankLine: 'always', prev: '*', next: 'return' },
     ],
-    'id-length': ['error', { min: 2, exceptions: ['i', 'e', 'a', 'b', '_'], properties: 'never' }],
+    'id-length': ['error', { min: 2, exceptions: ['i', 'e', 'a', 'b', '_', 't'], properties: 'never' }],
     '@typescript-eslint/naming-convention': [
       'error',
 

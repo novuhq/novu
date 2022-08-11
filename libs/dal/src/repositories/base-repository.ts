@@ -21,14 +21,14 @@ export class BaseRepository<T> {
     return await this.MongooseModel.aggregate(query);
   }
 
-  async findById(id: string, select?: keyof T): Promise<T | null> {
+  async findById(id: string, select?: string): Promise<T | null> {
     const data = await this.MongooseModel.findById(id, select);
     if (!data) return null;
 
     return this.mapEntity(data.toObject());
   }
 
-  async findOne(query: FilterQuery<T & Document>, select?: keyof T | string) {
+  async findOne(query: FilterQuery<T & Document>, select?: string) {
     const data = await this.MongooseModel.findOne(query, select);
     if (!data) return null;
 
@@ -55,6 +55,22 @@ export class BaseRepository<T> {
       .exec();
 
     return this.mapEntities(data);
+  }
+
+  async *findBatch(
+    query: FilterQuery<T & Document>,
+    select = '',
+    options: { limit?: number; sort?: any; skip?: number } = {},
+    batchSize = 500
+  ) {
+    for await (const doc of this._model
+      .find(query, select, {
+        sort: options.sort || null,
+      })
+      .batchSize(batchSize)
+      .cursor()) {
+      yield this.mapEntities(doc);
+    }
   }
 
   async create(data: Partial<T>): Promise<T> {
@@ -84,8 +100,8 @@ export class BaseRepository<T> {
     });
 
     return {
-      matched: saved.n,
-      modified: saved.nModified,
+      matched: saved.matchedCount,
+      modified: saved.modifiedCount,
     };
   }
 

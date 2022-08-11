@@ -15,16 +15,12 @@ import {
   ChannelCTATypeEnum,
   IMessageAction,
   DigestUnitEnum,
+  IPreferenceChannels,
 } from '@novu/shared';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageTemplateDto } from '../../dto';
 
 export class CreateNotificationTemplateCommand extends EnvironmentWithUserCommand {
-  static create(data: CreateNotificationTemplateCommand) {
-    return CommandHelper.create(CreateNotificationTemplateCommand, data);
-  }
-
   @IsMongoId()
   @IsDefined()
   notificationGroupId: string;
@@ -54,6 +50,9 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsBoolean()
   critical: boolean;
+
+  @IsOptional()
+  preferenceSettings?: IPreferenceChannels;
 }
 
 export class ChannelCTACommand {

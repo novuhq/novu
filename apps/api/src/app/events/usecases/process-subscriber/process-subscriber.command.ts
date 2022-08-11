@@ -1,13 +1,8 @@
 import { IsDefined, IsString } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { ISubscribersDefine } from '@novu/node';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
-  static create(data: ProcessSubscriberCommand) {
-    return CommandHelper.create(ProcessSubscriberCommand, data);
-  }
-
   @IsDefined()
   @IsString()
   identifier: string;
@@ -16,7 +11,10 @@ export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsDefined()
-  to: ISubscribersDefine; // eslint-disable-line @typescript-eslint/no-explicit-any
+  overrides: Record<string, Record<string, unknown>>;
+
+  @IsDefined()
+  to: ISubscribersDefine;
 
   @IsString()
   @IsDefined()

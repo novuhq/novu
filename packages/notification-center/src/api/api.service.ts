@@ -1,5 +1,5 @@
 import { IMessage, HttpClient, ButtonTypeEnum, MessageActionStatusEnum, IParamObject } from '@novu/shared';
-import { IStoreQuery } from '../index';
+import { IStoreQuery, IUserPreferenceSettings } from '../index';
 
 export class ApiService {
   private httpClient: HttpClient;
@@ -69,11 +69,15 @@ export class ApiService {
     return this.httpClient.get('/widgets/organization');
   }
 
-  async getUserPreference() {
+  async getUserPreference(): Promise<IUserPreferenceSettings[]> {
     return this.httpClient.get('/widgets/preferences');
   }
 
-  async updateSubscriberPreference(templateId: string, channelType: string, enabled: boolean): Promise<any> {
+  async updateSubscriberPreference(
+    templateId: string,
+    channelType: string,
+    enabled: boolean
+  ): Promise<IUserPreferenceSettings> {
     return await this.httpClient.patch(`/widgets/preference/${templateId}`, {
       channel: { type: channelType, enabled },
     });

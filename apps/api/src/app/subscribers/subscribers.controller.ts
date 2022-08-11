@@ -8,8 +8,12 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
 import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
+import { UpdateSubscriberChannelDto } from './dto/update-subscriber-channel.dto';
+import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers } from './usecases/get-subscribers';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
+import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
+import { GetSubscriberCommand } from './usecases/get-subscriber';
 import { UpdateSubscriberPreferenceDto } from '../widgets/dtos/update-subscriber-preference.dto';
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
@@ -21,7 +25,9 @@ export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
     private updateSubscriberUsecase: UpdateSubscriber,
+    private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
     private removeSubscriberUsecase: RemoveSubscriber,
+    private getSubscriberUseCase: GetSubscriber,
     private getSubscribersUsecase: GetSubscribers,
     private getPreferenceUsecase: GetPreferences,
     private updatePreferenceUsecase: UpdatePreference
@@ -36,6 +42,19 @@ export class SubscribersController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         page: page ? Number(page) : 0,
+      })
+    );
+  }
+
+  @Get('/:subscriberId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async getSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+    return await this.getSubscriberUseCase.execute(
+      GetSubscriberCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
       })
     );
   }
@@ -76,6 +95,25 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+      })
+    );
+  }
+
+  @Put('/:subscriberId/credentials')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async updateSubscriberChannel(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberChannelDto
+  ) {
+    return await this.updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        providerId: body.providerId,
+        credentials: body.credentials,
       })
     );
   }

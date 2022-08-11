@@ -5,7 +5,6 @@ import {
   IOrganizationEntity,
   ISubscriberJwt,
   MessageActionStatusEnum,
-  INotificationTemplate,
   IPreferenceChannels,
 } from '@novu/shared';
 
@@ -50,14 +49,22 @@ export interface INotificationCenterContext {
   isLoading: boolean;
   header: () => JSX.Element;
   footer: () => JSX.Element;
+  listItem: ListItem;
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
+  showUserPreferences?: boolean;
 }
 
 export interface IStore {
   storeId: string;
   query?: IStoreQuery;
 }
+
+export type ListItem = (
+  message: IMessage,
+  onActionButtonClick: (actionButtonType: ButtonTypeEnum) => void,
+  onNotificationClick: () => void
+) => JSX.Element;
 
 export interface INovuProviderContext {
   backendUrl?: string;
@@ -99,6 +106,6 @@ export interface IStoreQuery {
 }
 
 export interface IUserPreferenceSettings {
-  template: INotificationTemplate;
+  template: { _id: string; name: string; critical: boolean };
   preference: { enabled: boolean; channels: IPreferenceChannels };
 }

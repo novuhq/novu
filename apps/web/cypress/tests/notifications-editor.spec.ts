@@ -11,7 +11,7 @@ describe('Notifications Creator', function () {
       fillBasicNotificationDetails('Test drag and drop channel');
       cy.getByTestId('workflowButton').click();
       dragAndDrop('inApp');
-      dragAndDrop('inApp', 'inApp');
+      dragAndDrop('inApp');
 
       cy.getByTestId('node-inAppSelector').last().parent().click();
       cy.getByTestId('edit-template-channel').click();
@@ -24,7 +24,7 @@ describe('Notifications Creator', function () {
       fillBasicNotificationDetails('Test only drop on last node');
       cy.getByTestId('workflowButton').click();
       dragAndDrop('inApp');
-      dragAndDrop('email', 'trigger');
+      dragAndDrop('email');
       cy.getByTestId('node-emailSelector').should('not.exist');
       cy.get('.react-flow__node').should('have.length', 3);
     });
@@ -69,7 +69,7 @@ describe('Notifications Creator', function () {
       });
       goBack();
 
-      dragAndDrop('email', 'inApp');
+      dragAndDrop('email');
       editChannel('email');
       cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
         parseSpecialCharSequences: false,
@@ -119,6 +119,45 @@ describe('Notifications Creator', function () {
 
       cy.getByTestId('trigger-snippet-btn').click();
       cy.location('pathname').should('equal', '/templates');
+    });
+    it('should create multiline in-app notification, send it and receive', function () {
+      waitLoadTemplatePage(() => {
+        cy.visit('/templates/create');
+      });
+      cy.getByTestId('title').type('Test Notification Title');
+      cy.getByTestId('description').type('This is a test description for a test title');
+      cy.get('body').click();
+
+      addAndEditChannel('inApp');
+
+      // put the multiline notification message
+      cy.getByTestId('in-app-editor-content-input')
+        .type('{{firstName}} someone assigned you to {{taskName}}', {
+          parseSpecialCharSequences: false,
+        })
+        .type('{enter}Please check it.');
+      cy.getByTestId('inAppRedirect').type('/example/test');
+      cy.getByTestId('submit-btn').click();
+
+      cy.getByTestId('trigger-snippet-btn').click();
+
+      // trigger the notification
+      cy.task('createNotifications', {
+        identifier: 'test-notification-title',
+        token: this.session.token,
+        subscriberId: this.session.user.id,
+      });
+
+      // click on the notifications bell
+      cy.getByTestId('notification-bell').click();
+      // check the notification
+      cy.getByTestId('notifications-scroll-area')
+        .getByTestId('notification-content')
+        .first()
+        .then(($el) => {
+          expect($el[0].innerText).to.contain('\n');
+          expect($el[0].innerText).to.contain('Please check it.');
+        });
     });
     it('should create email notification', function () {
       waitLoadTemplatePage(() => {
@@ -173,7 +212,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('description').type('This is a test description for a test title');
       cy.get('body').click();
 
-      addAndEditChannel('email', 'trigger');
+      addAndEditChannel('email');
 
       cy.getByTestId('email-editor').getByTestId('editor-row').click();
       cy.getByTestId('control-add').click();
@@ -204,7 +243,7 @@ describe('Notifications Creator', function () {
 
       goBack();
 
-      dragAndDrop('digest', 'email');
+      dragAndDrop('digest');
 
       cy.clickWorkflowNode(`node-digestSelector`);
 
@@ -266,7 +305,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
     });
 
-    it('should edit notification', function () {
+    it.skip('should edit notification', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
@@ -288,7 +327,7 @@ describe('Notifications Creator', function () {
       cy.wait(1000);
       editChannel('inApp');
 
-      cy.getByTestId('feed-button-0').should('be.checked');
+      cy.getByTestId('feed-button-0-checked');
       cy.getByTestId('feed-button-1').click({ force: true });
 
       cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
@@ -306,11 +345,11 @@ describe('Notifications Creator', function () {
         cy.getByTestId('workflowButton').click();
       });
       editChannel('inApp');
-      cy.getByTestId('feed-button-1').should('be.checked');
+      cy.getByTestId('feed-button-1-checked');
       cy.getByTestId('create-feed-input').type('test4');
       cy.getByTestId('add-feed-button').click();
       cy.wait(1000);
-      cy.getByTestId('feed-button-2').should('be.checked');
+      cy.getByTestId('feed-button-2-checked');
     });
 
     it('should update notification active status', function () {
@@ -344,7 +383,7 @@ describe('Notifications Creator', function () {
       cy.get('.mantine-Switch-input').click();
       cy.getByTestId(`close-side-menu-btn`).click();
 
-      dragAndDrop('inApp', 'email');
+      dragAndDrop('inApp');
 
       cy.clickWorkflowNode(`node-inAppSelector`);
       cy.get('.mantine-Switch-input').should('have.value', 'on');
@@ -538,7 +577,7 @@ describe('Notifications Creator', function () {
       });
     });
 
-    it.only('should be able to delete a step', function () {
+    it('should be able to delete a step', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
@@ -581,7 +620,7 @@ describe('Notifications Creator', function () {
         cy.visit('/templates/edit/' + template._id);
       });
       cy.getByTestId('workflowButton').click();
-      dragAndDrop('sms', 'email');
+      dragAndDrop('sms');
 
       editChannel('sms');
       cy.getByTestId('smsNotificationContent').type('new content for sms');
@@ -622,27 +661,23 @@ describe('Notifications Creator', function () {
 });
 
 type Channel = 'inApp' | 'email' | 'sms' | 'digest';
-type Parent = Channel | 'trigger';
 
-function addAndEditChannel(channel: Channel, parent?: Parent) {
+function addAndEditChannel(channel: Channel) {
   waitLoadEnv(() => {
     cy.getByTestId('workflowButton').click();
   });
-  dragAndDrop(channel, parent);
+  dragAndDrop(channel);
   editChannel(channel);
 }
 
-function dragAndDrop(channel: Channel, parent?: Parent) {
+function dragAndDrop(channel: Channel) {
   const dataTransfer = new DataTransfer();
 
   cy.wait(2000);
   cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer });
-  if (parent) {
-    cy.getByTestId(`node-${parent}Selector`).parent().trigger('drop', { dataTransfer });
-  } else {
-    cy.getByTestId('node-triggerSelector').parent().trigger('drop', { dataTransfer });
-  }
+  cy.getByTestId('addNodeButton').parent().trigger('drop', { dataTransfer });
 }
+
 function editChannel(channel: Channel) {
   cy.clickWorkflowNode(`node-${channel}Selector`);
   cy.getByTestId('edit-template-channel').click();

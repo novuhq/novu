@@ -1,5 +1,5 @@
 import React from 'react';
-import { I18NLanguage, ITranslationEntry, TRANSLATIONS } from '../lang';
+import { I18NLanguage, ITranslationEntry, TRANSLATIONS } from '../i18n/lang';
 
 export const I18NContext = React.createContext<ITranslationEntry>({
   translations: {
@@ -20,7 +20,7 @@ export function NovuI18NProvider({ i18n = 'en', ...props }: INovuI18NProviderPro
   const i18nEntry = React.useMemo<ITranslationEntry>(() => {
     if (typeof i18n === 'string') {
       return {
-        translations: TRANSLATIONS[i18n],
+        translations: TRANSLATIONS[i18n].translations,
         lang: i18n,
       };
     }

@@ -62,6 +62,7 @@ export class CreateNotificationTemplate {
           userId: command.userId,
           cta: message.template.cta,
           subject: message.template.subject,
+          title: message.template.title,
           feedId: message.template.feedId,
           parentChangeId,
         })
@@ -86,6 +87,7 @@ export class CreateNotificationTemplate {
       active: command.active,
       draft: command.draft,
       critical: command.critical,
+      preferenceSettings: command.preferenceSettings,
       tags: command.tags,
       description: command.description,
       steps: templateSteps,
