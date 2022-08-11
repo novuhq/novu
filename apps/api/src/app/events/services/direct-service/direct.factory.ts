@@ -1,9 +1,10 @@
 import { IDirectFactory, IDirectHandler } from './interfaces';
 import { SlackHandler } from './handlers/slack.handler';
 import { IntegrationEntity } from '@novu/dal';
+import { DiscordHandler } from './handlers/discord.handler';
 
 export class DirectFactory implements IDirectFactory {
-  handlers: IDirectHandler[] = [new SlackHandler()];
+  handlers: IDirectHandler[] = [new SlackHandler(), new DiscordHandler()];
 
   getHandler(integration: IntegrationEntity): IDirectHandler {
     try {

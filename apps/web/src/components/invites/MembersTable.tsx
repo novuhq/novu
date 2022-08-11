@@ -1,12 +1,12 @@
 import { Avatar, Divider, Group, MenuItem as DropdownItem, Text } from '@mantine/core';
 import { Dropdown, Tag } from '../../design-system';
-import { DotsHorizontal, Trash } from '../../design-system/icons';
+import { DotsHorizontal, Mail, Trash } from '../../design-system/icons';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
 import * as capitalize from 'lodash.capitalize';
 import useStyles from '../../design-system/config/text.styles';
 
-export function MembersTable({ members, currentUser, onRemoveMember }) {
+export function MembersTable({ members, currentUser, onRemoveMember, onResendInviteMember }) {
   const { classes } = useStyles();
 
   function isEnableMemberActions(currentMember): boolean {
@@ -16,6 +16,10 @@ export function MembersTable({ members, currentUser, onRemoveMember }) {
     const isAllowedToRemove = currentUserRoles.includes(MemberRoleEnum.ADMIN);
 
     return isNotMyself && isAllowedToRemove;
+  }
+
+  function canResendInvite(currentMember): boolean {
+    return currentMember && currentMember.memberStatus === MemberStatusEnum.INVITED;
   }
 
   return (
@@ -65,6 +69,16 @@ export function MembersTable({ members, currentUser, onRemoveMember }) {
                   >
                     Remove Member
                   </DropdownItem>
+                  {canResendInvite(member) ? (
+                    <DropdownItem
+                      key="resendInviteBtn"
+                      data-test-id="resend-invite-btn"
+                      onClick={() => onResendInviteMember(member)}
+                      icon={<Mail />}
+                    >
+                      Resend Invite
+                    </DropdownItem>
+                  ) : null}
                 </Dropdown>
               </div>
             ) : null}

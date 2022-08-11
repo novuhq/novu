@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
 import { MemberRoleEnum } from '@novu/shared';
 import { ChangeMemberRoleCommand } from './change-member-role.command';
-import { ApiException } from '../../../../../shared/exceptions/api.exception';
+import { ApiException } from '../../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class ChangeMemberRole {
