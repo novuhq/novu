@@ -2,7 +2,7 @@ import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagge
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ButtonTypeEnum, ChannelCTATypeEnum, ChannelTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { SubscriberResponseDto } from '../../subscribers/dtos';
-import { NotificationTemplateResponse } from './notification-template-response.dto';
+import { NotificationTemplateResponse } from '../../notification-template/dto/notification-template-response.dto';
 
 class EmailBlockStyles {
   @ApiProperty({
@@ -11,7 +11,7 @@ class EmailBlockStyles {
   textDirection?: 'ltr' | 'rtl';
 }
 
-class EmailBlock {
+export class EmailBlock {
   @ApiProperty({
     enum: ['text', 'button'],
   })

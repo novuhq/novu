@@ -16,7 +16,11 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
-import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto, ChangeTemplateStatusDto } from './dto';
+import {
+  CreateNotificationTemplateRequestDto,
+  UpdateNotificationTemplateRequestDto,
+  ChangeTemplateStatusRequestDto,
+} from './dto';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
@@ -27,6 +31,7 @@ import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-ac
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiTags } from '@nestjs/swagger';
+import { NotificationTemplateResponse } from './dto/notification-template-response.dto';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -44,7 +49,7 @@ export class NotificationTemplateController {
 
   @Get('')
   @Roles(MemberRoleEnum.ADMIN)
-  getNotificationTemplates(@UserSession() user: IJwtPayload) {
+  getNotificationTemplates(@UserSession() user: IJwtPayload): Promise<NotificationTemplateResponse[]> {
     return this.getNotificationTemplatesUsecase.execute(
       GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
@@ -59,8 +64,8 @@ export class NotificationTemplateController {
   async updateTemplateById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string,
-    @Body() body: UpdateNotificationTemplateDto
-  ) {
+    @Body() body: UpdateNotificationTemplateRequestDto
+  ): Promise<NotificationTemplateResponse> {
     return await this.updateTemplateByIdUsecase.execute(
       UpdateNotificationTemplateCommand.create({
         environmentId: user.environmentId,
@@ -94,7 +99,10 @@ export class NotificationTemplateController {
 
   @Get('/:templateId')
   @Roles(MemberRoleEnum.ADMIN)
-  getNotificationTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string) {
+  getNotificationTemplateById(
+    @UserSession() user: IJwtPayload,
+    @Param('templateId') templateId: string
+  ): Promise<NotificationTemplateResponse> {
     return this.getNotificationTemplateUsecase.execute(
       GetNotificationTemplateCommand.create({
         environmentId: user.environmentId,
@@ -108,7 +116,10 @@ export class NotificationTemplateController {
   @Post('')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  createNotificationTemplates(@UserSession() user: IJwtPayload, @Body() body: CreateNotificationTemplateDto) {
+  createNotificationTemplates(
+    @UserSession() user: IJwtPayload,
+    @Body() body: CreateNotificationTemplateRequestDto
+  ): Promise<NotificationTemplateResponse> {
     return this.createNotificationTemplateUsecase.execute(
       CreateNotificationTemplateCommand.create({
         organizationId: user.organizationId,
@@ -132,9 +143,9 @@ export class NotificationTemplateController {
   @Roles(MemberRoleEnum.ADMIN)
   changeActiveStatus(
     @UserSession() user: IJwtPayload,
-    @Body() body: ChangeTemplateStatusDto,
+    @Body() body: ChangeTemplateStatusRequestDto,
     @Param('templateId') templateId: string
-  ) {
+  ): Promise<NotificationTemplateResponse> {
     return this.changeTemplateActiveStatusUsecase.execute(
       ChangeTemplateActiveStatusCommand.create({
         organizationId: user.organizationId,

@@ -5,8 +5,8 @@ import {
   DigestUnitEnum,
   DigestTypeEnum,
 } from '@novu/shared';
-import { PreferenceChannels } from './update-subscriber-preference-response.dto';
-import { MessageTemplateDto } from '../../notification-template/dto/message-template.dto';
+import { PreferenceChannels } from '../../widgets/dtos/update-subscriber-preference-response.dto';
+import { MessageTemplateDto } from './message-template.dto';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class NotificationTriggerVariable {
