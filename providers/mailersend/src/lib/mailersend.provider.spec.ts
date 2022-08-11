@@ -50,25 +50,25 @@ test('should trigger mailerSend correctly', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
     });
+
+  const attachment = new Attachment(
+    Buffer.from('ZEdWemRBPT0=').toString(),
+    'test.txt'
+  );
+  const recipient1 = new Recipient('test@test1.com', undefined);
+  const recipient2 = new Recipient('test@test2.com', undefined);
+
   const response = await provider.sendMessage(mockNovuMessage);
   expect(spy).toHaveBeenCalled();
   expect(spy).toBeCalledWith('/email', {
     method: 'POST',
     body: {
       from: { email: mockNovuMessage.from, name: undefined },
-      to: [
-        { email: 'test@test1.com' } as Recipient,
-        { email: 'test@test2.com' } as Recipient,
-      ],
+      to: [recipient1, recipient2],
       cc: undefined,
       bcc: undefined,
-      reply_to: { email: undefined, name: undefined },
-      attachments: [
-        {
-          content: Buffer.from('ZEdWemRBPT0=').toString(),
-          filename: 'test.txt',
-        } as Attachment,
-      ],
+      reply_to: undefined,
+      attachments: [attachment],
       subject: mockNovuMessage.subject,
       text: mockNovuMessage.text,
       html: mockNovuMessage.html,
