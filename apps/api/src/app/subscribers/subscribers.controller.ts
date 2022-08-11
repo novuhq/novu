@@ -40,6 +40,7 @@ export class SubscribersController {
     type: SubscribersResponseDto,
   })
   @ApiOperation({
+    summary: 'Get subscribers',
     description: 'Get subscribers paginated',
   })
   async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
@@ -59,6 +60,7 @@ export class SubscribersController {
     type: SubscriberResponseDto,
   })
   @ApiOperation({
+    summary: 'Get subscriber',
     description: 'Get subscriber by your internal id for subscriber',
   })
   async getSubscriber(
@@ -81,6 +83,7 @@ export class SubscribersController {
     type: SubscriberResponseDto,
   })
   @ApiOperation({
+    summary: 'Create subscriber',
     description: 'Create subscriber with your internal id for subscriber',
   })
   async createSubscriber(
@@ -108,6 +111,7 @@ export class SubscribersController {
     type: SubscriberResponseDto,
   })
   @ApiOperation({
+    summary: 'Update subscriber',
     description: 'Update subscriber with your internal id for subscriber',
   })
   async updateSubscriber(
@@ -136,6 +140,7 @@ export class SubscribersController {
     type: SubscriberResponseDto,
   })
   @ApiOperation({
+    summary: 'Update subscriber channel details',
     description: 'Update subscribers channel details with your internal id for subscriber',
   })
   async updateSubscriberChannel(
@@ -161,6 +166,7 @@ export class SubscribersController {
     type: DeleteSubscriberResponseDto,
   })
   @ApiOperation({
+    summary: 'Delete subscriber',
     description: 'Delete subscriber with your internal id for subscriber',
   })
   async removeSubscriber(

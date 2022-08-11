@@ -38,6 +38,7 @@ export class EventsController {
     },
   })
   @ApiOperation({
+    summary: 'Trigger event',
     description: 'Trigger event to send notifications to subscribers',
   })
   async trackEvent(
@@ -79,6 +80,7 @@ export class EventsController {
     },
   })
   @ApiOperation({
+    summary: 'Trigger event for all subscribers',
     description: 'Trigger event to send notifications to all subscribers',
   })
   async trackEventToAll(
@@ -108,6 +110,7 @@ export class EventsController {
     type: Boolean,
   })
   @ApiOperation({
+    summary: 'Cancel triggered event',
     description: 'Cancel trigger with workflow containing running digest node',
   })
   async cancelDigest(
