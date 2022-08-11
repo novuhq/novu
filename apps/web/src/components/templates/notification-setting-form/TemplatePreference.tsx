@@ -49,7 +49,12 @@ export function ChannelPreference() {
         }
 
         return (
-          <InputBackground dark={dark} label="Template default" description="Description here" styles={inputStyles}>
+          <InputBackground
+            dark={dark}
+            label="Template Defaults"
+            description="Check the channels you would like to be ON by default"
+            styles={inputStyles}
+          >
             <Grid pt={8.5}>
               {Object.keys(data).map((key) => {
                 const label = channels.find((channel) => channel.tabKey === key)?.label;
@@ -90,17 +95,15 @@ export function CriticalPreference() {
         return (
           <RelativeInputWrapper
             dark={dark}
-            label="This is Critical"
-            description="Description here"
+            label="System Critical (Always Sent)"
+            description={
+              field.value
+                ? 'Users will get your messages no matter what.'
+                : 'Users will be able to unsubscribe from channels.'
+            }
             styles={inputStyles}
           >
-            <StyledSwitch
-              {...field}
-              checked={field.value || false}
-              disabled={readonly}
-              data-test-id="critical"
-              label=""
-            />
+            <StyledSwitch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
           </RelativeInputWrapper>
         );
       }}
@@ -130,16 +133,17 @@ const StyledCheckbox = styled(CheckboxProxy)<{ isChecked }>`
 
 const StyledSwitch = styled(Switch)`
   position: absolute;
-  right: 20px;
-  top: 27.5px;
+  right: 0;
+  top: 40%;
 `;
 
 export function StyledDivider({ dark, ...props }) {
   return (
     <Divider
       color={dark ? colors.B20 : colors.BGLight}
-      label={<Text color={dark ? colors.B40 : colors.B70}>Your user preferences</Text>}
-      my="xs"
+      label={<Text color={dark ? colors.B40 : colors.B70}>User Preferences Settings</Text>}
+      mb={50}
+      mt={20}
       labelPosition="center"
       {...props}
     />
