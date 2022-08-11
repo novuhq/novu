@@ -6,6 +6,8 @@ import { getChannel } from './channels';
 import styled from 'styled-components';
 import { switchStyles, Text } from './styles';
 import { getLinearGradientColorStopValues } from '../../../../shared/utils/getLinearGradientColorStopValues';
+import { Check } from '../../../../shared/icons/Check';
+import { colors } from '../../../../shared/config/colors';
 
 interface IChannelPreferenceProps {
   type: string;
@@ -17,6 +19,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
   const { label, Icon } = getChannel(type);
   const { theme } = useNovuThemeProvider();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showSaved, setShowSaved] = useState<boolean>(false);
   const baseTheme = theme?.userPreferences;
   const iconColor = baseTheme?.accordionItem?.icon;
   const fontColor = baseTheme?.accordionItem?.fontColor;
@@ -27,6 +30,11 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
     await handleUpdateChannelPreference(type, checked);
 
     setIsLoading(false);
+
+    setShowSaved(true);
+    setTimeout(() => {
+      setShowSaved(false);
+    }, 1500);
   };
 
   return (
@@ -37,29 +45,39 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
           {label}
         </Text>
       </LeftContentWrapper>
-      <SwitchWrapper>
-        <LoadingOverlay
-          visible={isLoading}
-          data-test-id="channel-preference-item-loader"
-          loaderProps={{
-            size: 'xs',
-            color:
-              theme.loaderColor.indexOf('gradient') === -1
-                ? theme.loaderColor
-                : chroma.average(getLinearGradientColorStopValues(theme.loaderColor)),
-          }}
-          overlayOpacity={0.3}
-          overlayColor="transparent"
-          sx={{ justifyContent: active ? 'right' : 'left', marginLeft: '2.5px', marginRight: '2px' }}
-        />
-        <Switch
-          data-test-id="channel-preference-item-toggle"
-          styles={switchStyles(baseTheme)}
-          disabled={disabled && !isLoading}
-          checked={active}
-          onChange={(e) => updateChannel(e.target.checked)}
-        />
-      </SwitchWrapper>
+      <RightContentWrapper>
+        {showSaved && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+            <Check color={colors.success} />
+            <Text size="sm" color={colors.success}>
+              Saved
+            </Text>
+          </div>
+        )}
+        <SwitchWrapper>
+          <LoadingOverlay
+            visible={isLoading}
+            data-test-id="channel-preference-item-loader"
+            loaderProps={{
+              size: 'xs',
+              color:
+                theme.loaderColor.indexOf('gradient') === -1
+                  ? theme.loaderColor
+                  : chroma.average(getLinearGradientColorStopValues(theme.loaderColor)),
+            }}
+            overlayOpacity={0.3}
+            overlayColor="transparent"
+            sx={{ justifyContent: active ? 'right' : 'left', marginLeft: '2.5px', marginRight: '2px' }}
+          />
+          <Switch
+            data-test-id="channel-preference-item-toggle"
+            styles={switchStyles(baseTheme)}
+            disabled={disabled && !isLoading}
+            checked={active}
+            onChange={(e) => updateChannel(e.target.checked)}
+          />
+        </SwitchWrapper>
+      </RightContentWrapper>
     </ChannelItemWrapper>
   );
 }
@@ -77,6 +95,14 @@ const LeftContentWrapper = styled.div`
   align-items: center;
   justify-content: flex-start;
   gap: 15px;
+`;
+
+const RightContentWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 13px;
 `;
 
 const SwitchWrapper = styled.div`
