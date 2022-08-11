@@ -1,5 +1,9 @@
 import { AxiosInstance } from 'axios';
-import { ISubscriberPayload, ISubscribers } from './subscriber.interface';
+import {
+  ISubscriberPayload,
+  ISubscribers,
+  IUpdateSubscriberPreferencePayload,
+} from './subscriber.interface';
 import { IChannelCredentials } from '@novu/shared';
 
 export class Subscribers implements ISubscribers {
@@ -29,9 +33,26 @@ export class Subscribers implements ISubscribers {
   }
 
   async update(subscriberId: string, data: ISubscriberPayload) {
-    return await this.http.put(`/subscribers/${subscriberId}`, {
+    return await this.http.put(`/${subscriberId}/subscribers`, {
       ...data,
     });
+  }
+
+  async getPreference(subscriberId: string) {
+    return await this.http.get(`/subscribers/${subscriberId}/preferences`);
+  }
+
+  async updatePreference(
+    subscriberId: string,
+    templateId: string,
+    data: IUpdateSubscriberPreferencePayload
+  ) {
+    return await this.http.patch(
+      `/subscribers/${subscriberId}/preference/${templateId}`,
+      {
+        ...data,
+      }
+    );
   }
 
   async setCredentials(
