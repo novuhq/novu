@@ -81,7 +81,7 @@ export interface INotificationsContext {
   hasNextPage?: Map<string, boolean>;
   fetching?: boolean;
   markAsSeen?: (messageId: string) => Promise<IMessage>;
-  markAllAsSeen?: () => Promise<Number>;
+  markAllAsSeen?: () => Promise<number>;
   updateAction?: (
     messageId: string,
     actionButtonType: ButtonTypeEnum,
