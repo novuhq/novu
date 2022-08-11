@@ -2,12 +2,20 @@ import { ApiProperty } from '@nestjs/swagger';
 import { SubscriberResponseDto } from './subscriber-response.dto';
 
 export class SubscribersResponseDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'What page you are on in the paginated response',
+  })
   page: number;
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Total amount of pages',
+  })
   totalCount: number;
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Number of subscribers on each page',
+  })
   pageSize: number;
-  @ApiProperty()
+  @ApiProperty({
+    description: 'List of subscribers for current page',
+  })
   data: SubscriberResponseDto[];
 }

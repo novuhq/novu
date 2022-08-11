@@ -2,7 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class CreateSubscriberRequestDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Id for your subscriber',
+  })
   @IsString()
   @IsDefined()
   subscriberId: string;
@@ -27,7 +29,9 @@ export class CreateSubscriberRequestDto {
   @IsOptional()
   phone?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Url for avatar image of your subscriber',
+  })
   @IsString()
   @IsOptional()
   avatar?: string;

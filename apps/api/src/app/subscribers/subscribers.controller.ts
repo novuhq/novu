@@ -19,6 +19,7 @@ import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecas
 import { GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber';
+import { ApiResponse } from '@nestjs/swagger';
 
 @Controller('/subscribers')
 export class SubscribersController {
@@ -34,6 +35,9 @@ export class SubscribersController {
   @Get('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    type: SubscribersResponseDto,
+  })
   async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
@@ -47,6 +51,9 @@ export class SubscribersController {
   @Get('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    type: SubscriberResponseDto,
+  })
   async getSubscriber(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string
@@ -63,6 +70,9 @@ export class SubscribersController {
   @Post('/')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    type: SubscriberResponseDto,
+  })
   async createSubscriber(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateSubscriberRequestDto
@@ -84,6 +94,9 @@ export class SubscribersController {
   @Put('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    type: SubscriberResponseDto,
+  })
   async updateSubscriber(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
@@ -106,6 +119,9 @@ export class SubscribersController {
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    type: SubscriberResponseDto,
+  })
   async updateSubscriberChannel(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
@@ -125,6 +141,9 @@ export class SubscribersController {
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    type: DeleteSubscriberResponseDto,
+  })
   async removeSubscriber(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string

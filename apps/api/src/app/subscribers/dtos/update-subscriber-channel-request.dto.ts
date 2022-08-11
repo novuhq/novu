@@ -6,12 +6,15 @@ import { IChannelCredentials } from './update-subscriber.dto';
 export class UpdateSubscriberChannelRequestDto {
   @ApiProperty({
     enum: { ...DirectProviderIdEnum, ...PushProviderIdEnum },
+    description: 'Subscriber credentials for channel',
   })
   @IsString()
   @IsDefined()
   providerId: DirectProviderIdEnum | PushProviderIdEnum;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Subscriber credentials for channel',
+  })
   @IsDefined()
   @IsObject()
   credentials: IChannelCredentials;

@@ -24,16 +24,21 @@ export class TriggerEventRequestDto {
   @IsDefined()
   name: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'payload with data to be used inside of message templates',
+  })
   @IsObject()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Overrides for push notification settings',
+  })
   @IsObject()
   @IsOptional()
   overrides: Record<string, Record<string, unknown>>;
 
   @ApiProperty({
+    description: 'Who should we send then notification to',
     oneOf: [
       {
         $ref: getSchemaPath(SubscriberPayloadDto),
@@ -52,7 +57,9 @@ export class TriggerEventRequestDto {
   @IsDefined()
   to: TriggerRecipientsType;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Id to use to keep track of trigger',
+  })
   @IsString()
   @IsOptional()
   transactionId: string;

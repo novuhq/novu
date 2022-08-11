@@ -11,6 +11,7 @@ import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.comm
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
+import { ApiResponse } from '@nestjs/swagger';
 
 @Controller('events')
 export class EventsController {
@@ -23,6 +24,9 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
+  @ApiResponse({
+    type: TriggerEventResponseDto,
+  })
   async trackEvent(
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
@@ -49,6 +53,9 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/broadcast')
+  @ApiResponse({
+    type: TriggerEventResponseDto,
+  })
   async trackEventToAll(
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventToAllRequestDto
@@ -72,6 +79,9 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Delete('/trigger/:transactionId')
+  @ApiResponse({
+    type: Boolean,
+  })
   async cancelDigest(
     @UserSession() user: IJwtPayload,
     @Param('transactionId') transactionId: string
