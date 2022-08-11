@@ -1,10 +1,9 @@
-import { NotificationTemplateEntity, SubscriberEntity, MessageRepository } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
-import { SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 
 const axiosInstance = axios.create();

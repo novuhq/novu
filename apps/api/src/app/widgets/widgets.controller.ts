@@ -18,11 +18,6 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { GetSubscriberPreference } from './usecases/get-subscriber-preference/get-subscriber-preference.usecase';
-import { GetSubscriberPreferenceCommand } from './usecases/get-subscriber-preference/get-subscriber-preference.command';
-import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference/update-subscriber-preference.command';
-import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
-import { UpdateSubscriberPreference } from './usecases/update-subscriber-preference/update-subscriber-preference.usecase';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
@@ -31,6 +26,13 @@ import { LogUsageRequestDto } from './dtos/log-usage-request.dto';
 import { LogUsageResponseDto } from './dtos/log-usage-response.dto';
 import { OrganizationResponseDto } from './dtos/organization-response.dto';
 import { MessageResponseDto } from './dtos/message-response.dto';
+import { GetSubscriberPreferenceCommand } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.command';
+import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.usecase';
+import {
+  UpdateSubscriberPreference,
+  UpdateSubscriberPreferenceCommand,
+} from '../subscribers/usecases/update-subscriber-preference';
+import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 
 @Controller('/widgets')
 @ApiTags('Widgets')
