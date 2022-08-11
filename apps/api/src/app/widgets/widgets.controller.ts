@@ -23,10 +23,14 @@ import { GetSubscriberPreferenceCommand } from './usecases/get-subscriber-prefer
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference/update-subscriber-preference.command';
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 import { UpdateSubscriberPreference } from './usecases/update-subscriber-preference/update-subscriber-preference.usecase';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
+import { LogUsageRequestDto } from './dtos/log-usage-request.dto';
+import { LogUsageResponseDto } from './dtos/log-usage-response.dto';
+import { OrganizationResponseDto } from './dtos/organization-response.dto';
+import { MessageResponseDto } from './dtos/message-response.dto';
 
 @Controller('/widgets')
 @ApiTags('Widgets')
@@ -44,6 +48,12 @@ export class WidgetsController {
   ) {}
 
   @Post('/session/initialize')
+  @ApiOkResponse({
+    type: SessionInitializeResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Initialize widget session',
+  })
   async sessionInitialize(@Body() body: SessionInitializeRequestDto): Promise<SessionInitializeResponseDto> {
     return await this.initializeSessionUsecase.execute(
       InitializeSessionCommand.create({
@@ -60,6 +70,12 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/feed')
+  @ApiOperation({
+    summary: 'Get notifications in feed',
+  })
+  @ApiOkResponse({
+    type: [MessageResponseDto],
+  })
   async getNotificationsFeed(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
@@ -85,6 +101,12 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/unseen')
+  @ApiOkResponse({
+    type: UnseenCountResponse,
+  })
+  @ApiOperation({
+    summary: 'Get unseen count',
+  })
   async getUnseenCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
@@ -108,6 +130,12 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/:messageId/seen')
+  @ApiOperation({
+    summary: 'Mark message as seen',
+  })
+  @ApiOkResponse({
+    type: MessageResponseDto,
+  })
   async markMessageAsSeen(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('messageId') messageId: string
@@ -124,6 +152,12 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/:messageId/actions/:type')
+  @ApiOperation({
+    summary: 'Mark action as seen',
+  })
+  @ApiOkResponse({
+    type: MessageResponseDto,
+  })
   async markActionAsSeen(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('messageId') messageId: string,
@@ -145,7 +179,15 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/organization')
-  async getOrganizationData(@SubscriberSession() subscriberSession: SubscriberEntity) {
+  @ApiOperation({
+    summary: 'get organization',
+  })
+  @ApiOkResponse({
+    type: OrganizationResponseDto,
+  })
+  async getOrganizationData(
+    @SubscriberSession() subscriberSession: SubscriberEntity
+  ): Promise<OrganizationResponseDto> {
     const command = GetOrganizationDataCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
@@ -157,6 +199,12 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/preferences')
+  @ApiOkResponse({
+    type: UpdateSubscriberPreferenceResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get subscriber preference',
+  })
   async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
     const command = GetSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -169,6 +217,12 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Patch('/preference/:templateId')
+  @ApiOkResponse({
+    type: UpdateSubscriberPreferenceResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update subscriber preference from widget',
+  })
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('templateId') templateId: string,
@@ -188,10 +242,17 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/usage/log')
+  @ApiOkResponse({
+    type: LogUsageResponseDto,
+  })
+  @ApiOperation({
+    summary: 'log usage',
+    description: 'Endpoint to log usage of widget',
+  })
   async logUsage(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Body() body: { name: string; payload: any } // eslint-disable-line @typescript-eslint/no-explicit-any
-  ) {
+    @Body() body: LogUsageRequestDto
+  ): Promise<LogUsageResponseDto> {
     this.analyticsService.track(body.name, subscriberSession._organizationId, {
       environmentId: subscriberSession._environmentId,
       ...(body.payload || {}),
