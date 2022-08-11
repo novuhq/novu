@@ -18,6 +18,8 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
+import { MarkAllMessageAsSeenCommand } from './usecases/mark-all-message-as-seen/mark-all-message-as-seen.command';
+import { MarkAllMessageAsSeen } from './usecases/mark-all-message-as-seen/mark-all-message-as-seen.usecase';
 
 @Controller('/widgets')
 export class WidgetsController {
@@ -26,6 +28,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
+    private markAllMessageAsSeenUseCase: MarkAllMessageAsSeen,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
@@ -108,6 +111,18 @@ export class WidgetsController {
     });
 
     return await this.markMessageAsSeenUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/seen')
+  async markAllUnseenAsSeen(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<number> {
+    const command = MarkAllMessageAsSeenCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession._id,
+      environmentId: subscriberSession._environmentId,
+    });
+
+    return await this.markAllMessageAsSeenUseCase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

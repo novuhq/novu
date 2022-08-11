@@ -51,6 +51,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return await api.markMessageAsSeen(messageId);
   }
 
+  async function markAllAsSeen(): Promise<number> {
+    return await api.markAllAsSeen();
+  }
+
   async function updateAction(
     messageId: string,
     actionButtonType: ButtonTypeEnum,
@@ -82,7 +86,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   return (
     <NotificationsContext.Provider
-      value={{ notifications, fetchNextPage, hasNextPage, fetching, markAsSeen, updateAction, refetch }}
+      value={{ notifications, fetchNextPage, hasNextPage, fetching, markAsSeen, markAllAsSeen, updateAction, refetch }}
     >
       {children}
     </NotificationsContext.Provider>

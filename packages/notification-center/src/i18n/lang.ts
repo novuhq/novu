@@ -21,10 +21,10 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
   fi: FI,
   hi: HI,
-  fr: FR
+  fr: FR,
   gj: GJ,
   ru: RU,
-  sp: SP
+  sp: SP,
 };
 
 /**

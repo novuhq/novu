@@ -68,4 +68,8 @@ export class ApiService {
   async getOrganization() {
     return this.httpClient.get('/widgets/organization');
   }
+
+  async markAllAsSeen() {
+    return this.httpClient.post('/widgets/messages/seen', {});
+  }
 }
