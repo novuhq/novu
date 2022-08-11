@@ -24,10 +24,10 @@ import { RemoveMember } from './usecases/membership/remove-member/remove-member.
 import { RemoveMemberCommand } from './usecases/membership/remove-member/remove-member.command';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { GetMembersCommand } from './usecases/membership/membership/get-members/get-members.command';
-import { GetMembers } from './usecases/membership/membership/get-members/get-members.usecase';
-import { ChangeMemberRoleCommand } from './usecases/membership/membership/change-member-role/change-member-role.command';
-import { ChangeMemberRole } from './usecases/membership/membership/change-member-role/change-member-role.usecase';
+import { GetMembersCommand } from './usecases/membership/get-members/get-members.command';
+import { GetMembers } from './usecases/membership/get-members/get-members.usecase';
+import { ChangeMemberRoleCommand } from './usecases/membership/change-member-role/change-member-role.command';
+import { ChangeMemberRole } from './usecases/membership/change-member-role/change-member-role.usecase';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
 
