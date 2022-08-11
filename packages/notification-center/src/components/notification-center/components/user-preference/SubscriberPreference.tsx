@@ -5,19 +5,33 @@ import { useNovuThemeProvider, useSubscriberPreference } from '../../../../hooks
 import { accordionStyles, Text, TextBlock } from './styles';
 import { ChannelPreference } from './ChannelPreference';
 import { getChannel } from './channels';
+import image from '../../../../images/no-settings.png';
 
 export function SubscriberPreference() {
   const { theme, common } = useNovuThemeProvider();
-  const { preferences, updatePreference } = useSubscriberPreference();
+  const { preferences: data, updatePreference, loading } = useSubscriberPreference();
   const baseTheme = theme?.userPreferences;
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
+  const preferences = data?.filter((item) => !item.template.critical);
 
   return (
-    <div style={{ padding: '15px' }}>
-      <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
-        {preferences
-          ?.filter((item) => !item.template.critical)
-          .map((item, index) => {
+    <>
+      {!loading && preferences?.length === 0 && (
+        <div
+          style={{
+            textAlign: 'center',
+            minHeight: 350,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <img src={image as any} alt="logo" style={{ maxWidth: 300 }} />
+        </div>
+      )}
+      <div style={{ padding: '15px' }}>
+        <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
+          {preferences?.map((item, index) => {
             const channelsKeys = Object.keys(item?.preference?.channels);
             const channelsPreference = item?.preference?.channels;
 
@@ -54,8 +68,9 @@ export function SubscriberPreference() {
               </Accordion.Item>
             );
           })}
-      </Accordion>
-    </div>
+        </Accordion>
+      </div>
+    </>
   );
 }
 
