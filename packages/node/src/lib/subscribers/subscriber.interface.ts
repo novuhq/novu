@@ -89,3 +89,12 @@ export interface IAttachmentOptions {
   name?: string;
   channels?: ChannelTypeEnum[];
 }
+
+export interface IUpdateSubscriberPreferencePayload {
+  channel?: {
+    type: ChannelTypeEnum;
+    enabled: boolean;
+  };
+
+  enabled?: boolean;
+}
