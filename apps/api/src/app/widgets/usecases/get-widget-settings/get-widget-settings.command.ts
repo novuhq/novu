@@ -1,11 +1,7 @@
 import { IsDefined, IsString } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class GetWidgetSettingsCommand {
-  static create(data: GetWidgetSettingsCommand) {
-    return CommandHelper.create<GetWidgetSettingsCommand>(GetWidgetSettingsCommand, data);
-  }
-
+export class GetWidgetSettingsCommand extends BaseCommand {
   @IsDefined()
   @IsString()
   identifier: string;

@@ -2,11 +2,10 @@ import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/shared';
-import { UpdateSubscriberPreferenceBodyDto } from '../dtos/user-preference.dto';
+import { ChannelTypeEnum, IUpdateSubscriberPreferenceDto } from '@novu/shared';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
-describe('GET /widget/subscriber-preference', function () {
+describe('PATCH /widgets/preference/:templateId', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
   let subscriberId: string;
@@ -38,11 +37,6 @@ describe('GET /widget/subscriber-preference', function () {
   });
 
   it('should update user preference', async function () {
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-
-    await session.awaitRunningJobs(template._id);
-
     const createData = {
       enabled: true,
     };
@@ -65,15 +59,11 @@ describe('GET /widget/subscriber-preference', function () {
     expect(response.preference.channels.sms).to.be.not.ok;
     expect(response.preference.channels.direct).to.be.not.ok;
   });
+
   it(
     'should not update empty object should throw exception if ' +
       'no channel and not template enable param - user preference',
     async function () {
-      await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-      await session.triggerEvent(template.triggers[0].identifier, subscriberId);
-
-      await session.awaitRunningJobs(template._id);
-
       const createData = {
         templateId: template._id,
         enabled: true,
@@ -83,7 +73,7 @@ describe('GET /widget/subscriber-preference', function () {
 
       const updateDataEmailFalse = {
         channel: {},
-      } as UpdateSubscriberPreferenceBodyDto;
+      } as IUpdateSubscriberPreferenceDto;
 
       let responseMessage = '';
       try {
@@ -95,10 +85,32 @@ describe('GET /widget/subscriber-preference', function () {
       expect(responseMessage).to.equal('In order to make an update you need to provider channel or enabled');
     }
   );
+
+  it('should override template preference defaults after subscriber update', async function () {
+    const templateDefaultSettings = await session.createTemplate({
+      preferenceSettingsOverride: { email: false, direct: true, push: true, sms: true, in_app: true },
+      noFeedId: true,
+    });
+
+    const updateEmailEnable = {
+      channel: {
+        type: ChannelTypeEnum.EMAIL,
+        enabled: true,
+      },
+    };
+
+    const response = (
+      await updateSubscriberPreference(updateEmailEnable, session.subscriberToken, templateDefaultSettings._id)
+    ).data.data;
+
+    expect(response.preference.enabled).to.equal(true);
+    expect(response.preference.channels.email).to.equal(true);
+    expect(response.preference.channels.in_app).to.equal(true);
+  });
 });
 
 export async function updateSubscriberPreference(
-  data: UpdateSubscriberPreferenceBodyDto,
+  data: IUpdateSubscriberPreferenceDto,
   subscriberToken: string,
   templateId: string
 ) {

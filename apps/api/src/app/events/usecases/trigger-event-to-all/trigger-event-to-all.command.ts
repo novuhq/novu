@@ -1,12 +1,7 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
-  static create(data: TriggerEventToAllCommand) {
-    return CommandHelper.create(TriggerEventToAllCommand, data);
-  }
-
   @IsDefined()
   @IsString()
   identifier: string;
