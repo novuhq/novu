@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IChannelCredentials } from './update-subscriber.dto';
+import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
-export class IChannelSettings {
+class ChannelSettings {
   @ApiProperty({
     description: 'Id of the integration that is used for this channel',
   })
@@ -17,7 +17,7 @@ export class IChannelSettings {
   @ApiProperty({
     description: 'Subscriber credentials for channel',
   })
-  credentials: IChannelCredentials;
+  credentials: ChannelCredentials;
 }
 
 export class SubscriberResponseDto {
@@ -45,10 +45,10 @@ export class SubscriberResponseDto {
   subscriberId: string;
 
   @ApiPropertyOptional({
-    type: [IChannelSettings],
+    type: [ChannelSettings],
     description: 'Channels settings for subscriber',
   })
-  channels?: IChannelSettings[];
+  channels?: ChannelSettings[];
 
   @ApiProperty()
   _organizationId: string;

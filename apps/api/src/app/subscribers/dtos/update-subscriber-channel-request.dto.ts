@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
-import { IChannelCredentials } from './update-subscriber.dto';
+import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 
 export class UpdateSubscriberChannelRequestDto {
   @ApiProperty({
@@ -17,5 +17,5 @@ export class UpdateSubscriberChannelRequestDto {
   })
   @IsDefined()
   @IsObject()
-  credentials: IChannelCredentials;
+  credentials: ChannelCredentials;
 }

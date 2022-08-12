@@ -1,67 +1,45 @@
-import { IsArray, IsBoolean, IsMongoId, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
-import { ICreateNotificationTemplateDto, DigestUnitEnum, DigestTypeEnum, IPreferenceChannels } from '@novu/shared';
-import { MessageFilter } from './create-notification-template.request.dto';
-import { MessageTemplateDto } from './message-template.dto';
-
-export class NotificationStepDto {
-  @IsMongoId()
-  @IsOptional()
-  _id?: string;
-
-  @ValidateNested()
-  @IsOptional()
-  template?: MessageTemplateDto;
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested()
-  filters?: MessageFilter[];
-
-  @IsBoolean()
-  @IsOptional()
-  active?: boolean;
-
-  @IsOptional()
-  @IsMongoId()
-  _templateId?: string;
-
-  @IsOptional()
-  metadata?: {
-    amount?: number;
-    unit?: DigestUnitEnum;
-    digestKey?: string;
-    type: DigestTypeEnum;
-    backoffUnit?: DigestUnitEnum;
-    backoffAmount?: number;
-  };
-}
+import { IsArray, IsMongoId, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { ICreateNotificationTemplateDto, IPreferenceChannels } from '@novu/shared';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+import { NotificationStep } from '../../shared/dtos/notification-step';
 
 export class UpdateNotificationTemplateRequestDto implements ICreateNotificationTemplateDto {
+  @ApiProperty()
   @IsString()
   @IsOptional()
   name: string;
 
+  @ApiPropertyOptional()
   @IsArray()
   @IsOptional()
   tags: string[];
 
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   @MaxLength(100)
   description: string;
 
+  @ApiPropertyOptional()
   @IsArray()
   @IsOptional()
   @ValidateNested()
-  steps: NotificationStepDto[];
+  steps: NotificationStep[];
 
+  @ApiProperty()
   @IsOptional()
   @IsMongoId()
   notificationGroupId: string;
 
+  @ApiPropertyOptional()
   active?: boolean;
 
+  @ApiPropertyOptional()
   critical?: boolean;
 
+  @ApiPropertyOptional({
+    type: PreferenceChannels,
+  })
   preferenceSettings?: IPreferenceChannels;
 }

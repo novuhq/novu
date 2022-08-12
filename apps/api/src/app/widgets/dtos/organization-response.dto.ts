@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class Branding {
+class Branding {
   @ApiPropertyOptional()
   fontFamily?: string;
   @ApiPropertyOptional()

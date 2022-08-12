@@ -1,21 +1,6 @@
 import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
-import { ChannelTypeEnum } from '@novu/shared';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export class ChannelPreference {
-  @ApiProperty({
-    type: ChannelTypeEnum,
-    enum: ChannelTypeEnum,
-    description: 'The type of channel that is enabled or not',
-  })
-  type: ChannelTypeEnum;
-
-  @ApiProperty({
-    type: Boolean,
-    description: 'If channel is enabled or not',
-  })
-  enabled: boolean;
-}
+import { ChannelPreference } from '../../shared/dtos/channel-preference';
 
 @ApiExtraModels(ChannelPreference)
 export class UpdateSubscriberPreferenceRequestDto {

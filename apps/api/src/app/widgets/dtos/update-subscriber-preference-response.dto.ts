@@ -1,25 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 
-export class TemplateResponse {
+class TemplateResponse {
   @ApiProperty()
   _id: string;
   @ApiProperty()
   name: string;
   @ApiProperty()
   critical: boolean;
-}
-
-export class PreferenceChannels {
-  @ApiPropertyOptional()
-  email?: boolean;
-  @ApiPropertyOptional()
-  sms?: boolean;
-  @ApiPropertyOptional()
-  in_app?: boolean;
-  @ApiPropertyOptional()
-  direct?: boolean;
-  @ApiPropertyOptional()
-  push?: boolean;
 }
 
 class Preference {

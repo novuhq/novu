@@ -1,68 +1,17 @@
 import { IsArray, IsBoolean, IsDefined, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
-import {
-  BuilderFieldOperator,
-  BuilderFieldType,
-  BuilderGroupValues,
-  ICreateNotificationTemplateDto,
-  IPreferenceChannels,
-} from '@novu/shared';
-import { MessageTemplateDto } from './message-template.dto';
+import { ICreateNotificationTemplateDto, IPreferenceChannels } from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PreferenceChannels } from '../../widgets/dtos/update-subscriber-preference-response.dto';
+import { MessageFilter } from '../../shared/dtos/message-filter';
+import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+import { MessageTemplate } from '../../shared/dtos/message-template';
 
-class MessageFilterChild {
-  @ApiProperty()
-  field: string;
-  @ApiProperty()
-  value: string;
-  @ApiProperty({
-    enum: [
-      'LARGER',
-      'SMALLER',
-      'LARGER_EQUAL',
-      'SMALLER_EQUAL',
-      'EQUAL',
-      'NOT_EQUAL',
-      'ALL_IN',
-      'ANY_IN',
-      'NOT_IN',
-      'BETWEEN',
-      'NOT_BETWEEN',
-      'LIKE',
-      'NOT_LIKE',
-    ],
-  })
-  operator: BuilderFieldOperator;
-}
-
-export class MessageFilter {
-  @ApiProperty()
-  isNegated: boolean;
-
-  @ApiProperty({
-    enum: ['BOOLEAN', 'TEXT', 'DATE', 'NUMBER', 'STATEMENT', 'LIST', 'MULTI_LIST', 'GROUP'],
-  })
-  type: BuilderFieldType;
-
-  @ApiProperty({
-    enum: ['AND', 'OR'],
-  })
-  value: BuilderGroupValues;
-
-  @ApiProperty({
-    type: [MessageFilterChild],
-  })
-  @IsArray()
-  children: MessageFilterChild[];
-}
-
-export class NotificationChannelDto {
+class NotificationChannel {
   @ApiPropertyOptional({
-    type: MessageTemplateDto,
+    type: MessageTemplate,
   })
   @ValidateNested()
   @IsOptional()
-  template?: MessageTemplateDto;
+  template?: MessageTemplate;
 
   @ApiPropertyOptional({
     type: [MessageFilter],
@@ -103,12 +52,12 @@ export class CreateNotificationTemplateRequestDto implements ICreateNotification
   description: string;
 
   @ApiProperty({
-    type: [NotificationChannelDto],
+    type: [NotificationChannel],
   })
   @IsDefined()
   @IsArray()
   @ValidateNested()
-  steps: NotificationChannelDto[];
+  steps: NotificationChannel[];
 
   @ApiPropertyOptional()
   @IsBoolean()

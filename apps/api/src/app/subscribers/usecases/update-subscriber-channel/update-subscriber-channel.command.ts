@@ -1,9 +1,9 @@
 import { IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { IChannelCredentials, ISubscriberChannel } from '../../dtos';
 import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+import { ChannelCredentials, SubscriberChannel } from '../../../shared/dtos/subscriber-channel';
 
-export class IChannelCredentialsCommand implements IChannelCredentials {
+export class IChannelCredentialsCommand implements ChannelCredentials {
   @IsString()
   @IsOptional()
   webhookUrl?: string;
@@ -13,7 +13,7 @@ export class IChannelCredentialsCommand implements IChannelCredentials {
   notificationIdentifiers?: string[];
 }
 
-export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements ISubscriberChannel {
+export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements SubscriberChannel {
   @IsString()
   subscriberId: string;
 

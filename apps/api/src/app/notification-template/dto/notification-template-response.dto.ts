@@ -1,19 +1,29 @@
-import {
-  BuilderFieldOperator,
-  BuilderFieldType,
-  BuilderGroupValues,
-  DigestUnitEnum,
-  DigestTypeEnum,
-} from '@novu/shared';
-import { PreferenceChannels } from '../../widgets/dtos/update-subscriber-preference-response.dto';
-import { MessageTemplateDto } from './message-template.dto';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { NotificationStep } from '../../shared/dtos/notification-step';
+import { PreferenceChannels } from '../../shared/dtos/preference-channels';
+
+class NotificationGroup {
+  @ApiPropertyOptional()
+  _id?: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  _environmentId: string;
+
+  @ApiProperty()
+  _organizationId: string;
+
+  @ApiPropertyOptional()
+  _parentId?: string;
+}
 
 class NotificationTriggerVariable {
   name: string;
 }
 
-export class NotificationTrigger {
+class NotificationTrigger {
   @ApiProperty()
   type: 'event';
 
@@ -31,135 +41,7 @@ export class NotificationTrigger {
   subscriberVariables?: NotificationTriggerVariable[];
 }
 
-class NotificationStepMetadata {
-  @ApiPropertyOptional()
-  amount?: number;
-
-  @ApiPropertyOptional({
-    enum: DigestUnitEnum,
-  })
-  unit?: DigestUnitEnum;
-
-  @ApiPropertyOptional()
-  digestKey?: string;
-
-  @ApiProperty({
-    enum: DigestTypeEnum,
-  })
-  type: DigestTypeEnum;
-
-  @ApiPropertyOptional({
-    enum: DigestUnitEnum,
-  })
-  backoffUnit?: DigestUnitEnum;
-
-  @ApiPropertyOptional()
-  backoffAmount?: number;
-
-  @ApiPropertyOptional()
-  updateMode?: boolean;
-}
-
-class StepFilterChild {
-  @ApiProperty()
-  field: string;
-  @ApiProperty()
-  value: string;
-  @ApiProperty({
-    enum: [
-      'LARGER',
-      'SMALLER',
-      'LARGER_EQUAL',
-      'SMALLER_EQUAL',
-      'EQUAL',
-      'NOT_EQUAL',
-      'ALL_IN',
-      'ANY_IN',
-      'NOT_IN',
-      'BETWEEN',
-      'NOT_BETWEEN',
-      'LIKE',
-      'NOT_LIKE',
-    ],
-  })
-  operator: BuilderFieldOperator;
-}
-
-export class StepFilter {
-  @ApiProperty()
-  isNegated: boolean;
-
-  @ApiProperty({
-    enum: ['BOOLEAN', 'TEXT', 'DATE', 'NUMBER', 'STATEMENT', 'LIST', 'MULTI_LIST', 'GROUP'],
-  })
-  type: BuilderFieldType;
-
-  @ApiProperty({
-    enum: ['AND', 'OR'],
-  })
-  value: BuilderGroupValues;
-
-  @ApiProperty({
-    type: [StepFilterChild],
-  })
-  children: StepFilterChild[];
-}
-
-export class NotificationStep {
-  @ApiPropertyOptional()
-  _id?: string;
-
-  @ApiProperty()
-  _templateId: string;
-
-  @ApiPropertyOptional()
-  active?: boolean;
-
-  @ApiPropertyOptional({
-    type: MessageTemplateDto,
-  })
-  template?: MessageTemplateDto;
-
-  @ApiPropertyOptional({
-    type: [StepFilter],
-  })
-  filters?: StepFilter[];
-
-  @ApiPropertyOptional()
-  _parentId?: string;
-
-  @ApiPropertyOptional({
-    type: NotificationStepMetadata,
-  })
-  metadata?: NotificationStepMetadata;
-}
-
-export class NotificationGroup {
-  @ApiPropertyOptional()
-  _id?: string;
-
-  @ApiProperty()
-  name: string;
-
-  @ApiProperty()
-  _environmentId: string;
-
-  @ApiProperty()
-  _organizationId: string;
-
-  @ApiPropertyOptional()
-  _parentId?: string;
-}
-
-@ApiExtraModels(
-  NotificationGroup,
-  NotificationStep,
-  StepFilter,
-  StepFilterChild,
-  NotificationStepMetadata,
-  NotificationTrigger,
-  NotificationTriggerVariable
-)
+@ApiExtraModels(NotificationGroup)
 export class NotificationTemplateResponse {
   @ApiPropertyOptional()
   _id?: string;

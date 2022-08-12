@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
-export class IChannelCredentials {
+export class ChannelCredentials {
   @ApiProperty({
     description: 'Webhook url for direct notificaton',
   })
@@ -12,7 +12,7 @@ export class IChannelCredentials {
   notificationIdentifiers?: string[];
 }
 
-export class ISubscriberChannel {
+export class SubscriberChannel {
   @ApiProperty({
     enum: { ...DirectProviderIdEnum, ...PushProviderIdEnum },
     description: 'Id of provider for channel',
@@ -20,8 +20,8 @@ export class ISubscriberChannel {
   providerId: DirectProviderIdEnum | PushProviderIdEnum;
 
   @ApiProperty({
-    type: IChannelCredentials,
+    type: ChannelCredentials,
     description: 'Subscriber credentials for channel',
   })
-  credentials: IChannelCredentials;
+  credentials: ChannelCredentials;
 }
