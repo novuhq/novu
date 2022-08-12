@@ -7,6 +7,7 @@ export function useSubscriberPreference() {
   const [preferences, setPreferences] = useState<IUserPreferenceSettings[]>([]);
   const { api } = useApi();
   const { token } = useContext<IAuthContext>(AuthContext);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!api?.isAuthenticated || !token) return;
@@ -15,8 +16,10 @@ export function useSubscriberPreference() {
   }, [api?.isAuthenticated, token]);
 
   async function getUserPreference() {
+    setLoading(true);
     const result = await api.getUserPreference();
     setPreferences(result);
+    setLoading(false);
   }
 
   async function updatePreference(
@@ -41,5 +44,6 @@ export function useSubscriberPreference() {
   return {
     preferences,
     updatePreference,
+    loading,
   };
 }

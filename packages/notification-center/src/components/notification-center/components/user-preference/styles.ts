@@ -1,7 +1,7 @@
 import styled from 'styled-components';
-import { IThemePreferenceItem } from '../../../../store/novu-theme.context';
+import { IThemeUserPreferences } from '../../../../store/novu-theme.context';
 
-export const accordionStyles = (baseTheme: IThemePreferenceItem, font: string) => {
+export const accordionStyles = (baseTheme: IThemeUserPreferences, font: string) => {
   return {
     item: {
       borderBottom: 'none',
@@ -16,21 +16,22 @@ export const accordionStyles = (baseTheme: IThemePreferenceItem, font: string) =
     },
     control: {
       fontFamily: font,
+      height: '65px',
       '&:hover': {
         backgroundColor: baseTheme.accordion.background,
         borderRadius: '7px',
       },
     },
     icon: {
-      color: baseTheme.accordion.icon.inactive,
+      color: baseTheme.accordion?.arrowColor,
     },
   };
 };
 
-export const switchStyles = (baseTheme: IThemePreferenceItem) => {
+export const switchStyles = (baseTheme: IThemeUserPreferences) => {
   return {
     input: {
-      background: baseTheme.switch.background,
+      background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
       width: '41px',
       height: '24px',
       border: 'transparent',
@@ -43,10 +44,10 @@ export const switchStyles = (baseTheme: IThemePreferenceItem) => {
         opacity: 0.3,
       },
       '&:disabled:not(:checked)': {
-        background: baseTheme.switch?.backgroundUnchecked,
+        background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
       },
       '&:checked': {
-        background: baseTheme.switch?.backgroundChecked,
+        background: baseTheme.accordionItem?.switch?.backgroundChecked,
       },
     },
   };
@@ -56,6 +57,7 @@ export const Text = styled.div<{ color: string; size: 'sm' | 'md' | 'lg' }>`
   color: ${({ color }) => color};
   font-size: ${({ size }) => (size === 'sm' ? '12px' : '14px')};
   font-style: normal;
+  align-items: center;
   font-weight: ${({ size }) => (size === 'lg' ? '700' : '400')};
   line-height: ${({ size }) => (size === 'sm' ? '14.4px' : '16.8px')};
   text-align: left;
