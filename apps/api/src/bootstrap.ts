@@ -73,8 +73,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'local') {
     const options = new DocumentBuilder()
-      .setTitle('novu API')
-      .setDescription('The novu API description')
+      .setTitle('Novu API')
+      .setDescription('The Novu API description')
       .setVersion('1.0')
       .addTag('Activity')
       .addTag('Auth')

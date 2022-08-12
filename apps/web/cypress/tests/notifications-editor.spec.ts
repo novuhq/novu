@@ -124,6 +124,7 @@ describe('Notifications Creator', function () {
       waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
       });
+      cy.waitForNetworkIdle(1000);
       cy.getByTestId('title').type('Test Notification Title');
       cy.getByTestId('description').type('This is a test description for a test title');
       cy.get('body').click();
@@ -138,8 +139,11 @@ describe('Notifications Creator', function () {
         .type('{enter}Please check it.');
       cy.getByTestId('inAppRedirect').type('/example/test');
       cy.getByTestId('submit-btn').click();
+      cy.waitForNetworkIdle(1000);
 
       cy.getByTestId('trigger-snippet-btn').click();
+
+      cy.waitForNetworkIdle(1000);
 
       // trigger the notification
       cy.task('createNotifications', {
@@ -147,6 +151,7 @@ describe('Notifications Creator', function () {
         token: this.session.token,
         subscriberId: this.session.user.id,
       });
+      cy.waitForNetworkIdle(1000);
 
       // click on the notifications bell
       cy.getByTestId('notification-bell').click();
@@ -688,6 +693,7 @@ function goBack() {
 }
 
 function fillBasicNotificationDetails(title?: string) {
+  cy.waitForNetworkIdle(1000);
   cy.getByTestId('title').type(title || 'Test Notification Title');
   cy.getByTestId('description').type('This is a test description for a test title');
 }
