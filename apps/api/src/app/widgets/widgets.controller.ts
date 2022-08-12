@@ -182,7 +182,7 @@ export class WidgetsController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/organization')
   @ApiOperation({
-    summary: 'get organization',
+    summary: 'Get organization',
   })
   @ApiOkResponse({
     type: OrganizationResponseDto,
@@ -248,7 +248,7 @@ export class WidgetsController {
     type: LogUsageResponseDto,
   })
   @ApiOperation({
-    summary: 'log usage',
+    summary: 'Log usage',
     description: 'Endpoint to log usage of widget',
   })
   async logUsage(

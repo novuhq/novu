@@ -20,11 +20,12 @@ import { GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber';
 import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse } from '@nestjs/swagger';
-import { UpdateSubscriberPreferenceDto } from '../widgets/dtos/update-subscriber-preference.dto';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
+import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
+import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -192,7 +193,16 @@ export class SubscribersController {
   @Get('/:subscriberId/preferences')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async getSubscriberPreference(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+  @ApiOkResponse({
+    type: [UpdateSubscriberPreferenceResponseDto],
+  })
+  @ApiOperation({
+    summary: 'Get subscriber preferences',
+  })
+  async getSubscriberPreference(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<UpdateSubscriberPreferenceResponseDto[]> {
     const command = GetPreferencesCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,
@@ -205,12 +215,18 @@ export class SubscribersController {
   @Patch('/:subscriberId/preference/:templateId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    type: UpdateSubscriberPreferenceResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update subscriber preference',
+  })
   async updateSubscriberPreference(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
     @Param('templateId') templateId: string,
-    @Body() body: UpdateSubscriberPreferenceDto
-  ) {
+    @Body() body: UpdateSubscriberPreferenceRequestDto
+  ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,
