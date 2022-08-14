@@ -3,6 +3,7 @@
   "no-duplicate-heading": {
     "siblings_only": true
   },
+  "blanks-around-lists": false,
   "no-inline-html": false,
   "first-line-heading": false,
   "no-trailing-spaces": false,
