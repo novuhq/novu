@@ -8,16 +8,15 @@ import {
 const RC = require('@ringcentral/sdk').SDK;
 require('dotenv').config();
 
-const RECIPIENT = process.env.SMS_RECIPIENT;
-const rcsdk = new RC({
-  server: process.env.RC_SERVER_URL,
-  clientId: process.env.RC_CLIENT_ID,
-  clientSecret: process.env.RC_CLIENT_SECRET,
-});
-
 export class RingcentralSmsProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   platform = rcsdk.platform();
+  RECIPIENT = process.env.SMS_RECIPIENT;
+  rcsdk = new RC({
+    server: process.env.RC_SERVER_URL,
+    clientId: process.env.RC_CLIENT_ID,
+    clientSecret: process.env.RC_CLIENT_SECRET,
+  });
   constructor(
     private config: {
       apiKey: string;
@@ -48,7 +47,7 @@ export class RingcentralSmsProvider implements ISmsProvider {
               '/restapi/v1.0/account/~/extension/~/sms',
               {
                 from: { phoneNumber: record.phoneNumber },
-                to: [{ phoneNumber: RECIPIENT }],
+                to: [{ phoneNumber: this.RECIPIENT }],
                 text: 'Hello World from JavaScript',
               }
             );
