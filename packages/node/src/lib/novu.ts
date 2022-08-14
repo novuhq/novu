@@ -1,13 +1,10 @@
-import { EventEmitter } from 'events';
 import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
 import { ITriggerPayloadOptions } from './subscribers/subscriber.interface';
+import { EventEmitter } from 'events';
+import { INovu, INovuConfiguration } from './novu.interface';
 
-export interface INovuConfiguration {
-  backendUrl?: string;
-}
-
-export class Novu extends EventEmitter {
+export class Novu extends EventEmitter implements INovu {
   private readonly apiKey?: string;
   private readonly http: AxiosInstance;
   readonly subscribers: Subscribers;
@@ -33,6 +30,7 @@ export class Novu extends EventEmitter {
       payload: {
         ...data?.payload,
       },
+      overrides: data.overrides || {},
     });
   }
 

@@ -1,4 +1,4 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
@@ -12,4 +12,8 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsDefined()
   transactionId: string;
+
+  @IsObject()
+  @IsOptional()
+  overrides: Record<string, Record<string, unknown>>;
 }

@@ -15,6 +15,9 @@ const jobSchema = new Schema(
     payload: {
       type: Schema.Types.Mixed,
     },
+    overrides: {
+      type: Schema.Types.Mixed,
+    },
     step: {
       type: Schema.Types.Mixed,
     },

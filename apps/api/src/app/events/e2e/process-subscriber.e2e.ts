@@ -1,10 +1,9 @@
-import { NotificationTemplateEntity, SubscriberEntity, MessageRepository } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum, IUpdateSubscriberPreferenceDto } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
-import { SubscriberRepository } from '@novu/dal';
 
 const axiosInstance = axios.create();
 
@@ -29,17 +28,17 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       steps: [
         {
           active: true,
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Welcome to {{organizationName}}' as string,
         },
         {
           active: true,
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Welcome to {{organizationName}}' as string,
         },
         {
           active: false,
-          type: ChannelTypeEnum.SMS,
+          type: StepTypeEnum.SMS,
           content: 'Welcome to {{organizationName}}' as string,
         },
       ],
@@ -81,26 +80,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       email: 'newtest@email.novu',
     };
 
-    try {
-      await axiosInstance.post(
-        `${session.serverUrl}/v1/events/trigger`,
-        {
-          name: template.triggers[0].identifier,
-          to: {
-            ...payload,
-          },
-          payload: {},
-        },
-        {
-          headers: {
-            authorization: `ApiKey ${session.apiKey}`,
-          },
-        }
-      );
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.log(e);
-    }
+    await triggerEvent(session, template, payload);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -111,4 +91,81 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     expect(createdSubscriber.lastName).to.equal(payload.lastName);
     expect(createdSubscriber.email).to.equal(payload.email);
   });
+
+  it('should send only email trigger second time based on the subscriber preference', async function () {
+    const payload: ISubscribersDefine = {
+      subscriberId: session.subscriberId,
+      firstName: 'New Test Name',
+      lastName: 'New Last of name',
+      email: 'newtest@email.novu',
+    };
+
+    await triggerEvent(session, template, payload);
+
+    await session.awaitRunningJobs(template._id);
+
+    const widgetSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      session.subscriberId
+    );
+
+    let message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: widgetSubscriber._id,
+    });
+
+    expect(message.length).to.equal(2);
+
+    const updateData = {
+      channel: {
+        type: ChannelTypeEnum.IN_APP,
+        enabled: false,
+      },
+    };
+
+    await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
+
+    await triggerEvent(session, template, payload);
+
+    await session.awaitRunningJobs(template._id);
+
+    message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: widgetSubscriber._id,
+    });
+
+    expect(message.length).to.equal(3);
+  });
 });
+
+async function triggerEvent(session, template, payload) {
+  await axiosInstance.post(
+    `${session.serverUrl}/v1/events/trigger`,
+    {
+      name: template.triggers[0].identifier,
+      to: {
+        ...payload,
+      },
+      payload: {},
+    },
+    {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    }
+  );
+}
+
+async function updateSubscriberPreference(
+  data: IUpdateSubscriberPreferenceDto,
+  subscriberToken: string,
+  templateId: string
+) {
+  return await axios.patch(`http://localhost:${process.env.PORT}/v1/widgets/preference/${templateId}`, data, {
+    headers: {
+      Authorization: `Bearer ${subscriberToken}`,
+    },
+  });
+}

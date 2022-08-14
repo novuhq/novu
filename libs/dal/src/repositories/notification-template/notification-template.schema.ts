@@ -16,6 +16,10 @@ const notificationTemplateSchema = new Schema(
       type: Schema.Types.Boolean,
       default: true,
     },
+    critical: {
+      type: Schema.Types.Boolean,
+      default: true,
+    },
     _notificationGroupId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationGroup',
@@ -93,6 +97,28 @@ const notificationTemplateSchema = new Schema(
         },
       },
     ],
+    preferenceSettings: {
+      email: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+      sms: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+      in_app: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+      direct: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+      push: {
+        type: Schema.Types.Boolean,
+        default: true,
+      },
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

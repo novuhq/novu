@@ -1,4 +1,5 @@
-import { ChannelTypeEnum, INotificationTemplateStep } from '@novu/shared';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { StepTypeEnum, INotificationTemplateStep } from '@novu/shared';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {
@@ -46,12 +47,12 @@ export class ContentService {
   extractSubscriberMessageVariables(messages: INotificationTemplateStep[]): string[] {
     const variables = [];
 
-    const hasSmsMessage = !!messages.find((i) => i.template.type === ChannelTypeEnum.SMS);
+    const hasSmsMessage = !!messages.find((i) => i.template.type === StepTypeEnum.SMS);
     if (hasSmsMessage) {
       variables.push('phone');
     }
 
-    const hasEmailMessage = !!messages.find((i) => i.template.type === ChannelTypeEnum.EMAIL);
+    const hasEmailMessage = !!messages.find((i) => i.template.type === StepTypeEnum.EMAIL);
     if (hasEmailMessage) {
       variables.push('email');
     }
@@ -61,13 +62,13 @@ export class ContentService {
 
   private *messagesTextIterator(messages: INotificationTemplateStep[]): Generator<string> {
     for (const message of messages) {
-      if (message.template.type === ChannelTypeEnum.IN_APP) {
+      if (message.template.type === StepTypeEnum.IN_APP) {
         yield message.template.content as string;
 
         if (message?.template.cta?.data?.url) {
           yield message.template.cta.data.url;
         }
-      } else if (message.template.type === ChannelTypeEnum.SMS) {
+      } else if (message.template.type === StepTypeEnum.SMS) {
         yield message.template.content as string;
       } else if (Array.isArray(message.template.content)) {
         yield message.template.subject;

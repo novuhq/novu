@@ -1,5 +1,6 @@
 import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '../../types/builder/builder.types';
 import { IMessageTemplate } from '../message-template';
+import { IPreferenceChannels } from '../subscriber-preference';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -11,6 +12,8 @@ export interface INotificationTemplate {
   tags: string[];
   draft: boolean;
   active: boolean;
+  critical: boolean;
+  preferenceSettings: IPreferenceChannels;
   createdAt?: string;
   updatedAt?: string;
   steps: INotificationTemplateStep[];
