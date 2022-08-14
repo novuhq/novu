@@ -1,36 +1,42 @@
 # Slack
 
-On some channels as the Direct one, the user will need to add his provider integration credentials in order to provide Novu the right authorization to send the notification by his behave.
+When using Slack you will have to save the integration credentials on the subscriber entity.
 
-We will provide the basic flow that the user needs to perform in order to successfully send notifications via the Direct channel.
+In this guide we will perform the flow you have to do in order to obtain the `webhookUrl` that Novu needs to send direct messages to your customers.
 
-1. Go to slack API client <https://api.slack.com/apps>
-2. Create new application.
-3. Go to incoming-webhooks and Activate Incoming Webhooks
-4. Create a HTTPS server listen on REDIRECT_URL
-where you will send a POST request to URL `https://slack.com/api/oauth.v2.access` with the following params:
-   1. the `code` from the request object (request.queryParams.code).
-   2. `client_id` and `client_secret` that are located in your `Basic Information`section in the api.slack.com client.
-5. Go to`OAuth & Permissions` and add your REDIRECT_URL in Redirect URLs.
-6. Go to `Manage Distribution`, at the bottom of the page make sure to tick the `Remove Hard Coded Information` and `Activate  Public Distribution`.
-7. Add the `Add to Slack` button or the Sharable URL to your application.
-8. After the end-user finished the authorization you can get the webhookUrl from the response of the OAuth under body.incoming_webhook.url.
-9. Next you will need to update the newly created webhookUrl on Novu's environment, you can manage it through `@novu/node` package.
+We will provide the basic flow that the user needs to perform in order to successfully send notifications via the Slack integration.
+
+## Application Setup
+
+1. Go to slack developer dashboard [https://api.slack.com/apps](https://api.slack.com/apps)
+2. Create a new application.
+3. Go to `Incoming Webhooks` from the left menu and Activate Incoming Webhooks
+4. (Optional) here you could generate a test webhook for your own workspace to test your integration with.
+
+## Generate webhooks for your users
+
+1. On your server add a new endpoint that will listen to the response redirect from a POST request to `https://slack.com/api/oauth.v2.access` (read more on Slack's documentation [here](https://api.slack.com/authentication/oauth-v2#asking))
+2. Go to `OAuth & Permissions` on slack's developers dashboard and add your REDIRECT_URL in Redirect URLs. (You can use [Request Bin](https://requestbin.com/) for an easy HTTPS service for redirects)
+3. Go to `Manage Distribution`, at the bottom of the page make sure to tick the `Remove Hard Coded Information` and `Activate  Public Distribution`.
+4. Add the `Add to Slack` button or the Sharable URL to your application.
+5. After the end-user finished the authorization you can get the webhookUrl from the response of the OAuth under `body.incoming_webhook.url`.
+6. When the `incoming_webhook.url` was obtained we can save it on the relevant subscriber entity in Novu:
 
   ```typescript
-  import { Novu, DirectProviderIdEnum} from '@novu/node'
+  import { Novu, DirectProviderIdEnum } from '@novu/node'
 
   const novu = new Novu(process.env.NOVU_API_KEY);
 
+  const body = req.body; // From your HTTPS listener 
   await novu.subscribers.setCredentials('subscriberId', DirectProviderIdEnum.Slack, {
-    webhookUrl: 'webhookUrl',
+    webhookUrl: body.incoming_webhook.url,
   });
   ```
 
-- subscriberId is a custom identifier used when identifying your users within the Novu platform.
-- providerId is a unique provider identifier, we recommend using our DirectProviderIdEnum in our case its Slack.
-- credentials are the argument you need to be authentication with your provider workspace. At this point, we support direct messages through webhook, so a webhookUrl is needed.
+- `subscriberId` is a custom identifier used when identifying your users within the Novu platform.
+- `providerId` is a unique provider identifier, we recommend using our DirectProviderIdEnum to specify the provider.
+- The third parameter is the credentials object, in this case we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
 
 <!-- markdownlint-disable MD029 -->
-10. You are all set up and ready to send your first direct message via our `@novu/node` package novu.trigger or the API!
+7. You are all set up and ready to send your first direct message via our `@novu/node` package or directly using the REST API.
 <!-- markdownlint-enable MD029 -->
