@@ -119,14 +119,26 @@
   "lint-staged": {
     "apps/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix",
       "stop-only --file"
     ],
     "packages/**/*.{ts,json}": [
       "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix",
       "stop-only --file"
     ],
     "providers/**/*.{ts,json}": [
       "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix apps/api",
+      "stop-only --file"
+    ],
+    "docs/**/*.{ts,tsx,json}": [
+      "prettier --ignore-path ./.prettierignore --write",
+      "stop-only --file"
+    ],
+    "libs/**/*.{ts,js,json}": [
+      "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix",
       "stop-only --file"
     ]
   },
