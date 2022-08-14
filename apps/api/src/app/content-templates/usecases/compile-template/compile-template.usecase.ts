@@ -49,13 +49,16 @@ export class CompileTemplate {
 
   private async loadTemplateContent(name: string) {
     return new Promise<string>((resolve, reject) => {
-      fs.readFile(`${__dirname}/templates/${name}`, (err, content) => {
-        if (err) {
-          return reject(err);
-        }
+      fs.readFile(
+        `${__dirname}/src/app/content-templates/usecases/compile-template/templates/${name}`,
+        (err, content) => {
+          if (err) {
+            return reject(err);
+          }
 
-        return resolve(content.toString());
-      });
+          return resolve(content.toString());
+        }
+      );
     });
   }
 }
