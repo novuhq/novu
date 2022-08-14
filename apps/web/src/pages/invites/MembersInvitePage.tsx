@@ -5,7 +5,7 @@ import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { getOrganizationMembers, inviteMember, removeMember } from '../../api/organization';
+import { getOrganizationMembers, inviteMember, removeMember, resendInviteMember } from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Button, Input } from '../../design-system';
 import { Invite } from '../../design-system/icons';
@@ -48,11 +48,27 @@ export function MembersInvitePage() {
       await removeMember(member._id);
 
       showNotification({
-        message: `Successful member deletion.`,
+        message: `Successfully deleted member .`,
         color: 'green',
       });
 
       refetch();
+    } catch (err: any) {
+      showNotification({
+        message: err.message,
+        color: 'red',
+      });
+    }
+  }
+
+  async function resendInviteMemberClick(member) {
+    try {
+      await resendInviteMember(member._id);
+
+      showNotification({
+        message: `Successfully resent invite.`,
+        color: 'green',
+      });
     } catch (err: any) {
       showNotification({
         message: err.message,
@@ -80,12 +96,15 @@ export function MembersInvitePage() {
         }
       />
 
-      <MembersTable
-        loading={loadingMembers}
-        members={members}
-        currentUser={currentUser}
-        onRemoveMember={removeMemberClick}
-      />
+      <Container fluid mt={15} ml={5}>
+        <MembersTable
+          loading={loadingMembers}
+          members={members}
+          currentUser={currentUser}
+          onRemoveMember={removeMemberClick}
+          onResendInviteMember={resendInviteMemberClick}
+        />
+      </Container>
     </PageContainer>
   );
 }

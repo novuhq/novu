@@ -1,7 +1,7 @@
 import { BaseRepository } from '../base-repository';
 import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 export class JobRepository extends BaseRepository<JobEntity> {
   constructor() {
@@ -63,7 +63,7 @@ export class JobRepository extends BaseRepository<JobEntity> {
       },
       _templateId: templateId,
       status: JobStatusEnum.COMPLETED,
-      type: ChannelTypeEnum.DIGEST,
+      type: StepTypeEnum.DIGEST,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
     });
@@ -75,7 +75,7 @@ export class JobRepository extends BaseRepository<JobEntity> {
       },
       _templateId: templateId,
       status: JobStatusEnum.COMPLETED,
-      type: ChannelTypeEnum.TRIGGER,
+      type: StepTypeEnum.TRIGGER,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       transactionId: {

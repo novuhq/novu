@@ -11,7 +11,7 @@ export function useTranslations() {
       /**
        * Fallback to english when a key for a specified languages does not exist
        */
-      return translations[key] || TRANSLATIONS.en.translations;
+      return translations[key] || TRANSLATIONS.en.translations[key];
     },
   };
 }

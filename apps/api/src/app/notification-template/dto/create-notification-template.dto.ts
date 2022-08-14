@@ -4,6 +4,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   ICreateNotificationTemplateDto,
+  IPreferenceChannels,
 } from '@novu/shared';
 import { MessageTemplateDto } from './message-template.dto';
 
@@ -71,4 +72,11 @@ export class CreateNotificationTemplateDto implements ICreateNotificationTemplat
   @IsBoolean()
   @IsOptional()
   draft?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  critical?: boolean;
+
+  @IsOptional()
+  preferenceSettings?: IPreferenceChannels;
 }

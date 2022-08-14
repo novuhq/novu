@@ -4,6 +4,7 @@ import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
 import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
+import { When } from '../../components/utils/When';
 
 interface IDragButtonProps {
   Icon: React.FC<any>;
@@ -21,6 +22,7 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
         sx={{
           background: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
           border: `1px dashed ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
+          height: description.length > 0 ? '75px' : '50px',
         }}
         className={cx(classes.button, { [classes.active]: false })}
       >
@@ -31,9 +33,11 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
             </IconWrapper>
             <StyledContentWrapper>
               <Text weight="bold">{label}</Text>
-              <Text mt={3} color={colors.B60}>
-                {description}
-              </Text>
+              <When truthy={description}>
+                <Text mt={3} color={colors.B60}>
+                  {description}
+                </Text>
+              </When>
             </StyledContentWrapper>
           </LeftContainerWrapper>
         </ButtonWrapper>

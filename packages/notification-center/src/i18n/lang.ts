@@ -14,10 +14,11 @@ export interface ITranslationContent {
   readonly notifications: string;
   readonly markAllAsRead: string;
   readonly poweredBy: string;
+  readonly settings: string;
 }
 
 export interface ITranslationEntry {
-  readonly translations: ITranslationContent;
+  readonly translations: Partial<ITranslationContent>;
   readonly lang: string;
 }
 
@@ -25,14 +26,14 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
   fi: FI,
   hi: HI,
-  it: IT,
-  ar: AR,
-  fa: FA
-  fr: FR
+  fr: FR,
   gj: GJ,
   ru: RU,
+  sp: SP,
+  it: IT,
+  ar: AR,
+  fa: FA,
   uk: UK,
-  sp: SP
 };
 
 /**

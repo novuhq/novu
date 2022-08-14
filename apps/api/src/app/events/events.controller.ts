@@ -37,6 +37,7 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
+        overrides: body.overrides || {},
         to: mappedSubscribers,
         transactionId,
       })
@@ -58,6 +59,7 @@ export class EventsController {
         identifier: body.name,
         payload: body.payload,
         transactionId,
+        overrides: body.overrides || {},
       })
     );
   }
