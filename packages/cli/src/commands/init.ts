@@ -9,6 +9,7 @@ import {
   introQuestions,
   registerMethodQuestions,
   showWelcomeScreen,
+  termAndPrivacyQuestions,
 } from './init.consts';
 import { HttpServer } from '../server';
 import {
@@ -87,6 +88,11 @@ async function handleOnboardingFlow(config: ConfigService) {
     const regMethod = await prompt(registerMethodQuestions);
 
     if (regMethod.value === 'github') {
+      const { accept } = await prompt(termAndPrivacyQuestions);
+      if (accept === false) {
+        process.exit();
+      }
+
       spinner = ora('Waiting for a brave unicorn to login').start();
       await gitHubOAuth(httpServer, config);
       spinner.stop();

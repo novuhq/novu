@@ -67,6 +67,24 @@ export const registerMethodQuestions: ListQuestionOptions[] = [
   },
 ];
 
+export const termAndPrivacyQuestions: ListQuestionOptions[] = [
+  {
+    type: 'list',
+    name: 'accept',
+    message: `I accept the https://novu.co/terms and have read the  https://novu.co/privacy`,
+    choices: [
+      {
+        name: `Yes`,
+        value: true,
+      },
+      {
+        name: 'No',
+        value: false,
+      },
+    ],
+  },
+];
+
 export function showWelcomeScreen() {
   const textGradient = gradient('#0099F7', '#ff3432');
   const logoGradient = gradient('#DD2476', '#FF512F');
