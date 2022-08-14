@@ -50,7 +50,7 @@ export class CompileTemplate {
   private async loadTemplateContent(name: string) {
     return new Promise<string>((resolve, reject) => {
       let path = '';
-      if (process.env.NODE_ENV !== 'test') {
+      if (!process.env.E2E_RUNNER) {
         path = '/src/app/content-templates/usecases/compile-template';
       }
       fs.readFile(`${__dirname}${path}/templates/${name}`, (err, content) => {
