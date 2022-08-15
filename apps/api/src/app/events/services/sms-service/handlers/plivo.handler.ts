@@ -1,7 +1,7 @@
-import { ChannelTypeEnum } from '@novu/node';
 import { PlivoSmsProvider } from '@novu/plivo';
 import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export class PlivoHandler extends BaseSmsHandler {
   constructor() {
