@@ -2,18 +2,19 @@ import styled from 'styled-components';
 import { ActionIcon, Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
 import React, { useContext } from 'react';
-import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
+import { useNovuThemeProvider } from '../../../../../hooks';
 import { INotificationCenterContext, INotificationsContext } from '../../../../../index';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { useTranslations } from '../../../../../hooks/use-translations';
 import { Cogs } from '../../../../../shared/icons';
 import { ScreensEnum } from '../Layout';
 import { UnseenBadge } from '../../UnseenBadge';
-import { NotificationsContext } from '../../../../..//store/notifications.context';
+import { NotificationsContext } from '../../../../../store/notifications.context';
 
 export function Header({ unseenCount, setScreen }: { unseenCount: number; setScreen: (screen: ScreensEnum) => void }) {
   const { theme, common } = useNovuThemeProvider();
-  const { tabs, showUserPreferences, markAllAsSeen } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { markAllAsSeen } = useContext<INotificationsContext>(NotificationsContext);
   const { t } = useTranslations();
 
   return (
@@ -33,6 +34,7 @@ export function Header({ unseenCount, setScreen }: { unseenCount: number; setScr
         >
           <Cogs style={{ color: theme?.userPreferences?.settingsButtonColor }} />
         </ActionIcon>
+      </div>
     </HeaderWrapper>
   );
 }
