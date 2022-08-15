@@ -1,13 +1,12 @@
 name: "🐛 Bug Report"
 description: "Submit a bug report to help us improve"
 title: "🐛 Bug Report: "
-labels: [bug]
+labels: ["type: bug"]
 body:
   - type: markdown
     attributes:
-      value: |
-        We value your time and effort to submit this bug report. 🙏
-   - type: textarea
+      value: We value your time and effort to submit this bug report. 🙏
+  - type: textarea
     id: description
     validations:
       required: true
@@ -15,6 +14,8 @@ body:
       label: "📜 Description"
       description: "A clear and concise description of what the bug is."
       placeholder: "It bugs out when ..."
+    validations:
+      required: true
   - type: textarea
     id: steps-to-reproduce
     validations:
