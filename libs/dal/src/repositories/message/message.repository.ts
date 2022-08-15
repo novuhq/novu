@@ -109,9 +109,9 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     );
   }
 
-  async markAllUnseenAsSeen(subscriberId: string) {
+  async markAllUnseenAsSeen(subscriberId: string, environmentId: string) {
     return this.update(
-      { _subscriberId: subscriberId, seen: false },
+      { _subscriberId: subscriberId, _environmentId: environmentId, seen: false },
       { $set: { seen: true, lastSeenDate: new Date() } }
     );
   }

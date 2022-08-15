@@ -33,7 +33,6 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   gj: GJ,
   ru: RU,
   sp: SP,
-  fa: FA,
   uk: UK,
 };
 
