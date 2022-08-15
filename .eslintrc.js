@@ -8,7 +8,7 @@ module.exports = {
     'plugin:prettier/recommended',
     'plugin:promise/recommended',
   ],
-  ignorePatterns: ['.eslintrc.js'],
+  ignorePatterns: ['.eslintrc.js', '*.json', 'jest.config.js'],
   plugins: ['import', 'promise', '@typescript-eslint', 'prettier'],
   parser: '@typescript-eslint/parser',
   settings: {

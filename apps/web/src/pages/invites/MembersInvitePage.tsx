@@ -98,6 +98,7 @@ export function MembersInvitePage() {
 
       <Container fluid mt={15} ml={5}>
         <MembersTable
+          loading={loadingMembers}
           members={members}
           currentUser={currentUser}
           onRemoveMember={removeMemberClick}
