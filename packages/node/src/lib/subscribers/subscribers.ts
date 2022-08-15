@@ -48,7 +48,7 @@ export class Subscribers implements ISubscribers {
     data: IUpdateSubscriberPreferencePayload
   ) {
     return await this.http.patch(
-      `/subscribers/${subscriberId}/preference/${templateId}`,
+      `/subscribers/${subscriberId}/preferences/${templateId}`,
       {
         ...data,
       }

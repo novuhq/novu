@@ -78,7 +78,7 @@ export class ApiService {
     channelType: string,
     enabled: boolean
   ): Promise<IUserPreferenceSettings> {
-    return await this.httpClient.patch(`/widgets/preference/${templateId}`, {
+    return await this.httpClient.patch(`/widgets/preferences/${templateId}`, {
       channel: { type: channelType, enabled },
     });
   }
