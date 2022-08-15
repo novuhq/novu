@@ -57,7 +57,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
     expect(response.preference.channels.email).to.equal(false);
     expect(response.preference.channels.in_app).to.equal(true);
     expect(response.preference.channels.sms).to.be.not.ok;
-    expect(response.preference.channels.direct).to.be.not.ok;
+    expect(response.preference.channels.chat).to.be.not.ok;
   });
 
   it(
@@ -88,7 +88,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
 
   it('should override template preference defaults after subscriber update', async function () {
     const templateDefaultSettings = await session.createTemplate({
-      preferenceSettingsOverride: { email: false, direct: true, push: true, sms: true, in_app: true },
+      preferenceSettingsOverride: { email: false, chat: true, push: true, sms: true, in_app: true },
       noFeedId: true,
     });
 

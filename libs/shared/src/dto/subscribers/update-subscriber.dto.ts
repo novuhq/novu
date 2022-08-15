@@ -1,4 +1,4 @@
-import { DirectProviderIdEnum, PushProviderIdEnum } from '../../consts';
+import { ChatProviderIdEnum, PushProviderIdEnum } from '../../consts';
 
 export interface IUpdateSubscriberDto {
   subscriberId?: string;
@@ -17,7 +17,7 @@ export interface IUpdateSubscriberDto {
 }
 
 export class ISubscriberChannel {
-  providerId: DirectProviderIdEnum | PushProviderIdEnum;
+  providerId: ChatProviderIdEnum | PushProviderIdEnum;
 
   credentials: IChannelCredentials;
 }
@@ -28,7 +28,7 @@ export class IChannelCredentials {
 }
 
 export interface IUpdateSubscriberChannelDto {
-  providerId: DirectProviderIdEnum | PushProviderIdEnum;
+  providerId: ChatProviderIdEnum | PushProviderIdEnum;
 
   credentials: IChannelCredentials;
 }

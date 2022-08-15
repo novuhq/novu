@@ -1,6 +1,6 @@
 import React from 'react';
 /* eslint-disable */
-export function Direct(props: React.ComponentPropsWithoutRef<'svg'>) {
+export function Chat(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
       <path

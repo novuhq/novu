@@ -36,7 +36,7 @@ export interface IUpdateSubscriberPreferencePayload {
 export enum ChannelTypeEnum {
   EMAIL = 'email',
   SMS = 'sms',
-  DIRECT = 'direct',
+  CHAT = 'chat',
   PUSH = 'push',
 }
 

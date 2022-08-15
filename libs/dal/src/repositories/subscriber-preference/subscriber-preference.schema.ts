@@ -39,7 +39,7 @@ const subscriberPreferenceSchema = new Schema(
       in_app: {
         type: Schema.Types.Boolean,
       },
-      direct: {
+      chat: {
         type: Schema.Types.Boolean,
       },
       push: {

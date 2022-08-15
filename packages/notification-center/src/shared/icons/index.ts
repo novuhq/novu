@@ -6,4 +6,4 @@ export * from './ArrowLeft';
 export * from './channels/Sms';
 export * from './channels/Mail';
 export * from './channels/Mobile';
-export * from './channels/Direct';
+export * from './channels/Chat';

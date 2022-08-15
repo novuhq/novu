@@ -1,4 +1,4 @@
-import { BellGradient, DirectGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
+import { BellGradient, ChatGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { DigestGradient } from '../../../design-system/icons/general/DigestGradient';
 
@@ -45,12 +45,12 @@ export const channels = [
     type: NodeTypeEnum.ACTION,
   },
   {
-    tabKey: ChannelTypeEnum.DIRECT,
-    label: 'Direct',
-    description: 'Send a direct message',
-    Icon: DirectGradient,
-    testId: 'directSelector',
-    channelType: StepTypeEnum.DIRECT,
+    tabKey: ChannelTypeEnum.CHAT,
+    label: 'Chat',
+    description: 'Send a chat message',
+    Icon: ChatGradient,
+    testId: 'chatSelector',
+    channelType: StepTypeEnum.CHAT,
     type: NodeTypeEnum.CHANNEL,
   },
   {

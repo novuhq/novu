@@ -29,11 +29,11 @@ The ultimate library for managing multi-channel notifications with a single API.
   </p>
   
 ## ⭐️ Why
-Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, direct and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
+Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, chat and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
 
 ## ✨ Features
 
-- 🌈 Single API for all messaging providers (Email, SMS, Push, Direct)
+- 🌈 Single API for all messaging providers (Email, SMS, Push, Chat)
 - 💅 Easily manage notification over multiple channels
 - 🚀 Equipped with a templating engine for advanced layouts and designs
 - 🛡 Built-in protection for missing variables
@@ -103,7 +103,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Pushwoosh
 - [ ] SNS
 
-#### 👇 Direct (Coming Soon...)
+#### 👇 Chat (Coming Soon...)
 
 - [ ] Slack
 - [ ] MS Teams

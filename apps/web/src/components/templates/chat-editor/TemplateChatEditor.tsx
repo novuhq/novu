@@ -6,7 +6,7 @@ import { LackIntegrationError } from '../LackIntegrationError';
 import { colors } from '../../../design-system';
 import { ChannelTypeEnum } from '@novu/shared';
 
-export function TemplateDirectEditor({
+export function TemplateChatEditor({
   control,
   index,
   isIntegrationActive,
@@ -23,7 +23,7 @@ export function TemplateDirectEditor({
 
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.DIRECT} /> : null}
+      {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.CHAT} /> : null}
       <Controller
         name={`steps.${index}.template.content` as any}
         control={control}
@@ -31,12 +31,12 @@ export function TemplateDirectEditor({
           <Textarea
             styles={TextAreaStyles}
             {...field}
-            data-test-id="directNotificationContent"
+            data-test-id="chatNotificationContent"
             error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}
-            label="Direct message content"
+            label="Chat message content"
             placeholder="Add notification content here..."
           />
         )}

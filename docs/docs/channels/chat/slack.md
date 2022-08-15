@@ -2,7 +2,7 @@
 
 When using Slack you will have to save the integration credentials on the subscriber entity.
 
-In this guide we will perform the flow you have to do in order to obtain the `webhookUrl` that Novu needs to send direct messages to your customers.
+In this guide we will perform the flow you have to do in order to obtain the `webhookUrl` that Novu needs to send chat messages to your customers.
 
 We will provide the basic flow that the user needs to perform in order to successfully send notifications via the Slack integration.
 
@@ -23,20 +23,20 @@ We will provide the basic flow that the user needs to perform in order to succes
 6. When the `incoming_webhook.url` was obtained we can save it on the relevant subscriber entity in Novu:
 
   ```typescript
-  import { Novu, DirectProviderIdEnum } from '@novu/node'
+  import { Novu, ChatProviderIdEnum } from '@novu/node'
 
   const novu = new Novu(process.env.NOVU_API_KEY);
 
   const body = req.body; // From your HTTPS listener 
-  await novu.subscribers.setCredentials('subscriberId', DirectProviderIdEnum.Slack, {
+  await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, {
     webhookUrl: body.incoming_webhook.url,
   });
   ```
 
 - `subscriberId` is a custom identifier used when identifying your users within the Novu platform.
-- `providerId` is a unique provider identifier, we recommend using our DirectProviderIdEnum to specify the provider.
+- `providerId` is a unique provider identifier, we recommend using our ChatProviderIdEnum to specify the provider.
 - The third parameter is the credentials object, in this case we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
 
 <!-- markdownlint-disable MD029 -->
-7. You are all set up and ready to send your first direct message via our `@novu/node` package or directly using the REST API.
+7. You are all set up and ready to send your first chat message via our `@novu/node` package or directly using the REST API.
 <!-- markdownlint-enable MD029 -->

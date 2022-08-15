@@ -1,26 +1,26 @@
-import { IDirectProvider } from '../provider/provider.interface';
+import { IChatProvider } from '../provider/provider.interface';
 import { ChannelTypeEnum } from '../template/template.interface';
-import { DirectHandler } from './direct.handler';
+import { ChatHandler } from './chat.handler';
 
-test('send direct should call the provider method correctly', async () => {
-  const provider: IDirectProvider = {
-    id: 'direct-provider',
-    channelType: ChannelTypeEnum.DIRECT,
+test('send chat should call the provider method correctly', async () => {
+  const provider: IChatProvider = {
+    id: 'chat-provider',
+    channelType: ChannelTypeEnum.CHAT,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
   const spy = jest.spyOn(provider, 'sendMessage');
-  const directHandler = new DirectHandler(
+  const chatHandler = new ChatHandler(
     {
       subject: 'test',
-      channel: ChannelTypeEnum.DIRECT,
+      channel: ChannelTypeEnum.CHAT,
       template: `Name: {{firstName}}`,
     },
     provider
   );
 
-  await directHandler.send({
+  await chatHandler.send({
     $channel_id: '+1333322214',
     $user_id: '1234',
     firstName: 'test name',
@@ -36,10 +36,10 @@ test('send direct should call the provider method correctly', async () => {
   spy.mockRestore();
 });
 
-test('send direct should template method correctly', async () => {
-  const provider: IDirectProvider = {
-    id: 'direct-provider',
-    channelType: ChannelTypeEnum.DIRECT,
+test('send chat should template method correctly', async () => {
+  const provider: IChatProvider = {
+    id: 'chat-provider',
+    channelType: ChannelTypeEnum.CHAT,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
   };
@@ -48,16 +48,16 @@ test('send direct should template method correctly', async () => {
     .fn()
     .mockImplementation(() => Promise.resolve('test'));
 
-  const directHandler = new DirectHandler(
+  const chatHandler = new ChatHandler(
     {
       subject: 'test',
-      channel: ChannelTypeEnum.DIRECT,
+      channel: ChannelTypeEnum.CHAT,
       template: spyTemplateFunction,
     },
     provider
   );
 
-  await directHandler.send({
+  await chatHandler.send({
     $channel_id: '+1333322214',
     $user_id: '1234',
     firstName: 'test name',

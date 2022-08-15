@@ -1,11 +1,11 @@
 import { ICredentials } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { BaseDirectHandler } from './base.handler';
+import { BaseChatHandler } from './base.handler';
 import { SlackProvider } from '@novu/slack';
 
-export class SlackHandler extends BaseDirectHandler {
+export class SlackHandler extends BaseChatHandler {
   constructor() {
-    super('slack', ChannelTypeEnum.DIRECT);
+    super('slack', ChannelTypeEnum.CHAT);
   }
 
   buildProvider(credentials: ICredentials) {
