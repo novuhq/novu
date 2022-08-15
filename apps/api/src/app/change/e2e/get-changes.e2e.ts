@@ -1,5 +1,5 @@
 import { ChangeRepository } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto } from '../../notification-template/dto';
@@ -25,7 +25,7 @@ describe('Get changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {

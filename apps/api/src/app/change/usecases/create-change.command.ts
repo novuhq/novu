@@ -4,6 +4,7 @@ import { Document } from 'mongoose';
 import { EnvironmentWithUserCommand } from '../../shared/commands/project.command';
 
 export interface IItem extends Pick<Document, '_id'> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 

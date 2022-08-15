@@ -1,13 +1,13 @@
-import { Avatar, Divider, Group, MenuItem as DropdownItem, Text } from '@mantine/core';
-import { Dropdown, Tag } from '../../design-system';
-import { DotsHorizontal, Trash } from '../../design-system/icons';
+import { Avatar, Divider, Container, LoadingOverlay, Group, MenuItem as DropdownItem, Text } from '@mantine/core';
+import { colors, Dropdown, Tag } from '../../design-system';
+import { DotsHorizontal, Mail, Trash } from '../../design-system/icons';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
 import * as capitalize from 'lodash.capitalize';
 import useStyles from '../../design-system/config/text.styles';
 
-export function MembersTable({ members, currentUser, onRemoveMember }) {
-  const { classes } = useStyles();
+export function MembersTable({ members, currentUser, onRemoveMember, loading = false, onResendInviteMember }) {
+  const { classes, theme } = useStyles();
 
   function isEnableMemberActions(currentMember): boolean {
     const currentUserRoles = members?.find((memberEntity) => memberEntity._userId == currentUser?._id)?.roles || [];
@@ -18,8 +18,20 @@ export function MembersTable({ members, currentUser, onRemoveMember }) {
     return isNotMyself && isAllowedToRemove;
   }
 
+  function canResendInvite(currentMember): boolean {
+    return currentMember && currentMember.memberStatus === MemberStatusEnum.INVITED;
+  }
+
   return (
-    <>
+    <Container fluid mt={15} style={{ position: 'relative', minHeight: 500 }}>
+      <LoadingOverlay
+        visible={loading}
+        overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
+        loaderProps={{
+          color: colors.error,
+        }}
+      />
+
       {members?.map((member) => {
         return (
           <MemberRowWrapper key={member._id} data-test-id={'member-row-' + member._id}>
@@ -65,6 +77,16 @@ export function MembersTable({ members, currentUser, onRemoveMember }) {
                   >
                     Remove Member
                   </DropdownItem>
+                  {canResendInvite(member) ? (
+                    <DropdownItem
+                      key="resendInviteBtn"
+                      data-test-id="resend-invite-btn"
+                      onClick={() => onResendInviteMember(member)}
+                      icon={<Mail />}
+                    >
+                      Resend Invite
+                    </DropdownItem>
+                  ) : null}
                 </Dropdown>
               </div>
             ) : null}
@@ -73,7 +95,7 @@ export function MembersTable({ members, currentUser, onRemoveMember }) {
           </MemberRowWrapper>
         );
       })}
-    </>
+    </Container>
   );
 }
 

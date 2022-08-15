@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -8,19 +8,29 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
 import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
 import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
-import { GetSubscribers } from './usecases/get-subscribers/get-subscriber.usecase';
+import { UpdateSubscriberChannelDto } from './dto/update-subscriber-channel.dto';
+import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
+import { GetSubscribers } from './usecases/get-subscribers';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber';
+import { UpdateSubscriberPreferenceDto } from '../widgets/dtos/update-subscriber-preference.dto';
+import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
+import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
+import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
+import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
 
 @Controller('/subscribers')
 export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
     private updateSubscriberUsecase: UpdateSubscriber,
+    private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
     private removeSubscriberUsecase: RemoveSubscriber,
+    private getSubscriberUseCase: GetSubscriber,
     private getSubscribersUsecase: GetSubscribers,
-    private getSubscriberUseCase: GetSubscriber
+    private getPreferenceUsecase: GetPreferences,
+    private updatePreferenceUsecase: UpdatePreference
   ) {}
 
   @Get('')
@@ -89,6 +99,25 @@ export class SubscribersController {
     );
   }
 
+  @Put('/:subscriberId/credentials')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async updateSubscriberChannel(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberChannelDto
+  ) {
+    return await this.updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        providerId: body.providerId,
+        credentials: body.credentials,
+      })
+    );
+  }
+
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
@@ -100,5 +129,39 @@ export class SubscribersController {
         subscriberId,
       })
     );
+  }
+
+  @Get('/:subscriberId/preferences')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async getSubscriberPreference(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+    const command = GetPreferencesCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+    });
+
+    return await this.getPreferenceUsecase.execute(command);
+  }
+
+  @Patch('/:subscriberId/preference/:templateId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  async updateSubscriberPreference(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Param('templateId') templateId: string,
+    @Body() body: UpdateSubscriberPreferenceDto
+  ) {
+    const command = UpdateSubscriberPreferenceCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+      templateId: templateId,
+      channel: body.channel,
+      enabled: body.enabled,
+    });
+
+    return await this.updatePreferenceUsecase.execute(command);
   }
 }

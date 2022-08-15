@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { SessionInitializeBodyDto } from './dtos/session-initialize.dto';
@@ -18,6 +18,13 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
+import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.usecase';
+import { GetSubscriberPreferenceCommand } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.command';
+import {
+  UpdateSubscriberPreferenceCommand,
+  UpdateSubscriberPreference,
+} from '../subscribers/usecases/update-subscriber-preference';
+import { UpdateSubscriberPreferenceDto } from './dtos/update-subscriber-preference.dto';
 import { MarkAllMessageAsSeenCommand } from './usecases/mark-all-message-as-seen/mark-all-message-as-seen.command';
 import { MarkAllMessageAsSeen } from './usecases/mark-all-message-as-seen/mark-all-message-as-seen.usecase';
 
@@ -31,6 +38,8 @@ export class WidgetsController {
     private markAllMessageAsSeenUseCase: MarkAllMessageAsSeen,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
+    private getSubscriberPreferenceUsecase: GetSubscriberPreference,
+    private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -148,7 +157,7 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/organization')
-  async GetOrganizationData(@SubscriberSession() subscriberSession: SubscriberEntity) {
+  async getOrganizationData(@SubscriberSession() subscriberSession: SubscriberEntity) {
     const command = GetOrganizationDataCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
@@ -156,6 +165,37 @@ export class WidgetsController {
     });
 
     return await this.getOrganizationUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/preferences')
+  async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
+    const command = GetSubscriberPreferenceCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession._id,
+      environmentId: subscriberSession._environmentId,
+    });
+
+    return await this.getSubscriberPreferenceUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/preference/:templateId')
+  async updateSubscriberPreference(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('templateId') templateId: string,
+    @Body() body: UpdateSubscriberPreferenceDto
+  ) {
+    const command = UpdateSubscriberPreferenceCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession._id,
+      environmentId: subscriberSession._environmentId,
+      templateId: templateId,
+      channel: body.channel,
+      enabled: body.enabled,
+    });
+
+    return await this.updateSubscriberPreferenceUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

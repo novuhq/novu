@@ -29,6 +29,25 @@ export const defaultLightTheme: INovuTheme = {
     },
     buttons: lightButtonStyle,
   },
+  userPreferences: {
+    settingsButtonColor: colors.B70,
+    accordion: {
+      background: colors.white,
+      fontColor: colors.B40,
+      secondaryFontColor: colors.B60,
+      boxShadow: shadows.medium,
+      arrowColor: colors.B60,
+      dividerColor: colors.BGLight,
+    },
+    accordionItem: {
+      fontColor: { active: colors.B40, inactive: colors.B80 },
+      icon: { active: colors.B40, inactive: colors.B80 },
+      switch: {
+        backgroundChecked: colors.vertical,
+        backgroundUnchecked: colors.B80,
+      },
+    },
+  },
   footer: { logoTextColor: 'black', logoPrefixFontColor: colors.B70 },
   loaderColor: colors.vertical,
 };
@@ -57,6 +76,25 @@ export const defaultDarkTheme: INovuTheme = {
       timeMarkFontColor: colors.B60,
     },
     buttons: darkButtonStyle,
+  },
+  userPreferences: {
+    settingsButtonColor: colors.B40,
+    accordion: {
+      background: colors.B20,
+      fontColor: colors.white,
+      secondaryFontColor: colors.B60,
+      boxShadow: shadows.dark,
+      arrowColor: colors.B60,
+      dividerColor: colors.B30,
+    },
+    accordionItem: {
+      fontColor: { active: colors.white, inactive: colors.B60 },
+      icon: { active: colors.white, inactive: colors.B40 },
+      switch: {
+        backgroundChecked: colors.vertical,
+        backgroundUnchecked: colors.B30,
+      },
+    },
   },
   footer: { logoTextColor: colors.white, logoPrefixFontColor: colors.B40 },
   loaderColor: colors.vertical,

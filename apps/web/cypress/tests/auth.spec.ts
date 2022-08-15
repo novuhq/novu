@@ -100,6 +100,6 @@ describe('User Sign-up and Login', function () {
       cy.getLocalStorage('auth_token').should('be.null');
       // checking if user is redirected to login page
       cy.location('pathname').should('equal', '/auth/login');
-    })
-  })
+    });
+  });
 });

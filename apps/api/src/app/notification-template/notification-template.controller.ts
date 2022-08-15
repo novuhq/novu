@@ -68,6 +68,8 @@ export class NotificationTemplateController {
         name: body.name,
         tags: body.tags,
         description: body.description,
+        critical: body.critical,
+        preferenceSettings: body.preferenceSettings,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
       })
@@ -117,6 +119,8 @@ export class NotificationTemplateController {
         notificationGroupId: body.notificationGroupId,
         active: body.active ?? false,
         draft: body.draft ?? true,
+        critical: body.critical ?? false,
+        preferenceSettings: body.preferenceSettings,
       })
     );
   }

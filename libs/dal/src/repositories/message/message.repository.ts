@@ -184,7 +184,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
 
   async getFeed(
     environmentId: string,
-    query: { channels?: ChannelTypeEnum[]; templates?: string[]; subscriberId?: string } = {},
+    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[]; subscriberId?: string } = {},
     skip = 0,
     limit = 10
   ) {
@@ -201,6 +201,12 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     if (query?.templates) {
       requestQuery._templateId = {
         $in: query.templates,
+      };
+    }
+
+    if (query?.emails) {
+      requestQuery.email = {
+        $in: query.emails,
       };
     }
 
