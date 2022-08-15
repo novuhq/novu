@@ -23,18 +23,20 @@ export function Header({ unseenCount, setScreen }: { unseenCount: number; setScr
         <Text fontColor={theme.header.fontColor}>{t('notifications')}</Text>
         {!tabs && <UnseenBadge unseenCount={unseenCount} />}
       </div>
-      <MarkReadAction disabled={unseenCount === 0} onClick={markAllAsSeen}>
-        {t('markAllAsRead')}
-      </MarkReadAction>
-      <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
-        <ActionIcon
-          data-test-id="user-preference-cog"
-          variant="transparent"
-          onClick={() => setScreen(ScreensEnum.SETTINGS)}
-        >
-          <Cogs style={{ color: theme?.userPreferences?.settingsButtonColor }} />
-        </ActionIcon>
-      </div>
+      <ActionItems>
+        <MarkReadAction disabled={unseenCount === 0} onClick={markAllAsSeen}>
+          {t('markAllAsRead')}
+        </MarkReadAction>
+        <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
+          <ActionIcon
+            data-test-id="user-preference-cog"
+            variant="transparent"
+            onClick={() => setScreen(ScreensEnum.SETTINGS)}
+          >
+            <Cogs style={{ color: theme?.userPreferences?.settingsButtonColor }} />
+          </ActionIcon>
+        </div>
+      </ActionItems>
     </HeaderWrapper>
   );
 }
@@ -47,6 +49,11 @@ const HeaderWrapper = styled.div`
   height: 55px;
 `;
 
+const ActionItems = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const Text = styled.div<{ fontColor: string }>`
   color: ${({ fontColor }) => fontColor};
   font-size: 20px;
@@ -57,6 +64,7 @@ const Text = styled.div<{ fontColor: string }>`
 `;
 
 const MarkReadAction = styled.div<{ disabled: boolean }>`
+  margin-right: 10px;
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
