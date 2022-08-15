@@ -1,12 +1,13 @@
 import styled, { css } from 'styled-components';
 import { IMessage, ButtonTypeEnum, IMessageAction, MessageActionStatusEnum } from '@novu/shared';
-import moment from 'moment';
 import { DotsHorizontal } from '../../../../shared/icons';
 import React, { useContext } from 'react';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
 import { ActionContainer } from './ActionContainer';
 import { NotificationCenterContext } from '../../../../store/notification-center.context';
+import { formatDistanceToNow } from 'date-fns';
+import { useTranslations } from 'packages/notification-center/src/hooks/use-translations';
 
 export function NotificationListItem({
   notification,
@@ -17,6 +18,7 @@ export function NotificationListItem({
 }) {
   const { theme: novuTheme } = useNovuThemeProvider();
   const { onActionClick, listItem } = useContext(NotificationCenterContext);
+  const { dateFnsLocale } = useTranslations()
 
   function handleNotificationClick() {
     onClick(notification);
@@ -45,7 +47,7 @@ export function NotificationListItem({
           }}
         />
         <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
-          {moment(notification.createdAt).fromNow()}
+          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: dateFnsLocale() })}
         </TimeMark>
         <ActionWrapper
           templateIdentifier={notification.templateIdentifier}
