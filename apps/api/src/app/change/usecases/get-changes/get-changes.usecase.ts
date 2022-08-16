@@ -95,10 +95,18 @@ export class GetChanges {
     entityId: string,
     environmentId: string
   ): Promise<IViewEntity | Record<string, unknown>> {
-    const item = await this.notificationTemplateRepository.findOne({
+    let item = await this.notificationTemplateRepository.findOne({
       _environmentId: environmentId,
       _id: entityId,
     });
+
+    if (!item) {
+      const items = await this.notificationTemplateRepository.findDeleted({
+        _id: entityId,
+        _environmentId: environmentId,
+      });
+      item = items[0];
+    }
 
     if (!item) {
       Logger.error(`Could not find notification template for template id ${entityId}`);

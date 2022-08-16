@@ -109,6 +109,15 @@ export class PromoteNotificationTemplateChange {
       });
     }
 
+    const count = await this.notificationTemplateRepository.count({ _id: command.item._id });
+    if (count === 0) {
+      await this.notificationTemplateRepository.delete({
+        _id: item._id,
+      });
+
+      return;
+    }
+
     return await this.notificationTemplateRepository.update(
       {
         _id: item._id,
