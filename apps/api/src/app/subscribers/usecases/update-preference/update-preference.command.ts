@@ -1,6 +1,6 @@
 import { IsBoolean, IsDefined, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { IChannelPreference } from '@novu/shared';
+import { ChannelPreference } from '../../../shared/dtos/channel-preference';
 
 export class UpdatePreferenceCommand extends EnvironmentCommand {
   @IsString()
@@ -18,5 +18,5 @@ export class UpdatePreferenceCommand extends EnvironmentCommand {
 
   @ValidateNested()
   @IsOptional()
-  channel?: IChannelPreference;
+  channel?: ChannelPreference;
 }

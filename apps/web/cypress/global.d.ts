@@ -7,7 +7,7 @@ declare namespace Cypress {
   interface Chainable {
     getByTestId(dataTestAttribute: string, args?: any): Chainable<Element>;
     getBySelectorLike(dataTestPrefixAttribute: string, args?: any): Chainable<Element>;
-    clickWorkflowNode(selector: string, args?: any): Chainable<Element>;
+    clickWorkflowNode(selector: string, last?: boolean): void | Chainable<JQuery<HTMLElement>> | Chainable<Element>;
 
     /**
      *  Window object with additional properties used during test.

@@ -17,8 +17,8 @@
     "start:prod": "TZ=UTC node dist/main.js",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "cross-env TZ=UTC NODE_ENV=test mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
-    "test:e2e": "cross-env TZ=UTC NODE_ENV=test mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
+    "test": "cross-env TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
+    "test:e2e": "cross-env TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.11.0",
@@ -98,7 +98,6 @@
     "slugify": "^1.4.6",
     "swagger-ui-express": "^4.4.0",
     "twilio": "^3.72.0",
-    "typescript": "4.3.5",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
@@ -123,7 +122,7 @@
     "ts-loader": "9.2.8",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "3.11.0",
-    "typescript": "4.6.2"
+    "typescript": "4.3.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
