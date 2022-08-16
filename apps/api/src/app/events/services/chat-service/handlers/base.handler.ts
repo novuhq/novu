@@ -1,9 +1,9 @@
-import { IDirectOptions, IDirectProvider } from '@novu/stateless';
+import { IChatOptions, IChatProvider } from '@novu/stateless';
 import { ChannelTypeEnum } from '@novu/shared';
-import { IDirectHandler } from '../interfaces';
+import { IChatHandler } from '../interfaces';
 
-export abstract class BaseDirectHandler implements IDirectHandler {
-  protected provider: IDirectProvider;
+export abstract class BaseChatHandler implements IChatHandler {
+  protected provider: IChatProvider;
 
   protected constructor(private providerId: string, private channelType: string) {}
 
@@ -13,11 +13,11 @@ export abstract class BaseDirectHandler implements IDirectHandler {
 
   abstract buildProvider(credentials);
 
-  async send(directContent: IDirectOptions) {
+  async send(chatContent: IChatOptions) {
     if (process.env.NODE_ENV === 'test') {
       return null;
     }
 
-    return await this.provider.sendMessage(directContent);
+    return await this.provider.sendMessage(chatContent);
   }
 }

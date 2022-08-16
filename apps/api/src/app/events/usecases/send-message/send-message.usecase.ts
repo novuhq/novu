@@ -4,7 +4,7 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
-import { SendMessageDirect } from './send-message-direct.usecase';
+import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
 
@@ -14,7 +14,7 @@ export class SendMessage {
     private sendMessageEmail: SendMessageEmail,
     private sendMessageSms: SendMessageSms,
     private sendMessageInApp: SendMessageInApp,
-    private sendMessageDirect: SendMessageDirect,
+    private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest
   ) {}
@@ -27,8 +27,8 @@ export class SendMessage {
         return await this.sendMessageInApp.execute(command);
       case StepTypeEnum.EMAIL:
         return await this.sendMessageEmail.execute(command);
-      case StepTypeEnum.DIRECT:
-        return await this.sendMessageDirect.execute(command);
+      case StepTypeEnum.CHAT:
+        return await this.sendMessageChat.execute(command);
       case StepTypeEnum.PUSH:
         return await this.sendMessagePush.execute(command);
       case StepTypeEnum.DIGEST:

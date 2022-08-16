@@ -27,7 +27,7 @@ export class GetSubscriberTemplatePreference {
       email: true,
       sms: true,
       in_app: true,
-      direct: true,
+      chat: true,
       push: true,
     };
     const templateDefaultsFiltered = getDefaultFromTemplate(activeChannels, preferenceSettings);

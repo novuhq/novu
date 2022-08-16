@@ -1,6 +1,6 @@
-import { DirectProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import { PushProviderIdEnum } from '@novu/shared';
 
-export { DirectProviderIdEnum, PushProviderIdEnum };
+export { ChatProviderIdEnum, PushProviderIdEnum };
 export * from './lib/novu';
 export * from './lib/subscribers/subscriber.interface';

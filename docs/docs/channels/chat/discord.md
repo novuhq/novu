@@ -16,19 +16,19 @@ Let's follow a simple guide on how you can generate a webhook token for testing 
 5. Persist the webhook URL on the subscriber entity
 
   ```typescript
-  import { Novu, DirectProviderIdEnum } from '@novu/node'
+  import { Novu, ChatProviderIdEnum } from '@novu/node'
 
   const novu = new Novu(process.env.NOVU_API_KEY);
 
-  await novu.subscribers.setCredentials('SUBSCRIBER_ID', DirectProviderIdEnum.Discord, {
+  await novu.subscribers.setCredentials('SUBSCRIBER_ID', ChatProviderIdEnum.Discord, {
     webhookUrl: 'https://discord.com/api/webhooks/...',
   });
   ```
 
 - `subscriberId` is a custom identifier used when identifying your users within the Novu platform.
-- `providerId` is a unique provider identifier, we recommend using our DirectProviderIdEnum to specify the provider.
+- `providerId` is a unique provider identifier, we recommend using our ChatProviderIdEnum to specify the provider.
 - The third parameter is the credentials object, in this case we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
 
 <!-- markdownlint-disable MD029 -->
-6. You are all set up and ready to send your first direct message via our `@novu/node` package or directly using the REST API. 
+6. You are all set up and ready to send your first chat message via our `@novu/node` package or directly using the REST API. 
 <!-- markdownlint-enable MD029 -->

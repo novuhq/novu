@@ -6,13 +6,13 @@ sidebar_position: 4
 
 ## Creating a Novu provider package
 
-All of our providers need to implement one or more of our provider interfaces, based on provider feature, from Email, and SMS through Direct, In-app, and push.
+All of our providers need to implement one or more of our provider interfaces, based on provider feature, from Email, and SMS through Chat, In-app, and push.
 
 For a provider template, you can copy one of our existing provider from the `providers` folder in the Novu project, make the relevant changes and create a PR against the monorepo.
 
 ### Description
 
-Providers allow us to handle message delivery over multiple channels. We have multiple providers for each channel (SMS, Email, Push, Direct, and others). To get started with adding a new provider let's look at setting up our repository.
+Providers allow us to handle message delivery over multiple channels. We have multiple providers for each channel (SMS, Email, Push, Chat, and others). To get started with adding a new provider let's look at setting up our repository.
 
 ### Initialization
 

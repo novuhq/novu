@@ -3,7 +3,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
-import { DirectProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import { UpdateSubscriberChannel } from './update-subscriber-channel.usecase';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 
@@ -28,7 +28,7 @@ describe('Update Subscriber channel credentials', function () {
     const subscriber = await subscriberService.createSubscriber();
 
     const subscriberChannel = {
-      providerId: DirectProviderIdEnum.Discord,
+      providerId: ChatProviderIdEnum.Discord,
       credentials: { webhookUrl: 'newWebhookUrl' },
     };
     await updateSubscriberChannelUsecase.execute(
@@ -59,13 +59,13 @@ describe('Update Subscriber channel credentials', function () {
         organizationId: subscriber._organizationId,
         subscriberId: subscriber.subscriberId,
         environmentId: session.environment._id,
-        providerId: DirectProviderIdEnum.Discord,
+        providerId: ChatProviderIdEnum.Discord,
         credentials: { webhookUrl: 'webhookUrl' },
       })
     );
 
     const newSlackSubscribersChannel = {
-      providerId: DirectProviderIdEnum.Slack,
+      providerId: ChatProviderIdEnum.Slack,
       credentials: { webhookUrl: 'webhookUrlNew' },
     };
     await updateSubscriberChannelUsecase.execute(
@@ -92,7 +92,7 @@ describe('Update Subscriber channel credentials', function () {
     const subscriber = await subscriberService.createSubscriber();
 
     const newSlackCredentials = {
-      providerId: DirectProviderIdEnum.Slack,
+      providerId: ChatProviderIdEnum.Slack,
       credentials: { webhookUrl: 'new-secret-webhookUrl' },
     };
 

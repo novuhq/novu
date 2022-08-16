@@ -1,4 +1,4 @@
-import { DirectProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class SubscriberEntity {
   _id?: string;
@@ -25,7 +25,7 @@ export class SubscriberEntity {
 export class IChannelSettings {
   _integrationId: string;
 
-  providerId: DirectProviderIdEnum | PushProviderIdEnum;
+  providerId: ChatProviderIdEnum | PushProviderIdEnum;
 
   credentials: IChannelCredentials;
 }

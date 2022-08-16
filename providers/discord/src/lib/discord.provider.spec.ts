@@ -15,12 +15,12 @@ test('should trigger Slack correctly', async () => {
 
   await provider.sendMessage({
     webhookUrl: 'webhookUrl',
-    content: 'direct message',
+    content: 'chat message',
   });
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     webhookUrl: 'webhookUrl',
-    content: 'direct message',
+    content: 'chat message',
   });
 });

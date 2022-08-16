@@ -8,7 +8,7 @@ export class PreferenceChannels {
   @ApiPropertyOptional()
   in_app?: boolean;
   @ApiPropertyOptional()
-  direct?: boolean;
+  chat?: boolean;
   @ApiPropertyOptional()
   push?: boolean;
 }

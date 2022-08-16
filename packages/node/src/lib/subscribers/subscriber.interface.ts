@@ -29,6 +29,15 @@ export interface ISubscribersDefine extends ISubscriberPayload {
   subscriberId: string;
 }
 
+export interface IUpdateSubscriberPreferencePayload {
+  channel?: {
+    type: ChannelTypeEnum;
+    enabled: boolean;
+  };
+
+  enabled?: boolean;
+}
+
 export type TriggerRecipientsTypeArray = string[] | ISubscribersDefine[];
 
 export type TriggerRecipientsTypeSingle = string | ISubscribersDefine;

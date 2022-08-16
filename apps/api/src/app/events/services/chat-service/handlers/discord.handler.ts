@@ -1,11 +1,11 @@
 import { ICredentials } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { BaseDirectHandler } from './base.handler';
+import { BaseChatHandler } from './base.handler';
 import { DiscordProvider } from '@novu/discord';
 
-export class DiscordHandler extends BaseDirectHandler {
+export class DiscordHandler extends BaseChatHandler {
   constructor() {
-    super('discord', ChannelTypeEnum.DIRECT);
+    super('discord', ChannelTypeEnum.CHAT);
   }
 
   buildProvider(_credentials: ICredentials) {

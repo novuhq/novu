@@ -110,7 +110,7 @@ const notificationTemplateSchema = new Schema(
         type: Schema.Types.Boolean,
         default: true,
       },
-      direct: {
+      chat: {
         type: Schema.Types.Boolean,
         default: true,
       },

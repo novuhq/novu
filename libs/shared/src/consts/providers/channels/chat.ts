@@ -1,21 +1,21 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
 import { slackConfig } from '../provider-credentials';
-import { DirectProviderIdEnum } from '../provider.enum';
+import { ChatProviderIdEnum } from '../provider.enum';
 
-export const directProviders: IProviderConfig[] = [
+export const chatProviders: IProviderConfig[] = [
   {
-    id: DirectProviderIdEnum.Slack,
+    id: ChatProviderIdEnum.Slack,
     displayName: 'Slack',
-    channel: ChannelTypeEnum.DIRECT,
+    channel: ChannelTypeEnum.CHAT,
     credentials: slackConfig,
     docReference: 'https://api.slack.com/docs',
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },
   {
-    id: DirectProviderIdEnum.Discord,
+    id: ChatProviderIdEnum.Discord,
     displayName: 'Discord',
-    channel: ChannelTypeEnum.DIRECT,
+    channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
     docReference: 'https://discord.com/developers/docs/intro',
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },

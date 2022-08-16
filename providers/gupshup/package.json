@@ -31,7 +31,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.4.1",
+    "@novu/stateless": "^0.6.0",
     "node-fetch": "^3.2.10"
   },
   "devDependencies": {
