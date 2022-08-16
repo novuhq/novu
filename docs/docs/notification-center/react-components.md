@@ -145,21 +145,43 @@ The `i18n` prop can accept 2 different types of values
 - 2 letter language string
 
   ```tsx
-  i18n="en" // We currently only support English
+  i18n="en"
   ```
+
+  <details>
+    <summary>Supported languages</summary>
+    <div>
+      <ul>
+        <li><code>ar</code> (Arabic)</li>
+        <li><code>de</code> (German)</li>
+        <li><code>en</code> (English)</li>
+        <li><code>fa</code> (Farsi)</li>
+        <li><code>fi</code> (Finnish)</li>
+        <li><code>fr</code> (French)</li>
+        <li><code>gj</code> (Georgian)</li>
+        <li><code>hi</code> (Hindi)</li>
+        <li><code>it</code> (Italian)</li>
+        <li><code>ru</code> (Russian)</li>
+        <li><code>es</code> (Spanish)</li>
+        <li><code>uk</code> (Ukrainian)</li>
+      </ul>
+    </div>
+</details>
 
 - Translation object
 
   ```tsx
   i18n={{
-    // Make sure that the following is a proper 2 letter language code,
-    // since this is used by moment.js in order to calculate the relative time for each notification
+    // Make sure that the following is a proper language code,
+    // since this is used by date-fns in order to calculate the relative time for each notification
+    // supported languages by date-fns: https://github.com/date-fns/date-fns/tree/main/src/locale
     lang: "de",
     
     translations: {
-      poweredBy: "unterstützt von",
+      poweredBy: "von",
       markAllAsRead: "Alles als gelesen markieren",
       notifications: "Benachrichtigungen",
+      settings: "Einstellungen",
     },
   }}
   ```
