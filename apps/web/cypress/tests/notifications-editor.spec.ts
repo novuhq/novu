@@ -543,11 +543,13 @@ describe('Notifications Creator', function () {
       cy.get('#codeEditor').type('Hello world code {{name}} <div>Test', { parseSpecialCharSequences: false });
       cy.intercept('GET', '/v1/notification-templates').as('notification-templates');
       cy.getByTestId('submit-btn').click();
-      cy.wait(1000);
+      cy.waitForNetworkIdle(500);
       cy.getByTestId('trigger-snippet-btn').click();
 
       cy.wait('@notification-templates', { timeout: 60000 });
       cy.get('tbody').contains('Custom Code HTM').click();
+
+      cy.waitForNetworkIdle(500);
 
       cy.getByTestId('workflowButton').click();
       editChannel('email');
@@ -668,9 +670,9 @@ describe('Notifications Creator', function () {
 type Channel = 'inApp' | 'email' | 'sms' | 'digest';
 
 function addAndEditChannel(channel: Channel) {
-  waitLoadEnv(() => {
-    cy.getByTestId('workflowButton').click();
-  });
+  cy.getByTestId('workflowButton').click();
+  cy.waitForNetworkIdle(500);
+
   dragAndDrop(channel);
   editChannel(channel);
 }
