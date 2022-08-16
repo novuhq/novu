@@ -2,7 +2,8 @@ import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { ChannelTypeEnum, IUpdateSubscriberPreferenceDto } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
+import { UpdateSubscriberPreferenceRequestDto } from '../dtos/update-subscriber-preference-request.dto';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
 describe('PATCH /widgets/preference/:templateId', function () {
@@ -73,7 +74,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
 
       const updateDataEmailFalse = {
         channel: {},
-      } as IUpdateSubscriberPreferenceDto;
+      } as UpdateSubscriberPreferenceRequestDto;
 
       let responseMessage = '';
       try {
@@ -110,7 +111,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
 });
 
 export async function updateSubscriberPreference(
-  data: IUpdateSubscriberPreferenceDto,
+  data: UpdateSubscriberPreferenceRequestDto,
   subscriberToken: string,
   templateId: string
 ) {

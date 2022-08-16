@@ -2,7 +2,10 @@ import { ChangeRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto } from '../../notification-template/dto';
+import {
+  CreateNotificationTemplateRequestDto,
+  UpdateNotificationTemplateRequestDto,
+} from '../../notification-template/dto';
 
 describe('Get changes', () => {
   let session: UserSession;
@@ -14,7 +17,7 @@ describe('Get changes', () => {
   });
 
   it('get list of changes', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -49,7 +52,7 @@ describe('Get changes', () => {
 
     await session.applyChanges();
 
-    const updateData: UpdateNotificationTemplateDto = {
+    const updateData: UpdateNotificationTemplateRequestDto = {
       name: testTemplate.name,
       tags: testTemplate.tags,
       description: testTemplate.description,
