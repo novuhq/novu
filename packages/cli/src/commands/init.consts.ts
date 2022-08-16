@@ -71,7 +71,7 @@ export const termAndPrivacyQuestions: ListQuestionOptions[] = [
   {
     type: 'list',
     name: 'accept',
-    message: `I accept the https://novu.co/terms and have read the  https://novu.co/privacy`,
+    message: `I accept the Terms and Conditions (https://novu.co/terms) and have read the Privacy Policy (https://novu.co/privacy)`,
     choices: [
       {
         name: `Yes`,
