@@ -528,9 +528,9 @@ describe('Notifications Creator', function () {
     });
 
     it('should save HTML template email', function () {
-      waitLoadTemplatePage(() => {
-        cy.visit('/templates/create');
-      });
+      cy.visit('/templates/create');
+      cy.waitForNetworkIdle(500);
+
       fillBasicNotificationDetails('Custom Code HTML Notification Title');
       addAndEditChannel('email');
 
