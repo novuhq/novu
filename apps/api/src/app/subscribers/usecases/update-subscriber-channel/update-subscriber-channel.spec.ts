@@ -3,7 +3,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
-import { ChatProviderIdEnum, IUpdateSubscriberChannelDto } from '@novu/shared';
+import { ChatProviderIdEnum } from '@novu/shared';
 import { UpdateSubscriberChannel } from './update-subscriber-channel.usecase';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 
@@ -27,7 +27,7 @@ describe('Update Subscriber channel credentials', function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
-    const subscriberChannel: IUpdateSubscriberChannelDto = {
+    const subscriberChannel = {
       providerId: ChatProviderIdEnum.Discord,
       credentials: { webhookUrl: 'newWebhookUrl' },
     };
@@ -64,7 +64,7 @@ describe('Update Subscriber channel credentials', function () {
       })
     );
 
-    const newSlackSubscribersChannel: IUpdateSubscriberChannelDto = {
+    const newSlackSubscribersChannel = {
       providerId: ChatProviderIdEnum.Slack,
       credentials: { webhookUrl: 'webhookUrlNew' },
     };
@@ -91,7 +91,7 @@ describe('Update Subscriber channel credentials', function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
-    const newSlackCredentials: IUpdateSubscriberChannelDto = {
+    const newSlackCredentials = {
       providerId: ChatProviderIdEnum.Slack,
       credentials: { webhookUrl: 'new-secret-webhookUrl' },
     };
