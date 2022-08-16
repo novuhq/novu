@@ -310,11 +310,11 @@ describe('Notifications Creator', function () {
       cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
     });
 
-    it('should edit notification', function () {
+    it.only('should edit notification', function () {
       const template = this.session.templates[0];
-      waitLoadTemplatePage(() => {
-        cy.visit('/templates/edit/' + template._id);
-      });
+      cy.visit('/templates/edit/' + template._id);
+      cy.waitForNetworkIdle(500);
+
       cy.getByTestId('title').should('have.value', template.name);
 
       addAndEditChannel('inApp');
@@ -329,27 +329,27 @@ describe('Notifications Creator', function () {
       cy.getByTestId('settingsButton').click();
       cy.getByTestId('title').clear().type('This is the new notification title');
       cy.getByTestId('workflowButton').click();
-      cy.wait(1000);
-      editChannel('inApp');
 
-      cy.getByTestId('feed-button-0-checked');
+      editChannel('inApp', true);
+
+      cy.getByTestId('use-feeds-checkbox').click();
       cy.getByTestId('feed-button-1').click({ force: true });
 
       cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
       cy.getByTestId('submit-btn').click();
 
+      cy.waitForNetworkIdle(500);
       cy.visit('/templates');
       cy.getByTestId('template-edit-link');
       cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
         matchCase: false,
       });
-      waitLoadTemplatePage(() => {
-        cy.visit('/templates/edit/' + template._id);
-      });
-      waitLoadEnv(() => {
-        cy.getByTestId('workflowButton').click();
-      });
-      editChannel('inApp');
+      cy.visit('/templates/edit/' + template._id);
+      cy.waitForNetworkIdle(500);
+
+      cy.getByTestId('workflowButton').click();
+      editChannel('inApp', true);
+
       cy.getByTestId('feed-button-1-checked');
       cy.getByTestId('create-feed-input').type('test4');
       cy.getByTestId('add-feed-button').click();
@@ -685,8 +685,8 @@ function dragAndDrop(channel: Channel) {
   cy.getByTestId('addNodeButton').parent().trigger('drop', { dataTransfer });
 }
 
-function editChannel(channel: Channel) {
-  cy.clickWorkflowNode(`node-${channel}Selector`);
+function editChannel(channel: Channel, last = false) {
+  cy.clickWorkflowNode(`node-${channel}Selector`, last);
   cy.getByTestId('edit-template-channel').click();
 }
 
