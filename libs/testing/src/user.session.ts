@@ -4,9 +4,8 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
-import { TriggerRecipientsType } from '@novu/node';
 
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   UserRepository,
@@ -20,6 +19,7 @@ import {
   FeedRepository,
   ChangeRepository,
   ChangeEntity,
+  SubscriberRepository,
 } from '@novu/dal';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
@@ -28,6 +28,7 @@ import { OrganizationService } from './organization.service';
 import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
+import { TriggerRecipientsType } from '@novu/node';
 
 export class UserSession {
   private userRepository = new UserRepository();
@@ -38,6 +39,14 @@ export class UserSession {
   private changeRepository: ChangeRepository = new ChangeRepository();
 
   token: string;
+
+  subscriberToken: string;
+
+  subscriberId: string;
+
+  subscriberProfile: {
+    _id: string;
+  } = null;
 
   notificationGroups: NotificationGroupEntity[] = [];
 
@@ -96,6 +105,31 @@ export class UserSession {
         await this.updateOrganizationDetails();
       }
     }
+
+    if (!options.noOrganization && !options.noEnvironment) {
+      const { token, profile } = await this.initializeWidgetSession();
+      this.subscriberToken = token;
+      this.subscriberProfile = profile;
+    }
+  }
+
+  private async initializeWidgetSession() {
+    this.subscriberId = SubscriberRepository.createObjectId();
+
+    const { body } = await this.testAgent
+      .post('/v1/widgets/session/initialize')
+      .send({
+        applicationIdentifier: this.environment.identifier,
+        subscriberId: this.subscriberId,
+        firstName: 'Widget User',
+        lastName: 'Test',
+        email: 'test@example.com',
+      })
+      .expect(201);
+
+    const { token, profile } = body.data;
+
+    return { token, profile };
   }
 
   private shouldUseTestServer() {
@@ -197,7 +231,7 @@ export class UserSession {
     return await service.createIntegration(this.environment._id, this.organization._id);
   }
 
-  async createChannelTemplate(channel: ChannelTypeEnum) {
+  async createChannelTemplate(channel: StepTypeEnum) {
     const service = new NotificationTemplateService(this.user._id, this.organization._id, this.environment._id);
 
     return await service.createTemplate({
@@ -205,7 +239,7 @@ export class UserSession {
         {
           type: channel,
           content:
-            channel === ChannelTypeEnum.EMAIL
+            channel === StepTypeEnum.EMAIL
               ? [
                   {
                     type: 'text',
@@ -265,7 +299,7 @@ export class UserSession {
     do {
       runningJobs = await this.jobRepository.count({
         type: {
-          $nin: [ChannelTypeEnum.DIGEST],
+          $nin: [StepTypeEnum.DIGEST],
         },
         _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
         status: {

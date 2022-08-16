@@ -4,16 +4,21 @@ import {
   IEmailProvider,
   ISmsProvider,
   IDirectProvider,
+  IPushProvider,
 } from './provider.interface';
 
 export class ProviderStore {
   private providers: {
-    [key: string]: ISmsProvider | IEmailProvider | IDirectProvider;
+    [key: string]:
+      | ISmsProvider
+      | IEmailProvider
+      | IDirectProvider
+      | IPushProvider;
   } = {};
 
   async addProvider(
     providerId: string,
-    provider: IEmailProvider | ISmsProvider | IDirectProvider
+    provider: IEmailProvider | ISmsProvider | IDirectProvider | IPushProvider
   ) {
     this.providers[providerId] = provider;
   }

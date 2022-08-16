@@ -32,6 +32,12 @@ export class TriggerEventToAll {
     if (list.length > 0) {
       await this.trigger(command, list);
     }
+
+    return {
+      acknowledged: true,
+      status: 'processed',
+      transactionId: command.transactionId,
+    };
   }
 
   private async trigger(command: TriggerEventToAllCommand, list: SubscriberEntity[]) {
@@ -46,6 +52,7 @@ export class TriggerEventToAll {
           subscriberId: item.subscriberId,
         })),
         transactionId: command.transactionId,
+        overrides: command.overrides,
       })
     );
   }

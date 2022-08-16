@@ -4,8 +4,11 @@ import { GetSignedUrl } from './usecases/get-signed-url/get-signed-url.usecase';
 import { GetSignedUrlCommand } from './usecases/get-signed-url/get-signed-url.command';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/storage')
+@ApiTags('Storage')
+@ApiExcludeController()
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 export class StorageController {

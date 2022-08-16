@@ -23,10 +23,13 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UpdateWidgetSettingsDto } from './dto/update-widget-settings.dto';
 import { UpdateWidgetSettings } from './usecases/update-widget-settings/update-widget-settings.usecase';
 import { UpdateWidgetSettingsCommand } from './usecases/update-widget-settings/update-widget-settings.command';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
+@ApiTags('Environments')
+@ApiExcludeController()
 export class EnvironmentsController {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,

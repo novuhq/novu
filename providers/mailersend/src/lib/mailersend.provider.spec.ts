@@ -1,5 +1,5 @@
 import { MailersendEmailProvider } from './mailersend.provider';
-import MailerSend from 'mailersend';
+import MailerSend, { Attachment, Recipient } from 'mailersend';
 
 const mockConfig = {
   apiKey: 'SG.1234',
@@ -50,22 +50,32 @@ test('should trigger mailerSend correctly', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
     });
+
+  const attachment = new Attachment(
+    Buffer.from('ZEdWemRBPT0=').toString(),
+    'test.txt'
+  );
+  const recipient1 = new Recipient('test@test1.com', undefined);
+  const recipient2 = new Recipient('test@test2.com', undefined);
+
   const response = await provider.sendMessage(mockNovuMessage);
   expect(spy).toHaveBeenCalled();
   expect(spy).toBeCalledWith('/email', {
     method: 'POST',
     body: {
-      to: [{ email: 'test@test1.com' }, { email: 'test@test2.com' }],
+      from: { email: mockNovuMessage.from, name: undefined },
+      to: [recipient1, recipient2],
+      cc: undefined,
+      bcc: undefined,
+      reply_to: undefined,
+      attachments: [attachment],
       subject: mockNovuMessage.subject,
-      html: mockNovuMessage.html,
       text: mockNovuMessage.text,
-      from: { email: mockNovuMessage.from },
-      attachments: [
-        {
-          content: Buffer.from('ZEdWemRBPT0=').toString(),
-          filename: 'test.txt',
-        },
-      ],
+      html: mockNovuMessage.html,
+      template_id: undefined,
+      variables: undefined,
+      personalization: undefined,
+      tags: undefined,
     },
   });
 });

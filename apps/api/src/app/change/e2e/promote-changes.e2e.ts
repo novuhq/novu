@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ChangeRepository,
   NotificationTemplateRepository,
@@ -5,10 +6,13 @@ import {
   NotificationGroupRepository,
   EnvironmentRepository,
 } from '@novu/dal';
-import { ChannelCTATypeEnum, ChannelTypeEnum, ChangeEntityTypeEnum } from '@novu/shared';
+import { ChannelCTATypeEnum, StepTypeEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { CreateNotificationTemplateDto, UpdateNotificationTemplateDto } from '../../notification-template/dto';
+import {
+  CreateNotificationTemplateRequestDto,
+  UpdateNotificationTemplateRequestDto,
+} from '../../notification-template/dto';
 
 describe('Promote changes', () => {
   let session: UserSession;
@@ -41,7 +45,7 @@ describe('Promote changes', () => {
       _parentId: parentGroup._id,
     });
 
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -52,7 +56,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -87,7 +91,7 @@ describe('Promote changes', () => {
   });
 
   it('delete message', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -98,7 +102,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -120,7 +124,7 @@ describe('Promote changes', () => {
 
     let { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
-    const updateData: UpdateNotificationTemplateDto = {
+    const updateData: UpdateNotificationTemplateRequestDto = {
       name: testTemplate.name,
       tags: testTemplate.tags,
       description: testTemplate.description,
@@ -144,7 +148,7 @@ describe('Promote changes', () => {
   });
 
   it('update active flag on notification template', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -172,7 +176,7 @@ describe('Promote changes', () => {
   });
 
   it('update existing message', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -183,7 +187,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -214,7 +218,7 @@ describe('Promote changes', () => {
     const notificationTemplateId = data._id;
 
     const step = data.steps[0];
-    const update: UpdateNotificationTemplateDto = {
+    const update: UpdateNotificationTemplateRequestDto = {
       name: data.name,
       description: data.description,
       tags: data.tags,
@@ -248,7 +252,7 @@ describe('Promote changes', () => {
   });
 
   it('add one more message', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -259,7 +263,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -289,7 +293,7 @@ describe('Promote changes', () => {
     const notificationTemplateId = data._id;
 
     const step = data.steps[0];
-    const update: UpdateNotificationTemplateDto = {
+    const update: UpdateNotificationTemplateRequestDto = {
       name: data.name,
       description: data.description,
       tags: data.tags,
@@ -351,7 +355,7 @@ describe('Promote changes', () => {
   });
 
   it('should count not applied changes', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -362,7 +366,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -392,7 +396,7 @@ describe('Promote changes', () => {
   });
 
   it('should count delete change', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -403,7 +407,7 @@ describe('Promote changes', () => {
             name: 'Message Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
           },
           filters: [
             {
@@ -447,7 +451,7 @@ describe('Promote changes', () => {
       name: 'Test name',
     });
 
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],

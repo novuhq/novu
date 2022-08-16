@@ -19,6 +19,10 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   templates?: string[];
 
   @IsOptional()
+  @IsArray()
+  emails?: string[];
+
+  @IsOptional()
   @IsString()
   search?: string;
 }

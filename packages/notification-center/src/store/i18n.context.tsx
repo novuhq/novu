@@ -1,4 +1,6 @@
+import moment from 'moment';
 import React from 'react';
+import 'moment/min/locales.min';
 import { I18NLanguage, ITranslationEntry, TRANSLATIONS } from '../i18n/lang';
 
 export const I18NContext = React.createContext<ITranslationEntry>({
@@ -6,6 +8,7 @@ export const I18NContext = React.createContext<ITranslationEntry>({
     markAllAsRead: '',
     notifications: '',
     poweredBy: '',
+    settings: '',
   },
   lang: '',
 });
@@ -26,6 +29,10 @@ export function NovuI18NProvider({ i18n = 'en', ...props }: INovuI18NProviderPro
 
     return i18n;
   }, [i18n]);
+
+  React.useEffect(() => {
+    moment.locale(i18nEntry.lang)
+  }, [i18nEntry])
 
   return <I18NContext.Provider {...props} value={i18nEntry} />;
 }

@@ -9,7 +9,7 @@ import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
 import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../store/use-env-controller';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { useClickOutside } from '@mantine/hooks';
 
 const capitalize = (text: string) => {
@@ -162,7 +162,7 @@ export function ChannelButton({
                 </ActionIcon>
               }
             >
-              <When truthy={tabKey !== ChannelTypeEnum.DIGEST}>
+              <When truthy={tabKey !== StepTypeEnum.DIGEST}>
                 <MenuItem
                   key="edit"
                   style={{
@@ -197,7 +197,7 @@ export function ChannelButton({
                   onDelete(id || '');
                 }}
               >
-                Delete {tabKey !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
+                Delete {tabKey !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
               </MenuItem>
             </Menu>
           </When>

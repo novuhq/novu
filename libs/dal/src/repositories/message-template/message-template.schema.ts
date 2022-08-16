@@ -16,6 +16,7 @@ const messageTemplateSchema = new Schema(
     subject: Schema.Types.String,
     content: Schema.Types.Mixed,
     contentType: Schema.Types.String,
+    title: Schema.Types.String,
     cta: {
       type: {
         type: Schema.Types.String,

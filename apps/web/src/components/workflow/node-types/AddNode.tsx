@@ -2,8 +2,8 @@ import React, { memo } from 'react';
 import { colors, Dropdown, Text } from '../../../design-system';
 import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Mail, Mobile, PlusCircleOutlined, Sms } from '../../../design-system/icons';
-import { ChannelTypeEnum } from '@novu/shared';
+import { Mail, Mobile, PlusCircleOutlined, Direct, Sms, InApp } from '../../../design-system/icons';
+import { StepTypeEnum } from '@novu/shared';
 import { Digest } from '../../../design-system/icons/general/Digest';
 
 interface NodeData {
@@ -46,18 +46,24 @@ export default memo(({ data }: { data: NodeData }) => {
           </ActionIcon>
         }
       >
-        <DropdownItem data-test-id={`add-sms-node`} icon={<Sms />} onClick={() => addNewNode(ChannelTypeEnum.SMS)}>
-          SMS
+        <DropdownItem data-test-id={`add-in-app-node`} icon={<InApp />} onClick={() => addNewNode(StepTypeEnum.IN_APP)}>
+          In-App
         </DropdownItem>
-        <DropdownItem data-test-id={`add-email-node`} icon={<Mail />} onClick={() => addNewNode(ChannelTypeEnum.EMAIL)}>
+        <DropdownItem data-test-id={`add-email-node`} icon={<Mail />} onClick={() => addNewNode(StepTypeEnum.EMAIL)}>
           Email
         </DropdownItem>
+        <DropdownItem data-test-id={`add-sms-node`} icon={<Sms />} onClick={() => addNewNode(StepTypeEnum.SMS)}>
+          SMS
+        </DropdownItem>
         <DropdownItem
-          data-test-id={`add-in-app-node`}
-          icon={<Mobile />}
-          onClick={() => addNewNode(ChannelTypeEnum.IN_APP)}
+          data-test-id={`add-direct-node`}
+          icon={<Direct />}
+          onClick={() => addNewNode(StepTypeEnum.DIRECT)}
         >
-          In-App
+          Direct
+        </DropdownItem>
+        <DropdownItem data-test-id={`add-push-node`} icon={<Mobile />} onClick={() => addNewNode(StepTypeEnum.PUSH)}>
+          Push
         </DropdownItem>
         <DropdownItem
           data-test-id={`add-digest-node`}
@@ -67,7 +73,7 @@ export default memo(({ data }: { data: NodeData }) => {
               <Digest color={theme.colorScheme === 'dark' ? colors.white : colors.B40} />
             </div>
           }
-          onClick={() => addNewNode(ChannelTypeEnum.DIGEST)}
+          onClick={() => addNewNode(StepTypeEnum.DIGEST)}
         >
           Digest
         </DropdownItem>

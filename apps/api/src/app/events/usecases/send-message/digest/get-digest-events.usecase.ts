@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JobRepository, JobEntity } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 
 @Injectable()
 export abstract class GetDigestEvents {
@@ -16,7 +16,7 @@ export abstract class GetDigestEvents {
 
     const currentTrigger = await this.jobRepository.findOne({
       transactionId: transactionId,
-      type: ChannelTypeEnum.TRIGGER,
+      type: StepTypeEnum.TRIGGER,
     });
 
     return [currentJob.payload, ...jobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload)];

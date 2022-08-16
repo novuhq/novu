@@ -8,8 +8,11 @@ import { GetActivityStats } from './usecases/get-activity-stats/get-activity-sta
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
 import { GetActivityGraphStats } from './usecases/get-acticity-graph-states/get-acticity-graph-states.usecase';
 import { GetActivityGraphStatsCommand } from './usecases/get-acticity-graph-states/get-acticity-graph-states.command';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/activity')
+@ApiTags('Activity')
+@ApiExcludeController()
 export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
@@ -23,6 +26,7 @@ export class ActivityController {
     @UserSession() user: IJwtPayload,
     @Query('channels') channels: ChannelTypeEnum[] | ChannelTypeEnum,
     @Query('templates') templates: string[] | string,
+    @Query('emails') emails: string | string[],
     @Query('search') search: string,
     @Query('page') page = 0
   ) {
@@ -37,6 +41,11 @@ export class ActivityController {
       templatesQuery = Array.isArray(templates) ? templates : [templates];
     }
 
+    let emailsQuery: string[];
+    if (emails) {
+      emailsQuery = Array.isArray(emails) ? emails : [emails];
+    }
+
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
         page: page ? Number(page) : 0,
@@ -45,6 +54,7 @@ export class ActivityController {
         userId: user._id,
         channels: channelsQuery,
         templates: templatesQuery,
+        emails: emailsQuery,
         search,
       })
     );

@@ -39,7 +39,7 @@ export class GetActivityFeed {
 
     const { data: messages, totalCount } = await this.messageRepository.getFeed(
       command.environmentId,
-      { channels: command.channels, templates: command.templates, subscriberId },
+      { channels: command.channels, templates: command.templates, emails: command.emails },
       command.page * LIMIT,
       LIMIT
     );

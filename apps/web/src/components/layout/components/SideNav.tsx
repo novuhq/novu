@@ -4,8 +4,9 @@ import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
 import React, { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
+import styled from '@emotion/styled';
 
 type Props = {};
 
@@ -53,6 +54,13 @@ export function SideNav({}: Props) {
     },
   ];
 
+  async function handlePopoverForChanges(e) {
+    e.preventDefault();
+
+    await setEnvironment('Development');
+    navigate('/changes');
+  }
+
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
@@ -99,10 +107,21 @@ export function SideNav({}: Props) {
             />
           }
         >
-          {'To make changes you’ll need to go to development and promote the changes from there'}
+          {'To make changes you’ll need to visit '}
+          <StyledLink onClick={handlePopoverForChanges}>development changes</StyledLink>{' '}
+          {' and promote the changes from there'}
         </Popover>
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
     </Navbar>
   );
 }
+
+const StyledLink = styled.a`
+  font-weight: bold;
+  text-decoration: underline;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
