@@ -24,7 +24,15 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, IPasswordInputPr
     const defaultDesign = { radius: 'md', size: 'md', styles: inputStyles } as PasswordInputProps;
 
     return (
-      <StyledPassword ref={ref} {...defaultDesign} onChange={onChange} autoComplete="off" value={value} {...props} />
+      <StyledPassword
+        ref={ref}
+        {...defaultDesign}
+        onChange={onChange}
+        autoComplete="off"
+        value={value}
+        {...props}
+        toggleTabIndex={0}
+      />
     );
   }
 );
