@@ -73,13 +73,12 @@ jobs:
       - name: Start Client
         run: pnpm start:widget:test &
 
-      # Runs a single command using the runners shell
       - name: Start WS
         run: pnpm start:ws:test &
 
-      # Runs a single command using the runners shell
       - name: Start API in TEST
-        run: cd apps/api && pnpm start:test
+        run: cd apps/api && pnpm start:test &
+
       - name: Install wait-on plugin
         run: npm i -g wait-on
       - name: Wait on API
