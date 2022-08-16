@@ -310,7 +310,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
     });
 
-    it.skip('should edit notification', function () {
+    it('should edit notification', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
@@ -394,7 +394,7 @@ describe('Notifications Creator', function () {
       cy.get('.mantine-Switch-input').should('have.value', 'on');
     });
 
-    it.skip('should show trigger snippet block when editing', function () {
+    it('should show trigger snippet block when editing', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
