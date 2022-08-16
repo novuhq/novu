@@ -2,42 +2,37 @@ const fs = require('fs');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
+let dependenciesInstalled = false;
 
-if (!nodeModulesExist || !envInitialized) {
-  // eslint-disable-next-line no-console
-  console.log(
-    'Looks like its the first time running this project on your machine. We will start by installing pnpm dependencies'
-  );
-  const { spawn } = require('child_process');
-
-  const isWindows = process.platform === 'win32';
-  const cmd = isWindows ? 'cmd' : 'npm';
-  const args = isWindows ? ['/c', 'npm run setup:project'] : ['run setup:project'];
-
-  const command = spawn(cmd, args, {
-    shell: true,
-    stdio: 'inherit',
-  });
-
-  function onExit() {
-    command.kill('SIGINT');
-  }
-
-  process.on('SIGTERM', onExit);
-  process.on('SIGINT', onExit);
-
-  command.on('exit', (exitCode) => {
-    if (exitCode !== 0) {
-      throw new Error(exitCode.toString());
-    }
-
-    // eslint-disable-next-line no-console
-    console.log('FINISHED!');
-  });
-} else {
+async function reInstallProject() {
   const inquirer = require('inquirer');
+
+  const questions = [
+    {
+      type: 'list',
+      name: 'reinstall',
+      message:
+        'Are you changing branches like socks? just came from another branch? Do you wish us to reinstall the project for you?',
+      choices: ['Yes', 'No'],
+    },
+  ];
+
+  await inquirer.prompt(questions).then(async (answers) => {
+    if (answers.reinstall === 'No') {
+      return;
+    }
+    await setupProject();
+  });
+}
+
+async function setupRunner() {
   const shell = require('shelljs');
   const waitPort = require('wait-port');
+  const inquirer = require('inquirer');
+
+  if (!dependenciesInstalled) {
+    await reInstallProject();
+  }
 
   const questions = [
     {
@@ -166,3 +161,77 @@ Everything is running 🎊
     return true;
   });
 }
+
+const informAboutInitialSetup = () => {
+  const rlp = require('readline');
+
+  return new Promise((resolve, reject) => {
+    const rl = rlp.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    rl.question(
+      'Looks like its the first time running this project on your machine. We will start by installing pnpm dependencies. ' +
+        '\nDo you want to continue? Yes/No\n',
+      function (answer) {
+        if (answer.toLowerCase() === 'yes' || answer.toLowerCase() === 'y') {
+          rl.close();
+          resolve();
+
+          return;
+        }
+
+        reject('exit.. because dependencies are mandatory.');
+      }
+    );
+  });
+};
+
+const setupProject = () =>
+  new Promise((resolve, reject) => {
+    const { spawn } = require('child_process');
+
+    const isWindows = process.platform === 'win32';
+    const cmd = isWindows ? 'cmd' : 'npm';
+    const args = isWindows ? ['/c', 'npm run setup:project'] : ['run setup:project'];
+
+    const command = spawn(cmd, args, {
+      shell: true,
+      stdio: 'inherit',
+    });
+
+    function onExit() {
+      command.kill('SIGINT');
+    }
+
+    process.on('SIGTERM', onExit);
+    process.on('SIGINT', onExit);
+
+    command.on('exit', (exitCode) => {
+      if (parseInt(exitCode) !== 0) {
+        reject(new Error(exitCode));
+      }
+
+      // eslint-disable-next-line no-console
+      console.log('Finished installing building project!');
+      dependenciesInstalled = true;
+      resolve();
+    });
+  });
+
+async function main() {
+  if (!nodeModulesExist || !envInitialized) {
+    await informAboutInitialSetup();
+
+    await setupProject();
+  }
+
+  await setupRunner();
+}
+
+main().catch((rej) => {
+  // eslint-disable-next-line no-console
+  console.log(rej);
+  process.kill(process.pid, 'SIGTERM');
+});
