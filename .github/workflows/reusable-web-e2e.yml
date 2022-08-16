@@ -97,15 +97,15 @@ jobs:
       - name: Build API
         run: CI='' pnpm build:api
 
-      # Runs a single command using the runners shell
       - name: Start Client
         run: pnpm start:web &
 
-      # Runs a single command using the runners shell
       - name: Start API in TEST
-        run: cd apps/api && pnpm start:test
+        run: cd apps/api && pnpm start:test &
+
       - name: Install wait-on plugin
         run: npm i -g wait-on
+
       - name: Wait on API
         run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
 
