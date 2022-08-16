@@ -100,6 +100,9 @@ jobs:
       # Runs a single command using the runners shell
       - name: Start Client
         run: pnpm start:web &
+      - name: Build API
+        run: cd apps/web && pnpm start:api
+
 
       - name: Cypress run e2e
         uses: cypress-io/github-action@v4
