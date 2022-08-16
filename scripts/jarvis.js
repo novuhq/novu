@@ -1,14 +1,14 @@
 const fs = require('fs');
-const { spawn } = require('child_process');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
 
 if (!nodeModulesExist || !envInitialized) {
+  // eslint-disable-next-line no-console
   console.log(
-    'Looks like its the first time running this project on your machine. We will start by installing pnpm depependencies'
+    'Looks like its the first time running this project on your machine. We will start by installing pnpm dependencies'
   );
-  const spawn = require('child_process').spawn;
+  const { spawn } = require('child_process');
 
   const isWindows = process.platform === 'win32';
   const cmd = isWindows ? 'cmd' : 'npm';
@@ -27,10 +27,11 @@ if (!nodeModulesExist || !envInitialized) {
   process.on('SIGINT', onExit);
 
   command.on('exit', (exitCode) => {
-    if (parseInt(exitCode) !== 0) {
-      throw new Error(exitCode);
+    if (exitCode !== 0) {
+      throw new Error(exitCode.toString());
     }
 
+    // eslint-disable-next-line no-console
     console.log('FINISHED!');
   });
 } else {
@@ -92,6 +93,7 @@ if (!nodeModulesExist || !envInitialized) {
         port: 4200,
       });
 
+      // eslint-disable-next-line no-console
       console.log(`
 Everything is running 🎊
 
@@ -115,6 +117,7 @@ Everything is running 🎊
         port: 4200,
       });
 
+      // eslint-disable-next-line no-console
       console.log(`
 Everything is running 🎊
 
