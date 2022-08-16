@@ -61,7 +61,7 @@ export function LoginForm({}: Props) {
   }, [serverErrorString]);
 
   const passwordServerError = useMemo<string>(
-    () => (serverErrorString === 'Wrong credentials provided' ? 'Invalid password' : ''),
+    () => (serverErrorString === 'Wrong credentials provided' ? 'Incorrect username or password' : ''),
     [serverErrorString]
   );
 
