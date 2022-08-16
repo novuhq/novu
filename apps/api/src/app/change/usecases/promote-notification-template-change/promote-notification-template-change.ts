@@ -100,6 +100,7 @@ export class PromoteNotificationTemplateChange {
         tags: newItem.tags,
         critical: newItem.critical,
         triggers: newItem.triggers,
+        preferenceSettings: newItem.preferenceSettings,
         steps,
         _parentId: command.item._id,
         _creatorId: command.userId,
@@ -130,6 +131,7 @@ export class PromoteNotificationTemplateChange {
         tags: newItem.tags,
         critical: newItem.critical,
         triggers: newItem.triggers,
+        preferenceSettings: newItem.preferenceSettings,
         steps,
         _notificationGroupId: notificationGroup._id,
       }
