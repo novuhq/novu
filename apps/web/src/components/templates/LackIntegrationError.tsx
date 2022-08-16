@@ -11,10 +11,9 @@ export function LackIntegrationError({ channelType }: { channelType: string }) {
     <>
       <WarningMessage>
         <Text>
-          {`Looks like you haven’t configured your ${channelType} provider yet, this channel will be disabled until you`}
-          <StyledSpan onClick={() => navigate('/integrations')}>configure it</StyledSpan>
+          {`Looks like you haven’t configured your ${channelType} provider yet, this channel will be disabled until you configure it.`}
         </Text>
-        <DoubleArrowRight />
+        <DoubleArrowRight onClick={() => navigate('/integrations')} />
       </WarningMessage>
     </>
   );
@@ -31,13 +30,4 @@ const WarningMessage = styled.div`
 
   background: rgba(230, 69, 69, 0.15);
   border-radius: 7px;
-`;
-
-const StyledSpan = styled.span`
-  margin-left: 4px;
-  text-decoration: underline;
-
-  &:hover {
-    cursor: pointer;
-  }
 `;
