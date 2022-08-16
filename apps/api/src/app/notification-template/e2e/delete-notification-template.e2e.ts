@@ -63,6 +63,11 @@ describe('Delete notification template by id - /notification-templates/:template
 
     await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`).send();
 
+    const {
+      body: { data },
+    } = await session.testAgent.get(`/v1/changes?promoted=false`);
+    expect(data[0].templateName).to.eq(body.data.name);
+
     await session.applyChanges({
       enabled: false,
     });
