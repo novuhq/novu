@@ -2,19 +2,6 @@
 
 <div align="center">
   
-  ![Banner Dark](https://user-images.githubusercontent.com/8872447/184361788-2bf806e2-6169-4f9d-b6a2-3560370491ed.jpg#gh-dark-mode-only)
-
-</div>
-
-
-<div align="center">
-  
-  ![Banner Light](https://user-images.githubusercontent.com/8872447/184366259-f00891c8-f9da-434a-af70-8a096d5feba0.jpg#gh-light-mode-only)
-  
-</div>
-
-<div align="center">
-  
   ![Logo Dark](https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png#gh-dark-mode-only)
 
 </div>
