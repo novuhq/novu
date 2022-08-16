@@ -4,7 +4,11 @@ import {
   ISubscribers,
   IUpdateSubscriberPreferencePayload,
 } from './subscriber.interface';
-import { IChannelCredentials } from '@novu/shared';
+
+interface IChannelCredentials {
+  webhookUrl?: string;
+  notificationIdentifiers?: string[];
+}
 
 export class Subscribers implements ISubscribers {
   private readonly http: AxiosInstance;

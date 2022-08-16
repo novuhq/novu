@@ -40,7 +40,7 @@ jobs:
 
     - uses: pnpm/action-setup@v2.0.1
       with:
-        version: 7.3.0
+        version: 7.5.0
         run_install: true
 
     - uses: mansagroup/nrwl-nx-action@v2

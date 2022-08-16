@@ -25,9 +25,12 @@ import { GetInvite } from './usecases/get-invite/get-invite.usecase';
 import { ResendInviteDto } from '../organization/dtos/resend-invite.dto';
 import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('/invites')
+@ApiTags('Invites')
+@ApiExcludeController()
 export class InvitesController {
   constructor(
     private inviteMemberUsecase: InviteMember,

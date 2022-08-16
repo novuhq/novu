@@ -1,6 +1,6 @@
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { IsBoolean, IsDefined, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { IChannelPreference } from '@novu/shared';
+import { ChannelPreference } from '../../../shared/dtos/channel-preference';
 
 export class UpdateSubscriberPreferenceCommand extends EnvironmentWithSubscriber {
   @IsDefined()
@@ -14,5 +14,5 @@ export class UpdateSubscriberPreferenceCommand extends EnvironmentWithSubscriber
 
   @ValidateNested()
   @IsOptional()
-  channel?: IChannelPreference;
+  channel?: ChannelPreference;
 }
