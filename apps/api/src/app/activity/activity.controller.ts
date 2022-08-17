@@ -24,7 +24,9 @@ export class ActivityController {
   ) {}
 
   @Get('')
-  @ApiOkResponse({})
+  @ApiOkResponse({
+    type: ActivitiesResponseDto,
+  })
   @ApiOperation({
     summary: 'Get activity feed',
   })
@@ -63,7 +65,9 @@ export class ActivityController {
     );
   }
 
-  @ApiOkResponse({})
+  @ApiOkResponse({
+    type: ActivityStatsResponseDto,
+  })
   @ApiOperation({
     summary: 'Get activity statistics',
   })
@@ -81,7 +85,9 @@ export class ActivityController {
 
   @Get('/graph/stats')
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({})
+  @ApiOkResponse({
+    type: [ActivityGraphqStatesResponse],
+  })
   @ApiOperation({
     summary: 'Get activity graph statistics',
   })
