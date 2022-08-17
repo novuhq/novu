@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+import { INovuThemeProvider } from '@novu/notification-center/dist/esm/types/store/novu-theme-provider.context';
+
 declare namespace Cypress {
   interface Chainable {
     getByTestId(dataTestAttribute: string, args?: any): Chainable<Element>;
@@ -30,7 +32,7 @@ declare namespace Cypress {
       session: any,
       shell?: boolean,
       encryptedHmacHash?: string,
-      theme?: Record<string, unknown>
+      theme?: INovuThemeProvider
     ): Chainable<Response>;
     /**
      * Logs-in user by using API request
@@ -39,7 +41,7 @@ declare namespace Cypress {
       noEnvironment?: boolean;
       shell?: boolean;
       hmacEncryption?: boolean;
-      theme?: Record<string, unknown>;
+      theme?: INovuThemeProvider;
     }): Chainable<Response>;
 
     logout(): Chainable<Response>;
