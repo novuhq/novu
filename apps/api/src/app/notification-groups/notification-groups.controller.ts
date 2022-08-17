@@ -4,17 +4,18 @@ import { CreateNotificationGroup } from './usecases/create-notification-group/cr
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
-import { CreateNotificationGroupDto } from './dto/create-notification-group.dto';
+import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetNotificationGroups } from './usecases/get-notification-groups/get-notification-groups.usecase';
 import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Notification groups')
-@ApiExcludeController()
 export class NotificationGroupsController {
   constructor(
     private createNotificationGroupUsecase: CreateNotificationGroup,
@@ -23,7 +24,17 @@ export class NotificationGroupsController {
 
   @Post('')
   @Roles(MemberRoleEnum.ADMIN)
-  createNotificationGroup(@UserSession() user: IJwtPayload, @Body() body: CreateNotificationGroupDto) {
+  @ExternalApiAccessible()
+  @ApiCreatedResponse({
+    type: NotificationGroupResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Create notification group',
+  })
+  createNotificationGroup(
+    @UserSession() user: IJwtPayload,
+    @Body() body: CreateNotificationGroupRequestDto
+  ): Promise<NotificationGroupResponseDto> {
     return this.createNotificationGroupUsecase.execute(
       CreateNotificationGroupCommand.create({
         organizationId: user.organizationId,
@@ -36,7 +47,14 @@ export class NotificationGroupsController {
 
   @Get('')
   @Roles(MemberRoleEnum.ADMIN)
-  getNotificationGroups(@UserSession() user: IJwtPayload) {
+  @ExternalApiAccessible()
+  @ApiOkResponse({
+    type: [NotificationGroupResponseDto],
+  })
+  @ApiOperation({
+    summary: 'Get notification groups',
+  })
+  getNotificationGroups(@UserSession() user: IJwtPayload): Promise<NotificationGroupResponseDto[]> {
     return this.getNotificationGroupsUsecase.execute(
       GetNotificationGroupsCommand.create({
         organizationId: user.organizationId,

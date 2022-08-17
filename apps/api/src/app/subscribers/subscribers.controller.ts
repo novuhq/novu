@@ -5,7 +5,7 @@ import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-sub
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { IJwtPayload } from '@novu/shared';
+import { ButtonTypeEnum, IJwtPayload, MessageActionStatusEnum } from '@novu/shared';
 import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
@@ -25,6 +25,17 @@ import { UpdatePreference } from './usecases/update-preference/update-preference
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
 import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
+import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
+import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
+import { GetUnseenCountCommand } from '../widgets/usecases/get-unseen-count/get-unseen-count.command';
+import { MessageEntity } from '@novu/dal';
+import { MarkMessageAsSeenCommand } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.command';
+import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
+import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
+import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
+import { GetUnseenCount } from '../widgets/usecases/get-unseen-count/get-unseen-count.usecase';
+import { MarkMessageAsSeen } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.usecase';
+import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -37,7 +48,11 @@ export class SubscribersController {
     private getSubscriberUseCase: GetSubscriber,
     private getSubscribersUsecase: GetSubscribers,
     private getPreferenceUsecase: GetPreferences,
-    private updatePreferenceUsecase: UpdatePreference
+    private updatePreferenceUsecase: UpdatePreference,
+    private getNotificationsFeedUsecase: GetNotificationsFeed,
+    private genUnseenCountUsecase: GetUnseenCount,
+    private markMessageAsSeenUsecase: MarkMessageAsSeen,
+    private updateMessageActionsUsecase: UpdateMessageActions
   ) {}
 
   @Get('')
@@ -236,5 +251,122 @@ export class SubscribersController {
     });
 
     return await this.updatePreferenceUsecase.execute(command);
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Get('/:subscriberId/notifications/feed')
+  @ApiOperation({
+    summary: 'Get notifications in feed',
+  })
+  @ApiOkResponse({
+    type: [MessageResponseDto],
+  })
+  async getNotificationsFeed(
+    @UserSession() user: IJwtPayload,
+    @Query('page') page: number,
+    @Query('feedIdentifier') feedId: string[] | string,
+    @Query('seen') seen: boolean | undefined = undefined,
+    @Param('subscriberId') subscriberId: string
+  ) {
+    let feedsQuery: string[];
+    if (feedId) {
+      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    }
+
+    const command = GetNotificationsFeedCommand.create({
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+      subscriberId: subscriberId,
+      page,
+      feedId: feedsQuery,
+      seen,
+    });
+
+    return await this.getNotificationsFeedUsecase.execute(command);
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Get('/:subscriberId/notifications/unseen')
+  @ApiOkResponse({
+    type: UnseenCountResponse,
+  })
+  @ApiOperation({
+    summary: 'Get unseen count',
+  })
+  async getUnseenCount(
+    @UserSession() user: IJwtPayload,
+    @Query('feedIdentifier') feedId: string[] | string,
+    @Query('seen') seen: boolean,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<UnseenCountResponse> {
+    let feedsQuery: string[];
+    if (feedId) {
+      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    }
+
+    const command = GetUnseenCountCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+      feedId: feedsQuery,
+      seen,
+    });
+
+    return await this.genUnseenCountUsecase.execute(command);
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/:subscriberId/messages/:messageId/seen')
+  @ApiOperation({
+    summary: 'Mark message as seen',
+  })
+  @ApiCreatedResponse({
+    type: MessageResponseDto,
+  })
+  async markMessageAsSeen(
+    @UserSession() user: IJwtPayload,
+    @Param('messageId') messageId: string,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<MessageEntity> {
+    const command = MarkMessageAsSeenCommand.create({
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+      subscriberId: subscriberId,
+      messageId,
+    });
+
+    return await this.markMessageAsSeenUsecase.execute(command);
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/:subscriberId/messages/:messageId/actions/:type')
+  @ApiOperation({
+    summary: 'Mark action as seen',
+  })
+  @ApiCreatedResponse({
+    type: MessageResponseDto,
+  })
+  async markActionAsSeen(
+    @UserSession() user: IJwtPayload,
+    @Param('messageId') messageId: string,
+    @Param('type') type: ButtonTypeEnum,
+    @Body() body: { payload: any; status: MessageActionStatusEnum }, // eslint-disable-line @typescript-eslint/no-explicit-any
+    @Param('subscriberId') subscriberId: string
+  ): Promise<MessageEntity> {
+    return await this.updateMessageActionsUsecase.execute(
+      UpdateMessageActionsCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        subscriberId: subscriberId,
+        messageId,
+        type,
+        payload: body.payload,
+        status: body.status,
+      })
+    );
   }
 }

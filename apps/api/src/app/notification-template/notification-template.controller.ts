@@ -30,8 +30,9 @@ import { ChangeTemplateActiveStatus } from './usecases/change-template-active-st
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationTemplateResponse } from './dto/notification-template-response.dto';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -55,6 +56,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Get notification templates',
   })
+  @ExternalApiAccessible()
   getNotificationTemplates(@UserSession() user: IJwtPayload): Promise<NotificationTemplateResponse[]> {
     return this.getNotificationTemplatesUsecase.execute(
       GetNotificationTemplatesCommand.create({
@@ -73,6 +75,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Update notification template',
   })
+  @ExternalApiAccessible()
   async updateTemplateById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string,
@@ -104,6 +107,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Delete notification template',
   })
+  @ExternalApiAccessible()
   deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string): Promise<boolean> {
     return this.deleteTemplateByIdUsecase.execute(
       GetNotificationTemplateCommand.create({
@@ -123,6 +127,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Get notification template',
   })
+  @ExternalApiAccessible()
   getNotificationTemplateById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string
@@ -140,12 +145,13 @@ export class NotificationTemplateController {
   @Post('')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: NotificationTemplateResponse,
   })
   @ApiOperation({
     summary: 'Create notification template',
   })
+  @ExternalApiAccessible()
   createNotificationTemplates(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateNotificationTemplateRequestDto
@@ -177,6 +183,7 @@ export class NotificationTemplateController {
   @ApiOperation({
     summary: 'Update notification template status',
   })
+  @ExternalApiAccessible()
   changeActiveStatus(
     @UserSession() user: IJwtPayload,
     @Body() body: ChangeTemplateStatusRequestDto,

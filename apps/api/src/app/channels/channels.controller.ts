@@ -7,13 +7,16 @@ import { UpdateMailSettings } from './usecases/update-mail-settings/update-mail-
 import { UpdateMailSettingsCommand } from './usecases/update-mail-settings/update-mail-settings.command';
 import { UpdateSmsSettings } from './usecases/update-sms-settings/update-sms-settings.usecase';
 import { UpdateSmsSettingsCommand } from './usecases/update-sms-settings/update-sms-settings.command';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UpdateMailSettingsRequestDto } from './dtos/update-mail-settings-request.dto';
+import { UpdateSmsSettingsRequestDto } from './dtos/update-sms-settings-request.dto';
+import { UpdateSettingsResponseDto } from './dtos/update-settings-response.dto';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/channels')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Channels')
-@ApiExcludeController()
 export class ChannelsController {
   constructor(
     private updateMailSettingsUsecase: UpdateMailSettings,
@@ -22,7 +25,17 @@ export class ChannelsController {
 
   @Put('/email/settings')
   @Roles(MemberRoleEnum.ADMIN)
-  updateMailSettings(@UserSession() user: IJwtPayload, @Body() body: { senderEmail: string; senderName: string }) {
+  @ApiOperation({
+    summary: 'Update mail settings',
+  })
+  @ApiOkResponse({
+    type: UpdateSettingsResponseDto,
+  })
+  @ExternalApiAccessible()
+  updateMailSettings(
+    @UserSession() user: IJwtPayload,
+    @Body() body: UpdateMailSettingsRequestDto
+  ): Promise<UpdateSettingsResponseDto> {
     return this.updateMailSettingsUsecase.execute(
       UpdateMailSettingsCommand.create({
         userId: user._id,
@@ -36,10 +49,17 @@ export class ChannelsController {
 
   @Put('/sms/settings')
   @Roles(MemberRoleEnum.ADMIN)
+  @ApiOperation({
+    summary: 'Update mail settings',
+  })
+  @ApiOkResponse({
+    type: UpdateSettingsResponseDto,
+  })
+  @ExternalApiAccessible()
   updateSmsSettings(
     @UserSession() user: IJwtPayload,
-    @Body() body: { twillio: { authToken: string; accountSid: string; phoneNumber: string } }
-  ) {
+    @Body() body: UpdateSmsSettingsRequestDto
+  ): Promise<UpdateSettingsResponseDto> {
     return this.updateSmsSettingsUsecase.execute(
       UpdateSmsSettingsCommand.create({
         userId: user._id,
