@@ -5,7 +5,7 @@ const mailConfigBase: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.From,
     displayName: 'From email address',
-    description: 'Use the same email address you used to login to your email provider',
+    description: 'Use the same email address you used to authenticate your delivery provider',
     type: 'string',
     required: true,
   },
