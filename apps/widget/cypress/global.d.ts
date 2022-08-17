@@ -26,7 +26,12 @@ declare namespace Cypress {
 
     initializeShellSession(userId: string, identifier: string, encryptedHmacHash?: string): Chainable<Response>;
 
-    initializeWidget(session: any, shell?: boolean, encryptedHmacHash?: string): Chainable<Response>;
+    initializeWidget(
+      session: any,
+      shell?: boolean,
+      encryptedHmacHash?: string,
+      theme?: Record<string, unknown>
+    ): Chainable<Response>;
     /**
      * Logs-in user by using API request
      */
@@ -34,6 +39,7 @@ declare namespace Cypress {
       noEnvironment?: boolean;
       shell?: boolean;
       hmacEncryption?: boolean;
+      theme?: Record<string, unknown>;
     }): Chainable<Response>;
 
     logout(): Chainable<Response>;

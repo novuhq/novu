@@ -53,7 +53,100 @@ Optionally the embed init script receives a position object, you can use it to s
 </script>
 ```
 
-### Enabling HMAC Encryption
+## Customizing the theme
+
+The notification center component can be customized by passing a `theme` to the init script.
+
+```html
+<script>
+  const customTheme = {
+    light: {
+      layout: {
+        background: '',
+        boxShadow: '',
+        borderRadius: '',
+        wrapper: {
+          secondaryFontColor: ''
+        }
+      },
+      header: {
+        badgeColor: '',
+        badgeTextColor: '',
+        fontColor: ''
+      },
+      popover: {
+        arrowColor: ''
+      },
+      notificationItem: {
+        seen: {
+          fontColor: '',
+          background: '',
+          timeMarkFontColor: ''
+        },
+        unseen: {
+          fontColor: '',
+          background: '',
+          boxShadow: '',
+          notificationItemBeforeBrandColor: '',
+          timeMarkFontColor: ''
+        },
+        buttons: {
+          primary: {
+            backGroundColor: '',
+            fontColor: '',
+            removeCircleColor: '',
+            fontFamily: ''
+          },
+          secondary: { ... },
+          clicked: { ... }
+        }
+      },
+      userPreferences: {
+        settingsButtonColor: '',
+        accordion: {
+          background: '',
+          fontColor: '',
+          secondaryFontColor: '',
+          boxShadow: '',
+          arrowColor: '',
+          dividerColor: ''
+        },
+        accordionItem: {
+          fontColor: {
+            active: '',
+            inactive: ''
+          },
+          icon: {
+            active: '',
+            inactive: ''
+          },
+          switch: {
+            backgroundChecked: '',
+            backgroundUnchecked: ''
+          }
+        }
+      }
+      footer: {
+        logoTextColor: '',
+        logoPrefixFontColor: ''
+      },
+      loaderColor: '';
+    },
+    dark: { ... },
+    common: { ... }
+  }
+
+  novu.init('<REPLACE_APPLICATION_ID>', {
+    unseenBadgeSelector: '#unseen-badge',
+    bellSelector: '#notification-bell',
+    theme: customTheme
+  }, {
+    ...subscriberProps
+  });
+</script>
+```
+
+## Enabling HMAC Encryption
 
 In order to enable Hash-Based Message Authentication Codes, you need to visit the admin panel in-app settings page and enable HMAC encryption for your environment.
 
@@ -95,3 +188,4 @@ The second parameter of `novu.init` can be used to specify the options for the e
 | `socketUrl` | `string` | Custom WebSocket Service location in case of self-hosted version of Novu |
 | `position.top` | `string` \| `number` | Override the top position of the notification center drop down |
 | `position.left` | `string` \| `number` | Override the left position of the notification center drop down |
+| `theme` | `object` | Provide a custom theme for the notification center to use (for example see [above](#customizing-the-theme)) |

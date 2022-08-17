@@ -17,6 +17,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
   const [backendUrl, setBackendUrl] = useState(API_URL);
   const [socketUrl, setSocketUrl] = useState(WS_URL);
+  const [theme, setTheme] = useState<Record<string, unknown>>({});
   const [fontFamily, setFontFamily] = useState<string>('Lato');
   const [frameInitialized, setFrameInitialized] = useState(false);
 
@@ -40,6 +41,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
         if (event.data.value.socketUrl) {
           setSocketUrl(event.data.value.socketUrl);
+        }
+
+        if (event.data.value.theme) {
+          setTheme(event.data.value.theme);
         }
 
         setFrameInitialized(true);
@@ -80,6 +85,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
             onUrlChange={props.onUrlChange}
             onUnseenCountChanged={props.onUnseenCountChanged}
             onActionClick={props.onActionClick}
+            theme={theme}
           />
         </NovuProvider>
       )}

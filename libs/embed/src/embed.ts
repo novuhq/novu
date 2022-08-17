@@ -17,6 +17,8 @@ class Novu {
 
   private socketUrl?: string = '';
 
+  private theme?: Record<string, unknown>;
+
   private debugMode: boolean;
 
   private onloadFunc: (b: any) => void;
@@ -60,6 +62,7 @@ class Novu {
       this.options = selectorOrOptions;
       this.backendUrl = selectorOrOptions.backendUrl;
       this.socketUrl = selectorOrOptions.socketUrl;
+      this.theme = selectorOrOptions.theme;
     }
 
     this.clientId = clientId;
@@ -261,6 +264,7 @@ class Novu {
               clientId: this.clientId,
               backendUrl: this.backendUrl,
               socketUrl: this.socketUrl,
+              theme: this.theme,
               topHost: window.location.host,
               data: options,
             },
@@ -350,6 +354,7 @@ interface IOptions {
   unseenBadgeSelector: string;
   backendUrl?: string;
   socketUrl?: string;
+  theme?: Record<string, unknown>;
   position?: {
     top?: number | string;
     left?: number | string;
