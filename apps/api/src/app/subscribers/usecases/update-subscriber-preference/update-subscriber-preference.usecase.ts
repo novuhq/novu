@@ -28,7 +28,7 @@ export class UpdateSubscriberPreference {
     });
 
     if (!userPreference) {
-      const channelObj = {} as Record<'email' | 'sms' | 'in_app' | 'direct' | 'push', boolean>;
+      const channelObj = {} as Record<'email' | 'sms' | 'in_app' | 'chat' | 'push', boolean>;
       channelObj[command.channel?.type] = command.channel?.enabled;
 
       await this.subscriberPreferenceRepository.create({

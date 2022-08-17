@@ -137,9 +137,9 @@ export function ActivitiesPage() {
               <Tag data-test-id="row-sms-channel">Push</Tag>
             </Tooltip>
           ) : null}
-          {channel === ChannelTypeEnum.DIRECT ? (
-            <Tooltip label="Delivered on Direct Channel">
-              <Tag data-test-id="row-direct-channel">Direct</Tag>
+          {channel === ChannelTypeEnum.CHAT ? (
+            <Tooltip label="Delivered on Chat Channel">
+              <Tag data-test-id="row-chat-channel">Chat</Tag>
             </Tooltip>
           ) : null}
         </>

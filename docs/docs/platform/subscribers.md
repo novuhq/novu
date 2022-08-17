@@ -52,21 +52,21 @@ await novu.subscribers.update(user.id, {
 
 ### Updating subscriber credentials
 
-In case the user want to use direct channel, he will need to set the credentials that needed to be authentication with.
+In case the user want to use chat channel, he will need to set the credentials that needed to be authentication with.
 
 ```typescript
-import { Novu, DirectProviderIdEnum} from '@novu/node'
+import { Novu, ChatProviderIdEnum} from '@novu/node'
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-await novu.subscribers.setCredentials('subscriberId', DirectProviderIdEnum.Slack, {
+await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, {
   webhookUrl: 'webhookUrl',
 });
 ```
 
 - subscriberId is a custom identifier used when identifying your users within the Novu platform.
-- providerId is a unique provider identifier (we recommend using DirectProviderIdEnum).
-- credentials are the argument you need to be authentication with your provider workspace. At this point, we support direct messages through webhook, so a webhookUrl is needed to be provided.
+- providerId is a unique provider identifier (we recommend using ChatProviderIdEnum).
+- credentials are the argument you need to be authentication with your provider workspace. At this point, we support chat messages through webhook, so a webhookUrl is needed to be provided.
 
 ### Removing a subscriber
 

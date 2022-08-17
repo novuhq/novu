@@ -6,7 +6,7 @@ import { TemplateSMSEditor } from './TemplateSMSEditor';
 import { useTemplateController } from './use-template-controller.hook';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { TemplatePushEditor } from './TemplatePushEditor';
-import { TemplateDirectEditor } from './direct-editor/TemplateDirectEditor';
+import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
 
 export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
   const { integrations } = useActiveIntegrations();
@@ -72,17 +72,17 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
           })}
         </div>
       )}
-      {activePage === ActivePageEnum.DIRECT && (
+      {activePage === ActivePageEnum.CHAT && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.DIRECT && activeStep === index ? (
-              <TemplateDirectEditor
+            return message.template.type === StepTypeEnum.CHAT && activeStep === index ? (
+              <TemplateChatEditor
                 key={index}
                 errors={errors}
                 control={control}
                 index={index}
                 isIntegrationActive={
-                  !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.DIRECT)
+                  !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)
                 }
               />
             ) : null;

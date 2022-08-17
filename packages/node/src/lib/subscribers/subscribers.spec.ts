@@ -25,7 +25,7 @@ describe('test use of novus node package - Subscribers class', () => {
 
     expect(mockedAxios.put).toHaveBeenCalled();
     expect(mockedAxios.put).toHaveBeenCalledWith(
-      `/subscribers/test-update-subscriber`,
+      `/test-update-subscriber/subscribers`,
       {
         phone: '8989898',
       }
@@ -78,11 +78,9 @@ describe('test use of novus node package - Subscribers class', () => {
     expect(mockedAxios.put).toHaveBeenCalledWith(
       `/subscribers/test-update-subscriber/credentials`,
       {
-        channel: {
-          providerId: 'slack',
-          credentials: {
-            webhookUrl: 'webhookUrl',
-          },
+        providerId: 'slack',
+        credentials: {
+          webhookUrl: 'webhookUrl',
         },
       }
     );

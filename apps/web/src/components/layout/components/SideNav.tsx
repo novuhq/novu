@@ -113,6 +113,17 @@ export function SideNav({}: Props) {
         </Popover>
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
+      <BottomNav data-test-id="side-nav-bottom-links">
+        <a target="_blank" href="https://discord.gg/novu" data-test-id="side-nav-bottom-link-support">
+          Support
+        </a>
+        <p>
+          <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+        </p>
+        <a target="_blank" href="https://docs.novu.co" data-test-id="side-nav-bottom-link-documentation">
+          Documentation
+        </a>
+      </BottomNav>
     </Navbar>
   );
 }
@@ -124,4 +135,13 @@ const StyledLink = styled.a`
   &:hover {
     cursor: pointer;
   }
+`;
+
+const BottomNav = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: 5px;
+  color: ${colors.B60};
 `;

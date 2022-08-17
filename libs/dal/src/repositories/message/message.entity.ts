@@ -41,7 +41,7 @@ export class MessageEntity {
 
   phone?: string;
 
-  directWebhookUrl?: string;
+  chatWebhookUrl?: string;
 
   providerId?: string;
 

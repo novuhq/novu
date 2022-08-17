@@ -53,6 +53,7 @@
     "cross-env": "^7.0.3",
     "cypress": "^10.1.0",
     "cypress-intellij-reporter": "^0.0.6",
+    "cypress-network-idle": "^1.10.0",
     "html-webpack-plugin": "5.5.0",
     "http-server": "^0.12.3",
     "jest": "27.0.6",

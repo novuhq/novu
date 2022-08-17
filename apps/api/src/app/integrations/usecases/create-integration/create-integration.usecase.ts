@@ -25,7 +25,7 @@ export class CreateIntegration {
         active: command.active,
       });
 
-      if (command.active && ![ChannelTypeEnum.DIRECT, ChannelTypeEnum.PUSH].includes(command.channel)) {
+      if (command.active && ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(command.channel)) {
         await this.deactivateSimilarChannelIntegrations.execute({
           environmentId: command.environmentId,
           organizationId: command.organizationId,

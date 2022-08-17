@@ -6,20 +6,28 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
-import { CreateSubscriberBodyDto } from './dto/create-subscriber.dto';
-import { UpdateSubscriberBodyDto } from './dto/update-subscriber.dto';
-import { UpdateSubscriberChannelDto } from './dto/update-subscriber-channel.dto';
+import {
+  CreateSubscriberRequestDto,
+  DeleteSubscriberResponseDto,
+  SubscriberResponseDto,
+  SubscribersResponseDto,
+  UpdateSubscriberChannelRequestDto,
+  UpdateSubscriberRequestDto,
+} from './dtos';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers } from './usecases/get-subscribers';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { UpdateSubscriberPreferenceDto } from '../widgets/dtos/update-subscriber-preference.dto';
-import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
-import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
+import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse } from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
+import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
+import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
+import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
+import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
 
 @Controller('/subscribers')
+@ApiTags('Subscribers')
 export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
@@ -35,7 +43,14 @@ export class SubscribersController {
   @Get('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0) {
+  @ApiOkResponse({
+    type: SubscribersResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get subscribers',
+    description: 'Get subscribers paginated',
+  })
+  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
@@ -48,7 +63,17 @@ export class SubscribersController {
   @Get('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async getSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+  @ApiOkResponse({
+    type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get subscriber',
+    description: 'Get subscriber by your internal id for subscriber',
+  })
+  async getSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<SubscriberResponseDto> {
     return await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
         environmentId: user.environmentId,
@@ -61,7 +86,17 @@ export class SubscribersController {
   @Post('/')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async createSubscriber(@UserSession() user: IJwtPayload, @Body() body: CreateSubscriberBodyDto) {
+  @ApiCreatedResponse({
+    type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Create subscriber',
+    description: 'Create subscriber with your internal id for subscriber',
+  })
+  async createSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Body() body: CreateSubscriberRequestDto
+  ): Promise<SubscriberResponseDto> {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
         environmentId: user.environmentId,
@@ -79,11 +114,18 @@ export class SubscribersController {
   @Put('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update subscriber',
+    description: 'Update subscriber with your internal id for subscriber',
+  })
   async updateSubscriber(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: UpdateSubscriberBodyDto
-  ) {
+    @Body() body: UpdateSubscriberRequestDto
+  ): Promise<SubscriberResponseDto> {
     return await this.updateSubscriberUsecase.execute(
       UpdateSubscriberCommand.create({
         environmentId: user.environmentId,
@@ -101,11 +143,18 @@ export class SubscribersController {
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update subscriber channel details',
+    description: 'Update subscribers channel details with your internal id for subscriber',
+  })
   async updateSubscriberChannel(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: UpdateSubscriberChannelDto
-  ) {
+    @Body() body: UpdateSubscriberChannelRequestDto
+  ): Promise<SubscriberResponseDto> {
     return await this.updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
         environmentId: user.environmentId,
@@ -120,7 +169,17 @@ export class SubscribersController {
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async removeSubscriber(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+  @ApiOkResponse({
+    type: DeleteSubscriberResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Delete subscriber',
+    description: 'Delete subscriber with your internal id for subscriber',
+  })
+  async removeSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<DeleteSubscriberResponseDto> {
     return await this.removeSubscriberUsecase.execute(
       RemoveSubscriberCommand.create({
         environmentId: user.environmentId,
@@ -133,7 +192,16 @@ export class SubscribersController {
   @Get('/:subscriberId/preferences')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  async getSubscriberPreference(@UserSession() user: IJwtPayload, @Param('subscriberId') subscriberId: string) {
+  @ApiOkResponse({
+    type: [UpdateSubscriberPreferenceResponseDto],
+  })
+  @ApiOperation({
+    summary: 'Get subscriber preferences',
+  })
+  async getSubscriberPreference(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string
+  ): Promise<UpdateSubscriberPreferenceResponseDto[]> {
     const command = GetPreferencesCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,
@@ -146,12 +214,18 @@ export class SubscribersController {
   @Patch('/:subscriberId/preferences/:templateId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    type: UpdateSubscriberPreferenceResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update subscriber preference',
+  })
   async updateSubscriberPreference(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
     @Param('templateId') templateId: string,
-    @Body() body: UpdateSubscriberPreferenceDto
-  ) {
+    @Body() body: UpdateSubscriberPreferenceRequestDto
+  ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,

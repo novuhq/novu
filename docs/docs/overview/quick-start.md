@@ -54,7 +54,7 @@ Similiar to the the email, custom variables using hbs syntax can be described to
 
 In the notification center preview you can type the content, you can select content and use `CMD` + `B` to make the selected text bold.
 
-#### Direct
+#### Chat
 
 Custom variables using hbs syntax can be described to create the final message.
 In addition to the integration, any subscriber needs to set credentials in order to have proper authorization on the channel.

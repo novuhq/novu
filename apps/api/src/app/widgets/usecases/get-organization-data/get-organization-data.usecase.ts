@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
+import { OrganizationRepository } from '@novu/dal';
+import { OrganizationResponseDto } from '../../dtos/organization-response.dto';
 import { GetOrganizationDataCommand } from './get-organization-data.command';
 
 @Injectable()
 export class GetOrganizationData {
   constructor(private organizationRepository: OrganizationRepository) {}
 
-  async execute(command: GetOrganizationDataCommand): Promise<Pick<OrganizationEntity, '_id' | 'name' | 'branding'>> {
+  async execute(command: GetOrganizationDataCommand): Promise<OrganizationResponseDto> {
     const environment = await this.organizationRepository.findById(command.organizationId);
 
     return {

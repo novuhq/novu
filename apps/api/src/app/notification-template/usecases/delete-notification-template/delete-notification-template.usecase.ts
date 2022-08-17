@@ -37,6 +37,6 @@ export class DeleteNotificationTemplate {
       throw e;
     }
 
-    return command;
+    return true;
   }
 }

@@ -29,7 +29,7 @@ describe('GET /widget/preferences', function () {
 
   it('should fetch according to template preferences defaults ', async function () {
     const templateDefaultSettings = await session.createTemplate({
-      preferenceSettingsOverride: { email: true, direct: true, push: true, sms: true, in_app: false },
+      preferenceSettingsOverride: { email: true, chat: true, push: true, sms: true, in_app: false },
       noFeedId: true,
     });
     const response = await getSubscriberPreference(session.subscriberToken);

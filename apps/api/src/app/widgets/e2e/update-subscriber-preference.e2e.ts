@@ -2,7 +2,8 @@ import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { ChannelTypeEnum, IUpdateSubscriberPreferenceDto } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
+import { UpdateSubscriberPreferenceRequestDto } from '../dtos/update-subscriber-preference-request.dto';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
 describe('PATCH /widgets/preferences/:templateId', function () {
@@ -57,7 +58,7 @@ describe('PATCH /widgets/preferences/:templateId', function () {
     expect(response.preference.channels.email).to.equal(false);
     expect(response.preference.channels.in_app).to.equal(true);
     expect(response.preference.channels.sms).to.be.not.ok;
-    expect(response.preference.channels.direct).to.be.not.ok;
+    expect(response.preference.channels.chat).to.be.not.ok;
   });
 
   it(
@@ -73,7 +74,7 @@ describe('PATCH /widgets/preferences/:templateId', function () {
 
       const updateDataEmailFalse = {
         channel: {},
-      } as IUpdateSubscriberPreferenceDto;
+      } as UpdateSubscriberPreferenceRequestDto;
 
       let responseMessage = '';
       try {
@@ -88,7 +89,7 @@ describe('PATCH /widgets/preferences/:templateId', function () {
 
   it('should override template preference defaults after subscriber update', async function () {
     const templateDefaultSettings = await session.createTemplate({
-      preferenceSettingsOverride: { email: false, direct: true, push: true, sms: true, in_app: true },
+      preferenceSettingsOverride: { email: false, chat: true, push: true, sms: true, in_app: true },
       noFeedId: true,
     });
 
@@ -110,7 +111,7 @@ describe('PATCH /widgets/preferences/:templateId', function () {
 });
 
 export async function updateSubscriberPreference(
-  data: IUpdateSubscriberPreferenceDto,
+  data: UpdateSubscriberPreferenceRequestDto,
   subscriberToken: string,
   templateId: string
 ) {

@@ -18,7 +18,7 @@ import {
   IPreferenceChannels,
 } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { MessageTemplateDto } from '../../dto';
+import { MessageTemplate } from '../../../shared/dtos/message-template';
 
 export class CreateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
@@ -73,7 +73,7 @@ export class ChannelCTACommand {
 class NotificationStepCommand {
   @ValidateNested()
   @IsOptional()
-  template?: MessageTemplateDto;
+  template?: MessageTemplate;
 
   @IsOptional()
   name?: string;

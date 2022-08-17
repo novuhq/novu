@@ -2,8 +2,9 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { ChannelTypeEnum, IUpdateSubscriberPreferenceDto } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { getPreference } from './get-preferences.e2e';
+import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 
 const axiosInstance = axios.create();
 
@@ -42,7 +43,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
   });
 });
 
-async function updatePreference(data: IUpdateSubscriberPreferenceDto, session: UserSession, templateId: string) {
+async function updatePreference(data: UpdateSubscriberPreferenceRequestDto, session: UserSession, templateId: string) {
   return await axiosInstance.patch(
     `${session.serverUrl}/v1/subscribers/${session.subscriberId}/preferences/${templateId}`,
     data,

@@ -90,7 +90,7 @@ function getNoSettingFallback(
       email: true,
       sms: true,
       in_app: true,
-      direct: true,
+      chat: true,
       push: true,
     },
     activeChannels
