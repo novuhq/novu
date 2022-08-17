@@ -50,7 +50,7 @@ export class ChannelsController {
   @Put('/sms/settings')
   @Roles(MemberRoleEnum.ADMIN)
   @ApiOperation({
-    summary: 'Update mail settings',
+    summary: 'Update sms settings',
   })
   @ApiOkResponse({
     type: UpdateSettingsResponseDto,
