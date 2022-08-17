@@ -48,7 +48,7 @@ export function TemplatePushEditor({
             styles={TextAreaStyles}
             {...field}
             data-test-id="pushNotificationContent"
-            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
+            error={errors?.steps ? errors.steps[index]?.template?.title?.message : undefined}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}
