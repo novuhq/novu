@@ -1,5 +1,6 @@
 import { IEmailBlock } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import { showNotification } from '@mantine/notifications';
 import { TextInput as MantineInput, Popover, Button as MantineButton } from '@mantine/core';
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
@@ -29,6 +30,20 @@ export function ButtonRowContent({
   function handleUrlChange(e) {
     setUrl(e.target.value);
     onUrlChange(e.target.value);
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') {
+      setDropDownVisible(false);
+      showSaveSuccess();
+    }
+  }
+
+  function showSaveSuccess() {
+    showNotification({
+      message: 'Button saved',
+      color: 'green',
+    });
   }
 
   useEffect(() => {
@@ -65,7 +80,10 @@ export function ButtonRowContent({
         })}
         opened={dropDownVisible && !readonly}
         withArrow
-        onClose={() => setDropDownVisible(false)}
+        onClose={() => {
+          setDropDownVisible(false);
+          showSaveSuccess();
+        }}
         target={
           <MantineButton
             sx={{
@@ -86,6 +104,7 @@ export function ButtonRowContent({
           icon={<TextAlignment />}
           variant="unstyled"
           onChange={handleTextChange}
+          onKeyDown={handleKeyDown}
           value={text}
           placeholder="Button Text"
         />
@@ -93,6 +112,7 @@ export function ButtonRowContent({
           icon={<Wifi width={20} height={20} />}
           variant="unstyled"
           onChange={handleUrlChange}
+          onKeyDown={handleKeyDown}
           value={url || ''}
           placeholder="Button Link"
         />
