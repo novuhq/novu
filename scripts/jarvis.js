@@ -210,7 +210,7 @@ const setupProject = () =>
 
     command.on('exit', (exitCode) => {
       if (parseInt(exitCode) !== 0) {
-        reject(new Error(exitCode));
+        return reject(new Error(exitCode));
       }
 
       // eslint-disable-next-line no-console
