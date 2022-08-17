@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -29,21 +29,14 @@ import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-sub
 import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
 import { GetUnseenCountCommand } from '../widgets/usecases/get-unseen-count/get-unseen-count.command';
-import { OrganizationResponseDto } from '../widgets/dtos/organization-response.dto';
 import { MessageEntity } from '@novu/dal';
 import { MarkMessageAsSeenCommand } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.command';
 import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
-import { GetOrganizationDataCommand } from '../widgets/usecases/get-organization-data/get-organization-data.command';
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
 import { GetUnseenCount } from '../widgets/usecases/get-unseen-count/get-unseen-count.usecase';
 import { MarkMessageAsSeen } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
-import { GetOrganizationData } from '../widgets/usecases/get-organization-data/get-organization-data.usecase';
-import { LogUsageRequestDto } from '../widgets/dtos/log-usage-request.dto';
-import { LogUsageResponseDto } from '../widgets/dtos/log-usage-response.dto';
-import { AnalyticsService } from '../shared/services/analytics/analytics.service';
-import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -60,9 +53,7 @@ export class SubscribersController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
     private markMessageAsSeenUsecase: MarkMessageAsSeen,
-    private updateMessageActionsUsecase: UpdateMessageActions,
-    private getOrganizationUsecase: GetOrganizationData,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private updateMessageActionsUsecase: UpdateMessageActions
   ) {}
 
   @Get('')
@@ -378,41 +369,5 @@ export class SubscribersController {
         status: body.status,
       })
     );
-  }
-
-  @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
-  @Get('/:subscriberId/organization')
-  @ApiOperation({
-    summary: 'Get organization',
-  })
-  @ApiOkResponse({
-    type: OrganizationResponseDto,
-  })
-  async getOrganizationData(
-    @UserSession() user: IJwtPayload,
-    @Param('subscriberId') subscriberId: string
-  ): Promise<OrganizationResponseDto> {
-    const command = GetOrganizationDataCommand.create({
-      organizationId: user.organizationId,
-      environmentId: user.environmentId,
-      subscriberId: subscriberId,
-    });
-
-    return await this.getOrganizationUsecase.execute(command);
-  }
-
-  @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
-  @Post('/usage/log')
-  async logUsage(@UserSession() user: IJwtPayload, @Body() body: LogUsageRequestDto): Promise<LogUsageResponseDto> {
-    this.analyticsService.track(body.name, user.organizationId, {
-      environmentId: user.environmentId,
-      ...(body.payload || {}),
-    });
-
-    return {
-      success: true,
-    };
   }
 }
