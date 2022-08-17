@@ -20,7 +20,7 @@ import { GetFeeds } from './usecases/get-feeds/get-feeds.usecase';
 import { GetFeedsCommand } from './usecases/get-feeds/get-feeds.command';
 import { DeleteFeed } from './usecases/delete-feed/delete-feed.usecase';
 import { DeleteFeedCommand } from './usecases/delete-feed/delete-feed.command';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FeedResponseDto } from './dto/feed-response.dto';
 
 @Controller('/feeds')
@@ -36,7 +36,7 @@ export class FeedsController {
 
   @Post('')
   @Roles(MemberRoleEnum.ADMIN)
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: FeedResponseDto,
   })
   @ApiOperation({

@@ -11,7 +11,7 @@ import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.comm
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
-import { ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('events')
 @ApiTags('Event')
@@ -25,7 +25,7 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: TriggerEventResponseDto,
     content: {
       '200': {
@@ -67,7 +67,7 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/broadcast')
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: TriggerEventResponseDto,
     content: {
       '200': {
