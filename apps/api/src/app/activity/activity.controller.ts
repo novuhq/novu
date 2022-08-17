@@ -13,6 +13,7 @@ import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
 import { ActivitiesResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphqStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivitesRequestDto } from './dtos/activites-request.dto';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/activity')
 @ApiTags('Activity')
@@ -31,6 +32,7 @@ export class ActivityController {
     summary: 'Get activity feed',
   })
   @UseGuards(JwtAuthGuard)
+  @ExternalApiAccessible()
   getActivityFeed(
     @UserSession() user: IJwtPayload,
     @Query() query: ActivitesRequestDto
@@ -73,6 +75,7 @@ export class ActivityController {
   })
   @Get('/stats')
   @UseGuards(JwtAuthGuard)
+  @ExternalApiAccessible()
   getActivityStats(@UserSession() user: IJwtPayload): Promise<ActivityStatsResponseDto> {
     return this.getActivityStatsUsecase.execute(
       GetActivityStatsCommand.create({
@@ -85,6 +88,7 @@ export class ActivityController {
 
   @Get('/graph/stats')
   @UseGuards(JwtAuthGuard)
+  @ExternalApiAccessible()
   @ApiOkResponse({
     type: [ActivityGraphqStatesResponse],
   })

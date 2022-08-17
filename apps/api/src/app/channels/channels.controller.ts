@@ -11,6 +11,7 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateMailSettingsRequestDto } from './dtos/update-mail-settings-request.dto';
 import { UpdateSmsSettingsRequestDto } from './dtos/update-sms-settings-request.dto';
 import { UpdateSettingsResponseDto } from './dtos/update-settings-response.dto';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/channels')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -30,6 +31,7 @@ export class ChannelsController {
   @ApiOkResponse({
     type: UpdateSettingsResponseDto,
   })
+  @ExternalApiAccessible()
   updateMailSettings(
     @UserSession() user: IJwtPayload,
     @Body() body: UpdateMailSettingsRequestDto
@@ -53,6 +55,7 @@ export class ChannelsController {
   @ApiOkResponse({
     type: UpdateSettingsResponseDto,
   })
+  @ExternalApiAccessible()
   updateSmsSettings(
     @UserSession() user: IJwtPayload,
     @Body() body: UpdateSmsSettingsRequestDto

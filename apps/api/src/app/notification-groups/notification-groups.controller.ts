@@ -10,12 +10,12 @@ import { GetNotificationGroups } from './usecases/get-notification-groups/get-no
 import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
 import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Notification groups')
-@ApiExcludeController()
 export class NotificationGroupsController {
   constructor(
     private createNotificationGroupUsecase: CreateNotificationGroup,
@@ -24,6 +24,7 @@ export class NotificationGroupsController {
 
   @Post('')
   @Roles(MemberRoleEnum.ADMIN)
+  @ExternalApiAccessible()
   @ApiCreatedResponse({
     type: NotificationGroupResponseDto,
   })
@@ -46,6 +47,7 @@ export class NotificationGroupsController {
 
   @Get('')
   @Roles(MemberRoleEnum.ADMIN)
+  @ExternalApiAccessible()
   @ApiOkResponse({
     type: [NotificationGroupResponseDto],
   })

@@ -8,7 +8,7 @@ import { SubscribersModule } from '../subscribers/subscribers.module';
 @Module({
   imports: [SharedModule, SubscribersModule, AuthModule],
   providers: [...USE_CASES],
-  exports: [],
+  exports: [...USE_CASES],
   controllers: [WidgetsController],
 })
 export class WidgetsModule {}

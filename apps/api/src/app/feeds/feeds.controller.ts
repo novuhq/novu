@@ -22,6 +22,7 @@ import { DeleteFeed } from './usecases/delete-feed/delete-feed.usecase';
 import { DeleteFeedCommand } from './usecases/delete-feed/delete-feed.command';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FeedResponseDto } from './dto/feed-response.dto';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/feeds')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -42,6 +43,7 @@ export class FeedsController {
   @ApiOperation({
     summary: 'Create feed',
   })
+  @ExternalApiAccessible()
   createFeed(@UserSession() user: IJwtPayload, @Body() body: CreateFeedRequestDto): Promise<FeedResponseDto> {
     return this.createFeedUsecase.execute(
       CreateFeedCommand.create({
@@ -61,6 +63,7 @@ export class FeedsController {
   @ApiOperation({
     summary: 'Get feeds',
   })
+  @ExternalApiAccessible()
   getFeeds(@UserSession() user: IJwtPayload): Promise<FeedResponseDto[]> {
     return this.getFeedsUsecase.execute(
       GetFeedsCommand.create({
@@ -79,6 +82,7 @@ export class FeedsController {
     summary: 'Delete feed',
   })
   @Roles(MemberRoleEnum.ADMIN)
+  @ExternalApiAccessible()
   deleteFeedById(@UserSession() user: IJwtPayload, @Param('feedId') feedId: string): Promise<FeedResponseDto[]> {
     return this.deleteFeedsUsecase.execute(
       DeleteFeedCommand.create({
