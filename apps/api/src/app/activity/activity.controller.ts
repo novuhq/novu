@@ -8,11 +8,14 @@ import { GetActivityStats } from './usecases/get-activity-stats/get-activity-sta
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
 import { GetActivityGraphStats } from './usecases/get-acticity-graph-states/get-acticity-graph-states.usecase';
 import { GetActivityGraphStatsCommand } from './usecases/get-acticity-graph-states/get-acticity-graph-states.command';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
+import { ActivitiesResponseDto } from './dtos/activities-response.dto';
+import { ActivityGraphqStatesResponse } from './dtos/activity-graph-states-response.dto';
+import { ActivitesRequestDto } from './dtos/activites-request.dto';
 
 @Controller('/activity')
 @ApiTags('Activity')
-@ApiExcludeController()
 export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
@@ -21,48 +24,56 @@ export class ActivityController {
   ) {}
 
   @Get('')
+  @ApiOkResponse({
+    type: ActivitiesResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get activity feed',
+  })
   @UseGuards(JwtAuthGuard)
   getActivityFeed(
     @UserSession() user: IJwtPayload,
-    @Query('channels') channels: ChannelTypeEnum[] | ChannelTypeEnum,
-    @Query('templates') templates: string[] | string,
-    @Query('emails') emails: string | string[],
-    @Query('search') search: string,
-    @Query('page') page = 0
-  ) {
+    @Query() query: ActivitesRequestDto
+  ): Promise<ActivitiesResponseDto> {
     let channelsQuery: ChannelTypeEnum[];
 
-    if (channels) {
-      channelsQuery = Array.isArray(channels) ? channels : [channels];
+    if (query.channels) {
+      channelsQuery = Array.isArray(query.channels) ? query.channels : [query.channels];
     }
 
     let templatesQuery: string[];
-    if (templates) {
-      templatesQuery = Array.isArray(templates) ? templates : [templates];
+    if (query.templates) {
+      templatesQuery = Array.isArray(query.templates) ? query.templates : [query.templates];
     }
 
     let emailsQuery: string[];
-    if (emails) {
-      emailsQuery = Array.isArray(emails) ? emails : [emails];
+    if (query.emails) {
+      emailsQuery = Array.isArray(query.emails) ? query.emails : [query.emails];
     }
 
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
-        page: page ? Number(page) : 0,
+        page: query.page ? Number(query.page) : 0,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
         channels: channelsQuery,
         templates: templatesQuery,
         emails: emailsQuery,
-        search,
+        search: query.search,
       })
     );
   }
 
+  @ApiOkResponse({
+    type: ActivityStatsResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get activity statistics',
+  })
   @Get('/stats')
   @UseGuards(JwtAuthGuard)
-  getActivityStats(@UserSession() user: IJwtPayload, @Query('page') page = 0) {
+  getActivityStats(@UserSession() user: IJwtPayload): Promise<ActivityStatsResponseDto> {
     return this.getActivityStatsUsecase.execute(
       GetActivityStatsCommand.create({
         organizationId: user.organizationId,
@@ -74,7 +85,21 @@ export class ActivityController {
 
   @Get('/graph/stats')
   @UseGuards(JwtAuthGuard)
-  getActivityGraphStats(@UserSession() user: IJwtPayload, @Query('days') days = 32) {
+  @ApiOkResponse({
+    type: [ActivityGraphqStatesResponse],
+  })
+  @ApiOperation({
+    summary: 'Get activity graph statistics',
+  })
+  @ApiQuery({
+    name: 'days',
+    type: Number,
+    required: false,
+  })
+  getActivityGraphStats(
+    @UserSession() user: IJwtPayload,
+    @Query('days') days = 32
+  ): Promise<ActivityGraphqStatesResponse[]> {
     return this.getActivityGraphStatsUsecase.execute(
       GetActivityGraphStatsCommand.create({
         days: days ? Number(days) : 32,

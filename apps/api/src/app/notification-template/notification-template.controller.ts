@@ -30,7 +30,7 @@ import { ChangeTemplateActiveStatus } from './usecases/change-template-active-st
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationTemplateResponse } from './dto/notification-template-response.dto';
 
 @Controller('/notification-templates')
@@ -140,7 +140,7 @@ export class NotificationTemplateController {
   @Post('')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: NotificationTemplateResponse,
   })
   @ApiOperation({

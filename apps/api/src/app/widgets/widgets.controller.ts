@@ -18,7 +18,7 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
@@ -50,7 +50,7 @@ export class WidgetsController {
   ) {}
 
   @Post('/session/initialize')
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: SessionInitializeResponseDto,
   })
   @ApiOperation({
@@ -135,7 +135,7 @@ export class WidgetsController {
   @ApiOperation({
     summary: 'Mark message as seen',
   })
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: MessageResponseDto,
   })
   async markMessageAsSeen(
@@ -157,7 +157,7 @@ export class WidgetsController {
   @ApiOperation({
     summary: 'Mark action as seen',
   })
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: MessageResponseDto,
   })
   async markActionAsSeen(
@@ -244,7 +244,7 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/usage/log')
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: LogUsageResponseDto,
   })
   @ApiOperation({
