@@ -144,7 +144,6 @@ export class SendMessagePush extends SendMessageType {
     overrides: object,
     providerId: string
   ) {
-    console.log(integration);
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
       _environmentId: command.environmentId,

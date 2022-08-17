@@ -10,7 +10,6 @@ export class PushFactory implements IPushFactory {
     try {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
-      console.log(handler);
       if (!handler) return null;
 
       handler.buildProvider(integration.credentials);
