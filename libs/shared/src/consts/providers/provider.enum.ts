@@ -46,4 +46,5 @@ export enum ChatProviderIdEnum {
 export enum PushProviderIdEnum {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   FCM = 'fcm',
+  APNS = 'apns',
 }

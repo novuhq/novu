@@ -57,6 +57,10 @@
       "path": "packages/notification-center"
     },
     {
+      "name": "🔔 @novu/apns",
+      "path": "providers/apns"
+    },
+    {
       "name": "🔔 @novu/discord",
       "path": "providers/discord"
     },

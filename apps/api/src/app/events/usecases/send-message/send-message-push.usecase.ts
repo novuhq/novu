@@ -144,6 +144,7 @@ export class SendMessagePush extends SendMessageType {
     overrides: object,
     providerId: string
   ) {
+    console.log(integration);
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
@@ -163,7 +164,6 @@ export class SendMessagePush extends SendMessageType {
 
     try {
       const pushHandler = this.pushFactory.getHandler(integration);
-
       await pushHandler.send({
         target: (overrides as { notificationIdentifiers?: string[] }).notificationIdentifiers || target,
         title,
