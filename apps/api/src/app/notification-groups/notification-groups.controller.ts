@@ -4,11 +4,12 @@ import { CreateNotificationGroup } from './usecases/create-notification-group/cr
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
-import { CreateNotificationGroupDto } from './dto/create-notification-group.dto';
+import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetNotificationGroups } from './usecases/get-notification-groups/get-notification-groups.usecase';
 import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -23,7 +24,16 @@ export class NotificationGroupsController {
 
   @Post('')
   @Roles(MemberRoleEnum.ADMIN)
-  createNotificationGroup(@UserSession() user: IJwtPayload, @Body() body: CreateNotificationGroupDto) {
+  @ApiCreatedResponse({
+    type: NotificationGroupResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Create notification group',
+  })
+  createNotificationGroup(
+    @UserSession() user: IJwtPayload,
+    @Body() body: CreateNotificationGroupRequestDto
+  ): Promise<NotificationGroupResponseDto> {
     return this.createNotificationGroupUsecase.execute(
       CreateNotificationGroupCommand.create({
         organizationId: user.organizationId,
@@ -36,7 +46,13 @@ export class NotificationGroupsController {
 
   @Get('')
   @Roles(MemberRoleEnum.ADMIN)
-  getNotificationGroups(@UserSession() user: IJwtPayload) {
+  @ApiOkResponse({
+    type: [NotificationGroupResponseDto],
+  })
+  @ApiOperation({
+    summary: 'Get notification groups',
+  })
+  getNotificationGroups(@UserSession() user: IJwtPayload): Promise<NotificationGroupResponseDto[]> {
     return this.getNotificationGroupsUsecase.execute(
       GetNotificationGroupsCommand.create({
         organizationId: user.organizationId,
