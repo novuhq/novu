@@ -41,7 +41,7 @@ Let's explore them in detail:
 
 ### Regular Strategy
 
-In regular strategy, a digest will always be created for the specified window time. Which means that from the first event trigger, if not active digest exists for this subscriber one will be created and the user will receive the message only when the digest window time is reached.
+In regular strategy, a digest will always be created for the specified window time. Which means that from the first event trigger, if no active digest exists for this subscriber one will be created and the user will receive the message only when the digest window time is reached.
 
 ### Back-off Strategy
 
