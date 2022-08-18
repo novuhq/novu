@@ -7,7 +7,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",
-    "setup:project": "npx pnpm@7.3.0 i && node scripts/setup-env-files.js && npx pnpm build",
+    "setup:project": "npx pnpm@7.5.0 i && node scripts/setup-env-files.js && npx pnpm build",
     "clean": "lerna clean --yes",
     "commit": "cz",
     "nx": "nx",
