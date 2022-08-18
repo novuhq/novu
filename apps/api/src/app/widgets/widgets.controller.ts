@@ -175,7 +175,7 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/preference/:templateId')
+  @Patch('/preferences/:templateId')
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('templateId') templateId: string,

@@ -12,7 +12,9 @@ export function SubscriberPreference() {
   const { preferences: data, updatePreference, loading } = useSubscriberPreference();
   const baseTheme = theme?.userPreferences;
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
-  const preferences = data?.filter((item) => !item.template.critical);
+  const preferences = data
+    ?.filter((item) => !item.template.critical)
+    ?.filter((pref) => Object.keys(pref.preference.channels).length > 0);
 
   return (
     <>

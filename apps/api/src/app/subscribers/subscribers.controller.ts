@@ -17,8 +17,7 @@ import {
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers } from './usecases/get-subscribers';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
-import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
-import { GetSubscriberCommand } from './usecases/get-subscriber';
+import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
 import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse } from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
@@ -227,7 +226,7 @@ export class SubscribersController {
     return await this.getPreferenceUsecase.execute(command);
   }
 
-  @Patch('/:subscriberId/preference/:templateId')
+  @Patch('/:subscriberId/preferences/:templateId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @ApiOkResponse({
