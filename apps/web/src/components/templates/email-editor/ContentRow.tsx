@@ -19,10 +19,10 @@ export function ContentRow({
   onRemove: () => void;
   allowRemove: boolean;
   block: IEmailBlock;
-  onStyleChanged: (data: { textDirection: 'ltr' | 'rtl' }) => void;
+  onStyleChanged: (data: { textAlign: 'left' | 'right' | 'center' }) => void;
 }) {
   const { readonly } = useEnvController();
-  const [textDirection, setTextDirection] = useState<'ltr' | 'rtl'>(block?.styles?.textDirection || 'ltr');
+  const [textAlign, settextAlign] = useState<'left' | 'right' | 'center'>(block?.styles?.textAlign || 'left');
   const parentRef = useRef<HTMLDivElement>(null);
   const theme = useMantineTheme();
 
@@ -37,19 +37,20 @@ export function ContentRow({
 
   useEffect(() => {
     onStyleChanged({
-      textDirection,
+      textAlign,
     });
-  }, [textDirection]);
+  }, [textAlign]);
 
   const changeRowStyles = (value) => {
-    setTextDirection(value);
+    settextAlign(value);
   };
 
   const rowStyleMenu = [
-    <DropdownItem key="ltr" sx={{ '&:hover': { backgroundColor: 'transparent' } }}>
-      <RadioGroup value={textDirection} onChange={changeRowStyles}>
-        <Radio value="ltr" data-test-id="align-left-btn" label="Align Left" />
-        <Radio value="rtl" data-test-id="align-right-btn" label="Align Right" />
+    <DropdownItem key="left" sx={{ '&:hover': { backgroundColor: 'transparent' } }}>
+      <RadioGroup value={textAlign} onChange={changeRowStyles}>
+        <Radio value="left" data-test-id="align-left-btn" label="Align Left" />
+        <Radio value="center" data-test-id="align-center-btn" label="Align Center" />
+        <Radio value="right" data-test-id="align-right-btn" label="Align Right" />
       </RadioGroup>
     </DropdownItem>,
     <DropdownItem

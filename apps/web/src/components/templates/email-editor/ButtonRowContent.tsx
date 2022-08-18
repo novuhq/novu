@@ -55,10 +55,7 @@ export function ButtonRowContent({
   }, [block.url]);
 
   return (
-    <div
-      style={{ textAlign: 'center', direction: block?.styles?.textDirection || 'ltr' }}
-      data-test-id="button-block-wrapper"
-    >
+    <div style={{ textAlign: block?.styles?.textAlign || 'left' }} data-test-id="button-block-wrapper">
       <Popover
         styles={(theme) => ({
           inner: {

@@ -5,9 +5,9 @@ import { NotificationTemplateResponse } from '../../notification-template/dto/no
 
 class EmailBlockStyles {
   @ApiProperty({
-    enum: ['ltr', 'rtl'],
+    enum: ['left', 'right', 'center'],
   })
-  textDirection?: 'ltr' | 'rtl';
+  textAlign?: 'left' | 'right' | 'center';
 }
 
 class EmailBlock {
