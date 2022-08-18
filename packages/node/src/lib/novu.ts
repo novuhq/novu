@@ -2,7 +2,10 @@ import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
 import { EventEmitter } from 'events';
 import { INovu, INovuConfiguration } from './novu.interface';
-import { ITriggerPayloadOptions } from './subscribers/subscriber.interface';
+import {
+  IBroadcastPayloadOptions,
+  ITriggerPayloadOptions,
+} from './subscribers/subscriber.interface';
 
 export class Novu extends EventEmitter implements INovu {
   private readonly apiKey?: string;
@@ -27,6 +30,16 @@ export class Novu extends EventEmitter implements INovu {
     return await this.http.post(`/events/trigger`, {
       name: eventId,
       to: data.to,
+      payload: {
+        ...data?.payload,
+      },
+      overrides: data.overrides || {},
+    });
+  }
+
+  async broadcast(eventId: string, data: IBroadcastPayloadOptions) {
+    return await this.http.post(`/events/trigger/broadcast`, {
+      name: eventId,
       payload: {
         ...data?.payload,
       },
