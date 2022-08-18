@@ -11,6 +11,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('example@example.com');
       cy.getByTestId('password').type('usEr_password_123');
+      cy.getByTestId('accept-cb').click();
       cy.getByTestId('submitButton').click();
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
