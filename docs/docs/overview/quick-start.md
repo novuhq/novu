@@ -48,7 +48,7 @@ You can specify custom variables using the [{{handlebars}}](https://handlebarsjs
 
 #### SMS
 
-Similiar to the the email, custom variables using hbs syntax can be described to create the final message.
+Similiar to the the email, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
 
 #### In-app
 
