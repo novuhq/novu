@@ -46,10 +46,13 @@ export type TriggerRecipientsType =
   | TriggerRecipientsTypeSingle
   | TriggerRecipientsTypeArray;
 
-export interface ITriggerPayloadOptions {
+export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
+  to: TriggerRecipientsType;
+}
+
+export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
-  to: TriggerRecipientsType;
 }
 
 export interface ITriggerPayload {
