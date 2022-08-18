@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
@@ -86,9 +86,10 @@ export function SignUpForm({ token, email }: Props) {
       email,
       fullName: '',
       password: '',
-      accept: false,
     },
   });
+
+  const [accepted, setAccepted] = useState<boolean>(false);
 
   return (
     <>
@@ -151,8 +152,21 @@ export function SignUpForm({ token, email }: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        <Checkbox required label={<Accept />} data-test-id="accept" mt={20} />
-        <Button mt={60} inherit loading={isLoading || loadingAcceptInvite} submit data-test-id="submitButton">
+        <Checkbox
+          onChange={(prev) => setAccepted(prev.target.checked)}
+          required
+          label={<Accept />}
+          data-test-id="accept-cb"
+          mt={20}
+        />
+        <Button
+          disabled={!accepted}
+          mt={60}
+          inherit
+          loading={isLoading || loadingAcceptInvite}
+          submit
+          data-test-id="submitButton"
+        >
           Sign Up {token ? '& Accept Invite' : null}
         </Button>
         <Center mt={20}>
@@ -183,7 +197,7 @@ function Accept() {
       </a>
       <span> and have read the </span>
       <a style={{ textDecoration: 'underline' }} href="https://novu.co/privacy">
-        Privacy Policy{' '}
+        Privacy Policy
       </a>
     </div>
   );
