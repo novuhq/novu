@@ -79,3 +79,7 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 
 await novu.subscribers.remove(user.id);
 ```
+
+## Subscriber Preferences
+
+Novu manages a data model to help your users configure their preferences in an easy way. You can learn more about this in the [Subscriber Preferences](/platform/preferences) section.

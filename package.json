@@ -132,10 +132,10 @@
       "eslint --fix",
       "stop-only --file"
     ],
-    "docs/**/*.{ts,tsx,json}": [
+    "docs/**/*.{md,mdx}": [
       "prettier --ignore-path ./.prettierignore --write",
       "eslint --fix",
-      "stop-only --file"
+      "cd docs && npm run lint:md"
     ],
     "libs/**/*.{ts,js,json}": [
       "prettier --ignore-path ./.prettierignore --write",
