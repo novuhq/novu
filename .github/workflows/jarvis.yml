@@ -12,7 +12,7 @@ jobs:
     steps:
       - id: get-comment-body
         run: |
-          body="$(cat apps/api/jarvis-intro.md)"
+          body="$(cat .github//jarvis-intro.md)"
           body="${body//'%'/'%25'}"
           body="${body//$'\n'/'%0A'}"
           body="${body//$'\r'/'%0D'}" 
