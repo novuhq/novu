@@ -128,16 +128,17 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push (Coming Soon...)
+#### 📱 Push 
 
+- [x] FCM
 - [ ] Pushwoosh
 - [ ] SNS
 
-#### 👇 Chat (Coming Soon...)
+#### 👇 Chat 
 
-- [ ] Slack
+- [x] Slack
+- [x] Discord
 - [ ] MS Teams
-- [ ] Discord
 - [ ] Mattermost
 
 #### 📱 In-App
