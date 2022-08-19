@@ -147,7 +147,6 @@
     ],
     "docs/**/*.{md,mdx}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
       "cd docs && npm run lint:md"
     ],
     "libs/**/*.{ts,js,json}": [
