@@ -15,7 +15,7 @@ import {
 } from '../template/template.interface';
 import { TemplateStore } from '../template/template.store';
 import { ThemeStore } from '../theme/theme.store';
-import { DirectHandler } from '../handler/direct.handler';
+import { ChatHandler } from '../handler/chat.handler';
 
 export class TriggerEngine {
   constructor(
@@ -86,10 +86,10 @@ export class TriggerEngine {
       const smsHandler = new SmsHandler(message, provider);
 
       await smsHandler.send(data);
-    } else if (provider.channelType === ChannelTypeEnum.DIRECT) {
-      const directHandler = new DirectHandler(message, provider);
+    } else if (provider.channelType === ChannelTypeEnum.CHAT) {
+      const chatHandler = new ChatHandler(message, provider);
 
-      await directHandler.send(data);
+      await chatHandler.send(data);
     }
 
     this.eventEmitter.emit('post:send', {

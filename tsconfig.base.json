@@ -16,6 +16,7 @@
     "moduleResolution": "node",
     "strictPropertyInitialization": false,
     "resolveJsonModule": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "skipLibCheck": true
   }
 }

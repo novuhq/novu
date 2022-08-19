@@ -7,6 +7,8 @@ export interface IUpdateNotificationTemplate {
 
   description?: string;
 
+  critical?: boolean;
+
   steps?: NotificationStepDto[];
 
   notificationGroupId?: string;

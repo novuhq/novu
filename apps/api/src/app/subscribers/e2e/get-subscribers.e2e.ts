@@ -1,5 +1,4 @@
 import { UserSession } from '@novu/testing';
-import { SubscriberRepository } from '@novu/dal';
 import { expect } from 'chai';
 import axios from 'axios';
 
@@ -7,7 +6,6 @@ const axiosInstance = axios.create();
 
 describe('Get Subscribers - /subscribers (GET)', function () {
   let session: UserSession;
-  const subscriberRepository = new SubscriberRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -37,9 +35,13 @@ describe('Get Subscribers - /subscribers (GET)', function () {
       },
     });
 
-    const { data: body } = response;
-    expect(body.data.length).to.equal(1);
-    const subscriber = body.data[0];
+    const filteredData = filterOutInitialSessionUsers(response.data);
+    expect(filteredData.length).to.equal(1);
+    const subscriber = filteredData[0];
     expect(subscriber.subscriberId).to.equal('123');
   });
 });
+
+function filterOutInitialSessionUsers(body) {
+  return body.data.filter((user) => user.lastName !== 'Test');
+}

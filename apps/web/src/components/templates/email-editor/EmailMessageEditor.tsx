@@ -47,7 +47,7 @@ export function EmailMessageEditor({
     }
   }, [blocks, isMounted]);
 
-  function onBlockStyleChanged(blockIndex: number, styles: { textDirection: 'rtl' | 'ltr' }) {
+  function onBlockStyleChanged(blockIndex: number, styles: { textAlign: 'left' | 'right' | 'center' }) {
     blocks[blockIndex].styles = {
       ...styles,
     };

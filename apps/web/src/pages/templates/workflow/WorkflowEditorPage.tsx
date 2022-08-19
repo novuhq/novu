@@ -3,9 +3,9 @@ import styled from '@emotion/styled';
 import { Button, colors, DragButton, Text, Title } from '../../../design-system';
 import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
-import { channels, getChannel, StepTypeEnum } from '../shared/channels';
+import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
 import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
 import { StepActiveSwitch } from './StepActiveSwitch';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -33,7 +33,11 @@ const DraggableNode = ({ channel, setDragging, onDragStart }) => (
     }}
     draggable
   >
-    <DragButton Icon={channel.Icon} description={channel.description} label={channel.label} />
+    <DragButton
+      Icon={channel.Icon}
+      description={channel.type === NodeTypeEnum.ACTION ? channel.description : ''}
+      label={channel.label}
+    />
   </div>
 );
 
@@ -51,7 +55,7 @@ const WorkflowEditorPage = ({
   activeStep: number;
 }) => {
   const { colorScheme } = useMantineColorScheme();
-  const [selectedChannel, setSelectedChannel] = useState<ChannelTypeEnum | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<StepTypeEnum | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
   const [dragging, setDragging] = useState(false);
 
@@ -121,7 +125,7 @@ const WorkflowEditorPage = ({
           <SideBarWrapper dark={colorScheme === 'dark'}>
             {selectedChannel ? (
               <StyledNav data-test-id="step-properties-side-menu">
-                <When truthy={selectedChannel !== ChannelTypeEnum.DIGEST}>
+                <When truthy={selectedChannel !== StepTypeEnum.DIGEST}>
                   <NavSection>
                     <ButtonWrapper>
                       <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
@@ -142,7 +146,7 @@ const WorkflowEditorPage = ({
                       fullWidth
                       onClick={() =>
                         setActivePage(
-                          selectedChannel === ChannelTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
+                          selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
                         )
                       }
                     >
@@ -156,7 +160,7 @@ const WorkflowEditorPage = ({
                     })}
                   </NavSection>
                 </When>
-                <When truthy={selectedChannel === ChannelTypeEnum.DIGEST}>
+                <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
                   <NavSection>
                     <ButtonWrapper>
                       <Title size={2}>Digest Properties</Title>
@@ -199,7 +203,7 @@ const WorkflowEditorPage = ({
                         marginRight: '5px',
                       }}
                     />
-                    Delete {selectedChannel !== ChannelTypeEnum.DIGEST ? 'Step' : 'Action'}
+                    Delete {selectedChannel !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
                   </DeleteStepButton>
                 </NavSection>
               </StyledNav>
@@ -207,15 +211,15 @@ const WorkflowEditorPage = ({
               <StyledNav data-test-id="drag-side-menu">
                 <NavSection>
                   <Title size={2}>Steps to add</Title>
-                  <Text color={colors.B60} mt={10}>
-                    <When truthy={!readonly}>You can drag and drop new steps to the flow</When>
+                  <Text color={colors.B60} mt={5}>
+                    <When truthy={!readonly}>Drag and drop new steps to the canvas</When>
                     <When truthy={readonly}>You can not drag and drop new steps in Production</When>
                   </Text>
                 </NavSection>
                 <When truthy={!readonly}>
-                  <Stack>
+                  <Stack spacing={18}>
                     {channels
-                      .filter((channel) => channel.type === StepTypeEnum.CHANNEL)
+                      .filter((channel) => channel.type === NodeTypeEnum.CHANNEL)
                       .map((channel, index) => (
                         <DraggableNode
                           key={index}
@@ -228,19 +232,19 @@ const WorkflowEditorPage = ({
                 </When>
                 <NavSection
                   style={{
-                    marginTop: '30px',
+                    marginTop: '15px',
                   }}
                 >
                   <Title size={2}>Actions</Title>
-                  <Text color={colors.B60} mt={10}>
+                  <Text color={colors.B60} mt={5}>
                     <When truthy={!readonly}>Add actions to the flow</When>
                     <When truthy={readonly}>You can not drag and drop new actions in Production</When>
                   </Text>
                 </NavSection>
                 <When truthy={!readonly}>
-                  <Stack>
+                  <Stack spacing={18}>
                     {channels
-                      .filter((channel) => channel.type === StepTypeEnum.ACTION)
+                      .filter((channel) => channel.type === NodeTypeEnum.ACTION)
                       .map((channel, index) => (
                         <DraggableNode
                           key={index}

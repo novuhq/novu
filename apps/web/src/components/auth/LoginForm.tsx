@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import styled from '@emotion/styled';
@@ -49,6 +49,22 @@ export function LoginForm({}: Props) {
     }
   };
 
+  const serverErrorString = useMemo<string>(() => {
+    return Array.isArray(error?.message) ? error?.message[0] : error?.message;
+  }, [error]);
+
+  const emailServerError = useMemo<string>(() => {
+    if (serverErrorString === 'User not found') return 'Account does not exist';
+    if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
+
+    return '';
+  }, [serverErrorString]);
+
+  const passwordServerError = useMemo<string>(
+    () => (serverErrorString === 'Wrong credentials provided' ? 'Invalid password' : ''),
+    [serverErrorString]
+  );
+
   return (
     <>
       {!IS_DOCKER_HOSTED && (
@@ -70,7 +86,7 @@ export function LoginForm({}: Props) {
       )}
       <form onSubmit={handleSubmit(onLogin)}>
         <Input
-          error={errors.email?.message}
+          error={errors.email?.message || emailServerError}
           {...register('email', {
             required: 'Please provide an email',
             pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email' },
@@ -82,7 +98,7 @@ export function LoginForm({}: Props) {
           mt={5}
         />
         <PasswordInput
-          error={errors.password?.message}
+          error={errors.password?.message || passwordServerError}
           mt={20}
           {...register('password', {
             required: 'Please input a password',
@@ -109,7 +125,7 @@ export function LoginForm({}: Props) {
           </Link>
         </Center>
       </form>
-      {isError && (
+      {isError && !passwordServerError && !emailServerError && (
         <Text data-test-id="error-alert-banner" mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}

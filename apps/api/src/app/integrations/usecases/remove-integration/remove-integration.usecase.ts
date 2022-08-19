@@ -19,6 +19,9 @@ export class RemoveIntegration {
       throw e;
     }
 
-    return command;
+    return await this.integrationRepository.find({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
   }
 }

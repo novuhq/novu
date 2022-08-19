@@ -15,6 +15,7 @@ export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   async find(
     query: FilterQuery<IntegrationEntity & Document>,
     select = '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     options: { limit?: number; sort?: any; skip?: number } = {}
   ): Promise<IntegrationEntity[]> {
     return super.find(query, select, options);

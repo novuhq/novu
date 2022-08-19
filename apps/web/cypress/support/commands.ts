@@ -9,7 +9,11 @@ Cypress.Commands.add('getBySelectorLike', (selector, ...args) => {
   return cy.get(`[data-test*=${selector}]`, ...args);
 });
 
-Cypress.Commands.add('clickWorkflowNode', (selector: string, ...args) => {
+Cypress.Commands.add('clickWorkflowNode', (selector: string, last?: boolean) => {
+  if (last) {
+    return cy.getByTestId(selector).last().click({ force: true });
+  }
+
   return cy.getByTestId(selector).click({ force: true });
 });
 

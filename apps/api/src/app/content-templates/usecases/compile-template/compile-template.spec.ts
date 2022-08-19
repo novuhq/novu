@@ -87,6 +87,34 @@ describe('Compile Template', function () {
     expect(result).to.contain('Button content of text');
   });
 
+  it('should include text align for text blocks', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        templateId: 'basic',
+        data: {
+          branding: {
+            color: '#e7e7e7e9',
+          },
+          blocks: [
+            {
+              type: 'text',
+              styles: {
+                textAlign: 'center',
+              },
+              content: '<b>Hello TESTTTT content </b>',
+            },
+            {
+              type: 'button',
+              content: 'Button content of text',
+            },
+          ],
+        },
+      })
+    );
+
+    expect(result).to.contain('text-align: center');
+  });
+
   it('should allow the user to specify handlebars helpers', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({

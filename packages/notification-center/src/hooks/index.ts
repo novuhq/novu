@@ -6,3 +6,5 @@ export * from './use-novu-context.hook';
 export * from './use-default-theme.hook';
 export * from './notifications-provider';
 export * from './use-api.hook';
+export * from './use-subscriber-preference.hook';
+export * from './use-novu-theme-provider.hook';

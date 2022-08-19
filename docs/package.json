@@ -38,6 +38,7 @@
     "sass": "^1.51.0",
     "sharp": "^0.30.6",
     "styled-components": "5.3.5",
+    "stylelint-config-css-modules": "^4.1.0",
     "url-loader": "^4.1.1"
   },
   "devDependencies": {
@@ -52,13 +53,13 @@
     "lint-staged": "^12.4.1",
     "markdownlint-cli": "^0.31.1",
     "prettier": "2.6.2",
+    "sass-loader": "^13.0.0",
     "stylelint": "^14.8.2",
     "stylelint-config-recess-order": "^3.0.0",
     "stylelint-config-recommended-scss": "^6.0.0",
     "stylelint-config-standard": "^25.0.0",
     "stylelint-order": "^5.0.0",
     "stylelint-scss": "^4.2.0",
-    "sass-loader": "^13.0.0",
     "typescript": "^4.6.4"
   },
   "browserslist": {
