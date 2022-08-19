@@ -10,6 +10,7 @@ jobs:
     permissions:
       issues: write
     steps:
+      - uses: actions/checkout@v2
       - id: get-comment-body
         run: |
           ls -la
