@@ -68,6 +68,12 @@ const codeTheme = require('./src/utils/prism');
               position: 'left',
             },
             {
+              href: '/api',
+              className: 'navbar-item-api',
+              label: 'API Reference',
+              position: 'right',
+            },
+            {
               href: 'https://github.com/novuhq/novu',
               className: 'navbar-item-github',
               label: 'GitHub',
