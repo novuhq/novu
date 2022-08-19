@@ -56,84 +56,16 @@ Optionally the embed init script receives a position object, you can use it to s
 ## Customizing the theme
 
 The notification center component can be customized by passing a `theme` to the init script.
+More information on all possible theme properties can be found [here](/notification-center/react-components#customizing-the-notification-center-theme).
 
 ```html
 <script>
   const customTheme = {
     light: {
       layout: {
-        background: '',
-        boxShadow: '',
-        borderRadius: '',
-        wrapper: {
-          secondaryFontColor: ''
-        }
-      },
-      header: {
-        badgeColor: '',
-        badgeTextColor: '',
-        fontColor: ''
-      },
-      popover: {
-        arrowColor: ''
-      },
-      notificationItem: {
-        seen: {
-          fontColor: '',
-          background: '',
-          timeMarkFontColor: ''
-        },
-        unseen: {
-          fontColor: '',
-          background: '',
-          boxShadow: '',
-          notificationItemBeforeBrandColor: '',
-          timeMarkFontColor: ''
-        },
-        buttons: {
-          primary: {
-            backGroundColor: '',
-            fontColor: '',
-            removeCircleColor: '',
-            fontFamily: ''
-          },
-          secondary: { ... },
-          clicked: { ... }
-        }
-      },
-      userPreferences: {
-        settingsButtonColor: '',
-        accordion: {
-          background: '',
-          fontColor: '',
-          secondaryFontColor: '',
-          boxShadow: '',
-          arrowColor: '',
-          dividerColor: ''
-        },
-        accordionItem: {
-          fontColor: {
-            active: '',
-            inactive: ''
-          },
-          icon: {
-            active: '',
-            inactive: ''
-          },
-          switch: {
-            backgroundChecked: '',
-            backgroundUnchecked: ''
-          }
-        }
+        background: 'red'
       }
-      footer: {
-        logoTextColor: '',
-        logoPrefixFontColor: ''
-      },
-      loaderColor: '';
-    },
-    dark: { ... },
-    common: { ... }
+    }
   }
 
   novu.init('<REPLACE_APPLICATION_ID>', {
