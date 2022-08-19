@@ -5,7 +5,7 @@ const mailConfigBase: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.From,
     displayName: 'From email address',
-    description: 'Use the authenticated email address from the delivery provider you will send emails from.',
+    description: 'Use the same email address you used to authenticate your delivery provider',
     type: 'string',
     required: true,
   },
@@ -25,6 +25,8 @@ const smsConfigBase: IConfigCredentials[] = [
     required: true,
   },
 ];
+
+const pushConfigBase: IConfigCredentials[] = [];
 
 export const mailJsConfig: IConfigCredentials[] = [
   {
@@ -141,19 +143,19 @@ export const nodemailerConfig: IConfigCredentials[] = [
     key: CredentialsKeyEnum.Domain,
     displayName: 'DKIM: Domain name',
     type: 'string',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'DKIM: Private key',
     type: 'string',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.AccountSid,
     displayName: 'DKIM: Key selector',
     type: 'string',
-    required: true,
+    required: false,
   },
   ...mailConfigBase,
 ];
@@ -301,6 +303,37 @@ export const twilioConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
+];
+
+export const slackConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Id',
+    type: 'string',
+    required: false,
+  },
+];
+
+export const fcmConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Service Account',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
 ];
 
 export const gupshupConfig: IConfigCredentials[] = [

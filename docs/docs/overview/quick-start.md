@@ -54,6 +54,13 @@ Similiar to the the email, custom variables using [{{handlebars}}](https://handl
 
 In the notification center preview you can type the content, you can select content and use `CMD` + `B` to make the selected text bold.
 
+#### Chat
+
+Custom variables using hbs syntax can be described to create the final message.
+In addition to the integration, any subscriber needs to set credentials in order to have proper authorization on the channel.
+
+The credentials is can be saved through @novu/node package.
+
 ## Trigger the notification
 
 After creating the template trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.

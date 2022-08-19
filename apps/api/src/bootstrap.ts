@@ -71,16 +71,23 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.use(compression());
 
-  if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'local') {
-    const options = new DocumentBuilder()
-      .setTitle('novu API')
-      .setDescription('The novu API description')
-      .setVersion('1.0')
-      .build();
-    const document = SwaggerModule.createDocument(app, options);
+  const options = new DocumentBuilder()
+    .setTitle('Novu API')
+    .setDescription('The Novu API description')
+    .setVersion('1.0')
+    .addTag('Events')
+    .addTag('Subscribers')
+    .addTag('Activity')
+    .addTag('Integrations')
+    .addTag('Notification templates')
+    .addTag('Notification groups')
+    .addTag('Changes')
+    .addTag('Environments')
+    .addTag('Feeds')
+    .build();
+  const document = SwaggerModule.createDocument(app, options);
 
-    SwaggerModule.setup('api', app, document);
-  }
+  SwaggerModule.setup('api', app, document);
 
   if (expressApp) {
     await app.init();
@@ -98,7 +105,7 @@ const corsOptionsDelegate = function (req, callback) {
     origin: false as boolean | string | string[],
     preflightContinue: false,
     allowedHeaders: ['Content-Type', 'Authorization', 'sentry-trace'],
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
   if (['dev', 'test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url)) {

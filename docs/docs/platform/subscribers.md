@@ -50,6 +50,24 @@ await novu.subscribers.update(user.id, {
 });
 ```
 
+### Updating subscriber credentials
+
+In case the user want to use chat channel, he will need to set the credentials that needed to be authentication with.
+
+```typescript
+import { Novu, ChatProviderIdEnum} from '@novu/node'
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, {
+  webhookUrl: 'webhookUrl',
+});
+```
+
+- subscriberId is a custom identifier used when identifying your users within the Novu platform.
+- providerId is a unique provider identifier (we recommend using ChatProviderIdEnum).
+- credentials are the argument you need to be authentication with your provider workspace. At this point, we support chat messages through webhook, so a webhookUrl is needed to be provided.
+
 ### Removing a subscriber
 
 To remove and stop a subscriber from receiving communication, you call the remove API to delete the subscriber.
@@ -61,3 +79,7 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 
 await novu.subscribers.remove(user.id);
 ```
+
+## Subscriber Preferences
+
+Novu manages a data model to help your users configure their preferences in an easy way. You can learn more about this in the [Subscriber Preferences](/platform/preferences) section.

@@ -41,6 +41,7 @@ describe('Invites module', function () {
     cy.visit('/auth/invitation/' + this.token);
     cy.getByTestId('fullName').type('Invited to org user');
     cy.getByTestId('password').type('asd#Faf4fd');
+    cy.getByTestId('accept-cb').click();
     cy.getByTestId('submitButton').click();
 
     cy.url().should('include', '/templates');

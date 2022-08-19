@@ -1,6 +1,7 @@
-import { IsArray, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { NotificationStepDto } from '../../dto';
+import { IPreferenceChannels } from '@novu/shared';
+import { NotificationStep } from '../../../shared/dtos/notification-step';
 
 export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -19,6 +20,13 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsOptional()
   description: string;
 
+  @IsBoolean()
+  @IsOptional()
+  critical: boolean;
+
+  @IsOptional()
+  preferenceSettings?: IPreferenceChannels;
+
   @IsOptional()
   @IsMongoId({
     message: 'Bad group id name',
@@ -28,5 +36,5 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsArray()
   @ValidateNested()
   @IsOptional()
-  steps: NotificationStepDto[];
+  steps: NotificationStep[];
 }

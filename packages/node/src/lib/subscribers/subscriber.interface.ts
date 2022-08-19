@@ -1,3 +1,21 @@
+import { ChannelTypeEnum } from '@novu/shared';
+
+export interface IChannelCredentials {
+  webhookUrl?: string;
+  deviceTokens?: string[];
+}
+
+export interface ISubscribers {
+  identify(subscriberId: string, data: ISubscriberPayload);
+  update(subscriberId: string, data: ISubscriberPayload);
+  delete(subscriberId: string);
+  setCredentials(
+    subscriberId: string,
+    providerId: string,
+    credentials: IChannelCredentials
+  );
+}
+
 export interface ISubscriberPayload {
   firstName?: string;
   lastName?: string;
@@ -11,10 +29,13 @@ export interface ISubscribersDefine extends ISubscriberPayload {
   subscriberId: string;
 }
 
-export enum ChannelTypeEnum {
-  EMAIL = 'email',
-  SMS = 'sms',
-  DIRECT = 'direct',
+export interface IUpdateSubscriberPreferencePayload {
+  channel?: {
+    type: ChannelTypeEnum;
+    enabled: boolean;
+  };
+
+  enabled?: boolean;
 }
 
 export type TriggerRecipientsTypeArray = string[] | ISubscribersDefine[];
@@ -25,9 +46,13 @@ export type TriggerRecipientsType =
   | TriggerRecipientsTypeSingle
   | TriggerRecipientsTypeArray;
 
-export interface ITriggerPayloadOptions {
-  payload: ITriggerPayload;
+export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsType;
+}
+
+export interface IBroadcastPayloadOptions {
+  payload: ITriggerPayload;
+  overrides?: ITriggerOverrides;
 }
 
 export interface ITriggerPayload {
@@ -43,9 +68,45 @@ export interface ITriggerPayload {
     | Record<string, unknown>;
 }
 
+export type ITriggerOverrides = {
+  [key in
+    | 'emailjs'
+    | 'mailgun'
+    | 'nodemailer'
+    | 'plivo'
+    | 'postmark'
+    | 'sendgrid'
+    | 'twilio']: object;
+} & {
+  [key in 'fcm']: ITriggerOverrideFCM;
+};
+
+export type ITriggerOverrideFCM = {
+  tag?: string;
+  body?: string;
+  icon?: string;
+  badge?: string;
+  color?: string;
+  sound?: string;
+  title?: string;
+  bodyLocKey?: string;
+  bodyLocArgs?: string;
+  clickAction?: string;
+  titleLocKey?: string;
+  titleLocArgs?: string;
+};
 export interface IAttachmentOptions {
   mime: string;
   file: Buffer;
   name?: string;
   channels?: ChannelTypeEnum[];
+}
+
+export interface IUpdateSubscriberPreferencePayload {
+  channel?: {
+    type: ChannelTypeEnum;
+    enabled: boolean;
+  };
+
+  enabled?: boolean;
 }

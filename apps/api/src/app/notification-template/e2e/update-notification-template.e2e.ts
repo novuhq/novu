@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { ChannelTypeEnum, INotificationTemplate, IUpdateNotificationTemplate } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplate } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
-import { CreateNotificationTemplateDto } from '../dto/create-notification-template.dto';
-import { UpdateNotificationTemplateDto } from '../dto/update-notification-template.dto';
+import { CreateNotificationTemplateRequestDto } from '../dto/create-notification-template.request.dto';
+import { UpdateNotificationTemplateRequestDto } from '../dto/update-notification-template-request.dto';
 
 describe('Update notification template by id - /notification-templates/:templateId (PUT)', async () => {
   let session: UserSession;
@@ -26,7 +26,7 @@ describe('Update notification template by id - /notification-templates/:template
       steps: [
         {
           template: {
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             content: 'This is new content for notification',
           },
         },
@@ -57,7 +57,7 @@ describe('Update notification template by id - /notification-templates/:template
     const template = await notificationTemplateService.createTemplate({
       steps: [
         {
-          type: ChannelTypeEnum.IN_APP,
+          type: StepTypeEnum.IN_APP,
           content: 'This is new content for notification {{otherVariable}}',
         },
       ],
@@ -67,7 +67,7 @@ describe('Update notification template by id - /notification-templates/:template
       steps: [
         {
           template: {
-            type: ChannelTypeEnum.IN_APP,
+            type: StepTypeEnum.IN_APP,
             content: 'This is new content for notification {{newVariableFromUpdate}}',
           },
         },
@@ -90,7 +90,7 @@ describe('Update notification template by id - /notification-templates/:template
     const template = await notificationTemplateService.createTemplate({
       steps: [
         {
-          type: ChannelTypeEnum.EMAIL,
+          type: StepTypeEnum.EMAIL,
           contentType: 'editor',
           content: 'Content',
         },
@@ -102,7 +102,7 @@ describe('Update notification template by id - /notification-templates/:template
         {
           active: false,
           template: {
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
             contentType: 'customHtml',
             content: 'Content',
           },
@@ -118,7 +118,7 @@ describe('Update notification template by id - /notification-templates/:template
   });
 
   it('should update the steps', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -128,7 +128,7 @@ describe('Update notification template by id - /notification-templates/:template
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
             content: [],
           },
         },
@@ -136,7 +136,7 @@ describe('Update notification template by id - /notification-templates/:template
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
             content: [],
           },
         },
@@ -147,7 +147,7 @@ describe('Update notification template by id - /notification-templates/:template
 
     let template: INotificationTemplate = body.data;
 
-    const updateData: UpdateNotificationTemplateDto = {
+    const updateData: UpdateNotificationTemplateRequestDto = {
       name: testTemplate.name,
       tags: testTemplate.tags,
       description: testTemplate.description,
@@ -158,7 +158,7 @@ describe('Update notification template by id - /notification-templates/:template
             template: {
               name: 'Message Name',
               subject: 'Test email subject',
-              type: ChannelTypeEnum.EMAIL,
+              type: StepTypeEnum.EMAIL,
               content: [],
               cta: null,
             },
@@ -169,7 +169,7 @@ describe('Update notification template by id - /notification-templates/:template
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            type: ChannelTypeEnum.EMAIL,
+            type: StepTypeEnum.EMAIL,
             content: [],
             cta: null,
           },

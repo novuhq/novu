@@ -3,7 +3,7 @@ import { FieldArrayProvider } from './FieldArrayProvider';
 import { IForm } from './use-template-controller.hook';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ChannelTypeEnum, DigestTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum } from '@novu/shared';
 
 const schema = z
   .object({
@@ -47,11 +47,15 @@ const schema = z
               .object({
                 content: z.any(),
                 subject: z.any(),
+                title: z.any(),
               })
               .passthrough()
               .superRefine((template: any, ctx) => {
                 if (
-                  (template.type === ChannelTypeEnum.SMS || template.type === ChannelTypeEnum.IN_APP) &&
+                  (template.type === ChannelTypeEnum.SMS ||
+                    template.type === ChannelTypeEnum.IN_APP ||
+                    template.type === ChannelTypeEnum.PUSH ||
+                    template.type === ChannelTypeEnum.CHAT) &&
                   template.content.length === 0
                 ) {
                   ctx.addIssue({
@@ -73,6 +77,17 @@ const schema = z
                     path: ['subject'],
                   });
                 }
+
+                if (template.type === ChannelTypeEnum.PUSH && !template.title) {
+                  ctx.addIssue({
+                    code: z.ZodIssueCode.too_small,
+                    minimum: 1,
+                    type: 'string',
+                    inclusive: true,
+                    message: 'Required - Push Title',
+                    path: ['title'],
+                  });
+                }
               }),
             metadata: z
               .object({
@@ -84,7 +99,7 @@ const schema = z
           })
           .passthrough()
           .superRefine((step: any, ctx) => {
-            if (step.template.type !== ChannelTypeEnum.DIGEST) {
+            if (step.template.type !== StepTypeEnum.DIGEST) {
               return;
             }
 

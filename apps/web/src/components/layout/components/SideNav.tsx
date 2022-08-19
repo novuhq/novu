@@ -4,8 +4,9 @@ import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
 import React, { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
+import styled from '@emotion/styled';
 
 type Props = {};
 
@@ -53,6 +54,13 @@ export function SideNav({}: Props) {
     },
   ];
 
+  async function handlePopoverForChanges(e) {
+    e.preventDefault();
+
+    await setEnvironment('Development');
+    navigate('/changes');
+  }
+
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
@@ -99,10 +107,41 @@ export function SideNav({}: Props) {
             />
           }
         >
-          {'To make changes you’ll need to go to development and promote the changes from there'}
+          {'To make changes you’ll need to visit '}
+          <StyledLink onClick={handlePopoverForChanges}>development changes</StyledLink>{' '}
+          {' and promote the changes from there'}
         </Popover>
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
+      <BottomNav data-test-id="side-nav-bottom-links">
+        <a target="_blank" href="https://discord.gg/novu" data-test-id="side-nav-bottom-link-support">
+          Support
+        </a>
+        <p>
+          <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+        </p>
+        <a target="_blank" href="https://docs.novu.co" data-test-id="side-nav-bottom-link-documentation">
+          Documentation
+        </a>
+      </BottomNav>
     </Navbar>
   );
 }
+
+const StyledLink = styled.a`
+  font-weight: bold;
+  text-decoration: underline;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
+const BottomNav = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  margin-bottom: 5px;
+  color: ${colors.B60};
+`;

@@ -310,7 +310,9 @@
                                   {{#each blocks}}
                                     <div style="margin-bottom: 10px" data-test-id="block-item-wrapper">
                                       {{#equals type 'text'}}
-                                        <div>
+                                        <div style="
+                                                text-align: {{#if styles.textAlign}}{{styles.textAlign}}{{else}}left{{/if}};
+                                        ">
                                           <div>
                                             <p>
                                               {{{content}}}

@@ -6,6 +6,7 @@ import {
   NotificationRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { ActivitiesResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 
 @Injectable()
@@ -16,9 +17,7 @@ export class GetActivityFeed {
     private subscribersRepository: SubscriberRepository
   ) {}
 
-  async execute(
-    command: GetActivityFeedCommand
-  ): Promise<{ totalCount: number; data: MessageEntity[]; pageSize: number; page: number }> {
+  async execute(command: GetActivityFeedCommand): Promise<ActivitiesResponseDto> {
     const LIMIT = 10;
 
     let subscriberId: string;
@@ -39,7 +38,7 @@ export class GetActivityFeed {
 
     const { data: messages, totalCount } = await this.messageRepository.getFeed(
       command.environmentId,
-      { channels: command.channels, templates: command.templates, subscriberId },
+      { channels: command.channels, templates: command.templates, emails: command.emails },
       command.page * LIMIT,
       LIMIT
     );
