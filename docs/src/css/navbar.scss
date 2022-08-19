@@ -114,6 +114,10 @@ html[data-theme='light'] {
       background-image: url('/img/discord-black.svg');
     }
 
+    &-item-api:before {
+      background-image: url('/img/api-black.svg');
+    }
+
     &-sidebar {
       &__brand {
         border-bottom: 1px solid $color-gray-10;
