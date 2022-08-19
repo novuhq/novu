@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { colors, Dropdown, Text } from '../../../design-system';
 import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Mail, Mobile, PlusCircleOutlined, Direct, Sms, InApp } from '../../../design-system/icons';
+import { Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp } from '../../../design-system/icons';
 import { StepTypeEnum } from '@novu/shared';
 import { Digest } from '../../../design-system/icons/general/Digest';
 
@@ -55,12 +55,8 @@ export default memo(({ data }: { data: NodeData }) => {
         <DropdownItem data-test-id={`add-sms-node`} icon={<Sms />} onClick={() => addNewNode(StepTypeEnum.SMS)}>
           SMS
         </DropdownItem>
-        <DropdownItem
-          data-test-id={`add-direct-node`}
-          icon={<Direct />}
-          onClick={() => addNewNode(StepTypeEnum.DIRECT)}
-        >
-          Direct
+        <DropdownItem data-test-id={`add-chat-node`} icon={<Chat />} onClick={() => addNewNode(StepTypeEnum.CHAT)}>
+          Chat
         </DropdownItem>
         <DropdownItem data-test-id={`add-push-node`} icon={<Mobile />} onClick={() => addNewNode(StepTypeEnum.PUSH)}>
           Push

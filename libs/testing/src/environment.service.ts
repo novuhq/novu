@@ -7,7 +7,7 @@ export class EnvironmentService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async createEnvironment(organizationId: any) {
     return await this.environmentRepository.create({
-      name: faker.name.title(),
+      name: faker.name.jobTitle(),
       _organizationId: organizationId,
     });
   }

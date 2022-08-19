@@ -84,7 +84,7 @@ export class NotificationTemplateService {
     const data = {
       _notificationGroupId: groups[0]._id,
       _environmentId: this.environmentId,
-      name: faker.name.title(),
+      name: faker.name.jobTitle(),
       _organizationId: this.organizationId,
       _creatorId: this.userId,
       active: true,

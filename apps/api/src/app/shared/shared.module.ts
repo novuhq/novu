@@ -21,7 +21,12 @@ import {
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { MailService } from './services/mail/mail.service';
 import { QueueService } from './services/queue';
-import { GCSStorageService, S3StorageService, StorageService } from './services/storage/storage.service';
+import {
+  AzureBlobStorageService,
+  GCSStorageService,
+  S3StorageService,
+  StorageService,
+} from './services/storage/storage.service';
 
 const DAL_MODELS = [
   UserRepository,
@@ -41,6 +46,17 @@ const DAL_MODELS = [
   FeedRepository,
   SubscriberPreferenceRepository,
 ];
+
+function getStorageServiceClass() {
+  switch (process.env.STORAGE_SERVICE) {
+    case 'GCS':
+      return GCSStorageService;
+    case 'AZURE':
+      return AzureBlobStorageService;
+    default:
+      return S3StorageService;
+  }
+}
 
 const dalService = new DalService();
 
@@ -64,7 +80,7 @@ const PROVIDERS = [
   ...DAL_MODELS,
   {
     provide: StorageService,
-    useClass: process.env.STORAGE_SERVICE === 'GCS' ? GCSStorageService : S3StorageService,
+    useClass: getStorageServiceClass(),
   },
   {
     provide: ANALYTICS_SERVICE,

@@ -30,6 +30,26 @@ describe('test use of novu node package', () => {
     expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
       name: 'test-template',
       to: 'test-user',
+      overrides: {},
+      payload: {
+        email: 'test-user@sd.com',
+      },
+    });
+  });
+
+  test('should broadcast correctly', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.broadcast('test-template', {
+      payload: {
+        email: 'test-user@sd.com',
+      },
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger/broadcast', {
+      name: 'test-template',
+      overrides: {},
       payload: {
         email: 'test-user@sd.com',
       },
@@ -50,6 +70,7 @@ describe('test use of novu node package', () => {
     expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
       name: 'test-template',
       to: ['test-user', 'test-another-user'],
+      overrides: {},
       payload: {
         organizationName: 'Company',
       },
@@ -72,6 +93,7 @@ describe('test use of novu node package', () => {
         { subscriberId: 'test-user', firstName: 'test' },
         { subscriberId: 'test-another-user' },
       ],
+      overrides: {},
       payload: {
         organizationName: 'Company',
       },
@@ -105,7 +127,7 @@ describe('test use of novu node package', () => {
 
     expect(mockedAxios.put).toHaveBeenCalled();
     expect(mockedAxios.put).toHaveBeenCalledWith(
-      `/subscribers/test-update-subscriber`,
+      `/test-update-subscriber/subscribers`,
       {
         phone: '8989898',
       }

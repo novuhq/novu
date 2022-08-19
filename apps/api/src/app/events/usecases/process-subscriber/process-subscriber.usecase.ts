@@ -20,7 +20,7 @@ import { FilterStepsCommand } from '../filter-steps/filter-steps.command';
 import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
-} from '../../../widgets/usecases/get-subscriber-template-preference';
+} from '../../../subscribers/usecases/get-subscriber-template-preference';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -180,7 +180,7 @@ export class ProcessSubscriber {
   }
 
   private actionStep(step) {
-    const channels = [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS, 'push', 'direct'];
+    const channels = [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS, 'push', 'chat'];
 
     return !channels.some((channel) => channel === step.template.type);
   }

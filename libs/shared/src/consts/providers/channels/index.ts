@@ -1,4 +1,4 @@
 export * from './email';
 export * from './sms';
-export * from './direct';
+export * from './chat';
 export * from './push';

@@ -44,7 +44,7 @@ export interface IPushOptions {
   };
 }
 
-export interface IDirectOptions {
+export interface IChatOptions {
   webhookUrl: string;
   content: string;
 }
@@ -67,9 +67,9 @@ export interface ISmsProvider extends IProvider {
   channelType: ChannelTypeEnum.SMS;
 }
 
-export interface IDirectProvider extends IProvider {
-  sendMessage(options: IDirectOptions): Promise<ISendMessageSuccessResponse>;
-  channelType: ChannelTypeEnum.DIRECT;
+export interface IChatProvider extends IProvider {
+  sendMessage(options: IChatOptions): Promise<ISendMessageSuccessResponse>;
+  channelType: ChannelTypeEnum.CHAT;
 }
 
 export interface IPushProvider extends IProvider {

@@ -11,6 +11,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('example@example.com');
       cy.getByTestId('password').type('usEr_password_123');
+      cy.getByTestId('accept-cb').click();
       cy.getByTestId('submitButton').click();
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
@@ -72,7 +73,25 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('email').type('test-user-1@example.com');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.getByTestId('error-alert-banner').contains('Wrong credentials');
+      cy.get('.mantine-PasswordInput-error').contains('Invalid password');
+    });
+
+    it('should show invalid email error when authenticating with invalid email', function () {
+      cy.visit('/auth/login');
+
+      cy.getByTestId('email').type('test-user-1@example.c');
+      cy.getByTestId('password').type('123456');
+      cy.getByTestId('submit-btn').click();
+      cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
+    });
+
+    it('should show invalid email error when authenticating with invalid email', function () {
+      cy.visit('/auth/login');
+
+      cy.getByTestId('email').type('test-user-1@example.de');
+      cy.getByTestId('password').type('123456');
+      cy.getByTestId('submit-btn').click();
+      cy.get('.mantine-TextInput-error').contains('Account does not exist');
     });
   });
 

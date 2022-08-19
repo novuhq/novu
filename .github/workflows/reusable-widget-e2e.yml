@@ -54,7 +54,7 @@ jobs:
 
       - uses: pnpm/action-setup@v2.0.1
         with:
-          version: 7.3.0
+          version: 7.5.0
           run_install: true
 
       - uses: mansagroup/nrwl-nx-action@v2
@@ -73,12 +73,16 @@ jobs:
       - name: Start Client
         run: pnpm start:widget:test &
 
-      # Runs a single command using the runners shell
       - name: Start WS
         run: pnpm start:ws:test &
 
+      - name: Start API in TEST
+        run: cd apps/api && pnpm start:test &
+
       - name: Install wait-on plugin
         run: npm i -g wait-on
+      - name: Wait on API
+        run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
 
       - name: Wait on API
         run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
@@ -94,8 +98,7 @@ jobs:
           CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
         with:
           working-directory: apps/widget
-          start: pnpm start:api
-          wait-on: http://localhost:1336/v1/health-check, http://localhost:3500
+          wait-on: http://localhost:3500
           browser: chrome
           install: false
           record: true

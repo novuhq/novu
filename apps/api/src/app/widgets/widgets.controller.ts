@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
-import { SessionInitializeBodyDto } from './dtos/session-initialize.dto';
+import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
 import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
 import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';
 import { GetNotificationsFeed } from './usecases/get-notifications-feed/get-notifications-feed.usecase';
@@ -18,13 +18,23 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { GetSubscriberPreference } from './usecases/get-subscriber-preference/get-subscriber-preference.usecase';
-import { GetSubscriberPreferenceCommand } from './usecases/get-subscriber-preference/get-subscriber-preference.command';
-import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference/update-subscriber-preference.command';
-import { UpdateSubscriberPreferenceBodyDto } from './dtos/user-preference.dto';
-import { UpdateSubscriberPreference } from './usecases/update-subscriber-preference/update-subscriber-preference.usecase';
+import { ApiExcludeController } from '@nestjs/swagger';
+import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
+import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
+import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
+import { LogUsageRequestDto } from './dtos/log-usage-request.dto';
+import { LogUsageResponseDto } from './dtos/log-usage-response.dto';
+import { OrganizationResponseDto } from './dtos/organization-response.dto';
+import { GetSubscriberPreferenceCommand } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.command';
+import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.usecase';
+import {
+  UpdateSubscriberPreference,
+  UpdateSubscriberPreferenceCommand,
+} from '../subscribers/usecases/update-subscriber-preference';
+import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 
 @Controller('/widgets')
+@ApiExcludeController()
 export class WidgetsController {
   constructor(
     private initializeSessionUsecase: InitializeSession,
@@ -39,7 +49,7 @@ export class WidgetsController {
   ) {}
 
   @Post('/session/initialize')
-  async sessionInitialize(@Body() body: SessionInitializeBodyDto) {
+  async sessionInitialize(@Body() body: SessionInitializeRequestDto): Promise<SessionInitializeResponseDto> {
     return await this.initializeSessionUsecase.execute(
       InitializeSessionCommand.create({
         subscriberId: body.subscriberId,
@@ -59,7 +69,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen = undefined
+    @Query('seen') seen: boolean | undefined = undefined
   ) {
     let feedsQuery: string[];
     if (feedId) {
@@ -84,7 +94,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean
-  ): Promise<{ count: number }> {
+  ): Promise<UnseenCountResponse> {
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -140,7 +150,9 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/organization')
-  async getOrganizationData(@SubscriberSession() subscriberSession: SubscriberEntity) {
+  async getOrganizationData(
+    @SubscriberSession() subscriberSession: SubscriberEntity
+  ): Promise<OrganizationResponseDto> {
     const command = GetOrganizationDataCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
@@ -163,12 +175,12 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Patch('/preference/:templateId')
+  @Patch('/preferences/:templateId')
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('templateId') templateId: string,
-    @Body() body: UpdateSubscriberPreferenceBodyDto
-  ) {
+    @Body() body: UpdateSubscriberPreferenceRequestDto
+  ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession._id,
@@ -185,8 +197,8 @@ export class WidgetsController {
   @Post('/usage/log')
   async logUsage(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Body() body: { name: string; payload: any } // eslint-disable-line @typescript-eslint/no-explicit-any
-  ) {
+    @Body() body: LogUsageRequestDto
+  ): Promise<LogUsageResponseDto> {
     this.analyticsService.track(body.name, subscriberSession._organizationId, {
       environmentId: subscriberSession._environmentId,
       ...(body.payload || {}),

@@ -64,4 +64,4 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
  | grep -v "cross-device link not permitted\|Falling back to copying packages from store"
 
 WORKDIR /usr/src/app/apps/api
-CMD [ "pm2-runtime", "dist/src/main.js" ]
+CMD [ "pm2-runtime", "dist/main.js" ]

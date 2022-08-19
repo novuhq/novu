@@ -1,23 +1,39 @@
 import React, { useState } from 'react';
-import { Accordion } from '@mantine/core';
+import { Accordion, Divider } from '@mantine/core';
 import styled from 'styled-components';
 import { useNovuThemeProvider, useSubscriberPreference } from '../../../../hooks';
 import { accordionStyles, Text, TextBlock } from './styles';
 import { ChannelPreference } from './ChannelPreference';
 import { getChannel } from './channels';
+import image from '../../../../images/no-settings.png';
 
 export function SubscriberPreference() {
   const { theme, common } = useNovuThemeProvider();
-  const { preferences, updatePreference } = useSubscriberPreference();
-  const baseTheme = theme?.preferenceItem;
+  const { preferences: data, updatePreference, loading } = useSubscriberPreference();
+  const baseTheme = theme?.userPreferences;
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
+  const preferences = data
+    ?.filter((item) => !item.template.critical)
+    ?.filter((pref) => Object.keys(pref.preference.channels).length > 0);
 
   return (
-    <div style={{ padding: '15px' }}>
-      <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
-        {preferences
-          ?.filter((item) => !item.template.critical)
-          .map((item, index) => {
+    <>
+      {!loading && preferences?.length === 0 && (
+        <div
+          style={{
+            textAlign: 'center',
+            minHeight: 350,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <img src={image as any} alt="logo" style={{ maxWidth: 300 }} />
+        </div>
+      )}
+      <div style={{ padding: '15px' }}>
+        <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
+          {preferences?.map((item, index) => {
             const channelsKeys = Object.keys(item?.preference?.channels);
             const channelsPreference = item?.preference?.channels;
 
@@ -33,13 +49,14 @@ export function SubscriberPreference() {
                 data-test-id="workflow-list-item"
                 label={
                   <WorkflowHeader
-                    theme={theme}
+                    theme={baseTheme}
                     label={item.template?.name}
                     channels={getEnabledChannels(channelsPreference)}
                   />
                 }
               >
                 <ChannelsWrapper>
+                  <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
                   {channelsKeys.map((key) => (
                     <ChannelPreference
                       key={key}
@@ -53,22 +70,19 @@ export function SubscriberPreference() {
               </Accordion.Item>
             );
           })}
-      </Accordion>
-    </div>
+        </Accordion>
+      </div>
+    </>
   );
 }
 
 function WorkflowHeader({ label, channels, theme }) {
   return (
     <TextBlock>
-      <Text size={'lg'} color={theme.header.fontColor}>
+      <Text size={'lg'} color={theme?.accordion?.fontColor}>
         {label}
       </Text>
-      <Text
-        data-test-id="workflow-active-channels"
-        size={'sm'}
-        color={theme?.notificationItem?.unseen.timeMarkFontColor}
-      >
+      <Text data-test-id="workflow-active-channels" size={'sm'} color={theme?.accordion?.secondaryFontColor}>
         {channels}
       </Text>
     </TextBlock>

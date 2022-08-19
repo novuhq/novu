@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { NotificationTemplateRepository } from '@novu/dal';
-import { CreateNotificationTemplateDto } from '../../../src/app/notification-template/dto/create-notification-template.dto';
+import { CreateNotificationTemplateRequestDto } from '../../../src/app/notification-template/dto/create-notification-template.request.dto';
 
 describe('Environment - Check Root Environment Guard', async () => {
   let session: UserSession;
@@ -13,7 +13,7 @@ describe('Environment - Check Root Environment Guard', async () => {
   });
 
   it('should not allow create when not in development environment', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test template',
       description: 'This is a test description',
       notificationGroupId: session.notificationGroups[0]._id,

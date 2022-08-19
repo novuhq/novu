@@ -3,10 +3,10 @@ import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
-import { UpdateSubscriberPreferenceBodyDto } from '../dtos/user-preference.dto';
+import { UpdateSubscriberPreferenceRequestDto } from '../dtos/update-subscriber-preference-request.dto';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
-describe('PATCH /widgets/preference/:templateId', function () {
+describe('PATCH /widgets/preferences/:templateId', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
   let subscriberId: string;
@@ -58,7 +58,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
     expect(response.preference.channels.email).to.equal(false);
     expect(response.preference.channels.in_app).to.equal(true);
     expect(response.preference.channels.sms).to.be.not.ok;
-    expect(response.preference.channels.direct).to.be.not.ok;
+    expect(response.preference.channels.chat).to.be.not.ok;
   });
 
   it(
@@ -74,7 +74,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
 
       const updateDataEmailFalse = {
         channel: {},
-      } as UpdateSubscriberPreferenceBodyDto;
+      } as UpdateSubscriberPreferenceRequestDto;
 
       let responseMessage = '';
       try {
@@ -89,7 +89,7 @@ describe('PATCH /widgets/preference/:templateId', function () {
 
   it('should override template preference defaults after subscriber update', async function () {
     const templateDefaultSettings = await session.createTemplate({
-      preferenceSettingsOverride: { email: false, direct: true, push: true, sms: true, in_app: true },
+      preferenceSettingsOverride: { email: false, chat: true, push: true, sms: true, in_app: true },
       noFeedId: true,
     });
 
@@ -111,11 +111,11 @@ describe('PATCH /widgets/preference/:templateId', function () {
 });
 
 export async function updateSubscriberPreference(
-  data: UpdateSubscriberPreferenceBodyDto,
+  data: UpdateSubscriberPreferenceRequestDto,
   subscriberToken: string,
   templateId: string
 ) {
-  return await axios.patch(`http://localhost:${process.env.PORT}/v1/widgets/preference/${templateId}`, data, {
+  return await axios.patch(`http://localhost:${process.env.PORT}/v1/widgets/preferences/${templateId}`, data, {
     headers: {
       Authorization: `Bearer ${subscriberToken}`,
     },

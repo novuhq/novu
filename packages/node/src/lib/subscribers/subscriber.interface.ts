@@ -1,4 +1,9 @@
-import { IChannelCredentials } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
+
+export interface IChannelCredentials {
+  webhookUrl?: string;
+  deviceTokens?: string[];
+}
 
 export interface ISubscribers {
   identify(subscriberId: string, data: ISubscriberPayload);
@@ -24,11 +29,13 @@ export interface ISubscribersDefine extends ISubscriberPayload {
   subscriberId: string;
 }
 
-export enum ChannelTypeEnum {
-  EMAIL = 'email',
-  SMS = 'sms',
-  DIRECT = 'direct',
-  PUSH = 'push',
+export interface IUpdateSubscriberPreferencePayload {
+  channel?: {
+    type: ChannelTypeEnum;
+    enabled: boolean;
+  };
+
+  enabled?: boolean;
 }
 
 export type TriggerRecipientsTypeArray = string[] | ISubscribersDefine[];
@@ -39,10 +46,13 @@ export type TriggerRecipientsType =
   | TriggerRecipientsTypeSingle
   | TriggerRecipientsTypeArray;
 
-export interface ITriggerPayloadOptions {
+export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
+  to: TriggerRecipientsType;
+}
+
+export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
-  to: TriggerRecipientsType;
 }
 
 export interface ITriggerPayload {
@@ -90,4 +100,13 @@ export interface IAttachmentOptions {
   file: Buffer;
   name?: string;
   channels?: ChannelTypeEnum[];
+}
+
+export interface IUpdateSubscriberPreferencePayload {
+  channel?: {
+    type: ChannelTypeEnum;
+    enabled: boolean;
+  };
+
+  enabled?: boolean;
 }
