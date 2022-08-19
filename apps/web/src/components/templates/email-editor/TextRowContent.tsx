@@ -55,7 +55,7 @@ export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; on
           width: '90%',
           outline: 'none',
           backgroundColor: 'transparent',
-          direction: block.styles?.textDirection || 'ltr',
+          textAlign: block.styles?.textAlign || 'left',
         }}
       />
 

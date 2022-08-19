@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { ChannelTypeEnum, StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplate } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
-import { CreateNotificationTemplateDto } from '../dto/create-notification-template.dto';
-import { UpdateNotificationTemplateDto } from '../dto/update-notification-template.dto';
+import { CreateNotificationTemplateRequestDto } from '../dto/create-notification-template.request.dto';
+import { UpdateNotificationTemplateRequestDto } from '../dto/update-notification-template-request.dto';
 
 describe('Update notification template by id - /notification-templates/:templateId (PUT)', async () => {
   let session: UserSession;
@@ -118,7 +118,7 @@ describe('Update notification template by id - /notification-templates/:template
   });
 
   it('should update the steps', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -147,7 +147,7 @@ describe('Update notification template by id - /notification-templates/:template
 
     let template: INotificationTemplate = body.data;
 
-    const updateData: UpdateNotificationTemplateDto = {
+    const updateData: UpdateNotificationTemplateRequestDto = {
       name: testTemplate.name,
       tags: testTemplate.tags,
       description: testTemplate.description,

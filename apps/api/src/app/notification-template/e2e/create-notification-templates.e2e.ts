@@ -8,7 +8,7 @@ import {
   TriggerTypeEnum,
 } from '@novu/shared';
 import * as moment from 'moment';
-import { CreateNotificationTemplateDto } from '../dto';
+import { CreateNotificationTemplateRequestDto } from '../dto';
 import { ChangeRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
@@ -25,7 +25,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   it('should create email template', async function () {
     const defaultMessageIsActive = true;
 
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -117,7 +117,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should create a valid notification', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test template',
       description: 'This is a test description',
       notificationGroupId: session.notificationGroups[0]._id,
@@ -157,7 +157,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should create event trigger', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test template',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
@@ -192,7 +192,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should only add shortid to trigger identifier if same identifier exists', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
@@ -206,7 +206,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     expect(template.triggers[0].identifier).to.equal('test');
 
-    const sameNameTemplate: Partial<CreateNotificationTemplateDto> = {
+    const sameNameTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test',
       notificationGroupId: session.notificationGroups[0]._id,
       description: 'This is a test description',
@@ -221,7 +221,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should add parentId to step', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test template',
       description: 'This is a test description',
       notificationGroupId: session.notificationGroups[0]._id,

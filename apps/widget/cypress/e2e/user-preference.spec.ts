@@ -12,7 +12,7 @@ describe('User Preferences', function () {
         res.send({ body: res.body });
       });
     });
-    cy.intercept('**/preference/**', (r) => {
+    cy.intercept('**/preferences/**', (r) => {
       r.continue((res) => {
         if (!res.body?.data) return;
 
@@ -106,7 +106,7 @@ describe('User Preferences', function () {
       sendResponse = resolve;
     });
 
-    cy.intercept('**/preference/**', (request) => {
+    cy.intercept('**/preferences/**', (request) => {
       return trigger.then(() => {
         request.reply();
       });

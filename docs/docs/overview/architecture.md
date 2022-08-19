@@ -20,13 +20,13 @@ The production environment is a read-only environment, meaning that you can only
 
 ## Providers
 
-Providers are the delivery endpoints for your notifications. They are responsible for delivering the notifications to the end users on the specified channel. Providers usually refer to a specific channel, such as email, SMS, Direct, etc... Each provider is stateless and adheres to a specific interface, Novu will manage state and mediate all provider-specific configurations.
+Providers are the delivery endpoints for your notifications. They are responsible for delivering the notifications to the end users on the specified channel. Providers usually refer to a specific channel, such as email, SMS, Chat, etc... Each provider is stateless and adheres to a specific interface, Novu will manage state and mediate all provider-specific configurations.
 
 ### Provider Types
 
 - **Email** (Sendgrid, mailgun, mandrill, etc...)
 - **SMS** (Twilio, Nexmo, etc...)
-- **Direct** (Slack, MS messages, etc...)
+- **Chat** (Slack, MS messages, etc...)
 - **Push** (Pushover, One Signal, etc...)
 - **Web push**
 

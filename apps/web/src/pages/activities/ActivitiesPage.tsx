@@ -105,10 +105,10 @@ export function ActivitiesPage() {
     {
       accessor: 'recipient',
       Header: 'Recipient',
-      Cell: ({ channel, email, phone, notificationIdentifiers }: any) => (
+      Cell: ({ channel, email, phone, deviceTokens }: any) => (
         <Text rows={1}>
           {channel === ChannelTypeEnum.EMAIL ? email : ''} {channel === ChannelTypeEnum.SMS ? phone : ''}{' '}
-          {channel === ChannelTypeEnum.PUSH ? notificationIdentifiers.join(',') : ''}
+          {channel === ChannelTypeEnum.PUSH ? deviceTokens.join(',') : ''}
         </Text>
       ),
     },
@@ -137,9 +137,9 @@ export function ActivitiesPage() {
               <Tag data-test-id="row-sms-channel">Push</Tag>
             </Tooltip>
           ) : null}
-          {channel === ChannelTypeEnum.DIRECT ? (
-            <Tooltip label="Delivered on Direct Channel">
-              <Tag data-test-id="row-direct-channel">Direct</Tag>
+          {channel === ChannelTypeEnum.CHAT ? (
+            <Tooltip label="Delivered on Chat Channel">
+              <Tag data-test-id="row-chat-channel">Chat</Tag>
             </Tooltip>
           ) : null}
         </>

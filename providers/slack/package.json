@@ -1,6 +1,6 @@
 {
   "name": "@novu/slack",
-  "version": "0.5.1",
+  "version": "0.7.0",
   "description": "A slack wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -31,8 +31,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/node": "^0.6.0",
-    "@novu/stateless": "^0.6.0",
+    "@novu/node": "^0.7.0",
+    "@novu/stateless": "^0.7.0",
     "axios": "^0.27.2"
   },
   "devDependencies": {
@@ -50,7 +50,8 @@
     "standard-version": "^9.0.0",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
-    "typedoc": "^0.19.0"
+    "typedoc": "^0.19.0",
+    "typescript": "4.3.5"
   },
   "files": [
     "build/main",

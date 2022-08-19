@@ -180,7 +180,7 @@ export class ProcessSubscriber {
   }
 
   private actionStep(step) {
-    const channels = [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS, 'push', 'direct'];
+    const channels = [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS, 'push', 'chat'];
 
     return !channels.some((channel) => channel === step.template.type);
   }

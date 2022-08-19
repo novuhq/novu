@@ -14,7 +14,7 @@ export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
   const [emailProviders, setEmailProviders] = useState<IIntegratedProvider[]>([]);
   const [smsProvider, setSmsProvider] = useState<IIntegratedProvider[]>([]);
-  const [directProvider, setDirectProvider] = useState<IIntegratedProvider[]>([]);
+  const [chatProvider, setChatProvider] = useState<IIntegratedProvider[]>([]);
   const [pushProvider, setPushProvider] = useState<IIntegratedProvider[]>([]);
   const [isModalOpened, setModalIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
@@ -44,8 +44,8 @@ export function IntegrationsStore() {
         sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS))
       );
 
-      setDirectProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.DIRECT))
+      setChatProvider(
+        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.CHAT))
       );
 
       setPushProvider(
@@ -80,7 +80,7 @@ export function IntegrationsStore() {
           <ContentWrapper>
             <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
             <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
-            <ChannelGroup providers={directProvider} title="Direct" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={chatProvider} title="Chat" onProviderClick={handlerVisible} />
             <ChannelGroup providers={pushProvider} title="Push" onProviderClick={handlerVisible} />
           </ContentWrapper>
         </PageContainer>

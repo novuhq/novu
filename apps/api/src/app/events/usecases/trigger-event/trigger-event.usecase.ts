@@ -78,7 +78,7 @@ export class TriggerEvent {
       smsChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.SMS)?.length,
       emailChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.EMAIL)?.length,
       inAppChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.IN_APP)?.length,
-      directChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.DIRECT)?.length,
+      chatChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.CHAT)?.length,
       pushChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.PUSH)?.length,
     });
 

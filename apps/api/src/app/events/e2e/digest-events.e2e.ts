@@ -822,7 +822,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(jobCount).to.equal(10);
   });
 
-  it('should add a digest prop to direct template compilation', async function () {
+  it('should add a digest prop to chat template compilation', async function () {
     template = await session.createTemplate({
       steps: [
         {
@@ -835,7 +835,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           },
         },
         {
-          type: StepTypeEnum.DIRECT,
+          type: StepTypeEnum.CHAT,
           content: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}' as string,
         },
       ],
@@ -862,7 +862,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const message = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.DIRECT,
+      channel: StepTypeEnum.CHAT,
     });
 
     expect(message[0].content).to.include('HAS_DIGEST_PROP');

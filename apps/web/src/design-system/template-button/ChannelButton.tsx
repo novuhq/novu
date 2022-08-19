@@ -239,7 +239,7 @@ export function ChannelButton({
           position="right"
           target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
         >
-          {errors || 'Something is missing here'}
+          {errors.toString() || 'Something is missing here'}
         </Popover>
       )}
     </Button>

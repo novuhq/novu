@@ -36,7 +36,7 @@ export enum CredentialsKeyEnum {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export enum DirectProviderIdEnum {
+export enum ChatProviderIdEnum {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   Slack = 'slack',
   // eslint-disable-next-line @typescript-eslint/naming-convention

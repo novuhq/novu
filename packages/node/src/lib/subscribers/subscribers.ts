@@ -4,7 +4,11 @@ import {
   ISubscribers,
   IUpdateSubscriberPreferencePayload,
 } from './subscriber.interface';
-import { IChannelCredentials } from '@novu/shared';
+
+interface IChannelCredentials {
+  webhookUrl?: string;
+  deviceTokens?: string[];
+}
 
 export class Subscribers implements ISubscribers {
   private readonly http: AxiosInstance;
@@ -48,7 +52,7 @@ export class Subscribers implements ISubscribers {
     data: IUpdateSubscriberPreferencePayload
   ) {
     return await this.http.patch(
-      `/subscribers/${subscriberId}/preference/${templateId}`,
+      `/subscribers/${subscriberId}/preferences/${templateId}`,
       {
         ...data,
       }
