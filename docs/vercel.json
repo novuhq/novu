@@ -6,5 +6,5 @@
       "permanent": true
     }
   ],
-  "rewrites": [{ "source": "/api/:match*", "destination": "https://novuapidocs.gatsbyjs.io/:match*" }]
+  "rewrites": [{ "source": "/api/(.*)", "destination": "https://novuapidocs.gatsbyjs.io/api/" }]
 }
