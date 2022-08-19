@@ -1,6 +1,7 @@
 import { NotificationCenter, NovuProvider } from '@novu/notification-center';
+import { INovuThemeProvider } from '@novu/notification-center/dist/esm/types/store/novu-theme-provider.context';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
 import { API_URL, WS_URL } from '../../config';
 import { createGlobalStyle } from 'styled-components';
@@ -17,6 +18,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
   const [backendUrl, setBackendUrl] = useState(API_URL);
   const [socketUrl, setSocketUrl] = useState(WS_URL);
+  const [theme, setTheme] = useState<INovuThemeProvider>({});
   const [fontFamily, setFontFamily] = useState<string>('Lato');
   const [frameInitialized, setFrameInitialized] = useState(false);
 
@@ -40,6 +42,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
         if (event.data.value.socketUrl) {
           setSocketUrl(event.data.value.socketUrl);
+        }
+
+        if (event.data.value.theme) {
+          setTheme(event.data.value.theme);
         }
 
         setFrameInitialized(true);
@@ -80,6 +86,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
             onUrlChange={props.onUrlChange}
             onUnseenCountChanged={props.onUnseenCountChanged}
             onActionClick={props.onActionClick}
+            theme={theme}
           />
         </NovuProvider>
       )}

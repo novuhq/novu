@@ -6,6 +6,7 @@ import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
+import { INovuThemeProvider } from '@novu/notification-center/dist/esm/types/store/novu-theme-provider.context';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
@@ -16,6 +17,8 @@ class Novu {
   private backendUrl?: string = '';
 
   private socketUrl?: string = '';
+
+  private theme?: INovuThemeProvider;
 
   private debugMode: boolean;
 
@@ -60,6 +63,7 @@ class Novu {
       this.options = selectorOrOptions;
       this.backendUrl = selectorOrOptions.backendUrl;
       this.socketUrl = selectorOrOptions.socketUrl;
+      this.theme = selectorOrOptions.theme;
     }
 
     this.clientId = clientId;
@@ -261,6 +265,7 @@ class Novu {
               clientId: this.clientId,
               backendUrl: this.backendUrl,
               socketUrl: this.socketUrl,
+              theme: this.theme,
               topHost: window.location.host,
               data: options,
             },
@@ -350,6 +355,7 @@ interface IOptions {
   unseenBadgeSelector: string;
   backendUrl?: string;
   socketUrl?: string;
+  theme?: INovuThemeProvider;
   position?: {
     top?: number | string;
     left?: number | string;
