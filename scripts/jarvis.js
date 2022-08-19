@@ -30,10 +30,6 @@ async function setupRunner() {
   const waitPort = require('wait-port');
   const inquirer = require('inquirer');
 
-  if (!dependenciesInstalled) {
-    await reInstallProject();
-  }
-
   const questions = [
     {
       type: 'list',
