@@ -5,7 +5,7 @@ import { IJwtPayload } from '@novu/shared';
 export class ConfigService {
   private _config: Configstore;
   constructor() {
-    this._config = new Configstore('notu-cli');
+    this._config = new Configstore('novu-cli');
   }
 
   setValue(key: string, value: string) {
