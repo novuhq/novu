@@ -68,7 +68,7 @@ const codeTheme = require('./src/utils/prism');
               position: 'left',
             },
             {
-              href: '/api',
+              href: 'https://docs.novu.co/api',
               className: 'navbar-item-api',
               label: 'API Reference',
               position: 'right',
