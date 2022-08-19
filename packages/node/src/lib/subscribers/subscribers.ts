@@ -7,7 +7,7 @@ import {
 
 interface IChannelCredentials {
   webhookUrl?: string;
-  notificationIdentifiers?: string[];
+  deviceTokens?: string[];
 }
 
 export class Subscribers implements ISubscribers {

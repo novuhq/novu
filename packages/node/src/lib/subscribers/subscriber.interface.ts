@@ -2,7 +2,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 export interface IChannelCredentials {
   webhookUrl?: string;
-  notificationIdentifiers?: string[];
+  deviceTokens?: string[];
 }
 
 export interface ISubscribers {

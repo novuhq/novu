@@ -91,10 +91,10 @@ export class SendMessagePush extends SendMessageType {
 
     if (integration) {
       for (const channel of pushChannels) {
-        if (!channel.credentials.notificationIdentifiers) continue;
+        if (!channel.credentials.deviceTokens) continue;
         await this.sendMessage(
           integration,
-          channel.credentials.notificationIdentifiers,
+          channel.credentials.deviceTokens,
           title,
           content,
           command,
@@ -153,7 +153,7 @@ export class SendMessagePush extends SendMessageType {
       _messageTemplateId: command.step.template._id,
       channel: ChannelTypeEnum.PUSH,
       transactionId: command.transactionId,
-      notificationIdentifiers: target,
+      deviceTokens: target,
       content,
       title,
       payload: payload as never,
@@ -165,7 +165,7 @@ export class SendMessagePush extends SendMessageType {
       const pushHandler = this.pushFactory.getHandler(integration);
 
       await pushHandler.send({
-        target: (overrides as { notificationIdentifiers?: string[] }).notificationIdentifiers || target,
+        target: (overrides as { deviceTokens?: string[] }).deviceTokens || target,
         title,
         content,
         payload,

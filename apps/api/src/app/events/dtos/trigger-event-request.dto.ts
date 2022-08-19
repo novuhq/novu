@@ -18,23 +18,30 @@ export class SubscriberPayloadDto {
 @ApiExtraModels(SubscriberPayloadDto)
 export class TriggerEventRequestDto {
   @ApiProperty({
-    description: 'Trigger identifire of your notification',
+    description:
+      'The trigger identifier of the template you wish to send. This identifier can be found on the template page.',
   })
   @IsString()
   @IsDefined()
   name: string;
 
   @ApiProperty({
-    description: 'Oayload with data to be used inside of message templates',
+    description:
+      // eslint-disable-next-line max-len
+      `The payload object is used to pass additional custom information that could be used to render the template, or perform routing rules based on it. 
+      This data will also be available when fetching the notifications feed from the API to display certain parts of the UI.`,
     example: {
-      name: 'Novu',
+      comment_id: 'string',
+      post: {
+        text: 'string',
+      },
     },
   })
   @IsObject()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: Record<string, unknown>;
 
   @ApiPropertyOptional({
-    description: 'Overrides for push notification settings',
+    description: 'This could be used to override provider specific configurations',
     example: {
       fcm: {
         color: '#fff',
@@ -43,22 +50,22 @@ export class TriggerEventRequestDto {
   })
   @IsObject()
   @IsOptional()
-  overrides: Record<string, Record<string, unknown>>;
+  overrides?: Record<string, Record<string, unknown>>;
 
   @ApiProperty({
-    description: 'Who should we send then notification to',
+    description: 'The recipients list of people who will receive the notification',
     oneOf: [
       {
         $ref: getSchemaPath(SubscriberPayloadDto),
       },
       {
         type: '[SubscriberPayloadDto]',
-        description: 'List of your users info where you like to send notification to',
+        description: 'List of subscriber objects',
       },
-      { type: 'string', description: 'Subscriber id of your user' },
+      { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
       {
         type: '[string]',
-        description: 'List of subscriber ids of your users',
+        description: 'List of subscriber identifiers',
       },
     ],
   })
@@ -66,9 +73,9 @@ export class TriggerEventRequestDto {
   to: TriggerRecipientsType;
 
   @ApiProperty({
-    description: 'Id to use to keep track of trigger',
+    description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',
   })
   @IsString()
   @IsOptional()
-  transactionId: string;
+  transactionId?: string;
 }

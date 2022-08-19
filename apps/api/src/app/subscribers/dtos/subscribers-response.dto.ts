@@ -3,19 +3,24 @@ import { SubscriberResponseDto } from './subscriber-response.dto';
 
 export class SubscribersResponseDto {
   @ApiProperty({
-    description: 'What page you are on in the paginated response',
+    description: 'The current page of the paginated response',
   })
   page: number;
+
   @ApiProperty({
-    description: 'Total amount of pages',
+    description: 'Total count of subscribers matching the query',
   })
   totalCount: number;
+
   @ApiProperty({
     description: 'Number of subscribers on each page',
   })
   pageSize: number;
+
   @ApiProperty({
-    description: 'List of subscribers for current page',
+    description: 'The list of subscribers matching the query',
+    isArray: true,
+    type: SubscriberResponseDto,
   })
   data: SubscriberResponseDto[];
 }

@@ -7,7 +7,7 @@ import { UserResponseDto } from './dtos/user-response.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UpdateOnBoardingCommand } from './usecases/update-on-boarding/update-on-boarding.command';
 import { UpdateOnBoardingUsecase } from './usecases/update-on-boarding/update-on-boarding.usecase';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserOnboardingRequestDto } from './dtos/user-onboarding-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
@@ -15,6 +15,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 @ApiTags('Users')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
+@ApiExcludeController()
 export class UsersController {
   constructor(
     private getMyProfileUsecase: GetMyProfileUsecase,

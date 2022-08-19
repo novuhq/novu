@@ -45,7 +45,7 @@ export class MessageEntity {
 
   providerId?: string;
 
-  notificationIdentifiers?: string[];
+  deviceTokens?: string[];
 
   title?: string;
 

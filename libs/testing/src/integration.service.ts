@@ -53,7 +53,7 @@ export class IntegrationService {
       _organizationId: organizationId,
       providerId: 'fcm',
       channel: ChannelTypeEnum.PUSH,
-      credentials: { applicationId: 'secret_123', notificationIdentifiers: ['test'] },
+      credentials: { applicationId: 'secret_123', deviceTokens: ['test'] },
       active: true,
     };
 

@@ -7,7 +7,7 @@ import { UpdateMailSettings } from './usecases/update-mail-settings/update-mail-
 import { UpdateMailSettingsCommand } from './usecases/update-mail-settings/update-mail-settings.command';
 import { UpdateSmsSettings } from './usecases/update-sms-settings/update-sms-settings.usecase';
 import { UpdateSmsSettingsCommand } from './usecases/update-sms-settings/update-sms-settings.command';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateMailSettingsRequestDto } from './dtos/update-mail-settings-request.dto';
 import { UpdateSmsSettingsRequestDto } from './dtos/update-sms-settings-request.dto';
 import { UpdateSettingsResponseDto } from './dtos/update-settings-response.dto';
@@ -17,6 +17,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Channels')
+@ApiExcludeController()
 export class ChannelsController {
   constructor(
     private updateMailSettingsUsecase: UpdateMailSettings,

@@ -87,8 +87,8 @@ export class UpdateSubscriberChannel {
       if (command.credentials.webhookUrl != null) {
         updatePayload.credentials.webhookUrl = command.credentials.webhookUrl;
       }
-      if (command.credentials.notificationIdentifiers != null) {
-        updatePayload.credentials.notificationIdentifiers = command.credentials.notificationIdentifiers;
+      if (command.credentials.deviceTokens != null) {
+        updatePayload.credentials.deviceTokens = command.credentials.deviceTokens;
       }
     }
 

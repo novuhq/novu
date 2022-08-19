@@ -151,7 +151,7 @@ export class MessageResponseDto {
   providerId?: string;
 
   @ApiPropertyOptional()
-  notificationIdentifiers?: string[];
+  deviceTokens?: string[];
 
   @ApiPropertyOptional()
   title?: string;
@@ -179,20 +179,12 @@ export class MessageResponseDto {
   errorText: string;
 
   @ApiProperty({
-    description: 'Oayload with data to be used inside of message templates',
-    example: {
-      name: 'Novu',
-    },
+    description: 'The payload that was used to send the notification trigger',
   })
   payload: Record<string, unknown>;
 
   @ApiProperty({
-    description: 'Overrides for push notification settings',
-    example: {
-      fcm: {
-        color: '#fff',
-      },
-    },
+    description: 'Provider specific overrides used when triggering the notification',
   })
   overrides: Record<string, unknown>;
 }

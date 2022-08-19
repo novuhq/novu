@@ -21,7 +21,10 @@ class ChannelSettings {
 }
 
 export class SubscriberResponseDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description:
+      'The internal id novu generated for your subscriber, this is not the subscriberId matching your query. See `subscriberId` for that',
+  })
   _id?: string;
 
   @ApiProperty()
@@ -40,7 +43,8 @@ export class SubscriberResponseDto {
   avatar?: string;
 
   @ApiProperty({
-    description: 'Your internal identifire for subscriber',
+    description:
+      'The internal identifier you used to create this subscriber, usually correlates to the id the user in your systems',
   })
   subscriberId: string;
 
