@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-import { INovuThemeProvider } from '@novu/notification-center/dist/esm/types/store/novu-theme-provider.context';
+import { INovuThemeProvider } from '@novu/notification-center';
 
 declare namespace Cypress {
   interface Chainable {

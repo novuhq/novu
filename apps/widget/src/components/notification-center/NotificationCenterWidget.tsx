@@ -1,5 +1,5 @@
 import { NotificationCenter, NovuProvider } from '@novu/notification-center';
-import { INovuThemeProvider } from '@novu/notification-center/dist/esm/types/store/novu-theme-provider.context';
+import { INovuThemeProvider } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
