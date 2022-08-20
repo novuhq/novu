@@ -7,7 +7,6 @@ const waitPort = require('wait-port');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
-let dependenciesInstalled = false;
 
 async function reInstallProject() {
   const inquirer = require('inquirer');
@@ -230,7 +229,6 @@ const setupProject = () =>
 
       // eslint-disable-next-line no-console
       console.log('Finished installing building project!');
-      dependenciesInstalled = true;
       resolve();
     });
   });
