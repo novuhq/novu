@@ -26,7 +26,8 @@ export interface IMessage {
 export enum ChannelTypeEnum {
   EMAIL = 'email',
   SMS = 'sms',
-  DIRECT = 'direct',
+  CHAT = 'chat',
+  PUSH = 'push',
 }
 
 export interface ITriggerPayload {
@@ -34,7 +35,7 @@ export interface ITriggerPayload {
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
-  $channel_id?: string;
+  $webhookUrl?: string;
   $attachments?: IAttachmentOptions[];
   [key: string]:
     | string

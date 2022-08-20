@@ -98,7 +98,9 @@ export class PromoteNotificationTemplateChange {
         draft: newItem.draft,
         description: newItem.description,
         tags: newItem.tags,
+        critical: newItem.critical,
         triggers: newItem.triggers,
+        preferenceSettings: newItem.preferenceSettings,
         steps,
         _parentId: command.item._id,
         _creatorId: command.userId,
@@ -106,6 +108,15 @@ export class PromoteNotificationTemplateChange {
         _organizationId: command.organizationId,
         _notificationGroupId: notificationGroup._id,
       });
+    }
+
+    const count = await this.notificationTemplateRepository.count({ _id: command.item._id });
+    if (count === 0) {
+      await this.notificationTemplateRepository.delete({
+        _id: item._id,
+      });
+
+      return;
     }
 
     return await this.notificationTemplateRepository.update(
@@ -118,7 +129,9 @@ export class PromoteNotificationTemplateChange {
         draft: newItem.draft,
         description: newItem.description,
         tags: newItem.tags,
+        critical: newItem.critical,
         triggers: newItem.triggers,
+        preferenceSettings: newItem.preferenceSettings,
         steps,
         _notificationGroupId: notificationGroup._id,
       }

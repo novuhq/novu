@@ -12,7 +12,7 @@
     width: 100%;
     border-radius: 6px;
 
-    @include mobile-screen {
+    @include tablet-screen {
       position: static;
       transform: translate(0);
     }

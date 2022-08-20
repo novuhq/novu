@@ -4,7 +4,8 @@ import { INovuConfig } from './novu.interface';
 import {
   IEmailProvider,
   ISmsProvider,
-  IDirectProvider,
+  IChatProvider,
+  IPushProvider,
 } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
@@ -50,12 +51,12 @@ export class NovuStateless extends EventEmitter {
   }
 
   async registerProvider(
-    provider: IEmailProvider | ISmsProvider | IDirectProvider
+    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
   );
 
   async registerProvider(
     providerId: string,
-    provider: IEmailProvider | ISmsProvider | IDirectProvider
+    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
   );
 
   async registerProvider(
@@ -63,8 +64,9 @@ export class NovuStateless extends EventEmitter {
       | string
       | IEmailProvider
       | ISmsProvider
-      | IDirectProvider,
-    provider?: IEmailProvider | ISmsProvider | IDirectProvider
+      | IChatProvider
+      | IPushProvider,
+    provider?: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
   ) {
     await this.providerStore.addProvider(
       typeof providerOrProviderId === 'string'

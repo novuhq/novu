@@ -7,7 +7,8 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",
-    "setup:project": "npx pnpm@7.3.0 i && node scripts/setup-env-files.js && npx pnpm build",
+    "setup:project": "npx pnpm@7.5.0 i && node scripts/setup-env-files.js && npx pnpm build",
+    "install:docs": "pnpm install --filter @novu/docs",
     "clean": "lerna clean --yes",
     "commit": "cz",
     "nx": "nx",
@@ -98,10 +99,10 @@
     "pnpm": "^6.34.0",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
-    "stop-only": "^3.1.2",
-    "tar": "^6.1.11",
     "ts-node": "^9.1.1",
-    "typescript": "4.6.2"
+    "typescript": "4.3.5",
+    "stop-only": "^3.1.2",
+    "tar": "^6.1.11"
   },
   "workspaces": {
     "packages": [
@@ -119,14 +120,27 @@
   "lint-staged": {
     "apps/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix",
       "stop-only --file"
     ],
     "packages/**/*.{ts,json}": [
       "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix",
       "stop-only --file"
     ],
     "providers/**/*.{ts,json}": [
       "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix",
+      "stop-only --file"
+    ],
+    "docs/**/*.{md,mdx}": [
+      "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix",
+      "cd docs && npm run lint:md"
+    ],
+    "libs/**/*.{ts,js,json}": [
+      "prettier --ignore-path ./.prettierignore --write",
+      "eslint --fix",
       "stop-only --file"
     ]
   },

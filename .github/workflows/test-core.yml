@@ -23,7 +23,7 @@ jobs:
 
       - uses: pnpm/action-setup@v2.0.1
         with:
-          version: 6.0.2
+          version: 7.5.0
           run_install: true
 
       - name: Test

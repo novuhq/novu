@@ -1,13 +1,12 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ButtonProps } from '@mantine/core/lib/components/Button/Button';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
+import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { showNotification } from '@mantine/notifications';
@@ -90,6 +89,8 @@ export function SignUpForm({ token, email }: Props) {
     },
   });
 
+  const [accepted, setAccepted] = useState<boolean>(false);
+
   return (
     <>
       {!IS_DOCKER_HOSTED && !token && (
@@ -151,7 +152,21 @@ export function SignUpForm({ token, email }: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        <Button mt={60} inherit loading={isLoading || loadingAcceptInvite} submit data-test-id="submitButton">
+        <Checkbox
+          onChange={(prev) => setAccepted(prev.target.checked)}
+          required
+          label={<Accept />}
+          data-test-id="accept-cb"
+          mt={20}
+        />
+        <Button
+          disabled={!accepted}
+          mt={60}
+          inherit
+          loading={isLoading || loadingAcceptInvite}
+          submit
+          data-test-id="submitButton"
+        >
           Sign Up {token ? '& Accept Invite' : null}
         </Button>
         <Center mt={20}>
@@ -170,6 +185,21 @@ export function SignUpForm({ token, email }: Props) {
         </Text>
       )}
     </>
+  );
+}
+
+function Accept() {
+  return (
+    <div>
+      <span>I accept the </span>
+      <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms">
+        Terms and Conditions
+      </a>
+      <span> and have read the </span>
+      <a style={{ textDecoration: 'underline' }} href="https://novu.co/privacy">
+        Privacy Policy
+      </a>
+    </div>
   );
 }
 

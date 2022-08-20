@@ -29,7 +29,7 @@ export function BrandingForm({
   const [file, setFile] = useState<File>();
   const [imageLoading, setImageLoading] = useState<boolean>(false);
   const { mutateAsync: getSignedUrlAction } = useMutation<
-    { signedUrl: string; path: string },
+    { signedUrl: string; path: string; additionalHeaders: object },
     { error: string; message: string; statusCode: number },
     string
   >(getSignedUrl);
@@ -68,11 +68,13 @@ export function BrandingForm({
     if (!file) return;
 
     setImageLoading(true);
-    const { signedUrl, path } = await getSignedUrlAction(mimeTypes[file.type]);
+    const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(mimeTypes[file.type]);
+    const contentTypeHeaders = {
+      'Content-Type': file.type,
+    };
+    const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
     await axios.put(signedUrl, file, {
-      headers: {
-        'Content-Type': file.type,
-      },
+      headers: mergedHeaders,
       transformRequest: [
         (data, headers) => {
           if (headers) {

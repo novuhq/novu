@@ -1,8 +1,8 @@
-import { MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
-import { ChannelTypeEnum } from '@novu/shared';
+import { BellGradient, ChatGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { DigestGradient } from '../../../design-system/icons/general/DigestGradient';
 
-export enum StepTypeEnum {
+export enum NodeTypeEnum {
   CHANNEL = 'channel',
   ACTION = 'action',
 }
@@ -12,10 +12,10 @@ export const channels = [
     tabKey: ChannelTypeEnum.IN_APP,
     label: 'In-App',
     description: 'Send notifications to the in-app notification center',
-    Icon: MobileGradient,
+    Icon: BellGradient,
     testId: 'inAppSelector',
-    channelType: ChannelTypeEnum.IN_APP,
-    type: StepTypeEnum.CHANNEL,
+    channelType: StepTypeEnum.IN_APP,
+    type: NodeTypeEnum.CHANNEL,
   },
   {
     tabKey: ChannelTypeEnum.EMAIL,
@@ -23,8 +23,8 @@ export const channels = [
     description: 'Send using one of our email integrations',
     Icon: MailGradient,
     testId: 'emailSelector',
-    channelType: ChannelTypeEnum.EMAIL,
-    type: StepTypeEnum.CHANNEL,
+    channelType: StepTypeEnum.EMAIL,
+    type: NodeTypeEnum.CHANNEL,
   },
   {
     tabKey: ChannelTypeEnum.SMS,
@@ -32,17 +32,35 @@ export const channels = [
     description: "Send an SMS directly to the user's phone",
     Icon: SmsGradient,
     testId: 'smsSelector',
-    channelType: ChannelTypeEnum.SMS,
-    type: StepTypeEnum.CHANNEL,
+    channelType: StepTypeEnum.SMS,
+    type: NodeTypeEnum.CHANNEL,
   },
   {
-    tabKey: ChannelTypeEnum.DIGEST,
+    tabKey: StepTypeEnum.DIGEST,
     label: 'Digest',
     description: 'Aggregate events triggered to one notification',
     Icon: DigestGradient,
     testId: 'digestSelector',
-    channelType: ChannelTypeEnum.DIGEST,
-    type: StepTypeEnum.ACTION,
+    channelType: StepTypeEnum.DIGEST,
+    type: NodeTypeEnum.ACTION,
+  },
+  {
+    tabKey: ChannelTypeEnum.CHAT,
+    label: 'Chat',
+    description: 'Send a chat message',
+    Icon: ChatGradient,
+    testId: 'chatSelector',
+    channelType: StepTypeEnum.CHAT,
+    type: NodeTypeEnum.CHANNEL,
+  },
+  {
+    tabKey: ChannelTypeEnum.PUSH,
+    label: 'Push',
+    description: "Send an Push Notification to a user's device",
+    Icon: MobileGradient,
+    testId: 'pushSelector',
+    channelType: StepTypeEnum.PUSH,
+    type: NodeTypeEnum.CHANNEL,
   },
 ];
 
