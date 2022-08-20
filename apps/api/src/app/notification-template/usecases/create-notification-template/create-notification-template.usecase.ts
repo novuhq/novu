@@ -112,6 +112,6 @@ export class CreateNotificationTemplate {
       })
     );
 
-    return await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
+    return item;
   }
 }
