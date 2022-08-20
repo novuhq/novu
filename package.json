@@ -19,6 +19,7 @@
     "start:dev": "cross-env TZ=UTC lerna run start:dev --parallel --concurrency=20 --scope=@novu/{api,web,widget,ws,notification-center}",
     "start:web": "cross-env nx run @novu/web:start",
     "start:ws": "cross-env nx run @novu/ws:start",
+    "start:docs": "cross-env nx run @novu/docs:start",
     "start:widget": "cross-env nx run @novu/widget:start",
     "start:api": "cross-env nx run @novu/api:start",
     "start:dal": "cross-env nx run @novu/dal:start",

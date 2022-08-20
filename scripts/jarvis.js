@@ -2,6 +2,8 @@ const fs = require('fs');
 const chalk = require('chalk');
 const gradient = require('gradient-string');
 const chalkAnimation = require('chalk-animation');
+const shell = require('shelljs');
+const waitPort = require('wait-port');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
@@ -44,7 +46,7 @@ async function setupRunner() {
       type: 'list',
       name: 'runConfiguration',
       message: 'What section of the project you want to run?',
-      choices: ['Full project', 'Web & API', 'API Only'],
+      choices: ['Full project', 'Web & API', 'API Only', 'Docs'],
       when(answers) {
         return answers.action === 'Run the project';
       },
@@ -117,6 +119,20 @@ Everything is running 🎊
 
   Web: http://localhost:4200
   API: http://localhost:3000
+    `);
+    } else if (answers.runConfiguration === 'Docs') {
+      shell.exec('npm run start:docs', { async: true });
+
+      await waitPort({
+        host: 'localhost',
+        port: 4040,
+      });
+
+      // eslint-disable-next-line no-console
+      console.log(`
+Everything is running 🎊
+
+  Docs: http://localhost:4040
     `);
     } else if (answers.runConfiguration === 'API Only') {
       shell.exec('npm run nx build @novu/api');
