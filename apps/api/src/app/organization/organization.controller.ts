@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
