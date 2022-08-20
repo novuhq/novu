@@ -1,4 +1,7 @@
 const fs = require('fs');
+const chalk = require('chalk');
+const gradient = require('gradient-string');
+const chalkAnimation = require('chalk-animation');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
@@ -34,7 +37,7 @@ async function setupRunner() {
     {
       type: 'list',
       name: 'action',
-      message: 'Welcome to the Novu codebase, what you want to do?',
+      message: 'How can I help today?',
       choices: ['Run the project', 'Test the project'],
     },
     {
@@ -223,6 +226,7 @@ async function main() {
     await setupProject();
   }
 
+  showWelcomeScreen();
   await setupRunner();
 }
 
@@ -231,3 +235,31 @@ main().catch((rej) => {
   console.log(rej);
   process.kill(process.pid, 'SIGTERM');
 });
+
+function showWelcomeScreen() {
+  const textGradient = gradient('#0099F7', '#ff3432');
+  const logoGradient = gradient('#DD2476', '#FF512F');
+  const logo = `
+                                @@@@@@@@@@@@@        
+                        @@@       @@@@@@@@@@@        
+                      @@@@@@@@       @@@@@@@@        
+                    @@@@@@@@@@@@       @@@@@@     @@ 
+                   @@@@@@@@@@@@@@@@      @@@@     @@@
+                  @@@@@@@@@@@@@@@@@@@       @     @@@
+                  @@@@@         @@@@@@@@         @@@@
+                   @@@     @       @@@@@@@@@@@@@@@@@@
+                   @@@     @@@@      @@@@@@@@@@@@@@@@
+                    @@     @@@@@@       @@@@@@@@@@@@ 
+                           @@@@@@@@       @@@@@@@@   
+                           @@@@@@@@@@@       @@@     
+                           @@@@@@@@@@@@@                  
+                          `;
+
+  const items = logo.split('\n').map((row) => logoGradient(row));
+
+  /* eslint-disable no-console */
+  console.log(chalk.bold(items.join('\n')));
+  console.log(chalk.bold(`                        Hi, I'm Jarvis by NOVU!`));
+  console.log(chalk.bold(textGradient(`  Welcome to the codebase of the open-source notification infrastructure\n`)));
+  /* eslint-enable  no-console */
+}
