@@ -73,7 +73,7 @@ async function setupRunner() {
   inquirer.prompt(questions).then(async (answers) => {
     if (answers.runConfiguration === 'Full project') {
       shell.exec('npm run nx build @novu/api');
-      shell.exec('npm run start', { async: true });
+      shell.exec('npm run start:dev', { async: true });
 
       await waitPort({
         host: 'localhost',
