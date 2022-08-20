@@ -1,9 +1,4 @@
 const fs = require('fs');
-const chalk = require('chalk');
-const gradient = require('gradient-string');
-const chalkAnimation = require('chalk-animation');
-const shell = require('shelljs');
-const waitPort = require('wait-port');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
@@ -120,6 +115,7 @@ Everything is running 🎊
   API: http://localhost:3000
     `);
     } else if (answers.runConfiguration === 'Docs') {
+      ora('Building docs...').start();
       shell.exec('npm run start:docs', { async: true });
 
       await waitPort({
@@ -127,6 +123,7 @@ Everything is running 🎊
         port: 4040,
       });
 
+      console.clear();
       // eslint-disable-next-line no-console
       console.log(`
 Everything is running 🎊
@@ -251,6 +248,9 @@ main().catch((rej) => {
 });
 
 function showWelcomeScreen() {
+  const chalk = require('chalk');
+  const gradient = require('gradient-string');
+
   const textGradient = gradient('#0099F7', '#ff3432');
   const logoGradient = gradient('#212121', '#ec0f0d');
   const logo = `
