@@ -254,7 +254,7 @@ main().catch((rej) => {
 
 function showWelcomeScreen() {
   const textGradient = gradient('#0099F7', '#ff3432');
-  const logoGradient = gradient('#DD2476', '#FF512F');
+  const logoGradient = gradient('#212121', '#ec0f0d');
   const logo = `
                                 @@@@@@@@@@@@@        
                         @@@       @@@@@@@@@@@        
