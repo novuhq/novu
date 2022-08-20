@@ -130,6 +130,7 @@ describe('Promote changes', () => {
       description: testTemplate.description,
       steps: [],
       notificationGroupId: session.notificationGroups[0]._id,
+      identifier: undefined,
     };
 
     const notificationTemplateId = body.data._id;
@@ -235,6 +236,7 @@ describe('Promote changes', () => {
           },
         },
       ],
+      identifier: undefined,
     };
 
     const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
@@ -338,6 +340,7 @@ describe('Promote changes', () => {
           ],
         },
       ],
+      identifier: undefined,
     };
 
     const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);

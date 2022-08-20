@@ -123,6 +123,7 @@ describe('Create A Feed - /feeds (POST)', async () => {
           },
         },
       ],
+      identifier: undefined,
     };
 
     const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);

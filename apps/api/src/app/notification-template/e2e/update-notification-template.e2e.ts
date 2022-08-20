@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { ChannelTypeEnum, StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplate } from '@novu/shared';
+import { StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
 import { CreateNotificationTemplateRequestDto } from '../dto/create-notification-template.request.dto';
 import { UpdateNotificationTemplateRequestDto } from '../dto/update-notification-template-request.dto';
@@ -21,7 +21,7 @@ describe('Update notification template by id - /notification-templates/:template
       session.environment._id
     );
     const template = await notificationTemplateService.createTemplate();
-    const update: IUpdateNotificationTemplate = {
+    const update: IUpdateNotificationTemplateDto = {
       name: 'new name for notification',
       steps: [
         {
@@ -47,6 +47,27 @@ describe('Update notification template by id - /notification-templates/:template
     expect(change._entityId).to.eq(foundTemplate._id);
   });
 
+  it('should throw error if trigger identifier already exists', async function () {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+    const template1 = await notificationTemplateService.createTemplate();
+    const template2 = await notificationTemplateService.createTemplate();
+    const update: IUpdateNotificationTemplateDto = {
+      identifier: template1.triggers[0].identifier,
+    };
+
+    const { body } = await session.testAgent.put(`/v1/notification-templates/${template2._id}`).send(update);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.message).to.equal(
+      `Notification template with identifier ${template1.triggers[0].identifier} already exists`
+    );
+    expect(body.error).to.equal('Bad Request');
+  });
+
   it('should generate new variables on update', async function () {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
@@ -63,7 +84,7 @@ describe('Update notification template by id - /notification-templates/:template
       ],
     });
 
-    const update: IUpdateNotificationTemplate = {
+    const update: IUpdateNotificationTemplateDto = {
       steps: [
         {
           template: {
@@ -97,7 +118,7 @@ describe('Update notification template by id - /notification-templates/:template
       ],
     });
 
-    const update: IUpdateNotificationTemplate = {
+    const update: IUpdateNotificationTemplateDto = {
       steps: [
         {
           active: false,
@@ -176,6 +197,7 @@ describe('Update notification template by id - /notification-templates/:template
         },
       ],
       notificationGroupId: session.notificationGroups[0]._id,
+      identifier: undefined,
     };
 
     const { body: updated } = await session.testAgent

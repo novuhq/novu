@@ -58,6 +58,7 @@ describe('Get changes', () => {
       description: testTemplate.description,
       steps: [],
       notificationGroupId: session.notificationGroups[0]._id,
+      identifier: undefined,
     };
 
     const notificationTemplateId = body.data._id;
