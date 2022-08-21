@@ -135,14 +135,6 @@ const notificationTemplateSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
-    createdAt: {
-      type: Schema.Types.Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Schema.Types.Date,
-      default: Date.now,
-    },
   },
   schemaOptions
 );
