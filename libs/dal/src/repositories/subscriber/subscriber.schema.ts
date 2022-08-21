@@ -34,6 +34,7 @@ subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, over
 
 interface ISubscriberDocument extends SubscriberEntity, Document {
   _id: never;
+  __v: never;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
