@@ -36,7 +36,7 @@ export function ContentContainer({
         dangerouslySetInnerHTML={{
           __html: content as string,
         }}
-        onKeyUp={(e: any) => onChange(e.target.innerHTML)}
+        onKeyUp={(e: any) => onChange(removeHtmlTagsInsideVariableBrackets(e.target.innerHTML))}
         suppressContentEditableWarning
         style={{
           display: 'inline-block',
@@ -55,6 +55,12 @@ export function ContentContainer({
       <PlaceHolder show={showPlaceHolder}>{contentPlaceholder}</PlaceHolder>
     </div>
   );
+}
+
+function removeHtmlTagsInsideVariableBrackets(innerHTML: string) {
+  return innerHTML.replace(/\{\{.*?\}\}/gi, function (match) {
+    return match.replace(/<\/?[^>]*?>/gi, '');
+  });
 }
 
 const PlaceHolder = styled.div<{ show: boolean }>`
