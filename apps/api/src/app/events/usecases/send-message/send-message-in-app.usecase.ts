@@ -41,12 +41,24 @@ export class SendMessageInApp extends SendMessageType {
       _id: command.subscriberId,
     });
     const inAppChannel: NotificationStepEntity = command.step;
-    const content = await this.compileInAppTemplate(
-      inAppChannel.template.content,
-      command.payload,
-      subscriber,
-      command
-    );
+
+    let content: string;
+
+    try {
+      content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
+    } catch (e) {
+      await this.sendErrorStatus(
+        null,
+        'error',
+        'in-app_error_while_compiling_template',
+        e.message,
+        command,
+        notification,
+        LogCodeEnum.TEMPLATE_COMPILE_ERROR
+      );
+
+      throw e;
+    }
 
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
@@ -164,7 +176,7 @@ export class SendMessageInApp extends SendMessageType {
     payload: any,
     subscriber: SubscriberEntity,
     command: SendMessageCommand
-  ) {
+  ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
