@@ -26,6 +26,8 @@ const codeTheme = require('./src/utils/prism');
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
             breadcrumbs: false,
             routeBasePath: '/',
+            showLastUpdateAuthor: true,
+            showLastUpdateTime: true,
           },
           theme: {
             customCss: require.resolve('./src/css/custom.scss'),
