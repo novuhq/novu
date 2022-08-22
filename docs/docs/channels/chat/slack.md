@@ -37,6 +37,10 @@ await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, 
 - `providerId` is a unique provider identifier, we recommend using our ChatProviderIdEnum to specify the provider.
 - The third parameter is the credentials object, in this case we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
 
+:::info
+You need to set credentials for every subscriber because slack generate new Webhook URL on every new app install.
+:::
+
 <!-- markdownlint-disable MD029 -->
 
 7. You are all set up and ready to send your first chat message via our `@novu/node` package or directly using the REST API.
