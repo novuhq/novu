@@ -36,7 +36,7 @@ export function ContentContainer({
         dangerouslySetInnerHTML={{
           __html: content as string,
         }}
-        onKeyUp={(e: any) => onChange(removeHtmlTagsInsideVariableBrackets(e.target.innerHTML))}
+        onKeyUp={(e: any) => onChange(recursiveRemoveHtmlTagsInsideVariableBrackets(e.target.innerHTML))}
         suppressContentEditableWarning
         style={{
           display: 'inline-block',
@@ -57,10 +57,16 @@ export function ContentContainer({
   );
 }
 
-function removeHtmlTagsInsideVariableBrackets(innerHTML: string) {
-  return innerHTML.replace(/{{.*?}}/g, function (match) {
-    return match.replace(/<\/?[^>]*?>/g, '');
+/**
+ * Recursively remove a pattern from a string until there are no more matches.
+ * Avoids incomplete sanitization e.g. "aabcbc".replace(/abc/g, "") === "abc"
+ */
+function recursiveRemoveHtmlTagsInsideVariableBrackets(str) {
+  const newStr = str.replace(/{{.*?}}/gi, function (match) {
+    return match.replace(/<\/?[^>]*?>/gi, '');
   });
+
+  return newStr.length === str.length ? newStr : recursiveRemoveHtmlTagsInsideVariableBrackets(newStr);
 }
 
 const PlaceHolder = styled.div<{ show: boolean }>`
