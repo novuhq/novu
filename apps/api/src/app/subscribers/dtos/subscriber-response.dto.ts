@@ -59,4 +59,16 @@ export class SubscriberResponseDto {
 
   @ApiProperty()
   _environmentId: string;
+
+  @ApiProperty()
+  deleted: boolean;
+
+  @ApiProperty()
+  createdAt: string;
+
+  @ApiProperty()
+  updatedAt: string;
+
+  @ApiProperty()
+  __v?: number;
 }
