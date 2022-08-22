@@ -53,7 +53,32 @@ Optionally the embed init script receives a position object, you can use it to s
 </script>
 ```
 
-### Enabling HMAC Encryption
+## Customizing the theme
+
+The notification center component can be customized by passing a `theme` to the init script.
+More information on all possible theme properties can be found [here](/notification-center/react-components#customizing-the-notification-center-theme).
+
+```html
+<script>
+  const customTheme = {
+    light: {
+      layout: {
+        background: 'red'
+      }
+    }
+  }
+
+  novu.init('<REPLACE_APPLICATION_ID>', {
+    unseenBadgeSelector: '#unseen-badge',
+    bellSelector: '#notification-bell',
+    theme: customTheme
+  }, {
+    ...subscriberProps
+  });
+</script>
+```
+
+## Enabling HMAC Encryption
 
 In order to enable Hash-Based Message Authentication Codes, you need to visit the admin panel in-app settings page and enable HMAC encryption for your environment.
 
@@ -95,3 +120,4 @@ The second parameter of `novu.init` can be used to specify the options for the e
 | `socketUrl` | `string` | Custom WebSocket Service location in case of self-hosted version of Novu |
 | `position.top` | `string` \| `number` | Override the top position of the notification center drop down |
 | `position.left` | `string` \| `number` | Override the left position of the notification center drop down |
+| `theme` | `object` | Provide a custom theme for the notification center to use (for example see [above](#customizing-the-theme)) |
