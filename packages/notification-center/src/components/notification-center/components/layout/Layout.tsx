@@ -2,21 +2,17 @@ import styled from 'styled-components';
 import { Loader } from '../Loader';
 import { HeaderContainer as Header } from './header/HeaderContainer';
 import { FooterContainer as Footer } from './footer/FooterContainer';
-import React, { useState } from 'react';
-import { useNovuContext, useNovuThemeProvider } from '../../../../hooks';
+import React from 'react';
+import { useNovuContext, useNovuThemeProvider, useScreens } from '../../../../hooks';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 import { SubscriberPreference } from '../user-preference/SubscriberPreference';
-
-export enum ScreensEnum {
-  NOTIFICATIONS = 'notifications',
-  SETTINGS = 'settings',
-}
+import { ScreensEnum } from '../../../../store/screens-provider.context';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
   const { theme } = useNovuThemeProvider();
-  const [screen, setScreen] = useState<ScreensEnum>(ScreensEnum.NOTIFICATIONS);
+  const { screen, setScreen } = useScreens();
 
   return (
     <LayoutWrapper theme={theme}>

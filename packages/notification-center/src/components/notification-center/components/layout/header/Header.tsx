@@ -7,7 +7,7 @@ import { INotificationCenterContext } from '../../../../../index';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { useTranslations } from '../../../../../hooks/use-translations';
 import { Cogs } from '../../../../../shared/icons';
-import { ScreensEnum } from '../Layout';
+import { ScreensEnum } from '../../../../../store/screens-provider.context';
 
 export function Header({ unseenCount, setScreen }: { unseenCount: number; setScreen: (screen: ScreensEnum) => void }) {
   const { theme, common } = useNovuThemeProvider();
