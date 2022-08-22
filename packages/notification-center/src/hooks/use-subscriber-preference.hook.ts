@@ -1,6 +1,7 @@
 import { useApi } from './use-api.hook';
 import { useContext, useEffect, useState } from 'react';
-import { IAuthContext, IUserPreferenceSettings } from '../index';
+import { IUserPreferenceSettings } from '@novu/client';
+import { IAuthContext } from '../index';
 import { AuthContext } from '../store/auth.context';
 
 export function useSubscriberPreference() {

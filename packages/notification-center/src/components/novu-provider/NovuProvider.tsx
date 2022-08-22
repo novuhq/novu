@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { ApiService } from '@novu/client';
 import { NovuContext } from '../../store/novu-provider.context';
 import { ColorScheme, IAuthContext, INovuProviderContext, IStore } from '../../index';
 import { AuthContext } from '../../store/auth.context';
@@ -7,7 +8,6 @@ import { SocketContext } from '../../store/socket/socket.store';
 import { NotificationsProvider, useApi, useSocket, useUnseenController } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
-import { ApiService } from '../../api/api.service';
 import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
 import { NovuI18NProvider } from '../../store/i18n.context';
