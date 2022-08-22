@@ -69,8 +69,10 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen: boolean | undefined = undefined
+    @Query('seen') seen?: string
   ) {
+    const isSeen = this.initializeSeenParam(seen);
+
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -82,7 +84,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       page,
       feedId: feedsQuery,
-      seen,
+      seen: isSeen,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -207,5 +209,19 @@ export class WidgetsController {
     return {
       success: true,
     };
+  }
+
+  /*
+   * ValidationPipe convert boolean undefined params default (false)
+   * Therefore we need to get string and convert it to boolean
+   */
+  private initializeSeenParam(seen: string): boolean | null {
+    let isSeen: boolean = null;
+
+    if (seen) {
+      isSeen = seen == 'true';
+    }
+
+    return isSeen;
   }
 }
