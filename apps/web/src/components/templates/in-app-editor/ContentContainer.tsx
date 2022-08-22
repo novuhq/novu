@@ -58,8 +58,8 @@ export function ContentContainer({
 }
 
 function removeHtmlTagsInsideVariableBrackets(innerHTML: string) {
-  return innerHTML.replace(/\{\{.*?\}\}/gi, function (match) {
-    return match.replace(/<\/?[^>]*?>/gi, '');
+  return innerHTML.replace(/{{.*?}}/g, function (match) {
+    return match.replace(/<\/?[^>]*?>/g, '');
   });
 }
 

@@ -42,23 +42,12 @@ export class SendMessageInApp extends SendMessageType {
     });
     const inAppChannel: NotificationStepEntity = command.step;
 
-    let content: string;
-
-    try {
-      content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
-    } catch (e) {
-      await this.sendErrorStatus(
-        null,
-        'error',
-        'in-app_error_while_compiling_template',
-        e.message,
-        command,
-        notification,
-        LogCodeEnum.TEMPLATE_COMPILE_ERROR
-      );
-
-      throw e;
-    }
+    const content = await this.compileInAppTemplate(
+      inAppChannel.template.content,
+      command.payload,
+      subscriber,
+      command
+    );
 
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
