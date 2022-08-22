@@ -14,6 +14,8 @@ export * from './components';
 export * from './hooks/use-unseen-count.hook';
 export * from './hooks/use-socket.hook';
 export * from './hooks/use-notifications.hook';
+export * from './store/novu-theme-provider.context';
+export { INovuPopoverTheme } from './store/novu-theme.context';
 
 export interface IAuthContext {
   applyToken: (token: string | null) => void;
