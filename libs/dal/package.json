@@ -6,7 +6,9 @@
   "scripts": {
     "start": "npm run start:dev",
     "afterinstall": "pnpm build",
+    "prebuild": "rimraf dist",
     "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
+    "rebuild": "pnpm prebuild && pnpm build",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
@@ -46,6 +48,7 @@
     "mongoose-delete": "^0.5.4",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
+    "rimraf": "^3.0.2",
     "superagent-defaults": "^0.1.14",
     "supertest": "^5.0.0",
     "twilio": "^3.62.0",

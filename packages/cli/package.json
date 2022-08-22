@@ -7,6 +7,7 @@
     "build:post": "cross-env mkdir dist/constants/dashboard && cp-cli src/constants/dashboard/index.html dist/constants/dashboard/index.html",
     "build:pre": "rimraf dist",
     "build": "pnpm build:pre && tsc -p tsconfig.build.json && pnpm build:post",
+    "rebuild": "pnpm build",
     "build:prod": "pnpm build:pre && pnpm build && pnpm build:post",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",

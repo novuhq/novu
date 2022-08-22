@@ -36,6 +36,8 @@
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
     "build": "nx run-many --target=build --all",
+    "rebuild": "npm run prebuild && npm run build",
+    "prebuild": "nx run-many --target=prebuild --all",
     "build:api": "nx build @novu/api",
     "build:ws": "nx build @novu/ws",
     "build:web": "nx build @novu/web",

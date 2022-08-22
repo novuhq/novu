@@ -6,7 +6,9 @@
   "private": "true",
   "license": "MIT",
   "scripts": {
+    "prebuild": "rimraf dist",
     "build": "nest build",
+    "rebuild": "pnpm prebuild && pnpm build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker build --build-arg PACKAGE_PATH=apps/api - -t novu-api",
@@ -92,6 +94,7 @@
     "passport-oauth2": "^1.6.1",
     "recursive-diff": "^1.0.8",
     "reflect-metadata": "^0.1.13",
+    "rimraf": "^3.0.2",
     "rxjs": "^7.5.5",
     "sanitize-html": "^2.4.0",
     "shortid": "^2.2.16",
