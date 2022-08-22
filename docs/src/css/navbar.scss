@@ -30,6 +30,7 @@
   }
 
   &-item-discord:before,
+  &-item-api:before,
   &-item-github:before {
     display: flex;
     align-items: center;
@@ -57,6 +58,11 @@
     }
   }
 
+  &-item-api:before {
+    width: 22px;
+    height: 21px;
+  }
+
   &-sidebar {
     &__brand {
       box-shadow: none;
@@ -81,6 +87,10 @@ html[data-theme='dark'] {
       background-image: url('/img/discord-white.svg');
     }
 
+    &-item-api:before {
+      background-image: url('/img/api-white.svg');
+    }
+
     &-sidebar {
       background-color: $color-gray-1;
 
@@ -102,6 +112,10 @@ html[data-theme='light'] {
 
     &-item-discord:before {
       background-image: url('/img/discord-black.svg');
+    }
+
+    &-item-api:before {
+      background-image: url('/img/api-black.svg');
     }
 
     &-sidebar {

@@ -1,8 +1,4 @@
----
-sidebar_position: 6
----
-
-# Code of Conduct
+# Contributor Covenant Code of Conduct
 
 ## Our Pledge
 
