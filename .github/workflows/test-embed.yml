@@ -40,5 +40,4 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build
-        working-directory: libs/embed
-        run: CI='' pnpm build:dev
+        run: pnpm build:embed

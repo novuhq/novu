@@ -15,7 +15,7 @@ export function Layout({ children }: { children: JSX.Element }) {
   const { screen, setScreen } = useScreens();
 
   return (
-    <LayoutWrapper theme={theme}>
+    <LayoutWrapper theme={theme} data-test-id="layout-wrapper">
       {screen === ScreensEnum.SETTINGS && (
         <>
           <UserPreferenceHeader setScreen={setScreen} />

@@ -18,6 +18,9 @@ export * from './hooks/use-screens.hook';
 
 export { ScreensEnum } from './store/screens-provider.context';
 
+export * from './store/novu-theme-provider.context';
+export { INovuPopoverTheme } from './store/novu-theme.context';
+
 export interface IAuthContext {
   applyToken: (token: string | null) => void;
   setUser: (profile: ISubscriberJwt) => void;
