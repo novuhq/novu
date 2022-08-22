@@ -36,6 +36,7 @@ import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed
 import { GetUnseenCount } from '../widgets/usecases/get-unseen-count/get-unseen-count.usecase';
 import { MarkMessageAsSeen } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
+import { initializeSeenParam } from '../widgets/widgets.controller';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -266,13 +267,20 @@ export class SubscribersController {
   @ApiOkResponse({
     type: [MessageResponseDto],
   })
+  @ApiQuery({
+    name: 'seen',
+    type: Boolean,
+    required: false,
+  })
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
     @Query('page') page: number,
     @Query('feedIdentifier') feedId?: string,
-    @Query('seen') seen?: boolean
+    @Query('seen') seen?: string
   ) {
+    const isSeen = initializeSeenParam(seen);
+
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -284,7 +292,7 @@ export class SubscribersController {
       subscriberId: subscriberId,
       page,
       feedId: feedsQuery,
-      seen,
+      seen: isSeen,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
