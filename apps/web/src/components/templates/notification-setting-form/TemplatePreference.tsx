@@ -38,10 +38,13 @@ export function ChannelPreference() {
       control={control}
       render={({ field }) => {
         const { readonly } = useEnvController();
-        const data = field.value ?? {};
+
+        const preferences = field.value;
+        const mock = { email: true, sms: true, in_app: true, chat: true, push: true };
+        const data = Object.assign({}, mock, preferences);
 
         function handleCheckboxChange(e, channelType) {
-          const newData = Object.assign({}, data);
+          const newData = Object.assign({}, preferences);
           newData[channelType] = e.currentTarget.checked;
           field.onChange(newData);
         }
@@ -54,7 +57,7 @@ export function ChannelPreference() {
             styles={inputStyles}
           >
             <Grid pt={8.5}>
-              {Object.keys(data)?.map((key) => {
+              {Object.keys(data).map((key) => {
                 const label = channels.find((channel) => channel.tabKey === key)?.label;
                 const checked = data[key] || false;
 
