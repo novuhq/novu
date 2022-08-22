@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 ---
+
 # Quick Start
 
 To create your free managed or docker based Novu environment use our CLI tool:
@@ -14,7 +15,7 @@ After creating your cloud or self-hosted account the next steps to sending your 
 - Connect your providers
 - Create a notification template
 - Send a trigger
-- Integrate the Notification Center within your app *(optional)*
+- Integrate the Notification Center within your app _(optional)_
 
 ## Connect providers
 
@@ -66,19 +67,17 @@ The credentials is can be saved through @novu/node package.
 After creating the template trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.
 
 ```typescript
-await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
-  {
-    to: {
-      subscriberId: '<USER_IDENTIFIER>',
-      email: 'email@email.com',
-      firstName: 'John',
-      lastName: 'Doe',
-    },
-    payload: {
-      customVariables: 'Hello'
-    },
-  }
-);
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
+  to: {
+    subscriberId: '<USER_IDENTIFIER>',
+    email: 'email@email.com',
+    firstName: 'John',
+    lastName: 'Doe',
+  },
+  payload: {
+    customVariables: 'Hello',
+  },
+});
 ```
 
 The trigger function contains a parameters object as the second parameter. Let's explore it's different options:
@@ -92,20 +91,17 @@ The `to` parameter contains the information about the subscriber of the notifica
 You can pass the subscriber object containing the following keys as this paramter:
 
 ```typescript
-await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
-  {
-    to: {
-      subscriberId: 'Unique Subscriber Identifier',
-      firstName,
-      lastName,
-      email,
-      phone,
-      avatar
-    },
-    payload: {}
-  }
-);
-
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
+  to: {
+    subscriberId: 'Unique Subscriber Identifier',
+    firstName,
+    lastName,
+    email,
+    phone,
+    avatar,
+  },
+  payload: {},
+});
 ```
 
 The `subscriberId` is a custom identifier used when identifying your users within the Novu platform. We suggest using your internal DB identifier for this field.

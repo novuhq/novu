@@ -76,7 +76,7 @@ A Standalone Node.js wrapper around the Novu API. Exists to provide type-safe an
 
 ### @novu/nest
 
-A Nest.js  wrapper around the `@novu/node` package created by the community to easily interact with the core library from a nest project. Also released on NPM as a package
+A Nest.js wrapper around the `@novu/node` package created by the community to easily interact with the core library from a nest project. Also released on NPM as a package
 
 ### @novu/notification-center
 
