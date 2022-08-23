@@ -2,15 +2,16 @@ import styled from 'styled-components';
 import { ActionIcon, Badge } from '@mantine/core';
 import { colors } from '../../../../../shared/config/colors';
 import React, { useContext } from 'react';
-import { useNovuThemeProvider } from '../../../../../hooks';
+import { useNovuThemeProvider, useScreens } from '../../../../../hooks';
 import { INotificationCenterContext } from '../../../../../index';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { useTranslations } from '../../../../../hooks/use-translations';
 import { Cogs } from '../../../../../shared/icons';
 import { ScreensEnum } from '../../../../../store/screens-provider.context';
 
-export function Header({ unseenCount, setScreen }: { unseenCount: number; setScreen: (screen: ScreensEnum) => void }) {
+export function Header({ unseenCount }: { unseenCount: number }) {
   const { theme, common } = useNovuThemeProvider();
+  const { setScreen } = useScreens();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
 

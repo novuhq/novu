@@ -12,13 +12,13 @@ import { ScreensEnum } from '../../../../store/screens-provider.context';
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
   const { theme } = useNovuThemeProvider();
-  const { screen, setScreen } = useScreens();
+  const { screen } = useScreens();
 
   return (
     <LayoutWrapper theme={theme} data-test-id="layout-wrapper">
       {screen === ScreensEnum.SETTINGS && (
         <>
-          <UserPreferenceHeader setScreen={setScreen} />
+          <UserPreferenceHeader />
           <ContentWrapper>
             <SubscriberPreference />
           </ContentWrapper>
@@ -26,7 +26,7 @@ export function Layout({ children }: { children: JSX.Element }) {
       )}
       {screen === ScreensEnum.NOTIFICATIONS && (
         <>
-          <Header setScreen={setScreen} />
+          <Header />
           <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
         </>
       )}

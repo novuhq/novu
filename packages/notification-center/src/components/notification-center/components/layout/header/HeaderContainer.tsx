@@ -2,9 +2,8 @@ import React, { useContext, useEffect } from 'react';
 import { Header } from './Header';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { UnseenCountContext } from '../../../../../store/unseen-count.context';
-import { ScreensEnum } from '../../../../../store/screens-provider.context';
 
-export function HeaderContainer({ setScreen }: { setScreen: (screen: ScreensEnum) => void }) {
+export function HeaderContainer() {
   const { onUnseenCountChanged, header } = useContext(NotificationCenterContext);
   const { unseenCount } = useContext(UnseenCountContext);
 
@@ -14,5 +13,5 @@ export function HeaderContainer({ setScreen }: { setScreen: (screen: ScreensEnum
     }
   }, [unseenCount, (window as any).parentIFrame]);
 
-  return header ? header() : <Header setScreen={setScreen} unseenCount={unseenCount} />;
+  return header ? header() : <Header unseenCount={unseenCount} />;
 }
