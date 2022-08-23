@@ -751,7 +751,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_zorco6kbqtso4tbodg3tzvjobe
+      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
       ts-loader: 8.3.0_actwkd5w3rxts7lmypgqrtezda
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -1099,6 +1099,7 @@ importers:
       ts-node: ^10.5.0
       typescript: ^4.5.5
     dependencies:
+      '@novu/shared': link:../../libs/shared
       axios: 0.25.0
       chalk: 4.1.2
       commander: 9.1.0
@@ -1112,7 +1113,6 @@ importers:
       ora: 5.4.1
       ts-node: 10.7.0_n27kgyluszcj7fjwjso4u6qfjq
     devDependencies:
-      '@novu/shared': link:../../libs/shared
       '@types/configstore': 5.0.1
       '@types/inquirer': 8.2.1
       '@types/mocha': 9.1.1
@@ -2039,7 +2039,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       standard-version: 9.3.2
-      ts-jest: 27.1.4_zorco6kbqtso4tbodg3tzvjobe
+      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
       ts-node: 9.1.1_typescript@4.3.5
       typedoc: 0.19.2_typescript@4.3.5
       typescript: 4.3.5
@@ -18681,7 +18681,7 @@ packages:
       flat-cache: 3.0.4
       micromatch: 4.0.5
       react-docgen-typescript: 2.2.2_typescript@4.5.4
-      tslib: 2.4.0
+      tslib: 2.3.1
       typescript: 4.5.4
       webpack: 4.46.0
     transitivePeerDependencies:
@@ -28949,7 +28949,6 @@ packages:
     dependencies:
       eslint: 7.32.0
       globals: 11.12.0
-    dev: false
 
   /eslint-plugin-cypress/2.12.1_eslint@8.20.0:
     resolution: {integrity: sha512-c2W/uPADl5kospNDihgiLc7n87t5XhUbFDoTl6CfVkmG+kDAb5Ux10V9PoLPu9N+r7znpc+iQlcmAqT1A/89HA==}
@@ -34584,7 +34583,7 @@ packages:
       chalk: 4.1.2
       ci-info: 3.3.0
       deepmerge: 4.2.2
-      glob: 7.2.3
+      glob: 7.2.0
       graceful-fs: 4.2.9
       jest-circus: 27.5.1
       jest-environment-jsdom: 27.5.1
@@ -34601,7 +34600,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 9.1.1_typescript@4.3.5
+      ts-node: 9.1.1_typescript@4.6.2
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -40060,7 +40059,7 @@ packages:
     resolution: {integrity: sha512-7Wjy+9E3WwLOEL30D+m8TSTF7qJJUJLONBnwQp0518siuMxUQUbgZwssaFX+QKlZkjHZcw/IpZCt/H0srrntSg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.6.3
+      ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
 
@@ -40068,7 +40067,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.6.3
+      ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -43285,7 +43284,7 @@ packages:
       semver: 7.3.2
       style-loader: 1.3.0_webpack@4.44.2
       terser-webpack-plugin: 4.2.3_webpack@4.44.2
-      ts-pnp: 1.2.0_typescript@4.6.3
+      ts-pnp: 1.2.0_typescript@4.5.4
       typescript: 4.6.3
       url-loader: 4.1.1_7hroj2mdu577asu2zyhaasbvae
       webpack: 4.44.2
@@ -47236,7 +47235,7 @@ packages:
       schema-utils: 3.1.1
       serialize-javascript: 5.0.1
       source-map: 0.6.1
-      terser: 5.12.1
+      terser: 5.14.1
       webpack: 4.46.0
       webpack-sources: 1.4.3
     transitivePeerDependencies:
@@ -47756,6 +47755,40 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.4_2zv7k5h6rtkokmofpwrobdeggm:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.7
+      typescript: 4.3.5
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.4_7xtbyf6wfs43tumtyyqiqibi24:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -47928,41 +47961,6 @@ packages:
       make-error: 1.3.6
       semver: 7.3.7
       typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_zorco6kbqtso4tbodg3tzvjobe:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@babel/core': 7.18.9
-      '@types/jest': 27.4.1
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.7
-      typescript: 4.3.5
       yargs-parser: 20.2.9
     dev: true
 
@@ -48188,17 +48186,6 @@ packages:
         optional: true
     dependencies:
       typescript: 4.5.4
-
-  /ts-pnp/1.2.0_typescript@4.6.3:
-    resolution: {integrity: sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==}
-    engines: {node: '>=6'}
-    peerDependencies:
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      typescript: 4.6.3
 
   /tsconfig-paths-webpack-plugin/3.5.1:
     resolution: {integrity: sha512-n5CMlUUj+N5pjBhBACLq4jdr9cPTitySCjIosoQm0zwK99gmrcTGAfY9CwxRFT9+9OleNWXPRUcxsKP4AYExxQ==}
