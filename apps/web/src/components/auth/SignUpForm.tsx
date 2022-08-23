@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
@@ -91,6 +91,17 @@ export function SignUpForm({ token, email }: Props) {
 
   const [accepted, setAccepted] = useState<boolean>(false);
 
+  const serverErrorString = useMemo<string>(() => {
+    return Array.isArray(error?.message) ? error?.message[0] : error?.message;
+  }, [error]);
+
+  const emailServerError = useMemo<string>(() => {
+    if (serverErrorString === 'User already exists') return 'An account with this email already exists';
+    if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
+
+    return '';
+  }, [serverErrorString]);
+
   return (
     <>
       {!IS_DOCKER_HOSTED && !token && (
@@ -124,7 +135,7 @@ export function SignUpForm({ token, email }: Props) {
           mt={5}
         />
         <Input
-          error={errors.email?.message}
+          error={errors.email?.message || emailServerError}
           disabled={!!email}
           {...register('email', {
             required: 'Please provide an email',
@@ -178,7 +189,7 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
-      {isError && (
+      {isError && !emailServerError && (
         <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}
