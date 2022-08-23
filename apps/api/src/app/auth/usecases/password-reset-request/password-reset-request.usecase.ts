@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Novu } from '@novu/node';
 import { UserRepository } from '@novu/dal';
 import { v4 as uuidv4 } from 'uuid';
+import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
 
 @Injectable()
@@ -9,7 +10,8 @@ export class PasswordResetRequest {
   constructor(private userRepository: UserRepository) {}
 
   async execute(command: PasswordResetRequestCommand): Promise<{ success: boolean }> {
-    const foundUser = await this.userRepository.findByEmail(command.email);
+    const email = normalizeEmail(command.email);
+    const foundUser = await this.userRepository.findByEmail(email);
     if (foundUser) {
       const token = uuidv4();
 
