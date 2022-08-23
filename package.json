@@ -141,7 +141,7 @@
       "eslint --fix",
       "stop-only --file"
     ],
-    "packages/**/*.{ts,json}": [
+    "packages/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
       "eslint --fix",
       "stop-only --file"

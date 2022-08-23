@@ -78,12 +78,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     if (refetchTimeout.get(storeId)) {
       clearTimeout(refetchTimeout.get(storeId));
-      setRefetchTimeout(refetchTimeout.set(storeId, 0));
+      setRefetchTimeout(refetchTimeout.set(storeId, null));
     }
 
-    setRefetchTimeout(refetchTimeout.set(storeId, setTimeout(async () => {
-      await fetchPage(0, true, storeId);
-    }, 250)));
+    setRefetchTimeout(
+      refetchTimeout.set(
+        storeId,
+        setTimeout(async () => {
+          await fetchPage(0, true, storeId);
+        }, 250)
+      )
+    );
   }
 
   function getStoreQuery(storeId: string) {
