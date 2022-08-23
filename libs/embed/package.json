@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "description": "",
   "keywords": [],
@@ -92,6 +92,7 @@
   "devDependencies": {
     "@commitlint/cli": "^7.1.2",
     "@commitlint/config-conventional": "^7.1.2",
+    "@novu/notification-center": "^0.7.1",
     "@rollup/plugin-replace": "^2.4.2",
     "@types/jest": "27.4.0",
     "@types/node": "^14.14.16",

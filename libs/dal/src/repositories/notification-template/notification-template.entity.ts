@@ -46,6 +46,10 @@ export class NotificationTemplateEntity {
 
   deletedBy: string;
 
+  createdAt?: string;
+
+  updatedAt?: string;
+
   readonly notificationGroup?: NotificationGroupEntity;
 }
 

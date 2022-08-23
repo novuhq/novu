@@ -46,7 +46,7 @@ export function MembersTable({ members, currentUser, onRemoveMember, loading = f
                     )}`
                   : member.invite.email}
               </Text>
-              <Text className={classes.subHeading}>{member.user?.email ? member?.user.email : null}</Text>
+              {member.user?.email ? <Text className={classes.subHeading}>{member.user?.email}</Text> : null}
             </Group>
             <ActionsSider>
               <div style={{ marginLeft: 10 }}>
