@@ -16,7 +16,7 @@ A novu subscribers contains the following data points:
 When you want to send a notification to a specific recipient in the Novu platform, you must first create a subscriber using our server SDK.
 
 ```typescript
-import { Novu } from '@novu/node'
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
@@ -25,7 +25,7 @@ await novu.subscribers.identify(user.id, {
   firstName: user.firstName,
   lastName: user.lastName,
   phone: user.phone,
-  avatar: user.profile_avatar
+  avatar: user.profile_avatar,
 });
 ```
 
@@ -41,12 +41,12 @@ Using an identifier like email might cause issues locating a specific subscriber
 In some cases you want to access subscribers to update a specific field or data attribute. For example when user changes their email address or personal details.
 
 ```typescript
-import { Novu } from '@novu/node'
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
 await novu.subscribers.update(user.id, {
-  email: user.email
+  email: user.email,
 });
 ```
 
@@ -55,7 +55,7 @@ await novu.subscribers.update(user.id, {
 In case the user want to use chat channel, he will need to set the credentials that needed to be authentication with.
 
 ```typescript
-import { Novu, ChatProviderIdEnum} from '@novu/node'
+import { Novu, ChatProviderIdEnum } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
@@ -73,7 +73,7 @@ await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, 
 To remove and stop a subscriber from receiving communication, you call the remove API to delete the subscriber.
 
 ```typescript
-import { Novu } from '@novu/node'
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
