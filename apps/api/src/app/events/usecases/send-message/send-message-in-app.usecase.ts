@@ -41,6 +41,7 @@ export class SendMessageInApp extends SendMessageType {
       _id: command.subscriberId,
     });
     const inAppChannel: NotificationStepEntity = command.step;
+
     const content = await this.compileInAppTemplate(
       inAppChannel.template.content,
       command.payload,
@@ -164,7 +165,7 @@ export class SendMessageInApp extends SendMessageType {
     payload: any,
     subscriber: SubscriberEntity,
     command: SendMessageCommand
-  ) {
+  ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
