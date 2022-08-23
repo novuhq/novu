@@ -40,7 +40,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
   return (
     <ChannelItemWrapper data-test-id="channel-preference-item">
       <LeftContentWrapper>
-        <Icon style={{ color: active ? iconColor.active : iconColor.inactive }} />
+        <Icon style={{ color: active ? iconColor.active : iconColor.inactive, width: '30px' }} />
         <Text size={'md'} color={active ? fontColor.active : fontColor.inactive}>
           {label}
         </Text>

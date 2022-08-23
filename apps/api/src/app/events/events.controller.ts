@@ -14,7 +14,7 @@ import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllReque
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('events')
-@ApiTags('Event')
+@ApiTags('Events')
 export class EventsController {
   constructor(
     private triggerEvent: TriggerEvent,
@@ -39,18 +39,22 @@ export class EventsController {
   })
   @ApiOperation({
     summary: 'Trigger event',
-    description: 'Trigger event to send notifications to subscribers',
+    description: `
+    Trigger event is the main (and the only) way to send notification to subscribers. 
+    The trigger identifier is used to match the particular template associated with it. 
+    Additional information can be passed according the the body interface below.
+    `,
   })
   async trackEvent(
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
-  ): Promise<TriggerEventResponseDto | string> {
+  ): Promise<TriggerEventResponseDto> {
     const mappedSubscribers = this.mapSubscribers(body);
     const transactionId = body.transactionId || uuidv4();
 
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
 
-    return this.triggerEvent.execute(
+    return (await this.triggerEvent.execute(
       TriggerEventCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
@@ -61,7 +65,7 @@ export class EventsController {
         to: mappedSubscribers,
         transactionId,
       })
-    );
+    )) as unknown as TriggerEventResponseDto;
   }
 
   @ExternalApiAccessible()
@@ -80,8 +84,9 @@ export class EventsController {
     },
   })
   @ApiOperation({
-    summary: 'Trigger event for all subscribers',
-    description: 'Trigger event to send notifications to all subscribers',
+    summary: 'Broadcast event to all',
+    description:
+      'Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc. In the future could be used to trigger events to a subset of subscribers based on defined filters.',
   })
   async trackEventToAll(
     @UserSession() user: IJwtPayload,
@@ -111,7 +116,10 @@ export class EventsController {
   })
   @ApiOperation({
     summary: 'Cancel triggered event',
-    description: 'Cancel trigger with workflow containing running digest node',
+    description: `
+    Using a previously generated transactionId during the event trigger,
+     will cancel any active or pending workflows. This is useful to cancel active digests and etc...
+    `,
   })
   async cancelDigest(
     @UserSession() user: IJwtPayload,

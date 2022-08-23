@@ -1,16 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-class ApiKey {
-  @ApiProperty()
-  key: string;
-  @ApiProperty()
-  _userId: string;
-}
-
-class WidgetSettings {
-  @ApiProperty()
-  notificationCenterEncryption: boolean;
-}
+import { ApiKey } from '../../shared/dtos/api-key';
+import { WidgetSettings } from '../../shared/dtos/widget-settings';
 
 export class UpdateSettingsResponseDto {
   @ApiPropertyOptional()

@@ -3,14 +3,14 @@ import { IsBoolean, IsDefined, IsString } from 'class-validator';
 
 export class DeleteSubscriberResponseDto {
   @ApiProperty({
-    description: 'If subscriber was deleted or not',
+    description: 'A boolean stating the success of the action',
   })
   @IsBoolean()
   @IsDefined()
   acknowledged: boolean;
 
   @ApiProperty({
-    description: 'Status for subscriber',
+    description: 'The status enum for the performed action',
     enum: ['deleted'],
   })
   @IsString()

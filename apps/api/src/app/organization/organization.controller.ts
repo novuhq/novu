@@ -96,6 +96,7 @@ export class OrganizationController {
   async getMember(@UserSession() user: IJwtPayload) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
+        user,
         userId: user._id,
         organizationId: user.organizationId,
       })
@@ -107,6 +108,7 @@ export class OrganizationController {
   async inviteMember(@UserSession() user: IJwtPayload) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
+        user,
         userId: user._id,
         organizationId: user.organizationId,
       })

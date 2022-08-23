@@ -38,6 +38,6 @@ export class IEmailBlock {
   url?: string;
 
   styles?: {
-    textDirection?: 'rtl' | 'ltr';
+    textAlign?: 'left' | 'right' | 'center';
   };
 }

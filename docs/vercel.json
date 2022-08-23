@@ -5,5 +5,15 @@
       "destination": "/:slug*",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    { 
+      "source": "/api",
+      "destination": "https://novuapidocs.gatsbyjs.io/api"
+    },
+    { 
+      "source": "/api/(.*)", 
+      "destination": "https://novuapidocs.gatsbyjs.io/api/"
+    }
   ]
 }

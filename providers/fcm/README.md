@@ -16,7 +16,7 @@ novu.trigger('event-name', {
     subscriberId: '...',
   },
   payload: {
-    notificationIdentifiers: ['abcda...'], // Override subscriberId notification/device identifiers
+    deviceTokens: ['abcda...'], // Override subscriberId notification/device identifiers
     badge: 1, // iOS: The value of the badge on the home screen app icon, if 0 then the badge is removed.
     clickAction: 'clickity', // Android: Action associated with a user click on the notification.
     color: '#ff00ff', // Android: Hex color of the notification

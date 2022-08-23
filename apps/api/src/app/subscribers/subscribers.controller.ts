@@ -17,9 +17,8 @@ import {
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers } from './usecases/get-subscribers';
 import { GetSubscribersCommand } from './usecases/get-subscribers';
-import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
-import { GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse } from '@nestjs/swagger';
+import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
+import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse, ApiQuery } from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
@@ -37,6 +36,7 @@ import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed
 import { GetUnseenCount } from '../widgets/usecases/get-unseen-count/get-unseen-count.usecase';
 import { MarkMessageAsSeen } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
+import { initializeSeenParam } from '../widgets/widgets.controller';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -64,8 +64,9 @@ export class SubscribersController {
   })
   @ApiOperation({
     summary: 'Get subscribers',
-    description: 'Get subscribers paginated',
+    description: 'Returns a list of subscribers, could paginated using the `page` query parameter',
   })
+  @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
   async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
@@ -84,7 +85,7 @@ export class SubscribersController {
   })
   @ApiOperation({
     summary: 'Get subscriber',
-    description: 'Get subscriber by your internal id for subscriber',
+    description: 'Get subscriber by your internal id used to identify the subscriber',
   })
   async getSubscriber(
     @UserSession() user: IJwtPayload,
@@ -107,7 +108,10 @@ export class SubscribersController {
   })
   @ApiOperation({
     summary: 'Create subscriber',
-    description: 'Create subscriber with your internal id for subscriber',
+    description:
+      'Creates a subscriber entity, in the Novu platform. ' +
+      'The subscriber will be later used to receive notifications, and access notification feeds. ' +
+      'Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.',
   })
   async createSubscriber(
     @UserSession() user: IJwtPayload,
@@ -135,7 +139,7 @@ export class SubscribersController {
   })
   @ApiOperation({
     summary: 'Update subscriber',
-    description: 'Update subscriber with your internal id for subscriber',
+    description: 'Used to update the subscriber entity with new information',
   })
   async updateSubscriber(
     @UserSession() user: IJwtPayload,
@@ -163,8 +167,8 @@ export class SubscribersController {
     type: SubscriberResponseDto,
   })
   @ApiOperation({
-    summary: 'Update subscriber channel details',
-    description: 'Update subscribers channel details with your internal id for subscriber',
+    summary: 'Update subscriber credentials',
+    description: 'Subscriber credentials associated to the delivery methods such as slack and push tokens.',
   })
   async updateSubscriberChannel(
     @UserSession() user: IJwtPayload,
@@ -190,7 +194,7 @@ export class SubscribersController {
   })
   @ApiOperation({
     summary: 'Delete subscriber',
-    description: 'Delete subscriber with your internal id for subscriber',
+    description: 'Deletes a subscriber entity from the Novu platform',
   })
   async removeSubscriber(
     @UserSession() user: IJwtPayload,
@@ -227,7 +231,7 @@ export class SubscribersController {
     return await this.getPreferenceUsecase.execute(command);
   }
 
-  @Patch('/:subscriberId/preference/:templateId')
+  @Patch('/:subscriberId/preferences/:templateId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @ApiOkResponse({
@@ -258,18 +262,25 @@ export class SubscribersController {
   @UseGuards(JwtAuthGuard)
   @Get('/:subscriberId/notifications/feed')
   @ApiOperation({
-    summary: 'Get notifications in feed',
+    summary: 'Get a notification feed for a particular subscriber',
   })
   @ApiOkResponse({
     type: [MessageResponseDto],
   })
+  @ApiQuery({
+    name: 'seen',
+    type: Boolean,
+    required: false,
+  })
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
     @Query('page') page: number,
-    @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen: boolean | undefined = undefined,
-    @Param('subscriberId') subscriberId: string
+    @Query('feedIdentifier') feedId?: string,
+    @Query('seen') seen?: string
   ) {
+    const isSeen = initializeSeenParam(seen);
+
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -281,7 +292,7 @@ export class SubscribersController {
       subscriberId: subscriberId,
       page,
       feedId: feedsQuery,
-      seen,
+      seen: isSeen,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -294,7 +305,7 @@ export class SubscribersController {
     type: UnseenCountResponse,
   })
   @ApiOperation({
-    summary: 'Get unseen count',
+    summary: 'Get the unseen notification count for subscribers feed',
   })
   async getUnseenCount(
     @UserSession() user: IJwtPayload,
@@ -322,7 +333,7 @@ export class SubscribersController {
   @UseGuards(JwtAuthGuard)
   @Post('/:subscriberId/messages/:messageId/seen')
   @ApiOperation({
-    summary: 'Mark message as seen',
+    summary: 'Mark a subscriber feed message as seen',
   })
   @ApiCreatedResponse({
     type: MessageResponseDto,
@@ -346,7 +357,7 @@ export class SubscribersController {
   @UseGuards(JwtAuthGuard)
   @Post('/:subscriberId/messages/:messageId/actions/:type')
   @ApiOperation({
-    summary: 'Mark action as seen',
+    summary: 'Mark message action as seen',
   })
   @ApiCreatedResponse({
     type: MessageResponseDto,

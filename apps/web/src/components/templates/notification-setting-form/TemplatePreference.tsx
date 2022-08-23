@@ -33,9 +33,10 @@ export function ChannelPreference() {
       control={control}
       render={({ field }) => {
         const { readonly } = useEnvController();
+
         const preferences = field.value;
-        const mock = { channel: true };
-        const data = preferences ? preferences : mock;
+        const mock = { email: true, sms: true, in_app: true, chat: true, push: true };
+        const data = Object.assign({}, mock, preferences);
 
         function handleCheckboxChange(e, channelType) {
           const newData = Object.assign({}, preferences);

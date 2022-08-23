@@ -23,34 +23,33 @@ export class GetSubscriberTemplatePreference {
 
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
-    const preferenceSettings = command.template.preferenceSettings ?? {
-      email: true,
-      sms: true,
-      in_app: true,
-      chat: true,
-      push: true,
-    };
-    const templateDefaultsFiltered = getDefaultFromTemplate(activeChannels, preferenceSettings);
 
-    const currSubscriberPreference = await this.subscriberPreferenceRepository.findOne({
+    const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
       _environmentId: command.environmentId,
       _subscriberId: command.subscriberId,
       _templateId: command.template._id,
     });
 
     const responseTemplate = mapResponseTemplate(command.template);
+    const subscriberPreferenceEnabled = subscriberPreference?.enabled ?? true;
 
-    if (currSubscriberPreference) {
-      return {
-        template: responseTemplate,
-        preference: {
-          enabled: currSubscriberPreference.enabled,
-          channels: filterActiveChannels(currSubscriberPreference?.channels ?? {}, templateDefaultsFiltered),
-        },
-      };
+    if (subscriberPreferenceIsWhole(subscriberPreference?.channels, activeChannels)) {
+      return getResponse(responseTemplate, subscriberPreferenceEnabled, subscriberPreference.channels, activeChannels);
     }
 
-    return getNoSettingFallback(responseTemplate, templateDefaultsFiltered);
+    const templatePreference = command.template.preferenceSettings;
+
+    if (templatePreference) {
+      if (!subscriberPreference?.channels) {
+        return getResponse(responseTemplate, subscriberPreferenceEnabled, templatePreference, activeChannels);
+      }
+
+      const mergedPreference = Object.assign({}, templatePreference, subscriberPreference.channels);
+
+      return getResponse(responseTemplate, subscriberPreferenceEnabled, mergedPreference, activeChannels);
+    }
+
+    return getNoSettingFallback(responseTemplate, activeChannels);
   }
 
   private async queryActiveChannels(command: GetSubscriberTemplatePreferenceCommand): Promise<ChannelTypeEnum[]> {
@@ -69,9 +68,9 @@ export class GetSubscriberTemplatePreference {
   }
 }
 
-function getDefaultFromTemplate(activeChannels: ChannelTypeEnum[], defaults: IPreferenceChannels): IPreferenceChannels {
-  const filteredChannels = Object.assign({}, defaults);
-  for (const key in defaults) {
+function filterActiveChannels(activeChannels: ChannelTypeEnum[], preference: IPreferenceChannels): IPreferenceChannels {
+  const filteredChannels = Object.assign({}, preference);
+  for (const key in preference) {
     if (!activeChannels.some((channel) => channel === key)) {
       delete filteredChannels[key];
     }
@@ -80,32 +79,22 @@ function getDefaultFromTemplate(activeChannels: ChannelTypeEnum[], defaults: IPr
   return filteredChannels;
 }
 
-function filterActiveChannels(channels: IPreferenceChannels, defaults: IPreferenceChannels): IPreferenceChannels {
-  const filteredChannels = {};
-  const channelsKeys = Object.keys(channels);
-
-  for (const key in defaults) {
-    if (!channelsKeys.some((channel) => channel === key)) {
-      filteredChannels[key] = defaults[key];
-    } else {
-      filteredChannels[key] = channels[key];
-    }
-  }
-
-  return filteredChannels;
-}
-
 function getNoSettingFallback(
   template: IGetSubscriberPreferenceTemplateResponse,
-  defaults: IPreferenceChannels
+  activeChannels: ChannelTypeEnum[]
 ): ISubscriberPreferenceResponse {
-  return {
+  return getResponse(
     template,
-    preference: {
-      enabled: true,
-      channels: filterActiveChannels({}, defaults),
+    true,
+    {
+      email: true,
+      sms: true,
+      in_app: true,
+      chat: true,
+      push: true,
     },
-  };
+    activeChannels
+  );
 }
 
 function mapResponseTemplate(template: NotificationTemplateEntity): IGetSubscriberPreferenceTemplateResponse {
@@ -113,5 +102,26 @@ function mapResponseTemplate(template: NotificationTemplateEntity): IGetSubscrib
     _id: template._id,
     name: template.name,
     critical: template.critical != null ? template.critical : true,
+  };
+}
+
+function subscriberPreferenceIsWhole(preference: IPreferenceChannels, activeChannels: ChannelTypeEnum[]): boolean {
+  if (!preference || !activeChannels) return false;
+
+  return Object.keys(preference).length === activeChannels.length;
+}
+
+function getResponse(
+  responseTemplate: IGetSubscriberPreferenceTemplateResponse,
+  subscriberPreferenceEnabled: boolean,
+  subscriberPreferenceChannels: IPreferenceChannels,
+  activeChannels: ChannelTypeEnum[]
+): ISubscriberPreferenceResponse {
+  return {
+    template: responseTemplate,
+    preference: {
+      enabled: subscriberPreferenceEnabled,
+      channels: filterActiveChannels(activeChannels, subscriberPreferenceChannels),
+    },
   };
 }

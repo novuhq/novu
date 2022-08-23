@@ -105,10 +105,10 @@ export function ActivitiesPage() {
     {
       accessor: 'recipient',
       Header: 'Recipient',
-      Cell: ({ channel, email, phone, notificationIdentifiers }: any) => (
+      Cell: ({ channel, email, phone, deviceTokens }: any) => (
         <Text rows={1}>
           {channel === ChannelTypeEnum.EMAIL ? email : ''} {channel === ChannelTypeEnum.SMS ? phone : ''}{' '}
-          {channel === ChannelTypeEnum.PUSH ? notificationIdentifiers.join(',') : ''}
+          {channel === ChannelTypeEnum.PUSH ? deviceTokens.join(',') : ''}
         </Text>
       ),
     },
