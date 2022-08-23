@@ -8,3 +8,4 @@ export * from './notifications-provider';
 export * from './use-api.hook';
 export * from './use-subscriber-preference.hook';
 export * from './use-novu-theme-provider.hook';
+export * from './use-screens.hook';
