@@ -59,7 +59,6 @@ export function TemplatesSideBar({
         active={activeTab === ActivePageEnum.USER_PREFERENCE}
         label={minimalView ? '' : `User Preference Editor`}
         description={minimalView ? '' : `Update user preference`}
-        errors={showErrors && getStepsErrors(errors)}
       />
 
       {showTriggerSection && (
