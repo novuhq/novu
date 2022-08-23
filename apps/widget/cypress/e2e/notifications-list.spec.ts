@@ -36,8 +36,6 @@ describe('Notifications List', function () {
     });
 
     cy.wait('@getNotifications');
-    cy.waitForNetworkIdle(1000);
-    cy.wait(1000);
     cy.getByTestId('unseen-count-label').contains('8');
 
     cy.getByTestId('notification-list-item').should('have.length', 8);
