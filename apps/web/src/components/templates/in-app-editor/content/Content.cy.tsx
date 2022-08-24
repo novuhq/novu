@@ -1,18 +1,19 @@
-import { TestWrapper } from '../../../testing';
-import { ContentContainer } from './ContentContainer';
+import { TestWrapper } from '../../../../testing';
+import { Content } from './Content';
 
 it('should display the button text when passed as children', () => {
   const onChangeSpy = cy.spy().as('changeSpy');
 
   cy.mount(
     <TestWrapper>
-      <ContentContainer
+      <Content
         contentPlaceholder={'contentPlaceholder'}
         readonly={false}
         onChange={onChangeSpy}
-        value={
+        content={
           '{{<span>firstName</span>}} {{<span style="font-weight: bold;">lastName</span>}} <span style="font-weight: bold;">{{welcomeTo}}</span><br />'
         }
+        showPlaceHolder={false}
         index={0}
       />
     </TestWrapper>
