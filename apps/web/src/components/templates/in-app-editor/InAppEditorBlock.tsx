@@ -57,7 +57,9 @@ function ContentContainerController({
       render={({ field }) => {
         const { ref, ...fieldRefs } = field;
 
-        return <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} />;
+        return (
+          <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} index={index} />
+        );
       }}
     />
   );

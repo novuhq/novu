@@ -13,6 +13,7 @@ it('should display the button text when passed as children', () => {
         value={
           '{{<span>firstName</span>}} {{<span style="font-weight: bold;">lastName</span>}} <span style="font-weight: bold;">{{welcomeTo}}</span><br />'
         }
+        index={0}
       />
     </TestWrapper>
   );
