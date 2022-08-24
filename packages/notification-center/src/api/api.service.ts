@@ -28,49 +28,65 @@ export class ApiService {
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>
   ): Promise<any> {
-    return await this.httpClient.post(`/widgets/messages/${messageId}/actions/${executedType}`, {
-      executedType,
-      status,
-      payload,
+    return await this.defer(async () => {
+      return await this.httpClient.post(`/widgets/messages/${messageId}/actions/${executedType}`, {
+        executedType,
+        status,
+        payload,
+      });
     });
   }
 
   async markMessageAsSeen(messageId: string): Promise<any> {
-    return await this.httpClient.post(`/widgets/messages/${messageId}/seen`, {});
+    return await this.defer(async () => {
+      return await this.httpClient.post(`/widgets/messages/${messageId}/seen`, {});
+    });
   }
 
   async getNotificationsList(page: number, query: IStoreQuery = {}): Promise<IMessage[]> {
-    return await this.httpClient.get(`/widgets/notifications/feed`, {
-      page,
-      ...query,
+    return await this.defer(async () => {
+      return await this.httpClient.get(`/widgets/notifications/feed`, {
+        page,
+        ...query,
+      });
     });
   }
 
   async initializeSession(appId: string, subscriberId: string, hmacHash = null) {
-    return await this.httpClient.post(`/widgets/session/initialize`, {
-      applicationIdentifier: appId,
-      subscriberId: subscriberId,
-      hmacHash,
+    return await this.defer(async () => {
+      return await this.httpClient.post(`/widgets/session/initialize`, {
+        applicationIdentifier: appId,
+        subscriberId: subscriberId,
+        hmacHash,
+      });
     });
   }
 
   async postUsageLog(name: string, payload: { [key: string]: string | boolean | undefined }) {
-    return await this.httpClient.post('/widgets/usage/log', {
-      name: `[Widget] - ${name}`,
-      payload,
+    return await this.defer(async () => {
+      return await this.httpClient.post('/widgets/usage/log', {
+        name: `[Widget] - ${name}`,
+        payload,
+      });
     });
   }
 
   async getUnseenCount(query: IStoreQuery = {}) {
-    return await this.httpClient.get('/widgets/notifications/unseen', query as unknown as IParamObject);
+    return await this.defer(async () => {
+      return await this.httpClient.get('/widgets/notifications/unseen', query as unknown as IParamObject);
+    });
   }
 
   async getOrganization() {
-    return this.httpClient.get('/widgets/organization');
+    return await this.defer(async () => {
+      return this.httpClient.get('/widgets/organization');
+    });
   }
 
   async getUserPreference(): Promise<IUserPreferenceSettings[]> {
-    return this.httpClient.get('/widgets/preferences');
+    return await this.defer<IUserPreferenceSettings[]>(async () => {
+      return this.httpClient.get('/widgets/preferences');
+    });
   }
 
   async updateSubscriberPreference(
@@ -78,8 +94,28 @@ export class ApiService {
     channelType: string,
     enabled: boolean
   ): Promise<IUserPreferenceSettings> {
-    return await this.httpClient.patch(`/widgets/preferences/${templateId}`, {
-      channel: { type: channelType, enabled },
+    return await this.defer<IUserPreferenceSettings>(async () => {
+      return await this.httpClient.patch(`/widgets/preferences/${templateId}`, {
+        channel: { type: channelType, enabled },
+      });
+    });
+  }
+
+  private defer<T>(callback): Promise<T> {
+    let i = 0;
+
+    return new Promise((resolve, reject) => {
+      const interval = setInterval(() => {
+        if (this.isAuthenticated) {
+          clearInterval(interval);
+
+          return resolve(callback());
+        }
+        i++;
+        if (i >= 10) {
+          return reject();
+        }
+      }, 10);
     });
   }
 }
