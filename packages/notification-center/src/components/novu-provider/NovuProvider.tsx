@@ -1,17 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, IAuthContext, INovuProviderContext, IStore } from '../../index';
-import { AuthContext } from '../../store/auth.context';
+import { ColorScheme, INovuProviderContext, IStore } from '../../index';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
-import { NotificationsProvider, useApi, useSocket, useUnseenController } from '../../hooks';
+import { useApi, useAuth, useSocket, useUnseenController } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
-import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
 import { NovuI18NProvider } from '../../store/i18n.context';
 import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
+import { AuthProvider } from '../../store/auth-provider.context';
+import { NotificationsProvider } from '../../store/notifications-provider.context';
 
 interface INovuProviderProps {
   stores?: IStore[];
@@ -29,9 +29,9 @@ interface INovuProviderProps {
 let api: ApiService;
 
 export function NovuProvider(props: INovuProviderProps) {
+  const [isSessionInitialized, setIsSessionInitialized] = useState(false);
   const backendUrl = props.backendUrl ?? 'https://api.novu.co';
   const socketUrl = props.socketUrl ?? 'https://ws.novu.co';
-  const [isSessionInitialized, setIsSessionInitialized] = useState(false);
 
   if (!api) api = new ApiService(backendUrl);
 
@@ -79,7 +79,7 @@ interface ISessionInitializationProps {
 
 function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
   const { api: apiService } = useApi();
-  const { applyToken, setUser } = useContext<IAuthContext>(AuthContext);
+  const { applyToken, setUser } = useAuth();
   const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
