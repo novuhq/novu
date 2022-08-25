@@ -91,7 +91,6 @@ export class OrganizationController {
   }
 
   @Get('/members')
-  @Roles(MemberRoleEnum.ADMIN)
   async getMember(@UserSession() user: IJwtPayload) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
