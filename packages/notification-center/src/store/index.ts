@@ -3,6 +3,8 @@ export * from './auth-provider.context';
 export * from './novu-provider.context';
 export * from './screens-provider.context';
 export * from './novu-theme-provider.context';
+export * from './unseen-provider.context';
+export * from './socket-initialization-provider.context';
 
 export * from './unseen-count.context';
 export * from './screens.context';

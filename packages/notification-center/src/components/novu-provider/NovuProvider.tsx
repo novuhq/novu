@@ -1,17 +1,18 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, INovuProviderContext, IStore } from '../../index';
-import { useSocketController } from '../../store/socket/use-socket-controller';
-import { SocketContext } from '../../store/socket/socket.store';
-import { useApi, useAuth, useSocket, useUnseenController } from '../../hooks';
-import { UnseenCountContext } from '../../store/unseen-count.context';
-import { ApiContext } from '../../store/api.context';
-import { ApiService } from '../../api/api.service';
 import { IOrganizationEntity } from '@novu/shared';
-import { NovuI18NProvider } from '../../store/i18n.context';
+import {
+  AuthProvider,
+  NotificationsProvider,
+  SocketInitializationProvider,
+  UnseenProvider,
+  NovuI18NProvider,
+  NovuContext,
+  ApiContext,
+} from '../../store';
+import { ColorScheme, INovuProviderContext, IStore } from '../../index';
+import { useApi, useAuth } from '../../hooks';
+import { ApiService } from '../../api/api.service';
 import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
-import { AuthProvider } from '../../store/auth-provider.context';
-import { NotificationsProvider } from '../../store/notifications-provider.context';
 
 interface INovuProviderProps {
   stores?: IStore[];
@@ -58,11 +59,11 @@ export function NovuProvider(props: INovuProviderProps) {
         <AuthProvider>
           <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
             <NotificationsProvider>
-              <SocketInitialization>
+              <SocketInitializationProvider>
                 <NovuI18NProvider i18n={props.i18n}>
                   <UnseenProvider>{props.children}</UnseenProvider>
                 </NovuI18NProvider>
-              </SocketInitialization>
+              </SocketInitializationProvider>
             </NotificationsProvider>
           </SessionInitialization>
         </AuthProvider>
@@ -115,10 +116,4 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   }
 
   return children;
-}
-
-function SocketInitialization({ children }: { children: React.ReactNode }) {
-  const { socket } = useSocketController();
-
-  return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
 }
