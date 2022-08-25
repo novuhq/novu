@@ -1,9 +1,9 @@
-import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
-import { Badge } from '@mantine/core';
 import React from 'react';
+import { Badge } from '@mantine/core';
+import { useNovuTheme } from '../../../hooks';
 
 export function UnseenBadge({ unseenCount }: { unseenCount: number }) {
-  const { theme, common } = useNovuThemeProvider();
+  const { theme, common } = useNovuTheme();
 
   return (
     <>

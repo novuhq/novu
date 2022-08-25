@@ -1,12 +1,11 @@
 /* eslint-disable max-len */
-import React, { useContext } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
-import { INovuTheme } from '../../../../../store/novu-theme.context';
-import { useTranslations } from '../../../../../hooks/use-translations';
+import { useNovuTheme, useTranslations } from '../../../../../hooks';
+import { INovuTheme } from '../../../../../store';
 
 export function Footer() {
-  const { theme } = useNovuThemeProvider();
+  const { theme } = useNovuTheme();
   const { t } = useTranslations();
 
   return (
