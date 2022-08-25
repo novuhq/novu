@@ -60,7 +60,7 @@ importers:
       listr: ^0.14.3
       meow: ^10.1.1
       mississippi: ^4.0.0
-      nx: ^14.5.4
+      nx: ^14.5.10
       pnpm: 7.5.0
       prettier: ^2.6.2
       rimraf: ^3.0.2
@@ -73,7 +73,7 @@ importers:
       typescript: 4.3.5
       wait-port: ^0.3.0
     dependencies:
-      nx: 14.5.4
+      nx: 14.5.10
       tslib: 2.4.0
     devDependencies:
       '@auto-it/npm': 10.36.5_y4qulqmukjoftrdyqj7awk6qby
@@ -751,7 +751,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_zorco6kbqtso4tbodg3tzvjobe
+      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
       ts-loader: 8.3.0_actwkd5w3rxts7lmypgqrtezda
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -14233,10 +14233,10 @@ packages:
       - supports-color
     dev: true
 
-  /@nrwl/cli/14.5.4:
-    resolution: {integrity: sha512-UYr14hxeYV8p/zt6D6z33hljZJQROJAVxSC+mm72fyVvy88Gt0sQNLfMmOARXur0p/73PSLM0jJ2Sr7Ftsuu+A==}
+  /@nrwl/cli/14.5.10:
+    resolution: {integrity: sha512-GpnnKGO3+HwlMmZSStbq1MOyoDJg2I0HN4nBqM3ltaQkfxGZv3erwRMOAT+8mba2MWbJJ2QQgASAYvTscNYjOQ==}
     dependencies:
-      nx: 14.5.4
+      nx: 14.5.10
     transitivePeerDependencies:
       - '@swc-node/register'
       - '@swc/core'
@@ -14371,11 +14371,11 @@ packages:
       - supports-color
     dev: true
 
-  /@nrwl/tao/14.5.4:
-    resolution: {integrity: sha512-a2GCuSE8WghjehuU3GVO63KZEnZXXQiqEg137yN/Na+PxwSu68XeaX53SLyzRskTV120YwBBy1YCTNzAZxxsjg==}
+  /@nrwl/tao/14.5.10:
+    resolution: {integrity: sha512-eWORRba0HlTNmOQFUxHqki0Z5yiRIq1Hl0taprmZpz2lgDXuzPIjGfAi5/ETy5+G5gkEyxFnCq7+SiMilPokwA==}
     hasBin: true
     dependencies:
-      nx: 14.5.4
+      nx: 14.5.10
     transitivePeerDependencies:
       - '@swc-node/register'
       - '@swc/core'
@@ -25618,7 +25618,7 @@ packages:
     resolution: {integrity: sha512-j4dx+Fb0URmzbwwMUrhqWM2BEWHdFGx+qZ9qqASHRPqvTYdqvWnHg0H1hIbcyLnvgnoNAVMlwkepyqM3DaIFUg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -38880,8 +38880,8 @@ packages:
       '@nrwl/cli': 13.8.5
     dev: true
 
-  /nx/14.5.4:
-    resolution: {integrity: sha512-xv1nTaQP6kqVDE4PXcB1tLlgzNAPUHE/2vlqSLgxjNb6colKf0vrEZhVTjhnbqBeJiTb33gUx50bBXkurCkN5w==}
+  /nx/14.5.10:
+    resolution: {integrity: sha512-dqiV+zY32k98mfKFTgiQyYd9HYZmB1zoJj6gYniEuqzs6CKp8ZSpeRDaVQRxR6wEMvW9MSTA9kBg8sJ78W/NZg==}
     hasBin: true
     requiresBuild: true
     peerDependencies:
@@ -38893,8 +38893,8 @@ packages:
       '@swc/core':
         optional: true
     dependencies:
-      '@nrwl/cli': 14.5.4
-      '@nrwl/tao': 14.5.4
+      '@nrwl/cli': 14.5.10
+      '@nrwl/tao': 14.5.10
       '@parcel/watcher': 2.0.4
       chalk: 4.1.0
       chokidar: 3.5.3
@@ -47751,6 +47751,40 @@ packages:
       jest-util: 27.5.1
       json5: 2.2.1
       lodash: 4.17.21
+      make-error: 1.3.6
+      semver: 7.3.7
+      typescript: 4.3.5
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.4_2zv7k5h6rtkokmofpwrobdeggm:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
       make-error: 1.3.6
       semver: 7.3.7
       typescript: 4.3.5
