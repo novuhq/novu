@@ -12,7 +12,7 @@ export function getCurrentOrganization() {
 export function inviteMember(email: string) {
   return api.post(`/v1/invites`, {
     email,
-    role: MemberRoleEnum.MEMBER,
+    role: MemberRoleEnum.ADMIN,
   });
 }
 
