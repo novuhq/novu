@@ -1,9 +1,10 @@
-import React from 'react';
 import { Badge } from '@mantine/core';
 
 interface ITagProps extends JSX.ElementChildrenAttribute {
   color?: string;
   border?: string;
+  ml?: number;
+  mr?: number;
 }
 
 /**
