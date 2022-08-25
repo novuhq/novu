@@ -13,7 +13,6 @@
     "start:docker": "pnpm build && pnpm start:static:build",
     "prebuild": "rimraf build",
     "build": "craco build",
-    "rebuild": "pnpm prebuild && pnpm build",
     "test": "craco test",
     "precommit": "lint-staged",
     "eject": "craco eject",

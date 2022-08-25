@@ -8,7 +8,6 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "rebuild": "pnpm prebuild && pnpm build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker build --build-arg PACKAGE_PATH=apps/api - -t novu-api",

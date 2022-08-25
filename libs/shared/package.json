@@ -7,7 +7,6 @@
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
     "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
-    "rebuild": "pnpm prebuild && pnpm build",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",

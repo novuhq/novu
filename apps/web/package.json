@@ -6,7 +6,6 @@
     "start": "cross-env PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "react-app-rewired build",
-    "rebuild": "pnpm prebuild && pnpm build",
     "test": "react-app-rewired test",
     "precommit": "lint-staged",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",

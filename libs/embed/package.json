@@ -24,7 +24,6 @@
     "lint:fix": "pnpm lint -- --fix",
     "prebuild": "rimraf dist",
     "build": "tsc && cross-env ENVIRONMENT=local rollup -c rollup.config.ts",
-    "rebuild": "pnpm prebuild && pnpm build",
     "build:dev": "tsc && cross-env ENVIRONMENT=dev rollup -c rollup.config.ts",
     "build:prod": "tsc && cross-env ENVIRONMENT=production rollup -c rollup.config.ts",
     "start": "cross-env ENVIRONMENT=local rollup -c rollup.config.ts -w",

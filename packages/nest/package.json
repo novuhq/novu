@@ -15,7 +15,6 @@
   "scripts": {
     "prebuild": "rimraf build",
     "build": "run-p build:*",
-    "rebuild": "npm run prebuild && npm run build",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
     "fix": "run-s fix:*",

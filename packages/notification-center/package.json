@@ -7,7 +7,6 @@
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
     "build": "rollup -c",
-    "rebuild": "npm run prebuild && npm run build",
     "build:watch": "rollup -c -w",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook"
