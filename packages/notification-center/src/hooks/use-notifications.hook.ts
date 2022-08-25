@@ -32,6 +32,9 @@ export function useNotifications(props?: IUseNotificationsProps) {
   });
 
   useEffect(() => {
+    if (!data) {
+      return;
+    }
     setNotifications(data.pages.reduce((prev, current) => [...prev, ...current], []));
   }, [data]);
 
