@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { useSocket, useUnseenController } from '../hooks';
+import { useSocket, useUnseenCountController } from '../hooks';
 import { UnseenCountContext } from './unseen-count.context';
 
 export function UnseenProvider({ children }: { children: React.ReactNode }) {
-  const { unseenCount, setUnseenCount } = useUnseenController();
+  const { unseenCount, setUnseenCount } = useUnseenCountController();
   const { socket } = useSocket();
 
   useEffect(() => {

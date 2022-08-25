@@ -1,11 +1,10 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Header } from './Header';
-import { UnseenCountContext } from '../../../../../store';
-import { useNotificationCenter } from '../../../../../hooks';
+import { useNotificationCenter, useUnseenCount } from '../../../../../hooks';
 
 export function HeaderContainer() {
   const { onUnseenCountChanged, header } = useNotificationCenter();
-  const { unseenCount } = useContext(UnseenCountContext);
+  const { unseenCount } = useUnseenCount();
 
   useEffect(() => {
     if (onUnseenCountChanged) {

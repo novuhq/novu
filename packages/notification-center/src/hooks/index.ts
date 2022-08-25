@@ -9,3 +9,5 @@ export * from './use-subscriber-preference.hook';
 export * from './use-novu-theme-provider.hook';
 export * from './use-screens.hook';
 export * from './use-notification-center-hook';
+
+export * from './use-unseen-count-controller.hook';

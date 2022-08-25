@@ -1,9 +1,8 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
-import { useNotifications, useApi, useNotificationCenter } from '../../../hooks';
+import { useNotifications, useApi, useNotificationCenter, useUnseenCount } from '../../../hooks';
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
-import { UnseenCountContext } from '../../../store';
 import { ITab } from '../../../index';
 
 export function NotificationsListTab({ tab }: { tab?: ITab }) {
@@ -20,7 +19,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     hasNextPage,
   } = useNotifications({ storeId: storeId });
 
-  const { unseenCount } = useContext(UnseenCountContext);
+  const { unseenCount } = useUnseenCount();
 
   useEffect(() => {
     if (!isNaN(unseenCount)) {
