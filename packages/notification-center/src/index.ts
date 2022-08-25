@@ -86,22 +86,6 @@ export interface INovuProviderContext {
   stores?: IStore[];
 }
 
-export interface INotificationsContext {
-  notifications?: Record<string, IMessage[]>;
-  fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
-  hasNextPage?: Map<string, boolean>;
-  fetching?: boolean;
-  markAsSeen?: (messageId: string) => Promise<IMessage>;
-  updateAction?: (
-    messageId: string,
-    actionButtonType: ButtonTypeEnum,
-    status: MessageActionStatusEnum,
-    payload?: Record<string, unknown>,
-    storeId?: string
-  ) => void;
-  refetch?: (storeId?: string, query?: IStoreQuery) => void;
-}
-
 export declare type ColorScheme = 'light' | 'dark';
 
 export interface ITab {

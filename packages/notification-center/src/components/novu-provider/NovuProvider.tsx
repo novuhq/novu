@@ -4,7 +4,7 @@ import { ColorScheme, IAuthContext, INovuProviderContext, IStore } from '../../i
 import { AuthContext } from '../../store/auth.context';
 import { useSocketController } from '../../store/socket/use-socket-controller';
 import { SocketContext } from '../../store/socket/socket.store';
-import { NotificationsProvider, useApi, useSocket, useUnseenController } from '../../hooks';
+import { useApi, useSocket, useUnseenController } from '../../hooks';
 import { UnseenCountContext } from '../../store/unseen-count.context';
 import { ApiContext } from '../../store/api.context';
 import { ApiService } from '../../api/api.service';
@@ -57,13 +57,11 @@ export function NovuProvider(props: INovuProviderProps) {
       <ApiContext.Provider value={{ api }}>
         <AuthProvider>
           <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
-            <NotificationsProvider>
-              <SocketInitialization>
-                <NovuI18NProvider i18n={props.i18n}>
-                  <UnseenProvider>{props.children}</UnseenProvider>
-                </NovuI18NProvider>
-              </SocketInitialization>
-            </NotificationsProvider>
+            <SocketInitialization>
+              <NovuI18NProvider i18n={props.i18n}>
+                <UnseenProvider>{props.children}</UnseenProvider>
+              </NovuI18NProvider>
+            </SocketInitialization>
           </SessionInitialization>
         </AuthProvider>
       </ApiContext.Provider>
