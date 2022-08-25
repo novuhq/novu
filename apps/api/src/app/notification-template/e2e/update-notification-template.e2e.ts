@@ -68,6 +68,33 @@ describe('Update notification template by id - /notification-templates/:template
     expect(body.error).to.equal('Bad Request');
   });
 
+  it('should update the trigger identifier', async function () {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+    const template = await notificationTemplateService.createTemplate();
+    const newIdentifier = `${template.triggers[0].identifier}-new`;
+    const update: IUpdateNotificationTemplateDto = {
+      identifier: newIdentifier,
+    };
+
+    const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}`).send(update);
+
+    const foundTemplate: INotificationTemplate = body.data;
+
+    expect(foundTemplate._id).to.equal(template._id);
+    expect(foundTemplate.description).to.equal(template.description);
+    expect(foundTemplate.name).to.equal(template.name);
+    expect(foundTemplate.triggers[0].identifier).to.equal(newIdentifier);
+
+    const change = await changeRepository.findOne({
+      _entityId: foundTemplate._id,
+    });
+    expect(change._entityId).to.eq(foundTemplate._id);
+  });
+
   it('should generate new variables on update', async function () {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
@@ -197,7 +224,6 @@ describe('Update notification template by id - /notification-templates/:template
         },
       ],
       notificationGroupId: session.notificationGroups[0]._id,
-      identifier: undefined,
     };
 
     const { body: updated } = await session.testAgent

@@ -24,7 +24,7 @@ export class UpdateNotificationTemplateRequestDto implements ICreateNotification
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  identifier: string;
+  identifier?: string;
 
   @ApiPropertyOptional()
   @IsArray()
