@@ -163,7 +163,7 @@ importers:
       '@nestjs/swagger': 6.0.1
       '@nestjs/terminus': 9.0.0
       '@nestjs/testing': 9.0.2
-      '@novu/dal': ^0.7.0
+      '@novu/dal': ^0.7.1
       '@novu/discord': ^0.7.0
       '@novu/emailjs': ^0.7.0
       '@novu/fcm': ^0.7.0
@@ -172,21 +172,21 @@ importers:
       '@novu/mailjet': ^0.7.0
       '@novu/mandrill': ^0.7.0
       '@novu/netcore': ^0.7.0
-      '@novu/node': ^0.7.0
+      '@novu/node': ^0.7.1
       '@novu/nodemailer': ^0.7.0
       '@novu/plivo': ^0.7.0
       '@novu/postmark': ^0.7.0
       '@novu/sendgrid': ^0.7.0
       '@novu/sendinblue': ^0.7.0
       '@novu/ses': ^0.7.0
-      '@novu/shared': ^0.7.0
-      '@novu/slack': ^0.7.0
+      '@novu/shared': ^0.7.1
+      '@novu/slack': ^0.7.1
       '@novu/sms77': ^0.7.0
       '@novu/sns': ^0.7.0
       '@novu/stateless': ^0.7.0
       '@novu/telnyx': ^0.7.0
       '@novu/termii': ^0.7.0
-      '@novu/testing': ^0.7.0
+      '@novu/testing': ^0.7.1
       '@novu/twilio': ^0.7.0
       '@sendgrid/mail': ^7.6.0
       '@sentry/node': ^6.1.0
@@ -371,10 +371,10 @@ importers:
       '@mantine/hooks': 4.2.12
       '@mantine/notifications': 4.1.0
       '@mantine/prism': 4.1.0
-      '@novu/dal': ^0.7.0
-      '@novu/notification-center': ^0.7.0
-      '@novu/shared': ^0.7.0
-      '@novu/testing': ^0.7.0
+      '@novu/dal': ^0.7.1
+      '@novu/notification-center': ^0.7.1
+      '@novu/shared': ^0.7.1
+      '@novu/testing': ^0.7.1
       '@sentry/react': ^6.3.1
       '@sentry/tracing': ^6.3.1
       '@storybook/addon-actions': ^6.4.14
@@ -556,11 +556,11 @@ importers:
       '@faker-js/faker': ^6.0.0
       '@mantine/core': ^4.1.0
       '@mantine/hooks': ^4.1.0
-      '@novu/dal': ^0.7.0
-      '@novu/embed': ^0.7.0
-      '@novu/notification-center': ^0.7.0
-      '@novu/shared': ^0.7.0
-      '@novu/testing': ^0.7.0
+      '@novu/dal': ^0.7.1
+      '@novu/embed': ^0.7.1
+      '@novu/notification-center': ^0.7.1
+      '@novu/shared': ^0.7.1
+      '@novu/testing': ^0.7.1
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
@@ -680,9 +680,9 @@ importers:
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
       '@nestjs/websockets': ^7.6.17
-      '@novu/dal': ^0.7.0
-      '@novu/shared': ^0.7.0
-      '@novu/testing': ^0.7.0
+      '@novu/dal': ^0.7.1
+      '@novu/shared': ^0.7.1
+      '@novu/testing': ^0.7.1
       '@sentry/node': ^6.3.3
       '@types/express': ^4.17.8
       '@types/jest': ^27.0.2
@@ -835,7 +835,7 @@ importers:
       '@aws-sdk/client-s3': ^3.14.0
       '@aws-sdk/s3-request-presigner': ^3.14.0
       '@faker-js/faker': ^6.0.0
-      '@novu/shared': ^0.7.0
+      '@novu/shared': ^0.7.1
       '@octokit/graphql': ^4.3.1
       '@sendgrid/mail': ^7.4.2
       '@types/async': ^3.2.1
@@ -923,7 +923,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^7.1.2
       '@commitlint/config-conventional': ^7.1.2
-      '@novu/notification-center': ^0.7.0
+      '@novu/notification-center': ^0.7.1
       '@rollup/plugin-replace': ^2.4.2
       '@types/iframe-resizer': ^3.5.8
       '@types/jest': 27.4.0
@@ -1020,9 +1020,9 @@ importers:
   libs/testing:
     specifiers:
       '@faker-js/faker': ^6.0.0
-      '@novu/dal': ^0.7.0
-      '@novu/node': ^0.7.0
-      '@novu/shared': ^0.7.0
+      '@novu/dal': ^0.7.1
+      '@novu/node': ^0.7.1
+      '@novu/shared': ^0.7.1
       '@types/async': ^3.2.1
       '@types/bluebird': ^3.5.30
       '@types/node': ^14.6.0
@@ -1080,7 +1080,7 @@ importers:
 
   packages/cli:
     specifiers:
-      '@novu/shared': ^0.7.0
+      '@novu/shared': ^0.7.1
       '@types/configstore': ^5.0.1
       '@types/inquirer': ^8.2.0
       '@types/mocha': 9.1.1
@@ -1099,6 +1099,7 @@ importers:
       ts-node: ^10.5.0
       typescript: ^4.5.5
     dependencies:
+      '@novu/shared': link:../../libs/shared
       axios: 0.25.0
       chalk: 4.1.2
       commander: 9.1.0
@@ -1112,7 +1113,6 @@ importers:
       ora: 5.4.1
       ts-node: 10.7.0_n27kgyluszcj7fjwjso4u6qfjq
     devDependencies:
-      '@novu/shared': link:../../libs/shared
       '@types/configstore': 5.0.1
       '@types/inquirer': 8.2.1
       '@types/mocha': 9.1.1
@@ -1162,7 +1162,7 @@ importers:
 
   packages/node:
     specifiers:
-      '@novu/shared': ^0.7.0
+      '@novu/shared': ^0.7.1
       '@sendgrid/mail': ^7.4.6
       '@types/jest': 27.4.0
       '@types/lodash.get': ^4.4.6
@@ -1208,7 +1208,7 @@ importers:
       '@babel/core': ^7.17.8
       '@mantine/core': ^4.1.0
       '@mantine/hooks': ^4.1.3
-      '@novu/shared': ^0.7.0
+      '@novu/shared': ^0.7.1
       '@rollup/plugin-commonjs': ^21.0.1
       '@rollup/plugin-image': ^2.1.1
       '@rollup/plugin-node-resolve': ^13.1.3
@@ -2004,7 +2004,7 @@ importers:
   providers/slack:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.7.0
+      '@novu/node': ^0.7.1
       '@novu/stateless': ^0.7.0
       '@types/jest': ^27.0.1
       axios: ^0.27.2
@@ -24466,7 +24466,7 @@ packages:
       minipass-pipeline: 1.2.4
       mkdirp: 1.0.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1
+      promise-inflight: 1.0.1_bluebird@3.7.2
       rimraf: 3.0.2
       ssri: 8.0.1
       tar: 6.1.11
@@ -25618,7 +25618,7 @@ packages:
     resolution: {integrity: sha512-j4dx+Fb0URmzbwwMUrhqWM2BEWHdFGx+qZ9qqASHRPqvTYdqvWnHg0H1hIbcyLnvgnoNAVMlwkepyqM3DaIFUg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -34584,7 +34584,7 @@ packages:
       chalk: 4.1.2
       ci-info: 3.3.0
       deepmerge: 4.2.2
-      glob: 7.2.3
+      glob: 7.2.0
       graceful-fs: 4.2.9
       jest-circus: 27.5.1
       jest-environment-jsdom: 27.5.1
@@ -34601,7 +34601,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 9.1.1_typescript@4.3.5
+      ts-node: 9.1.1_typescript@4.6.2
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -41732,6 +41732,7 @@ packages:
     peerDependenciesMeta:
       bluebird:
         optional: true
+    dev: true
 
   /promise-inflight/1.0.1_bluebird@3.7.2:
     resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}

@@ -7,6 +7,7 @@ import { Layout } from './layout/Layout';
 import { Main } from './Main';
 import { useApi } from '../../../hooks/use-api.hook';
 import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
+import { ScreenProvider } from '../../../store/screens-provider.context';
 
 export function AppContent() {
   const { api } = useApi();
@@ -33,12 +34,14 @@ export function AppContent() {
 
   return (
     <ThemeProvider theme={themeConfig}>
-      <GlobalStyle fontFamily={themeConfig.fontFamily} />
-      <Wrap layoutDirection={themeConfig.layout.direction} brandColor={themeConfig.colors.main}>
-        <Layout>
-          <Main />
-        </Layout>
-      </Wrap>
+      <ScreenProvider>
+        <GlobalStyle fontFamily={themeConfig.fontFamily} />
+        <Wrap layoutDirection={themeConfig.layout.direction} brandColor={themeConfig.colors.main}>
+          <Layout>
+            <Main />
+          </Layout>
+        </Wrap>
+      </ScreenProvider>
     </ThemeProvider>
   );
 }
