@@ -1,15 +1,14 @@
-import { useNotifications, useApi } from '../../../hooks';
-import React, { useContext, useEffect, useRef } from 'react';
-import { NotificationCenterContext } from '../../../store/notification-center.context';
+import React, { useContext, useEffect } from 'react';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
+import { useNotifications, useApi, useNotificationCenter } from '../../../hooks';
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
-import { UnseenCountContext } from '../../../store/unseen-count.context';
+import { UnseenCountContext } from '../../../store';
 import { ITab } from '../../../index';
 
 export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();
-  const { onNotificationClick, onUrlChange } = useContext(NotificationCenterContext);
+  const { onNotificationClick, onUrlChange } = useNotificationCenter();
 
   const storeId = tab?.storeId || 'default_store';
   const {
