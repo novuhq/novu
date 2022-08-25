@@ -8,7 +8,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",
-    "setup:project": "pnpm i && node scripts/setup-env-files.js && pnpm build",
+    "setup:project": "npx pnpm@7.5.0 i && node scripts/setup-env-files.js && pnpm build",
     "install:docs": "pnpm install --filter @novu/docs",
     "clean": "lerna clean --yes",
     "commit": "cz",
