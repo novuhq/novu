@@ -1,10 +1,8 @@
-import { Center, Container, Grid, Group } from '@mantine/core';
+import { Container, Grid, Group } from '@mantine/core';
 import { useState } from 'react';
-import { Button, colors, Switch, Title, Text } from '../../design-system';
-import { ArrowLeft } from '../../design-system/icons';
+import { Button, Switch, Title } from '../../design-system';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { useEnvController } from '../../store/use-env-controller';
-import { When } from '../utils/When';
 import { EditorPreviewSwitch } from './EditorPreviewSwitch';
 import { useStatusChangeControllerHook } from './use-status-change-controller.hook';
 import { useTemplateController } from './use-template-controller.hook';
@@ -52,7 +50,7 @@ interface Props {
   activePage: ActivePageEnum;
 }
 
-export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActivePage, activePage }: Props) => {
+export const TemplatePageHeader = ({ templateId, loading, disableSubmit, activePage }: Props) => {
   const { editMode, template } = useTemplateController(templateId);
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const { readonly } = useEnvController();
@@ -69,30 +67,6 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActi
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When
-            truthy={
-              activePage !== ActivePageEnum.SETTINGS &&
-              activePage !== ActivePageEnum.USER_PREFERENCE &&
-              activePage !== ActivePageEnum.TRIGGER_SNIPPET
-            }
-          >
-            <Center
-              mt={10}
-              data-test-id="go-back-button"
-              onClick={() => {
-                setActivePage(
-                  activePage === ActivePageEnum.WORKFLOW ? ActivePageEnum.SETTINGS : ActivePageEnum.WORKFLOW
-                );
-              }}
-              inline
-              style={{ cursor: 'pointer' }}
-            >
-              <ArrowLeft color={colors.B60} />
-              <Text ml={5} color={colors.B60}>
-                Go Back
-              </Text>
-            </Center>
-          </When>
         </div>
         <div>
           <EditorPreviewSwitch view={view} setView={setView} />
