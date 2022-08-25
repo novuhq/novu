@@ -36,7 +36,7 @@ export function ContentContainer({
         dangerouslySetInnerHTML={{
           __html: content as string,
         }}
-        onKeyUp={(e: any) => onChange(e.target.innerHTML)}
+        onKeyUp={(e: any) => onChange(sanitizeHandlebarsVariables(e.target.innerHTML))}
         suppressContentEditableWarning
         style={{
           display: 'inline-block',
@@ -55,6 +55,22 @@ export function ContentContainer({
       <PlaceHolder show={showPlaceHolder}>{contentPlaceholder}</PlaceHolder>
     </div>
   );
+}
+
+/**
+ * Recursively remove a pattern from a string until there are no more matches.
+ * Avoids incomplete sanitization e.g. "aabcbc".replace(/abc/g, "") === "abc"
+ * See: https://github.com/novuhq/novu/security/code-scanning/9
+ */
+function sanitizeHandlebarsVariables(content: string): string {
+  const handlebarsTags = /{{.*?}}/gi;
+  const newStr = content.replace(handlebarsTags, function (match) {
+    const htmlElementsMatch = /<\/?[^>]*?>/gi;
+
+    return match.replace(htmlElementsMatch, '');
+  });
+
+  return newStr.length === content.length ? newStr : sanitizeHandlebarsVariables(newStr);
 }
 
 const PlaceHolder = styled.div<{ show: boolean }>`
