@@ -4,7 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { IMessage, ButtonTypeEnum, IMessageAction, MessageActionStatusEnum } from '@novu/shared';
 import { DotsHorizontal } from '../../../../shared/icons';
 import { INovuTheme } from '../../../../store';
-import { useNovuThemeProvider, useNotificationCenter } from '../../../../hooks';
+import { useNovuTheme, useNotificationCenter } from '../../../../hooks';
 import { ActionContainer } from './ActionContainer';
 import { useTranslations } from 'packages/notification-center/src/hooks/use-translations';
 
@@ -15,7 +15,7 @@ export function NotificationListItem({
   notification: IMessage;
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
-  const { theme: novuTheme } = useNovuThemeProvider();
+  const { theme: novuTheme } = useNovuTheme();
   const { onActionClick, listItem } = useNotificationCenter();
   const { dateFnsLocale } = useTranslations();
 

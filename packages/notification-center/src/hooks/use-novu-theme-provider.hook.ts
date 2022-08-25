@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { INovuTheme, ThemeContext, ICommonTheme } from '../store';
 import { ColorScheme } from '../index';
 
-export function useNovuThemeProvider(): {
+export function useNovuTheme(): {
   theme: INovuTheme;
   common: ICommonTheme;
   colorScheme: ColorScheme;

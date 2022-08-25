@@ -4,13 +4,13 @@ import styled, { createGlobalStyle, ThemeProvider } from 'styled-components';
 import { IOrganizationEntity } from '@novu/shared';
 import { Layout } from './layout/Layout';
 import { Main } from './Main';
-import { useAuth, useApi, useNovuThemeProvider } from '../../../hooks';
+import { useAuth, useApi, useNovuTheme } from '../../../hooks';
 import { ScreenProvider } from '../../../store';
 
 export function AppContent() {
   const { api } = useApi();
   const { isLoggedIn } = useAuth();
-  const { theme, common } = useNovuThemeProvider();
+  const { theme, common } = useNovuTheme();
   const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
     'organization',
     () => api.getOrganization(),
