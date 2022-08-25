@@ -1,4 +1,11 @@
-import { IMessage, HttpClient, ButtonTypeEnum, MessageActionStatusEnum, IParamObject } from '@novu/shared';
+import {
+  IMessage,
+  HttpClient,
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+  IParamObject,
+  IOrganizationEntity,
+} from '@novu/shared';
 import { IStoreQuery, IUserPreferenceSettings } from '../index';
 
 export class ApiService {
@@ -53,12 +60,10 @@ export class ApiService {
   }
 
   async initializeSession(appId: string, subscriberId: string, hmacHash = null) {
-    return await this.defer(async () => {
-      return await this.httpClient.post(`/widgets/session/initialize`, {
-        applicationIdentifier: appId,
-        subscriberId: subscriberId,
-        hmacHash,
-      });
+    return await this.httpClient.post(`/widgets/session/initialize`, {
+      applicationIdentifier: appId,
+      subscriberId: subscriberId,
+      hmacHash,
     });
   }
 
@@ -71,13 +76,13 @@ export class ApiService {
     });
   }
 
-  async getUnseenCount(query: IStoreQuery = {}) {
+  async getUnseenCount(query: IStoreQuery = {}): Promise<{ count: number }> {
     return await this.defer(async () => {
       return await this.httpClient.get('/widgets/notifications/unseen', query as unknown as IParamObject);
     });
   }
 
-  async getOrganization() {
+  async getOrganization(): Promise<IOrganizationEntity> {
     return await this.defer(async () => {
       return this.httpClient.get('/widgets/organization');
     });
