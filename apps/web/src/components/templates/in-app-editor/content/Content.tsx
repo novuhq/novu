@@ -3,6 +3,7 @@ import { MantineTheme, Textarea } from '@mantine/core';
 import { colors } from '../../../../design-system';
 import { IEmailBlock } from '@novu/shared/src';
 import { FieldErrors, FieldValues } from 'react-hook-form';
+import styled from 'styled-components';
 
 interface IContentProps {
   readonly: boolean;
@@ -20,7 +21,7 @@ interface IContentProps {
 export function Content(props: IContentProps) {
   return (
     <div>
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }} data-test-id="content-text-area">
         <div
           ref={props.ref}
           data-test-id="in-app-editor-content-input"
@@ -44,7 +45,7 @@ export function Content(props: IContentProps) {
               : {}),
           }}
         />
-        <Textarea
+        <StyledTextarea
           classNames={props.classes}
           error={props.errors?.steps ? props.errors.steps[props.index]?.template?.content?.message : undefined}
           placeholder={props.showPlaceHolder ? props.contentPlaceholder : ''}
@@ -69,3 +70,9 @@ function sanitizeHandlebarsVariables(content: string): string {
 
   return newStr.length === content.length ? newStr : sanitizeHandlebarsVariables(newStr);
 }
+
+const StyledTextarea = styled(Textarea)`
+  textarea {
+    background: transparent;
+  }
+`;
