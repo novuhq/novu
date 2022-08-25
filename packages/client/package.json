@@ -52,5 +52,8 @@
   },
   "prettier": {
     "singleQuote": true
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }
