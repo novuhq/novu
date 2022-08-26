@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNovuThemeProvider } from '../../../../hooks';
 import { LoadingOverlay, Switch } from '@mantine/core';
-import chroma from 'chroma-js';
-import { getChannel } from './channels';
 import styled from 'styled-components';
+import chroma from 'chroma-js';
+import { useNovuTheme } from '../../../../hooks';
+import { getChannel } from './channels';
 import { switchStyles, Text } from './styles';
 import { getLinearGradientColorStopValues } from '../../../../shared/utils/getLinearGradientColorStopValues';
 import { Check } from '../../../../shared/icons/Check';
@@ -17,7 +17,7 @@ interface IChannelPreferenceProps {
 }
 export function ChannelPreference({ type, active, disabled, handleUpdateChannelPreference }: IChannelPreferenceProps) {
   const { label, Icon } = getChannel(type);
-  const { theme } = useNovuThemeProvider();
+  const { theme } = useNovuTheme();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSaved, setShowSaved] = useState<boolean>(false);
   const baseTheme = theme?.userPreferences;
