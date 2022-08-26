@@ -21,7 +21,7 @@ interface IFiltersForm {
 }
 
 export function ActivitiesPage() {
-  const { templates, loading: loadingTemplates } = useTemplates();
+  const { templates, loading: loadingTemplates } = useTemplates(0, false);
   const [page, setPage] = useState<number>(0);
   const [filters, setFilters] = useState<IFiltersForm>({ channels: [] });
   const { data, isLoading, isFetching } = useQuery<{ data: any[]; totalCount: number; pageSize: number }>(

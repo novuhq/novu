@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import moment from 'moment';
 import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
@@ -15,9 +16,14 @@ import { useEnvController } from '../../store/use-env-controller';
 
 function NotificationList() {
   const { readonly } = useEnvController();
-  const { templates, loading: isLoading } = useTemplates();
+  const [page, setPage] = useState<number>(0);
+  const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page, true);
   const theme = useMantineTheme();
   const navigate = useNavigate();
+
+  function handleTableChange(pageIndex) {
+    setPage(pageIndex);
+  }
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
@@ -111,6 +117,12 @@ function NotificationList() {
           data-test-id="notifications-template"
           columns={columns}
           data={templates || []}
+          pagination={{
+            pageSize: pageSize,
+            current: page,
+            total: totalTemplatesCount,
+            onPageChange: handleTableChange,
+          }}
         >
           {' '}
         </Table>

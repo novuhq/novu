@@ -22,6 +22,7 @@
     "start:docs": "cross-env nx run @novu/docs:start",
     "start:widget": "cross-env nx run @novu/widget:start",
     "start:api": "cross-env nx run @novu/api:start",
+    "start:api:dev": "cross-env nx run @novu/api:start:dev",
     "start:dal": "cross-env nx run @novu/dal:start",
     "start:node": "cross-env nx run @novu/node:start",
     "start:shared": "cross-env nx run @novu/shared:start",
