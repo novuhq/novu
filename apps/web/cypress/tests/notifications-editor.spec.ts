@@ -310,7 +310,7 @@ describe('Notifications Creator', function () {
       cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
     });
 
-    it.only('should edit notification', function () {
+    it('should edit notification', function () {
       const template = this.session.templates[0];
       cy.visit('/templates/edit/' + template._id);
       cy.waitForNetworkIdle(500);
@@ -323,7 +323,6 @@ describe('Notifications Creator', function () {
         .getByTestId('in-app-editor-content-input')
         .contains('Test content for {{firstName}}');
 
-      goBack();
       goBack();
 
       cy.getByTestId('settingsButton').click();
