@@ -18,7 +18,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
   }
 
   const { refetch, fetchNextPage, hasNextPage, isLoading, data } = useInfiniteQuery<IMessage[], unknown, IMessage[]>({
-    queryKey: ['notifications', props.storeId],
+    queryKey: ['notifications', props?.storeId ? props.storeId : 'default_store'],
     queryFn: (context) =>
       api.getNotificationsList(context.pageParam ? context.pageParam : 0, getStoreQuery(props.storeId)),
     getNextPageParam: (lastPage, allPages) => {
