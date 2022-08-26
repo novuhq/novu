@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { TemplatesSideBar } from '../../templates/TemplatesSideBar';
+import { NavSection, TemplatesSideBar } from '../../templates/TemplatesSideBar';
 import { ActivePageEnum } from '../../../pages/templates/editor/TemplateEditorPage';
 import { WrapperButton } from '../../../design-system/template-button/Button';
 import { IconWrapper } from '../../../design-system/template-button/IconWrapper';
@@ -35,8 +35,14 @@ const Wrapper = styled.div`
   padding: 25px;
   z-index: 5;
 
+  ${NavSection} {
+    margin-bottom: 20px;
+  }
+
   ${WrapperButton} {
     height: 50px;
+    width: 50px;
+    margin: 0;
   }
 
   ${IconWrapper} {

@@ -52,7 +52,7 @@ interface Props {
   activePage: ActivePageEnum;
 }
 
-export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActivePage, activePage }: Props) => {
+export const TemplatePageHeader = ({ templateId, loading, disableSubmit, activePage, setActivePage }: Props) => {
   const { editMode, template } = useTemplateController(templateId);
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const { readonly } = useEnvController();
@@ -73,6 +73,7 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActi
             truthy={
               activePage !== ActivePageEnum.SETTINGS &&
               activePage !== ActivePageEnum.USER_PREFERENCE &&
+              activePage !== ActivePageEnum.WORKFLOW &&
               activePage !== ActivePageEnum.TRIGGER_SNIPPET
             }
           >
