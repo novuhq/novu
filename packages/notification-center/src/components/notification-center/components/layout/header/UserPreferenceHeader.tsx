@@ -1,13 +1,12 @@
 import React from 'react';
 import { ActionIcon } from '@mantine/core';
-import { ArrowLeft } from '../../../../../shared/icons';
 import styled from 'styled-components';
-import { useNovuThemeProvider, useScreens } from '../../../../../hooks';
-import { useTranslations } from '../../../../../hooks/use-translations';
-import { ScreensEnum } from '../../../../../store/screens-provider.context';
+import { ArrowLeft } from '../../../../../shared/icons';
+import { useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
+import { ScreensEnum } from '../../../../../store';
 
 export function UserPreferenceHeader() {
-  const { theme } = useNovuThemeProvider();
+  const { theme } = useNovuTheme();
   const { setScreen } = useScreens();
   const { t } = useTranslations();
 

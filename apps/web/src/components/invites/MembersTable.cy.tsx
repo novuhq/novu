@@ -4,10 +4,12 @@ import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { SinonSpy } from 'cypress/types/sinon';
 
 describe('MembersTable Component', function () {
+  let onChangeMemberRole: SinonSpy;
   let onResendInviteMember: SinonSpy;
   let onRemoveMember: SinonSpy;
 
   beforeEach(() => {
+    onChangeMemberRole = cy.spy().as('changeMemberRoleSpy');
     onResendInviteMember = cy.spy().as('resendInviteSpy');
     onRemoveMember = cy.spy().as('removeSpy');
   });
@@ -23,6 +25,7 @@ describe('MembersTable Component', function () {
           currentUser={{ _id: 1 }}
           onRemoveMember={onRemoveMember}
           onResendInviteMember={onResendInviteMember}
+          onChangeMemberRole={onChangeMemberRole}
         />
       </TestWrapper>
     );
@@ -52,6 +55,7 @@ describe('MembersTable Component', function () {
           currentUser={{ _id: 1 }}
           onRemoveMember={onRemoveMember}
           onResendInviteMember={onResendInviteMember}
+          onChangeMemberRole={onChangeMemberRole}
         />
       </TestWrapper>
     );
@@ -81,6 +85,7 @@ describe('MembersTable Component', function () {
           currentUser={{ _id: 1 }}
           onRemoveMember={onRemoveMember}
           onResendInviteMember={onResendInviteMember}
+          onChangeMemberRole={onChangeMemberRole}
         />
       </TestWrapper>
     );
@@ -104,6 +109,7 @@ describe('MembersTable Component', function () {
           currentUser={{ _id: 1 }}
           onRemoveMember={onRemoveMember}
           onResendInviteMember={onResendInviteMember}
+          onChangeMemberRole={onChangeMemberRole}
         />
       </TestWrapper>
     );
@@ -129,6 +135,7 @@ describe('MembersTable Component', function () {
           currentUser={{ _id: 1 }}
           onRemoveMember={onRemoveMember}
           onResendInviteMember={onResendInviteMember}
+          onChangeMemberRole={onChangeMemberRole}
         />
       </TestWrapper>
     );
@@ -148,6 +155,7 @@ describe('MembersTable Component', function () {
           currentUser={{ _id: 1 }}
           onRemoveMember={onRemoveMember}
           onResendInviteMember={onResendInviteMember}
+          onChangeMemberRole={onChangeMemberRole}
           loading={true}
         />
       </TestWrapper>
@@ -167,11 +175,54 @@ describe('MembersTable Component', function () {
           onResendInviteMember={onResendInviteMember}
           currentUser={{ _id: 1 }}
           onRemoveMember={onRemoveMember}
+          onChangeMemberRole={onChangeMemberRole}
           loading={false}
         />
       </TestWrapper>
     );
 
     cy.get('.mantine-LoadingOverlay-root').should('not.be.exist');
+  });
+
+  it('should be able to change other users role', function () {
+    const anotherMember = { _userId: 2, user: { email: 'another-test@email.com' }, roles: [MemberRoleEnum.ADMIN] };
+    const members = [{ _userId: 1, user: { email: 'test@email.com' }, roles: [MemberRoleEnum.ADMIN] }, anotherMember];
+
+    cy.mount(
+      <TestWrapper>
+        <MembersTable
+          members={members}
+          onResendInviteMember={onResendInviteMember}
+          currentUser={{ _id: 1 }}
+          onRemoveMember={onRemoveMember}
+          onChangeMemberRole={onChangeMemberRole}
+        />
+      </TestWrapper>
+    );
+
+    cy.getByTestId('change-member-role-btn').click();
+    cy.getByTestId('change-member-role-to-member-btn').should('be.exist');
+    cy.getByTestId('change-member-role-to-admin-btn').should('not.be.exist');
+
+    cy.getByTestId('change-member-role-to-member-btn').click();
+    cy.get('@changeMemberRoleSpy').should('have.been.calledWith', anotherMember, 'member');
+  });
+
+  it('should not be able to change own role', function () {
+    const members = [{ _userId: 1, user: { email: 'test@email.com' }, roles: [MemberRoleEnum.ADMIN] }];
+
+    cy.mount(
+      <TestWrapper>
+        <MembersTable
+          members={members}
+          onResendInviteMember={onResendInviteMember}
+          currentUser={{ _id: 1 }}
+          onRemoveMember={onRemoveMember}
+          onChangeMemberRole={onChangeMemberRole}
+        />
+      </TestWrapper>
+    );
+
+    cy.getByTestId('change-member-role-btn').should('not.be.exist');
   });
 });

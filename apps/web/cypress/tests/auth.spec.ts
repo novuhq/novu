@@ -18,6 +18,26 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('submit-btn').click();
       cy.location('pathname').should('equal', '/quickstart');
     });
+
+    it('should show account already exists when signing up with already registered mail', function () {
+      cy.visit('/auth/signup');
+      cy.getByTestId('fullName').type('Test User');
+      cy.getByTestId('email').type('test-user-1@example.com');
+      cy.getByTestId('password').type('usEr_password_123');
+      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('submitButton').click();
+      cy.get('.mantine-TextInput-error').contains('An account with this email already exists');
+    });
+
+    it('should show invalid email error when signing up with invalid email', function () {
+      cy.visit('/auth/signup');
+      cy.getByTestId('fullName').type('Test User');
+      cy.getByTestId('email').type('test-user-1@example.c');
+      cy.getByTestId('password').type('usEr_password_123');
+      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('submitButton').click();
+      cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
+    });
   });
 
   describe('Password Reset', function () {

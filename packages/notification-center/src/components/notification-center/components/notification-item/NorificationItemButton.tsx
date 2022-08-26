@@ -1,8 +1,8 @@
 import React from 'react';
+import { Button } from '@mantine/core';
 import styled from 'styled-components';
 import { IButtonStyles, ButtonTypeEnum, IMessageAction } from '@novu/shared';
-import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
-import { Button } from '@mantine/core';
+import { useNovuTheme } from '../../../../hooks';
 
 interface NotificationButtonProps {
   messageAction: IMessageAction;
@@ -10,7 +10,7 @@ interface NotificationButtonProps {
   buttonIndex: number;
 }
 export function NotificationButton(props: NotificationButtonProps) {
-  const { theme } = useNovuThemeProvider();
+  const { theme } = useNovuTheme();
   const button = props.messageAction.buttons[props.buttonIndex];
   const buttonStyle = theme.notificationItem.buttons[button.type];
 
