@@ -47,12 +47,14 @@ export class UpdateNotificationTemplate {
         command.environmentId,
         command.identifier
       );
-      if (isExistingIdentifier) {
+
+      if (isExistingIdentifier && isExistingIdentifier._id !== command.templateId) {
         throw new BadRequestException(`Notification template with identifier ${command.identifier} already exists`);
       } else {
         updatePayload['triggers.0.identifier'] = command.identifier;
       }
     }
+
     if (command.notificationGroupId) {
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
