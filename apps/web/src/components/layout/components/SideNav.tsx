@@ -3,10 +3,11 @@ import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-syst
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
-import React, { useContext, useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useContext, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import styled from '@emotion/styled';
+import OrganizationSelect from './OrganizationSelect';
 
 type Props = {};
 
@@ -64,6 +65,9 @@ export function SideNav({}: Props) {
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
       <Navbar.Section>
+        <OrganizationSelect />
+      </Navbar.Section>
+      <Navbar.Section mt={20}>
         <Popover
           styles={{
             inner: {

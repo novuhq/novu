@@ -12,16 +12,14 @@ import {
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
 import { CreateOrganizationCommand } from './usecases/create-organization/create-organization.command';
 import { CreateOrganization } from './usecases/create-organization/create-organization.usecase';
-import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
-import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
 import { RemoveMember } from './usecases/membership/remove-member/remove-member.usecase';
 import { RemoveMemberCommand } from './usecases/membership/remove-member/remove-member.command';
-import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetMembersCommand } from './usecases/membership/get-members/get-members.command';
 import { GetMembers } from './usecases/membership/get-members/get-members.usecase';
@@ -29,7 +27,9 @@ import { ChangeMemberRoleCommand } from './usecases/membership/change-member-rol
 import { ChangeMemberRole } from './usecases/membership/change-member-role/change-member-role.usecase';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { GetOrganizationsCommand } from './usecases/get-organizations/get-organizations.command';
+import { GetOrganizations } from './usecases/get-organizations/get-organizations.usecase';
+import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -39,11 +39,11 @@ import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 export class OrganizationController {
   constructor(
     private createOrganizationUsecase: CreateOrganization,
-    private getMyOrganizationUsecase: GetMyOrganization,
     private getMembers: GetMembers,
     private removeMemberUsecase: RemoveMember,
     private changeMemberRoleUsecase: ChangeMemberRole,
-    private updateBrandingDetailsUsecase: UpdateBrandingDetails
+    private updateBrandingDetailsUsecase: UpdateBrandingDetails,
+    private getOrganizationsUsecase: GetOrganizations
   ) {}
 
   @Post('/')
@@ -59,6 +59,16 @@ export class OrganizationController {
     const organization = await this.createOrganizationUsecase.execute(command);
 
     return organization;
+  }
+
+  @Get('/')
+  async getOrganizations(@UserSession() user: IJwtPayload): Promise<IGetOrganizationsDto> {
+    const command = GetOrganizationsCommand.create({
+      userId: user._id,
+    });
+    const organizations = await this.getOrganizationsUsecase.execute(command);
+
+    return organizations;
   }
 
   @Delete('/members/:memberId')
@@ -111,16 +121,6 @@ export class OrganizationController {
         organizationId: user.organizationId,
       })
     );
-  }
-
-  @Get('/me')
-  async getMyOrganization(@UserSession() user: IJwtPayload): Promise<IGetMyOrganizationDto> {
-    const command = GetMyOrganizationCommand.create({
-      userId: user._id,
-      id: user.organizationId,
-    });
-
-    return await this.getMyOrganizationUsecase.execute(command);
   }
 
   @Put('/branding')
