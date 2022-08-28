@@ -11,7 +11,7 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   icon?: React.ReactNode;
   fullWidth?: boolean;
   submit?: boolean;
-  onClick?: () => void;
+  onClick?: (e: any) => void;
   inherit?: boolean;
 }
 

@@ -18,7 +18,7 @@ it('should call callbacks when template clicked', function () {
         setTemplateSelected={selectedSpy}
         setIsPopoverVisible={popoverVisible}
         setSelectedTemplate={selectedTemplate}
-      ></ButtonsTemplates>
+      />
     </TestWrapper>
   );
 
@@ -35,7 +35,7 @@ it('should render 3 templates to display', function () {
         setTemplateSelected={selectedSpy}
         setIsPopoverVisible={popoverVisible}
         setSelectedTemplate={selectedTemplate}
-      ></ButtonsTemplates>
+      />
     </TestWrapper>
   );
 
