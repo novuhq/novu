@@ -14,10 +14,12 @@ import { TemplateTriggerModal } from '../../../components/templates/TemplateTrig
 import { usePrompt } from '../../../hooks/use-prompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
 import { When } from '../../../components/utils/When';
+import { UserPreference } from '../../user-preference/UserPreference';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
   WORKFLOW = 'Workflow',
+  USER_PREFERENCE = 'UserPreference',
   SMS = 'Sms',
   EMAIL = 'Email',
   IN_APP = 'in_app',
@@ -78,6 +80,7 @@ export default function TemplateEditorPage() {
               activePage={activePage}
             />
           </When>
+
           {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
             <TemplateSettings
               activePage={activePage}
@@ -86,6 +89,7 @@ export default function TemplateEditorPage() {
               templateId={templateId}
             />
           )}
+
           {activePage === ActivePageEnum.WORKFLOW && (
             <ReactFlowProvider>
               <WorkflowEditorPage
@@ -97,6 +101,16 @@ export default function TemplateEditorPage() {
               />
             </ReactFlowProvider>
           )}
+
+          <When truthy={activePage === ActivePageEnum.USER_PREFERENCE}>
+            <UserPreference
+              activePage={activePage}
+              setActivePage={setActivePage}
+              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
+              templateId={templateId}
+            />
+          </When>
+
           {!loadingEditTemplate && !isIntegrationsLoading ? (
             <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
           ) : null}
