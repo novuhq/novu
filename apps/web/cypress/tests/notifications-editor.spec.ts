@@ -265,8 +265,6 @@ describe('Notifications Creator', function () {
       cy.getByTestId('backoff-unit').click();
       cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
 
-      // cy.getByTestId('updateMode').click();
-
       cy.getByTestId('submit-btn').click();
 
       cy.getByTestId('success-trigger-modal').should('be.visible');
@@ -275,7 +273,10 @@ describe('Notifications Creator', function () {
       cy.visit('/templates');
       cy.wait('@notification-templates');
       cy.get('tbody').contains('Test Notification Title').click();
+
+      cy.waitForNetworkIdle(1000);
       cy.getByTestId('workflowButton').click();
+
       cy.clickWorkflowNode(`node-digestSelector`);
 
       cy.getByTestId('time-amount').should('have.value', '20');
@@ -413,7 +414,6 @@ describe('Notifications Creator', function () {
       fillBasicNotificationDetails('Test SMS Notification Title');
       cy.getByTestId('workflowButton').click();
       dragAndDrop('inApp');
-      goBack();
 
       cy.getByTestId('submit-btn').click();
       cy.getByTestId('workflowButton').getByTestId('error-circle').should('be.visible');
@@ -495,9 +495,9 @@ describe('Notifications Creator', function () {
       editChannel('email');
 
       cy.getByTestId('settings-row-btn').eq(0).invoke('show').click();
-      cy.getByTestId('editable-text-content').should('have.css', 'direction', 'ltr');
+      cy.getByTestId('editable-text-content').should('have.css', 'text-align', 'left');
       cy.getByTestId('align-right-btn').click();
-      cy.getByTestId('editable-text-content').should('have.css', 'direction', 'rtl');
+      cy.getByTestId('editable-text-content').should('have.css', 'text-align', 'right');
     });
 
     it('should create an SMS channel message', function () {
