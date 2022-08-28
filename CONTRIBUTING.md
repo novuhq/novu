@@ -21,7 +21,10 @@ You can open a new issues with this new [issue form](https://github.com/novuhq/n
 
 - Node.js version v14.19.3
 - MongoDB
-- Redis
+- Redis. To install Redis on your O.S, please follow the below guides
+  - [To install Redis on Windows](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)
+  - [To install Redis on Linux](https://redis.io/docs/getting-started/installation/install-redis-on-linux/)
+  - [To install Redis on macOS](https://redis.io/docs/getting-started/installation/install-redis-on-mac-os/)
 - **(Optional)** pnpm - Needed if you want to install new packages
 - **(Optional)** localstack (required only in S3 related modules)
 

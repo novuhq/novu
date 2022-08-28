@@ -24,7 +24,39 @@ export class IntegrationService {
       credentials: { accountSid: 'AC123', token: '123', from: 'me' },
       active: true,
     };
-
     await this.integrationRepository.create(smsPayload);
+
+    const chatSlackPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'slack',
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { applicationId: 'secret_123' },
+      active: true,
+    };
+
+    await this.integrationRepository.create(chatSlackPayload);
+
+    const chatDiscordPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'discord',
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { applicationId: 'secret_123' },
+      active: true,
+    };
+
+    await this.integrationRepository.create(chatDiscordPayload);
+
+    const pushFcmPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'fcm',
+      channel: ChannelTypeEnum.PUSH,
+      credentials: { applicationId: 'secret_123', deviceTokens: ['test'] },
+      active: true,
+    };
+
+    await this.integrationRepository.create(pushFcmPayload);
   }
 }

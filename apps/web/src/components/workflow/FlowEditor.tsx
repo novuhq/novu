@@ -19,11 +19,13 @@ import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
-import { StepEntity } from '../templates/use-template-controller.hook';
-import { ChannelTypeEnum } from '@novu/shared';
+import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
+import { StepTypeEnum } from '@novu/shared';
 import { v4 as uuid4 } from 'uuid';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/use-env-controller';
+import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
+import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -43,6 +45,7 @@ const initialNodes: Node[] = [
 ];
 
 export function FlowEditor({
+  activePage,
   setActivePage,
   steps,
   setSelectedNodeId,
@@ -50,15 +53,17 @@ export function FlowEditor({
   dragging,
   errors,
   onDelete,
+  templateId,
 }: {
+  activePage: ActivePageEnum;
   setActivePage: (string) => void;
   onDelete: (id: string) => void;
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
-  addStep: (channelType: ChannelTypeEnum, id: string) => void;
-  templateId: string;
+  addStep: (channelType: StepTypeEnum, id: string) => void;
   dragging: boolean;
   errors: any;
+  templateId: string;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -68,6 +73,7 @@ export function FlowEditor({
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
+  const { template, trigger, methods } = useTemplateController(templateId);
 
   useEffect(() => {
     if (reactFlowWrapper) {
@@ -231,30 +237,38 @@ export function FlowEditor({
   );
 
   return (
-    <Wrapper dark={colorScheme === 'dark'}>
-      <div style={{ height: '500px', width: 'inherit' }} ref={reactFlowWrapper}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onInit={setReactFlowInstance}
-          nodeTypes={nodeTypes}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onNodeClick={onNodeClick}
-          {...reactFlowDefaultProps}
-        >
-          <Controls />
-          <Background
-            size={1}
-            gap={10}
-            variant={BackgroundVariant.Dots}
-            color={colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
-          />
-        </ReactFlow>
-      </div>
-    </Wrapper>
+    <>
+      <Wrapper dark={colorScheme === 'dark'}>
+        <div style={{ height: '500px', width: 'inherit' }} ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onInit={setReactFlowInstance}
+            nodeTypes={nodeTypes}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onNodeClick={onNodeClick}
+            {...reactFlowDefaultProps}
+          >
+            <MinimalTemplatesSideBar
+              activePage={activePage}
+              setActivePage={setActivePage}
+              showTriggerSection={!!template && !!trigger}
+              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
+            />
+            <Controls />
+            <Background
+              size={1}
+              gap={10}
+              variant={BackgroundVariant.Dots}
+              color={colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
+            />
+          </ReactFlow>
+        </div>
+      </Wrapper>
+    </>
   );
 }
 
@@ -276,14 +290,14 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
   .react-flow__handle {
     background: transparent;
-    border: 1px solid ${({ dark }) => (dark ? colors.B40 : colors.B80)};
+    border: 1px solid ${colors.B60};
   }
   .react-flow__attribution {
     background: transparent;
     opacity: 0.5;
   }
   .react-flow__edge-path {
-    stroke: ${({ dark }) => (dark ? colors.B40 : colors.B80)};
+    stroke: ${colors.B60};
     border-radius: 10px;
     stroke-dasharray: 5;
   }
@@ -307,7 +321,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     border: none;
 
     svg {
-      fill: ${({ dark }) => (dark ? colors.B40 : colors.B80)};
+      fill: ${colors.B60};
     }
   }
 `;

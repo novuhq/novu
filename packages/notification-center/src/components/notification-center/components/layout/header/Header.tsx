@@ -1,15 +1,16 @@
-import styled from 'styled-components';
-import { Badge } from '@mantine/core';
-import { colors } from '../../../../../shared/config/colors';
 import React, { useContext } from 'react';
-import { useNovuThemeProvider } from '../../../../../hooks/use-novu-theme-provider.hook';
+import { ActionIcon, Badge } from '@mantine/core';
+import styled from 'styled-components';
+import { colors } from '../../../../../shared/config/colors';
+import { useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
 import { INotificationCenterContext } from '../../../../../index';
-import { NotificationCenterContext } from '../../../../../store/notification-center.context';
-import { useTranslations } from '../../../../../hooks/use-translations';
+import { NotificationCenterContext, ScreensEnum } from '../../../../../store';
+import { Cogs } from '../../../../../shared/icons';
 
 export function Header({ unseenCount }: { unseenCount: number }) {
-  const { theme, common } = useNovuThemeProvider();
-  const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { theme, common } = useNovuTheme();
+  const { setScreen } = useScreens();
+  const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
 
   return (
@@ -37,6 +38,15 @@ export function Header({ unseenCount }: { unseenCount: number }) {
             {unseenCount}
           </Badge>
         ) : null}
+      </div>
+      <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
+        <ActionIcon
+          data-test-id="user-preference-cog"
+          variant="transparent"
+          onClick={() => setScreen(ScreensEnum.SETTINGS)}
+        >
+          <Cogs style={{ color: theme?.userPreferences?.settingsButtonColor }} />
+        </ActionIcon>
       </div>
       <MarkReadAction style={{ display: 'none' }}>{t('markAllAsRead')}</MarkReadAction>
     </HeaderWrapper>

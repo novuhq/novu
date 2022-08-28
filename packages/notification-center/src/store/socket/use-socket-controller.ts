@@ -1,15 +1,14 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
-import { AuthContext } from '../auth.context';
-import { IAuthContext, ISocket } from '../../index';
-import { useNovuContext } from '../../hooks';
+import { ISocket } from '../../index';
+import { useAuth, useNovuContext } from '../../hooks';
 
 let socket;
 
 export function useSocketController() {
-  const { socketUrl } = useNovuContext();
-  const { token } = useContext<IAuthContext>(AuthContext);
   const [socketInstance, setSocketInstance] = useState<ISocket | null>(null);
+  const { socketUrl } = useNovuContext();
+  const { token } = useAuth();
 
   useEffect(() => {
     if (token && !socket) {

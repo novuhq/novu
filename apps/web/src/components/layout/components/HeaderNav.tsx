@@ -9,6 +9,8 @@ import {
 } from '@mantine/core';
 import { useContext, useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
+import { useIntercom } from 'react-use-intercom';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Bell, Trash, Mail } from '../../../design-system/icons';
@@ -16,7 +18,6 @@ import { useLocalThemePreference } from '../../../hooks/use-localThemePreference
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
-import { useIntercom } from 'react-use-intercom';
 
 type Props = {};
 const menuItem = [
@@ -96,9 +97,11 @@ export function HeaderNav({}: Props) {
       </Group>
     </MantineMenu.Item>,
     ...menuItem.map(({ title, icon, path }) => (
-      <MantineMenu.Item key={title} icon={icon} component="a" href={path}>
-        {title}
-      </MantineMenu.Item>
+      <Link to={path}>
+        <MantineMenu.Item key={title} icon={icon} component="div">
+          {title}
+        </MantineMenu.Item>
+      </Link>
     )),
     <MantineMenu.Item key="logout" icon={<Trash />} onClick={logout} data-test-id="logout-button">
       Sign Out

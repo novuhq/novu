@@ -1,12 +1,11 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { UnseenCountContext } from '../../store/unseen-count.context';
-import { INovuThemePopoverProvider } from '../../store/novu-theme-provider.context';
-import { useDefaultTheme } from '../../hooks';
-import { ColorScheme, ListItem } from '../../index';
+import { INovuThemePopoverProvider } from '../../store';
+import { useDefaultTheme, useUnseenCount } from '../../hooks';
+import { ColorScheme, ListItem, ITab } from '../../index';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -20,11 +19,13 @@ interface IPopoverNotificationCenterProps {
   theme?: INovuThemePopoverProvider;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  tabs?: ITab[];
+  showUserPreferences?: boolean;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
   const { theme } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
-  const { setUnseenCount, unseenCount } = useContext(UnseenCountContext);
+  const { setUnseenCount, unseenCount } = useUnseenCount();
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
@@ -49,6 +50,8 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         onActionClick={props.onActionClick}
         actionsResultBlock={props.actionsResultBlock}
         listItem={props.listItem}
+        tabs={props.tabs}
+        showUserPreferences={props.showUserPreferences}
       />
     </Popover>
   );

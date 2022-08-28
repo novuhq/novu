@@ -1,9 +1,10 @@
 import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
-import { ActionIcon, MenuItem as DropdownItem, RadioGroup, Radio, useMantineTheme } from '@mantine/core';
+import { ActionIcon, MenuItem as DropdownItem, MenuLabel } from '@mantine/core';
 import styled from '@emotion/styled';
+import { AlignCenterOutlined, AlignLeftOutlined, AlignRightOutlined } from '@ant-design/icons';
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
-import { colors, Dropdown } from '../../../design-system';
+import { Button, colors, Dropdown } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 
 export function ContentRow({
@@ -19,12 +20,18 @@ export function ContentRow({
   onRemove: () => void;
   allowRemove: boolean;
   block: IEmailBlock;
-  onStyleChanged: (data: { textDirection: 'ltr' | 'rtl' }) => void;
+  onStyleChanged: (data: { textAlign: 'left' | 'right' | 'center' }) => void;
 }) {
   const { readonly } = useEnvController();
-  const [textDirection, setTextDirection] = useState<'ltr' | 'rtl'>(block?.styles?.textDirection || 'ltr');
+  const [textAlign, settextAlign] = useState<'left' | 'right' | 'center'>(block?.styles?.textAlign || 'left');
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const parentRef = useRef<HTMLDivElement>(null);
-  const theme = useMantineTheme();
+
+  const textAlignments = [
+    ['left', <AlignLeftOutlined />],
+    ['center', <AlignCenterOutlined />],
+    ['right', <AlignRightOutlined />],
+  ];
 
   function onHover() {
     if (!parentRef.current) return;
@@ -37,21 +44,29 @@ export function ContentRow({
 
   useEffect(() => {
     onStyleChanged({
-      textDirection,
+      textAlign,
     });
-  }, [textDirection]);
+  }, [textAlign]);
 
-  const changeRowStyles = (value) => {
-    setTextDirection(value);
+  const changeRowStyles = (e, dir) => {
+    e.preventDefault();
+    e.stopPropagation();
+    settextAlign(dir);
   };
 
   const rowStyleMenu = [
-    <DropdownItem key="ltr" sx={{ '&:hover': { backgroundColor: 'transparent' } }}>
-      <RadioGroup value={textDirection} onChange={changeRowStyles}>
-        <Radio value="ltr" data-test-id="align-left-btn" label="Align Left" />
-        <Radio value="rtl" data-test-id="align-right-btn" label="Align Right" />
-      </RadioGroup>
-    </DropdownItem>,
+    <MenuLabel style={{ fontSize: '14px' }}>Align Text</MenuLabel>,
+    <TextAlignmentWrapper>
+      {textAlignments.map(([dir, icon]) => (
+        <Button
+          onClick={(e) => changeRowStyles(e, dir)}
+          data-test-id={`align-${dir}-button`}
+          variant={dir === textAlign ? 'filled' : 'outline'}
+        >
+          {icon}
+        </Button>
+      ))}
+    </TextAlignmentWrapper>,
     <DropdownItem
       key="removeBtn"
       disabled={!allowRemove}
@@ -66,29 +81,39 @@ export function ContentRow({
   return (
     <div onMouseEnter={onHover} ref={parentRef} data-test-id="editor-row">
       <ContentRowWrapper>
-        <div style={{ width: 'calc(100% - 20px)' }}>{children}</div>
-        {!readonly && (
-          <Dropdown
-            control={
-              <SettingsButton data-test-id="settings-row-btn">
-                <ActionIcon variant="transparent">
-                  <DotsHorizontalOutlined color={theme.colorScheme === 'dark' ? colors.B30 : colors.B80} />
-                </ActionIcon>
-              </SettingsButton>
-            }
-          >
-            {rowStyleMenu}
-          </Dropdown>
-        )}
+        <div style={{ width: '100%' }}>{children}</div>
+        <SettingsWrapper>
+          {!readonly && (
+            <Dropdown
+              onClose={() => setDropdownOpen(false)}
+              onOpen={() => setDropdownOpen(true)}
+              control={
+                <SettingsButton data-test-id="settings-row-btn" visible={dropdownOpen}>
+                  <ActionIcon variant="transparent">
+                    <DotsHorizontalOutlined color={colors.B60} />
+                  </ActionIcon>
+                </SettingsButton>
+              }
+            >
+              {rowStyleMenu}
+            </Dropdown>
+          )}
+        </SettingsWrapper>
       </ContentRowWrapper>
     </div>
   );
 }
 
-const SettingsButton = styled.div`
-  display: none;
-  right: -10px;
-  position: absolute;
+const SettingsWrapper = styled.div`
+  width: 50px;
+  height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+`;
+
+const SettingsButton = styled.div<{ visible: boolean }>`
+  display: ${({ visible }) => (visible ? 'inline-block' : 'none')};
 `;
 
 const ContentRowWrapper = styled.div`
@@ -96,10 +121,23 @@ const ContentRowWrapper = styled.div`
   outline: transparent;
   padding-bottom: 10px;
   display: flex;
+  align-items: center;
 
   &:hover {
     ${SettingsButton} {
       display: inline-block;
     }
+  }
+`;
+
+const TextAlignmentWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 15px 15px 15px;
+
+  button {
+    padding: 0;
+    margin: 0 5px;
+    width: 100%;
   }
 `;

@@ -35,10 +35,9 @@ jobs:
             ${{ runner.os }}-
       - uses: pnpm/action-setup@v2.0.1
         with:
-          version: 6.0.2
+          version: 7.5.0
           run_install: true
 
       # Runs a single command using the runners shell
       - name: Build
-        working-directory: libs/embed
-        run: CI='' pnpm build:dev
+        run: pnpm build:embed

@@ -34,6 +34,18 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     const items = await NotificationTemplate.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
+    })
+      .sort({ createdAt: -1 })
+      .populate({ path: 'notificationGroup' });
+
+    return this.mapEntities(items);
+  }
+
+  async getActiveList(organizationId: string, environmentId: string, active?: boolean) {
+    const items = await NotificationTemplate.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      active: active,
     }).populate('notificationGroup');
 
     return this.mapEntities(items);

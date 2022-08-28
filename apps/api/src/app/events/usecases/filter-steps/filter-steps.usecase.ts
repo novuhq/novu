@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationStepEntity } from '@novu/dal';
-import { ChannelTypeEnum, DigestTypeEnum } from '@novu/shared';
+import { StepTypeEnum, DigestTypeEnum } from '@novu/shared';
 import { FilterStepsCommand } from './filter-steps.command';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { FilterStepsBackoff } from './filter-steps-backoff.usecase';
@@ -16,7 +16,7 @@ export class FilterSteps {
       command.payload
     );
 
-    const digestStep = matchedSteps.find((step) => step.template.type === ChannelTypeEnum.DIGEST);
+    const digestStep = matchedSteps.find((step) => step.template.type === StepTypeEnum.DIGEST);
 
     if (!digestStep) {
       return matchedSteps;
@@ -42,7 +42,7 @@ export class FilterSteps {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _creatorId: command.userId,
-        type: ChannelTypeEnum.TRIGGER,
+        type: StepTypeEnum.TRIGGER,
         content: '',
       },
       _templateId: command.templateId,

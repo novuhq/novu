@@ -1,6 +1,6 @@
 import React from 'react';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
-import { ContentContainer } from './ContentContainer';
+import { ContentContainer } from './content/ContentContainer';
 import { Control, Controller } from 'react-hook-form';
 import { IForm } from '../use-template-controller.hook';
 
@@ -57,7 +57,9 @@ function ContentContainerController({
       render={({ field }) => {
         const { ref, ...fieldRefs } = field;
 
-        return <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} />;
+        return (
+          <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} index={index} />
+        );
       }}
     />
   );

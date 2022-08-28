@@ -1,7 +1,8 @@
 import { ModuleMetadata, Type } from '@nestjs/common';
 import {
-  IDirectProvider,
+  IChatProvider,
   IEmailProvider,
+  IPushProvider,
   ISmsProvider,
   ITemplate,
 } from '@novu/stateless';
@@ -13,7 +14,8 @@ export interface INovuOptions {
    * NovuModule.
    *
    */
-  providers: (IEmailProvider | ISmsProvider | IDirectProvider)[];
+  providers: (IEmailProvider | ISmsProvider | IChatProvider | IPushProvider)[];
+
   templates: ITemplate[];
 }
 

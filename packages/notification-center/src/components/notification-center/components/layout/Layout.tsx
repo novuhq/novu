@@ -3,18 +3,33 @@ import { Loader } from '../Loader';
 import { HeaderContainer as Header } from './header/HeaderContainer';
 import { FooterContainer as Footer } from './footer/FooterContainer';
 import React from 'react';
-import { useNovuContext } from '../../../../hooks';
-import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
-import { INovuTheme } from '../../../../store/novu-theme.context';
+import { useNovuContext, useNovuTheme, useScreens } from '../../../../hooks';
+import { INovuTheme, ScreensEnum } from '../../../../store';
+import { UserPreferenceHeader } from './header/UserPreferenceHeader';
+import { SubscriberPreference } from '../user-preference/SubscriberPreference';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
-  const { theme } = useNovuThemeProvider();
+  const { theme } = useNovuTheme();
+  const { screen } = useScreens();
 
   return (
-    <LayoutWrapper theme={theme}>
-      <Header />
-      <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
+    <LayoutWrapper theme={theme} data-test-id="layout-wrapper">
+      {screen === ScreensEnum.SETTINGS && (
+        <>
+          <UserPreferenceHeader />
+          <ContentWrapper>
+            <SubscriberPreference />
+          </ContentWrapper>
+        </>
+      )}
+      {screen === ScreensEnum.NOTIFICATIONS && (
+        <>
+          <Header />
+          <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
+        </>
+      )}
+
       <Footer />
     </LayoutWrapper>
   );

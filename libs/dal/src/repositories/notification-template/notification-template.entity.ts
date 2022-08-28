@@ -4,6 +4,7 @@ import {
   BuilderGroupValues,
   DigestUnitEnum,
   DigestTypeEnum,
+  IPreferenceChannels,
 } from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
@@ -18,6 +19,10 @@ export class NotificationTemplateEntity {
   active: boolean;
 
   draft: boolean;
+
+  preferenceSettings: IPreferenceChannels;
+
+  critical: boolean;
 
   tags: string[];
 
@@ -40,6 +45,10 @@ export class NotificationTemplateEntity {
   deletedAt: string;
 
   deletedBy: string;
+
+  createdAt?: string;
+
+  updatedAt?: string;
 
   readonly notificationGroup?: NotificationGroupEntity;
 }

@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
@@ -24,16 +23,19 @@ import { RemoveMember } from './usecases/membership/remove-member/remove-member.
 import { RemoveMemberCommand } from './usecases/membership/remove-member/remove-member.command';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { GetMembersCommand } from './usecases/membership/membership/get-members/get-members.command';
-import { GetMembers } from './usecases/membership/membership/get-members/get-members.usecase';
-import { ChangeMemberRoleCommand } from './usecases/membership/membership/change-member-role/change-member-role.command';
-import { ChangeMemberRole } from './usecases/membership/membership/change-member-role/change-member-role.usecase';
+import { GetMembersCommand } from './usecases/membership/get-members/get-members.command';
+import { GetMembers } from './usecases/membership/get-members/get-members.usecase';
+import { ChangeMemberRoleCommand } from './usecases/membership/change-member-role/change-member-role.command';
+import { ChangeMemberRole } from './usecases/membership/change-member-role/change-member-role.usecase';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
+@ApiTags('Organizations')
+@ApiExcludeController()
 export class OrganizationController {
   constructor(
     private createOrganizationUsecase: CreateOrganization,
@@ -89,10 +91,10 @@ export class OrganizationController {
   }
 
   @Get('/members')
-  @Roles(MemberRoleEnum.ADMIN)
   async getMember(@UserSession() user: IJwtPayload) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
+        user,
         userId: user._id,
         organizationId: user.organizationId,
       })
@@ -104,6 +106,7 @@ export class OrganizationController {
   async inviteMember(@UserSession() user: IJwtPayload) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
+        user,
         userId: user._id,
         organizationId: user.organizationId,
       })

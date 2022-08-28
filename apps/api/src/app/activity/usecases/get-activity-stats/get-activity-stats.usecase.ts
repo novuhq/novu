@@ -1,17 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import * as moment from 'moment';
+import { ActivityStatsResponseDto } from '../../dtos/activity-stats-response.dto';
 import { GetActivityStatsCommand } from './get-activity-stats.command';
 
 @Injectable()
 export class GetActivityStats {
   constructor(private messageRepository: MessageRepository) {}
 
-  async execute(command: GetActivityStatsCommand): Promise<{
-    weeklySent: number;
-    monthlySent: number;
-    yearlySent: number;
-  }> {
+  async execute(command: GetActivityStatsCommand): Promise<ActivityStatsResponseDto> {
     const yearly = await this.messageRepository.count({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,

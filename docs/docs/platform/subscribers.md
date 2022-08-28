@@ -16,7 +16,7 @@ A novu subscribers contains the following data points:
 When you want to send a notification to a specific recipient in the Novu platform, you must first create a subscriber using our server SDK.
 
 ```typescript
-import { Novu } from '@novu/node'
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
@@ -25,7 +25,7 @@ await novu.subscribers.identify(user.id, {
   firstName: user.firstName,
   lastName: user.lastName,
   phone: user.phone,
-  avatar: user.profile_avatar
+  avatar: user.profile_avatar,
 });
 ```
 
@@ -33,7 +33,7 @@ Novu will create a subscriber if one does not exist, and will update existing su
 
 ### Subscriber identifier
 
-This is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal id you application uses for a specific users.
+This is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal id your application uses for a specific user.
 Using an identifier like email might cause issues locating a specific subscriber once they change their email address.
 
 ### Updating subscriber data
@@ -41,23 +41,45 @@ Using an identifier like email might cause issues locating a specific subscriber
 In some cases you want to access subscribers to update a specific field or data attribute. For example when user changes their email address or personal details.
 
 ```typescript
-import { Novu } from '@novu/node'
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
 await novu.subscribers.update(user.id, {
-  email: user.email
+  email: user.email,
 });
 ```
+
+### Updating subscriber credentials
+
+In case the user want to use chat channel, he will need to set the credentials that needed to be authentication with.
+
+```typescript
+import { Novu, ChatProviderIdEnum } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, {
+  webhookUrl: 'webhookUrl',
+});
+```
+
+- subscriberId is a custom identifier used when identifying your users within the Novu platform.
+- providerId is a unique provider identifier (we recommend using ChatProviderIdEnum).
+- credentials are the argument you need to be authentication with your provider workspace. At this point, we support chat messages through webhook, so a webhookUrl is needed to be provided.
 
 ### Removing a subscriber
 
 To remove and stop a subscriber from receiving communication, you call the remove API to delete the subscriber.
 
 ```typescript
-import { Novu } from '@novu/node'
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
 await novu.subscribers.remove(user.id);
 ```
+
+## Subscriber Preferences
+
+Novu manages a data model to help your users configure their preferences in an easy way. You can learn more about this in the [Subscriber Preferences](/platform/preferences) section.

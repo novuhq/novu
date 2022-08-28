@@ -5,6 +5,7 @@ import {
   IOrganizationEntity,
   ISubscriberJwt,
   MessageActionStatusEnum,
+  IPreferenceChannels,
 } from '@novu/shared';
 
 export { IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
@@ -13,6 +14,15 @@ export * from './components';
 export * from './hooks/use-unseen-count.hook';
 export * from './hooks/use-socket.hook';
 export * from './hooks/use-notifications.hook';
+export * from './hooks/use-screens.hook';
+export * from './hooks/use-subscriber-preference.hook';
+
+export { ScreensEnum } from './store/screens-provider.context';
+
+export * from './store/novu-theme-provider.context';
+export { INovuPopoverTheme } from './store/novu-theme.context';
+
+export { SubscriberPreference } from './components/notification-center/components/user-preference/SubscriberPreference';
 
 export interface IAuthContext {
   applyToken: (token: string | null) => void;
@@ -51,6 +61,7 @@ export interface INotificationCenterContext {
   listItem: ListItem;
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
+  showUserPreferences?: boolean;
 }
 
 export interface IStore {
@@ -101,4 +112,9 @@ export interface ITab {
 export interface IStoreQuery {
   feedIdentifier?: string | string[];
   seen?: boolean;
+}
+
+export interface IUserPreferenceSettings {
+  template: { _id: string; name: string; critical: boolean };
+  preference: { enabled: boolean; channels: IPreferenceChannels };
 }

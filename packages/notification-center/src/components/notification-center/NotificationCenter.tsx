@@ -1,11 +1,10 @@
 import React from 'react';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
-import { NotificationCenterContext } from '../../store/notification-center.context';
-import { AppContent } from './components';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { AppContent } from './components';
 import { useNovuContext } from '../../hooks';
-import { INovuThemeProvider, NovuThemeProvider } from '../../store/novu-theme-provider.context';
-import { ColorScheme, ListItem } from '../../index';
+import { INovuThemeProvider, NovuThemeProvider, NotificationCenterContext } from '../../store';
+import { ColorScheme, ITab, ListItem } from '../../index';
 
 export interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -18,6 +17,8 @@ export interface INotificationCenterProps {
   colorScheme: ColorScheme;
   theme?: INovuThemeProvider;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
+  tabs?: ITab[];
+  showUserPreferences?: boolean;
 }
 
 export function NotificationCenter(props: INotificationCenterProps) {
@@ -37,6 +38,8 @@ export function NotificationCenter(props: INotificationCenterProps) {
           footer: props.footer,
           listItem: props.listItem,
           actionsResultBlock: props.actionsResultBlock,
+          tabs: props.tabs,
+          showUserPreferences: props.showUserPreferences ?? true,
         }}
       >
         <NovuThemeProvider colorScheme={props.colorScheme} theme={props.theme}>
