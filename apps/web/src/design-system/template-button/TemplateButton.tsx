@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UnstyledButton, Group, Popover } from '@mantine/core';
+import { Popover } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
@@ -7,6 +7,8 @@ import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
 import { useFormContext } from 'react-hook-form';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { Button } from './Button';
+import { IconWrapper } from './IconWrapper';
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -146,19 +148,6 @@ const ErrorCircle = styled.div<{ dark: boolean }>`
   border: 3px solid ${({ dark }) => (dark ? colors.B15 : 'white')};
 `;
 
-const IconWrapper = styled.div`
-  padding-right: 15px;
-
-  @media screen and (max-width: 1400px) {
-    padding-right: 5px;
-
-    svg {
-      width: 20px;
-      height: 20px;
-    }
-  }
-`;
-
 const ActionWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -176,14 +165,4 @@ const ButtonWrapper = styled.div`
 
 const StyledContentWrapper = styled.div`
   padding-right: 10px;
-`;
-
-const StyledGroup = styled(Group)``;
-
-const Button: any = styled(UnstyledButton)`
-  position: relative;
-
-  @media screen and (max-width: 1400px) {
-    padding: 0 5px;
-  }
 `;
