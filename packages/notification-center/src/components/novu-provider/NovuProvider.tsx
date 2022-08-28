@@ -1,16 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, IAuthContext, INovuProviderContext, IStore } from '../../index';
-import { AuthContext } from '../../store/auth.context';
-import { useSocketController } from '../../store/socket/use-socket-controller';
-import { SocketContext } from '../../store/socket/socket.store';
-import { NotificationsProvider, useApi, useSocket, useUnseenController } from '../../hooks';
-import { UnseenCountContext } from '../../store/unseen-count.context';
-import { ApiContext } from '../../store/api.context';
-import { ApiService } from '../../api/api.service';
-import { AuthProvider } from '../notification-center/components';
 import { IOrganizationEntity } from '@novu/shared';
-import { NovuI18NProvider } from '../../store/i18n.context';
+import {
+  AuthProvider,
+  NotificationsProvider,
+  SocketInitializationProvider,
+  UnseenProvider,
+  NovuI18NProvider,
+  NovuContext,
+  ApiContext,
+} from '../../store';
+import { ColorScheme, INovuProviderContext, IStore } from '../../index';
+import { useApi, useAuth } from '../../hooks';
+import { ApiService } from '../../api/api.service';
 import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
 
 interface INovuProviderProps {
@@ -29,9 +30,9 @@ interface INovuProviderProps {
 let api: ApiService;
 
 export function NovuProvider(props: INovuProviderProps) {
+  const [isSessionInitialized, setIsSessionInitialized] = useState(false);
   const backendUrl = props.backendUrl ?? 'https://api.novu.co';
   const socketUrl = props.socketUrl ?? 'https://ws.novu.co';
-  const [isSessionInitialized, setIsSessionInitialized] = useState(false);
 
   if (!api) api = new ApiService(backendUrl);
 
@@ -58,11 +59,11 @@ export function NovuProvider(props: INovuProviderProps) {
         <AuthProvider>
           <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
             <NotificationsProvider>
-              <SocketInitialization>
+              <SocketInitializationProvider>
                 <NovuI18NProvider i18n={props.i18n}>
                   <UnseenProvider>{props.children}</UnseenProvider>
                 </NovuI18NProvider>
-              </SocketInitialization>
+              </SocketInitializationProvider>
             </NotificationsProvider>
           </SessionInitialization>
         </AuthProvider>
@@ -79,7 +80,7 @@ interface ISessionInitializationProps {
 
 function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
   const { api: apiService } = useApi();
-  const { applyToken, setUser } = useContext<IAuthContext>(AuthContext);
+  const { applyToken, setUser } = useAuth();
   const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
 
   useEffect(() => {
@@ -115,33 +116,4 @@ function SessionInitialization({ children, ...props }: ISessionInitializationPro
   }
 
   return children;
-}
-
-function SocketInitialization({ children }: { children: React.ReactNode }) {
-  const { socket } = useSocketController();
-
-  return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
-}
-
-function UnseenProvider({ children }: { children: React.ReactNode }) {
-  const { unseenCount, setUnseenCount } = useUnseenController();
-  const { socket } = useSocket();
-
-  useEffect(() => {
-    if (socket) {
-      socket.on('unseen_count_changed', (onData: { unseenCount: number }) => {
-        if (!isNaN(onData?.unseenCount)) {
-          setUnseenCount(onData.unseenCount);
-        }
-      });
-    }
-
-    return () => {
-      if (socket) {
-        socket.off('unseen_count_changed');
-      }
-    };
-  }, [socket]);
-
-  return <UnseenCountContext.Provider value={{ unseenCount, setUnseenCount }}>{children}</UnseenCountContext.Provider>;
 }
