@@ -1,20 +1,15 @@
-import { Divider, Grid, InputWrapper, useMantineColorScheme } from '@mantine/core';
+import { Grid, InputWrapper, useMantineColorScheme } from '@mantine/core';
 import { useEnvController } from '../../../store/use-env-controller';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { Checkbox, colors, Text, Switch } from '../../../design-system';
+import { Checkbox, colors, Switch } from '../../../design-system';
 import styled from 'styled-components';
 import { channels } from '../../../pages/templates/shared/channels';
 import React from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 
 export function TemplatePreference() {
-  const { colorScheme } = useMantineColorScheme();
-  const dark = colorScheme === 'dark';
-
   return (
     <>
-      <StyledDivider dark={dark} />
-
       <Grid>
         <Grid.Col span={6}>
           <ChannelPreference />
@@ -62,7 +57,7 @@ export function ChannelPreference() {
                 const checked = data[key] || false;
 
                 return (
-                  <Grid.Col span={3}>
+                  <Grid.Col md={6} lg={4}>
                     <StyledCheckbox
                       isChecked={checked}
                       checked={checked}
@@ -83,7 +78,6 @@ export function ChannelPreference() {
 }
 
 export function CriticalPreference() {
-  const { readonly } = useEnvController();
   const { control } = useFormContext();
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
@@ -94,21 +88,30 @@ export function CriticalPreference() {
       control={control}
       render={({ field }) => {
         return (
-          <RelativeInputWrapper
-            dark={dark}
-            label="System Critical (Always Sent)"
-            description={
-              field.value
-                ? 'Users will get your messages no matter what.'
-                : 'Users will be able to unsubscribe from channels.'
-            }
-            styles={inputStyles}
-          >
-            <StyledSwitch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
-          </RelativeInputWrapper>
+          <>
+            <InputBackground
+              dark={dark}
+              label="System Critical (Always Sent)"
+              description={<CriticalDescription field={field} />}
+              styles={inputStyles}
+            />
+          </>
         );
       }}
     />
+  );
+}
+
+function CriticalDescription({ field }) {
+  const { readonly } = useEnvController();
+
+  return (
+    <DescriptionWrapper>
+      {field.value
+        ? 'Users will get your messages no matter what.'
+        : 'Users will be able to unsubscribe from channels.'}
+      <Switch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
+    </DescriptionWrapper>
   );
 }
 
@@ -118,8 +121,9 @@ const InputBackground = styled(InputWrapperProxy)<{ dark }>`
   padding: 20px;
 `;
 
-const RelativeInputWrapper = styled(InputBackground)<{ dark }>`
-  position: relative;
+const DescriptionWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
 `;
 
 const StyledCheckbox = styled(CheckboxProxy)<{ isChecked }>`
@@ -131,25 +135,6 @@ const StyledCheckbox = styled(CheckboxProxy)<{ isChecked }>`
   `}
   }
 `;
-
-const StyledSwitch = styled(Switch)`
-  position: absolute;
-  right: 0;
-  top: 40%;
-`;
-
-export function StyledDivider({ dark, ...props }) {
-  return (
-    <Divider
-      color={dark ? colors.B20 : colors.BGLight}
-      label={<Text color={dark ? colors.B40 : colors.B70}>User Preferences Settings</Text>}
-      mb={50}
-      mt={20}
-      labelPosition="center"
-      {...props}
-    />
-  );
-}
 
 export function InputWrapperProxy({ children, ...props }) {
   return <InputWrapper {...props}>{children}</InputWrapper>;

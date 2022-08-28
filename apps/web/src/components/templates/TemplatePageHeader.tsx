@@ -17,6 +17,10 @@ const Header = ({ activePage, editMode }: { editMode: boolean; activePage: Activ
     return <>{'Workflow Editor'}</>;
   }
 
+  if (activePage === ActivePageEnum.USER_PREFERENCE) {
+    return <>{'User Preference Editor'}</>;
+  }
+
   if (activePage === ActivePageEnum.SMS) {
     return <>{'Edit SMS Template'}</>;
   }
@@ -48,7 +52,7 @@ interface Props {
   activePage: ActivePageEnum;
 }
 
-export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActivePage, activePage }: Props) => {
+export const TemplatePageHeader = ({ templateId, loading, disableSubmit, activePage, setActivePage }: Props) => {
   const { editMode, template } = useTemplateController(templateId);
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const { readonly } = useEnvController();
@@ -65,7 +69,14 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, setActi
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When truthy={activePage !== ActivePageEnum.SETTINGS && activePage !== ActivePageEnum.TRIGGER_SNIPPET}>
+          <When
+            truthy={
+              activePage !== ActivePageEnum.SETTINGS &&
+              activePage !== ActivePageEnum.USER_PREFERENCE &&
+              activePage !== ActivePageEnum.WORKFLOW &&
+              activePage !== ActivePageEnum.TRIGGER_SNIPPET
+            }
+          >
             <Center
               mt={10}
               data-test-id="go-back-button"
