@@ -8,7 +8,6 @@ import { api } from '../../../api/api.client';
 import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
-import { TemplatePreference } from './TemplatePreference';
 import { Controller, useFormContext } from 'react-hook-form';
 
 export const NotificationSettingsForm = ({
@@ -160,7 +159,6 @@ export const NotificationSettingsForm = ({
           />
         </Grid.Col>
       </Grid>
-      <TemplatePreference />
     </>
   );
 };

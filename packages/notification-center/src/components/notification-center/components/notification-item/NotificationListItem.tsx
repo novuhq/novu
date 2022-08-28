@@ -1,12 +1,11 @@
+import React from 'react';
 import styled, { css } from 'styled-components';
+import { formatDistanceToNow } from 'date-fns';
 import { IMessage, ButtonTypeEnum, IMessageAction, MessageActionStatusEnum } from '@novu/shared';
 import { DotsHorizontal } from '../../../../shared/icons';
-import React, { useContext } from 'react';
-import { INovuTheme } from '../../../../store/novu-theme.context';
-import { useNovuThemeProvider } from '../../../../hooks/use-novu-theme-provider.hook';
+import { INovuTheme } from '../../../../store';
+import { useNovuTheme, useNotificationCenter } from '../../../../hooks';
 import { ActionContainer } from './ActionContainer';
-import { NotificationCenterContext } from '../../../../store/notification-center.context';
-import { formatDistanceToNow } from 'date-fns';
 import { useTranslations } from 'packages/notification-center/src/hooks/use-translations';
 
 export function NotificationListItem({
@@ -16,9 +15,9 @@ export function NotificationListItem({
   notification: IMessage;
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
-  const { theme: novuTheme } = useNovuThemeProvider();
-  const { onActionClick, listItem } = useContext(NotificationCenterContext);
-  const { dateFnsLocale } = useTranslations()
+  const { theme: novuTheme } = useNovuTheme();
+  const { onActionClick, listItem } = useNotificationCenter();
+  const { dateFnsLocale } = useTranslations();
 
   function handleNotificationClick() {
     onClick(notification);
@@ -74,7 +73,7 @@ function ActionWrapper({
   ctaAction: IMessageAction;
   handleActionButtonClick: (actionButtonType: ButtonTypeEnum) => void;
 }) {
-  const { actionsResultBlock } = useContext(NotificationCenterContext);
+  const { actionsResultBlock } = useNotificationCenter();
 
   return (
     <>
