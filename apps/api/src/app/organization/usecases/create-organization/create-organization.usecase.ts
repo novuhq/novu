@@ -63,7 +63,7 @@ export class CreateOrganization {
       })
     );
 
-    this.analyticsService.upsertGroup(organization._id, organization);
+    this.analyticsService.upsertGroup(organization._id, organization, user._id);
 
     const organizationAfterChanges = await this.getOrganizationUsecase.execute(
       GetOrganizationCommand.create({
