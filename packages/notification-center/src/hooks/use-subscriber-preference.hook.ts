@@ -1,13 +1,13 @@
 import { useApi } from './use-api.hook';
-import { useContext, useEffect, useState } from 'react';
-import { IAuthContext, IUserPreferenceSettings } from '../index';
-import { AuthContext } from '../store/auth.context';
+import { useEffect, useState } from 'react';
+import { IUserPreferenceSettings } from '../index';
+import { useAuth } from './use-auth.hook';
 
 export function useSubscriberPreference() {
   const [preferences, setPreferences] = useState<IUserPreferenceSettings[]>([]);
-  const { api } = useApi();
-  const { token } = useContext<IAuthContext>(AuthContext);
   const [loading, setLoading] = useState<boolean>(false);
+  const { api } = useApi();
+  const { token } = useAuth();
 
   useEffect(() => {
     if (!api?.isAuthenticated || !token) return;

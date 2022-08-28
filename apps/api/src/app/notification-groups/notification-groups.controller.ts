@@ -23,7 +23,6 @@ export class NotificationGroupsController {
   ) {}
 
   @Post('')
-  @Roles(MemberRoleEnum.ADMIN)
   @ExternalApiAccessible()
   @ApiCreatedResponse({
     type: NotificationGroupResponseDto,
@@ -46,7 +45,6 @@ export class NotificationGroupsController {
   }
 
   @Get('')
-  @Roles(MemberRoleEnum.ADMIN)
   @ExternalApiAccessible()
   @ApiOkResponse({
     type: [NotificationGroupResponseDto],

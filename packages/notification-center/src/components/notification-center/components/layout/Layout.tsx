@@ -2,27 +2,22 @@ import styled from 'styled-components';
 import { Loader } from '../Loader';
 import { HeaderContainer as Header } from './header/HeaderContainer';
 import { FooterContainer as Footer } from './footer/FooterContainer';
-import React, { useState } from 'react';
-import { useNovuContext, useNovuThemeProvider } from '../../../../hooks';
-import { INovuTheme } from '../../../../store/novu-theme.context';
+import React from 'react';
+import { useNovuContext, useNovuTheme, useScreens } from '../../../../hooks';
+import { INovuTheme, ScreensEnum } from '../../../../store';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 import { SubscriberPreference } from '../user-preference/SubscriberPreference';
 
-export enum ScreensEnum {
-  NOTIFICATIONS = 'notifications',
-  SETTINGS = 'settings',
-}
-
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
-  const { theme } = useNovuThemeProvider();
-  const [screen, setScreen] = useState<ScreensEnum>(ScreensEnum.NOTIFICATIONS);
+  const { theme } = useNovuTheme();
+  const { screen } = useScreens();
 
   return (
     <LayoutWrapper theme={theme} data-test-id="layout-wrapper">
       {screen === ScreensEnum.SETTINGS && (
         <>
-          <UserPreferenceHeader setScreen={setScreen} />
+          <UserPreferenceHeader />
           <ContentWrapper>
             <SubscriberPreference />
           </ContentWrapper>
@@ -30,7 +25,7 @@ export function Layout({ children }: { children: JSX.Element }) {
       )}
       {screen === ScreensEnum.NOTIFICATIONS && (
         <>
-          <Header setScreen={setScreen} />
+          <Header />
           <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
         </>
       )}

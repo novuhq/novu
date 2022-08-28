@@ -1,11 +1,11 @@
+import React from 'react';
 import { Loader as MantineLoader } from '@mantine/core';
 import chroma from 'chroma-js';
 import { getLinearGradientColorStopValues } from '../../../shared/utils/getLinearGradientColorStopValues';
-import React from 'react';
-import { useNovuThemeProvider } from '../../../hooks/use-novu-theme-provider.hook';
+import { useNovuTheme } from '../../../hooks';
 
 export const Loader = ({ color }: { color?: string }) => {
-  const { theme } = useNovuThemeProvider();
+  const { theme } = useNovuTheme();
   const loaderColor = color || theme.loaderColor;
 
   return (
