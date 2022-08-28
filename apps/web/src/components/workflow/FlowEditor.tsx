@@ -290,14 +290,14 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
   .react-flow__handle {
     background: transparent;
-    border: 1px solid ${({ dark }) => (dark ? colors.B40 : colors.B80)};
+    border: 1px solid ${colors.B60};
   }
   .react-flow__attribution {
     background: transparent;
     opacity: 0.5;
   }
   .react-flow__edge-path {
-    stroke: ${({ dark }) => (dark ? colors.B40 : colors.B80)};
+    stroke: ${colors.B60};
     border-radius: 10px;
     stroke-dasharray: 5;
   }
@@ -321,7 +321,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     border: none;
 
     svg {
-      fill: ${({ dark }) => (dark ? colors.B40 : colors.B80)};
+      fill: ${colors.B60};
     }
   }
 `;
