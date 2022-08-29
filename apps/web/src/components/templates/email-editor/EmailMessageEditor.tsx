@@ -118,47 +118,49 @@ export function EmailMessageEditor({
 
   return (
     <Card withBorder sx={styledCard}>
-      <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())}>
-        <Dropzone
-          styles={{
-            root: {
-              borderRadius: '7px',
-              padding: '10px',
-              border: 'none',
-              height: '80px',
-              backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-            },
-          }}
-          disabled
-          multiple={false}
-          onDrop={(file) => {}}
-          data-test-id="upload-image-button"
-        >
-          {(status) => (
-            <Group position="center" style={{ height: '100%' }}>
-              {!branding?.logo ? (
-                <Group
-                  style={{ height: '100%' }}
-                  spacing={5}
-                  position="center"
-                  direction="column"
-                  data-test-id="logo-upload-button"
-                >
-                  <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
-                  <Text color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>Upload Brand Logo</Text>
-                </Group>
-              ) : (
-                <img
-                  data-test-id="brand-logo"
-                  src={branding?.logo}
-                  alt=""
-                  style={{ width: 'inherit', maxHeight: '80%' }}
-                />
-              )}
-            </Group>
-          )}
-        </Dropzone>
-      </div>
+      <Container pl={0} pr={0}>
+        <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())}>
+          <Dropzone
+            styles={{
+              root: {
+                borderRadius: '7px',
+                padding: '10px',
+                border: 'none',
+                height: '80px',
+                backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+              },
+            }}
+            disabled
+            multiple={false}
+            onDrop={(file) => {}}
+            data-test-id="upload-image-button"
+          >
+            {(status) => (
+              <Group position="center" style={{ height: '100%' }}>
+                {!branding?.logo ? (
+                  <Group
+                    style={{ height: '100%' }}
+                    spacing={5}
+                    position="center"
+                    direction="column"
+                    data-test-id="logo-upload-button"
+                  >
+                    <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
+                    <Text color={colors.B60}>Upload Brand Logo</Text>
+                  </Group>
+                ) : (
+                  <img
+                    data-test-id="brand-logo"
+                    src={branding?.logo}
+                    alt=""
+                    style={{ width: 'inherit', maxHeight: '80%' }}
+                  />
+                )}
+              </Group>
+            )}
+          </Dropzone>
+        </div>
+      </Container>
 
       <Container
         mt={30}
