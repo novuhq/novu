@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { Button, colors, DragButton, Text, Title } from '../../../design-system';
 import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
 import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
@@ -111,6 +111,7 @@ const WorkflowEditorPage = ({
             activePage={activePage}
           />
           <FlowEditor
+            activePage={activePage}
             onDelete={onDelete}
             setActivePage={setActivePage}
             dragging={dragging}

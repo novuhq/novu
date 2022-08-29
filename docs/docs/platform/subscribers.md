@@ -33,7 +33,7 @@ Novu will create a subscriber if one does not exist, and will update existing su
 
 ### Subscriber identifier
 
-This is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal id you application uses for a specific users.
+This is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal id your application uses for a specific user.
 Using an identifier like email might cause issues locating a specific subscriber once they change their email address.
 
 ### Updating subscriber data
