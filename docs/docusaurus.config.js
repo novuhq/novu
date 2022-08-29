@@ -61,7 +61,7 @@ const codeTheme = require('./src/utils/prism');
             srcDark: 'img/logo-dark-bg.svg',
             href: '/',
             target: '_self',
-            width: 102,
+            width: 114,
             height: 32,
           },
           items: [
@@ -71,19 +71,16 @@ const codeTheme = require('./src/utils/prism');
             },
             {
               href: 'https://docs.novu.co/api',
-              className: 'navbar-item-api',
               label: 'API Reference',
               position: 'right',
             },
             {
               href: 'https://github.com/novuhq/novu',
-              className: 'navbar-item-github',
               label: 'GitHub',
               position: 'right',
             },
             {
               href: 'https://discord.gg/9wcGSf22PM',
-              className: 'navbar-item-discord',
               label: 'Community',
               position: 'right',
             },
@@ -96,7 +93,7 @@ const codeTheme = require('./src/utils/prism');
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
             href: '/',
-            width: 102,
+            width: 114,
             height: 32,
           },
           links: [

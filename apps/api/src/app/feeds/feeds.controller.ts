@@ -36,7 +36,6 @@ export class FeedsController {
   ) {}
 
   @Post('')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiCreatedResponse({
     type: FeedResponseDto,
   })
@@ -56,7 +55,6 @@ export class FeedsController {
   }
 
   @Get('')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: [FeedResponseDto],
   })
@@ -81,7 +79,6 @@ export class FeedsController {
   @ApiOperation({
     summary: 'Delete feed',
   })
-  @Roles(MemberRoleEnum.ADMIN)
   @ExternalApiAccessible()
   deleteFeedById(@UserSession() user: IJwtPayload, @Param('feedId') feedId: string): Promise<FeedResponseDto[]> {
     return this.deleteFeedsUsecase.execute(

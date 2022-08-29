@@ -23,6 +23,17 @@ describe('Password reset - /auth/reset (POST)', async () => {
     expect(found.resetToken).to.be.ok;
   });
 
+  it('should request a password reset for existing user with uppercase email', async () => {
+    const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
+      email: session.user.email.toUpperCase(),
+    });
+
+    expect(body.data.success).to.equal(true);
+    const found = await userRepository.findById(session.user._id);
+
+    expect(found.resetToken).to.be.ok;
+  });
+
   it('should change a password after reset', async () => {
     const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
       email: session.user.email,

@@ -1,9 +1,8 @@
 import { useContext } from 'react';
-import { INovuTheme, ThemeContext } from '../store/novu-theme.context';
-import { ICommonTheme } from '../store/novu-theme-provider.context';
+import { INovuTheme, ThemeContext, ICommonTheme } from '../store';
 import { ColorScheme } from '../index';
 
-export function useNovuThemeProvider(): {
+export function useNovuTheme(): {
   theme: INovuTheme;
   common: ICommonTheme;
   colorScheme: ColorScheme;

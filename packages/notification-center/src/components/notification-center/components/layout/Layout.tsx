@@ -3,15 +3,14 @@ import { Loader } from '../Loader';
 import { HeaderContainer as Header } from './header/HeaderContainer';
 import { FooterContainer as Footer } from './footer/FooterContainer';
 import React from 'react';
-import { useNovuContext, useNovuThemeProvider, useScreens } from '../../../../hooks';
-import { INovuTheme } from '../../../../store/novu-theme.context';
+import { useNovuContext, useNovuTheme, useScreens } from '../../../../hooks';
+import { INovuTheme, ScreensEnum } from '../../../../store';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 import { SubscriberPreference } from '../user-preference/SubscriberPreference';
-import { ScreensEnum } from '../../../../store/screens-provider.context';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();
-  const { theme } = useNovuThemeProvider();
+  const { theme } = useNovuTheme();
   const { screen } = useScreens();
 
   return (

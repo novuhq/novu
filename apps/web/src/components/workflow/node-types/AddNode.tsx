@@ -34,7 +34,7 @@ export default memo(({ data }: { data: NodeData }) => {
               transparent: {
                 zIndex: 9999,
                 pointerEvents: 'all',
-                color: theme.colorScheme === 'dark' ? (data.showDropZone ? colors.white : colors.B30) : colors.B80,
+                color: theme.colorScheme === 'dark' ? (data.showDropZone ? colors.white : colors.B60) : colors.B60,
                 '&:hover': {
                   color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
                 },

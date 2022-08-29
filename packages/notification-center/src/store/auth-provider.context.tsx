@@ -1,5 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
-import { useApi } from '../hooks/use-api.hook';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AuthContext } from './auth.context';
+import { ISubscriberJwt } from '@novu/shared';
+import { useApi } from '../hooks';
 
 function isBrowser() {
   return typeof window !== 'undefined';
@@ -12,8 +14,7 @@ export function getToken(): string {
 
   return null;
 }
-
-export function useAuthController() {
+export function AuthProvider({ children }: { children: JSX.Element }) {
   const { api } = useApi();
   const [token, setToken] = useState<string | null>(getToken());
   const [user, setUser] = useState<{ _id: string; firstName: string; lastName: string } | null>(null);
@@ -43,12 +44,9 @@ export function useAuthController() {
     applyToken(null);
   };
 
-  return {
-    isLoggedIn: !!token,
-    user,
-    setUser,
-    applyToken,
-    token,
-    logout,
-  };
+  return (
+    <AuthContext.Provider value={{ token, applyToken, user: user as ISubscriberJwt, setUser, isLoggedIn: !!token }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

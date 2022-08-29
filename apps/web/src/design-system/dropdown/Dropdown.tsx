@@ -8,6 +8,8 @@ interface IDropdownProps extends JSX.ElementChildrenAttribute {
   opened?: boolean;
   gutter?: number;
   placement?: 'center' | 'end' | 'start';
+  onOpen?: () => void;
+  onClose?: () => void;
   sx?: Sx | Sx[];
 }
 export function Dropdown({ children, ...props }: IDropdownProps) {
