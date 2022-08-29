@@ -9,6 +9,13 @@ export interface IEmailBlock {
   };
 }
 
+export class ITemplateVariable {
+  type: 'String' | 'Array' | 'Boolean';
+  name: string;
+  required: boolean;
+  defaultValue?: string | boolean;
+}
+
 export interface IMessageTemplate {
   _id?: string;
   subject?: string;
@@ -16,6 +23,7 @@ export interface IMessageTemplate {
   type: StepTypeEnum;
   contentType?: 'editor' | 'customHtml';
   content: string | IEmailBlock[];
+  variables?: ITemplateVariable[];
   cta?: {
     type: ChannelCTATypeEnum;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

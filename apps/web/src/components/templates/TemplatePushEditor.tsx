@@ -4,6 +4,7 @@ import { LackIntegrationError } from './LackIntegrationError';
 import { IForm } from './use-template-controller.hook';
 import { colors } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
+import { VariableManager } from './VariableManager';
 
 export function TemplatePushEditor({
   control,
@@ -23,6 +24,7 @@ export function TemplatePushEditor({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="Push" /> : null}
+      <VariableManager template={`steps.${index}.template`} useTitle />
       <Controller
         name={`steps.${index}.template.title` as any}
         control={control}

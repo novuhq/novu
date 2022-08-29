@@ -11,6 +11,8 @@ export class MessageTemplateEntity {
 
   type: StepTypeEnum;
 
+  variables?: ITemplateVariable[];
+
   content: string | IEmailBlock[];
 
   contentType?: 'editor' | 'customHtml';
@@ -40,4 +42,14 @@ export class IEmailBlock {
   styles?: {
     textAlign?: 'left' | 'right' | 'center';
   };
+}
+
+export class ITemplateVariable {
+  type: 'String' | 'Array' | 'Boolean';
+
+  name: string;
+
+  required: boolean;
+
+  defaultValue?: string | boolean;
 }

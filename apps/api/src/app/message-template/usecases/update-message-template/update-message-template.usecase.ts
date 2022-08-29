@@ -32,6 +32,10 @@ export class UpdateMessageTemplate {
         command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content;
     }
 
+    if (command.variables) {
+      updatePayload.variables = command.variables;
+    }
+
     if (command.contentType) {
       updatePayload.contentType = command.contentType;
     }

@@ -475,6 +475,118 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(message.subject).to.equal('Test email a subject nested');
   });
 
+  it('should fail to trigger with missing variables', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email {{nested.subject}}',
+          type: StepTypeEnum.EMAIL,
+          variables: [{ name: 'myUser.lastName', required: true, type: 'String' }],
+          content: [
+            {
+              type: 'text',
+              content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    const { body } = await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      })
+      .expect(400);
+
+    expect(JSON.stringify(body)).to.include('payload is missing required key(s): myUser.lastName');
+  });
+
+  it('should fill trigger payload with default variables', async function () {
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email {{nested.subject}}',
+          type: StepTypeEnum.EMAIL,
+          variables: [{ name: 'myUser.lastName', required: false, type: 'String', defaultValue: 'John Doe' }],
+          content: [
+            {
+              type: 'text',
+              content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: template.triggers[0].identifier,
+        to: newSubscriberIdInAppNotification,
+        payload: {
+          organizationName: 'Umbrella Corp',
+        },
+      })
+      .expect(201);
+
+    await session.awaitRunningJobs(template._id);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    const block = message.content[0] as IEmailBlock;
+
+    expect(block.content).to.equal('Hello John Doe, Welcome to Umbrella Corp');
+  });
+
+  it('should trigger with given required variables', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email {{nested.subject}}',
+          type: StepTypeEnum.EMAIL,
+          variables: [{ name: 'myUser.lastName', required: true, type: 'String' }],
+          content: [
+            {
+              type: 'text',
+              content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {
+          myUser: {
+            lastName: 'Test',
+          },
+        },
+      })
+      .expect(201);
+  });
+
   it('should broadcast trigger to all subscribers', async () => {
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     await subscriberService.createSubscriber();

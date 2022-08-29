@@ -1,10 +1,11 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { Textarea } from '@mantine/core';
+import { ChannelTypeEnum } from '@novu/shared';
 import { useEnvController } from '../../../store/use-env-controller';
 import { IForm } from '../use-template-controller.hook';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { colors } from '../../../design-system';
-import { ChannelTypeEnum } from '@novu/shared';
+import { VariableManager } from '../VariableManager';
 
 export function TemplateChatEditor({
   control,
@@ -24,6 +25,7 @@ export function TemplateChatEditor({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.CHAT} /> : null}
+      <VariableManager template={`steps.${index}.template`} />
       <Controller
         name={`steps.${index}.template.content` as any}
         control={control}

@@ -6,6 +6,7 @@ import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
+import { VariableManager } from '../VariableManager';
 
 export function EmailContentCard({
   index,
@@ -79,6 +80,7 @@ export function EmailContentCard({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
+      <VariableManager template={`steps.${index}.template`} />
       <Controller
         name={`steps.${index}.template.subject` as any}
         control={control}
