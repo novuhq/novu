@@ -33,8 +33,6 @@ describe('App Branding', function () {
       expect(contentValueColor).to.eq('rgba(0, 0, 0, 0)');
       expect(contentValueImage).to.eq('linear-gradient(0deg, rgb(255, 81, 47) 0%, rgb(221, 36, 118) 100%)');
     });
-
-    cy.get('body').first().should('have.css', 'font-family', 'Lato, Helvetica, sans-serif');
   });
 });
 
