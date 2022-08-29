@@ -49,7 +49,6 @@ export class NotificationTemplateController {
   ) {}
 
   @Get('')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })
@@ -68,7 +67,6 @@ export class NotificationTemplateController {
   }
 
   @Put('/:templateId')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })
@@ -120,7 +118,6 @@ export class NotificationTemplateController {
   }
 
   @Get('/:templateId')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })

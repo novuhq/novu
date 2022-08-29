@@ -5,8 +5,16 @@ import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
 import * as capitalize from 'lodash.capitalize';
 import useStyles from '../../design-system/config/text.styles';
+import { MemberRole } from './MemberRole';
 
-export function MembersTable({ members, currentUser, onRemoveMember, loading = false, onResendInviteMember }) {
+export function MembersTable({
+  members,
+  currentUser,
+  onRemoveMember,
+  loading = false,
+  onResendInviteMember,
+  onChangeMemberRole,
+}) {
   const { classes, theme } = useStyles();
 
   function isEnableMemberActions(currentMember): boolean {
@@ -50,14 +58,12 @@ export function MembersTable({ members, currentUser, onRemoveMember, loading = f
             </Group>
             <ActionsSider>
               <div style={{ marginLeft: 10 }}>
-                {/* eslint-disable-next-line no-nested-ternary */}
-                {member.memberStatus === MemberStatusEnum.INVITED ? (
-                  <Tag>Invite Pending</Tag>
-                ) : member.roles.find((role: string) => role === 'admin') ? (
-                  <Tag>Admin</Tag>
-                ) : (
-                  <Tag>Member</Tag>
-                )}
+                {member.memberStatus === MemberStatusEnum.INVITED ? <Tag mr={10}>Invite Pending</Tag> : null}
+                <MemberRole
+                  onChangeMemberRole={onChangeMemberRole}
+                  member={member}
+                  isEnableMemberActions={isEnableMemberActions}
+                />
               </div>
             </ActionsSider>
             {isEnableMemberActions(member) ? (
