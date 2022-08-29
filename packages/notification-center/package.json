@@ -5,6 +5,7 @@
   "description": "",
   "scripts": {
     "start": "npm run build:watch",
+    "prebuild": "rimraf dist",
     "build": "rollup -c",
     "build:watch": "rollup -c -w",
     "storybook": "start-storybook -p 6006",
@@ -34,6 +35,7 @@
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-terser": "^7.0.2",
     "tslib": "^2.3.1",
+    "rimraf": "^3.0.2",
     "typescript": "^4.4.4"
   },
   "peerDependencies": {

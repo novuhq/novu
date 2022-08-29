@@ -1,5 +1,5 @@
 import { Button, colors, Switch, Text } from '../../../../design-system';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { ColorScheme, InputWrapper, useMantineTheme } from '@mantine/core';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
@@ -69,8 +69,8 @@ function DescriptionText() {
   const { colorScheme } = useMantineTheme();
 
   return (
-    <InlineDiv>
-      HMAC used to verify that the request performed by the specific user. Read more
+    <div>
+      HMAC used to verify that the request performed by the specific user. Read more{' '}
       <StyledHref
         colorScheme={colorScheme}
         className={'security-doc-href'}
@@ -80,7 +80,7 @@ function DescriptionText() {
       >
         here.
       </StyledHref>
-    </InlineDiv>
+    </div>
   );
 }
 
@@ -88,10 +88,6 @@ const Title = styled(Text)`
   padding-bottom: 17px;
   font-size: 20px;
   font-weight: 700;
-`;
-
-const InlineDiv = styled.div`
-  max-width: 400px;
 `;
 
 const RowDiv = styled.div`
