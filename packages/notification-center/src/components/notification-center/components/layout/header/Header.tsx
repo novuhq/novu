@@ -16,7 +16,7 @@ export function Header({ unseenCount }: { unseenCount: number }) {
   return (
     <HeaderWrapper>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-        <Text fontColor={theme.header.fontColor}>{t('notifications')}</Text>
+        <Text fontColor={theme.header.fontColor} data-test-id="notifications-header-title">{t('notifications')}</Text>
         {!tabs && unseenCount && unseenCount > 0 ? (
           <Badge
             data-test-id="unseen-count-label"

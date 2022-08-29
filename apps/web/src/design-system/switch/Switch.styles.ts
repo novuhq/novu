@@ -15,6 +15,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       width: '40px',
       height: '24px',
       border: 'transparent',
+      cursor: 'pointer',
       '&::before': {
         border: 'transparent',
         width: '20px',
@@ -42,6 +43,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       paddingLeft: '10px',
       backgroundImage: 'none',
       color: dark ? theme.colors.dark[6] : theme.colors.gray[6],
+      cursor: 'pointer',
     },
   };
 });

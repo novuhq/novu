@@ -1,13 +1,14 @@
 {
   "name": "novuhq",
   "private": true,
+  "packageManager": "pnpm@7.5.0",
   "scripts": {
     "bootstrap": "npm run setup:dev",
     "start": "npm run jarvis",
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",
-    "setup:project": "npx pnpm@7.5.0 i && node scripts/setup-env-files.js && npx pnpm build",
+    "setup:project": "npx pnpm@7.5.0 i && node scripts/setup-env-files.js && pnpm build",
     "install:docs": "pnpm install --filter @novu/docs",
     "clean": "lerna clean --yes && npm run prebuild",
     "commit": "cz",
@@ -110,9 +111,10 @@
     "lerna": "5.1.6",
     "lint-staged": "^10.5.4",
     "listr": "^0.14.3",
+    "markdownlint-cli": "^0.31.1",
     "meow": "^10.1.1",
     "mississippi": "^4.0.0",
-    "pnpm": "^6.34.0",
+    "pnpm": "7.5.0",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
@@ -142,7 +144,7 @@
       "eslint --fix",
       "stop-only --file"
     ],
-    "packages/**/*.{ts,json}": [
+    "packages/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
       "eslint --fix",
       "stop-only --file"
@@ -154,7 +156,7 @@
     ],
     "docs/**/*.{md,mdx}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "cd docs && npm run lint:md"
+      "markdownlint --ignore-path ./.gitignore --fix -c ./.markdownlint.jsonc"
     ],
     "libs/**/*.{ts,js,json}": [
       "prettier --ignore-path ./.prettierignore --write",
@@ -168,10 +170,11 @@
     }
   },
   "engines": {
-    "node": ">=13.0.0 <17.0.0"
+    "node": ">=13.0.0 <17.0.0",
+    "pnpm": "7.5.0"
   },
   "dependencies": {
-    "nx": "^14.5.4",
+    "nx": "^14.5.10",
     "tslib": "^2.0.0"
   }
 }
