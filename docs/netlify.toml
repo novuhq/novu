@@ -1,6 +1,6 @@
 [[redirects]]
-  from = "/docs/:slug"
-  to = "/:slug"
+  from = "/docs/*"
+  to = "/:splat"
   status = 301
   force = false
 
