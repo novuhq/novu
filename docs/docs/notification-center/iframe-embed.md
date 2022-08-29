@@ -3,24 +3,13 @@
 If you are using an unsupported (yet) client framework, you can use our embed script, this will generate the notification center inside an iframe.
 You can find the embed code in the `Settings` page within the Admin Panel. It will look similar to this:
 
+<!-- prettier-ignore-start -->
 ```html
 <script>
-  (function (n, o, t, i, f) {
-    n[i] = {};
-    var m = ['init'];
-    n[i]._c = [];
-    m.forEach(
-      (me) =>
-        (n[i][me] = function () {
-          n[i]._c.push([me, arguments]);
-        })
-    );
-    var elt = o.createElement(f);
-    elt.type = 'text/javascript';
-    elt.async = true;
-    elt.src = t;
-    var before = o.getElementsByTagName(f)[0];
-    before.parentNode.insertBefore(elt, before);
+  (function(n,o,t,i,f) {
+    n[i] = {}; var m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
+    var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
+    var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
   })(window, document, 'https://embed.novu.co/embed.umd.min.js', 'novu', 'script');
 
   novu.init(
@@ -38,6 +27,7 @@ You can find the embed code in the `Settings` page within the Admin Panel. It wi
   );
 </script>
 ```
+<!-- prettier-ignore-end -->
 
 Replace the selectors for the bell icon and the unseen badge withing your code. Let's take a look at this example code:
 
