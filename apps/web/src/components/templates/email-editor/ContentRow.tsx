@@ -60,7 +60,7 @@ export function ContentRow({
       {textAlignments.map(([dir, icon]) => (
         <Button
           onClick={(e) => changeRowStyles(e, dir)}
-          data-test-id={`align-${dir}-button`}
+          data-test-id={`align-${dir}-btn`}
           variant={dir === textAlign ? 'filled' : 'outline'}
         >
           {icon}
