@@ -74,7 +74,7 @@ await novu.trigger('<TRIGGER_NAME>',
   {
     to: {
       subscriberId: '<UNIQUE_IDENTIFIER>',
-      email: 'john@doemail.com',
+      email: ['john1@doemail.com','roger@doemail.com'],
       firstName: 'John',
       lastName: 'Doe',
     },
