@@ -30,6 +30,9 @@ import { UpdateBrandingDetails } from './usecases/update-branding-details/update
 import { GetOrganizationsCommand } from './usecases/get-organizations/get-organizations.command';
 import { GetOrganizations } from './usecases/get-organizations/get-organizations.usecase';
 import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
+import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
+import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
+import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -43,7 +46,8 @@ export class OrganizationController {
     private removeMemberUsecase: RemoveMember,
     private changeMemberRoleUsecase: ChangeMemberRole,
     private updateBrandingDetailsUsecase: UpdateBrandingDetails,
-    private getOrganizationsUsecase: GetOrganizations
+    private getOrganizationsUsecase: GetOrganizations,
+    private getMyOrganizationUsecase: GetMyOrganization
   ) {}
 
   @Post('/')
@@ -69,6 +73,16 @@ export class OrganizationController {
     const organizations = await this.getOrganizationsUsecase.execute(command);
 
     return organizations;
+  }
+
+  @Get('/me')
+  async getMyOrganization(@UserSession() user: IJwtPayload): Promise<IGetMyOrganizationDto> {
+    const command = GetMyOrganizationCommand.create({
+      userId: user._id,
+      id: user.organizationId,
+    });
+
+    return await this.getMyOrganizationUsecase.execute(command);
   }
 
   @Delete('/members/:memberId')
