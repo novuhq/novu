@@ -39,6 +39,7 @@
     "@nestjs/platform-express": "9.0.2",
     "@nestjs/swagger": "6.0.1",
     "@nestjs/terminus": "9.0.0",
+    "@novu/apns": "^0.7.2",
     "@novu/dal": "^0.7.2",
     "@novu/discord": "^0.7.2",
     "@novu/emailjs": "^0.7.2",
