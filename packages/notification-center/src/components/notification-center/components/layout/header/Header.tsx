@@ -1,16 +1,14 @@
-import styled from 'styled-components';
-import { ActionIcon, Badge } from '@mantine/core';
-import { colors } from '../../../../../shared/config/colors';
 import React, { useContext } from 'react';
-import { useNovuThemeProvider, useScreens } from '../../../../../hooks';
+import { ActionIcon, Badge } from '@mantine/core';
+import styled from 'styled-components';
+import { colors } from '../../../../../shared/config/colors';
+import { useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
 import { INotificationCenterContext } from '../../../../../index';
-import { NotificationCenterContext } from '../../../../../store/notification-center.context';
-import { useTranslations } from '../../../../../hooks/use-translations';
+import { NotificationCenterContext, ScreensEnum } from '../../../../../store';
 import { Cogs } from '../../../../../shared/icons';
-import { ScreensEnum } from '../../../../../store/screens-provider.context';
 
 export function Header({ unseenCount }: { unseenCount: number }) {
-  const { theme, common } = useNovuThemeProvider();
+  const { theme, common } = useNovuTheme();
   const { setScreen } = useScreens();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
@@ -18,7 +16,9 @@ export function Header({ unseenCount }: { unseenCount: number }) {
   return (
     <HeaderWrapper>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-        <Text fontColor={theme.header.fontColor}>{t('notifications')}</Text>
+        <Text fontColor={theme.header.fontColor} data-test-id="notifications-header-title">
+          {t('notifications')}
+        </Text>
         {!tabs && unseenCount && unseenCount > 0 ? (
           <Badge
             data-test-id="unseen-count-label"

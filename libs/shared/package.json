@@ -5,6 +5,7 @@
   "scripts": {
     "start": "npm run start:dev",
     "afterinstall": "pnpm build",
+    "prebuild": "rimraf dist",
     "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
@@ -22,7 +23,8 @@
     "axios": "^0.26.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.13.2",
-    "mixpanel": "^0.13.0"
+    "mixpanel": "^0.13.0",
+    "rimraf": "^3.0.2"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.24",

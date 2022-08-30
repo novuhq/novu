@@ -1,10 +1,9 @@
-/* eslint-disable max-len */
-import React, { useContext } from 'react';
+import React from 'react';
 import { Footer } from './Footer';
-import { NotificationCenterContext } from '../../../../../store/notification-center.context';
+import { useNotificationCenter } from '../../../../../hooks';
 
 export function FooterContainer() {
-  const { footer } = useContext(NotificationCenterContext);
+  const { footer } = useNotificationCenter();
 
   return <>{footer ? footer() : <Footer />}</>;
 }
