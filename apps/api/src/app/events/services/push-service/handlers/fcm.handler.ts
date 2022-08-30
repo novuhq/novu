@@ -10,7 +10,7 @@ export class FCMHandler extends BasePushHandler {
 
   buildProvider(credentials: ICredentials) {
     if (!credentials.user) {
-      throw Error('Config is not valid for fcm');
+      throw new Error('Config is not valid for fcm');
     }
     const config = JSON.parse(credentials.user);
     this.provider = new FcmPushProvider({

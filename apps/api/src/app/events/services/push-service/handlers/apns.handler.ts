@@ -10,7 +10,7 @@ export class APNSHandler extends BasePushHandler {
 
   buildProvider(credentials: ICredentials) {
     if (!credentials.secretKey || !credentials.apiKey || !credentials.projectName) {
-      throw Error('Config is not valid for apns');
+      throw new Error('Config is not valid for apns');
     }
     this.provider = new APNSPushProvider({
       key: credentials.secretKey,
