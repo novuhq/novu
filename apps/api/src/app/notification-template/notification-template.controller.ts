@@ -88,6 +88,7 @@ export class NotificationTemplateController {
         name: body.name,
         tags: body.tags,
         description: body.description,
+        identifier: body.identifier,
         critical: body.critical,
         preferenceSettings: body.preferenceSettings,
         steps: body.steps,
