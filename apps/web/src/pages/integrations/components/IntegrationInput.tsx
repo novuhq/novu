@@ -1,5 +1,5 @@
 import { Textarea } from '@mantine/core';
-import { CredentialsKeyEnum, IConfigCredentials } from '@novu/shared';
+import { CredentialsKeyEnum, IConfigCredentials, secureCredentials } from '@novu/shared';
 import { Input, PasswordInput } from '../../../design-system';
 
 export function IntegrationInput({
@@ -64,13 +64,5 @@ export function IntegrationInput({
 }
 
 function isNeededToHide(keyString: CredentialsKeyEnum): boolean {
-  const hideParams: CredentialsKeyEnum[] = [
-    CredentialsKeyEnum.ApiKey,
-    CredentialsKeyEnum.SecretKey,
-    CredentialsKeyEnum.Token,
-    CredentialsKeyEnum.Secure,
-    CredentialsKeyEnum.Password,
-  ];
-
-  return hideParams.some((param) => param === keyString);
+  return secureCredentials.some((param) => param === keyString);
 }
