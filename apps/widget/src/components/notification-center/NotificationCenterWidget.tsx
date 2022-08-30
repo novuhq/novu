@@ -1,4 +1,4 @@
-import { NotificationCenter, NovuProvider } from '@novu/notification-center';
+import { I18NLanguage, NotificationCenter, NovuProvider, ITranslationEntry } from '@novu/notification-center';
 import { INovuThemeProvider } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
@@ -21,6 +21,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [theme, setTheme] = useState<INovuThemeProvider>({});
   const [fontFamily, setFontFamily] = useState<string>('Lato');
   const [frameInitialized, setFrameInitialized] = useState(false);
+  const [i18n, setI18n] = useState<ITranslationEntry>();
 
   useEffect(() => {
     WebFont.load({
@@ -46,6 +47,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
         if (event.data.value.theme) {
           setTheme(event.data.value.theme);
+        }
+
+        if (event.data.value.i18n) {
+          setI18n(event.data.value.i18n);
         }
 
         setFrameInitialized(true);
@@ -79,6 +84,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           subscriberId={userDataPayload.subscriberId}
           onLoad={onLoad}
           subscriberHash={userDataPayload.subscriberHash}
+          i18n={i18n}
         >
           <NotificationCenter
             colorScheme="light"

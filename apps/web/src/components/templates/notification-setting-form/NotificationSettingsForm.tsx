@@ -50,7 +50,7 @@ export const NotificationSettingsForm = ({
   function selectFirstGroupByDefault() {
     setTimeout(() => {
       setValue('notificationGroup', groups[0]._id);
-    }, 0);
+    }, 50);
   }
 
   async function addGroupItem(newGroup) {
@@ -78,7 +78,7 @@ export const NotificationSettingsForm = ({
                 mb={30}
                 data-test-id="title"
                 disabled={readonly}
-                required
+                required={!editMode}
                 value={field.value || ''}
                 error={errors.name?.message}
                 label="Notification Name"
@@ -106,21 +106,27 @@ export const NotificationSettingsForm = ({
         </Grid.Col>
         <Grid.Col md={6} sm={12}>
           {trigger && (
-            <Input
-              mb={30}
-              data-test-id="trigger-id"
-              disabled={true}
-              value={trigger.identifier || ''}
-              error={errors.name?.message}
-              label="Notification Identifier"
-              description="This will be used to identify the notification template using the API."
-              rightSection={
-                <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>
-                  <ActionIcon variant="transparent" onClick={() => idClipboard.copy(trigger.identifier)}>
-                    {idClipboard.copied ? <Check /> : <Copy />}
-                  </ActionIcon>
-                </Tooltip>
-              }
+            <Controller
+              name="identifier"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  mb={30}
+                  data-test-id="trigger-id"
+                  value={field.value || ''}
+                  error={errors.name?.message}
+                  label="Notification Identifier"
+                  description="This will be used to identify the notification template using the API."
+                  rightSection={
+                    <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>
+                      <ActionIcon variant="transparent" onClick={() => idClipboard.copy(field.value)}>
+                        {idClipboard.copied ? <Check /> : <Copy />}
+                      </ActionIcon>
+                    </Tooltip>
+                  }
+                />
+              )}
             />
           )}
           <Controller
@@ -137,7 +143,7 @@ export const NotificationSettingsForm = ({
                     disabled={readonly}
                     creatable
                     searchable
-                    required
+                    required={!editMode}
                     description="Categorize notifications into groups for unified settings control"
                     error={errors.notificationGroup?.message}
                     getCreateLabel={(newGroup) => (

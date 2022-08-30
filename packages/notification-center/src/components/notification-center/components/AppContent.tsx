@@ -33,8 +33,11 @@ export function AppContent() {
   return (
     <ThemeProvider theme={themeConfig}>
       <ScreenProvider>
-        <GlobalStyle fontFamily={themeConfig.fontFamily} />
-        <Wrap layoutDirection={themeConfig.layout.direction} brandColor={themeConfig.colors.main}>
+        <Wrap
+          fontFamily={themeConfig.fontFamily}
+          layoutDirection={themeConfig.layout.direction}
+          brandColor={themeConfig.colors.main}
+        >
           <Layout>
             <Main />
           </Layout>
@@ -44,15 +47,10 @@ export function AppContent() {
   );
 }
 
-const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
-  body {
-    margin: 0;
-    font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
-    color: #333737;
-  }
-`;
-
-const Wrap = styled.div<{ layoutDirection: 'ltr' | 'rtl'; brandColor: string }>`
+const Wrap = styled.div<{ fontFamily: string; layoutDirection: 'ltr' | 'rtl'; brandColor: string }>`
+  margin: 0;
+  font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
+  color: #333737;
   direction: ${({ layoutDirection }) => layoutDirection};
   width: 420px;
   z-index: 999;
