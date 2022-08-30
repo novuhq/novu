@@ -1,21 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum } from '@novu/shared';
-import { FilterStepsCommand } from './filter-steps.command';
-import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
-import { FilterStepsBackoff } from './filter-steps-backoff.usecase';
-import { FilterStepsRegular } from './filter-steps-regular.usecase';
+import { DigestFilterStepsCommand } from './digest-filter-steps.command';
+import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
+import { DigestFilterStepsRegular } from './digest-filter-steps-regular.usecase';
 
 @Injectable()
-export class FilterSteps {
-  constructor(private filterStepsBackoff: FilterStepsBackoff, private filterStepsRegular: FilterStepsRegular) {}
+export class DigestFilterSteps {
+  constructor(
+    private filterStepsBackoff: DigestFilterStepsBackoff,
+    private filterStepsRegular: DigestFilterStepsRegular
+  ) {}
 
-  public async execute(command: FilterStepsCommand): Promise<NotificationStepEntity[]> {
-    const matchedSteps = matchMessageWithFilters(
-      command.steps.filter((step) => step.active === true),
-      command.payload
-    );
-
+  public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
+    const matchedSteps = command.steps.filter((step) => step.active === true);
     const digestStep = matchedSteps.find((step) => step.template.type === StepTypeEnum.DIGEST);
 
     if (!digestStep) {
@@ -36,7 +34,7 @@ export class FilterSteps {
     });
   }
 
-  public static createTriggerStep(command: FilterStepsCommand): NotificationStepEntity {
+  public static createTriggerStep(command: DigestFilterStepsCommand): NotificationStepEntity {
     return {
       template: {
         _environmentId: command.environmentId,
