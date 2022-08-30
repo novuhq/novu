@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, JobRepository, NotificationStepEntity } from '@novu/dal';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { FilterStepsCommand } from './filter-steps.command';
-import { FilterSteps } from './filter-steps.usecase';
+import { DigestFilterStepsCommand } from './digest-filter-steps.command';
+import { DigestFilterSteps } from './digest-filter-steps.usecase';
 
 @Injectable()
-export class FilterStepsRegular {
+export class DigestFilterStepsRegular {
   constructor(private jobRepository: JobRepository) {}
 
-  public async execute(command: FilterStepsCommand): Promise<NotificationStepEntity[]> {
-    const steps = [FilterSteps.createTriggerStep(command)];
+  public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
+    const steps = [DigestFilterSteps.createTriggerStep(command)];
     let delayedDigests: JobEntity = null;
     for (const step of command.steps) {
       if (step.template.type === StepTypeEnum.DIGEST) {
@@ -26,7 +26,7 @@ export class FilterStepsRegular {
     return steps;
   }
 
-  private async getDigest(command: FilterStepsCommand, step: NotificationStepEntity) {
+  private async getDigest(command: DigestFilterStepsCommand, step: NotificationStepEntity) {
     const where: any = {
       status: JobStatusEnum.DELAYED,
       _subscriberId: command.subscriberId,
