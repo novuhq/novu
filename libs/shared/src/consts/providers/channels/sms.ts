@@ -8,7 +8,7 @@ import {
   snsConfig,
   telnyxConfig,
   twilioConfig,
-} from '../provider-credentials';
+} from '../credentials';
 
 export const smsProviders: IProviderConfig[] = [
   {

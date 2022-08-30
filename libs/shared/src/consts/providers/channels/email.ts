@@ -9,7 +9,7 @@ import {
   sendgridConfig,
   sendinblueConfig,
   sesConfig,
-} from '../provider-credentials';
+} from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
 
