@@ -1,9 +1,13 @@
 import * as MixpanelInstance from 'mixpanel';
-import Analytics from 'analytics-node';
 
 import { Mixpanel } from 'mixpanel';
 import { UserEntity } from '@novu/dal';
 import { OrganizationEntity } from '@novu/dal';
+import Analytics from 'analytics-node';
+
+// Due to problematic analytics-node types, we need to use require
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const AnalyticsClass = require('analytics-node');
 
 export class AnalyticsService {
   private mixpanel: Mixpanel;
@@ -16,7 +20,7 @@ export class AnalyticsService {
     }
 
     if (process.env.SEGMENT_TOKEN) {
-      this.segment = new Analytics(process.env.SEGMENT_TOKEN);
+      this.segment = new AnalyticsClass(process.env.SEGMENT_TOKEN);
     }
   }
 
