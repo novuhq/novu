@@ -4,7 +4,7 @@ import {
   ICreateNotificationTemplateDto,
   IMessageTemplate,
   INotificationTemplate,
-  IUpdateNotificationTemplate,
+  IUpdateNotificationTemplateDto,
   StepTypeEnum,
   IPreferenceChannels,
 } from '@novu/shared';
@@ -67,7 +67,7 @@ export function useTemplateController(templateId: string) {
   const { isLoading: isUpdateLoading, mutateAsync: updateNotification } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
-    { id: string; data: Partial<IUpdateNotificationTemplate> }
+    { id: string; data: Partial<IUpdateNotificationTemplateDto> }
   >(({ id, data }) => updateTemplate(id, data));
 
   useEffect(() => {
@@ -80,6 +80,7 @@ export function useTemplateController(templateId: string) {
         name: template.name,
         description: template.description as string,
         tags: template.tags,
+        identifier: template.triggers[0].identifier,
         critical: template.critical,
         preferenceSettings: template.preferenceSettings,
         steps: [],
@@ -129,7 +130,8 @@ export function useTemplateController(templateId: string) {
 
       return step;
     });
-    const payload: ICreateNotificationTemplateDto = {
+
+    const payloadToCreate: ICreateNotificationTemplateDto = {
       notificationGroupId: data.notificationGroup,
       name: data.name,
       description: data.description,
@@ -139,15 +141,20 @@ export function useTemplateController(templateId: string) {
       steps: stepsToSave,
     };
 
+    const payloadToUpdate: IUpdateNotificationTemplateDto = {
+      ...payloadToCreate,
+      identifier: data.identifier,
+    };
+
     try {
       if (editMode) {
         await updateNotification({
           id: templateId,
-          data: payload,
+          data: payloadToUpdate,
         });
 
         refetch();
-        reset(payload);
+        reset(payloadToUpdate);
         setIsDirty(false);
 
         await client.refetchQueries(QueryKeys.changesCount);
@@ -156,11 +163,11 @@ export function useTemplateController(templateId: string) {
           color: 'green',
         });
       } else {
-        const response = await createNotification({ ...payload, active: true, draft: false });
+        const response = await createNotification({ ...payloadToCreate, active: true, draft: false });
 
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
-        reset(payload);
+        reset(payloadToCreate);
         setIsDirty(false);
         await client.refetchQueries(QueryKeys.changesCount);
         successMessage('Template saved successfully');
@@ -250,6 +257,7 @@ export interface IForm {
   notificationGroup: string;
   name: string;
   description: string;
+  identifier: string;
   tags: string[];
   critical: boolean;
   steps: StepEntity[];
