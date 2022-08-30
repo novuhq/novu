@@ -82,11 +82,16 @@ Cypress.Commands.add('initializeSession', function (settings = {}) {
               ...session,
               subscriber,
             }))
-        : cy.initializeWidget({ session: session, encryptedHmacHash: encryptedHmacHash, theme: settings.theme });
+        : cy.initializeWidget({
+            session: session,
+            encryptedHmacHash: encryptedHmacHash,
+            theme: settings.theme,
+            i18n: settings.i18n,
+          });
     });
 });
 
-Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash, theme }) => {
+Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash, theme, i18n }) => {
   const URL = `/${session.environment.identifier}`;
   return cy.visit(URL, { log: false }).then(() =>
     cy
@@ -109,6 +114,7 @@ Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash, theme })
                 clientId: session.environment.identifier,
                 data: user,
                 theme,
+                i18n,
               },
             },
           });

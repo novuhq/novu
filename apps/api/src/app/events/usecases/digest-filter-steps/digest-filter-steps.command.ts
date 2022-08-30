@@ -2,7 +2,7 @@ import { IsDefined, IsMongoId } from 'class-validator';
 import { NotificationStepEntity } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class FilterStepsCommand extends EnvironmentWithUserCommand {
+export class DigestFilterStepsCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   subscriberId: string;
 

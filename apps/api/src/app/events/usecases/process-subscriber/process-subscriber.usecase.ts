@@ -15,8 +15,8 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { ISubscribersDefine } from '@novu/node';
-import { FilterSteps } from '../filter-steps/filter-steps.usecase';
-import { FilterStepsCommand } from '../filter-steps/filter-steps.command';
+import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
+import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
 import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -30,7 +30,7 @@ export class ProcessSubscriber {
     private createSubscriberUsecase: CreateSubscriber,
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private filterSteps: FilterSteps,
+    private filterSteps: DigestFilterSteps,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
   ) {}
 
@@ -52,7 +52,7 @@ export class ProcessSubscriber {
     );
 
     const steps: NotificationStepEntity[] = await this.filterSteps.execute(
-      FilterStepsCommand.create({
+      DigestFilterStepsCommand.create({
         subscriberId: subscriber._id,
         payload: command.payload,
         steps: preferredSubscriberSteps,

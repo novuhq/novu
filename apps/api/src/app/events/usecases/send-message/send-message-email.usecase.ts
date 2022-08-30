@@ -199,12 +199,14 @@ export class SendMessageEmail extends SendMessageType {
     } catch (error) {
       console.error(error);
       Sentry.captureException(error?.response?.body || error?.response || error);
+      const text =
+        String(error?.response?.body || error?.response || error) || 'Error while sending email with provider';
       this.messageRepository.updateMessageStatus(
         message._id,
         'error',
-        error?.response?.body || error?.response || error,
+        String(error?.response?.body || error?.response || error),
         'mail_unexpected_error',
-        'Error while sending email with provider'
+        text
       );
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
@@ -214,13 +216,13 @@ export class SendMessageEmail extends SendMessageType {
           organizationId: command.organizationId,
           notificationId: notification._id,
           messageId: message._id,
-          text: 'Error while sending email with provider',
+          text,
           userId: command.userId,
           subscriberId: command.subscriberId,
           code: LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
           templateId: notification._templateId,
           raw: {
-            error: error?.response?.body || error?.response || error,
+            error: String(error?.response?.body || error?.response || error),
             payload: command.payload,
             triggerIdentifier: command.identifier,
           },

@@ -10,6 +10,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const [page, setPage] = useState<Map<string, number>>(new Map([['default_store', 0]]));
   const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['default_store', true]]));
   const [fetching, setFetching] = useState<boolean>(false);
+  const [refetchTimeout, setRefetchTimeout] = useState<Map<string, NodeJS.Timeout>>(new Map());
 
   async function fetchPage(pageToFetch: number, isRefetch = false, storeId = 'default_store') {
     setFetching(true);
@@ -72,7 +73,21 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }
 
   async function refetch(storeId = 'default_store') {
-    await fetchPage(0, true, storeId);
+    setFetching(true);
+
+    if (refetchTimeout.get(storeId)) {
+      clearTimeout(refetchTimeout.get(storeId));
+      setRefetchTimeout(refetchTimeout.set(storeId, null));
+    }
+
+    setRefetchTimeout(
+      refetchTimeout.set(
+        storeId,
+        setTimeout(async () => {
+          await fetchPage(0, true, storeId);
+        }, 250)
+      )
+    );
   }
 
   function getStoreQuery(storeId: string) {
