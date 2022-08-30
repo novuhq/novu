@@ -7,6 +7,8 @@ import {
   MessageActionStatusEnum,
 } from '@novu/shared';
 import { IStoreQuery } from '@novu/client';
+export { IStoreQuery };
+export { IUserPreferenceSettings } from '@novu/client';
 
 export { IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
 
