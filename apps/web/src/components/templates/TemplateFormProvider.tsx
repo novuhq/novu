@@ -52,7 +52,10 @@ const schema = z
               .passthrough()
               .superRefine((template: any, ctx) => {
                 if (
-                  (template.type === ChannelTypeEnum.SMS || template.type === ChannelTypeEnum.IN_APP) &&
+                  (template.type === ChannelTypeEnum.SMS ||
+                    template.type === ChannelTypeEnum.IN_APP ||
+                    template.type === ChannelTypeEnum.PUSH ||
+                    template.type === ChannelTypeEnum.CHAT) &&
                   template.content.length === 0
                 ) {
                   ctx.addIssue({
@@ -72,6 +75,17 @@ const schema = z
                     inclusive: true,
                     message: 'Required - Email Subject',
                     path: ['subject'],
+                  });
+                }
+
+                if (template.type === ChannelTypeEnum.PUSH && !template.title) {
+                  ctx.addIssue({
+                    code: z.ZodIssueCode.too_small,
+                    minimum: 1,
+                    type: 'string',
+                    inclusive: true,
+                    message: 'Required - Push Title',
+                    path: ['title'],
                   });
                 }
               }),

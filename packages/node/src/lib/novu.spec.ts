@@ -37,6 +37,25 @@ describe('test use of novu node package', () => {
     });
   });
 
+  test('should broadcast correctly', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.broadcast('test-template', {
+      payload: {
+        email: 'test-user@sd.com',
+      },
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger/broadcast', {
+      name: 'test-template',
+      overrides: {},
+      payload: {
+        email: 'test-user@sd.com',
+      },
+    });
+  });
+
   test('should trigger correctly for all subscribers definitions ', async () => {
     mockedAxios.post.mockResolvedValue({});
 

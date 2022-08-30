@@ -5,7 +5,7 @@ export interface IEmailBlock {
   content: string;
   url?: string;
   styles?: {
-    textDirection?: 'ltr' | 'rtl';
+    textAlign?: 'left' | 'right' | 'center';
   };
 }
 

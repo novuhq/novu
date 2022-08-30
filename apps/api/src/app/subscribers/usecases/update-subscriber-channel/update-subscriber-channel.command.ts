@@ -10,7 +10,7 @@ export class IChannelCredentialsCommand implements ChannelCredentials {
 
   @IsString({ each: true })
   @IsOptional()
-  notificationIdentifiers?: string[];
+  deviceTokens?: string[];
 }
 
 export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements SubscriberChannel {

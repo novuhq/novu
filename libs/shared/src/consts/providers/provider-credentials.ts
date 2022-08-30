@@ -143,19 +143,19 @@ export const nodemailerConfig: IConfigCredentials[] = [
     key: CredentialsKeyEnum.Domain,
     displayName: 'DKIM: Domain name',
     type: 'string',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'DKIM: Private key',
     type: 'string',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.AccountSid,
     displayName: 'DKIM: Key selector',
     type: 'string',
-    required: true,
+    required: false,
   },
   ...mailConfigBase,
 ];

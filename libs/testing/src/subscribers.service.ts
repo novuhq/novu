@@ -25,7 +25,7 @@ export class SubscribersService {
         {
           _integrationId: 'integrationId_fcm',
           providerId: PushProviderIdEnum.FCM,
-          credentials: { notificationIdentifiers: ['identifier'] },
+          credentials: { deviceTokens: ['identifier'] },
         },
       ],
     });

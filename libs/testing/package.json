@@ -1,11 +1,12 @@
 {
   "name": "@novu/testing",
-  "version": "0.6.2",
+  "version": "0.7.1",
   "description": "",
   "private": true,
   "scripts": {
     "start": "npm run start:dev",
     "afterinstall": "pnpm build",
+    "prebuild": "rimraf dist",
     "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
@@ -21,9 +22,9 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.6.2",
-    "@novu/node": "^0.6.0",
-    "@novu/shared": "^0.6.0",
+    "@novu/dal": "^0.7.1",
+    "@novu/node": "^0.7.1",
+    "@novu/shared": "^0.7.1",
     "JSONStream": "^1.3.5",
     "async": "^3.2.0",
     "axios": "0.25.0",
@@ -35,6 +36,7 @@
     "mongoose": "6.4.6",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
+    "rimraf": "^3.0.2",
     "superagent-defaults": "^0.1.14",
     "supertest": "^5.0.0",
     "uuid": "^8.3.0"

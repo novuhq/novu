@@ -22,6 +22,12 @@ export function resendInviteMember(memberId: string) {
   });
 }
 
+export function changeMemberRole(memberId: string, memberRole: MemberRoleEnum) {
+  return api.put(`/v1/organizations/members/${memberId}/roles`, {
+    role: memberRole,
+  });
+}
+
 export function removeMember(memberId: string) {
   return api.delete(`/v1/organizations/members/${memberId}`);
 }

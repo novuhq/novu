@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { Accordion, Divider } from '@mantine/core';
 import styled from 'styled-components';
-import { useNovuThemeProvider, useSubscriberPreference } from '../../../../hooks';
+import { useNovuTheme, useSubscriberPreference } from '../../../../hooks';
 import { accordionStyles, Text, TextBlock } from './styles';
 import { ChannelPreference } from './ChannelPreference';
 import { getChannel } from './channels';
 import image from '../../../../images/no-settings.png';
 
 export function SubscriberPreference() {
-  const { theme, common } = useNovuThemeProvider();
+  const { theme, common } = useNovuTheme();
   const { preferences: data, updatePreference, loading } = useSubscriberPreference();
   const baseTheme = theme?.userPreferences;
   const [loadingUpdate, setLoadingUpdate] = useState<boolean>(false);
-  const preferences = data?.filter((item) => !item.template.critical);
+  const preferences = data
+    ?.filter((item) => !item.template.critical)
+    ?.filter((pref) => Object.keys(pref.preference.channels).length > 0);
 
   return (
     <>

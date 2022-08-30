@@ -2,7 +2,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 export interface IChannelCredentials {
   webhookUrl?: string;
-  notificationIdentifiers?: string[];
+  deviceTokens?: string[];
 }
 
 export interface ISubscribers {
@@ -46,10 +46,13 @@ export type TriggerRecipientsType =
   | TriggerRecipientsTypeSingle
   | TriggerRecipientsTypeArray;
 
-export interface ITriggerPayloadOptions {
+export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
+  to: TriggerRecipientsType;
+}
+
+export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
-  to: TriggerRecipientsType;
 }
 
 export interface ITriggerPayload {
@@ -95,6 +98,18 @@ export type ITriggerOverrideFCM = {
   titleLocArgs?: string;
 };
 
+export type IAPNSAlert = {
+  title?: string;
+  subtitle?: string;
+  body: string;
+  'title-loc-key'?: string;
+  'title-loc-args'?: string[];
+  'action-loc-key'?: string;
+  'loc-key'?: string;
+  'loc-args'?: string[];
+  'launch-image'?: string;
+};
+
 export type ITriggerOverrideAPNS = {
   topic?: string;
   id?: string;
@@ -105,18 +120,7 @@ export type ITriggerOverrideAPNS = {
   threadId?: string;
   payload?: unknown;
   aps?: {
-    alert?:
-      | string
-      | {
-          body?: string;
-          'loc-key'?: string;
-          'loc-args'?: unknown[];
-          title?: string;
-          'title-loc-key'?: string;
-          'title-loc-args'?: unknown[];
-          action?: string;
-          'action-loc-key'?: string;
-        };
+    alert?: string | IAPNSAlert;
     'launch-image'?: string;
     badge?: number;
     sound?: string;
@@ -128,19 +132,7 @@ export type ITriggerOverrideAPNS = {
   rawPayload?: unknown;
   badge?: number;
   sound?: string;
-  alert?:
-    | string
-    | {
-        title?: string;
-        subtitle?: string;
-        body: string;
-        'title-loc-key'?: string;
-        'title-loc-args'?: string[];
-        'action-loc-key'?: string;
-        'loc-key'?: string;
-        'loc-args'?: string[];
-        'launch-image'?: string;
-      };
+  alert?: string | IAPNSAlert;
   contentAvailable?: boolean;
   mutableContent?: boolean;
   mdm?: string | Record<string, unknown>;

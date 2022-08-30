@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
@@ -92,10 +91,10 @@ export class OrganizationController {
   }
 
   @Get('/members')
-  @Roles(MemberRoleEnum.ADMIN)
   async getMember(@UserSession() user: IJwtPayload) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
+        user,
         userId: user._id,
         organizationId: user.organizationId,
       })
@@ -107,6 +106,7 @@ export class OrganizationController {
   async inviteMember(@UserSession() user: IJwtPayload) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
+        user,
         userId: user._id,
         organizationId: user.organizationId,
       })

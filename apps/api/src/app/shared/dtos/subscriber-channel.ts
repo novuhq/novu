@@ -3,25 +3,27 @@ import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class ChannelCredentials {
   @ApiProperty({
-    description: 'Webhook url for chat notificaton',
+    description:
+      'Webhook url used by chat app integrations. The webhook should be obtained from the chat app provider.',
   })
   webhookUrl?: string;
+
   @ApiPropertyOptional({
-    description: 'Device token for push or chat notificaton',
+    description: 'Contains an array of the subscriber device tokens for a given provider. Used on Push integrations',
   })
-  notificationIdentifiers?: string[];
+  deviceTokens?: string[];
 }
 
 export class SubscriberChannel {
   @ApiProperty({
     enum: { ...ChatProviderIdEnum, ...PushProviderIdEnum },
-    description: 'Id of provider for channel',
+    description: 'The provider identifier for the credentials',
   })
   providerId: ChatProviderIdEnum | PushProviderIdEnum;
 
   @ApiProperty({
     type: ChannelCredentials,
-    description: 'Subscriber credentials for channel',
+    description: 'Credentials payload for the specified provider',
   })
   credentials: ChannelCredentials;
 }

@@ -6,14 +6,14 @@ import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 export class UpdateSubscriberChannelRequestDto {
   @ApiProperty({
     enum: { ...ChatProviderIdEnum, ...PushProviderIdEnum },
-    description: 'Subscriber credentials for channel',
+    description: 'The provider identifier for the credentials',
   })
   @IsString()
   @IsDefined()
   providerId: ChatProviderIdEnum | PushProviderIdEnum;
 
   @ApiProperty({
-    description: 'Subscriber credentials for channel',
+    description: 'Credentials payload for the specified provider',
   })
   @IsDefined()
   @IsObject()

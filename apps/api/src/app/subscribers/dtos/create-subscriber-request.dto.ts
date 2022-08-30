@@ -3,7 +3,8 @@ import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class CreateSubscriberRequestDto {
   @ApiProperty({
-    description: 'Your internal identifire for subscriber',
+    description:
+      'The internal identifier you used to create this subscriber, usually correlates to the id the user in your systems',
   })
   @IsString()
   @IsDefined()
@@ -30,7 +31,7 @@ export class CreateSubscriberRequestDto {
   phone?: string;
 
   @ApiPropertyOptional({
-    description: 'Url for avatar image of your subscriber',
+    description: 'An http url to the profile image of your subscriber',
   })
   @IsString()
   @IsOptional()

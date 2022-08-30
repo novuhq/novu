@@ -1,11 +1,10 @@
-import React, { useContext } from 'react';
-import { colors } from '../../shared/config/colors';
-import { Bell as BellIcon, GradientDot } from '../../shared/icons';
+import React from 'react';
 import { ActionIcon } from '@mantine/core';
 import styled from 'styled-components';
-import { UnseenCountContext } from '../../store/unseen-count.context';
-import { ColorScheme } from '../../index';
-import { ISvgStopColor } from '../../store/novu-theme.context';
+import { colors } from '../../shared/config/colors';
+import { Bell as BellIcon, GradientDot } from '../../shared/icons';
+import { ColorScheme, useUnseenCount } from '../../index';
+import { ISvgStopColor } from '../../store';
 import { useDefaultBellColors } from '../../hooks';
 
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
@@ -18,7 +17,7 @@ export interface INotificationBellProps {
 }
 
 export function NotificationBell(props: INotificationBellProps) {
-  const { unseenCount } = useContext(UnseenCountContext);
+  const { unseenCount } = useUnseenCount();
   const { bellColors } = useDefaultBellColors({
     unseenBadgeColor: props?.unseenBadgeColor,
     unseenBadgeBackgroundColor: props?.unseenBadgeBackgroundColor,

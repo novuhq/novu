@@ -1,13 +1,12 @@
-import { useContext } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ButtonProps } from '@mantine/core/lib/components/Button/Button';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
+import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { showNotification } from '@mantine/notifications';
@@ -90,6 +89,19 @@ export function SignUpForm({ token, email }: Props) {
     },
   });
 
+  const [accepted, setAccepted] = useState<boolean>(false);
+
+  const serverErrorString = useMemo<string>(() => {
+    return Array.isArray(error?.message) ? error?.message[0] : error?.message;
+  }, [error]);
+
+  const emailServerError = useMemo<string>(() => {
+    if (serverErrorString === 'User already exists') return 'An account with this email already exists';
+    if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
+
+    return '';
+  }, [serverErrorString]);
+
   return (
     <>
       {!IS_DOCKER_HOSTED && !token && (
@@ -123,7 +135,7 @@ export function SignUpForm({ token, email }: Props) {
           mt={5}
         />
         <Input
-          error={errors.email?.message}
+          error={errors.email?.message || emailServerError}
           disabled={!!email}
           {...register('email', {
             required: 'Please provide an email',
@@ -151,7 +163,21 @@ export function SignUpForm({ token, email }: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        <Button mt={60} inherit loading={isLoading || loadingAcceptInvite} submit data-test-id="submitButton">
+        <Checkbox
+          onChange={(prev) => setAccepted(prev.target.checked)}
+          required
+          label={<Accept />}
+          data-test-id="accept-cb"
+          mt={20}
+        />
+        <Button
+          disabled={!accepted}
+          mt={60}
+          inherit
+          loading={isLoading || loadingAcceptInvite}
+          submit
+          data-test-id="submitButton"
+        >
           Sign Up {token ? '& Accept Invite' : null}
         </Button>
         <Center mt={20}>
@@ -163,13 +189,28 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
-      {isError && (
+      {isError && !emailServerError && (
         <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}
         </Text>
       )}
     </>
+  );
+}
+
+function Accept() {
+  return (
+    <div>
+      <span>I accept the </span>
+      <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms">
+        Terms and Conditions
+      </a>
+      <span> and have read the </span>
+      <a style={{ textDecoration: 'underline' }} href="https://novu.co/privacy">
+        Privacy Policy
+      </a>
+    </div>
   );
 }
 

@@ -20,6 +20,14 @@ export class SubscriberEntity {
   _organizationId: string;
 
   _environmentId: string;
+
+  deleted: boolean;
+
+  createdAt: string;
+
+  updatedAt: string;
+
+  __v?: number;
 }
 
 export class IChannelSettings {
@@ -32,5 +40,5 @@ export class IChannelSettings {
 
 export class IChannelCredentials {
   webhookUrl?: string;
-  notificationIdentifiers?: string[];
+  deviceTokens?: string[];
 }

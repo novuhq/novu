@@ -29,34 +29,24 @@
     }
   }
 
-  &-item-discord:before,
-  &-item-github:before {
-    display: flex;
-    align-items: center;
-    background-position: 50%;
-    background-repeat: no-repeat;
-    margin-right: 0.5rem;
-    content: '';
-    justify-items: center;
-    margin-right: 0.5rem;
-    background-size: contain;
-  }
-
-  &-item-discord:before {
-    width: 27px;
-    height: 20px;
-  }
-
-  &-item-github:before {
-    width: 20px;
-    height: 20px;
-
-    @include mobile-screen {
-      width: 27px;
-      height: 27px;
+  &__items--right {
+    & > * {
+       &:nth-last-child(2) {
+        padding-right: 0;
+   
+        &::after{
+          content: '';
+          flex-shrink: 0;
+          display: inline-block;
+          height: 24px;
+          width: 1px;
+          background-color: #E6E6E6;
+          margin: 0 12px 0 20px;
+        }
+      }
     }
   }
-
+  
   &-sidebar {
     &__brand {
       box-shadow: none;
@@ -73,19 +63,21 @@ html[data-theme='dark'] {
     background-color: $color-gray-1;
     border-bottom: 1px solid $color-gray-3;
 
-    &-item-github:before {
-      background-image: url('/img/github-white.svg');
-    }
-
-    &-item-discord:before {
-      background-image: url('/img/discord-white.svg');
-    }
-
     &-sidebar {
       background-color: $color-gray-1;
 
       &__brand {
         border-bottom: 1px solid $color-gray-3;
+      }
+    }
+
+    &__items--right {
+      & > * {
+         &:nth-last-child(2) {
+          &::after {
+            background-color: #262626;
+          }
+        }
       }
     }
   }
@@ -95,14 +87,6 @@ html[data-theme='light'] {
   .navbar {
     border-bottom: 1px solid $color-gray-10;
     box-shadow: none;
-
-    &-item-github:before {
-      background-image: url('/img/github-black.svg');
-    }
-
-    &-item-discord:before {
-      background-image: url('/img/discord-black.svg');
-    }
 
     &-sidebar {
       &__brand {

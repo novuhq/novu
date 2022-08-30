@@ -36,7 +36,6 @@ describe('Notifications List', function () {
     });
 
     cy.wait('@getNotifications');
-    cy.waitForNetworkIdle(500);
     cy.getByTestId('unseen-count-label').contains('8');
 
     cy.getByTestId('notification-list-item').should('have.length', 8);
@@ -83,5 +82,15 @@ describe('Notifications List', function () {
     cy.getByTestId('notification-list-item').first().click();
     cy.wait('@seenRequest');
     cy.getByTestId('unseen-count-label').contains('4');
+  });
+
+  it('count seen-unseen notification', function () {
+    cy.getByTestId('unseen-count-label').contains('5');
+    cy.intercept('**/messages/**/seen').as('seenRequest');
+    cy.intercept('**/notifications/feed?page=0').as('getNotifications');
+    cy.getByTestId('notification-list-item').first().click();
+    cy.wait('@seenRequest');
+    cy.wait('@getNotifications');
+    cy.getByTestId('notification-list-item').should('have.length', 5);
   });
 });

@@ -6,7 +6,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { UpdateSubscriberPreferenceRequestDto } from '../dtos/update-subscriber-preference-request.dto';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
-describe('PATCH /widgets/preference/:templateId', function () {
+describe('PATCH /widgets/preferences/:templateId', function () {
   let template: NotificationTemplateEntity;
   let session: UserSession;
   let subscriberId: string;
@@ -115,7 +115,7 @@ export async function updateSubscriberPreference(
   subscriberToken: string,
   templateId: string
 ) {
-  return await axios.patch(`http://localhost:${process.env.PORT}/v1/widgets/preference/${templateId}`, data, {
+  return await axios.patch(`http://localhost:${process.env.PORT}/v1/widgets/preferences/${templateId}`, data, {
     headers: {
       Authorization: `Bearer ${subscriberToken}`,
     },
