@@ -482,7 +482,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           name: 'Message Name',
           subject: 'Test email {{nested.subject}}',
           type: StepTypeEnum.EMAIL,
-          variables: [{ name: 'myUser.lastName', required: true, type: 'String' }],
+          variables: [
+            { name: 'myUser.lastName', required: true, type: 'String' },
+            { name: 'myUser.array', required: true, type: 'Array' },
+            { name: 'myUser.bool', required: true, type: 'Boolean' },
+          ],
           content: [
             {
               type: 'text',
@@ -493,7 +497,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       ],
     });
 
-    const { body } = await session.testAgent
+    let response = await session.testAgent
       .post(`/v1/events/trigger`)
       .send({
         name: template.triggers[0].identifier,
@@ -502,7 +506,43 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       })
       .expect(400);
 
-    expect(JSON.stringify(body)).to.include('payload is missing required key(s): myUser.lastName');
+    expect(JSON.stringify(response.body)).to.include(
+      'payload is missing required key(s) and type(s): myUser.lastName (Value), myUser.array (Array), myUser.bool (Boolean)'
+    );
+
+    response = await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {
+          myUser: {
+            lastName: true,
+            array: 'John Doe',
+            bool: 0,
+          },
+        },
+      })
+      .expect(400);
+
+    expect(JSON.stringify(response.body)).to.include(
+      'payload is missing required key(s) and type(s): myUser.lastName (Value), myUser.array (Array), myUser.bool (Boolean)'
+    );
+
+    response = await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {
+          myUser: {
+            lastName: '',
+            array: [],
+            bool: true,
+          },
+        },
+      })
+      .expect(201);
   });
 
   it('should fill trigger payload with default variables', async function () {

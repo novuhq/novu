@@ -4,14 +4,15 @@ import { VerifyPayloadCommand } from './verify-payload.command';
 
 export class VerifyPayload {
   execute(command: VerifyPayloadCommand): Record<string, unknown> {
-    const missingKeys = [];
+    const invalidKeys = [];
     const defaultPayload = {};
 
     for (const step of command.template.steps) {
-      missingKeys.push(...this.checkRequired(step.template.variables || [], command.payload));
+      invalidKeys.push(...this.checkRequired(step.template.variables || [], command.payload));
     }
 
-    if (missingKeys.length) throw new ApiException(`payload is missing required key(s): ${missingKeys.join(', ')}`);
+    if (invalidKeys.length)
+      throw new ApiException(`payload is missing required key(s) and type(s): ${invalidKeys.join(', ')}`);
 
     for (const step of command.template.steps) {
       this.fillDefaults(step.template.variables || [], defaultPayload);
@@ -21,7 +22,7 @@ export class VerifyPayload {
   }
 
   private checkRequired(variables: ITemplateVariable[], payload: Record<string, unknown>): string[] {
-    const missingKeys = [];
+    const invalidKeys = [];
 
     for (const variable of variables.filter((vari) => vari.required)) {
       let value;
@@ -32,12 +33,30 @@ export class VerifyPayload {
         value = null;
       }
 
-      if (value === null || value === undefined) {
-        missingKeys.push(variable.name);
+      const variableTypeHumanize = {
+        String: 'Value',
+        Array: 'Array',
+        Boolean: 'Boolean',
+      }[variable.type];
+
+      const variableErrorHumanize = `${variable.name} (${variableTypeHumanize})`;
+
+      switch (variable.type) {
+        case 'Array':
+          if (!Array.isArray(value)) invalidKeys.push(variableErrorHumanize);
+          break;
+        case 'Boolean':
+          if (value !== true && value !== false) invalidKeys.push(variableErrorHumanize);
+          break;
+        case 'String':
+          if (!['string', 'number'].includes(typeof value)) invalidKeys.push(variableErrorHumanize);
+          break;
+        default:
+          if (value === null || value === undefined) invalidKeys.push(variableErrorHumanize);
       }
     }
 
-    return missingKeys;
+    return invalidKeys;
   }
 
   private fillDefaults(variables: ITemplateVariable[], payload: Record<string, unknown>) {
