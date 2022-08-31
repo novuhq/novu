@@ -72,12 +72,12 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 
 await novu.trigger('<TRIGGER_NAME>',
   {
-    to: {
+    to: [{
       subscriberId: '<UNIQUE_IDENTIFIER>',
-      email: ['john1@doemail.com','roger@doemail.com'],
+      email: 'john1@doemail.com',
       firstName: 'John',
       lastName: 'Doe',
-    },
+    }],
     payload: {
       name: "Hello World",
       organization: {
