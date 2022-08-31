@@ -46,8 +46,10 @@ export class SendMessage {
   }
 
   private async filter(command: SendMessageCommand) {
-    return true;
-    const filter = command.step?.filters[0]?.children;
+    if (!Array.isArray(command.step?.filters)) {
+      return true;
+    }
+    const filter = command.step.filters[0]?.children;
     if (!filter) {
       return true;
     }
