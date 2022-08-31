@@ -50,5 +50,6 @@ export { TapeGradient } from './gradient/TapeGradient';
 export { BoltGradient } from './gradient/BoltGradient';
 export { ConnectGradient } from './gradient/ConnectGradient';
 export { ChatGradient } from './gradient/ChatGradient';
+export { LevelsGradient } from './gradient/LevelsGradient';
 
 export { Github } from './social/Github';
