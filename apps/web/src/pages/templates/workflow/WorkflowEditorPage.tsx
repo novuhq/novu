@@ -126,7 +126,7 @@ const WorkflowEditorPage = ({
           <SideBarWrapper dark={colorScheme === 'dark'}>
             {selectedChannel ? (
               <StyledNav data-test-id="step-properties-side-menu">
-                <When truthy={selectedChannel !== StepTypeEnum.DIGEST}>
+                <When truthy={selectedChannel !== StepTypeEnum.DIGEST && selectedChannel !== StepTypeEnum.DELAY}>
                   <NavSection>
                     <ButtonWrapper>
                       <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
@@ -161,7 +161,7 @@ const WorkflowEditorPage = ({
                     })}
                   </NavSection>
                 </When>
-                <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
+                <When truthy={selectedChannel === StepTypeEnum.DIGEST || selectedChannel === StepTypeEnum.DELAY}>
                   <NavSection>
                     <ButtonWrapper>
                       <Title size={2}>Digest Properties</Title>

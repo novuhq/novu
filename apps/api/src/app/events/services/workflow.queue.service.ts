@@ -108,7 +108,11 @@ export class WorkflowQueueService {
     };
 
     const digestAdded = await this.addDigestJob(data, options);
+    const delayAdded = await this.addDelayJob(data, options);
     if (digestAdded) {
+      return;
+    }
+    if (delayAdded) {
       return;
     }
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
@@ -151,6 +155,19 @@ export class WorkflowQueueService {
         await this.addJob(inApp, true);
       }
     }
+    await this.queue.add(data._id, data, { delay, ...options });
+
+    return true;
+  }
+
+  private async addDelayJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
+    const isDelay = data.type === StepTypeEnum.DELAY && data.step.metadata.amount && data.step.metadata.unit;
+    if (!isDelay) {
+      return false;
+    }
+
+    await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
+    const delay = WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
     await this.queue.add(data._id, data, { delay, ...options });
 
     return true;

@@ -45,6 +45,15 @@ export const channels = [
     type: NodeTypeEnum.ACTION,
   },
   {
+    tabKey: StepTypeEnum.DELAY,
+    label: 'Delay',
+    description: 'Delay events',
+    Icon: DigestGradient,
+    testId: 'delaySelector',
+    channelType: StepTypeEnum.DELAY,
+    type: NodeTypeEnum.ACTION,
+  },
+  {
     tabKey: ChannelTypeEnum.CHAT,
     label: 'Chat',
     description: 'Send a chat message',
