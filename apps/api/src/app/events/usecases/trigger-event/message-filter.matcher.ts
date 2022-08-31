@@ -36,12 +36,41 @@ function handleOrFilters(filter, payloadVariables) {
 }
 
 function processFilterEquality(i, payloadVariables) {
+  const payloadVariable = _.get(payloadVariables, [i.on, i.field]);
+  const value = parseValue(payloadVariable, i.value);
   if (i.operator === 'EQUAL') {
-    return _.get(payloadVariables, [i.on, i.field]) === i.value;
+    return payloadVariable === value;
   }
   if (i.operator === 'NOT_EQUAL') {
-    return _.get(payloadVariables, [i.on, i.field]) !== i.value;
+    return payloadVariable !== value;
+  }
+  if (i.operator === 'LARGER') {
+    return payloadVariable > value;
+  }
+  if (i.operator === 'SMALLER') {
+    return payloadVariable < value;
+  }
+  if (i.operator === 'LARGER_EQUAL') {
+    return payloadVariable >= value;
+  }
+  if (i.operator === 'SMALLER_EQUAL') {
+    return payloadVariable <= value;
   }
 
   return false;
+}
+
+function parseValue(originValue, parsingValue) {
+  switch (typeof originValue) {
+    case 'number':
+      return Number(parsingValue);
+    case 'string':
+      return String(parsingValue);
+    case 'boolean':
+      return parsingValue === 'true';
+    case 'bigint':
+      return Number(parsingValue);
+    default:
+      return parsingValue;
+  }
 }

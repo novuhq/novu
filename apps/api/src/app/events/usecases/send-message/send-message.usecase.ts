@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
@@ -8,7 +8,7 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
-import { StepFilter, SubscriberRepository } from '@novu/dal';
+import { SubscriberRepository } from '@novu/dal';
 
 @Injectable()
 export class SendMessage {
@@ -46,7 +46,7 @@ export class SendMessage {
   }
 
   private async filter(command: SendMessageCommand) {
-    const filter = command.step.filters[0].children;
+    const filter = command.step?.filters[0]?.children;
     if (!filter) {
       return true;
     }

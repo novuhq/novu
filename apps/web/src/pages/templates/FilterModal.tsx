@@ -1,6 +1,5 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
 import { Button, colors, Input, Select, shadows, Title } from '../../design-system';
-import { useTemplateController } from '../../components/templates/use-template-controller.hook';
 import { Controller, useFieldArray } from 'react-hook-form';
 import styled from '@emotion/styled';
 
@@ -51,13 +50,14 @@ export function FilterModal({
         }}
       >
         <Grid align="center">
-          <Grid.Col span={2}>
+          <Grid.Col span={3}>
             <Controller
               control={control}
               name={`steps.${stepIndex}.filters.0.value`}
               render={({ field }) => {
                 return (
                   <Select
+                    placeholder="How to group rules?"
                     data={[
                       { value: 'AND', label: 'And' },
                       { value: 'OR', label: 'Or' },
@@ -68,7 +68,7 @@ export function FilterModal({
               }}
             />
           </Grid.Col>
-          <Grid.Col span={8} />
+          <Grid.Col span={7} />
           <Grid.Col span={2}>
             <FilterButton
               variant="outline"
@@ -81,7 +81,7 @@ export function FilterModal({
                 });
               }}
             >
-              Append
+              Create rule
             </FilterButton>
           </Grid.Col>
         </Grid>
@@ -101,6 +101,7 @@ export function FilterModal({
                   render={({ field }) => {
                     return (
                       <Select
+                        placeholder="On"
                         data={[
                           { value: 'payload', label: 'Payload' },
                           { value: 'subscriber', label: 'Subscriber' },
@@ -116,16 +117,7 @@ export function FilterModal({
                   control={control}
                   name={`steps.${stepIndex}.filters.0.children.${index}.field`}
                   render={({ field }) => {
-                    return <Input {...field} />;
-                  }}
-                />
-              </Grid.Col>
-              <Grid.Col span={2}>
-                <Controller
-                  control={control}
-                  name={`steps.${stepIndex}.filters.0.children.${index}.value`}
-                  render={({ field }) => {
-                    return <Input {...field} />;
+                    return <Input {...field} placeholder="Label" />;
                   }}
                 />
               </Grid.Col>
@@ -136,13 +128,27 @@ export function FilterModal({
                   render={({ field }) => {
                     return (
                       <Select
+                        placeholder="Operator"
                         data={[
-                          { value: 'EQUAL', label: '===' },
-                          { value: 'NOT_EQUAL', label: '!==' },
+                          { value: 'EQUAL', label: 'Equal' },
+                          { value: 'NOT_EQUAL', label: 'Not equal' },
+                          { value: 'LARGER', label: 'Larger' },
+                          { value: 'SMALLER', label: 'Smaller' },
+                          { value: 'LARGER_EQUAL', label: 'Larger or equal' },
+                          { value: 'LARGER_EQUAL', label: 'Smaller or equal' },
                         ]}
                         {...field}
                       />
                     );
+                  }}
+                />
+              </Grid.Col>
+              <Grid.Col span={2}>
+                <Controller
+                  control={control}
+                  name={`steps.${stepIndex}.filters.0.children.${index}.value`}
+                  render={({ field }) => {
+                    return <Input {...field} placeholder="Value" />;
                   }}
                 />
               </Grid.Col>

@@ -1,6 +1,6 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
-import { Button, colors, DragButton, Input, Select, Switch, Text, Title } from '../../../design-system';
+import { Button, colors, DragButton, Text, Title } from '../../../design-system';
 import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { StepTypeEnum } from '@novu/shared';
@@ -125,22 +125,24 @@ const WorkflowEditorPage = ({
             addStep={addStep}
             setSelectedNodeId={setSelectedNodeId}
           />
-          {steps.map((i, index) => {
-            return index === activeStep ? (
-              <FilterModal
-                key={index}
-                isOpen={filterOpen}
-                cancel={() => {
-                  setFilterOpen(false);
-                }}
-                confirm={() => {
-                  setFilterOpen(false);
-                }}
-                control={control}
-                stepIndex={activeStep}
-              />
-            ) : null;
-          })}
+          <When truthy={![StepTypeEnum.DIGEST, null].includes(selectedChannel)}>
+            {steps.map((i, index) => {
+              return index === activeStep ? (
+                <FilterModal
+                  key={index}
+                  isOpen={filterOpen}
+                  cancel={() => {
+                    setFilterOpen(false);
+                  }}
+                  confirm={() => {
+                    setFilterOpen(false);
+                  }}
+                  control={control}
+                  stepIndex={activeStep}
+                />
+              ) : null;
+            })}
+          </When>
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
@@ -226,15 +228,17 @@ const WorkflowEditorPage = ({
                     />
                     Delete {selectedChannel !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
                   </DeleteStepButton>
-                  <Button
-                    mt={10}
-                    variant="outline"
-                    onClick={() => {
-                      setFilterOpen(true);
-                    }}
-                  >
-                    Add filter
-                  </Button>
+                  <When truthy={![StepTypeEnum.DIGEST, null].includes(selectedChannel)}>
+                    <Button
+                      mt={10}
+                      variant="outline"
+                      onClick={() => {
+                        setFilterOpen(true);
+                      }}
+                    >
+                      Add filter
+                    </Button>
+                  </When>
                 </NavSection>
               </StyledNav>
             ) : (
