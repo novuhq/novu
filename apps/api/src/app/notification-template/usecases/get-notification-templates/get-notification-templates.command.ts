@@ -6,7 +6,7 @@ export class GetNotificationTemplatesCommand extends EnvironmentWithUserCommand 
   @IsOptional()
   page?: number;
 
-  @IsBoolean()
+  @IsNumber()
   @IsOptional()
-  usePagination?: boolean;
+  limit?: number;
 }

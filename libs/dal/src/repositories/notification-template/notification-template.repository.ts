@@ -30,15 +30,15 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
     return this.mapEntity(item);
   }
 
-  async getList(organizationId: string, environmentId: string, skip = 0, limit = 10, usePagination = false) {
-    const totalItemsCount = await this.count({});
+  async getList(organizationId: string, environmentId: string, skip = 0, limit = 10) {
+    const totalItemsCount = await this.count({ _environmentId: environmentId });
     const items = await NotificationTemplate.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
     })
       .sort({ createdAt: -1 })
-      .skip(usePagination ? skip : 0)
-      .limit(usePagination ? limit : totalItemsCount)
+      .skip(skip)
+      .limit(limit)
       .populate({ path: 'notificationGroup' });
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };

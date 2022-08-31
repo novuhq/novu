@@ -17,7 +17,7 @@ import { useEnvController } from '../../store/use-env-controller';
 function NotificationList() {
   const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
-  const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page, true);
+  const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
   const theme = useMantineTheme();
   const navigate = useNavigate();
 

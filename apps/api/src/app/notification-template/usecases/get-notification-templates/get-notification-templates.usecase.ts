@@ -7,16 +7,13 @@ export class GetNotificationTemplates {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
   async execute(command: GetNotificationTemplatesCommand): Promise<NotificationTemplatesResponseDto> {
-    const LIMIT = 10;
-
     const { data: list, totalCount } = await this.notificationTemplateRepository.getList(
       command.organizationId,
       command.environmentId,
-      command.page * LIMIT,
-      LIMIT,
-      command.usePagination
+      command.page * command.limit,
+      command.limit
     );
 
-    return { page: command.page, data: list, totalCount, pageSize: command.usePagination ? LIMIT : totalCount };
+    return { page: command.page, data: list, totalCount, pageSize: command.limit };
   }
 }

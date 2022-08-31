@@ -69,7 +69,7 @@ export class NotificationTemplateController {
         userId: user._id,
         environmentId: user.environmentId,
         page: query.page ? Number(query.page) : 0,
-        usePagination: query.usePagination === 0 ? false : true,
+        limit: query.limit ? Number(query.limit) : 10,
       })
     );
   }

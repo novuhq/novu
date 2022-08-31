@@ -1,16 +1,15 @@
-import { useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { INotificationTemplate } from '@novu/shared';
 import { getNotificationsList } from '../notifications';
 import { useEnvController } from '../../store/use-env-controller';
 
-export function useTemplates(page = 0, usePagination = false) {
+export function useTemplates(page = 0, limit = 10) {
   const { environment } = useEnvController();
   const { data, isLoading } = useQuery<{
     data: INotificationTemplate[];
     totalCount: number;
     pageSize: number;
-  }>(['notificationsList', environment?._id, page, usePagination], () => getNotificationsList(page, usePagination), {
+  }>(['notificationsList', environment?._id, page, limit], () => getNotificationsList(page, limit), {
     keepPreviousData: true,
   });
 

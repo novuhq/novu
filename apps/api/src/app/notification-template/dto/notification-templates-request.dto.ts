@@ -10,6 +10,8 @@ export class NotificationTemplatesRequestDto {
   @ApiPropertyOptional({
     type: Number,
     required: false,
+    default: 10,
+    maximum: 100,
   })
-  usePagination?: number = 0;
+  limit?: number = 10;
 }
