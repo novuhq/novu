@@ -1135,6 +1135,29 @@ importers:
       nodemon: 2.0.15
       typescript: 4.6.3
 
+  packages/client:
+    specifiers:
+      '@novu/shared': ^0.7.0
+      '@types/jest': 27.4.0
+      '@types/node': ^14.6.0
+      axios: ^0.26.1
+      codecov: ^3.5.0
+      jest: ^27.0.6
+      ts-jest: ^27.0.5
+      typedoc: ^0.19.0
+      typescript: 4.1.3
+    dependencies:
+      '@novu/shared': link:../../libs/shared
+      axios: 0.26.1
+    devDependencies:
+      '@types/jest': 27.4.0
+      '@types/node': 14.18.12
+      codecov: 3.8.3
+      jest: 27.5.1
+      ts-jest: 27.1.4_ghnj4347cpeuki2qbazzoz3bra
+      typedoc: 0.19.2_typescript@4.1.3
+      typescript: 4.1.3
+
   packages/nest:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
@@ -1219,7 +1242,7 @@ importers:
       open-cli: 6.0.1
       rimraf: 3.0.2
       run-p: 0.0.0
-      ts-jest: 27.1.4_b4vkfpvo4m6gii5wkcsqftzefm
+      ts-jest: 27.1.4_ghnj4347cpeuki2qbazzoz3bra
       typedoc: 0.19.2_typescript@4.1.3
       typescript: 4.1.3
 
@@ -1228,6 +1251,7 @@ importers:
       '@babel/core': ^7.17.8
       '@mantine/core': ^4.1.0
       '@mantine/hooks': ^4.1.3
+      '@novu/client': ^0.7.2
       '@novu/shared': ^0.7.2
       '@rollup/plugin-commonjs': ^21.0.1
       '@rollup/plugin-image': ^2.1.1
@@ -1265,6 +1289,7 @@ importers:
     dependencies:
       '@mantine/core': 4.1.0_dluy2hxddty7axnf23yfene6ou
       '@mantine/hooks': 4.1.4_react@17.0.2
+      '@novu/client': link:../client
       '@novu/shared': link:../../libs/shared
       acorn-jsx: 5.3.2_acorn@8.7.1
       axios: 0.26.1
@@ -27380,7 +27405,6 @@ packages:
   /date-fns/2.29.1:
     resolution: {integrity: sha512-dlLD5rKaKxpFdnjrs+5azHDFOPEu4ANy/LTh04A1DTzMM7qoajmKCBc8pkKRFT41CNzw+4gQh79X5C+Jq27HAw==}
     engines: {node: '>=0.11'}
-    dev: false
 
   /date.js/0.3.3:
     resolution: {integrity: sha512-HgigOS3h3k6HnW011nAb43c5xx5rBXk8P2v/WIT9Zv4koIaVXiH2BURguI78VVp+5Qc076T7OR378JViCnZtBw==}
@@ -35004,7 +35028,7 @@ packages:
     resolution: {integrity: sha512-rMyFe1+jnyAAf+NHwTclDz0eAaLkVDdKVHHBFWsBWHnnh5YeJMNWWsv7AbFYXfK3oTqvL7VTWkhNLu1jX24D+g==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
-      '@babel/code-frame': 7.16.7
+      '@babel/code-frame': 7.18.6
       '@jest/types': 27.5.1
       '@types/stack-utils': 2.0.1
       chalk: 4.1.2
@@ -35740,7 +35764,7 @@ packages:
       - utf-8-validate
 
   /jsesc/0.5.0:
-    resolution: {integrity: sha1-597mbjXW/Bb3EP6R1c9p9w8IkR0=}
+    resolution: {integrity: sha512-uZz5UnB7u4T9LvwmFqXii7pZSouaRPorGs5who1Ip7VO0wxanFvBL7GkM6dTHlgX+jhBApRetaWpnDabOeTcnA==}
     hasBin: true
 
   /jsesc/2.5.2:
@@ -39780,7 +39804,7 @@ packages:
     resolution: {integrity: sha512-ayCKvm/phCGxOkYRSCM82iDwct8/EonSEgCSxWxD7ve6jHggsFl4fZVQBPRNgQoKiuV/odhFrGzQXZwbifC8Rg==}
     engines: {node: '>=8'}
     dependencies:
-      '@babel/code-frame': 7.16.7
+      '@babel/code-frame': 7.18.6
       error-ex: 1.3.2
       json-parse-even-better-errors: 2.3.1
       lines-and-columns: 1.2.4
@@ -42553,7 +42577,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.18.9
       classnames: 2.3.1
-      date-fns: 2.28.0
+      date-fns: 2.29.1
       dayjs: 1.11.0
       moment: 2.29.4
       rc-trigger: 5.2.11_sfoxds7t5ydpegc3knd667wn6m
@@ -48022,6 +48046,40 @@ packages:
       make-error: 1.3.6
       semver: 7.3.7
       typescript: 4.6.2
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.4_ghnj4347cpeuki2qbazzoz3bra:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.0
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.7
+      typescript: 4.1.3
       yargs-parser: 20.2.9
     dev: true
 
