@@ -1,6 +1,7 @@
 import { IntegrationEntity } from '@novu/dal';
 import { IPushFactory, IPushHandler } from './interfaces';
 import { FCMHandler } from './handlers';
+import { decryptCredentials } from '../../../shared/services/encryption';
 
 export class PushFactory implements IPushFactory {
   handlers: IPushHandler[] = [new FCMHandler()];
@@ -12,7 +13,7 @@ export class PushFactory implements IPushFactory {
 
       if (!handler) return null;
 
-      handler.buildProvider(integration.credentials);
+      handler.buildProvider(decryptCredentials(integration.credentials));
 
       return handler;
     } catch (error) {

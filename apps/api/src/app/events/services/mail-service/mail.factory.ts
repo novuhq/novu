@@ -12,6 +12,7 @@ import {
   NetCoreHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
+import { decryptCredentials } from '../../../shared/services/encryption';
 
 export class MailFactory {
   handlers: IMailHandler[] = [
@@ -34,7 +35,7 @@ export class MailFactory {
 
       if (!handler) return null;
 
-      handler.buildProvider(integration.credentials, from);
+      handler.buildProvider(decryptCredentials(integration.credentials), from);
 
       return handler;
     } catch (error) {

@@ -2,6 +2,7 @@ import { IChatFactory, IChatHandler } from './interfaces';
 import { SlackHandler } from './handlers/slack.handler';
 import { IntegrationEntity } from '@novu/dal';
 import { DiscordHandler } from './handlers/discord.handler';
+import { decryptCredentials } from '../../../shared/services/encryption';
 
 export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [new SlackHandler(), new DiscordHandler()];
@@ -13,7 +14,7 @@ export class ChatFactory implements IChatFactory {
 
       if (!handler) return null;
 
-      handler.buildProvider(integration.credentials);
+      handler.buildProvider(decryptCredentials(integration.credentials));
 
       return handler;
     } catch (error) {

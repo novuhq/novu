@@ -9,6 +9,7 @@ import {
   PlivoHandler,
   GupshupSmsHandler,
 } from './handlers';
+import { decryptCredentials } from '../../../shared/services/encryption';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [
@@ -28,7 +29,7 @@ export class SmsFactory implements ISmsFactory {
 
       if (!handler) return null;
 
-      handler.buildProvider(integration.credentials);
+      handler.buildProvider(decryptCredentials(integration.credentials));
 
       return handler;
     } catch (error) {
