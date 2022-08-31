@@ -20,6 +20,10 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsOptional()
   description: string;
 
+  @IsString()
+  @IsOptional()
+  identifier: string;
+
   @IsBoolean()
   @IsOptional()
   critical: boolean;

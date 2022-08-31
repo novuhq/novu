@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum, JobRepository, NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
+import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { sub } from 'date-fns';
-import { FilterStepsCommand } from './filter-steps.command';
-import { FilterSteps } from './filter-steps.usecase';
+import { DigestFilterSteps } from './digest-filter-steps.usecase';
 
 @Injectable()
-export class FilterStepsBackoff {
+export class DigestFilterStepsBackoff {
   constructor(private jobRepository: JobRepository) {}
 
-  public async execute(command: FilterStepsCommand): Promise<NotificationStepEntity[]> {
-    const steps = [FilterSteps.createTriggerStep(command)];
+  public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
+    const steps = [DigestFilterSteps.createTriggerStep(command)];
     for (const step of command.steps) {
       if (step.template.type !== StepTypeEnum.DIGEST) {
         steps.push(step);
@@ -37,7 +37,7 @@ export class FilterStepsBackoff {
     });
   }
 
-  private getTrigger(command: FilterStepsCommand, step: NotificationStepEntity) {
+  private getTrigger(command: DigestFilterStepsCommand, step: NotificationStepEntity) {
     const query = {
       updatedAt: {
         $gte: this.getBackoffDate(step),
@@ -56,7 +56,7 @@ export class FilterStepsBackoff {
     return this.jobRepository.findOne(query);
   }
 
-  private async alreadyHaveDigest(command: FilterStepsCommand, step: NotificationStepEntity): Promise<boolean> {
+  private async alreadyHaveDigest(command: DigestFilterStepsCommand, step: NotificationStepEntity): Promise<boolean> {
     const query = {
       updatedAt: {
         $gte: this.getBackoffDate(step),

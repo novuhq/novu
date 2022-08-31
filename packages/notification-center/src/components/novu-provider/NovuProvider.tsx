@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { ApiService } from '@novu/client';
 import { IOrganizationEntity } from '@novu/shared';
 import {
   AuthProvider,
@@ -11,7 +12,6 @@ import {
 } from '../../store';
 import { ColorScheme, INovuProviderContext, IStore } from '../../index';
 import { useApi, useAuth } from '../../hooks';
-import { ApiService } from '../../api/api.service';
 import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
 
 interface INovuProviderProps {
