@@ -12,4 +12,9 @@ const provider = new TwilioSmsProvider({
   authToken: process.env.TWILIO_AUTH_TOKEN,
   from: process.env.TWILIO_FROM_NUMBER, // a valid twilio phone number
 });
+
+await provider.sendMessage({
+  to: '0123456789',
+  content: 'Message to send',
+});
 ```

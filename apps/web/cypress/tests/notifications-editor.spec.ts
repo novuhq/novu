@@ -669,7 +669,7 @@ describe('Notifications Creator', function () {
 type Channel = 'inApp' | 'email' | 'sms' | 'digest';
 
 function addAndEditChannel(channel: Channel) {
-  cy.getByTestId('workflowButton').click();
+  cy.getByTestId('workflowButton').click({ force: true });
   cy.waitForNetworkIdle(500);
 
   dragAndDrop(channel);
@@ -679,7 +679,7 @@ function addAndEditChannel(channel: Channel) {
 function dragAndDrop(channel: Channel) {
   const dataTransfer = new DataTransfer();
 
-  cy.wait(2000);
+  cy.wait(1000);
   cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer });
   cy.getByTestId('addNodeButton').parent().trigger('drop', { dataTransfer });
 }
