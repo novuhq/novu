@@ -11,6 +11,7 @@ describe('Message filter matcher', function () {
           operator: 'EQUAL',
           value: 'firstVar',
           field: 'varField',
+          on: 'payload',
         },
       ]),
       {
@@ -28,11 +29,13 @@ describe('Message filter matcher', function () {
           operator: 'EQUAL',
           value: 'firstVar',
           field: 'varField',
+          on: 'payload',
         },
         {
           operator: 'EQUAL',
           value: 'secondVar',
           field: 'secondField',
+          on: 'payload',
         },
       ]),
       {
@@ -51,11 +54,13 @@ describe('Message filter matcher', function () {
           operator: 'EQUAL',
           value: 'firstVar',
           field: 'varField',
+          on: 'payload',
         },
         {
           operator: 'EQUAL',
           value: 'secondVar',
           field: 'secondField',
+          on: 'payload',
         },
       ]),
 
@@ -75,11 +80,13 @@ describe('Message filter matcher', function () {
           operator: 'EQUAL',
           value: 'firstVar',
           field: 'varField',
+          on: 'payload',
         },
         {
           operator: 'NOT_EQUAL',
           value: 'secondVar',
           field: 'secondField',
+          on: 'payload',
         },
       ]),
       {
@@ -108,6 +115,7 @@ function messageWrapper(
     field: string;
     value: string;
     operator: BuilderFieldOperator;
+    on: 'payload';
   }[],
   channel = StepTypeEnum.EMAIL
 ): NotificationStepEntity {
