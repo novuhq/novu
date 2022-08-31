@@ -3,13 +3,13 @@ import { ICredentialsDto, secureCredentials } from '@novu/shared';
 
 const novuSubMask = 'nvsk.';
 
-export function encryptProviderSecret(text) {
+export function encryptProviderSecret(text: string): string {
   const encrypted = encrypt(text);
 
   return novuSubMask + encrypted;
 }
 
-export function decryptProviderSecret(text) {
+export function decryptProviderSecret(text: string): string {
   if (text.startsWith(novuSubMask)) {
     text = text.slice(novuSubMask.length);
   }
