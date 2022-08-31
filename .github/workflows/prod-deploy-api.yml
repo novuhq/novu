@@ -129,4 +129,10 @@ jobs:
           service: ${{ env.api_ecs_service }}
           cluster: ${{ env.api_ecs_cluster }}
           wait-for-service-stability: true
+      
+      - name: Deploy API Documentation
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
+          method: 'POST'
 
