@@ -7,6 +7,8 @@ import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
+import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
+import { StepFilter, SubscriberRepository } from '@novu/dal';
 
 @Injectable()
 export class SendMessage {
@@ -16,10 +18,17 @@ export class SendMessage {
     private sendMessageInApp: SendMessageInApp,
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
-    private digest: Digest
+    private digest: Digest,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   public async execute(command: SendMessageCommand) {
+    const shouldRun = await this.filter(command);
+
+    if (!shouldRun) {
+      return;
+    }
+
     switch (command.step.template.type) {
       case StepTypeEnum.SMS:
         return await this.sendMessageSms.execute(command);
@@ -34,5 +43,24 @@ export class SendMessage {
       case StepTypeEnum.DIGEST:
         return await this.digest.execute(command);
     }
+  }
+
+  private async filter(command: SendMessageCommand) {
+    const filter = command.step.filters[0].children;
+    if (!filter) {
+      return true;
+    }
+    const data = await this.getFilterData(command);
+
+    return matchMessageWithFilters(command.step, data);
+  }
+
+  private async getFilterData(command: SendMessageCommand) {
+    const subscriber = await this.subscriberRepository.findById(command.subscriberId);
+
+    return {
+      subscriber,
+      payload: command.payload,
+    };
   }
 }

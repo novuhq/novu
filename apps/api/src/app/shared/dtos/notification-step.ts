@@ -60,6 +60,11 @@ class StepFilterChild {
     ],
   })
   operator: BuilderFieldOperator;
+
+  @ApiProperty({
+    enum: ['payload', 'subscriber'],
+  })
+  on?: 'payload' | 'subscriber';
 }
 
 class StepFilter {

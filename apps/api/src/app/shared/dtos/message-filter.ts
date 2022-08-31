@@ -25,6 +25,11 @@ class MessageFilterChild {
     ],
   })
   operator: BuilderFieldOperator;
+
+  @ApiProperty({
+    enum: ['payload', 'subscriber'],
+  })
+  on?: 'payload' | 'subscriber';
 }
 
 export class MessageFilter {

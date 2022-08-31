@@ -1,6 +1,6 @@
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import styled from '@emotion/styled';
-import { Button, colors, DragButton, Text, Title } from '../../../design-system';
+import { Button, colors, DragButton, Input, Select, Switch, Text, Title } from '../../../design-system';
 import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { StepTypeEnum } from '@novu/shared';
@@ -15,6 +15,8 @@ import { TemplatePageHeader } from '../../../components/templates/TemplatePageHe
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { DigestMetadata } from './DigestMetadata';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
+import { Controller } from 'react-hook-form';
+import { FilterModal } from '../FilterModal';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -65,7 +67,9 @@ const WorkflowEditorPage = ({
   };
   const { addStep, deleteStep, control, watch, errors } = useTemplateController(templateId);
   const { isLoading, isUpdateLoading, loadingEditTemplate, isDirty } = useTemplateController(templateId);
+  const [filterOpen, setFilterOpen] = useState(false);
   const steps = watch('steps');
+
   const { readonly } = useEnvController();
   const [toDelete, setToDelete] = useState<string>('');
 
@@ -121,6 +125,22 @@ const WorkflowEditorPage = ({
             addStep={addStep}
             setSelectedNodeId={setSelectedNodeId}
           />
+          {steps.map((i, index) => {
+            return index === activeStep ? (
+              <FilterModal
+                key={index}
+                isOpen={filterOpen}
+                cancel={() => {
+                  setFilterOpen(false);
+                }}
+                confirm={() => {
+                  setFilterOpen(false);
+                }}
+                control={control}
+                stepIndex={activeStep}
+              />
+            ) : null;
+          })}
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
@@ -206,6 +226,15 @@ const WorkflowEditorPage = ({
                     />
                     Delete {selectedChannel !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
                   </DeleteStepButton>
+                  <Button
+                    mt={10}
+                    variant="outline"
+                    onClick={() => {
+                      setFilterOpen(true);
+                    }}
+                  >
+                    Add filter
+                  </Button>
                 </NavSection>
               </StyledNav>
             ) : (
