@@ -2,17 +2,17 @@ import { useInputState } from '@mantine/hooks';
 import { ActionIcon, Container, Group } from '@mantine/core';
 import { IFeedEntity } from '@novu/shared';
 import { Control, Controller, useFormContext } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { showNotification } from '@mantine/notifications';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { createFeed, getFeeds } from '../../../api/feeds';
-import { useEffect, useState } from 'react';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
-import { showNotification } from '@mantine/notifications';
 import { VariableManager } from '../VariableManager';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
@@ -52,7 +52,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
         baseContent.push(`cta.action.buttons.${ind}.content`);
       });
 
-      if (baseContent !== variableContents) setVariableContents(baseContent);
+      if (JSON.stringify(baseContent) !== JSON.stringify(variableContents)) setVariableContents(baseContent);
     });
 
     return () => subscription.unsubscribe();
