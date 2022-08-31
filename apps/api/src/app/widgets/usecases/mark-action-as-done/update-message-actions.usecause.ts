@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository, MessageTemplateEntity } from '@novu/dal';
+import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
 
 @Injectable()
 export class UpdateMessageActions {
-  constructor(private messageRepository: MessageRepository) {}
+  constructor(private messageRepository: MessageRepository, private subscriberRepository: SubscriberRepository) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
     const updatePayload: Partial<MessageTemplateEntity> = {};
@@ -21,9 +21,11 @@ export class UpdateMessageActions {
       updatePayload['cta.action.result.payload'] = command.payload;
     }
 
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+
     await this.messageRepository.update(
       {
-        _subscriberId: command.subscriberId,
+        _subscriberId: subscriber._id,
         _id: command.messageId,
       },
       {

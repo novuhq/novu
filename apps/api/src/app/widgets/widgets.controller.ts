@@ -85,7 +85,7 @@ export class WidgetsController {
 
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       page,
       feedId: feedsQuery,
@@ -109,7 +109,7 @@ export class WidgetsController {
 
     const command = GetUnseenCountCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       feedId: feedsQuery,
       seen,
@@ -126,7 +126,7 @@ export class WidgetsController {
   ): Promise<MessageEntity> {
     const command = MarkMessageAsSeenCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       messageId,
     });
@@ -145,7 +145,7 @@ export class WidgetsController {
     return await this.updateMessageActionsUsecase.execute(
       UpdateMessageActionsCommand.create({
         organizationId: subscriberSession._organizationId,
-        subscriberId: subscriberSession._id,
+        subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         messageId,
         type,
@@ -174,7 +174,7 @@ export class WidgetsController {
   async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
     const command = GetSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
     });
 
@@ -190,7 +190,7 @@ export class WidgetsController {
   ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       templateId: templateId,
       channel: body.channel,
