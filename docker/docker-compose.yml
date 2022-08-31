@@ -19,7 +19,7 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
-    image: "ghcr.io/novuhq/novu/api:0.7.0"
+    image: "ghcr.io/novuhq/novu/api:0.7.2"
     depends_on:
       - mongodb
       - redis
@@ -42,7 +42,7 @@ services:
     ports:
       - "3000:3000"
   ws:
-    image: "ghcr.io/novuhq/novu/ws:0.7.0"
+    image: "ghcr.io/novuhq/novu/ws:0.7.2"
     depends_on:
       - mongodb
       - redis
@@ -57,7 +57,7 @@ services:
     ports:
       - "3002:3002"
   web:
-    image: "ghcr.io/novuhq/novu/web:0.7.0"
+    image: "ghcr.io/novuhq/novu/web:0.7.2"
     depends_on:
       - api
     container_name: web
@@ -69,7 +69,7 @@ services:
     ports:
       - 4200:4200
   widget:
-    image: "ghcr.io/novuhq/novu/widget:0.7.0"
+    image: "ghcr.io/novuhq/novu/widget:0.7.2"
     depends_on:
       - api
       - web
@@ -83,7 +83,7 @@ services:
   embed:
     depends_on:
       - widget
-    image: "ghcr.io/novuhq/novu/embed:0.7.0"
+    image: "ghcr.io/novuhq/novu/embed:0.7.2"
     container_name: embed
     environment:
       WIDGET_URL: ${WIDGET_URL}

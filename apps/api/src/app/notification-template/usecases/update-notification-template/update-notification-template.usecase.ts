@@ -42,6 +42,19 @@ export class UpdateNotificationTemplate {
       updatePayload.description = command.description;
     }
 
+    if (command.identifier) {
+      const isExistingIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
+        command.environmentId,
+        command.identifier
+      );
+
+      if (isExistingIdentifier && isExistingIdentifier._id !== command.templateId) {
+        throw new BadRequestException(`Notification template with identifier ${command.identifier} already exists`);
+      } else {
+        updatePayload['triggers.0.identifier'] = command.identifier;
+      }
+    }
+
     if (command.notificationGroupId) {
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
