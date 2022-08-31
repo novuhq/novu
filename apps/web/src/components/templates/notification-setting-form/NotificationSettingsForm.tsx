@@ -50,7 +50,7 @@ export const NotificationSettingsForm = ({
   function selectFirstGroupByDefault() {
     setTimeout(() => {
       setValue('notificationGroup', groups[0]._id);
-    }, 50);
+    }, 500);
   }
 
   async function addGroupItem(newGroup) {

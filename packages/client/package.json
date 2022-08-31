@@ -1,21 +1,16 @@
 {
-  "name": "@novu/stateless",
+  "name": "@novu/client",
   "version": "0.7.2",
-  "description": "Notification Management Framework",
-  "main": "build/main/index.js",
-  "typings": "build/main/index.d.ts",
-  "module": "build/module/index.js",
   "repository": "https://github.com/novuhq/novu",
+  "description": "API client to be used in end user environments",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "license": "MIT",
   "keywords": [],
-  "private": false,
   "scripts": {
     "start": "npm run start:dev",
     "start:dev": "npm run watch:build",
-    "prebuild": "rimraf build",
-    "build": "run-p build:*",
-    "build:main": "tsc -p tsconfig.json",
-    "build:module": "tsc -p tsconfig.module.json",
+    "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "lint": "pnpm test:lint",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
@@ -43,38 +38,22 @@
     "node": ">=10"
   },
   "dependencies": {
-    "axios": "^0.26.1",
-    "handlebars": "^4.7.7",
-    "lodash.get": "^4.4.2",
-    "lodash.merge": "^4.6.2"
+    "@novu/shared": "^0.7.0",
+    "axios": "^0.26.1"
   },
   "devDependencies": {
-    "@sendgrid/mail": "^7.4.6",
     "@types/jest": "27.4.0",
-    "@types/lodash.get": "^4.4.6",
-    "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",
     "codecov": "^3.5.0",
-    "cz-conventional-changelog": "^3.3.0",
     "jest": "^27.0.6",
-    "npm-run-all": "^4.1.5",
-    "open-cli": "^6.0.1",
-    "rimraf": "^3.0.2",
-    "run-p": "0.0.0",
     "ts-jest": "^27.0.5",
     "typedoc": "^0.19.0",
     "typescript": "4.1.3"
   },
-  "files": [
-    "build/main",
-    "build/module",
-    "!**/*.spec.*",
-    "!**/*.json",
-    "CHANGELOG.md",
-    "LICENSE",
-    "README.md"
-  ],
   "prettier": {
     "singleQuote": true
-  }
+  },
+  "files": [
+    "dist"
+  ]
 }

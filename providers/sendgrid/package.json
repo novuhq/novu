@@ -1,6 +1,6 @@
 {
   "name": "@novu/sendgrid",
-  "version": "0.7.0",
+  "version": "0.7.2",
   "description": "A sendgrid wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -45,7 +45,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.7.0",
+    "@novu/stateless": "^0.7.2",
     "@sendgrid/mail": "^7.4.6"
   },
   "devDependencies": {
@@ -60,12 +60,12 @@
     "nyc": "^15.1.0",
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
+    "rimraf": "^3.0.2",
     "standard-version": "9.3.2",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
     "typedoc": "^0.19.0",
-    "typescript": "4.6.2",
-    "rimraf": "^3.0.2"
+    "typescript": "4.6.2"
   },
   "files": [
     "build/main",
