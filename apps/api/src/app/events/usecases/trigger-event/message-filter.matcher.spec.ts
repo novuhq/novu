@@ -15,7 +15,9 @@ describe('Message filter matcher', function () {
         },
       ]),
       {
-        varField: 'firstVar',
+        payload: {
+          varField: 'firstVar',
+        },
       }
     );
 
@@ -39,8 +41,10 @@ describe('Message filter matcher', function () {
         },
       ]),
       {
-        varField: 'firstVar',
-        secondField: 'secondVar',
+        payload: {
+          varField: 'firstVar',
+          secondField: 'secondVar',
+        },
       }
     );
 
@@ -63,14 +67,15 @@ describe('Message filter matcher', function () {
           on: 'payload',
         },
       ]),
-
       {
-        varField: 'firstVar',
-        secondField: 'secondVarBad',
+        payload: {
+          varField: 'firstVar',
+          secondField: 'secondVarBad',
+        },
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage).to.equal(false);
   });
 
   it('should match a NOT_EQUAL for EQUAL var', function () {
@@ -90,8 +95,10 @@ describe('Message filter matcher', function () {
         },
       ]),
       {
-        varField: 'firstVar',
-        secondField: 'secondVarBad',
+        payload: {
+          varField: 'firstVar',
+          secondField: 'secondVarBad',
+        },
       }
     );
 
@@ -100,8 +107,10 @@ describe('Message filter matcher', function () {
 
   it('should fall thru for no filters item', function () {
     const matchedMessage = matchMessageWithFilters(messageWrapper('Correct Match 2', 'OR', []), {
-      varField: 'firstVar',
-      secondField: 'secondVarBad',
+      payload: {
+        varField: 'firstVar',
+        secondField: 'secondVarBad',
+      },
     });
 
     expect(matchedMessage).to.equal(true);
