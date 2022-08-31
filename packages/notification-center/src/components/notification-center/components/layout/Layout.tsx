@@ -17,7 +17,7 @@ export function Layout({ children }: { children: JSX.Element }) {
     <LayoutWrapper theme={theme} data-test-id="layout-wrapper">
       {screen === ScreensEnum.SETTINGS && (
         <>
-          <UserPreferenceHeader />
+          <Header defaultHeader={<UserPreferenceHeader />} />
           <ContentWrapper>
             <SubscriberPreference />
           </ContentWrapper>
