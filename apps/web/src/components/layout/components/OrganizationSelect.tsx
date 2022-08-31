@@ -2,9 +2,8 @@ import { useContext, useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import * as capitalize from 'lodash.capitalize';
 import styled from 'styled-components';
-import { useMantineColorScheme } from '@mantine/core';
 import { IOrganizationEntity } from '@novu/shared';
-import { colors, Select, shadows } from '../../../design-system';
+import { Select } from '../../../design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
 import { AuthContext } from '../../../store/authContext';
 
@@ -15,7 +14,6 @@ export default function OrganizationSelect() {
 
   const queryClient = useQueryClient();
   const { currentOrganization, organizations, setToken } = useContext(AuthContext);
-  const { colorScheme } = useMantineColorScheme();
 
   const { isLoading: loadingAddOrganization, mutateAsync: createOrganization } = useMutation<
     IOrganizationEntity,
@@ -56,7 +54,7 @@ export default function OrganizationSelect() {
 
   return (
     <>
-      <SelectWrapper dark={colorScheme === 'dark'}>
+      <SelectWrapper>
         <Select
           data-test-id="organization-switch"
           loading={loadingAddOrganization || loadingSwitch}
@@ -78,11 +76,8 @@ export default function OrganizationSelect() {
   );
 }
 
-const SelectWrapper = styled.div<{ dark: boolean }>`
+const SelectWrapper = styled.div`
   input {
-    border: 0;
-    border-radius: 9999px;
-    background: ${({ dark }) => (dark ? colors.B15 : colors.white)};
-    box-shadow: ${({ dark }) => (dark ? shadows.dark : shadows.light)};
+    background: transparent;
   }
 `;

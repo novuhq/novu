@@ -64,9 +64,6 @@ export function SideNav({}: Props) {
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
-      <Navbar.Section>
-        <OrganizationSelect />
-      </Navbar.Section>
       <Navbar.Section mt={20}>
         <Popover
           styles={{
@@ -117,17 +114,22 @@ export function SideNav({}: Props) {
         </Popover>
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
-      <BottomNav data-test-id="side-nav-bottom-links">
-        <a target="_blank" href="https://discord.gg/novu" data-test-id="side-nav-bottom-link-support">
-          Support
-        </a>
-        <p>
-          <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
-        </p>
-        <a target="_blank" href="https://docs.novu.co" data-test-id="side-nav-bottom-link-documentation">
-          Documentation
-        </a>
-      </BottomNav>
+      <BottomNavWrapper>
+        <Navbar.Section>
+          <OrganizationSelect />
+        </Navbar.Section>
+        <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
+          <a target="_blank" href="https://discord.gg/novu" data-test-id="side-nav-bottom-link-support">
+            Support
+          </a>
+          <p>
+            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+          </p>
+          <a target="_blank" href="https://docs.novu.co" data-test-id="side-nav-bottom-link-documentation">
+            Documentation
+          </a>
+        </BottomNav>
+      </BottomNavWrapper>
     </Navbar>
   );
 }
@@ -141,11 +143,15 @@ const StyledLink = styled.a`
   }
 `;
 
-const BottomNav = styled.div`
+const BottomNavWrapper = styled.div`
+  margin-top: auto;
+  padding-top: 30px;
+`;
+
+const BottomNav = styled.div<{ dark: boolean }>`
+  color: ${colors.B60};
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-top: auto;
+  justify-content: start;
   margin-bottom: 5px;
-  color: ${colors.B60};
 `;
