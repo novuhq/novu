@@ -6,6 +6,12 @@
 
 [[redirects]]
   from = "/api"
+  to = "/api/overview/"
+  status = 301
+  force = false
+
+[[redirects]]
+  from = "/api/*"
   to = "https://novuapidocs.gatsbyjs.io/api/"
   status = 200
   force = true
