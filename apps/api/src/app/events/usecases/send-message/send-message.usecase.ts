@@ -46,6 +46,7 @@ export class SendMessage {
   }
 
   private async filter(command: SendMessageCommand) {
+    return true;
     const filter = command.step?.filters[0]?.children;
     if (!filter) {
       return true;
