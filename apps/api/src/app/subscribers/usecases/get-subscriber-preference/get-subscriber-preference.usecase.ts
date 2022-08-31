@@ -4,7 +4,6 @@ import {
   NotificationTemplateRepository,
   SubscriberPreferenceRepository,
   NotificationTemplateEntity,
-  SubscriberRepository,
 } from '@novu/dal';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import { IPreferenceChannels } from '@novu/shared';
@@ -22,8 +21,7 @@ export class GetSubscriberPreference {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private subscriberRepository: SubscriberRepository
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
@@ -42,10 +40,9 @@ export class GetSubscriberPreference {
   }
 
   async getTemplatePreference(template: NotificationTemplateEntity, command: GetSubscriberPreferenceCommand) {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: command.organizationId,
-      subscriberId: subscriber._id,
+      subscriberId: command.subscriberId,
       environmentId: command.environmentId,
       template,
     });

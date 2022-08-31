@@ -4,6 +4,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   SubscriberPreferenceRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IPreferenceChannels } from '@novu/shared';
@@ -18,15 +19,17 @@ export class GetSubscriberTemplatePreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private messageTemplateRepository: MessageTemplateRepository
+    private messageTemplateRepository: MessageTemplateRepository,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
       _environmentId: command.environmentId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: subscriber._id,
       _templateId: command.template._id,
     });
 

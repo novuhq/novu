@@ -51,7 +51,7 @@ export class UpdateSubscriberPreference {
 
       const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
         organizationId: command.organizationId,
-        subscriberId: subscriber._id,
+        subscriberId: command.subscriberId,
         environmentId: command.environmentId,
         template,
       });
@@ -95,7 +95,7 @@ export class UpdateSubscriberPreference {
 
     const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: command.organizationId,
-      subscriberId: subscriber._id,
+      subscriberId: command.subscriberId,
       environmentId: command.environmentId,
       template,
     });
