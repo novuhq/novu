@@ -2,7 +2,6 @@ import { Control, Controller } from 'react-hook-form';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
 import { ContentContainer } from './content/ContentContainer';
 import { IForm } from '../use-template-controller.hook';
-import { VariableManager } from '../VariableManager';
 
 export function InAppEditorBlock({
   contentPlaceholder,
@@ -68,7 +67,6 @@ function ContentContainerController({
           );
         }}
       />
-      <VariableManager index={index} contents={['content']} />
     </>
   );
 }

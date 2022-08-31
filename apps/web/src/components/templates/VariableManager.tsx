@@ -102,29 +102,38 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
 export const VariableManager = ({ index, contents }: VariableManagerProps) => {
   const [ast, setAst] = useState<any>({ body: [] });
   const [textContent, setTextContent] = useState<string>('');
-  const { watch, control } = useFormContext();
+  const { watch, control, getValues } = useFormContext();
 
   const variablesArray = useFieldArray({ control, name: `steps.${index}.template.variables` });
   const variableArray = watch(`steps.${index}.template.variables`, []);
 
   useEffect(() => {
     const subscription = watch((values) => {
-      setTextContent(
-        contents
-          .map((con) => values.steps[index].template[con])
-          .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
-          .join(' ')
-      );
+      gatherTextContent(values.steps[index].template);
     });
 
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, contents]);
+
+  useEffect(() => {
+    const template = getValues(`steps.${index}.template`);
+    gatherTextContent(template);
+  }, [contents]);
 
   useMemo(() => {
     try {
       setAst(parse(textContent));
     } catch (e) {}
   }, [textContent]);
+
+  function gatherTextContent(template: any) {
+    setTextContent(
+      contents
+        .map((con) => con.split('.').reduce((a, b) => a[b], template))
+        .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
+        .join(' ')
+    );
+  }
 
   function getMustacheVariables(bod: any[]): IMustacheVariable[] {
     const stringVariables: IMustacheVariable[] = bod

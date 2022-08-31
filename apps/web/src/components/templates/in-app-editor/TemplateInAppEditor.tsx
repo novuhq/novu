@@ -13,15 +13,18 @@ import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { showNotification } from '@mantine/notifications';
+import { VariableManager } from '../VariableManager';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const [newFeed, setNewFeed] = useInputState('');
+  const [variableContents, setVariableContents] = useState<string[]>([]);
   const {
     formState: { errors },
     setValue,
     getValues,
+    watch,
   } = useFormContext();
   const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
@@ -35,6 +38,25 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   });
 
   const [showFeed, setShowFeed] = useState(true);
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      const baseContent = ['content'];
+      const template = values.steps[index].template;
+
+      if (template.cta?.data?.url) {
+        baseContent.push('cta.data.url');
+      }
+
+      template.cta?.action?.buttons?.forEach((_button, ind) => {
+        baseContent.push(`cta.action.buttons.${ind}.content`);
+      });
+
+      if (baseContent !== variableContents) setVariableContents(baseContent);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   useEffect(() => {
     const feed = getValues(`steps.${index}.template.feedId`);
@@ -157,6 +179,9 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             }}
           />
         </Group>
+      </Container>
+      <Container>
+        <VariableManager index={index} contents={variableContents} />
       </Container>
     </>
   );
