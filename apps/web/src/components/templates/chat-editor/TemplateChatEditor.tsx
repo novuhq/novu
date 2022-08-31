@@ -25,7 +25,6 @@ export function TemplateChatEditor({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.CHAT} /> : null}
-      <VariableManager template={`steps.${index}.template`} />
       <Controller
         name={`steps.${index}.template.content` as any}
         control={control}
@@ -43,6 +42,7 @@ export function TemplateChatEditor({
           />
         )}
       />
+      <VariableManager index={index} contents={['content']} />
     </>
   );
 }

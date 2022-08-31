@@ -51,7 +51,6 @@ function ContentContainerController({
 }) {
   return (
     <>
-      <VariableManager template={`steps.${index}.template`} />
       <Controller
         name={`steps.${index}.template.content` as any}
         data-test-id="in-app-content-form-item"
@@ -69,6 +68,7 @@ function ContentContainerController({
           );
         }}
       />
+      <VariableManager index={index} contents={['content']} />
     </>
   );
 }

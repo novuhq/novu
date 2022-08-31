@@ -24,7 +24,6 @@ export function TemplatePushEditor({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="Push" /> : null}
-      <VariableManager template={`steps.${index}.template`} useTitle />
       <Controller
         name={`steps.${index}.template.title` as any}
         control={control}
@@ -59,6 +58,7 @@ export function TemplatePushEditor({
           />
         )}
       />
+      <VariableManager index={index} contents={['content', 'title']} />
     </>
   );
 }

@@ -1,11 +1,12 @@
 import { ITemplateVariable } from '@novu/dal';
+import { TemplateSystemVariables } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayloadCommand } from './verify-payload.command';
 
 export class VerifyPayload {
   execute(command: VerifyPayloadCommand): Record<string, unknown> {
     const invalidKeys = [];
-    const defaultPayload = {};
+    let defaultPayload;
 
     for (const step of command.template.steps) {
       invalidKeys.push(...this.checkRequired(step.template.variables || [], command.payload));
@@ -15,7 +16,7 @@ export class VerifyPayload {
       throw new ApiException(`payload is missing required key(s) and type(s): ${invalidKeys.join(', ')}`);
 
     for (const step of command.template.steps) {
-      this.fillDefaults(step.template.variables || [], defaultPayload);
+      defaultPayload = this.fillDefaults(step.template.variables || []);
     }
 
     return defaultPayload;
@@ -24,7 +25,7 @@ export class VerifyPayload {
   private checkRequired(variables: ITemplateVariable[], payload: Record<string, unknown>): string[] {
     const invalidKeys = [];
 
-    for (const variable of variables.filter((vari) => vari.required)) {
+    for (const variable of variables.filter((vari) => vari.required && !this.isSystemVariable(vari.name))) {
       let value;
 
       try {
@@ -59,10 +60,16 @@ export class VerifyPayload {
     return invalidKeys;
   }
 
-  private fillDefaults(variables: ITemplateVariable[], payload: Record<string, unknown>) {
-    for (const variable of variables.filter((vari) => vari.defaultValue !== undefined && vari.defaultValue !== null)) {
+  private fillDefaults(variables: ITemplateVariable[]): Record<string, unknown> {
+    const payload = {};
+
+    for (const variable of variables.filter(
+      (vari) => vari.defaultValue !== undefined && vari.defaultValue !== null && !this.isSystemVariable(vari.name)
+    )) {
       this.setNestedKey(payload, variable.name.split('.'), variable.defaultValue);
     }
+
+    return payload;
   }
 
   private setNestedKey(obj, path, value) {
@@ -77,5 +84,9 @@ export class VerifyPayload {
     }
 
     return this.setNestedKey(obj[path[0]], path.slice(1), value);
+  }
+
+  private isSystemVariable(variableName: string): boolean {
+    return TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
   }
 }

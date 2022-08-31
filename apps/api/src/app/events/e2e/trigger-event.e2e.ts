@@ -12,7 +12,7 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, StepTypeEnum, IEmailBlock } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum, IEmailBlock, TemplateVariableTypeEnum } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
 
@@ -483,9 +483,9 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Test email {{nested.subject}}',
           type: StepTypeEnum.EMAIL,
           variables: [
-            { name: 'myUser.lastName', required: true, type: 'String' },
-            { name: 'myUser.array', required: true, type: 'Array' },
-            { name: 'myUser.bool', required: true, type: 'Boolean' },
+            { name: 'myUser.lastName', required: true, type: TemplateVariableTypeEnum.STRING },
+            { name: 'myUser.array', required: true, type: TemplateVariableTypeEnum.ARRAY },
+            { name: 'myUser.bool', required: true, type: TemplateVariableTypeEnum.BOOLEAN },
           ],
           content: [
             {
@@ -555,7 +555,14 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           name: 'Message Name',
           subject: 'Test email {{nested.subject}}',
           type: StepTypeEnum.EMAIL,
-          variables: [{ name: 'myUser.lastName', required: false, type: 'String', defaultValue: 'John Doe' }],
+          variables: [
+            {
+              name: 'myUser.lastName',
+              required: false,
+              type: TemplateVariableTypeEnum.STRING,
+              defaultValue: 'John Doe',
+            },
+          ],
           content: [
             {
               type: 'text',
@@ -602,7 +609,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           name: 'Message Name',
           subject: 'Test email {{nested.subject}}',
           type: StepTypeEnum.EMAIL,
-          variables: [{ name: 'myUser.lastName', required: true, type: 'String' }],
+          variables: [{ name: 'myUser.lastName', required: true, type: TemplateVariableTypeEnum.STRING }],
           content: [
             {
               type: 'text',
