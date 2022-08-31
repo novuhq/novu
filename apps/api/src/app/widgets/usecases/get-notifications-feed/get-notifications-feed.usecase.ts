@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
@@ -9,13 +9,15 @@ import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 export class GetNotificationsFeed {
   constructor(
     private messageRepository: MessageRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   async execute(command: GetNotificationsFeedCommand): Promise<MessageEntity[]> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     const feed = await this.messageRepository.findBySubscriberChannel(
       command.environmentId,
-      command.subscriberId,
+      subscriber._id,
       ChannelTypeEnum.IN_APP,
       { feedId: command.feedId, seen: command.seen },
       {
