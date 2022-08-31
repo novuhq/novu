@@ -10,6 +10,7 @@ COPY package.json .
 COPY libs/testing ./libs/testing
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
+COPY libs/client ./libs/client
 COPY libs/embed ./libs/embed
 COPY packages/notification-center ./packages/notification-center
 
