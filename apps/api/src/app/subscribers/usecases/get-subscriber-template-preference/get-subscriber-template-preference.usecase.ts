@@ -29,7 +29,7 @@ export class GetSubscriberTemplatePreference {
 
     const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
       _environmentId: command.environmentId,
-      _subscriberId: subscriber._id,
+      _subscriberId: subscriber !== null ? subscriber._id : command.subscriberId,
       _templateId: command.template._id,
     });
 
