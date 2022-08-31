@@ -185,7 +185,13 @@ const WorkflowEditorPage = ({
                   <NavSection>
                     {steps.map((i, index) => {
                       return index === activeStep ? (
-                        <DigestMetadata key={index} control={control} index={index} />
+                        <DigestMetadata
+                          key={index}
+                          control={control}
+                          index={index}
+                          loading={isLoading || isUpdateLoading}
+                          disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+                        />
                       ) : null;
                     })}
                   </NavSection>
