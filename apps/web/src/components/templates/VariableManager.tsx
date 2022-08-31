@@ -126,7 +126,7 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
     } catch (e) {}
   }, [textContent]);
 
-  function gatherTextContent(template: any) {
+  function gatherTextContent(template = {}) {
     setTextContent(
       contents
         .map((con) => con.split('.').reduce((a, b) => a[b], template))
