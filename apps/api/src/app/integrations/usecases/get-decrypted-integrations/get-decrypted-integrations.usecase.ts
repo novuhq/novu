@@ -20,7 +20,13 @@ export class GetDecryptedIntegrations {
       query.channel = command.channelType;
     }
 
-    const integrations = await this.integrationRepository.find(query);
+    if (command.providerId) {
+      query.providerId = command.providerId;
+    }
+
+    const integrations = command.findOne
+      ? [await this.integrationRepository.findOne(query)]
+      : await this.integrationRepository.find(query);
 
     return integrations.map((integration: IntegrationEntity) => {
       integration.credentials = decryptCredentials(integration.credentials);
