@@ -1,5 +1,5 @@
-import { IEmailBlock } from '@novu/shared';
-import { useMemo, useState } from 'react';
+import { TemplateVariableTypeEnum, TemplateSystemVariables } from '@novu/shared';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { parse } from '@handlebars/parser';
 import { Code, Space, Table } from '@mantine/core';
@@ -8,8 +8,8 @@ import { colors, Input, Switch, Text } from '../../design-system';
 import { FieldArrayProvider } from './FieldArrayProvider';
 
 interface VariableManagerProps {
-  template: string;
-  useTitle?: boolean;
+  index: number;
+  contents: string[];
 }
 
 interface VariableComponentProps {
@@ -17,10 +17,8 @@ interface VariableComponentProps {
   template: string;
 }
 
-type MustacheVariableType = 'String' | 'Array' | 'Boolean';
-
 interface IMustacheVariable {
-  type: MustacheVariableType;
+  type: TemplateVariableTypeEnum;
   name: string;
   defaultValue?: string | boolean;
   required?: boolean;
@@ -33,14 +31,17 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   const variableType = watch(`${template}.variables.${index}.type`);
 
   const variableTypeHumanize = {
-    String: 'value',
-    Array: 'array',
-    Object: 'object',
-    Boolean: 'boolean',
+    [TemplateVariableTypeEnum.STRING]: 'value',
+    [TemplateVariableTypeEnum.ARRAY]: 'array',
+    [TemplateVariableTypeEnum.BOOLEAN]: 'boolean',
   }[variableType];
 
+  const isSystemVariable = TemplateSystemVariables.includes(
+    variableName.includes('.') ? variableName.split('.')[0] : variableName
+  );
+
   return (
-    <VariableWrapper>
+    <VariableWrapper data-test-id="template-variable-row">
       <td>
         <Code>{variableName}</Code>
       </td>
@@ -48,7 +49,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
         <Code style={{ color: colors.B60 }}>{variableTypeHumanize}</Code>
       </td>
       <td>
-        {variableType === 'String' ? (
+        {variableType === 'String' && !isSystemVariable && (
           <Controller
             name={`${template}.variables.${index}.defaultValue`}
             control={control}
@@ -56,8 +57,8 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
               return <Input type="text" placeholder="Default Value" value={field.value} onChange={field.onChange} />;
             }}
           />
-        ) : null}
-        {variableType === 'Boolean' ? (
+        )}
+        {variableType === 'Boolean' && !isSystemVariable && (
           <Controller
             name={`${template}.variables.${index}.defaultValue`}
             control={control}
@@ -71,14 +72,26 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
               );
             }}
           />
-        ) : null}
+        )}
+        {isSystemVariable && (
+          <Text color={colors.error} size="lg" weight="bold">
+            This variable is reserved by the system
+          </Text>
+        )}
       </td>
       <td className="required-td">
         <Controller
           name={`${template}.variables.${index}.required`}
           control={control}
           render={({ field }) => {
-            return <Switch label="is&nbsp;required" checked={field.value === true} onChange={field.onChange} />;
+            return (
+              <Switch
+                label="is&nbsp;required"
+                checked={field.value === true}
+                onChange={field.onChange}
+                disabled={isSystemVariable}
+              />
+            );
           }}
         />
       </td>
@@ -86,27 +99,47 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   );
 };
 
-export const VariableManager = ({ template, useTitle = false }: VariableManagerProps) => {
+export const VariableManager = ({ index, contents }: VariableManagerProps) => {
   const [ast, setAst] = useState<any>({ body: [] });
-  const { watch, control } = useFormContext();
-  const variablesArray = useFieldArray({ control, name: `${template}.variables` });
+  const [textContent, setTextContent] = useState<string>('');
+  const { watch, control, getValues } = useFormContext();
 
-  const content: string | IEmailBlock[] = watch(`${template}.content`);
-  const subjectContent: string = useTitle ? watch(`${template}.title`) : '';
-  const variableArray = watch(`${template}.variables`, []);
+  const variablesArray = useFieldArray({ control, name: `steps.${index}.template.variables` });
+  const variableArray = watch(`steps.${index}.template.variables`, []);
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      gatherTextContent(values.steps[index].template);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, contents]);
+
+  useEffect(() => {
+    const template = getValues(`steps.${index}.template`);
+    gatherTextContent(template);
+  }, [contents]);
 
   useMemo(() => {
-    const textContent = Array.isArray(content) ? content.map((con) => con.content).join() : content;
     try {
-      setAst(parse(textContent + ' ' + subjectContent));
+      setAst(parse(textContent));
     } catch (e) {}
-  }, [content, subjectContent]);
+  }, [textContent]);
+
+  function gatherTextContent(template = {}) {
+    setTextContent(
+      contents
+        .map((con) => con.split('.').reduce((a, b) => a[b], template))
+        .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
+        .join(' ')
+    );
+  }
 
   function getMustacheVariables(bod: any[]): IMustacheVariable[] {
     const stringVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'MustacheStatement')
       .map((body) => ({
-        type: 'String' as MustacheVariableType,
+        type: TemplateVariableTypeEnum.STRING,
         name: body.path.original as string,
         defaultValue: '',
         required: false,
@@ -115,7 +148,7 @@ export const VariableManager = ({ template, useTitle = false }: VariableManagerP
     const arrayVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'BlockStatement' && ['each', 'with'].includes(body.path.head))
       .map((body) => ({
-        type: 'Array' as MustacheVariableType,
+        type: TemplateVariableTypeEnum.ARRAY,
         name: body.params[0].original as string,
         required: false,
       }));
@@ -123,7 +156,7 @@ export const VariableManager = ({ template, useTitle = false }: VariableManagerP
     const boolVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'BlockStatement' && ['if'].includes(body.path.head))
       .map((body) => ({
-        type: 'Boolean' as MustacheVariableType,
+        type: TemplateVariableTypeEnum.BOOLEAN,
         name: body.params[0].original as string,
         defaultValue: true,
         required: false,
@@ -142,9 +175,9 @@ export const VariableManager = ({ template, useTitle = false }: VariableManagerP
       }
     });
 
-    arrayFields.forEach((vari, index) => {
+    arrayFields.forEach((vari, ind) => {
       if (!variables.find((field) => field.name === vari.name)) {
-        delete arrayFields[index];
+        delete arrayFields[ind];
       }
     });
 
@@ -155,7 +188,7 @@ export const VariableManager = ({ template, useTitle = false }: VariableManagerP
 
   return (
     <>
-      <Text size="md" weight="bold">
+      <Text size="md" weight="bold" mt={20}>
         Variables
       </Text>
 
@@ -170,8 +203,8 @@ export const VariableManager = ({ template, useTitle = false }: VariableManagerP
         </thead>
         <tbody>
           <FieldArrayProvider fieldArrays={{ variablesArray }}>
-            {variablesArray.fields.map((field, index) => (
-              <VariableComponent key={field.id} index={index} template={template} />
+            {variablesArray.fields.map((field, ind) => (
+              <VariableComponent key={field.id} index={ind} template={`steps.${index}.template`} />
             ))}
           </FieldArrayProvider>
         </tbody>

@@ -2,6 +2,7 @@ import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTempl
 import { Inject, Injectable } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
+import { merge } from 'lodash';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -59,7 +60,7 @@ export class TriggerEvent {
       })
     );
 
-    command.payload = { ...command.payload, ...defaultPayload };
+    command.payload = merge({}, command.payload, defaultPayload);
 
     const jobs: JobEntity[][] = [];
 

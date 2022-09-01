@@ -80,7 +80,6 @@ export function EmailContentCard({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
-      <VariableManager template={`steps.${index}.template`} />
       <Controller
         name={`steps.${index}.template.subject` as any}
         control={control}
@@ -102,6 +101,7 @@ export function EmailContentCard({
       <div data-test-id="editor-type-selector">
         <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
       </div>
+      <VariableManager index={index} contents={['content', 'htmlContent']} />
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, StepTypeEnum } from './channel.enum';
+import { ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from './channel.enum';
 
 export interface IEmailBlock {
   type: 'text' | 'button';
@@ -10,7 +10,7 @@ export interface IEmailBlock {
 }
 
 export class ITemplateVariable {
-  type: 'String' | 'Array' | 'Boolean';
+  type: TemplateVariableTypeEnum;
   name: string;
   required: boolean;
   defaultValue?: string | boolean;
@@ -32,3 +32,6 @@ export interface IMessageTemplate {
   _feedId?: string;
   active?: boolean;
 }
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const TemplateSystemVariables = ['subscriber', 'step', 'branding'];

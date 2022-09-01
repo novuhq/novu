@@ -2,7 +2,6 @@ import { Control, Controller } from 'react-hook-form';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
 import { ContentContainer } from './content/ContentContainer';
 import { IForm } from '../use-template-controller.hook';
-import { VariableManager } from '../VariableManager';
 
 export function InAppEditorBlock({
   contentPlaceholder,
@@ -51,7 +50,6 @@ function ContentContainerController({
 }) {
   return (
     <>
-      <VariableManager template={`steps.${index}.template`} />
       <Controller
         name={`steps.${index}.template.content` as any}
         data-test-id="in-app-content-form-item"
