@@ -251,6 +251,108 @@ describe('Message filter matcher', function () {
 
     expect(matchedMessage).to.equal(true);
   });
+
+  it('should handle now filters', function () {
+    let matchedMessage = matchMessageWithFilters(
+      {
+        _templateId: '123',
+        template: {
+          subject: 'Test Subject',
+          type: StepTypeEnum.EMAIL,
+          name: '',
+          content: 'Test',
+          _organizationId: '123',
+          _environmentId: 'asdas',
+          _creatorId: '123',
+        },
+        filters: undefined,
+      },
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+    expect(matchedMessage).to.equal(true);
+
+    matchedMessage = matchMessageWithFilters(
+      {
+        _templateId: '123',
+        template: {
+          subject: 'Test Subject',
+          type: StepTypeEnum.EMAIL,
+          name: '',
+          content: 'Test',
+          _organizationId: '123',
+          _environmentId: 'asdas',
+          _creatorId: '123',
+        },
+        filters: [],
+      },
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+    expect(matchedMessage).to.equal(true);
+    matchedMessage = matchMessageWithFilters(
+      {
+        _templateId: '123',
+        template: {
+          subject: 'Test Subject',
+          type: StepTypeEnum.EMAIL,
+          name: '',
+          content: 'Test',
+          _organizationId: '123',
+          _environmentId: 'asdas',
+          _creatorId: '123',
+        },
+        filters: [
+          {
+            isNegated: false,
+            type: 'GROUP',
+            value: 'AND',
+            children: undefined,
+          },
+        ],
+      },
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+    expect(matchedMessage).to.equal(true);
+    matchedMessage = matchMessageWithFilters(
+      {
+        _templateId: '123',
+        template: {
+          subject: 'Test Subject',
+          type: StepTypeEnum.EMAIL,
+          name: '',
+          content: 'Test',
+          _organizationId: '123',
+          _environmentId: 'asdas',
+          _creatorId: '123',
+        },
+        filters: [
+          {
+            isNegated: false,
+            type: 'GROUP',
+            value: 'AND',
+            children: [],
+          },
+        ],
+      },
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+    expect(matchedMessage).to.equal(true);
+  });
 });
 
 function messageWrapper(

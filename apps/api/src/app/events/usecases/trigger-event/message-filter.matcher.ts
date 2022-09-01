@@ -2,6 +2,13 @@ import { NotificationStepEntity } from '@novu/dal';
 import * as _ from 'lodash';
 
 export function matchMessageWithFilters(step: NotificationStepEntity, payloadVariables: any): boolean {
+  if (!Array.isArray(step?.filters)) {
+    return true;
+  }
+  const firstFilter = step.filters[0]?.children;
+  if (!firstFilter || (Array.isArray(firstFilter) && firstFilter.length === 0)) {
+    return true;
+  }
   if (step.filters?.length) {
     const foundFilter = step.filters.find((filter) => {
       return handleGroupFilters(filter, payloadVariables);
