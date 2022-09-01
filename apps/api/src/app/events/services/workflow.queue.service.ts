@@ -147,6 +147,19 @@ export class WorkflowQueueService {
       return false;
     }
 
+    const where: any = {
+      status: JobStatusEnum.DELAYED,
+      type: StepTypeEnum.DIGEST,
+      _subscriberId: data._subscriberId,
+      _templateId: data._templateId,
+      _environmentId: data._environmentId,
+    };
+    const delayedDigest = await this.jobRepository.findOne(where);
+
+    if (delayedDigest) {
+      return true;
+    }
+
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
     const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
     if (data.digest?.updateMode) {

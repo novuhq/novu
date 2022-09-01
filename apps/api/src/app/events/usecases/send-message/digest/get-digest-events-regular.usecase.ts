@@ -13,7 +13,7 @@ export class GetDigestEventsRegular extends GetDigestEvents {
       typeof currentJob?.digest.amount === 'number'
         ? currentJob?.digest.amount
         : parseInt(currentJob.digest.amount, 10);
-    const earliest = moment()
+    const earliest = moment(currentJob.createdAt)
       .subtract(amount, currentJob.digest.unit as moment.unitOfTime.DurationConstructor)
       .toDate();
 
