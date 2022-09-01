@@ -524,6 +524,72 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const subscriberIds = messages.map((message) => message._subscriberId).filter(isUnique);
     expect(subscriberIds.length).to.equal(4);
   });
+
+  it('should not filter a message with correct payload', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Password reset',
+          content: [
+            {
+              type: 'text',
+              content: 'This are the text contents of the template for {{firstName}}',
+            },
+            {
+              type: 'button',
+              content: 'SIGN UP',
+              url: 'https://url-of-app.com/{{urlVariable}}',
+            },
+          ],
+          filters: [
+            {
+              isNegated: false,
+
+              type: 'GROUP',
+
+              value: 'AND',
+
+              children: [
+                {
+                  field: 'run',
+                  value: 'true',
+                  operator: 'EQUAL',
+                  on: 'payload',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {
+          firstName: 'Testing of User Name',
+          urlVariable: '/test/url/path',
+          run: true,
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    const message = await messageRepository.findOne({
+      _templateId: template._id,
+    });
+
+    expect(message).to.be.ok;
+  });
 });
 
 async function createTemplate(session, channelType) {
