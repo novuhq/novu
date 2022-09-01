@@ -12,10 +12,11 @@ import {
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
+import { EmailProviderIdEnum } from '../provider.enum';
 
 export const emailProviders: IProviderConfig[] = [
   {
-    id: 'emailjs',
+    id: EmailProviderIdEnum.EmailJS,
     displayName: 'Email.js',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailJsConfig,
@@ -23,7 +24,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
   },
   {
-    id: 'mailgun',
+    id: EmailProviderIdEnum.Mailgun,
     displayName: 'Mailgun',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailgunConfig,
@@ -31,7 +32,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'mailgun.svg', dark: 'mailgun.svg' },
   },
   {
-    id: 'mailjet',
+    id: EmailProviderIdEnum.Mailjet,
     displayName: 'Mailjet',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailjetConfig,
@@ -39,7 +40,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'mailjet.png', dark: 'mailjet.png' },
   },
   {
-    id: 'mandrill',
+    id: EmailProviderIdEnum.Mandrill,
     displayName: 'Mandrill',
     channel: ChannelTypeEnum.EMAIL,
     credentials: mandrillConfig,
@@ -47,7 +48,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'mandrill.svg', dark: 'mandrill.svg' },
   },
   {
-    id: 'nodemailer',
+    id: EmailProviderIdEnum.Nodemailer,
     displayName: 'Nodemailer',
     channel: ChannelTypeEnum.EMAIL,
     credentials: nodemailerConfig,
@@ -55,7 +56,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'nodemailer.svg', dark: 'nodemailer.svg' },
   },
   {
-    id: 'postmark',
+    id: EmailProviderIdEnum.Postmark,
     displayName: 'Postmark',
     channel: ChannelTypeEnum.EMAIL,
     credentials: postmarkConfig,
@@ -63,7 +64,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'postmark.png', dark: 'postmark.png' },
   },
   {
-    id: 'sendgrid',
+    id: EmailProviderIdEnum.SendGrid,
     displayName: 'SendGrid',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendgridConfig,
@@ -71,7 +72,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'sendgrid.png', dark: 'sendgrid.png' },
   },
   {
-    id: 'sendinblue',
+    id: EmailProviderIdEnum.Sendinblue,
     displayName: 'Sendinblue',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendinblueConfig,
@@ -79,7 +80,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'sendinblue.png', dark: 'sendinblue.png' },
   },
   {
-    id: 'ses',
+    id: EmailProviderIdEnum.SES,
     displayName: 'SES',
     channel: ChannelTypeEnum.EMAIL,
     credentials: sesConfig,
@@ -87,7 +88,7 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'ses.svg', dark: 'ses.svg' },
   },
   {
-    id: 'netcore',
+    id: EmailProviderIdEnum.NetCore,
     displayName: 'NetCore',
     channel: ChannelTypeEnum.EMAIL,
     credentials: netCoreConfig,
