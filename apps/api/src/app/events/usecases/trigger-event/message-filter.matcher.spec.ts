@@ -105,6 +105,26 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
+  it('should match a EQUAL for a boolean var', function () {
+    const matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: true,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+  });
+
   it('should fall thru for no filters item', function () {
     const matchedMessage = matchMessageWithFilters(messageWrapper('Correct Match 2', 'OR', []), {
       payload: {
@@ -112,6 +132,122 @@ describe('Message filter matcher', function () {
         secondField: 'secondVarBad',
       },
     });
+
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should get larger payload var then then filter value', function () {
+    const matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'LARGER',
+          value: '0',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should get smaller payload var then then filter value', function () {
+    const matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'SMALLER',
+          value: '3',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 0,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should get larger or equal payload var then then filter value', function () {
+    let matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'LARGER_EQUAL',
+          value: '0',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+
+    matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'LARGER_EQUAL',
+          value: '3',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should get smaller or equal payload var then then filter value', function () {
+    let matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'SMALLER_EQUAL',
+          value: '3',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 0,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+
+    matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'SMALLER_EQUAL',
+          value: '3',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
 
     expect(matchedMessage).to.equal(true);
   });
