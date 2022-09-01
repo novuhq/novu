@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
-import * as moment from 'moment';
+import { subMonths, subWeeks, subYears } from 'date-fns';
 import { ActivityStatsResponseDto } from '../../dtos/activity-stats-response.dto';
 import { GetActivityStatsCommand } from './get-activity-stats.command';
 
@@ -13,7 +13,7 @@ export class GetActivityStats {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       createdAt: {
-        $gte: String(moment().subtract(1, 'year').toDate()),
+        $gte: subYears(new Date(), 1),
       },
     });
 
@@ -21,7 +21,7 @@ export class GetActivityStats {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       createdAt: {
-        $gte: String(moment().subtract(1, 'month').toDate()),
+        $gte: subMonths(new Date(), 1),
       },
     });
 
@@ -29,7 +29,7 @@ export class GetActivityStats {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       createdAt: {
-        $gte: String(moment().subtract(1, 'week').toDate()),
+        $gte: subWeeks(new Date(), 1),
       },
     });
 
