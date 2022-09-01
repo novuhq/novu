@@ -4,13 +4,13 @@ import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title
 import { Bar } from 'react-chartjs-2';
 import { useEffect, useState } from 'react';
 import { useMantineTheme } from '@mantine/core';
-import moment from 'moment';
+import * as cloneDeep from 'lodash.clonedeep';
+import { differenceInDays, format, isSameDay, subDays } from 'date-fns';
 import { getActivityGraphStats } from '../../../api/activity';
 import { IActivityGraphStats } from '../interfaces';
 import { MessageContainer } from './MessageContainer';
 import { ActivityGraphGlobalStyles } from './ActivityGraphGlobalStyles';
 import { getOptions, getChartData } from '../services';
-import * as cloneDeep from 'lodash.clonedeep';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -73,14 +73,12 @@ function fillDateGaps(data: IActivityGraphStats[]): IActivityGraphStats[] {
       const nextModel = originalArray[index + 1];
 
       if (nextModel) {
-        const currentDate = moment(currentModel._id);
-        const daysBetween = moment(nextModel._id).diff(currentDate, 'days') * -1;
-        const fillerDates = Array.from({ length: daysBetween - 1 }, (value, dayIndex) => {
+        const currentDate = new Date(currentModel._id);
+        const daysBetween = differenceInDays(currentDate, new Date(nextModel._id));
+        const fillerDates = Array.from({ length: daysBetween - 1 }, (_value, dayIndex) => {
           return {
             count: 0,
-            _id: moment(currentDate)
-              .subtract(dayIndex + 1, 'days')
-              .format('YYYY-MM-DD'),
+            _id: format(subDays(currentDate, dayIndex + 1), 'yyyy-MM-dd'),
           };
         });
 
@@ -96,8 +94,8 @@ function fillDateGaps(data: IActivityGraphStats[]): IActivityGraphStats[] {
 }
 
 function unshiftCurrentDay(data: IActivityGraphStats[]): IActivityGraphStats[] {
-  const currentDate = moment().format('YYYY-MM-DD');
-  const isContainsCurrentDate = moment(data[0]._id).isSame(currentDate, 'day');
+  const currentDate = format(new Date(), 'yyyy-MM-dd');
+  const isContainsCurrentDate = isSameDay(new Date(data[0]._id), new Date(currentDate));
 
   if (isContainsCurrentDate) return data;
 

@@ -12,6 +12,7 @@ COPY apps/ws ./apps/ws
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
 COPY libs/testing ./libs/testing
+COPY packages/client ./packages/client
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
 

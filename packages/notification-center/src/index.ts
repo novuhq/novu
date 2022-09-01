@@ -5,8 +5,10 @@ import {
   IOrganizationEntity,
   ISubscriberJwt,
   MessageActionStatusEnum,
-  IPreferenceChannels,
 } from '@novu/shared';
+import { IStoreQuery } from '@novu/client';
+export { IStoreQuery };
+export { IUserPreferenceSettings } from '@novu/client';
 
 export { IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
 
@@ -108,14 +110,4 @@ export declare type ColorScheme = 'light' | 'dark';
 export interface ITab {
   name: string;
   storeId: string;
-}
-
-export interface IStoreQuery {
-  feedIdentifier?: string | string[];
-  seen?: boolean;
-}
-
-export interface IUserPreferenceSettings {
-  template: { _id: string; name: string; critical: boolean };
-  preference: { enabled: boolean; channels: IPreferenceChannels };
 }
