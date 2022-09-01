@@ -11,8 +11,8 @@
   force = false
 
 [[redirects]]
-  from = "/api/*"
-  to = "https://novuapidocs.gatsbyjs.io/api/:splat"
+  from = "/api/:splat/"
+  to = "https://novuapidocs.gatsbyjs.io/api/:splat/"
   status = 200
   force = true
   headers = {X-From = "Netlify"}
