@@ -11,7 +11,7 @@ COPY apps/web ./apps/web
 
 COPY libs/dal ./libs/dal
 COPY libs/testing ./libs/testing
-COPY libs/client ./libs/client
+COPY packages/client ./packages/client
 COPY libs/shared ./libs/shared
 COPY packages/notification-center ./packages/notification-center
 COPY packages/stateless ./packages/stateless
