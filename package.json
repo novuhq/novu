@@ -34,7 +34,7 @@
     "start:static:web": "cross-env nx run-many --target=start:static:build --projects=@novu/web",
     "start:static:widget": "cross-env nx run-many --target=start:static:build --projects=@novu/widget",
     "start:docker:web": "cross-env nx run-many --target=start:docker --projects=@novu/web",
-    "start:docker:embed": "cross-env nx run-many --target=start:docker --projects=@novu/embed",
+    "start:docker:embed": "cd libs/embed && npm run start:docker",
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
     "build": "nx run-many --target=build --all",
