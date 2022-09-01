@@ -63,6 +63,12 @@ function processFilterEquality(i, payloadVariables) {
   if (i.operator === 'SMALLER_EQUAL') {
     return payloadVariable <= value;
   }
+  if (i.operator === 'NOT_IN') {
+    return !payloadVariable.includes(value);
+  }
+  if (i.operator === 'IN') {
+    return payloadVariable.includes(value);
+  }
 
   return false;
 }

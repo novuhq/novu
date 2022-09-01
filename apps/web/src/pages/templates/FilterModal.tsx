@@ -124,7 +124,7 @@ export function FilterModal({
               <Grid.Col span={2}>
                 <Controller
                   control={control}
-                  name={`steps.${index}.filters.0.children.${index}.operator`}
+                  name={`steps.${stepIndex}.filters.0.children.${index}.operator`}
                   render={({ field }) => {
                     return (
                       <Select
@@ -135,7 +135,9 @@ export function FilterModal({
                           { value: 'LARGER', label: 'Larger' },
                           { value: 'SMALLER', label: 'Smaller' },
                           { value: 'LARGER_EQUAL', label: 'Larger or equal' },
-                          { value: 'LARGER_EQUAL', label: 'Smaller or equal' },
+                          { value: 'SMALLER_EQUAL', label: 'Smaller or equal' },
+                          { value: 'IN', label: 'Contains' },
+                          { value: 'NOT_IN', label: 'Not contains' },
                         ]}
                         {...field}
                       />

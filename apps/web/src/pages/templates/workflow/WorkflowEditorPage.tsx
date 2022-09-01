@@ -175,11 +175,48 @@ const WorkflowEditorPage = ({
                     >
                       Edit Template
                     </EditTemplateButton>
+                    <Button
+                      fullWidth
+                      mt={10}
+                      variant="outline"
+                      onClick={() => {
+                        setFilterOpen(true);
+                      }}
+                    >
+                      Add filter
+                    </Button>
                     <Divider my={30} />
                     {steps.map((i, index) => {
                       return index === activeStep ? (
                         <StepActiveSwitch key={index} index={activeStep} control={control} />
                       ) : null;
+                    })}
+                  </NavSection>
+                  <NavSection>
+                    {steps.map((i, index) => {
+                      if (index !== activeStep) {
+                        return null;
+                      }
+                      if (!i.filters || !Array.isArray(i.filters)) {
+                        return null;
+                      }
+
+                      return i.filters.map((group) => {
+                        if (!Array.isArray(group.children) || group.children.length === 0) {
+                          return null;
+                        }
+
+                        return group.children.map((filter, fIndex, filters) => {
+                          return (
+                            <>
+                              <p>
+                                {filter.on}.{filter.field} {filter.operator} {filter.value}
+                              </p>
+                              {fIndex !== filters.length - 1 ? <p>{group.value}</p> : null}
+                            </>
+                          );
+                        });
+                      });
                     })}
                   </NavSection>
                 </When>
@@ -228,17 +265,6 @@ const WorkflowEditorPage = ({
                     />
                     Delete {selectedChannel !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
                   </DeleteStepButton>
-                  <When truthy={![StepTypeEnum.DIGEST, null].includes(selectedChannel)}>
-                    <Button
-                      mt={10}
-                      variant="outline"
-                      onClick={() => {
-                        setFilterOpen(true);
-                      }}
-                    >
-                      Add filter
-                    </Button>
-                  </When>
                 </NavSection>
               </StyledNav>
             ) : (

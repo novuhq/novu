@@ -22,6 +22,7 @@ class MessageFilterChild {
       'NOT_BETWEEN',
       'LIKE',
       'NOT_LIKE',
+      'IN',
     ],
   })
   operator: BuilderFieldOperator;
