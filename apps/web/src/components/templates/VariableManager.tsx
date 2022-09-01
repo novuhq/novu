@@ -74,7 +74,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
           />
         )}
         {isSystemVariable && (
-          <Text color={colors.error} size="lg" weight="bold">
+          <Text color={colors.B60} size="lg" weight="bold">
             This variable is reserved by the system
           </Text>
         )}
