@@ -50,9 +50,10 @@ export class SendMessage {
       return true;
     }
     const filter = command.step.filters[0]?.children;
-    if (!filter) {
+    if (!filter || (Array.isArray(filter) && filter.length === 0)) {
       return true;
     }
+
     const data = await this.getFilterData(command);
 
     return matchMessageWithFilters(command.step, data);
