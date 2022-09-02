@@ -21,7 +21,7 @@ export class UserRegister {
   ) {}
 
   async execute(command: UserRegisterCommand) {
-    if (process.env.DISABLE_USER_REGISTRATION !== 'false') throw new ApiException('Account creation is disabled');
+    if (process.env.DISABLE_USER_REGISTRATION === 'true') throw new ApiException('Account creation is disabled');
 
     const email = normalizeEmail(command.email);
     const existingUser = await this.userRepository.findByEmail(email);
