@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { format, parse } from 'date-fns';
 
 export function getOptions(this: any, isTriggerSent: boolean, daysCount: number) {
   return {
@@ -173,9 +173,9 @@ function getBodyText(body: string[]): string | string[] {
 function buildDisplayTitle(title) {
   const dayMonth = title.split(',')[1].split('/');
   const dateString = `${normalizeDateNumber(dayMonth[1])}-${normalizeDateNumber(dayMonth[0])}`;
-  const data = moment(dateString, 'MM-DD');
+  const data = parse(dateString, 'MM-dd', new Date());
 
-  return `${data.format('dddd')}, ${data.format('MMMM')} ${data.format('Do')}`;
+  return `${format(data, 'EEEE')}, ${format(data, 'LLLL')} ${format(data, 'Do')}`;
 }
 
 export function normalizeDateNumber(num: string): string {

@@ -13,20 +13,33 @@ Device/notification identifiers can be set by using [Subscriber Credentials](/pl
 <Tabs>
   <TabItem value="nodejs" label="Node.js" default>
 
-  ```ts
-  import { Novu } from '@novu/node';
-  
-  const novu = new Novu(process.env.NOVU_API_KEY);
-  
-  novu.trigger('event-name', {
-    to: {
-      subscriberId: '...'
-    },
-    payload: {
-      abc: 'def',
-    },
-  })
-  ```
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+novu.trigger('event-name', {
+  to: {
+    subscriberId: '...',
+  },
+  payload: {
+    abc: 'def',
+  },
+});
+```
 
   </TabItem>
 </Tabs>
+
+Before triggering the notification to a subscriber(user) with push as a step in workflow, make sure you have added subscriber(user) device token as follows:-
+
+```typescript
+import { Novu, PushProviderIdEnum } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+const body = req.body; // From your HTTPS listener
+await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.FCM, {
+  deviceTokens: ['<token1>', 'token2'],
+});
+```
