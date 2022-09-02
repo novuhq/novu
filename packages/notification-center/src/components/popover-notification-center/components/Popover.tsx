@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Popover as MantinePopover } from '@mantine/core';
+import { Popover as MantinePopover, PopoverProps } from '@mantine/core';
 import styled from 'styled-components';
 import { INovuTheme } from '../../../store/novu-theme.context';
 
@@ -7,9 +7,11 @@ interface INovuPopoverProps {
   bell: (props: any) => JSX.Element;
   children: JSX.Element;
   theme: INovuTheme;
+  position?: PopoverProps['position'];
+  placement?: PopoverProps['placement'];
 }
 
-export function Popover({ children, bell, theme }: INovuPopoverProps) {
+export function Popover({ children, bell, theme, position = 'bottom', placement = 'end' }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
 
   function handlerBellClick() {
@@ -21,8 +23,8 @@ export function Popover({ children, bell, theme }: INovuPopoverProps) {
       opened={isVisible}
       onClose={() => setIsVisible(false)}
       target={<BellContainer onClick={handlerBellClick}> {bell({})}</BellContainer>}
-      position={'bottom'}
-      placement={'end'}
+      position={position}
+      placement={placement}
       withArrow
       styles={{
         inner: { margin: 0, padding: 0 },
