@@ -39,7 +39,15 @@ const codeTheme = require('./src/utils/prism');
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
-        image: '/img/social-preview.jpg',
+        metadata: [
+          { name: 'robots', content: 'max-image-preview:large' },
+          {
+            name: 'keywords',
+            content:
+              'novu,novu documentation,novu docs,notification,notification insfrastructure,open source,oss',
+          },
+        ],
+        image: 'https://novu.co/images/social-preview.jpg',
         algolia: {
           appId: '5AG4YK0YDV',
           apiKey: '67ce2424b44097b63a6f21a6615de538',
