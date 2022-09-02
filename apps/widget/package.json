@@ -1,6 +1,6 @@
 {
   "name": "@novu/widget",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "private": true,
   "scripts": {
     "start": "craco start",
@@ -27,8 +27,8 @@
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "^4.1.0",
     "@mantine/hooks": "^4.1.0",
-    "@novu/embed": "^0.7.2",
-    "@novu/notification-center": "^0.7.2",
+    "@novu/embed": "^0.7.3",
+    "@novu/notification-center": "^0.7.3",
     "@novu/shared": "^0.7.2",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
