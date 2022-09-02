@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
@@ -5,6 +6,7 @@ import styled from '@emotion/styled';
 import { format } from 'date-fns';
 import { useSubscribers } from '../../api/hooks/use-subscribers';
 import PageMeta from '../../components/layout/components/PageMeta';
+import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Table, Text } from '../../design-system';
 import { Tooltip } from '../../design-system';
@@ -13,9 +15,14 @@ import { useEnvController } from '../../store/use-env-controller';
 
 function SubscribersList() {
   const { readonly } = useEnvController();
-  const { subscibers, loading: isLoading } = useSubscribers();
+  const [page, setPage] = useState<number>(0);
+  const { subscibers, loading: isLoading, totalCount, pageSize } = useSubscribers(page);
   const theme = useMantineTheme();
   const navigate = useNavigate();
+
+  function handleTableChange(pageIndex) {
+    setPage(pageIndex);
+  }
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
@@ -36,13 +43,66 @@ function SubscribersList() {
         </Tooltip>
       ),
     },
+    {
+      accessor: 'lastName',
+      Header: 'Last Name',
+      Cell: ({ lastName }: any) => (
+        <Tooltip label={lastName}>
+          <Text rows={1}>{lastName}</Text>
+        </Tooltip>
+      ),
+    },
+    {
+      accessor: 'deleted',
+      Header: 'Deleted',
+      Cell: ({ deleted }: any) => (
+        <Tooltip label={deleted ? 'true' : 'false'}>
+          <Text rows={1}>{deleted ? 'true' : 'false'}</Text>
+        </Tooltip>
+      ),
+    },
+    {
+      accessor: 'email',
+      Header: 'Email',
+      Cell: ({ email }: any) => (
+        <Tooltip label={email}>
+          <Text rows={1}>{email}</Text>
+        </Tooltip>
+      ),
+    },
+    {
+      accessor: 'phone',
+      Header: 'Phone',
+      Cell: ({ phone }: any) => (
+        <Tooltip label={phone}>
+          <Text rows={1}>{phone}</Text>
+        </Tooltip>
+      ),
+    },
+    {
+      accessor: 'createdAt',
+      Header: 'Created At',
+      Cell: ({ createdAt }: any) => format(new Date(createdAt), 'dd/MM/yyyy HH:mm'),
+    },
   ];
 
   return (
     <PageContainer>
       <PageMeta title="Subscribers" />
+      <PageHeader title="Subscribers" />
       <SubscibersListTableWrapper>
-        <Table loading={isLoading} data-test-id="notifications-template" columns={columns} data={subscibers || []}>
+        <Table
+          loading={isLoading}
+          data-test-id="notifications-template"
+          columns={columns}
+          data={subscibers || []}
+          pagination={{
+            pageSize: pageSize,
+            current: page,
+            total: totalCount,
+            onPageChange: handleTableChange,
+          }}
+        >
           {' '}
         </Table>
       </SubscibersListTableWrapper>
