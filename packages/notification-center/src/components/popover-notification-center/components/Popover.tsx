@@ -7,11 +7,12 @@ interface INovuPopoverProps {
   bell: (props: any) => JSX.Element;
   children: JSX.Element;
   theme: INovuTheme;
+  offset?: number;
   position?: PopoverProps['position'];
   placement?: PopoverProps['placement'];
 }
 
-export function Popover({ children, bell, theme, position = 'bottom', placement = 'end' }: INovuPopoverProps) {
+export function Popover({ children, bell, theme, offset, position = 'bottom', placement = 'end' }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
 
   function handlerBellClick() {
@@ -36,6 +37,7 @@ export function Popover({ children, bell, theme, position = 'bottom', placement 
           borderColor: `${theme.popover?.arrowColor}`,
         },
       }}
+      gutter={offset}
     >
       {children}
     </MantinePopover>
