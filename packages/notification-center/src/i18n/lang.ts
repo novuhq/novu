@@ -11,6 +11,7 @@ import { AR } from './languages/ar';
 import { GJ } from './languages/gj';
 import { DE } from './languages/de';
 import { ML } from './languages/ml';
+import { ZH } from './languages/zh';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -38,6 +39,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   uk: UK,
   de: DE,
   ml: ML,
+  zh: ZH,
 };
 
 /**
@@ -51,4 +53,4 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * Any new language should also be added to the documentation
  * https://docs.novu.co/notification-center/react-components#customize-the-ui-language
  */
-export type I18NLanguage = 'en' | 'fi' | 'hi' | 'it' | 'gj' | 'ru' | 'uk' | 'es' | 'ar' | 'fa' | 'fr' | 'de' | 'ml';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'it' | 'gj' | 'ru' | 'uk' | 'es' | 'ar' | 'fa' | 'fr' | 'de' | 'ml' | 'zh';
