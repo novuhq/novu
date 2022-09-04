@@ -18,6 +18,7 @@ export enum CredentialsKeyEnum {
   ApplicationId = 'applicationId',
   ClientId = 'clientId',
   ProjectName = 'projectName',
+  ServiceAccount = 'serviceAccount',
 }
 
 export enum EmailProviderIdEnum {

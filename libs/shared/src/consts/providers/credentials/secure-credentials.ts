@@ -6,4 +6,5 @@ export const secureCredentials: CredentialsKeyEnum[] = [
   CredentialsKeyEnum.Token,
   CredentialsKeyEnum.Secure,
   CredentialsKeyEnum.Password,
+  CredentialsKeyEnum.ServiceAccount,
 ];
