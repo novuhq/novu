@@ -14,7 +14,10 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   S3_REGION: str(),
   PORT: port(),
   FRONT_BASE_URL: url(),
-  DISABLE_USER_REGISTRATION: bool(),
+  DISABLE_USER_REGISTRATION: str({
+    default: 'false',
+    choices: ['false', 'true'],
+  }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
   JWT_SECRET: str(),
