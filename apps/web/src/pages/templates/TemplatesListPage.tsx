@@ -1,8 +1,8 @@
-import moment from 'moment';
 import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
+import { format } from 'date-fns';
 import { useTemplates } from '../../api/hooks/use-templates';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -46,7 +46,7 @@ function NotificationList() {
     {
       accessor: 'createdAt',
       Header: 'Created At',
-      Cell: ({ createdAt }: any) => moment(createdAt).format('DD/MM/YYYY HH:mm'),
+      Cell: ({ createdAt }: any) => format(new Date(createdAt), 'dd/MM/yyyy HH:mm'),
     },
     {
       accessor: 'status',

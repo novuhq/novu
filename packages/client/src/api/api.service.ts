@@ -1,4 +1,10 @@
-import { IMessage, HttpClient, ButtonTypeEnum, MessageActionStatusEnum, IParamObject } from '@novu/shared';
+import {
+  IMessage,
+  HttpClient,
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+  IParamObject,
+} from '@novu/shared';
 import { IStoreQuery, IUserPreferenceSettings } from '../index';
 
 export class ApiService {
@@ -28,25 +34,38 @@ export class ApiService {
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>
   ): Promise<any> {
-    return await this.httpClient.post(`/widgets/messages/${messageId}/actions/${executedType}`, {
-      executedType,
-      status,
-      payload,
-    });
+    return await this.httpClient.post(
+      `/widgets/messages/${messageId}/actions/${executedType}`,
+      {
+        executedType,
+        status,
+        payload,
+      }
+    );
   }
 
   async markMessageAsSeen(messageId: string): Promise<any> {
-    return await this.httpClient.post(`/widgets/messages/${messageId}/seen`, {});
+    return await this.httpClient.post(
+      `/widgets/messages/${messageId}/seen`,
+      {}
+    );
   }
 
-  async getNotificationsList(page: number, query: IStoreQuery = {}): Promise<IMessage[]> {
+  async getNotificationsList(
+    page: number,
+    query: IStoreQuery = {}
+  ): Promise<IMessage[]> {
     return await this.httpClient.get(`/widgets/notifications/feed`, {
       page,
       ...query,
     });
   }
 
-  async initializeSession(appId: string, subscriberId: string, hmacHash = null) {
+  async initializeSession(
+    appId: string,
+    subscriberId: string,
+    hmacHash = null
+  ) {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
       subscriberId: subscriberId,
@@ -54,7 +73,10 @@ export class ApiService {
     });
   }
 
-  async postUsageLog(name: string, payload: { [key: string]: string | boolean | undefined }) {
+  async postUsageLog(
+    name: string,
+    payload: { [key: string]: string | boolean | undefined }
+  ) {
     return await this.httpClient.post('/widgets/usage/log', {
       name: `[Widget] - ${name}`,
       payload,
@@ -62,7 +84,10 @@ export class ApiService {
   }
 
   async getUnseenCount(query: IStoreQuery = {}) {
-    return await this.httpClient.get('/widgets/notifications/unseen', query as unknown as IParamObject);
+    return await this.httpClient.get(
+      '/widgets/notifications/unseen',
+      query as unknown as IParamObject
+    );
   }
 
   async getOrganization() {

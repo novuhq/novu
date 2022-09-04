@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
-import * as moment from 'moment';
+import { isBefore, subDays } from 'date-fns';
 import { PasswordResetCommand } from './password-reset.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AuthService } from '../../services/auth.service';
@@ -16,7 +16,7 @@ export class PasswordReset {
       throw new ApiException('Bad token provided');
     }
 
-    if (moment(user.resetTokenDate).isBefore(moment().subtract(7, 'days'))) {
+    if (isBefore(new Date(user.resetTokenDate), subDays(new Date(), 7))) {
       throw new ApiException('Token has expired');
     }
 
