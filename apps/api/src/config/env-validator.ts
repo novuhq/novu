@@ -1,4 +1,4 @@
-import { port, str, url, ValidatorSpec } from 'envalid';
+import { port, str, url, ValidatorSpec, bool } from 'envalid';
 import * as envalid from 'envalid';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,6 +14,10 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   S3_REGION: str(),
   PORT: port(),
   FRONT_BASE_URL: url(),
+  DISABLE_USER_REGISTRATION: str({
+    default: 'false',
+    choices: ['false', 'true'],
+  }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
   JWT_SECRET: str(),
