@@ -228,7 +228,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
   async delete(query: FilterQuery<MessageEntity & Document>) {
     const message = await this.findOne({ _id: query._id });
     if (!message) {
-      throw new DalException(`Could not find feed with id ${query._id}`);
+      throw new DalException(`Could not find a message with id ${query._id}`);
     }
     await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
   }
