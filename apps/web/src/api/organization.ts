@@ -1,12 +1,22 @@
 import { MemberRoleEnum } from '@novu/shared';
 import { api } from './api.client';
 
-export function getOrganizationMembers() {
-  return api.get(`/v1/organizations/members`);
+export function getOrganizations() {
+  return api.get(`/v1/organizations`);
 }
 
-export function getCurrentOrganization() {
-  return api.get(`/v1/organizations/me`);
+export function addOrganization(name: string) {
+  return api.post(`/v1/organizations`, {
+    name,
+  });
+}
+
+export function switchOrganization(organizationId: string) {
+  return api.post(`/v1/auth/organizations/${organizationId}/switch`, {});
+}
+
+export function getOrganizationMembers() {
+  return api.get(`/v1/organizations/members`);
 }
 
 export function inviteMember(email: string) {
