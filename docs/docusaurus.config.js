@@ -6,7 +6,7 @@ const codeTheme = require('./src/utils/prism');
   module.exports = {
     title: 'Novu',
     tagline: 'All the tools you need to build modern transactional notification experience',
-    url: 'https://novu.co',
+    url: 'https://docs.novu.co',
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
@@ -39,6 +39,14 @@ const codeTheme = require('./src/utils/prism');
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
+        metadata: [
+          { name: 'robots', content: 'max-image-preview:large' },
+          {
+            name: 'keywords',
+            content:
+              'novu,novu documentation,novu docs,notification,notification insfrastructure,open source,oss',
+          },
+        ],
         image: '/img/social-preview.jpg',
         algolia: {
           appId: '5AG4YK0YDV',
