@@ -1,24 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Container } from '@mantine/core';
-import { IOrganizationEntity } from '@novu/shared';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
-import { useQuery } from 'react-query';
-import { getCurrentOrganization } from '../../api/organization';
 import { BrandingForm, ApiKeysCard, InAppCenterCard } from './tabs';
+import { AuthContext } from '../../store/authContext';
 
 export function SettingsPage() {
   const location = useLocation();
-
+  const { currentOrganization } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState(0);
-
-  const { data: organization, isLoading: isLoadingOrganization } = useQuery<IOrganizationEntity>(
-    '/v1/organizations/me',
-    getCurrentOrganization
-  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -31,7 +24,7 @@ export function SettingsPage() {
   const menuTabs = [
     {
       label: 'Branding',
-      content: <BrandingForm isLoading={isLoadingOrganization} organization={organization} />,
+      content: <BrandingForm isLoading={!currentOrganization} organization={currentOrganization} />,
     },
     {
       label: 'In App Center',
@@ -48,7 +41,7 @@ export function SettingsPage() {
       <PageMeta title="Settings" />
       <PageHeader title="Settings" />
       <Container fluid mt={15} ml={5}>
-        <Tabs loading={isLoadingOrganization} active={activeTab} onTabChange={setActiveTab} menuTabs={menuTabs} />
+        <Tabs loading={!currentOrganization} active={activeTab} onTabChange={setActiveTab} menuTabs={menuTabs} />
       </Container>
     </PageContainer>
   );

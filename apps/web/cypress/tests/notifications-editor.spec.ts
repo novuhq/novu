@@ -452,10 +452,10 @@ describe('Notifications Creator', function () {
     });
 
     it('should allow uploading a logo from email editor', function () {
-      cy.intercept(/.*organizations\/me.*/, (r) => {
+      cy.intercept('*/organizations', (r) => {
         r.continue((res) => {
           if (res.body) {
-            delete res.body.data.branding.logo;
+            delete res.body.data[0].branding.logo;
           }
 
           res.send({ body: res.body });
@@ -551,6 +551,7 @@ describe('Notifications Creator', function () {
       cy.waitForNetworkIdle(500);
 
       cy.getByTestId('workflowButton').click();
+      cy.wait(500);
       editChannel('email');
       cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
     });

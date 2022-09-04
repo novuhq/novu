@@ -32,7 +32,7 @@ const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const { themeStatus, setThemeStatus } = useLocalThemePreference();
+  const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
 
   if (INTERCOM_APP_ID) {

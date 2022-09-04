@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { useQuery } from 'react-query';
 import { ColumnWithStrictAccessor } from 'react-table';
-import moment from 'moment';
 import { Controller, useForm } from 'react-hook-form';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
+import { format, formatDistanceToNow, isAfter, subDays } from 'date-fns';
 import { useTemplates } from '../../api/hooks/use-templates';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -161,9 +161,9 @@ export function ActivitiesPage() {
       accessor: 'createdAt',
       Header: 'Sent On',
       Cell: ({ createdAt }: any) => {
-        return moment(createdAt).isAfter(moment().subtract(1, 'day'))
-          ? moment(createdAt).fromNow()
-          : moment(createdAt).format('DD/MM/YYYY HH:mm');
+        return isAfter(new Date(createdAt), subDays(new Date(), 1))
+          ? formatDistanceToNow(new Date(createdAt), { addSuffix: true })
+          : format(new Date(createdAt), 'dd/MM/yyyy HH:mm');
       },
     },
   ];

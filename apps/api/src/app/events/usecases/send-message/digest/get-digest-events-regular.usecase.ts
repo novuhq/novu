@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { sub } from 'date-fns';
 import { SendMessageCommand } from '../send-message.command';
-import * as moment from 'moment';
 import { GetDigestEvents } from './get-digest-events.usecase';
 
 @Injectable()
@@ -13,9 +13,9 @@ export class GetDigestEventsRegular extends GetDigestEvents {
       typeof currentJob?.digest.amount === 'number'
         ? currentJob?.digest.amount
         : parseInt(currentJob.digest.amount, 10);
-    const earliest = moment()
-      .subtract(amount, currentJob.digest.unit as moment.unitOfTime.DurationConstructor)
-      .toDate();
+    const earliest = sub(new Date(), {
+      [currentJob.digest.unit]: amount,
+    });
 
     const jobs = await this.jobRepository.findJobsToDigest(
       earliest,
