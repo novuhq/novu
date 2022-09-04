@@ -63,6 +63,9 @@ function DescriptionText() {
 
 export const PrismContainer = styled.div`
   padding: 25px 0 32px 0;
+  @media screen and (max-width: 1400px) {
+    width: 600px;
+  }
 `;
 
 export const StyledText = styled(Text)`

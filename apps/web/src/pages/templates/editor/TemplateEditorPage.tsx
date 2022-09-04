@@ -70,7 +70,7 @@ export default function TemplateEditorPage() {
     <>
       <PageContainer>
         <PageMeta title={editMode ? template?.name : 'Create Template'} />
-        <form name="template-form" noValidate onSubmit={handleSubmit(onSubmit)}>
+        <form name="template-form" noValidate onSubmit={handleSubmit(onSubmit)} style={{ minHeight: '100%' }}>
           <When truthy={activePage !== ActivePageEnum.WORKFLOW}>
             <TemplatePageHeader
               loading={isLoading || isUpdateLoading}

@@ -1,0 +1,18 @@
+[[redirects]]
+  from = "/docs/*"
+  to = "/:splat"
+  status = 301
+  force = false
+
+[[redirects]]
+  from = "/api"
+  to = "/api/overview/"
+  status = 301
+  force = false
+
+[[redirects]]
+  from = "/api/:splat/"
+  to = "https://novuapidocs.gatsbyjs.io/api/:splat/"
+  status = 200
+  force = true
+  headers = {X-From = "Netlify"}

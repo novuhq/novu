@@ -100,8 +100,8 @@ const WorkflowEditorPage = ({
   };
 
   return (
-    <div style={{ minHeight: 500 }}>
-      <Grid gutter={0} grow style={{ minHeight: 500 }}>
+    <>
+      <Grid gutter={0} grow style={{ minHeight: '100%' }}>
         <Grid.Col md={9} sm={6}>
           <TemplatePageHeader
             loading={isLoading || isUpdateLoading}
@@ -262,7 +262,7 @@ const WorkflowEditorPage = ({
         </Grid.Col>
       </Grid>
       <DeleteConfirmModal target="step" isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
-    </div>
+    </>
   );
 };
 
