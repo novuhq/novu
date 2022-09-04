@@ -15,6 +15,7 @@ import { TemplatePageHeader } from '../../../components/templates/TemplatePageHe
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { DigestMetadata } from './DigestMetadata';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
+import { DelayMetadata } from './DelayMetadata';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -161,7 +162,7 @@ const WorkflowEditorPage = ({
                     })}
                   </NavSection>
                 </When>
-                <When truthy={selectedChannel === StepTypeEnum.DIGEST || selectedChannel === StepTypeEnum.DELAY}>
+                <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
                   <NavSection>
                     <ButtonWrapper>
                       <Title size={2}>Digest Properties</Title>
@@ -190,6 +191,31 @@ const WorkflowEditorPage = ({
                     })}
                   </NavSection>
                 </When>
+                <When truthy={selectedChannel === StepTypeEnum.DELAY}>
+                  <NavSection>
+                    <ButtonWrapper>
+                      <Title size={2}>Delay Properties</Title>
+                      <ActionIcon
+                        data-test-id="close-side-menu-btn"
+                        variant="transparent"
+                        onClick={() => setSelectedChannel(null)}
+                      >
+                        <Close />
+                      </ActionIcon>
+                    </ButtonWrapper>
+
+                    <Text mr={10} mt={10} size="md" color={colors.B60}>
+                      Configure the delay parameters.
+                    </Text>
+                  </NavSection>
+                  <NavSection>
+                    {steps.map((i, index) => {
+                      return index === activeStep ? (
+                        <DelayMetadata key={index} control={control} index={index} />
+                      ) : null;
+                    })}
+                  </NavSection>
+                </When>
                 <NavSection>
                   <DeleteStepButton
                     mt={10}
@@ -204,7 +230,7 @@ const WorkflowEditorPage = ({
                         marginRight: '5px',
                       }}
                     />
-                    Delete {selectedChannel !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
+                    Delete {getChannel(selectedChannel)?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
                   </DeleteStepButton>
                 </NavSection>
               </StyledNav>

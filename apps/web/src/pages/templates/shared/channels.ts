@@ -1,13 +1,24 @@
 import { BellGradient, ChatGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { DigestGradient } from '../../../design-system/icons/general/DigestGradient';
+import React from 'react';
 
 export enum NodeTypeEnum {
   CHANNEL = 'channel',
   ACTION = 'action',
 }
 
-export const channels = [
+interface IChannelDefinition {
+  tabKey: StepTypeEnum | ChannelTypeEnum;
+  label: string;
+  description: string;
+  Icon: React.FC<any>;
+  testId: string;
+  channelType: StepTypeEnum;
+  type: NodeTypeEnum;
+}
+
+export const channels: IChannelDefinition[] = [
   {
     tabKey: ChannelTypeEnum.IN_APP,
     label: 'In-App',

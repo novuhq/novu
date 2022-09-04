@@ -158,10 +158,7 @@ export function useTemplateController(templateId: string) {
         setIsDirty(false);
 
         await client.refetchQueries(QueryKeys.changesCount);
-        showNotification({
-          message: 'Template updated successfully',
-          color: 'green',
-        });
+        successMessage('Template updated successfully');
       } else {
         const response = await createNotification({ ...payloadToCreate, active: true, draft: false });
 
