@@ -9,7 +9,7 @@ import { NotificationCenterContext } from '../../../store';
 import { useApi, useNovuContext } from '../../../hooks';
 
 export function FeedsTabs() {
-  const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { tabs, onTabClick } = useContext<INotificationCenterContext>(NotificationCenterContext);
 
   return (
     <>
@@ -24,6 +24,9 @@ export function FeedsTabs() {
                   <UnseenBadgeContainer storeId={tab.storeId} />
                 </TabLabelWrapper>
               }
+              onClick={() => {
+                onTabClick(tab);
+              }}
             >
               <NotificationsListTab tab={tab} />
             </Tab>

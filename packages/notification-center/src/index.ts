@@ -65,6 +65,7 @@ export interface INotificationCenterContext {
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  onTabClick?: (tab: ITab) => void;
 }
 
 export interface IStore {

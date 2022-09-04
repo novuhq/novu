@@ -1,6 +1,6 @@
 import React from 'react';
 import { IMessage, ButtonTypeEnum } from '@novu/shared';
-import { INotificationCenterContext } from '../index';
+import { INotificationCenterContext, ITab } from '../index';
 
 export const NotificationCenterContext = React.createContext<INotificationCenterContext>({
   onUrlChange: (url: string) => {},
@@ -14,4 +14,5 @@ export const NotificationCenterContext = React.createContext<INotificationCenter
   actionsResultBlock: null,
   tabs: [],
   showUserPreferences: true,
+  onTabClick: (tab: ITab) => {},
 } as any);
