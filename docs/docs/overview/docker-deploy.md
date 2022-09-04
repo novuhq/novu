@@ -52,6 +52,29 @@ To keep the setup simple, we made some choices that may not be optimal for produ
 We strongly recommend that you decouple your database
 before deploying.
 
+### Triggering events with custom installation
+
+When self-hosting Novu, in order to trigger an event you must first create a new `Novu` object and configure it with the proper `backendUrl`.
+
+```
+import { Novu } from '@novu/node';
+
+const config = {
+  backendUrl: '<REPLACE_WITH_BACKEND_URL>'
+}
+
+const novu = new Novu('<API_KEY>', config);
+
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
+  to: {
+    subscriberId: '<REPLACE_WITH_DATA>',
+  },
+  payload: {
+    
+  },
+})
+```
+
 ### Pointing IFrame embed to custom installation
 
 When using the IFrame embed to attach the notification center rather than the react component, you will need to specify the `backendUrl` and the `socketUrl` when initializing the iframe.
@@ -68,6 +91,10 @@ When using the IFrame embed to attach the notification center rather than the re
   })
 </script>
 ```
+
+### Using React Component with custom installation
+
+See [https://docs.novu.co/notification-center/react-components#use-your-own-backend-and-socket-url](Use your own backend and socket URL)
 
 ## Next steps
 

@@ -26,6 +26,22 @@ describe('User registration - /auth/register (POST)', async () => {
     expect(body.message.find((i) => i.includes('lastName'))).to.be.ok;
   });
 
+  it('should throw error if user signup is disabled', async () => {
+    process.env.DISABLE_USER_REGISTRATION = 'true';
+
+    const { body } = await session.testAgent.post('/v1/auth/register').send({
+      email: 'Testy.test@gmail.com',
+      firstName: 'Test',
+      lastName: 'User',
+      password: '123456789',
+    });
+
+    expect(body.statusCode).to.equal(400);
+    expect(JSON.stringify(body)).to.include('Account creation is disabled');
+
+    process.env.DISABLE_USER_REGISTRATION = 'false';
+  });
+
   it('should create a new user successfully', async () => {
     const { body } = await session.testAgent.post('/v1/auth/register').send({
       email: 'Testy.test@gmail.com',
