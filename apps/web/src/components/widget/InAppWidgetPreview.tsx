@@ -1,9 +1,11 @@
 import { Badge, Card, Container, Group, Space, useMantineTheme } from '@mantine/core';
-import moment from 'moment';
+
+import { useState } from 'react';
+import { IMessageAction } from '@novu/shared';
+
+import { formatDistanceToNow, subMinutes } from 'date-fns';
 import { colors, shadows, Text, Title } from '../../design-system';
 import { ButtonsTemplatesPopover } from '../templates/in-app-editor/ButtonsTemplatesPopover';
-import React, { useState } from 'react';
-import { IMessageAction } from '@novu/shared';
 import { ActionBlockContainer } from './ActionBlockContainer';
 
 export function InAppWidgetPreview({
@@ -30,6 +32,10 @@ export function InAppWidgetPreview({
   function onRemoveTemplate() {
     setIsButtonsTemplateSelected(false);
     onChange({});
+  }
+
+  function minutesAgo(num: number): string {
+    return formatDistanceToNow(subMinutes(new Date(), num), { addSuffix: true });
   }
 
   return (
@@ -99,7 +105,7 @@ export function InAppWidgetPreview({
               <div style={{ width: '100%' }}>
                 <Text weight="bold">{children}</Text>
                 <Text mt={5} color={colors.B60}>
-                  {moment(moment().subtract(5, 'minutes')).fromNow()}
+                  {minutesAgo(5)}
                 </Text>
                 <ActionBlockContainer
                   value={value}
@@ -125,7 +131,7 @@ export function InAppWidgetPreview({
         >
           <Text color={colors.B60}>Notification Example</Text>
           <Text mt={5} color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>
-            {moment(moment().subtract(10, 'minutes')).fromNow()}
+            {minutesAgo(10)}
           </Text>
         </Container>
         <Container
@@ -140,7 +146,7 @@ export function InAppWidgetPreview({
         >
           <Text color={colors.B60}>Notification Example</Text>
           <Text mt={5} color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>
-            {moment(moment().subtract(25, 'minutes')).fromNow()}
+            {minutesAgo(25)}
           </Text>
         </Container>
         <Space h={100} />

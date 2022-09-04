@@ -1,0 +1,59 @@
+{
+  "name": "@novu/client",
+  "version": "0.7.3",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "API client to be used in end user environments",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "keywords": [],
+  "scripts": {
+    "start": "npm run start:dev",
+    "start:dev": "npm run watch:build",
+    "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
+    "lint": "pnpm test:lint",
+    "fix": "run-s fix:*",
+    "fix:prettier": "prettier \"src/**/*.ts\" --write",
+    "fix:lint": "eslint src --ext .ts --fix",
+    "test": "run-s build test:*",
+    "test:lint": "eslint src --ext .ts",
+    "test:prettier": "prettier \"src/**/*.ts\"",
+    "test:unit": "jest src",
+    "check-cli": "run-s test diff-integration-tests check-integration-tests",
+    "check-integration-tests": "run-s check-integration-test:*",
+    "diff-integration-tests": "mkdir -p diff && rm -rf diff/test && cp -r test diff/test && rm -rf diff/test/test-*/.git && cd diff && git init --quiet && git add -A && git commit --quiet --no-verify --allow-empty -m 'WIP' && echo '\\n\\nCommitted most recent integration test output in the \"diff\" directory. Review the changes with \"cd diff && git diff HEAD\" or your preferred git diff viewer.'",
+    "watch:build": "tsc -p tsconfig.json -w",
+    "watch:test": "jest src --watch",
+    "doc": "run-s doc:html && open-cli build/docs/index.html",
+    "doc:html": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --out build/docs",
+    "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
+    "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
+    "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
+    "prepare-release": "run-s reset-hard test"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "dependencies": {
+    "@novu/shared": "^0.7.0",
+    "axios": "^0.26.1"
+  },
+  "devDependencies": {
+    "@types/jest": "27.4.0",
+    "@types/node": "^14.6.0",
+    "codecov": "^3.5.0",
+    "jest": "^27.0.6",
+    "ts-jest": "^27.0.5",
+    "typedoc": "^0.19.0",
+    "typescript": "4.1.3"
+  },
+  "prettier": {
+    "singleQuote": true
+  },
+  "files": [
+    "dist"
+  ]
+}

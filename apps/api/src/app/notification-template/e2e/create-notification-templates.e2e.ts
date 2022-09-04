@@ -7,9 +7,9 @@ import {
   INotificationTemplate,
   TriggerTypeEnum,
 } from '@novu/shared';
-import * as moment from 'moment';
-import { CreateNotificationTemplateRequestDto } from '../dto';
 import { ChangeRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
+import { isSameDay } from 'date-fns';
+import { CreateNotificationTemplateRequestDto } from '../dto';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
@@ -148,7 +148,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(template.name).to.equal(testTemplate.name);
     expect(template.draft).to.equal(true);
     expect(template.active).to.equal(false);
-    expect(moment(template.createdAt).isSame(moment(), 'day'));
+    expect(isSameDay(new Date(template.createdAt), new Date()));
 
     expect(template.steps.length).to.equal(1);
     expect(template.steps[0].template.type).to.equal(ChannelTypeEnum.IN_APP);
