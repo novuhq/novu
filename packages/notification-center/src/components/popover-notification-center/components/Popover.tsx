@@ -1,31 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Popover as MantinePopover, PopoverProps } from '@mantine/core';
 import styled from 'styled-components';
 import { INovuTheme } from '../../../store/novu-theme.context';
 
+type PositionType = [PopoverProps['position'], PopoverProps['placement']];
 interface INovuPopoverProps {
   bell: (props: any) => JSX.Element;
   children: JSX.Element;
   theme: INovuTheme;
   offset?: number;
-  position?: PopoverProps['position'];
-  placement?: PopoverProps['placement'];
+  position?: PopoverProps['position'] | `${PopoverProps['position']}-${PopoverProps['placement']}`;
 }
 
-export function Popover({ children, bell, theme, offset, position = 'bottom', placement = 'end' }: INovuPopoverProps) {
+export function Popover({ children, bell, theme, offset, position = 'bottom' }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
 
   function handlerBellClick() {
     setIsVisible(!isVisible);
   }
 
+  const [modPosition, modPlacement] = useMemo<PositionType>(() => {
+    if (position.includes('-')) {
+      return position.split('-') as PositionType;
+    }
+
+    return [position, 'end'] as PositionType;
+  }, [position]);
+
   return (
     <MantinePopover
       opened={isVisible}
       onClose={() => setIsVisible(false)}
       target={<BellContainer onClick={handlerBellClick}> {bell({})}</BellContainer>}
-      position={position}
-      placement={placement}
+      position={modPosition}
+      placement={modPlacement}
       withArrow
       styles={{
         inner: { margin: 0, padding: 0 },

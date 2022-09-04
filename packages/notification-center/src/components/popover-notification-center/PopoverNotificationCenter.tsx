@@ -24,8 +24,9 @@ interface IPopoverNotificationCenterProps {
   showUserPreferences?: boolean;
   onTabClick?: (tab: ITab) => void;
   offset?: number;
-  position?: PopoverProps['position'];
-  placement?: PopoverProps['placement'];
+  position?:
+    | PopoverProps['position']
+    | `${NonNullable<PopoverProps['position']>}-${NonNullable<PopoverProps['placement']>}`;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -47,7 +48,6 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
       theme={theme}
       bell={(bellProps) => children({ ...bellProps, unseenCount, theme })}
       position={props.position}
-      placement={props.placement}
       offset={props.offset}
     >
       <NotificationCenter
