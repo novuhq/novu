@@ -64,7 +64,7 @@ export function SideNav({}: Props) {
 
   return (
     <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
-      <Navbar.Section mt={20}>
+      <Navbar.Section grow>
         <Popover
           styles={{
             inner: {
@@ -114,7 +114,7 @@ export function SideNav({}: Props) {
         </Popover>
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
-      <BottomNavWrapper>
+      <Navbar.Section mt={15}>
         <Navbar.Section>
           <OrganizationSelect />
         </Navbar.Section>
@@ -129,7 +129,7 @@ export function SideNav({}: Props) {
             Documentation
           </a>
         </BottomNav>
-      </BottomNavWrapper>
+      </Navbar.Section>
     </Navbar>
   );
 }
@@ -152,6 +152,6 @@ const BottomNav = styled.div<{ dark: boolean }>`
   color: ${colors.B60};
   display: flex;
   align-items: center;
-  justify-content: start;
+  justify-content: center;
   margin-bottom: 5px;
 `;
