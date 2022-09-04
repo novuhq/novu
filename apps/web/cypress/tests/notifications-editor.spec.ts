@@ -551,6 +551,7 @@ describe('Notifications Creator', function () {
       cy.waitForNetworkIdle(500);
 
       cy.getByTestId('workflowButton').click();
+      cy.wait(500);
       editChannel('email');
       cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
     });
