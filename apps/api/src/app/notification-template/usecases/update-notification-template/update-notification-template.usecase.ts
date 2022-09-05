@@ -1,5 +1,5 @@
 // eslint-ignore max-len
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -15,6 +15,8 @@ import { UpdateMessageTemplateCommand } from '../../../message-template/usecases
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -23,7 +25,8 @@ export class UpdateNotificationTemplate {
     private createMessageTemplate: CreateMessageTemplate,
     private updateMessageTemplate: UpdateMessageTemplate,
     private createChange: CreateChange,
-    private changeRepository: ChangeRepository
+    private changeRepository: ChangeRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -58,11 +61,29 @@ export class UpdateNotificationTemplate {
     if (command.notificationGroupId) {
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
+
     if (command.critical != null) {
       updatePayload.critical = command.critical;
+
+      if (command.critical !== existingTemplate.critical) {
+        this.analyticsService.track('Update Critical Template - [Platform]', command.userId, {
+          _organization: command.organizationId,
+          critical: command.critical,
+        });
+      }
     }
 
     if (command.preferenceSettings) {
+      if (existingTemplate.preferenceSettings) {
+        if (JSON.stringify(existingTemplate.preferenceSettings) !== JSON.stringify(command.preferenceSettings)) {
+          this.analyticsService.track('Update Preference Defaults - [Platform]', command.userId, {
+            _organization: command.organizationId,
+            critical: command.critical,
+            ...command.preferenceSettings,
+          });
+        }
+      }
+
       updatePayload.preferenceSettings = command.preferenceSettings;
     }
 
@@ -190,6 +211,13 @@ export class UpdateNotificationTemplate {
         changeId: parentChangeId,
       })
     );
+
+    this.analyticsService.track('Update Notification Template - [Platform]', command.userId, {
+      _organization: command.organizationId,
+      steps: command.steps?.length,
+      channels: command.steps?.map((i) => i.template.type),
+      critical: command.critical,
+    });
 
     return await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
   }

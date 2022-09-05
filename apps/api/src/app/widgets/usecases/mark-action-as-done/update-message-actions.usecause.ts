@@ -1,10 +1,23 @@
-import { Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  MessageEntity,
+  MessageRepository,
+  MessageTemplateEntity,
+  SubscriberRepository,
+  OrganizationRepository,
+} from '@novu/dal';
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class UpdateMessageActions {
-  constructor(private messageRepository: MessageRepository, private subscriberRepository: SubscriberRepository) {}
+  constructor(
+    private messageRepository: MessageRepository,
+    private subscriberRepository: SubscriberRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private organizationRepository: OrganizationRepository
+  ) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
     const updatePayload: Partial<MessageTemplateEntity> = {};
@@ -32,6 +45,12 @@ export class UpdateMessageActions {
         $set: updatePayload,
       }
     );
+
+    this.analyticsService.track('Notification Action Clicked - [Notification Center]', command.organizationId, {
+      _subscriber: subscriber._id,
+      _organization: command.organizationId,
+      _environment: command.environmentId,
+    });
 
     return await this.messageRepository.findById(command.messageId);
   }
