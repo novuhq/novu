@@ -15,6 +15,7 @@ import { DigestFilterStepsBackoff } from './digest-filter-steps/digest-filter-st
 import { DigestFilterStepsRegular } from './digest-filter-steps/digest-filter-steps-regular.usecase';
 import { GetDigestEventsRegular } from './send-message/digest/get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './send-message/digest/get-digest-events-backoff.usecase';
+import { VerifyPayload } from './verify-payload/verify-payload.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -34,4 +35,5 @@ export const USE_CASES = [
   DigestFilterStepsBackoff,
   GetDigestEventsBackoff,
   GetDigestEventsRegular,
+  VerifyPayload,
 ];

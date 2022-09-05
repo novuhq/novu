@@ -63,6 +63,7 @@ export class NotificationTemplateService {
       const saved = await this.messageTemplateRepository.create({
         type: message.type,
         cta: message.cta,
+        variables: message.variables,
         content: message.content,
         subject: message.subject,
         title: message.title,

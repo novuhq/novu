@@ -2,6 +2,7 @@ import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTempl
 import { Inject, Injectable } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
+import { merge } from 'lodash';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -11,6 +12,8 @@ import { ProcessSubscriberCommand } from '../process-subscriber/process-subscrib
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
+import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
 
 @Injectable()
 export class TriggerEvent {
@@ -20,6 +23,7 @@ export class TriggerEvent {
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
     private workflowQueueService: WorkflowQueueService,
+    private verifyPayload: VerifyPayload,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -47,6 +51,15 @@ export class TriggerEvent {
     if (!template.active || template.draft) {
       return this.logTemplateNotActive(command, template);
     }
+
+    const defaultPayload = this.verifyPayload.execute(
+      VerifyPayloadCommand.create({
+        payload: command.payload,
+        template,
+      })
+    );
+
+    command.payload = merge({}, command.payload, defaultPayload);
 
     const jobs: JobEntity[][] = [];
 

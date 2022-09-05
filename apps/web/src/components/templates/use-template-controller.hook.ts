@@ -195,6 +195,7 @@ export function useTemplateController(templateId: string) {
         contentType: 'editor',
         subject: '',
         name: 'Email Message Template',
+        variables: [],
       },
       active: true,
       filters: [],

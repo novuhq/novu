@@ -371,6 +371,7 @@ importers:
       '@emotion/babel-plugin': ^11.7.2
       '@emotion/react': ^11.7.1
       '@emotion/styled': ^11.6.0
+      '@handlebars/parser': ^2.1.0
       '@hookform/resolvers': ^2.9.1
       '@mantine/core': 4.1.1
       '@mantine/dropzone': 4.1.1
@@ -466,6 +467,7 @@ importers:
       '@emotion/babel-plugin': 11.7.2_@babel+core@7.18.9
       '@emotion/react': 11.8.2_cccso3eap4yxo2qdsmp4gnn23e
       '@emotion/styled': 11.8.1_37e3dnzsc5654rhpebeqr3r2hu
+      '@handlebars/parser': 2.1.0
       '@hookform/resolvers': 2.9.1_react-hook-form@7.34.0
       '@mantine/core': 4.1.1_2jev7vnekycungnoo7dax3e42u
       '@mantine/dropzone': 4.1.1_3ti3pstfevj7ngnpjpzwas3f5e
@@ -11741,6 +11743,10 @@ packages:
       yargs: 16.2.0
     dev: false
     optional: true
+
+  /@handlebars/parser/2.1.0:
+    resolution: {integrity: sha512-R14NuNaSKZ6eE9y4t0fg/1f8iKd5ZJtSOTIseGFzXINTV17XffhLG2Y0CvdKOgyVQ7+UnXi89YGzRo/xsgwHIA==}
+    dev: false
 
   /@hapi/address/2.1.4:
     resolution: {integrity: sha512-QD1PhQk+s31P1ixsX0H0Suoupp3VMXzIVMSwobR3F3MSUO2YCV0B7xqLcUw/Bh8yuvd3LhpyqLQWTNcRmp6IdQ==}

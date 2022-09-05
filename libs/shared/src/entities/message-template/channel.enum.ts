@@ -20,3 +20,9 @@ export enum StepTypeEnum {
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
 }
+
+export enum TemplateVariableTypeEnum {
+  STRING = 'String',
+  ARRAY = 'Array',
+  BOOLEAN = 'Boolean',
+}
