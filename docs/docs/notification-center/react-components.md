@@ -91,10 +91,10 @@ Use `position` prop to position the popover relative to the Bell icon
 </PopoverNotificationCenter>
 ```
 
-| Prop     | Type                                                                                                                                                               | Default  | Description                                       |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------- |
-| position | 'top' \| 'bottom' \| 'left' \| 'right' \| 'top-start' \| 'top-end' \| 'bottom-start' \| 'bottom-end' \| 'left-start' \| 'left-end' \| 'right-start' \| 'right-end' | 'bottom' | Position of the popover relative to the bell icon |
-| offset   | number                                                                                                                                                             |          | Gap between the Bell icon and Popover in px       |
+| Prop     | Type                                                                                                                                                               | Default      | Description                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | ------------------------------------------------- |
+| position | 'top' \| 'bottom' \| 'left' \| 'right' \| 'top-start' \| 'top-end' \| 'bottom-start' \| 'bottom-end' \| 'left-start' \| 'left-end' \| 'right-start' \| 'right-end' | 'bottom-end' | Position of the popover relative to the bell icon |
+| offset   | number                                                                                                                                                             |              | Gap between the Bell icon and Popover in px       |
 
 ## Custom UI
 
