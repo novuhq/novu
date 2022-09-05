@@ -5,7 +5,6 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { SendMessageCommand } from './send-message.command';
 import * as Sentry from '@sentry/node';
 import {
-  IntegrationRepository,
   NotificationRepository,
   NotificationStepEntity,
   SubscriberEntity,
@@ -13,11 +12,16 @@ import {
   MessageRepository,
   MessageEntity,
   NotificationEntity,
+  IntegrationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, ChatProviderIdEnum } from '@novu/shared';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import {
+  GetDecryptedIntegrationsCommand,
+  GetDecryptedIntegrations,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()
 export class SendMessageChat extends SendMessageType {
@@ -28,8 +32,8 @@ export class SendMessageChat extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    private integrationRepository: IntegrationRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -92,12 +96,17 @@ export class SendMessageChat extends SendMessageType {
       providerId: subscriberChannel.providerId,
     });
 
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      providerId: subscriberChannel.providerId,
-      channel: ChannelTypeEnum.CHAT,
-      active: true,
-    });
+    const integration = (
+      await this.getDecryptedIntegrationsUsecase.execute(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          providerId: subscriberChannel.providerId,
+          channelType: ChannelTypeEnum.CHAT,
+          findOne: true,
+        })
+      )
+    )[0];
 
     if (chatWebhookUrl && integration) {
       await this.sendMessage(chatWebhookUrl, integration, content, message, command, notification);
@@ -155,9 +164,9 @@ export class SendMessageChat extends SendMessageType {
   }
 
   private async sendMessage(
-    chatWebhookUrl,
-    integration,
-    content,
+    chatWebhookUrl: string,
+    integration: IntegrationEntity,
+    content: string,
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity
