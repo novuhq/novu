@@ -180,10 +180,31 @@ export class WorkflowQueueService {
     }
 
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
-    const delay = WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+
+    let delay: number;
+    if (WorkflowQueueService.checkValidDelayOverride(data)) {
+      delay = WorkflowQueueService.toMilliseconds(
+        data.overrides.delay.amount as number,
+        data.overrides.delay.unit as DigestUnitEnum
+      );
+    } else {
+      delay = WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+    }
     await this.queue.add(data._id, data, { delay, ...options });
 
     return true;
+  }
+
+  private static checkValidDelayOverride(data: JobEntity): boolean {
+    if (!data.overrides.delay) {
+      return false;
+    }
+    const values = Object.values(DigestUnitEnum);
+
+    return (
+      typeof data.overrides.delay.amount === 'number' &&
+      values.includes(data.overrides.delay.unit as unknown as DigestUnitEnum)
+    );
   }
 
   private async delayedEventIsCanceled(job: JobEntity) {
