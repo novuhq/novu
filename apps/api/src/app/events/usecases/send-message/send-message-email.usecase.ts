@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
   IEmailBlock,
-  IntegrationRepository,
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
@@ -11,6 +10,7 @@ import {
   MessageEntity,
   NotificationEntity,
   OrganizationEntity,
+  IntegrationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -22,6 +22,10 @@ import { CompileTemplateCommand } from '../../../content-templates/usecases/comp
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageType {
@@ -33,18 +37,13 @@ export class SendMessageEmail extends SendMessageType {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     private compileTemplate: CompileTemplate,
-    private integrationRepository: IntegrationRepository,
-    private organizationRepository: OrganizationRepository
+    private organizationRepository: OrganizationRepository,
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(messageRepository, createLogUsecase);
   }
 
   public async execute(command: SendMessageCommand) {
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.EMAIL,
-      active: true,
-    });
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -58,6 +57,17 @@ export class SendMessageEmail extends SendMessageType {
       message: 'Sending Email',
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
+
+    const integration = (
+      await this.getDecryptedIntegrationsUsecase.execute(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.EMAIL,
+          findOne: true,
+        })
+      )
+    )[0];
 
     const overrides = command.overrides[integration.providerId] || {};
 
@@ -186,8 +196,8 @@ export class SendMessageEmail extends SendMessageType {
   }
 
   private async sendMessage(
-    integration,
-    mailData,
+    integration: IntegrationEntity,
+    mailData: IEmailOptions,
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity

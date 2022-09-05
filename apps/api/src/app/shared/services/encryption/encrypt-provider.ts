@@ -1,32 +1,30 @@
 import { decrypt, encrypt } from './cipher';
 import { ICredentialsDto, secureCredentials } from '@novu/shared';
 
-const novuSubMask = 'nvsk.';
+const NOVU_SUB_MASK = 'nvsk.';
 
 export function encryptProviderSecret(text: string): string {
   const encrypted = encrypt(text);
 
-  return novuSubMask + encrypted;
+  return NOVU_SUB_MASK + encrypted;
 }
 
 export function decryptProviderSecret(text: string): string {
-  if (text.startsWith(novuSubMask)) {
-    text = text.slice(novuSubMask.length);
+  let encryptedSecret = text;
+
+  if (isEncryptedCredential(text)) {
+    encryptedSecret = text.slice(NOVU_SUB_MASK.length);
   }
 
-  return decrypt(text);
+  return decrypt(encryptedSecret);
 }
 
 export function encryptCredentials(credentials: ICredentialsDto): ICredentialsDto {
   const encryptedCredentials: ICredentialsDto = {};
 
-  Object.keys(credentials).forEach((key) => {
-    if (secureCredentials.some((secureCred) => secureCred === key)) {
-      encryptedCredentials[key] = encryptProviderSecret(credentials[key]);
-    } else {
-      encryptedCredentials[key] = credentials[key];
-    }
-  });
+  for (const key in credentials) {
+    encryptedCredentials[key] = needEncryption(key) ? encryptProviderSecret(credentials[key]) : credentials[key];
+  }
 
   return encryptedCredentials;
 }
@@ -34,13 +32,19 @@ export function encryptCredentials(credentials: ICredentialsDto): ICredentialsDt
 export function decryptCredentials(credentials: ICredentialsDto): ICredentialsDto {
   const decryptedCredentials: ICredentialsDto = {};
 
-  Object.keys(credentials).forEach((key) => {
-    if (credentials[key].startsWith(novuSubMask)) {
-      decryptedCredentials[key] = decryptProviderSecret(credentials[key]);
-    } else {
-      decryptedCredentials[key] = credentials[key];
-    }
-  });
+  for (const key in credentials) {
+    decryptedCredentials[key] = isEncryptedCredential(credentials[key])
+      ? decryptProviderSecret(credentials[key])
+      : credentials[key];
+  }
 
   return decryptedCredentials;
+}
+
+function isEncryptedCredential(text: string): boolean {
+  return text.startsWith(NOVU_SUB_MASK);
+}
+
+function needEncryption(key: string): boolean {
+  return secureCredentials.some((secureCred) => secureCred === key);
 }

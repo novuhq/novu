@@ -8,6 +8,7 @@ import {
   SubscriberRepository,
   NotificationEntity,
   MessageEntity,
+  IntegrationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -18,6 +19,10 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()
 export class SendMessageSms extends SendMessageType {
@@ -29,7 +34,8 @@ export class SendMessageSms extends SendMessageType {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     private integrationRepository: IntegrationRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -38,11 +44,7 @@ export class SendMessageSms extends SendMessageType {
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
     });
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.SMS,
-      active: true,
-    });
+
     const smsChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -67,6 +69,18 @@ export class SendMessageSms extends SendMessageType {
     );
 
     const phone = command.payload.phone || subscriber.phone;
+
+    const integration = (
+      await this.getDecryptedIntegrationsUsecase.execute(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.SMS,
+          findOne: true,
+        })
+      )
+    )[0];
+
     const overrides = command.overrides[integration.providerId] || {};
 
     const messagePayload = Object.assign({}, command.payload);
@@ -156,9 +170,9 @@ export class SendMessageSms extends SendMessageType {
   }
 
   private async sendMessage(
-    phone,
-    integration,
-    content,
+    phone: string,
+    integration: IntegrationEntity,
+    content: string,
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity,
