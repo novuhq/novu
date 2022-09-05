@@ -24,7 +24,7 @@ export function Popover({ children, bell, theme, offset, position = 'bottom' }: 
       return position.split('-') as PositionType;
     }
 
-    return [position, 'end'] as PositionType;
+    return [position, 'center'] as PositionType;
   }, [position]);
 
   return (

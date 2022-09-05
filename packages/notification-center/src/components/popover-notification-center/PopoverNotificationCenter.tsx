@@ -26,7 +26,7 @@ interface IPopoverNotificationCenterProps {
   offset?: number;
   position?:
     | PopoverProps['position']
-    | `${NonNullable<PopoverProps['position']>}-${NonNullable<PopoverProps['placement']>}`;
+    | `${NonNullable<PopoverProps['position']>}-${NonNullable<Exclude<PopoverProps['placement'], 'center'>>}`;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {

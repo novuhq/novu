@@ -41,6 +41,7 @@ function PopoverWrapper() {
       colorScheme={colorScheme}
       onNotificationClick={handlerOnNotificationClick}
       onActionClick={handlerOnActionClick}
+      position="bottom-end"
     >
       {({ unseenCount }) => {
         return <NotificationBell colorScheme={colorScheme} unseenCount={unseenCount} />;
