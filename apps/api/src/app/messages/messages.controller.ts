@@ -22,7 +22,7 @@ export class MessagesController {
     summary: 'Delete message',
     description: 'Deletes a message entity from the Novu platform',
   })
-  async removeSubscriber(
+  async deleteMessage(
     @UserSession() user: IJwtPayload,
     @Param('messageId') messageId: string
   ): Promise<DeleteMessageResponseDto> {
