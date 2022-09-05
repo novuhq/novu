@@ -1,5 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SubscriberPreferenceEntity, SubscriberPreferenceRepository, NotificationTemplateRepository } from '@novu/dal';
+import {
+  SubscriberPreferenceEntity,
+  SubscriberPreferenceRepository,
+  NotificationTemplateRepository,
+  SubscriberRepository,
+} from '@novu/dal';
 import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ISubscriberPreferenceResponse } from '../get-subscriber-preference/get-subscriber-preference.usecase';
@@ -16,14 +21,16 @@ export class UpdateSubscriberPreference {
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private getSubscriberTemplatePreference: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   async execute(command: UpdateSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     const userPreference = await this.subscriberPreferenceRepository.findOne({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: subscriber._id,
       _templateId: command.templateId,
     });
 
@@ -34,7 +41,7 @@ export class UpdateSubscriberPreference {
       await this.subscriberPreferenceRepository.create({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        _subscriberId: command.subscriberId,
+        _subscriberId: subscriber._id,
         _templateId: command.templateId,
         enabled: command.enabled !== false,
         channels: command.channel?.type ? channelObj : null,
@@ -70,7 +77,7 @@ export class UpdateSubscriberPreference {
       {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        _subscriberId: command.subscriberId,
+        _subscriberId: subscriber._id,
         _templateId: command.templateId,
       },
       {

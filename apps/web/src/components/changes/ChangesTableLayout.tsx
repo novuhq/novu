@@ -1,15 +1,16 @@
-import moment from 'moment';
 import * as capitalize from 'lodash.capitalize';
-import { Data, Table } from '../../design-system/table/Table';
+import { format } from 'date-fns';
 import { useMantineColorScheme } from '@mantine/core';
 import { ColumnWithStrictAccessor } from 'react-table';
-import { Button, colors, Text } from '../../design-system';
+
 import { useMutation, useQueryClient } from 'react-query';
-import { promoteChange } from '../../api/changes';
-import { QueryKeys } from '../../api/query.keys';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { showNotification } from '@mantine/notifications';
+import { Data, Table } from '../../design-system/table/Table';
+import { Button, colors, Text } from '../../design-system';
+import { promoteChange } from '../../api/changes';
+import { QueryKeys } from '../../api/query.keys';
 
 export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: boolean }) => {
   const queryClient = useQueryClient();
@@ -70,7 +71,7 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
       accessor: 'createdAt',
       Header: 'Date Changed',
       Cell: ({ createdAt }: any) => {
-        return moment(createdAt).format('DD/MM/YYYY');
+        return format(new Date(createdAt), 'dd/MM/yyyy');
       },
     },
     {

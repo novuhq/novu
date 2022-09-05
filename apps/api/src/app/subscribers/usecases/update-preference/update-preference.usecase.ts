@@ -1,21 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberPreference, UpdateSubscriberPreferenceCommand } from '../update-subscriber-preference';
 import { UpdatePreferenceCommand } from './update-preference.command';
 
 @Injectable()
 export class UpdatePreference {
-  constructor(
-    private subscriberRepository: SubscriberRepository,
-    private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference
-  ) {}
+  constructor(private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference) {}
 
   async execute(command: UpdatePreferenceCommand) {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
-
     const updateCommand = UpdateSubscriberPreferenceCommand.create({
       organizationId: command.organizationId,
-      subscriberId: subscriber._id,
+      subscriberId: command.subscriberId,
       environmentId: command.environmentId,
       templateId: command.templateId,
       channel: command.channel,

@@ -37,6 +37,10 @@
       "path": "packages/cli"
     },
     {
+      "name": "📦 @novu/client",
+      "path": "packages/client"
+    },
+    {
       "name": "📦 @novu/shared",
       "path": "libs/shared"
     },
@@ -59,6 +63,10 @@
     {
       "name": "🔔 @novu/apns",
       "path": "providers/apns"
+    },
+    {
+      "name": "📦 @novu/react-native",
+      "path": "packages/react-native"
     },
     {
       "name": "🔔 @novu/discord",

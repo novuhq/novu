@@ -19,6 +19,7 @@ export interface INotificationCenterProps {
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  onTabClick?: (tab: ITab) => void;
 }
 
 export function NotificationCenter(props: INotificationCenterProps) {
@@ -40,6 +41,7 @@ export function NotificationCenter(props: INotificationCenterProps) {
           actionsResultBlock: props.actionsResultBlock,
           tabs: props.tabs,
           showUserPreferences: props.showUserPreferences ?? true,
+          onTabClick: props.onTabClick ? props.onTabClick : () => {},
         }}
       >
         <NovuThemeProvider colorScheme={props.colorScheme} theme={props.theme}>

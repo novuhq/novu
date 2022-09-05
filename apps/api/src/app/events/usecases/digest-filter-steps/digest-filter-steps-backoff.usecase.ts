@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JobStatusEnum, JobRepository, NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
-import * as moment from 'moment';
+import { sub } from 'date-fns';
 import { DigestFilterSteps } from './digest-filter-steps.usecase';
 
 @Injectable()
@@ -32,7 +32,9 @@ export class DigestFilterStepsBackoff {
   }
 
   private getBackoffDate(step: NotificationStepEntity) {
-    return moment().subtract(step.metadata.backoffAmount, step.metadata.backoffUnit).toDate();
+    return sub(new Date(), {
+      [step.metadata.backoffUnit]: step.metadata.backoffAmount,
+    });
   }
 
   private getTrigger(command: DigestFilterStepsCommand, step: NotificationStepEntity) {

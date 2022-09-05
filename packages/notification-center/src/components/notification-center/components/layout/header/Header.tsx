@@ -1,17 +1,25 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { ActionIcon, Badge } from '@mantine/core';
 import styled from 'styled-components';
 import { colors } from '../../../../../shared/config/colors';
-import { useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
+import { useNotificationCenter, useNovuTheme, useScreens, useTranslations, useUnseenCount } from '../../../../../hooks';
 import { INotificationCenterContext } from '../../../../../index';
 import { NotificationCenterContext, ScreensEnum } from '../../../../../store';
 import { Cogs } from '../../../../../shared/icons';
 
-export function Header({ unseenCount }: { unseenCount: number }) {
+export function Header() {
+  const { onUnseenCountChanged } = useNotificationCenter();
+  const { unseenCount } = useUnseenCount();
   const { theme, common } = useNovuTheme();
   const { setScreen } = useScreens();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
+
+  useEffect(() => {
+    if (onUnseenCountChanged) {
+      onUnseenCountChanged(unseenCount);
+    }
+  }, [unseenCount, (window as any).parentIFrame]);
 
   return (
     <HeaderWrapper>
