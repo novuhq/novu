@@ -561,6 +561,39 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
             },
           ],
         },
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Password reset',
+          content: [
+            {
+              type: 'text',
+              content: 'This are the text contents of the template for {{firstName}}',
+            },
+            {
+              type: 'button',
+              content: 'SIGN UP',
+              url: 'https://url-of-app.com/{{urlVariable}}',
+            },
+          ],
+          filters: [
+            {
+              isNegated: false,
+
+              type: 'GROUP',
+
+              value: 'AND',
+
+              children: [
+                {
+                  field: 'subscriberId',
+                  value: subscriber.subscriberId,
+                  operator: 'NOT_EQUAL',
+                  on: 'subscriber',
+                },
+              ],
+            },
+          ],
+        },
       ],
     });
 
@@ -584,11 +617,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await session.awaitRunningJobs(template._id);
 
-    const message = await messageRepository.findOne({
+    const messages = await messageRepository.count({
       _templateId: template._id,
     });
 
-    expect(message).to.be.ok;
+    expect(messages).to.equal(1);
   });
 });
 
