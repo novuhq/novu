@@ -1,55 +1,96 @@
-import { NotificationStepEntity } from '@novu/dal';
+import { NotificationStepEntity, SubscriberEntity } from '@novu/dal';
+import { ITriggerPayload } from '@novu/node';
+import * as _ from 'lodash';
 
-export function matchMessageWithFilters(
-  steps: NotificationStepEntity[],
-  payloadVariables: { [key: string]: string | string[] | { [key: string]: string } }
-): NotificationStepEntity[] {
-  return steps.filter((message) => {
-    if (message.filters?.length) {
-      const foundFilter = message.filters.find((filter) => {
-        if (filter.type === 'GROUP') {
-          return handleGroupFilters(filter, payloadVariables);
-        }
-
-        return false;
-      });
-
-      return foundFilter;
-    }
-
-    return true;
-  });
+export interface IFilterVariables {
+  payload: ITriggerPayload;
+  subscriber?: SubscriberEntity;
 }
 
-function handleGroupFilters(filter, payloadVariables) {
+export function matchMessageWithFilters(step: NotificationStepEntity, variables: IFilterVariables): boolean {
+  if (!Array.isArray(step?.filters)) {
+    return true;
+  }
+  if (step.filters?.length) {
+    const foundFilter = step.filters.find((filter) => {
+      const children = filter.children;
+      if (!children || (Array.isArray(children) && children.length === 0)) {
+        return true;
+      }
+
+      return handleGroupFilters(filter, variables);
+    });
+
+    return foundFilter !== undefined;
+  }
+
+  return true;
+}
+
+function handleGroupFilters(filter, variables: IFilterVariables) {
   if (filter.value === 'OR') {
-    return handleOrFilters(filter, payloadVariables);
+    return handleOrFilters(filter, variables);
   }
 
   if (filter.value === 'AND') {
-    return handleAndFilters(filter, payloadVariables);
+    return handleAndFilters(filter, variables);
   }
 
   return false;
 }
 
-function handleAndFilters(filter, payloadVariables) {
-  const foundFilterMatches = filter.children.filter((i) => processFilterEquality(i, payloadVariables));
+function handleAndFilters(filter, variables: IFilterVariables) {
+  const foundFilterMatches = filter.children.filter((i) => processFilterEquality(i, variables));
 
   return foundFilterMatches.length === filter.children.length;
 }
 
-function handleOrFilters(filter, payloadVariables) {
-  return filter.children.find((i) => processFilterEquality(i, payloadVariables));
+function handleOrFilters(filter, variables: IFilterVariables) {
+  return filter.children.find((i) => processFilterEquality(i, variables));
 }
 
-function processFilterEquality(i, payloadVariables) {
+function processFilterEquality(i, variables: IFilterVariables) {
+  const payloadVariable = _.get(variables, [i.on, i.field]);
+  const value = parseValue(payloadVariable, i.value);
   if (i.operator === 'EQUAL') {
-    return payloadVariables[i.field] === i.value;
+    return payloadVariable === value;
   }
   if (i.operator === 'NOT_EQUAL') {
-    return payloadVariables[i.field] !== i.value;
+    return payloadVariable !== value;
+  }
+  if (i.operator === 'LARGER') {
+    return payloadVariable > value;
+  }
+  if (i.operator === 'SMALLER') {
+    return payloadVariable < value;
+  }
+  if (i.operator === 'LARGER_EQUAL') {
+    return payloadVariable >= value;
+  }
+  if (i.operator === 'SMALLER_EQUAL') {
+    return payloadVariable <= value;
+  }
+  if (i.operator === 'NOT_IN') {
+    return !payloadVariable.includes(value);
+  }
+  if (i.operator === 'IN') {
+    return payloadVariable.includes(value);
   }
 
   return false;
+}
+
+function parseValue(originValue, parsingValue) {
+  switch (typeof originValue) {
+    case 'number':
+      return Number(parsingValue);
+    case 'string':
+      return String(parsingValue);
+    case 'boolean':
+      return parsingValue === 'true';
+    case 'bigint':
+      return Number(parsingValue);
+    default:
+      return parsingValue;
+  }
 }

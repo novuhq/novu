@@ -7,6 +7,9 @@ import {
   IUpdateNotificationTemplateDto,
   StepTypeEnum,
   IPreferenceChannels,
+  BuilderFieldType,
+  BuilderGroupValues,
+  BuilderFieldOperator,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
@@ -242,7 +245,20 @@ export interface StepEntity {
 
   template: ITemplates;
 
-  filters?: any[];
+  filters?: {
+    isNegated?: boolean;
+
+    type?: BuilderFieldType;
+
+    value?: BuilderGroupValues;
+
+    children?: {
+      on?: 'payload' | 'subscriber';
+      field?: string;
+      value?: string;
+      operator?: BuilderFieldOperator;
+    }[];
+  }[];
 
   active: boolean;
 
