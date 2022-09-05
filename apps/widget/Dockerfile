@@ -11,7 +11,7 @@ COPY apps/widget ./apps/widget
 
 COPY libs/dal ./libs/dal
 COPY libs/embed ./libs/embed
-COPY libs/client ./libs/client
+COPY packages/client ./packages/client
 COPY libs/testing ./libs/testing
 COPY libs/shared ./libs/shared
 COPY packages/notification-center ./packages/notification-center

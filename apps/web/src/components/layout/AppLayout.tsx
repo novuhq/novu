@@ -17,7 +17,9 @@ export function AppLayout() {
           navbar={<SideNav />}
           header={<HeaderNav />}
           styles={(theme) => ({
-            main: { backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight },
+            root: { minHeight: '100vh' },
+            body: { height: 'calc(100vh - 65px)' },
+            main: { backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight, overflow: 'auto' },
           })}
         >
           <Sentry.ErrorBoundary
