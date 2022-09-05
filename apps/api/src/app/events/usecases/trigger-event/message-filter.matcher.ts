@@ -8,7 +8,7 @@ export interface IFilterVariables {
 }
 
 export function matchMessageWithFilters(step: NotificationStepEntity, variables: IFilterVariables): boolean {
-  if (!Array.isArray(step?.filters)) {
+  if (!step?.filters || !Array.isArray(step?.filters)) {
     return true;
   }
   if (step.filters?.length) {

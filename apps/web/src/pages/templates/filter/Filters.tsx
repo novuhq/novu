@@ -32,16 +32,16 @@ interface IFilter {
 
 export const Filter = ({ filter }: { filter: IFilter }) => {
   return (
-    <FilterItem>
+    <FilterItem className="filter-item">
       <FilterPosition>
         {filter.on} {filter.field} {translateOperator(filter.operator)}
       </FilterPosition>
-      <FilterValue>{filter.value}</FilterValue>
+      <FilterValue className="filter-item-value">{filter.value}</FilterValue>
     </FilterItem>
   );
 };
 
-const translateOperator = (operator?: BuilderFieldOperator) => {
+export const translateOperator = (operator?: BuilderFieldOperator) => {
   if (operator === 'NOT_EQUAL') {
     return 'not equal';
   }
