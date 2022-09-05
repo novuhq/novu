@@ -6,6 +6,7 @@ import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase'
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { FilterQuery } from 'mongoose';
 
 interface IJobEntityExtended extends JobEntity {
   presend?: boolean;
@@ -62,7 +63,7 @@ export class WorkflowQueueService {
   }
 
   public async work(job: IJobEntityExtended) {
-    const canceled = await this.digestIsCanceled(job);
+    const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {
       return;
     }
@@ -109,12 +110,11 @@ export class WorkflowQueueService {
 
     const digestAdded = await this.addDigestJob(data, options);
     const delayAdded = await this.addDelayJob(data, options);
-    if (digestAdded) {
+
+    if (digestAdded || delayAdded) {
       return;
     }
-    if (delayAdded) {
-      return;
-    }
+
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
     await this.queue.add(
       data._id,
@@ -142,12 +142,12 @@ export class WorkflowQueueService {
   }
 
   private async addDigestJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
-    const isDigest = data.type === StepTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
-    if (!isDigest) {
+    const isValidDigestStep = data.type === StepTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
+    if (!isValidDigestStep) {
       return false;
     }
 
-    const where: any = {
+    const where: FilterQuery<JobEntity> = {
       status: JobStatusEnum.DELAYED,
       type: StepTypeEnum.DIGEST,
       _subscriberId: data._subscriberId,
@@ -174,8 +174,8 @@ export class WorkflowQueueService {
   }
 
   private async addDelayJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
-    const isDelay = data.type === StepTypeEnum.DELAY && data.step.metadata.amount && data.step.metadata.unit;
-    if (!isDelay) {
+    const isValidDelayStep = data.type === StepTypeEnum.DELAY && data.step.metadata.amount && data.step.metadata.unit;
+    if (!isValidDelayStep) {
       return false;
     }
 
@@ -186,8 +186,8 @@ export class WorkflowQueueService {
     return true;
   }
 
-  private async digestIsCanceled(job: JobEntity) {
-    if (job.type !== StepTypeEnum.DIGEST) {
+  private async delayedEventIsCanceled(job: JobEntity) {
+    if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
       return false;
     }
     const count = await this.jobRepository.count({
