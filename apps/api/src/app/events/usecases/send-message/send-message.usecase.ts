@@ -53,7 +53,7 @@ export class SendMessage {
 
   private async getFilterData(command: SendMessageCommand) {
     const fetchSubscriber = command.step.filters.find((filter) => {
-      return filter.children.find((item) => item.on === 'subscriber');
+      return filter.children.find((item) => item?.on === 'subscriber');
     });
 
     let subscriber = undefined;

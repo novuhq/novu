@@ -1,9 +1,9 @@
 import { NotificationStepEntity, SubscriberEntity } from '@novu/dal';
-import { ITriggerPayloadOptions } from '@novu/node';
+import { ITriggerPayload } from '@novu/node';
 import * as _ from 'lodash';
 
 export interface IFilterVariables {
-  payload: ITriggerPayloadOptions;
+  payload: ITriggerPayload;
   subscriber?: SubscriberEntity;
 }
 
