@@ -8,7 +8,7 @@ import { SendMessageChat } from './send-message/send-message-chat.usecase';
 import { SendMessagePush } from './send-message/send-message-push.usecase';
 import { QueueNextJob } from './queue-next-job/queue-next-job.usecase';
 import { Digest } from './send-message/digest/digest.usecase';
-import { CancelDigest } from './cancel-digest/cancel-digest.usecase';
+import { CancelDelayed } from './cancel-delayed/cancel-delayed.usecase';
 import { TriggerEventToAll } from './trigger-event-to-all/trigger-event-to-all.usecase';
 import { DigestFilterSteps } from './digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsBackoff } from './digest-filter-steps/digest-filter-steps-backoff.usecase';
@@ -27,7 +27,7 @@ export const USE_CASES = [
   SendMessagePush,
   QueueNextJob,
   Digest,
-  CancelDigest,
+  CancelDelayed,
   TriggerEventToAll,
   DigestFilterSteps,
   DigestFilterStepsRegular,

@@ -73,6 +73,18 @@ export default memo(({ data }: { data: NodeData }) => {
         >
           Digest
         </DropdownItem>
+        <DropdownItem
+          data-test-id={`add-delay-node`}
+          icon={
+            /* Hack to manage the size of the SVG, which can't be changed with height and width attributes */
+            <div style={{ zoom: 0.65, width: 28, marginLeft: 4 }}>
+              <Digest color={theme.colorScheme === 'dark' ? colors.white : colors.B40} />
+            </div>
+          }
+          onClick={() => addNewNode(StepTypeEnum.DELAY)}
+        >
+          Delay
+        </DropdownItem>
       </Dropdown>
       <Dropzone data-test-id="dropzone-area" dark={theme.colorScheme === 'dark'} visible={data.showDropZone}>
         <Text weight="bold" size="lg">

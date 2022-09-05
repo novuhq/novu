@@ -57,7 +57,7 @@ before deploying.
 When self-hosting Novu, in order to trigger an event you must first create a new `Novu` object and configure it with the proper `backendUrl`.
 
 ```
-import { Novu } from '@novu/node';
+import { Novu } from '@novu/node'; 
 
 const config = {
   backendUrl: '<REPLACE_WITH_BACKEND_URL>'
