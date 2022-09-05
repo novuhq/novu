@@ -10,12 +10,14 @@ import { useTemplateController } from '../../../components/templates/use-templat
 import { StepActiveSwitch } from './StepActiveSwitch';
 import { useEnvController } from '../../../store/use-env-controller';
 import { When } from '../../../components/utils/When';
-import { Trash } from '../../../design-system/icons';
+import { PlusCircle, Trash } from '../../../design-system/icons';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { DigestMetadata } from './DigestMetadata';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { DelayMetadata } from './DelayMetadata';
+import { FilterModal } from '../filter/FilterModal';
+import { Filters } from '../filter/Filters';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -66,7 +68,9 @@ const WorkflowEditorPage = ({
   };
   const { addStep, deleteStep, control, watch, errors } = useTemplateController(templateId);
   const { isLoading, isUpdateLoading, loadingEditTemplate, isDirty } = useTemplateController(templateId);
+  const [filterOpen, setFilterOpen] = useState(false);
   const steps = watch('steps');
+
   const { readonly } = useEnvController();
   const [toDelete, setToDelete] = useState<string>('');
 
@@ -122,6 +126,24 @@ const WorkflowEditorPage = ({
             addStep={addStep}
             setSelectedNodeId={setSelectedNodeId}
           />
+          <When truthy={selectedChannel !== null && selectedChannel !== StepTypeEnum.DIGEST}>
+            {steps.map((i, index) => {
+              return index === activeStep ? (
+                <FilterModal
+                  key={index}
+                  isOpen={filterOpen}
+                  cancel={() => {
+                    setFilterOpen(false);
+                  }}
+                  confirm={() => {
+                    setFilterOpen(false);
+                  }}
+                  control={control}
+                  stepIndex={activeStep}
+                />
+              ) : null;
+            })}
+          </When>
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
@@ -160,6 +182,32 @@ const WorkflowEditorPage = ({
                         <StepActiveSwitch key={index} index={activeStep} control={control} />
                       ) : null;
                     })}
+                  </NavSection>
+                  <NavSection>
+                    <Divider
+                      style={{
+                        marginBottom: '15px',
+                      }}
+                      label="Filters"
+                      labelPosition="center"
+                    />
+                    {steps.map((i, index) => {
+                      return index !== activeStep ? null : <Filters step={i} />;
+                    })}
+                    <FilterButton
+                      fullWidth
+                      variant="outline"
+                      onClick={() => {
+                        setFilterOpen(true);
+                      }}
+                    >
+                      <PlusCircle
+                        style={{
+                          marginRight: '7px',
+                        }}
+                      />{' '}
+                      Add filter
+                    </FilterButton>
                   </NavSection>
                 </When>
                 <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
@@ -329,4 +377,9 @@ const DeleteStepButton = styled(Button)`
   :hover {
     background: rgba(229, 69, 69, 0.15);
   }
+`;
+
+const FilterButton = styled(Button)`
+  background: ${colors.B20};
+  box-shadow: 0px 5px 20px rgb(0 0 0 / 20%);
 `;

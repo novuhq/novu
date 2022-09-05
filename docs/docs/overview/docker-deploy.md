@@ -57,7 +57,7 @@ before deploying.
 When self-hosting Novu, in order to trigger an event you must first create a new `Novu` object and configure it with the proper `backendUrl`.
 
 ```
-import { Novu } from '@novu/node';
+import { Novu } from '@novu/node'; 
 
 const config = {
   backendUrl: '<REPLACE_WITH_BACKEND_URL>'
@@ -70,7 +70,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
     subscriberId: '<REPLACE_WITH_DATA>',
   },
   payload: {
-    
+
   },
 })
 ```
@@ -81,14 +81,16 @@ When using the IFrame embed to attach the notification center rather than the re
 
 ```html
 <script>
-  novu.init('<REPLACE_APPLICATION_ID>', {
-    unseenBadgeSelector: '#unseen-badge',
-    bellSelector: '#notification-bell',
-    backendUrl: 'https://api.example.com',
-    socketUrl: 'https://ws.example.com'
-  }, {
- 
-  })
+  novu.init(
+    '<REPLACE_APPLICATION_ID>',
+    {
+      unseenBadgeSelector: '#unseen-badge',
+      bellSelector: '#notification-bell',
+      backendUrl: 'https://api.example.com',
+      socketUrl: 'https://ws.example.com',
+    },
+    {}
+  );
 </script>
 ```
 

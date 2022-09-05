@@ -61,6 +61,7 @@ const notificationTemplateSchema = new Schema(
                 field: Schema.Types.String,
                 value: Schema.Types.String,
                 operator: Schema.Types.String,
+                on: Schema.Types.String,
               },
             ],
           },
