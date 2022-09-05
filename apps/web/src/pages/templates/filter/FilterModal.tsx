@@ -1,7 +1,8 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
-import { Button, colors, Input, Select, shadows, Title } from '../../design-system';
+import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Controller, useFieldArray } from 'react-hook-form';
 import styled from '@emotion/styled';
+import { Trash } from '../../../design-system/icons';
 
 export function FilterModal({
   isOpen,
@@ -155,7 +156,7 @@ export function FilterModal({
                 />
               </Grid.Col>
               <Grid.Col span={1}>
-                <FilterButton
+                <DeleteStepButton
                   variant="outline"
                   size="md"
                   mt={30}
@@ -163,8 +164,8 @@ export function FilterModal({
                     remove(index);
                   }}
                 >
-                  -
-                </FilterButton>
+                  <Trash />
+                </DeleteStepButton>
               </Grid.Col>
             </Grid>
           );
@@ -185,5 +186,15 @@ export function FilterModal({
 }
 
 const FilterButton = styled(Button)`
+  margin-top: 0px;
+`;
+
+const DeleteStepButton = styled(Button)`
+  background: rgba(229, 69, 69, 0.15);
+  color: ${colors.error};
+  box-shadow: none;
+  :hover {
+    background: rgba(229, 69, 69, 0.15);
+  }
   margin-top: 0px;
 `;

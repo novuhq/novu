@@ -10,13 +10,14 @@ import { useTemplateController } from '../../../components/templates/use-templat
 import { StepActiveSwitch } from './StepActiveSwitch';
 import { useEnvController } from '../../../store/use-env-controller';
 import { When } from '../../../components/utils/When';
-import { Trash } from '../../../design-system/icons';
+import { PlusCircle, Trash } from '../../../design-system/icons';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { DigestMetadata } from './DigestMetadata';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { Controller } from 'react-hook-form';
-import { FilterModal } from '../FilterModal';
+import { FilterModal } from '../filter/FilterModal';
+import { Filters } from '../filter/Filters';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -175,16 +176,6 @@ const WorkflowEditorPage = ({
                     >
                       Edit Template
                     </EditTemplateButton>
-                    <Button
-                      fullWidth
-                      mt={10}
-                      variant="outline"
-                      onClick={() => {
-                        setFilterOpen(true);
-                      }}
-                    >
-                      Add filter
-                    </Button>
                     <Divider my={30} />
                     {steps.map((i, index) => {
                       return index === activeStep ? (
@@ -193,31 +184,30 @@ const WorkflowEditorPage = ({
                     })}
                   </NavSection>
                   <NavSection>
+                    <Divider
+                      style={{
+                        marginBottom: '15px',
+                      }}
+                      label="Filters"
+                      labelPosition="center"
+                    />
                     {steps.map((i, index) => {
-                      if (index !== activeStep) {
-                        return null;
-                      }
-                      if (!i.filters || !Array.isArray(i.filters)) {
-                        return null;
-                      }
-
-                      return i.filters.map((group) => {
-                        if (!Array.isArray(group.children) || group.children.length === 0) {
-                          return null;
-                        }
-
-                        return group.children.map((filter, fIndex, filters) => {
-                          return (
-                            <>
-                              <p>
-                                {filter.on}.{filter.field} {filter.operator} {filter.value}
-                              </p>
-                              {fIndex !== filters.length - 1 ? <p>{group.value}</p> : null}
-                            </>
-                          );
-                        });
-                      });
+                      return index !== activeStep ? null : <Filters step={i} />;
                     })}
+                    <FilterButton
+                      fullWidth
+                      variant="outline"
+                      onClick={() => {
+                        setFilterOpen(true);
+                      }}
+                    >
+                      <PlusCircle
+                        style={{
+                          marginRight: '7px',
+                        }}
+                      />{' '}
+                      Add filter
+                    </FilterButton>
                   </NavSection>
                 </When>
                 <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
@@ -362,4 +352,9 @@ const DeleteStepButton = styled(Button)`
   :hover {
     background: rgba(229, 69, 69, 0.15);
   }
+`;
+
+const FilterButton = styled(Button)`
+  background: ${colors.B20};
+  box-shadow: 0px 5px 20px rgb(0 0 0 / 20%);
 `;
