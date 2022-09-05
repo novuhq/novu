@@ -9,7 +9,6 @@ import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.c
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
-import { matchMessageWithFilters } from './message-filter.matcher';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -82,7 +81,7 @@ export class TriggerEvent {
       );
     }
 
-    const steps = matchMessageWithFilters(template.steps, command.payload);
+    const steps = template.steps;
 
     this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
       _template: template._id,
