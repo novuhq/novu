@@ -126,7 +126,7 @@ const WorkflowEditorPage = ({
             addStep={addStep}
             setSelectedNodeId={setSelectedNodeId}
           />
-          <When truthy={selectedChannel !== null && selectedChannel !== StepTypeEnum.DIGEST}>
+          <When truthy={selectedChannel !== null && getChannel(selectedChannel)?.type !== NodeTypeEnum.ACTION}>
             {steps.map((i, index) => {
               return index === activeStep ? (
                 <FilterModal
