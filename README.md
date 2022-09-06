@@ -169,6 +169,6 @@ Novu is licensed under the MIT License - see the [LICENSE](https://github.com/no
 
 Thanks a lot for spending your time helping Novu grow. Thanks a lot! Keep rocking 🥂
 
-<a href="https://github.com/novuhq/novu/graphs/contributors">
+<a href="https://novu.co/contributors">
   <img src="https://contrib.rocks/image?repo=novuhq/novu" />
 </a>
