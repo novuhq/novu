@@ -72,12 +72,12 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 
 await novu.trigger('<TRIGGER_NAME>',
   {
-    to: {
+    to: [{
       subscriberId: '<UNIQUE_IDENTIFIER>',
-      email: 'john@doemail.com',
+      email: 'john1@doemail.com',
       firstName: 'John',
       lastName: 'Doe',
-    },
+    }],
     payload: {
       name: "Hello World",
       organization: {
@@ -159,3 +159,16 @@ Just <a href="https://discord.gg/novu">Join Our Discord</a> server and ask for h
 ## 🔗 Links
 
 - [Home page](https://novu.co/)
+- [Contribution Guidelines](https://github.com/AmanNegi/novu/blob/main/CONTRIBUTING.md)
+
+## 🛡️ License
+
+Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
+
+## 💪 Thanks to all Contributors
+
+Thanks a lot for spending your time helping Novu grow. Thanks a lot! Keep rocking 🥂
+
+<a href="https://github.com/novuhq/novu/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=novuhq/novu" />
+</a>

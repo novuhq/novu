@@ -102,5 +102,6 @@ export class StepFilter {
     field: string;
     value: string;
     operator: BuilderFieldOperator;
+    on?: 'payload' | 'subscriber';
   }[];
 }

@@ -1,15 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum, JobRepository } from '@novu/dal';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { CancelDigestCommand } from './cancel-digest.command';
+import { CancelDelayedCommand } from './cancel-delayed.command';
 
 @Injectable()
-export class CancelDigest {
+export class CancelDelayed {
   constructor(private jobRepository: JobRepository) {}
 
-  public async execute(command: CancelDigestCommand): Promise<boolean> {
+  public async execute(command: CancelDelayedCommand): Promise<boolean> {
     const job = await this.jobRepository.findOne({
-      type: StepTypeEnum.DIGEST,
       transactionId: command.transactionId,
       status: JobStatusEnum.DELAYED,
     });

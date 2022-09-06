@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, StepTypeEnum } from './channel.enum';
+import { ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from './channel.enum';
 
 export interface IEmailBlock {
   type: 'text' | 'button';
@@ -9,6 +9,13 @@ export interface IEmailBlock {
   };
 }
 
+export class ITemplateVariable {
+  type: TemplateVariableTypeEnum;
+  name: string;
+  required: boolean;
+  defaultValue?: string | boolean;
+}
+
 export interface IMessageTemplate {
   _id?: string;
   subject?: string;
@@ -16,6 +23,7 @@ export interface IMessageTemplate {
   type: StepTypeEnum;
   contentType?: 'editor' | 'customHtml';
   content: string | IEmailBlock[];
+  variables?: ITemplateVariable[];
   cta?: {
     type: ChannelCTATypeEnum;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,3 +32,6 @@ export interface IMessageTemplate {
   _feedId?: string;
   active?: boolean;
 }
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const TemplateSystemVariables = ['subscriber', 'step', 'branding'];

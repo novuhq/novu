@@ -63,7 +63,7 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, activeP
   );
 
   return (
-    <Container fluid sx={{ padding: '20px' }}>
+    <Container fluid sx={{ padding: '20px', width: '100%' }}>
       <Group position="apart">
         <div>
           <Title>

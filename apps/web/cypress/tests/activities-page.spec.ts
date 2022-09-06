@@ -15,7 +15,7 @@ describe('Activity Feed Screen', function () {
       });
   });
 
-  it('should display notification templates list', function () {
+  it('should display notification for activity', function () {
     cy.intercept('*/activity*', (r) => {
       r.continue((res) => {
         if (!res.body?.data) return;
@@ -33,8 +33,8 @@ describe('Activity Feed Screen', function () {
       .getByTestId('row-template-name')
       .contains(this.session.templates[0].name);
 
-    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-in-app-channel').should('be.visible');
-    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-email-channel').should('be.visible');
+    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-in-app-channel').should('exist');
+    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-email-channel').should('exist');
     cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
   });
 
