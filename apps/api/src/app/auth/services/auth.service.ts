@@ -131,9 +131,9 @@ export class AuthService {
     return this.jwtService.sign(
       {
         _id: user._id,
-        firstName: null,
+        firstName: 'API Request',
         lastName: null,
-        email: null,
+        email: user.email,
         profilePicture: null,
         organizationId,
         roles: [MemberRoleEnum.ADMIN],
