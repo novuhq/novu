@@ -49,12 +49,12 @@ export interface IThemePopover {
 }
 
 export interface IThemeNotificationListItem {
-  seen?: {
+  read?: {
     fontColor?: string;
     background?: string;
     timeMarkFontColor?: string;
   };
-  unseen?: {
+  unread?: {
     fontColor?: string;
     background?: string;
     boxShadow?: string;
@@ -90,8 +90,8 @@ export interface IThemeFooter {
 }
 
 export interface INotificationBellColors {
-  unseenBadgeColor?: string | ISvgStopColor;
-  unseenBadgeBackgroundColor?: string;
+  unreadBadgeColor?: string | ISvgStopColor;
+  unreadBadgeBackgroundColor?: string;
 }
 
 export interface ISvgStopColor {

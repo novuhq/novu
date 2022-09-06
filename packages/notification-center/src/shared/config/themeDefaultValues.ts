@@ -19,8 +19,8 @@ export const defaultLightTheme: INovuTheme = {
   },
   popover: { arrowColor: colors.white },
   notificationItem: {
-    seen: { background: colors.B98, fontColor: colors.B60, timeMarkFontColor: colors.B80 },
-    unseen: {
+    read: { background: colors.B98, fontColor: colors.B60, timeMarkFontColor: colors.B80 },
+    unread: {
       background: colors.white,
       fontColor: colors.B40,
       boxShadow: shadows.medium,
@@ -67,8 +67,8 @@ export const defaultDarkTheme: INovuTheme = {
   },
   popover: { arrowColor: colors.B15 },
   notificationItem: {
-    seen: { background: colors.B17, fontColor: colors.white, timeMarkFontColor: colors.B40 },
-    unseen: {
+    read: { background: colors.B17, fontColor: colors.white, timeMarkFontColor: colors.B40 },
+    unread: {
       background: colors.B20,
       fontColor: colors.white,
       boxShadow: shadows.dark,
@@ -105,11 +105,11 @@ export const defaultCommonTheme: ICommonTheme = {
 };
 
 export const defaultNotificationBellLightTheme: INotificationBellColors = {
-  unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
-  unseenBadgeBackgroundColor: colors.white,
+  unreadBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  unreadBadgeBackgroundColor: colors.white,
 };
 
 export const defaultNotificationBellDarkTheme: INotificationBellColors = {
-  unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
-  unseenBadgeBackgroundColor: colors.B15,
+  unreadBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  unreadBadgeBackgroundColor: colors.B15,
 };
