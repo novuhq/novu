@@ -1,4 +1,11 @@
-import { BellGradient, ChatGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
+import {
+  BellGradient,
+  ChatGradient,
+  MailGradient,
+  MobileGradient,
+  SmsGradient,
+  TimerGradient,
+} from '../../../design-system/icons';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { DigestGradient } from '../../../design-system/icons/general/DigestGradient';
 import React from 'react';
@@ -59,7 +66,7 @@ export const channels: IChannelDefinition[] = [
     tabKey: StepTypeEnum.DELAY,
     label: 'Delay',
     description: 'Delay events',
-    Icon: DigestGradient,
+    Icon: TimerGradient,
     testId: 'delaySelector',
     channelType: StepTypeEnum.DELAY,
     type: NodeTypeEnum.ACTION,
