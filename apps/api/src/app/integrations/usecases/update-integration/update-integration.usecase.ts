@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
+import { encryptCredentials } from '../../../shared/services/encryption';
 
 @Injectable()
 export class UpdateIntegration {
@@ -21,7 +22,7 @@ export class UpdateIntegration {
     }
 
     if (command.credentials) {
-      updatePayload.credentials = command.credentials;
+      updatePayload.credentials = encryptCredentials(command.credentials);
     }
 
     if (!Object.keys(updatePayload).length) {

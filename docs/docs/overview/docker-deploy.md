@@ -56,12 +56,12 @@ before deploying.
 
 When self-hosting Novu, in order to trigger an event you must first create a new `Novu` object and configure it with the proper `backendUrl`.
 
-```
-import { Novu } from '@novu/node'; 
+```typescript
+import { Novu } from '@novu/node';
 
 const config = {
-  backendUrl: '<REPLACE_WITH_BACKEND_URL>'
-}
+  backendUrl: '<REPLACE_WITH_BACKEND_URL>',
+};
 
 const novu = new Novu('<API_KEY>', config);
 
@@ -69,10 +69,8 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
   to: {
     subscriberId: '<REPLACE_WITH_DATA>',
   },
-  payload: {
-
-  },
-})
+  payload: {},
+});
 ```
 
 ### Pointing IFrame embed to custom installation
