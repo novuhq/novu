@@ -81,6 +81,21 @@ To support dark mode in your application the notification center component can r
 </PopoverNotificationCenter>
 ```
 
+## Modify the Popover's `position`
+
+Use `position` prop to position the popover relative to the Bell icon
+
+```tsx
+<PopoverNotificationCenter position="left-start">
+  {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
+</PopoverNotificationCenter>
+```
+
+| Prop     | Type                                                                                                                                                               | Default      | Description                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | ------------------------------------------------- |
+| position | 'top' \| 'bottom' \| 'left' \| 'right' \| 'top-start' \| 'top-end' \| 'bottom-start' \| 'bottom-end' \| 'left-start' \| 'left-end' \| 'right-start' \| 'right-end' | 'bottom-end' | Position of the popover relative to the bell icon |
+| offset   | number                                                                                                                                                             |              | Gap between the Bell icon and Popover in px       |
+
 ## Custom UI
 
 If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our react library.
