@@ -1,3 +1,4 @@
+
 import { EN } from './languages/en';
 import { FI } from './languages/fi';
 import { FR } from './languages/fr';
@@ -13,6 +14,7 @@ import { DE } from './languages/de';
 import { BN } from './languages/bn';
 import { ML } from './languages/ml';
 import { ZH } from './languages/zh';
+import { HR } from './languages/hr';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -42,6 +44,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   bn: BN,
   ml: ML,
   zh: ZH,
+  hr: HR,
 };
 
 /**
@@ -55,4 +58,4 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * Any new language should also be added to the documentation
  * https://docs.novu.co/notification-center/react-components#customize-the-ui-language
  */
-export type I18NLanguage = 'en' | 'fi' | 'hi' | 'it' | 'gj' | 'ru' | 'uk' | 'es' | 'ar' | 'fa' | 'fr' | 'de' | 'bn' | 'ml' | 'zh';
+export type I18NLanguage = 'en' | 'fi' | 'hi' | 'it' | 'gj' | 'ru' | 'uk' | 'es' | 'ar' | 'fa' | 'fr' | 'de' | 'bn' | 'ml' | 'zh' | 'hr';
