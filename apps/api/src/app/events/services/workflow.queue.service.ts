@@ -196,7 +196,7 @@ export class WorkflowQueueService {
   }
 
   private static checkValidDelayOverride(data: JobEntity): boolean {
-    if (!data.overrides.delay) {
+    if (!data.overrides?.delay) {
       return false;
     }
     const values = Object.values(DigestUnitEnum);
