@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useCallback } from 'react';
 import { INotificationsContext } from '../index';
 import { NotificationsContext } from '../store/notifications.context';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
@@ -37,9 +37,13 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapUpdateAction(messageId, actionButtonType, status, payload, storeId);
   }
 
-  async function refetch() {
+  const refetch = useCallback(async () => {
     await mapRefetch(storeId);
-  }
+  }, []);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   return {
     notifications,
