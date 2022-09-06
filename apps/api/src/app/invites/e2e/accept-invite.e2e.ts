@@ -1,4 +1,4 @@
-import { OrganizationRepository, MemberRepository } from '@novu/dal';
+import { MemberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { MemberStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -6,7 +6,6 @@ import { expect } from 'chai';
 describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
   let session: UserSession;
   let invitedUserSession: UserSession;
-  const organizationRepository = new OrganizationRepository();
   const memberRepository = new MemberRepository();
 
   async function setup() {
@@ -29,20 +28,13 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
   }
 
   describe('Valid invite accept flow', async () => {
-    let response;
-
     before(async () => {
       await setup();
 
-      const organization = await organizationRepository.findById(session.organization._id);
       const members = await memberRepository.getOrganizationMembers(session.organization._id);
       const invitee = members.find((i) => !i._userId);
 
-      const { body } = await invitedUserSession.testAgent
-        .post(`/v1/invites/${invitee.invite.token}/accept`)
-        .expect(201);
-
-      response = body.data;
+      await invitedUserSession.testAgent.post(`/v1/invites/${invitee.invite.token}/accept`).expect(201);
     });
 
     it('should change the member status to active', async () => {
@@ -50,6 +42,35 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
 
       expect(member._userId).to.equal(invitedUserSession.user._id);
       expect(member.memberStatus).to.equal(MemberStatusEnum.ACTIVE);
+    });
+
+    it('should invite existing user instead of creating new user', async () => {
+      const thirdUserSession = new UserSession();
+      await thirdUserSession.initialize();
+
+      const inviteeMembers = await memberRepository.find({ _userId: invitedUserSession.user._id });
+      expect(inviteeMembers.length).to.eq(1);
+
+      await thirdUserSession.testAgent.post('/v1/invites/bulk').send({
+        invitees: [
+          {
+            email: invitedUserSession.user.email,
+          },
+        ],
+      });
+
+      const members = await memberRepository.getOrganizationMembers(thirdUserSession.organization._id);
+      const newInvitee = members.find((i) => i._userId === invitedUserSession.user._id);
+      expect(newInvitee).to.exist;
+
+      const { body } = await invitedUserSession.testAgent.get(`/v1/invites/${newInvitee.invite.token}`).expect(200);
+
+      expect(body.data._userId).to.eq(newInvitee.user._id);
+
+      await invitedUserSession.testAgent.post(`/v1/invites/${newInvitee.invite.token}/accept`).expect(201);
+
+      const newInviteeMembers = await memberRepository.find({ _userId: invitedUserSession.user._id });
+      expect(newInviteeMembers.length).to.eq(2);
     });
   });
 
@@ -59,7 +80,6 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
     });
 
     it('should reject expired token', async () => {
-      const organization = await organizationRepository.findById(session.organization._id);
       const members = await memberRepository.getOrganizationMembers(session.organization._id);
       const invitee = members.find((i) => !i._userId);
 

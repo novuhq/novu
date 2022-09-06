@@ -11,4 +11,5 @@ export interface IGetInviteResponseDto {
     name: string;
   };
   email: string;
+  _userId?: string;
 }
