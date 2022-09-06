@@ -1,8 +1,8 @@
 import { useContext } from 'react';
 import { Locale } from 'date-fns';
 import * as dateFnsLocales from 'date-fns/locale';
-import { I18NContext } from '../store';
 import { ITranslationEntry, TRANSLATIONS } from '../i18n/lang';
+import { I18NContext } from '../store/i18n.context';
 
 export function useTranslations() {
   const { translations, lang } = useContext<ITranslationEntry>(I18NContext);

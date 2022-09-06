@@ -3,10 +3,10 @@ import styled, { css } from 'styled-components';
 import { formatDistanceToNow } from 'date-fns';
 import { IMessage, ButtonTypeEnum, IMessageAction, MessageActionStatusEnum } from '@novu/shared';
 import { DotsHorizontal } from '../../../../shared/icons';
-import { INovuTheme } from '../../../../store';
 import { useNovuTheme, useNotificationCenter } from '../../../../hooks';
 import { ActionContainer } from './ActionContainer';
 import { useTranslations } from 'packages/notification-center/src/hooks/use-translations';
+import { INovuTheme } from '../../../../store/novu-theme.context';
 
 export function NotificationListItem({
   notification,

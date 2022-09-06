@@ -1,6 +1,6 @@
 import { useContext } from 'react';
-import { INovuTheme, ThemeContext, ICommonTheme } from '../store';
-import { ColorScheme } from '../index';
+import { ColorScheme, ICommonTheme } from '../index';
+import { INovuTheme, ThemeContext } from '../store/novu-theme.context';
 
 export function useNovuTheme(): {
   theme: INovuTheme;

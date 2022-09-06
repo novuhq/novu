@@ -3,7 +3,7 @@ import { ActionIcon } from '@mantine/core';
 import styled from 'styled-components';
 import { ArrowLeft } from '../../../../../shared/icons';
 import { useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
-import { ScreensEnum } from '../../../../../store';
+import { ScreensEnum } from '../../../../../shared/enums/screens.enum';
 
 export function UserPreferenceHeader() {
   const { theme } = useNovuTheme();

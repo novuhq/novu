@@ -1,6 +1,6 @@
 import React from 'react';
 import { ISubscriberJwt } from '@novu/shared';
-import { IAuthContext } from '../index';
+import { IAuthContext } from '../shared/interfaces';
 
 export const AuthContext = React.createContext<IAuthContext>({
   token: null,

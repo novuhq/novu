@@ -3,7 +3,7 @@ import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 import { useNotifications, useApi, useNotificationCenter, useUnseenCount } from '../../../hooks';
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
-import { ITab } from '../../../index';
+import { ITab } from '../../../shared/interfaces';
 
 export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();

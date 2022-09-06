@@ -1,4 +1,4 @@
 import React from 'react';
-import { INotificationsContext } from '../index';
+import { INotificationsContext } from '../shared/interfaces';
 
 export const NotificationsContext = React.createContext<INotificationsContext | null>(null);

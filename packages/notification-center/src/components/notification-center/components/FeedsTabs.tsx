@@ -2,11 +2,11 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Tab } from '@mantine/core';
 import styled from 'styled-components';
 import { NotificationsListTab } from './NotificationsListTab';
-import { INotificationCenterContext, useUnseenCount } from '../../../index';
 import { UnseenBadge } from './UnseenBadge';
 import { Tabs } from './layout/tabs/Tabs';
-import { NotificationCenterContext } from '../../../store';
-import { useApi, useNovuContext } from '../../../hooks';
+import { useApi, useNovuContext, useUnseenCount } from '../../../hooks';
+import { NotificationCenterContext } from '../../../store/notification-center.context';
+import { INotificationCenterContext } from '../../../shared/interfaces';
 
 export function FeedsTabs() {
   const { tabs, onTabClick } = useContext<INotificationCenterContext>(NotificationCenterContext);

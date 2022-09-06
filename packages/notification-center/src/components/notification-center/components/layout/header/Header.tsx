@@ -3,9 +3,10 @@ import { ActionIcon, Badge } from '@mantine/core';
 import styled from 'styled-components';
 import { colors } from '../../../../../shared/config/colors';
 import { useNotificationCenter, useNovuTheme, useScreens, useTranslations, useUnseenCount } from '../../../../../hooks';
-import { INotificationCenterContext } from '../../../../../index';
-import { NotificationCenterContext, ScreensEnum } from '../../../../../store';
 import { Cogs } from '../../../../../shared/icons';
+import { NotificationCenterContext } from '../../../../../store/notification-center.context';
+import { ScreensEnum } from '../../../../../shared/enums/screens.enum';
+import { INotificationCenterContext } from '../../../../../shared/interfaces';
 
 export function Header() {
   const { onUnseenCountChanged } = useNotificationCenter();
@@ -79,6 +80,7 @@ const Text = styled.div<{ fontColor: string }>`
   line-height: 24px;
   text-align: center;
 `;
+
 const MarkReadAction = styled.div`
   font-size: 14px;
   font-style: normal;

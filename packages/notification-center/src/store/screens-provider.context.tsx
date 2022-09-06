@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenContext } from './screens.context';
-
-export enum ScreensEnum {
-  NOTIFICATIONS = 'notifications',
-  SETTINGS = 'settings',
-}
+import { ScreensEnum } from '../shared/enums/screens.enum';
 
 export function ScreenProvider({ children }) {
   const [screen, setScreen] = useState<ScreensEnum>(ScreensEnum.NOTIFICATIONS);
