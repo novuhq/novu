@@ -107,7 +107,7 @@ const WorkflowEditorPage = ({
   return (
     <>
       <Grid gutter={0} grow style={{ minHeight: '100%' }}>
-        <Grid.Col md={9} sm={6}>
+        <Grid.Col md={9} sm={6} style={{ display: 'flex', flexDirection: 'column' }}>
           <TemplatePageHeader
             loading={isLoading || isUpdateLoading}
             disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
