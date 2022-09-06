@@ -13,7 +13,11 @@ export const DelayMetadata = ({ control, index }) => {
 
   return (
     <>
-      <InputWrapper label="Time Interval" description="Once triggered, for how long should delay" styles={inputStyles}>
+      <InputWrapper
+        label="Time Interval"
+        description="Once triggered, for how long should delay before next step execution."
+        styles={inputStyles}
+      >
         <Grid
           sx={{
             marginBottom: '2px',

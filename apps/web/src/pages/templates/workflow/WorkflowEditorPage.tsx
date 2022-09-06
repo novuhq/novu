@@ -253,7 +253,7 @@ const WorkflowEditorPage = ({
                     </ButtonWrapper>
 
                     <Text mr={10} mt={10} size="md" color={colors.B60}>
-                      Configure the delay parameters.
+                      Configure the delay parameters. Set await time.
                     </Text>
                   </NavSection>
                   <NavSection>
