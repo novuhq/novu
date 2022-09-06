@@ -167,6 +167,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ru</code> (Russian)</li>
           <li><code>es</code> (Spanish)</li>
           <li><code>uk</code> (Ukrainian)</li>
+          <li><code>hr</code> (Croatian)</li>
         </ul>
       </div>
   </details>
