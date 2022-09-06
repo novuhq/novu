@@ -334,9 +334,11 @@ export default ((window: any) => {
     // eslint-disable-next-line prefer-spread
     novuApi[initCall[0]].apply(novuApi, initCall[1]);
 
-    const onCall = window.novu._c.find((call: string[]) => call[0] === 'on');
-    if (onCall) {
-      novuApi[onCall[0]].apply(novuApi, onCall[1]);
+    const onCalls = window.novu._c.filter((call: string[]) => call[0] === 'on');
+    if (onCalls.length) {
+      for (const onCall of onCalls) {
+        novuApi[onCall[0]].apply(novuApi, onCall[1]);
+      }
     }
   } else {
     // eslint-disable-next-line no-param-reassign
