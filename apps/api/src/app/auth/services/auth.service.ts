@@ -102,7 +102,7 @@ export class AuthService {
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
 
-  async getSubscriberWidgetToken(subscriber: SubscriberEntity) {
+  async getSubscriberWidgetToken(subscriber: SubscriberEntity, userId: string): Promise<string> {
     return this.jwtService.sign(
       {
         _id: subscriber._id,
@@ -112,6 +112,7 @@ export class AuthService {
         organizationId: subscriber._organizationId,
         environmentId: subscriber._environmentId,
         subscriberId: subscriber.subscriberId,
+        organizationAdminId: userId,
       },
       {
         expiresIn: '15 day',
@@ -130,9 +131,9 @@ export class AuthService {
     return this.jwtService.sign(
       {
         _id: user._id,
-        firstName: null,
+        firstName: 'API Request',
         lastName: null,
-        email: null,
+        email: user.email,
         profilePicture: null,
         organizationId,
         roles: [MemberRoleEnum.ADMIN],

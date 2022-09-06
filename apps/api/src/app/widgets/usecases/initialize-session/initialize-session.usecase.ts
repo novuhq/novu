@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { EnvironmentRepository, FeedRepository } from '@novu/dal';
+import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -16,7 +16,8 @@ export class InitializeSession {
     private createSubscriber: CreateSubscriber,
     private authService: AuthService,
     private feedRepository: FeedRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private membersRepository: MemberRepository
   ) {}
 
   async execute(command: InitializeSessionCommand): Promise<SessionInitializeResponseDto> {
@@ -48,8 +49,10 @@ export class InitializeSession {
       _subscriber: subscriber._id,
     });
 
+    const organizationAdmin = await this.membersRepository.getOrganizationAdminAccount(environment._organizationId);
+
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber),
+      token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin?._userId),
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,
