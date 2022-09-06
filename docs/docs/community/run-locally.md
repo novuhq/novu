@@ -36,26 +36,26 @@ If you only want to run parts of the platform, you can use the following run com
 
 ## Setting up environment variables
 
-The command `npm run setup:project` will setup default environment variables for each app that are required for Novu to be run in a development environment.
-If you want to test certain parts of Novu or run it in production mode, some of them will have to be changed. Below are all environment variables explained for each app.
+The command `npm run setup:project` will create default environment variables that are required for Novu to be run in a development environment.
+If you want to test certain parts of Novu or run it in production mode though, some of them will have to be changed. All available environment variables are listed below.
 
 <details>
     <summary>API Backend</summary>
     <div>
       <ul>
         <li><code>NODE_ENV</code> (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local</li>
-        <li><code>S3_LOCAL_STACK</code><br />The endpoint for the S3 Bucket required for storing various media</li>
+        <li><code>S3_LOCAL_STACK</code><br />The AWS endpoint for the S3 Bucket required for storing various media</li>
         <li><code>S3_BUCKET_NAME</code><br />The name of the S3 Bucket</li>
-        <li><code>S3_REGION</code><br />The region of the S3 Bucket</li>
+        <li><code>S3_REGION</code><br />The AWS region of the S3 Bucket</li>
         <li><code>PORT</code><br />The port on which the API backend should listen on</li>
         <li><code>FRONT_BASE_URL</code><br />The base url on which your frontend is accessible for the user. (e.g. web.novu.co)</li>
-        <li><code>DISABLE_USER_REGISTRATION</code> (default: false)<br />If user registration should be disabled. Possible values are: true, false</li>
+        <li><code>DISABLE_USER_REGISTRATION</code> (default: false)<br />If users should not be able to create new accounts. Possible values are: true, false</li>
         <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
         <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
         <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
-        <li><code>SENDGRID_API_KEY</code><br />The api key of the Sendgrid account used to send various emails with</li>
+        <li><code>SENDGRID_API_KEY</code><br />The api key of the Sendgrid account used to send various emails</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
-        <li><code>NOVU_API_KEY</code><br />The api key of web.novu.co used to send various emails / invites</li>
+        <li><code>NOVU_API_KEY</code><br />The api key of web.novu.co used to send various emails</li>
         <li><code>SENTRY_DSN</code><br />The DSN of sentry.io used to report errors happening in production</li>
       </ul>
     </div>
