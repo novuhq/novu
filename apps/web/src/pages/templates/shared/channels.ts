@@ -65,7 +65,7 @@ export const channels: IChannelDefinition[] = [
   {
     tabKey: StepTypeEnum.DELAY,
     label: 'Delay',
-    description: 'Delay events',
+    description: 'Delay before trigger of next event',
     Icon: TimerGradient,
     testId: 'delaySelector',
     channelType: StepTypeEnum.DELAY,
