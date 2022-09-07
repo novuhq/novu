@@ -1,4 +1,4 @@
-import { port, str, url, ValidatorSpec, bool } from 'envalid';
+import { port, str, url, ValidatorSpec } from 'envalid';
 import * as envalid from 'envalid';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,6 +30,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NOVU_API_KEY: str({
     default: '',
   }),
+  STORE_ENCRYPTION_KEY: str(),
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
