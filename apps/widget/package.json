@@ -25,8 +25,8 @@
   },
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
-    "@mantine/core": "^4.1.0",
-    "@mantine/hooks": "^4.1.0",
+    "@mantine/core": "4.1.0",
+    "@mantine/hooks": "4.1.0",
     "@novu/embed": "^0.7.3",
     "@novu/notification-center": "^0.7.3",
     "@novu/shared": "^0.7.2",
