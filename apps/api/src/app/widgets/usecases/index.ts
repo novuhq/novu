@@ -1,5 +1,5 @@
 import { GetOrganizationData } from './get-organization-data/get-organization-data.usecase';
-import { MarkMessageAsSeen } from './mark-message-as-seen/mark-message-as-seen.usecase';
+import { MarkMessageAs } from './mark-message-as/mark-message-as.usecase';
 import { GetUnseenCount } from './get-unseen-count/get-unseen-count.usecase';
 import { GetNotificationsFeed } from './get-notifications-feed/get-notifications-feed.usecase';
 import { InitializeSession } from './initialize-session/initialize-session.usecase';
@@ -8,7 +8,7 @@ import { UpdateMessageActions } from './mark-action-as-done/update-message-actio
 
 export const USE_CASES = [
   GetOrganizationData,
-  MarkMessageAsSeen,
+  MarkMessageAs,
   UpdateMessageActions,
   GetUnseenCount,
   GetNotificationsFeed,

@@ -15,10 +15,9 @@ import {
   UpdateSubscriberRequestDto,
 } from './dtos';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
-import { GetSubscribers } from './usecases/get-subscribers';
-import { GetSubscribersCommand } from './usecases/get-subscribers';
+import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
@@ -29,12 +28,12 @@ import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
 import { GetUnseenCountCommand } from '../widgets/usecases/get-unseen-count/get-unseen-count.command';
 import { MessageEntity } from '@novu/dal';
-import { MarkMessageAsSeenCommand } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.command';
+import { MarkEnum, MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
 import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
 import { GetUnseenCount } from '../widgets/usecases/get-unseen-count/get-unseen-count.usecase';
-import { MarkMessageAsSeen } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.usecase';
+import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
 import { initializeSeenParam } from '../widgets/widgets.controller';
 
@@ -52,7 +51,7 @@ export class SubscribersController {
     private updatePreferenceUsecase: UpdatePreference,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
-    private markMessageAsSeenUsecase: MarkMessageAsSeen,
+    private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions
   ) {}
 
@@ -340,17 +339,20 @@ export class SubscribersController {
   })
   async markMessageAsSeen(
     @UserSession() user: IJwtPayload,
-    @Param('messageId') messageId: string,
+    @Param('messageId') messageId: string | string[],
     @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity> {
-    const command = MarkMessageAsSeenCommand.create({
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(messageId);
+
+    const command = MarkMessageAsCommand.create({
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      messageId,
+      messageIds,
+      mark: MarkEnum.SEEN,
     });
 
-    return await this.markMessageAsSeenUsecase.execute(command);
+    return await this.markMessageAsUsecase.execute(command);
   }
 
   @ExternalApiAccessible()
@@ -380,5 +382,13 @@ export class SubscribersController {
         status: body.status,
       })
     );
+  }
+  private toArray(param: string[] | string): string[] {
+    let paramArray: string[];
+    if (param) {
+      paramArray = Array.isArray(param) ? param : param.split(',');
+    }
+
+    return paramArray;
   }
 }

@@ -17,6 +17,7 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { MarkEnum } from '../../../widgets/usecases/mark-message-as/mark-message-as.command';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -125,7 +126,15 @@ export class SendMessageInApp extends SendMessageType {
       message = await this.messageRepository.findById(oldMessage._id);
     }
 
-    const count = await this.messageRepository.getUnseenCount(
+    const unseenCount = await this.messageRepository.getCount(
+      MarkEnum.SEEN,
+      command.environmentId,
+      command.subscriberId,
+      ChannelTypeEnum.IN_APP
+    );
+
+    const unreadCount = await this.messageRepository.getCount(
+      MarkEnum.READ,
       command.environmentId,
       command.subscriberId,
       ChannelTypeEnum.IN_APP
@@ -155,7 +164,15 @@ export class SendMessageInApp extends SendMessageType {
       event: 'unseen_count_changed',
       userId: command.subscriberId,
       payload: {
-        unseenCount: count,
+        unseenCount,
+      },
+    });
+
+    await this.queueService.wsSocketQueue.add({
+      event: 'unread_count_changed',
+      userId: command.subscriberId,
+      payload: {
+        unreadCount,
       },
     });
   }

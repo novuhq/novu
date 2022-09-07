@@ -9,8 +9,6 @@ import { GetNotificationsFeedCommand } from './usecases/get-notifications-feed/g
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { GetUnseenCount } from './usecases/get-unseen-count/get-unseen-count.usecase';
 import { GetUnseenCountCommand } from './usecases/get-unseen-count/get-unseen-count.command';
-import { MarkMessageAsSeenCommand } from './usecases/mark-message-as-seen/mark-message-as-seen.command';
-import { MarkMessageAsSeen } from './usecases/mark-message-as-seen/mark-message-as-seen.usecase';
 import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
@@ -32,6 +30,8 @@ import {
   UpdateSubscriberPreferenceCommand,
 } from '../subscribers/usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
+import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -40,7 +40,7 @@ export class WidgetsController {
     private initializeSessionUsecase: InitializeSession,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genUnseenCountUsecase: GetUnseenCount,
-    private markMessageAsSeenUsecase: MarkMessageAsSeen,
+    private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -78,10 +78,7 @@ export class WidgetsController {
   ) {
     const isSeen = initializeSeenParam(seen);
 
-    let feedsQuery: string[];
-    if (feedId) {
-      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
-    }
+    const feedsQuery = this.toArray(feedId);
 
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -102,10 +99,7 @@ export class WidgetsController {
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean
   ): Promise<UnseenCountResponse> {
-    let feedsQuery: string[];
-    if (feedId) {
-      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
-    }
+    const feedsQuery = this.toArray(feedId);
 
     const command = GetUnseenCountCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -122,16 +116,38 @@ export class WidgetsController {
   @Post('/messages/:messageId/seen')
   async markMessageAsSeen(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('messageId') messageId: string
-  ): Promise<MessageEntity> {
-    const command = MarkMessageAsSeenCommand.create({
+    @Param('messageId') messageId: string | string[]
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(messageId);
+
+    const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      messageId,
+      messageIds,
+      mark: MarkEnum.SEEN,
     });
 
-    return await this.markMessageAsSeenUsecase.execute(command);
+    return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/:messageId/read')
+  async markMessageAsRead(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('messageId') messageId: string | string[]
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(messageId);
+
+    const command = MarkMessageAsCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      messageIds,
+      mark: MarkEnum.READ,
+    });
+
+    return await this.markMessageAsUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -214,6 +230,16 @@ export class WidgetsController {
     return {
       success: true,
     };
+  }
+
+  private toArray(param: string[] | string): string[] {
+    let paramArray: string[];
+
+    if (param) {
+      paramArray = Array.isArray(param) ? param : param.split(',');
+    }
+
+    return paramArray;
   }
 }
 
