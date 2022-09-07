@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { useMantineColorScheme } from '@mantine/core';
 import { BuilderFieldOperator } from '@novu/shared';
 import { StepEntity } from '../../../components/templates/use-template-controller.hook';
 import { colors } from '../../../design-system';
@@ -31,8 +32,10 @@ interface IFilter {
 }
 
 export const Filter = ({ filter }: { filter: IFilter }) => {
+  const { colorScheme } = useMantineColorScheme();
+
   return (
-    <FilterItem className="filter-item">
+    <FilterItem className="filter-item" dark={colorScheme === 'dark'}>
       <FilterPosition>
         {filter.on} {filter.field} {translateOperator(filter.operator)}
       </FilterPosition>
@@ -76,8 +79,8 @@ const FilterValue = styled.div`
   margin-top: 7px;
 `;
 
-const FilterItem = styled.div`
-  background: ${colors.B20};
+const FilterItem = styled.div<{ dark: boolean }>`
+  background: ${({ dark }) => (dark ? colors.B20 : colors.white)};
   box-shadow: 0px 5px 20px rgb(0 0 0 / 20%);
   margin-bottom: 15px;
   padding: 15px;
