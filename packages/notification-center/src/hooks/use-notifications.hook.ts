@@ -13,7 +13,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     fetchNextPage: mapFetchNextPage,
     hasNextPage: mapHasNextPage,
     fetching,
-    markAsSeen,
+    markAsRead,
     updateAction: mapUpdateAction,
     refetch: mapRefetch,
   } = useContext<INotificationsContext>(NotificationsContext);
@@ -46,7 +46,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     fetchNextPage,
     hasNextPage,
     fetching,
-    markAsSeen,
+    markAsRead,
     updateAction,
     refetch,
   };

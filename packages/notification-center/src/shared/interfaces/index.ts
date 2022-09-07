@@ -76,7 +76,7 @@ export interface INotificationsContext {
   fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
   hasNextPage?: Map<string, boolean>;
   fetching?: boolean;
-  markAsSeen?: (messageId: string) => Promise<IMessage>;
+  markAsRead?: (messageId: string) => Promise<IMessage>;
   updateAction?: (
     messageId: string,
     actionButtonType: ButtonTypeEnum,

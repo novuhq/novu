@@ -35,7 +35,7 @@ export function NotificationListItem({
     <ItemWrapper
       novuTheme={novuTheme}
       data-test-id="notification-list-item"
-      // unread={!notification.read}
+      unread={!notification.read}
       onClick={() => handleNotificationClick()}
     >
       <NotificationItemContainer>

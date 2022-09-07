@@ -11,7 +11,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
 
   const storeId = tab?.storeId || 'default_store';
   const {
-    markAsSeen: markNotificationAsSeen,
+    markAsRead: markNotificationAsRead,
     fetchNextPage,
     refetch,
     notifications: data,
@@ -38,7 +38,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
   }
 
   async function onNotificationClicked(notification: IMessage) {
-    await markNotificationAsSeen(notification._id);
+    await markNotificationAsRead(notification._id);
 
     if (onNotificationClick) {
       onNotificationClick(notification);

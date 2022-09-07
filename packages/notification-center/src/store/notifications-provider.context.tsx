@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApi, useNovuContext } from '../hooks';
 import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { NotificationsContext } from './notifications.context';
+import { ApiService } from '@novu/client';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { api } = useApi();
@@ -16,6 +17,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     setFetching(true);
 
     const newNotifications = await api.getNotificationsList(pageToFetch, getStoreQuery(storeId));
+
+    await markNotificationsAsSeen(newNotifications, api);
 
     if (newNotifications?.length < 10) {
       setHasNextPage(hasNextPage.set(storeId, false));
@@ -47,8 +50,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     await fetchPage(nextPage, false, storeId);
   }
 
-  async function markAsSeen(messageId: string): Promise<IMessage> {
-    return await api.markMessageAsSeen(messageId);
+  async function markAsRead(messageId: string): Promise<IMessage> {
+    return await api.markMessageAsRead(messageId);
   }
 
   async function updateAction(
@@ -96,9 +99,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   return (
     <NotificationsContext.Provider
-      value={{ notifications, fetchNextPage, hasNextPage, fetching, markAsSeen, updateAction, refetch }}
+      value={{ notifications, fetchNextPage, hasNextPage, fetching, markAsRead, updateAction, refetch }}
     >
       {children}
     </NotificationsContext.Provider>
   );
+}
+
+async function markNotificationsAsSeen(newNotifications: IMessage[], api: ApiService) {
+  const notificationsToMarkAsSeen = newNotifications.filter((notification) => notification.seen == false);
+  if (notificationsToMarkAsSeen.length) {
+    const messageIds = notificationsToMarkAsSeen.map((notification) => notification._id);
+    await api.markMessageAsSeen(messageIds);
+  }
 }
