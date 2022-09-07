@@ -6,7 +6,6 @@ import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase'
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestUnitEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
 
 interface IJobEntityExtended extends JobEntity {
   presend?: boolean;
@@ -147,7 +146,7 @@ export class WorkflowQueueService {
       return false;
     }
 
-    const where: FilterQuery<JobEntity> = {
+    const where: Partial<JobEntity> = {
       status: JobStatusEnum.DELAYED,
       type: StepTypeEnum.DIGEST,
       _subscriberId: data._subscriberId,
