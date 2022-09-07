@@ -59,16 +59,17 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     });
   }
 
-  async getUnseenCount(
+  async getCount(
+    mark: string,
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean } = {}
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
   ) {
     const requestQuery: FilterQuery<MessageEntity> = {
       _environmentId: new Types.ObjectId(environmentId),
       _subscriberId: new Types.ObjectId(subscriberId),
-      seen: false,
+      [mark]: false,
       channel,
     };
 
@@ -91,8 +92,8 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       };
     }
 
-    if (query.seen != null) {
-      requestQuery.seen = query.seen;
+    if (query[mark] != null) {
+      requestQuery[mark] = query[mark];
     }
 
     return await this.count(requestQuery);
@@ -223,6 +224,25 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       totalCount,
       data: this.mapEntities(response),
     };
+  }
+
+  async changeStatus(subscriberId: string, messageIds: string[], mark: string) {
+    await this.update(
+      {
+        _subscriberId: subscriberId,
+        _id: {
+          $in: messageIds.map((id) => {
+            return new Types.ObjectId(id);
+          }),
+        },
+      },
+      {
+        $set: {
+          [mark]: true,
+          lastReadDate: new Date(),
+        },
+      }
+    );
   }
 
   async delete(query: FilterQuery<MessageEntity & Document>) {

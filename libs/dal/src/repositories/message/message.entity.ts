@@ -37,6 +37,8 @@ export class MessageEntity {
 
   seen: boolean;
 
+  read: boolean;
+
   email?: string;
 
   phone?: string;
@@ -50,6 +52,8 @@ export class MessageEntity {
   title?: string;
 
   lastSeenDate: string;
+
+  lastReadDate: string;
 
   cta: IMessageCTA;
 
