@@ -1,5 +1,5 @@
-import { CredentialsKeyEnum } from './provider.enum';
-import { IConfigCredentials } from './provider.interface';
+import { CredentialsKeyEnum } from '../provider.enum';
+import { IConfigCredentials } from '../provider.interface';
 
 const mailConfigBase: IConfigCredentials[] = [
   {
@@ -328,7 +328,7 @@ export const slackConfig: IConfigCredentials[] = [
 
 export const fcmConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.User,
+    key: CredentialsKeyEnum.ServiceAccount,
     displayName: 'Service Account',
     type: 'text',
     required: true,

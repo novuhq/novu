@@ -33,6 +33,7 @@
     "@emotion/babel-plugin": "^11.7.2",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
+    "@handlebars/parser": "^2.1.0",
     "@hookform/resolvers": "^2.9.1",
     "@mantine/core": "4.1.1",
     "@mantine/dropzone": "4.1.1",

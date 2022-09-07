@@ -1,6 +1,6 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
-import { slackConfig } from '../provider-credentials';
+import { slackConfig } from '../credentials';
 import { ChatProviderIdEnum } from '../provider.enum';
 
 export const chatProviders: IProviderConfig[] = [
