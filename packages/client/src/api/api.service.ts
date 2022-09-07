@@ -44,9 +44,16 @@ export class ApiService {
     );
   }
 
-  async markMessageAsSeen(messageId: string): Promise<any> {
+  async markMessageAsSeen(messageId: string | string[]): Promise<any> {
     return await this.httpClient.post(
       `/widgets/messages/${messageId}/seen`,
+      {}
+    );
+  }
+
+  async markMessageAsRead(messageId: string | string[]): Promise<any> {
+    return await this.httpClient.post(
+      `/widgets/messages/${messageId}/read`,
       {}
     );
   }
