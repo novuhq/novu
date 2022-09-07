@@ -1,16 +1,58 @@
-import { Controller, Delete, Param, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { IJwtPayload } from '@novu/shared';
-import { ApiTags, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
+import { ApiTags, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
+import { ActivitiesResponseDto } from '../activity/dtos/activities-response.dto';
+import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 
 @Controller('/messages')
 @ApiTags('Messages')
 export class MessagesController {
-  constructor(private removeMessage: RemoveMessage) {}
+  constructor(private removeMessage: RemoveMessage, private getMessagesUsecase: GetMessages) {}
+
+  @Get('')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    type: ActivitiesResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get messages',
+    description: 'Returns a list of messages, could paginated using the `page` query parameter',
+  })
+  @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
+  @ApiQuery({
+    name: 'subscriberId',
+    type: String,
+    required: false,
+    description: 'The subscriberId for the subscriber you like to list messages for',
+  })
+  @ApiQuery({
+    name: 'channel',
+    enum: ChannelTypeEnum,
+    required: false,
+    description: 'The channel for the messages you like to list',
+  })
+  async getMessages(
+    @UserSession() user: IJwtPayload,
+    @Query('page') page = 0,
+    @Query('subscriberId') subscriberId,
+    @Query('channel') channel: ChannelTypeEnum
+  ): Promise<ActivitiesResponseDto> {
+    return await this.getMessagesUsecase.execute(
+      GetMessagesCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        page: page ? Number(page) : 0,
+        channel,
+        subscriberId,
+      })
+    );
+  }
 
   @Delete('/:messageId')
   @ExternalApiAccessible()
