@@ -186,7 +186,27 @@ export function useTemplateController(templateId: string) {
     navigate('/templates');
   };
 
-  const addStep = (channelType: StepTypeEnum, id: string) => {
+  const addStep = (channelType: StepTypeEnum, id: string, index = -1) => {
+    if (index !== -1) {
+      console.log(index);
+      console.log(steps.fields);
+      steps.insert(index, {
+        _id: id,
+        template: {
+          type: channelType,
+          content: [],
+          contentType: 'editor',
+          subject: '',
+          name: 'Email Message Template',
+          variables: [],
+        },
+        active: true,
+        filters: [],
+      });
+      console.log(steps.fields);
+
+      return;
+    }
     steps.append({
       _id: id,
       template: {

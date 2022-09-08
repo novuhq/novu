@@ -60,7 +60,7 @@ export function FlowEditor({
   onDelete: (id: string) => void;
   steps: StepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
-  addStep: (channelType: StepTypeEnum, id: string) => void;
+  addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
   dragging: boolean;
   errors: any;
   templateId: string;
@@ -133,7 +133,6 @@ export function FlowEditor({
           type: 'smoothstep',
         };
         parentId = newId;
-
         setNodes((nds) => nds.concat(newNode));
         setEdges((eds) => addEdge(newEdge, eds));
       }
@@ -157,7 +156,7 @@ export function FlowEditor({
     }
   }, [steps, dragging, errors]);
 
-  const addNewNode = useCallback((parentNodeId: string, channelType: string) => {
+  const addNewNode = useCallback((parentNodeId: string, channelType: string, index = -1) => {
     const channel = getChannel(channelType);
 
     if (!channel) {
@@ -177,9 +176,8 @@ export function FlowEditor({
       },
     };
 
-    addStep(newNode.data.channelType, newId);
-    setNodes((nds) => nds.slice(0, -1));
-    setNodes((nds) => nds.concat(newNode));
+    addStep(newNode.data.channelType, newId, index === -1 ? -1 : index === 0 ? 0 : index - 1);
+
     updateNodeInternals(newId);
 
     const newEdge = {
@@ -221,17 +219,29 @@ export function FlowEditor({
 
       const parentNode = reactFlowInstance?.getNode(parentId);
 
-      // dropId !== 2 condition will active only DropZone and will inactive other nodes
-      if (typeof parentNode === 'undefined' || dropId !== '2') {
+      if (typeof parentNode === 'undefined') {
         return;
       }
 
-      const childNode = getOutgoers(parentNode, nodes, edges);
-      if (childNode.length) {
-        return;
+      // dropId === 2 condition will active only DropZone and will inactive other nodes
+      if (dropId === '2') {
+        // Add node
+        const childNode = getOutgoers(parentNode, nodes, edges);
+        if (childNode.length) return;
+        addNewNode(parentId, type);
+      } else if (dropId != null) {
+        // Add node to other index
+        const dropNode = reactFlowInstance?.getNode(dropId);
+        const edge = reactFlowInstance?.getEdge(`e-${dropNode?.parentNode}-${dropId}`);
+        setEdges((curEdges) =>
+          curEdges.filter((edg) => {
+            return edg.id !== edge?.id;
+          })
+        );
+        const nodesIdArray = nodes.map((json) => json.id);
+        const dropIndex = nodesIdArray.indexOf(dropId);
+        addNewNode(dropId, type, dropIndex);
       }
-
-      addNewNode(parentId, type);
     },
     [reactFlowInstance, nodes, edges]
   );
