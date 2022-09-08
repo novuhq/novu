@@ -188,8 +188,6 @@ export function useTemplateController(templateId: string) {
 
   const addStep = (channelType: StepTypeEnum, id: string, index = -1) => {
     if (index !== -1) {
-      console.log(index);
-      console.log(steps.fields);
       steps.insert(index, {
         _id: id,
         template: {
@@ -203,7 +201,6 @@ export function useTemplateController(templateId: string) {
         active: true,
         filters: [],
       });
-      console.log(steps.fields);
 
       return;
     }
