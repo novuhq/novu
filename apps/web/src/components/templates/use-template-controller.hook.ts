@@ -7,6 +7,9 @@ import {
   IUpdateNotificationTemplateDto,
   StepTypeEnum,
   IPreferenceChannels,
+  BuilderFieldType,
+  BuilderGroupValues,
+  BuilderFieldOperator,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
@@ -158,10 +161,7 @@ export function useTemplateController(templateId: string) {
         setIsDirty(false);
 
         await client.refetchQueries(QueryKeys.changesCount);
-        showNotification({
-          message: 'Template updated successfully',
-          color: 'green',
-        });
+        successMessage('Template updated successfully');
       } else {
         const response = await createNotification({ ...payloadToCreate, active: true, draft: false });
 
@@ -195,6 +195,7 @@ export function useTemplateController(templateId: string) {
         contentType: 'editor',
         subject: '',
         name: 'Email Message Template',
+        variables: [],
       },
       active: true,
       filters: [],
@@ -242,7 +243,20 @@ export interface StepEntity {
 
   template: ITemplates;
 
-  filters?: any[];
+  filters?: {
+    isNegated?: boolean;
+
+    type?: BuilderFieldType;
+
+    value?: BuilderGroupValues;
+
+    children?: {
+      on?: 'payload' | 'subscriber';
+      field?: string;
+      value?: string;
+      operator?: BuilderFieldOperator;
+    }[];
+  }[];
 
   active: boolean;
 

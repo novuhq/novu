@@ -34,6 +34,14 @@ export class UpdateSubscriberPreference {
       _templateId: command.templateId,
     });
 
+    this.analyticsService.track('Update User Preference - [Notification Center]', command.organizationId, {
+      _organization: command.organizationId,
+      _subscriber: subscriber._id,
+      _template: command.templateId,
+      channel: command.channel?.type,
+      enabled: command.channel?.enabled,
+    });
+
     if (!userPreference) {
       const channelObj = {} as Record<'email' | 'sms' | 'in_app' | 'chat' | 'push', boolean>;
       channelObj[command.channel?.type] = command.channel?.enabled;
@@ -84,12 +92,6 @@ export class UpdateSubscriberPreference {
         $set: updatePayload,
       }
     );
-
-    this.analyticsService.track('Update User Preference - [Notification Center]', command.organizationId, {
-      _organization: command.organizationId,
-      _template: command.templateId,
-      ...updatePayload,
-    });
 
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
 

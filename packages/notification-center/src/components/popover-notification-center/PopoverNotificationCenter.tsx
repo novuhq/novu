@@ -1,4 +1,5 @@
 import React from 'react';
+import { PopoverProps } from '@mantine/core';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
@@ -21,6 +22,11 @@ interface IPopoverNotificationCenterProps {
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  onTabClick?: (tab: ITab) => void;
+  offset?: number;
+  position?:
+    | PopoverProps['position']
+    | `${NonNullable<PopoverProps['position']>}-${NonNullable<Exclude<PopoverProps['placement'], 'center'>>}`;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -38,7 +44,12 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
   }
 
   return (
-    <Popover theme={theme} bell={(bellProps) => children({ ...bellProps, unseenCount, theme })}>
+    <Popover
+      theme={theme}
+      bell={(bellProps) => children({ ...bellProps, unseenCount, theme })}
+      position={props.position}
+      offset={props.offset}
+    >
       <NotificationCenter
         onNotificationClick={props.onNotificationClick}
         onUnseenCountChanged={handlerOnUnseenCount}
@@ -52,6 +63,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         listItem={props.listItem}
         tabs={props.tabs}
         showUserPreferences={props.showUserPreferences}
+        onTabClick={props.onTabClick}
       />
     </Popover>
   );

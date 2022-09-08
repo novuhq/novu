@@ -2,7 +2,13 @@
  * @type {Cypress.PluginConfig}
  */
 import { DalService, NotificationTemplateEntity, UserRepository } from '@novu/dal';
-import { UserSession, SubscribersService, NotificationTemplateService, NotificationsService } from '@novu/testing';
+import {
+  UserSession,
+  SubscribersService,
+  NotificationTemplateService,
+  NotificationsService,
+  OrganizationService,
+} from '@novu/testing';
 
 const userRepository = new UserRepository();
 module.exports = (on, config) => {
@@ -48,6 +54,16 @@ module.exports = (on, config) => {
         _id: id,
       });
       return user?.resetToken;
+    },
+    async addOrganization(userId: string) {
+      const dal = new DalService();
+      await dal.connect('mongodb://localhost:27017/novu-test');
+      const organizationService = new OrganizationService();
+
+      const organization = await organizationService.createOrganization();
+      await organizationService.addMember(organization._id, userId);
+
+      return organization;
     },
     async getSession(
       settings: { noEnvironment?: boolean; partialTemplate?: Partial<NotificationTemplateEntity> } = {}

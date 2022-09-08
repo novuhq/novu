@@ -13,6 +13,20 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentEntity> {
     });
   }
 
+  async updateApiKeyUserId(organizationId: string, oldUserId: string, newUserId: string) {
+    return await this.update(
+      {
+        _organizationId: organizationId,
+        'apiKeys._userId': oldUserId,
+      },
+      {
+        $set: {
+          'apiKeys.$._userId': newUserId,
+        },
+      }
+    );
+  }
+
   async findOrganizationEnvironments(organizationId: string) {
     return this.find({
       _organizationId: organizationId,

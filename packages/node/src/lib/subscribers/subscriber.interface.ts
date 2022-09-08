@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 export interface IChannelCredentials {
   webhookUrl?: string;
@@ -79,6 +79,13 @@ export type ITriggerOverrides = {
     | 'twilio']: object;
 } & {
   [key in 'fcm']: ITriggerOverrideFCM;
+} & {
+  [key in 'delay']: ITriggerOverrideDelayAction;
+};
+
+export type ITriggerOverrideDelayAction = {
+  unit: DigestUnitEnum;
+  amount: number;
 };
 
 export type ITriggerOverrideFCM = {
