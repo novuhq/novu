@@ -6,162 +6,352 @@ import { matchMessageWithFilters } from './message-filter.matcher';
 describe('Message filter matcher', function () {
   it('should filter correct message by the filter value', function () {
     const matchedMessage = matchMessageWithFilters(
-      [
-        messageWrapper('Correct Match', 'OR', [
-          {
-            operator: 'EQUAL',
-            value: 'firstVar',
-            field: 'varField',
-          },
-        ]),
-        messageWrapper('Bad Match', 'OR', [
-          {
-            operator: 'EQUAL',
-            value: 'otherValue',
-            field: 'varField',
-          },
-        ]),
-      ],
+      messageWrapper('Correct Match', 'OR', [
+        {
+          operator: 'EQUAL',
+          value: 'firstVar',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
       {
-        varField: 'firstVar',
+        payload: {
+          varField: 'firstVar',
+        },
       }
     );
 
-    expect(matchedMessage.length).to.equal(1);
-    expect(matchedMessage[0].template.name).to.equal('Correct Match');
-  });
-
-  it('should handle multiple message matches', function () {
-    const matchedMessage = matchMessageWithFilters(
-      [
-        messageWrapper('Correct Match', 'OR', [
-          {
-            operator: 'EQUAL',
-            value: 'firstVar',
-            field: 'varField',
-          },
-        ]),
-        messageWrapper('Correct Message', 'OR', [
-          {
-            operator: 'EQUAL',
-            value: 'secondVar',
-            field: 'secondField',
-          },
-        ]),
-      ],
-      {
-        varField: 'firstVar',
-        secondField: 'secondVar',
-      }
-    );
-
-    expect(matchedMessage.length).to.equal(2);
-    expect(matchedMessage[0].template.name).to.equal('Correct Match');
+    expect(matchedMessage).to.equal(true);
   });
 
   it('should match a message for AND filter group', function () {
     const matchedMessage = matchMessageWithFilters(
-      [
-        messageWrapper('Correct Match', 'AND', [
-          {
-            operator: 'EQUAL',
-            value: 'firstVar',
-            field: 'varField',
-          },
-          {
-            operator: 'EQUAL',
-            value: 'secondVar',
-            field: 'secondField',
-          },
-        ]),
-      ],
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'EQUAL',
+          value: 'firstVar',
+          field: 'varField',
+          on: 'payload',
+        },
+        {
+          operator: 'EQUAL',
+          value: 'secondVar',
+          field: 'secondField',
+          on: 'payload',
+        },
+      ]),
       {
-        varField: 'firstVar',
-        secondField: 'secondVar',
+        payload: {
+          varField: 'firstVar',
+          secondField: 'secondVar',
+        },
       }
     );
 
-    expect(matchedMessage.length).to.equal(1);
-    expect(matchedMessage[0].template.name).to.equal('Correct Match');
+    expect(matchedMessage).to.equal(true);
   });
 
   it('should not match AND group for single bad item', function () {
     const matchedMessage = matchMessageWithFilters(
-      [
-        messageWrapper('Title', 'AND', [
-          {
-            operator: 'EQUAL',
-            value: 'firstVar',
-            field: 'varField',
-          },
-          {
-            operator: 'EQUAL',
-            value: 'secondVar',
-            field: 'secondField',
-          },
-        ]),
-      ],
+      messageWrapper('Title', 'AND', [
+        {
+          operator: 'EQUAL',
+          value: 'firstVar',
+          field: 'varField',
+          on: 'payload',
+        },
+        {
+          operator: 'EQUAL',
+          value: 'secondVar',
+          field: 'secondField',
+          on: 'payload',
+        },
+      ]),
       {
-        varField: 'firstVar',
-        secondField: 'secondVarBad',
+        payload: {
+          varField: 'firstVar',
+          secondField: 'secondVarBad',
+        },
       }
     );
 
-    expect(matchedMessage.length).to.equal(0);
+    expect(matchedMessage).to.equal(false);
   });
 
   it('should match a NOT_EQUAL for EQUAL var', function () {
     const matchedMessage = matchMessageWithFilters(
-      [
-        messageWrapper('Correct Match', 'AND', [
-          {
-            operator: 'EQUAL',
-            value: 'firstVar',
-            field: 'varField',
-          },
-          {
-            operator: 'NOT_EQUAL',
-            value: 'secondVar',
-            field: 'secondField',
-          },
-        ]),
-      ],
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'EQUAL',
+          value: 'firstVar',
+          field: 'varField',
+          on: 'payload',
+        },
+        {
+          operator: 'NOT_EQUAL',
+          value: 'secondVar',
+          field: 'secondField',
+          on: 'payload',
+        },
+      ]),
       {
-        varField: 'firstVar',
-        secondField: 'secondVarBad',
+        payload: {
+          varField: 'firstVar',
+          secondField: 'secondVarBad',
+        },
       }
     );
 
-    expect(matchedMessage.length).to.equal(1);
-    expect(matchedMessage[0].template.name).to.equal('Correct Match');
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should match a EQUAL for a boolean var', function () {
+    const matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: true,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
   });
 
   it('should fall thru for no filters item', function () {
-    const matchedMessage = matchMessageWithFilters(
-      [
-        messageWrapper('Correct Match', 'AND', [
-          {
-            operator: 'EQUAL',
-            value: 'firstVar',
-            field: 'varField',
-          },
-          {
-            operator: 'NOT_EQUAL',
-            value: 'secondVar',
-            field: 'secondField',
-          },
-        ]),
-        messageWrapper('Correct Match 2', 'OR', []),
-      ],
-      {
+    const matchedMessage = matchMessageWithFilters(messageWrapper('Correct Match 2', 'OR', []), {
+      payload: {
         varField: 'firstVar',
         secondField: 'secondVarBad',
+      },
+    });
+
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should get larger payload var then then filter value', function () {
+    const matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'LARGER',
+          value: '0',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 3,
+        },
       }
     );
 
-    expect(matchedMessage.length).to.equal(2);
-    expect(matchedMessage[0].template.name).to.equal('Correct Match');
-    expect(matchedMessage[1].template.name).to.equal('Correct Match 2');
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should get smaller payload var then then filter value', function () {
+    const matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'SMALLER',
+          value: '3',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 0,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should get larger or equal payload var then then filter value', function () {
+    let matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'LARGER_EQUAL',
+          value: '0',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+
+    matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'LARGER_EQUAL',
+          value: '3',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should get smaller or equal payload var then then filter value', function () {
+    let matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'SMALLER_EQUAL',
+          value: '3',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 0,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+
+    matchedMessage = matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'SMALLER_EQUAL',
+          value: '3',
+          field: 'varField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+  });
+
+  it('should handle now filters', function () {
+    let matchedMessage = matchMessageWithFilters(
+      {
+        _templateId: '123',
+        template: {
+          subject: 'Test Subject',
+          type: StepTypeEnum.EMAIL,
+          name: '',
+          content: 'Test',
+          _organizationId: '123',
+          _environmentId: 'asdas',
+          _creatorId: '123',
+        },
+        filters: undefined,
+      },
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+    expect(matchedMessage).to.equal(true);
+
+    matchedMessage = matchMessageWithFilters(
+      {
+        _templateId: '123',
+        template: {
+          subject: 'Test Subject',
+          type: StepTypeEnum.EMAIL,
+          name: '',
+          content: 'Test',
+          _organizationId: '123',
+          _environmentId: 'asdas',
+          _creatorId: '123',
+        },
+        filters: [],
+      },
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+    expect(matchedMessage).to.equal(true);
+    matchedMessage = matchMessageWithFilters(
+      {
+        _templateId: '123',
+        template: {
+          subject: 'Test Subject',
+          type: StepTypeEnum.EMAIL,
+          name: '',
+          content: 'Test',
+          _organizationId: '123',
+          _environmentId: 'asdas',
+          _creatorId: '123',
+        },
+        filters: [
+          {
+            isNegated: false,
+            type: 'GROUP',
+            value: 'AND',
+            children: undefined,
+          },
+        ],
+      },
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+    expect(matchedMessage).to.equal(true);
+    matchedMessage = matchMessageWithFilters(
+      {
+        _templateId: '123',
+        template: {
+          subject: 'Test Subject',
+          type: StepTypeEnum.EMAIL,
+          name: '',
+          content: 'Test',
+          _organizationId: '123',
+          _environmentId: 'asdas',
+          _creatorId: '123',
+        },
+        filters: [
+          {
+            isNegated: false,
+            type: 'GROUP',
+            value: 'AND',
+            children: [],
+          },
+        ],
+      },
+      {
+        payload: {
+          varField: 3,
+        },
+      }
+    );
+    expect(matchedMessage).to.equal(true);
   });
 });
 
@@ -172,6 +362,7 @@ function messageWrapper(
     field: string;
     value: string;
     operator: BuilderFieldOperator;
+    on: 'payload';
   }[],
   channel = StepTypeEnum.EMAIL
 ): NotificationStepEntity {

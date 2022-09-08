@@ -8,11 +8,12 @@ import {
   snsConfig,
   telnyxConfig,
   twilioConfig,
-} from '../provider-credentials';
+} from '../credentials';
+import { SmsProviderIdEnum } from '../provider.enum';
 
 export const smsProviders: IProviderConfig[] = [
   {
-    id: 'nexmo',
+    id: SmsProviderIdEnum.Nexmo,
     displayName: 'Nexmo',
     channel: ChannelTypeEnum.SMS,
     credentials: nexmoConfig,
@@ -20,7 +21,7 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'nexmo.png', dark: 'nexmo.png' },
   },
   {
-    id: 'plivo',
+    id: SmsProviderIdEnum.Plivo,
     displayName: 'Plivo',
     channel: ChannelTypeEnum.SMS,
     credentials: plivoConfig,
@@ -29,7 +30,7 @@ export const smsProviders: IProviderConfig[] = [
   },
 
   {
-    id: 'sms77',
+    id: SmsProviderIdEnum.Sms77,
     displayName: 'sms77',
     channel: ChannelTypeEnum.SMS,
     credentials: sms77Config,
@@ -37,7 +38,7 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'sms77.svg', dark: 'sms77.svg' },
   },
   {
-    id: 'sns',
+    id: SmsProviderIdEnum.SNS,
     displayName: 'SNS',
     channel: ChannelTypeEnum.SMS,
     credentials: snsConfig,
@@ -45,7 +46,7 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'sns.svg', dark: 'sns.svg' },
   },
   {
-    id: 'telnyx',
+    id: SmsProviderIdEnum.Telnyx,
     displayName: 'Telnyx',
     channel: ChannelTypeEnum.SMS,
     credentials: telnyxConfig,
@@ -53,7 +54,7 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
   },
   {
-    id: 'twilio',
+    id: SmsProviderIdEnum.Twilio,
     displayName: 'Twilio',
     channel: ChannelTypeEnum.SMS,
     credentials: twilioConfig,
@@ -61,7 +62,7 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
   },
   {
-    id: 'gupshup',
+    id: SmsProviderIdEnum.Gupshup,
     displayName: 'Gupshup',
     channel: ChannelTypeEnum.SMS,
     credentials: gupshupConfig,

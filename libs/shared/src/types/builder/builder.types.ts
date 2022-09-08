@@ -15,4 +15,5 @@ export type BuilderFieldOperator =
   | 'BETWEEN'
   | 'NOT_BETWEEN'
   | 'LIKE'
-  | 'NOT_LIKE';
+  | 'NOT_LIKE'
+  | 'IN';

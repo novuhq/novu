@@ -33,24 +33,24 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = async (event: { data: any }) => {
-      if (event.data.type === 'INIT_IFRAME') {
-        setUserDataPayload(event.data.value.data);
+    const handler = ({ data }: any) => {
+      if (data && data.type === 'INIT_IFRAME') {
+        setUserDataPayload(data.value.data);
 
-        if (event.data.value.backendUrl) {
-          setBackendUrl(event.data.value.backendUrl);
+        if (data.value.backendUrl) {
+          setBackendUrl(data.value.backendUrl);
         }
 
-        if (event.data.value.socketUrl) {
-          setSocketUrl(event.data.value.socketUrl);
+        if (data.value.socketUrl) {
+          setSocketUrl(data.value.socketUrl);
         }
 
-        if (event.data.value.theme) {
-          setTheme(event.data.value.theme);
+        if (data.value.theme) {
+          setTheme(data.value.theme);
         }
 
-        if (event.data.value.i18n) {
-          setI18n(event.data.value.i18n);
+        if (data.value.i18n) {
+          setI18n(data.value.i18n);
         }
 
         setFrameInitialized(true);
@@ -63,6 +63,8 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     }
 
     window.addEventListener('message', handler);
+
+    window.parent.postMessage({ type: 'WIDGET_READY' }, '*');
 
     return () => window.removeEventListener('message', handler);
   }, []);

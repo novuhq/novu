@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
+import * as mongooseDelete from 'mongoose-delete';
 import { schemaOptions } from '../schema-default.options';
 import { MessageEntity } from './message.entity';
 
@@ -109,6 +110,8 @@ messageSchema.virtual('template', {
   foreignField: '_id',
   justOne: true,
 });
+
+messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 interface IMessageDocument extends MessageEntity, Document {
   _id: never;

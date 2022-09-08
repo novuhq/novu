@@ -62,7 +62,7 @@ export class WorkflowQueueService {
   }
 
   public async work(job: IJobEntityExtended) {
-    const canceled = await this.digestIsCanceled(job);
+    const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {
       return;
     }
@@ -108,9 +108,12 @@ export class WorkflowQueueService {
     };
 
     const digestAdded = await this.addDigestJob(data, options);
-    if (digestAdded) {
+    const delayAdded = await this.addDelayJob(data, options);
+
+    if (digestAdded || delayAdded) {
       return;
     }
+
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.QUEUED);
     await this.queue.add(
       data._id,
@@ -138,9 +141,22 @@ export class WorkflowQueueService {
   }
 
   private async addDigestJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
-    const isDigest = data.type === StepTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
-    if (!isDigest) {
+    const isValidDigestStep = data.type === StepTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
+    if (!isValidDigestStep) {
       return false;
+    }
+
+    const where: Partial<JobEntity> = {
+      status: JobStatusEnum.DELAYED,
+      type: StepTypeEnum.DIGEST,
+      _subscriberId: data._subscriberId,
+      _templateId: data._templateId,
+      _environmentId: data._environmentId,
+    };
+    const delayedDigest = await this.jobRepository.findOne(where);
+
+    if (delayedDigest) {
+      return true;
     }
 
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
@@ -156,8 +172,42 @@ export class WorkflowQueueService {
     return true;
   }
 
-  private async digestIsCanceled(job: JobEntity) {
-    if (job.type !== StepTypeEnum.DIGEST) {
+  private async addDelayJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
+    const isValidDelayStep = data.type === StepTypeEnum.DELAY && data.step.metadata.amount && data.step.metadata.unit;
+    if (!isValidDelayStep) {
+      return false;
+    }
+
+    await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
+
+    let delay: number;
+    if (WorkflowQueueService.checkValidDelayOverride(data)) {
+      delay = WorkflowQueueService.toMilliseconds(
+        data.overrides.delay.amount as number,
+        data.overrides.delay.unit as DigestUnitEnum
+      );
+    } else {
+      delay = WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+    }
+    await this.queue.add(data._id, data, { delay, ...options });
+
+    return true;
+  }
+
+  private static checkValidDelayOverride(data: JobEntity): boolean {
+    if (!data.overrides?.delay) {
+      return false;
+    }
+    const values = Object.values(DigestUnitEnum);
+
+    return (
+      typeof data.overrides.delay.amount === 'number' &&
+      values.includes(data.overrides.delay.unit as unknown as DigestUnitEnum)
+    );
+  }
+
+  private async delayedEventIsCanceled(job: JobEntity) {
+    if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
       return false;
     }
     const count = await this.jobRepository.count({

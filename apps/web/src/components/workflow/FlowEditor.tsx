@@ -239,7 +239,7 @@ export function FlowEditor({
   return (
     <>
       <Wrapper dark={colorScheme === 'dark'}>
-        <div style={{ height: '500px', width: 'inherit' }} ref={reactFlowWrapper}>
+        <div style={{ minHeight: '500px', height: '100%', width: 'inherit' }} ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -275,6 +275,7 @@ export function FlowEditor({
 export default FlowEditor;
 
 const Wrapper = styled.div<{ dark: boolean }>`
+  flex: 1 1 0%;
   background: ${({ dark }) => (dark ? colors.B15 : colors.B98)};
   .react-flow__node.react-flow__node-channelNode,
   .react-flow__node.react-flow__node-triggerNode {

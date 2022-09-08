@@ -20,6 +20,7 @@ export class CreateMessageTemplate {
     let item = await this.messageTemplateRepository.create({
       cta: command.cta,
       name: command.name,
+      variables: command.variables,
       content: command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content,
       contentType: command.contentType,
       subject: command.subject,

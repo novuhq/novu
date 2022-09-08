@@ -35,6 +35,7 @@ const integrationSchema = new Schema(
       applicationId: Schema.Types.String,
       clientId: Schema.Types.String,
       projectName: Schema.Types.String,
+      serviceAccount: Schema.Types.String,
     },
 
     active: {

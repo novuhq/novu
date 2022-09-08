@@ -14,6 +14,19 @@ const messageTemplateSchema = new Schema(
     },
     name: Schema.Types.String,
     subject: Schema.Types.String,
+    variables: [
+      {
+        name: Schema.Types.String,
+        type: {
+          type: Schema.Types.String,
+        },
+        required: {
+          type: Schema.Types.Boolean,
+          default: false,
+        },
+        defaultValue: Schema.Types.Mixed,
+      },
+    ],
     content: Schema.Types.Mixed,
     contentType: Schema.Types.String,
     title: Schema.Types.String,
