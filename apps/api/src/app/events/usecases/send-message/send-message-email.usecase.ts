@@ -208,7 +208,7 @@ export class SendMessageEmail extends SendMessageType {
       await mailHandler.send(mailData);
     } catch (error) {
       console.error(error);
-      Sentry.captureException(error?.response?.body || error?.response || error);
+      Sentry.captureException(error?.response?.body || error?.response || error?.errors || error);
       const text =
         String(error?.response?.body || error?.response || error) || 'Error while sending email with provider';
       this.messageRepository.updateMessageStatus(

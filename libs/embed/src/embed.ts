@@ -6,7 +6,6 @@ import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
-import { INovuThemeProvider, ITranslationEntry } from '@novu/notification-center';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
@@ -18,9 +17,9 @@ class Novu {
 
   private socketUrl?: string = '';
 
-  private theme?: INovuThemeProvider;
+  private theme?: Record<string, unknown>;
 
-  private i18n?: ITranslationEntry;
+  private i18n?: Record<string, unknown>;
 
   private debugMode: boolean;
 
@@ -368,8 +367,8 @@ interface IOptions {
   unseenBadgeSelector: string;
   backendUrl?: string;
   socketUrl?: string;
-  theme?: INovuThemeProvider;
-  i18n?: ITranslationEntry;
+  theme?: Record<string, unknown>;
+  i18n?: Record<string, unknown>;
   position?: {
     top?: number | string;
     left?: number | string;
