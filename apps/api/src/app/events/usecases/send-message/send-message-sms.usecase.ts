@@ -77,6 +77,7 @@ export class SendMessageSms extends SendMessageType {
           environmentId: command.environmentId,
           channelType: ChannelTypeEnum.SMS,
           findOne: true,
+          active: true,
         })
       )
     )[0];
