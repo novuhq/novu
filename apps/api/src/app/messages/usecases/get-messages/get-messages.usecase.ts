@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { GetMessagesCommand } from './get-messages.command';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class GetMessages {
   async execute(command: GetMessagesCommand) {
     const LIMIT = 10;
 
-    const query: Record<string, string> = {
+    const query: Partial<MessageEntity> = {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     };

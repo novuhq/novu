@@ -22,7 +22,7 @@ export class MessagesController {
   })
   @ApiOperation({
     summary: 'Get messages',
-    description: 'Returns a list of messages, could paginated using the `page` query parameter',
+    description: 'Returns a list of messages, could paginate using the `page` query parameter',
   })
   @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
   @ApiQuery({
@@ -35,7 +35,7 @@ export class MessagesController {
     name: 'channel',
     enum: ChannelTypeEnum,
     required: false,
-    description: 'The channel for the messages you like to list',
+    description: 'The channel for the messages you wish to list',
   })
   async getMessages(
     @UserSession() user: IJwtPayload,
