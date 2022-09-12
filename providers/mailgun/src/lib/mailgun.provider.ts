@@ -6,18 +6,19 @@ import {
 } from '@novu/stateless';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
-import Client from 'mailgun.js/dist/lib/client';
+import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
 
 export class MailgunEmailProvider implements IEmailProvider {
   id = 'mailgun';
 
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  private mailgunClient: Client;
+  private mailgunClient: IMailgunClient;
 
   constructor(
     private config: {
       apiKey: string;
+      baseUrl?: string;
       username: string;
       domain: string;
       from: string;
@@ -28,6 +29,7 @@ export class MailgunEmailProvider implements IEmailProvider {
     this.mailgunClient = mailgun.client({
       username: config.username,
       key: config.apiKey,
+      url: config.baseUrl || 'https://api.mailgun.net',
     });
   }
 
@@ -36,7 +38,7 @@ export class MailgunEmailProvider implements IEmailProvider {
       this.config.domain,
       {
         from: data.from || this.config.from,
-        to: [data.to],
+        to: data.to,
         subject: data.subject,
         html: data.html,
         attachment: data.attachments?.map((attachment) => {
