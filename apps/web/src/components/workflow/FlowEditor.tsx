@@ -118,7 +118,7 @@ export function FlowEditor({
             ...getChannel(step.template.type),
             active: step.active,
             index: nodes.length,
-            error: getChannelErrors(i, errors),
+            error: getChannelErrors(i, errors, step),
             onDelete,
             setActivePage,
           },
@@ -326,8 +326,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
   }
 `;
-
-function getChannelErrors(index: number, errors: any) {
+function getChannelErrors(index: number, errors: any, step: any) {
   if (errors?.steps) {
     const stepErrors = errors.steps[index]?.template;
     if (stepErrors) {
@@ -335,6 +334,10 @@ function getChannelErrors(index: number, errors: any) {
 
       return keys.map((key) => stepErrors[key]?.message);
     }
+  }
+
+  if (step.template.content.length === 0 && step.template.type !== StepTypeEnum.DIGEST) {
+    return 'Something is missing here';
   }
 }
 
