@@ -7,7 +7,7 @@ You can find the embed code in the `Settings` page within the Admin Panel. It wi
 ```html
 <script>
   (function(n,o,t,i,f) {
-    n[i] = {}; var m = ['init']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
+    n[i] = {}; var m = ['init', 'on']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
     var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
     var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
   })(window, document, 'https://embed.novu.co/embed.umd.min.js', 'novu', 'script');
@@ -118,6 +118,20 @@ More information on all possible properties for it can be found [here](/notifica
     }
   );
 </script>
+```
+
+## Handle User Interaction
+
+In order to handle certain events like the user clicking on the notification or clicking on an action button inside a notification, you can listen for these events and handle them accordingly.
+
+```ts
+novu.on('notification_click', (notification) => {
+  // do custom logic here
+});
+
+novu.on('action_click', ({ templateIdentifier, type, notification }) => {
+  // do custom logic here
+});
 ```
 
 ## Enabling HMAC Encryption
