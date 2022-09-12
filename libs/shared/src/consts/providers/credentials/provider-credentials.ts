@@ -52,6 +52,12 @@ export const mailgunConfig: IConfigCredentials[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.User,
     displayName: 'User name',
     type: 'string',
