@@ -65,6 +65,7 @@ export class SendMessageEmail extends SendMessageType {
           environmentId: command.environmentId,
           channelType: ChannelTypeEnum.EMAIL,
           findOne: true,
+          active: true,
         })
       )
     )[0];

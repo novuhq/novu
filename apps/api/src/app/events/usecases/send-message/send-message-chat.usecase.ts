@@ -104,6 +104,7 @@ export class SendMessageChat extends SendMessageType {
           providerId: subscriberChannel.providerId,
           channelType: ChannelTypeEnum.CHAT,
           findOne: true,
+          active: true,
         })
       )
     )[0];
