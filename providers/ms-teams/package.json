@@ -1,5 +1,5 @@
 {
-  "name": "@novu/msteams",
+  "name": "@novu/ms-teams",
   "version": "0.7.2",
   "description": "A msTeams wrapper for novu",
   "main": "build/main/index.js",
