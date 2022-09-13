@@ -8,4 +8,6 @@ export interface IMailHandler {
   buildProvider(credentials: ICredentials, from: string);
 
   send(mailData: IEmailOptions): Promise<ISendMessageSuccessResponse>;
+
+  checkIntegration(): Promise<ISendMessageSuccessResponse>;
 }

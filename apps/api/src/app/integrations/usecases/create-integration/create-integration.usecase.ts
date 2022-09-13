@@ -1,13 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { encryptCredentials } from '../../../shared/services/encryption';
-
+import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
+import { CheckIntegration } from '../check-integration/check-integration.usecase';
 @Injectable()
 export class CreateIntegration {
+  @Inject()
+  private checkIntegration: CheckIntegration;
   constructor(
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
@@ -17,6 +20,15 @@ export class CreateIntegration {
     let response: IntegrationEntity;
 
     try {
+      const res = await this.checkIntegration.execute(
+        CheckIntegrationCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          providerId: command.providerId,
+          channel: command.channel,
+          credentials: command.credentials,
+        })
+      );
       response = await this.integrationRepository.create({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,

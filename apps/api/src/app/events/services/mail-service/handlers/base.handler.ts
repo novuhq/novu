@@ -20,4 +20,14 @@ export abstract class BaseHandler implements IMailHandler {
 
     return await this.provider.sendMessage(mailData);
   }
+
+  async checkIntegration() {
+    const mailData: IEmailOptions = {
+      html: '<div>checking integration</div>',
+      subject: 'Checking Integration',
+      to: 'biswa@novu.co',
+    };
+
+    return await this.send(mailData);
+  }
 }
