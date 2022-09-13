@@ -6,6 +6,7 @@ import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase'
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { StorageService } from '../../shared/services/storage/storage.service';
 
 interface IJobEntityExtended extends JobEntity {
   presend?: boolean;
@@ -31,6 +32,8 @@ export class WorkflowQueueService {
   private queueNextJob: QueueNextJob;
   @Inject()
   private jobRepository: JobRepository;
+  @Inject()
+  private storageService: StorageService;
   private readonly queueScheduler: QueueScheduler;
 
   constructor() {
@@ -66,6 +69,8 @@ export class WorkflowQueueService {
     if (canceled) {
       return;
     }
+
+    await this.getAttachments(job);
 
     await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
 
@@ -166,5 +171,17 @@ export class WorkflowQueueService {
     });
 
     return count > 0;
+  }
+
+  private async getAttachments(job: IJobEntityExtended): Promise<void> {
+    if (!job.payload.attachments) {
+      return;
+    }
+
+    for (const attachment of job.payload.attachments) {
+      if (!attachment.file) {
+        attachment.file = await this.storageService.getFile(attachment.name);
+      }
+    }
   }
 }

@@ -12,6 +12,7 @@ import { matchMessageWithFilters } from './message-filter.matcher';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { StorageService } from '../../../shared/services/storage/storage.service';
 
 @Injectable()
 export class TriggerEvent {
@@ -21,6 +22,7 @@ export class TriggerEvent {
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
     private workflowQueueService: WorkflowQueueService,
+    private storageService: StorageService,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -47,6 +49,16 @@ export class TriggerEvent {
 
     if (!template.active || template.draft) {
       return this.logTemplateNotActive(command, template);
+    }
+
+    // Uploading attachments to S3 and Removing them from payload
+    if (command.payload && Array.isArray(command.payload.attachments)) {
+      console.log(command.payload);
+      await this.uploadAttachments(command);
+      command.payload.attachments = command.payload.attachments.map((attachment) => ({
+        name: attachment.name,
+        mime: attachment.mime,
+      }));
     }
 
     const jobs: JobEntity[][] = [];
@@ -224,5 +236,41 @@ export class TriggerEvent {
       acknowledged: true,
       status: 'subscriber_id_missing',
     };
+  }
+
+  private async uploadAttachments(command: TriggerEventCommand): Promise<void> {
+    if (!command.payload.attachments) {
+      return;
+    }
+
+    for (const attachment of command.payload.attachments) {
+      if (attachment.file) {
+        await this.storageService.uploadFile(attachment.name, attachment.file, attachment.mime);
+      }
+    }
+  }
+
+  private async getAttachments(command: TriggerEventCommand): Promise<void> {
+    if (!command.payload.attachments) {
+      return;
+    }
+
+    for (const attachment of command.payload.attachments) {
+      if (attachment.file) {
+        attachment.file = await this.storageService.getFile(attachment.name);
+      }
+    }
+  }
+
+  private async deleteAttachments(command: TriggerEventCommand): Promise<void> {
+    if (!command.payload.attachments) {
+      return;
+    }
+
+    for (const attachment of command.payload.attachments) {
+      if (attachment.file) {
+        await this.storageService.deleteFile(attachment.name);
+      }
+    }
   }
 }
