@@ -59,6 +59,8 @@ export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
   sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
+
+  checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse>;
 }
 
 export interface ISmsProvider extends IProvider {
@@ -76,4 +78,9 @@ export interface IPushProvider extends IProvider {
   sendMessage(options: IPushOptions): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.PUSH;
+}
+
+export interface ICheckIntegrationResponse {
+  success: boolean;
+  message: string;
 }

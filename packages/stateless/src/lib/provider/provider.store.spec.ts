@@ -32,6 +32,7 @@ test('should get a provider by id', async () => {
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   });
 
   const provider = await store.getProviderByInternalId('test');
@@ -55,6 +56,7 @@ test('should get a provider by channel', async () => {
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   });
 
   const provider = await store.getProviderByChannel(ChannelTypeEnum.EMAIL);

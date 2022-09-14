@@ -10,6 +10,7 @@ test('should register an SMS provider and return it', async () => {
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
     setSubscriberCredentials: () => '123',
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   };
 
   await novu.registerProvider('sms', template);
@@ -28,6 +29,7 @@ test('should call 2 hooks together', async () => {
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
     setSubscriberCredentials: () => '123',
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   };
 
   await novu.registerProvider('sms', template);

@@ -17,6 +17,7 @@ test('emailHandler should be called correctly', async () => {
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   });
 
   await templateStore.addTemplate({
@@ -72,6 +73,7 @@ test('variable protection should throw if missing variable provided', async () =
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   });
 
   await templateStore.addTemplate({
@@ -114,6 +116,7 @@ test('variable protection should throw if missing variable provided with templat
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   });
 
   await templateStore.addTemplate({
@@ -146,6 +149,7 @@ test('TriggerEngine should call validate if validator is provided', async () => 
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   });
 
   const validate = jest.fn().mockImplementation(() => true);
@@ -195,6 +199,7 @@ test('Validation should throw error if validate method returns false', async () 
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
   });
 
   await templateStore.addTemplate({
