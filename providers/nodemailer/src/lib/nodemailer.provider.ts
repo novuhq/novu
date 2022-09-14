@@ -3,6 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
 } from '@novu/stateless';
 import nodemailer, { Transporter } from 'nodemailer';
 import DKIM from 'nodemailer/lib/dkim';
@@ -62,6 +63,15 @@ export class NodemailerProvider implements IEmailProvider {
     return {
       id: info?.messageId,
       date: new Date().toISOString(),
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
     };
   }
 }

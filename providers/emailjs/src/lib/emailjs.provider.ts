@@ -3,6 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
 } from '@novu/stateless';
 import { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { IEmailJsConfig } from './emailjs.config';
@@ -57,6 +58,15 @@ export class EmailJsProvider implements IEmailProvider {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       id: sent.header['message-id']!,
       date: sent.header.date,
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
     };
   }
 }

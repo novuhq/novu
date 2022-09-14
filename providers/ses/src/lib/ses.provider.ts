@@ -3,6 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
 } from '@novu/stateless';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { SESConfig } from './ses.config';
@@ -51,6 +52,15 @@ export class SESEmailProvider implements IEmailProvider {
     return {
       id: info?.messageId,
       date: new Date().toISOString(),
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
     };
   }
 }

@@ -3,6 +3,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
 } from '@novu/stateless';
 
 export class NetCoreProvider implements IEmailProvider {
@@ -60,6 +61,15 @@ export class NetCoreProvider implements IEmailProvider {
     return {
       id: response?.data?.message_id,
       date: new Date().toISOString(),
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
     };
   }
 }
