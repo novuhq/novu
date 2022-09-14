@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  IntegrationRepository,
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
@@ -8,6 +7,7 @@ import {
   SubscriberRepository,
   NotificationEntity,
   MessageEntity,
+  IntegrationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, PushProviderIdEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -18,6 +18,10 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()
 export class SendMessagePush extends SendMessageType {
@@ -28,8 +32,8 @@ export class SendMessagePush extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    private integrationRepository: IntegrationRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(messageRepository, createLogUsecase);
   }
@@ -38,11 +42,7 @@ export class SendMessagePush extends SendMessageType {
     Sentry.addBreadcrumb({
       message: 'Sending Push',
     });
-    const integration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      channel: ChannelTypeEnum.PUSH,
-      active: true,
-    });
+
     const pushChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
@@ -81,6 +81,18 @@ export class SendMessagePush extends SendMessageType {
         },
       })
     );
+    const integration = (
+      await this.getDecryptedIntegrationsUsecase.execute(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.PUSH,
+          findOne: true,
+          active: true,
+        })
+      )
+    )[0];
+
     const overrides = command.overrides[integration.providerId] || {};
     const pushChannels = subscriber.channels.filter((chan) =>
       Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
@@ -134,7 +146,7 @@ export class SendMessagePush extends SendMessageType {
   }
 
   private async sendMessage(
-    integration,
+    integration: IntegrationEntity,
     target: string[],
     title: string,
     content: string,

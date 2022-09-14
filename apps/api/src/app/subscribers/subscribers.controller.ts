@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  ArgumentMetadata,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -272,10 +284,15 @@ export class SubscribersController {
     type: Boolean,
     required: false,
   })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+  })
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Query('page') page: number,
+    @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
     @Query('seen') seen?: string
   ) {
@@ -290,7 +307,7 @@ export class SubscribersController {
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page,
+      page: page != null ? parseInt(page) : undefined,
       feedId: feedsQuery,
       seen: isSeen,
     });

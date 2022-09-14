@@ -9,6 +9,7 @@ import { SubscribersModule } from '../subscribers/subscribers.module';
 import { LogsModule } from '../logs/logs.module';
 import { ContentTemplatesModule } from '../content-templates/content-templates.module';
 import { WorkflowQueueService } from './services/workflow.queue.service';
+import { IntegrationModule } from '../integrations/integrations.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { WorkflowQueueService } from './services/workflow.queue.service';
     SubscribersModule,
     LogsModule,
     ContentTemplatesModule,
+    IntegrationModule,
   ],
   controllers: [EventsController],
   providers: [...USE_CASES, WorkflowQueueService],

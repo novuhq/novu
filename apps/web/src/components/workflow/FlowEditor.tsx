@@ -118,7 +118,7 @@ export function FlowEditor({
             ...getChannel(step.template.type),
             active: step.active,
             index: nodes.length,
-            error: getChannelErrors(i, errors),
+            error: getChannelErrors(i, errors, step),
             onDelete,
             setActivePage,
           },
@@ -239,7 +239,7 @@ export function FlowEditor({
   return (
     <>
       <Wrapper dark={colorScheme === 'dark'}>
-        <div style={{ height: '500px', width: 'inherit' }} ref={reactFlowWrapper}>
+        <div style={{ minHeight: '500px', height: '100%', width: 'inherit' }} ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -275,6 +275,7 @@ export function FlowEditor({
 export default FlowEditor;
 
 const Wrapper = styled.div<{ dark: boolean }>`
+  flex: 1 1 0%;
   background: ${({ dark }) => (dark ? colors.B15 : colors.B98)};
   .react-flow__node.react-flow__node-channelNode,
   .react-flow__node.react-flow__node-triggerNode {
@@ -325,8 +326,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
   }
 `;
-
-function getChannelErrors(index: number, errors: any) {
+function getChannelErrors(index: number, errors: any, step: any) {
   if (errors?.steps) {
     const stepErrors = errors.steps[index]?.template;
     if (stepErrors) {
@@ -334,6 +334,10 @@ function getChannelErrors(index: number, errors: any) {
 
       return keys.map((key) => stepErrors[key]?.message);
     }
+  }
+
+  if (step.template.content.length === 0 && step.template.type !== StepTypeEnum.DIGEST) {
+    return 'Something is missing here';
   }
 }
 

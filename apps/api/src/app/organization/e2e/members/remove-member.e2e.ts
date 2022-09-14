@@ -1,4 +1,4 @@
-import { MemberEntity, OrganizationRepository, MemberRepository } from '@novu/dal';
+import { MemberEntity, OrganizationRepository, MemberRepository, EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
@@ -7,9 +7,8 @@ import { describe } from 'mocha';
 
 describe('Remove organization member - /organizations/members/:memberId (DELETE)', async () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
   const memberRepository = new MemberRepository();
-
+  const environmentRepository = new EnvironmentRepository();
   let user2: UserSession;
   let user3: UserSession;
 
@@ -45,6 +44,23 @@ describe('Remove organization member - /organizations/members/:memberId (DELETE)
     user3.organization = session.organization;
   });
 
+  it('should switch the apiKey association when api key creator removed', async function () {
+    const members: MemberEntity[] = await getOrganizationMembers();
+    const originalCreator = members.find((i) => i._userId === session.user._id);
+    await user2.fetchJWT();
+
+    expect(session.environment.apiKeys[0]._userId).to.equal(session.user._id);
+    const { body } = await user2.testAgent.delete(`/v1/organizations/members/${originalCreator._id}`);
+    expect(body.data._id).to.equal(originalCreator._id);
+
+    const membersAfterRemoval: MemberEntity[] = await getOrganizationMembers(user2);
+    const originalCreatorAfterRemoval = membersAfterRemoval.find((i) => i._userId === originalCreator.user._id);
+    expect(originalCreatorAfterRemoval).to.not.be.ok;
+
+    const environment = await environmentRepository.findById(session.environment._id);
+    expect(environment.apiKeys[0]._userId).to.not.equal(session.user._id);
+  });
+
   it('should remove the member by his id', async () => {
     const members: MemberEntity[] = await getOrganizationMembers();
     const user2Member = members.find((i) => i._userId === user2.user._id);
@@ -57,10 +73,16 @@ describe('Remove organization member - /organizations/members/:memberId (DELETE)
     const user2Removed = membersAfterRemoval.find((i) => i._userId === user2.user._id);
 
     expect(user2Removed).to.not.be.ok;
+
+    /**
+     * The API Key owner should not be updated if non creator was removed
+     */
+    const environment = await environmentRepository.findById(session.environment._id);
+    expect(environment.apiKeys[0]._userId).to.equal(session.user._id);
   });
 
-  async function getOrganizationMembers() {
-    const { body } = await session.testAgent.get('/v1/organizations/members');
+  async function getOrganizationMembers(sessionToUser = session) {
+    const { body } = await sessionToUser.testAgent.get('/v1/organizations/members');
 
     return body.data;
   }

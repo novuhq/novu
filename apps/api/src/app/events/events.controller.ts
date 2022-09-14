@@ -6,8 +6,8 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ISubscribersDefine } from '@novu/node';
-import { CancelDigest } from './usecases/cancel-digest/cancel-digest.usecase';
-import { CancelDigestCommand } from './usecases/cancel-digest/cancel-digest.command';
+import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
+import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
@@ -18,7 +18,7 @@ import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags }
 export class EventsController {
   constructor(
     private triggerEvent: TriggerEvent,
-    private cancelDigestUsecase: CancelDigest,
+    private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll
   ) {}
 
@@ -118,15 +118,15 @@ export class EventsController {
     summary: 'Cancel triggered event',
     description: `
     Using a previously generated transactionId during the event trigger,
-     will cancel any active or pending workflows. This is useful to cancel active digests and etc...
+     will cancel any active or pending workflows. This is useful to cancel active digests, delays etc...
     `,
   })
-  async cancelDigest(
+  async cancelDelayed(
     @UserSession() user: IJwtPayload,
     @Param('transactionId') transactionId: string
   ): Promise<boolean> {
-    return await this.cancelDigestUsecase.execute(
-      CancelDigestCommand.create({
+    return await this.cancelDelayedUsecase.execute(
+      CancelDelayedCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

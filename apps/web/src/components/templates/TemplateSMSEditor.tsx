@@ -4,6 +4,7 @@ import { LackIntegrationError } from './LackIntegrationError';
 import { IForm } from './use-template-controller.hook';
 import { colors } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
+import { VariableManager } from './VariableManager';
 
 export function TemplateSMSEditor({
   control,
@@ -40,6 +41,7 @@ export function TemplateSMSEditor({
           />
         )}
       />
+      <VariableManager index={index} contents={['content']} />
     </>
   );
 }

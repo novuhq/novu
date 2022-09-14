@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '../../../entities/message-template';
-import { fcmConfig } from '../provider-credentials';
+import { fcmConfig } from '../credentials';
 import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
 
