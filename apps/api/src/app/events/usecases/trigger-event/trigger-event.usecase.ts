@@ -248,28 +248,4 @@ export class TriggerEvent {
       }
     }
   }
-
-  private async getAttachments(command: TriggerEventCommand): Promise<void> {
-    if (!command.payload.attachments) {
-      return;
-    }
-
-    for (const attachment of command.payload.attachments) {
-      if (attachment.file) {
-        attachment.file = await this.storageService.getFile(attachment.name);
-      }
-    }
-  }
-
-  private async deleteAttachments(command: TriggerEventCommand): Promise<void> {
-    if (!command.payload.attachments) {
-      return;
-    }
-
-    for (const attachment of command.payload.attachments) {
-      if (attachment.file) {
-        await this.storageService.deleteFile(attachment.name);
-      }
-    }
-  }
 }

@@ -101,6 +101,8 @@ export class WorkflowQueueService {
         userId: job._userId,
       })
     );
+
+    await this.deleteAttachments(job);
   }
 
   public async addJob(data: JobEntity | undefined, presend = false) {
@@ -181,6 +183,18 @@ export class WorkflowQueueService {
     for (const attachment of job.payload.attachments) {
       if (!attachment.file) {
         attachment.file = await this.storageService.getFile(attachment.name);
+      }
+    }
+  }
+
+  private async deleteAttachments(job: IJobEntityExtended): Promise<void> {
+    if (!job.payload.attachments) {
+      return;
+    }
+
+    for (const attachment of job.payload.attachments) {
+      if (attachment.file) {
+        await this.storageService.deleteFile(attachment.name);
       }
     }
   }
