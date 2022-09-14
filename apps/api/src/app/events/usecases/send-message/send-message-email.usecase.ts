@@ -123,7 +123,7 @@ export class SendMessageEmail extends SendMessageType {
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>
         <IAttachmentOptions>{
-          file: Buffer.from(attachment.file),
+          file: attachment.file,
           mime: attachment.mime,
           name: attachment.name,
           channels: attachment.channels,

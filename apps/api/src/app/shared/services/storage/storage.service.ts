@@ -37,7 +37,7 @@ async function streamToString(stream: Readable): Promise<string> {
     const chunks: Uint8Array[] = [];
     stream.on('data', (chunk) => chunks.push(chunk));
     stream.on('error', reject);
-    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('base64')));
   });
 }
 export class S3StorageService implements StorageService {
@@ -66,7 +66,6 @@ export class S3StorageService implements StorageService {
     const data = await this.s3.send(command);
     const bodyContents = await streamToString(data.Body as Readable);
 
-    // return Buffer.from(bodyContents);
     return bodyContents as unknown as Buffer;
   }
 

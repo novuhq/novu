@@ -53,7 +53,6 @@ export class TriggerEvent {
 
     // Uploading attachments to S3 and Removing them from payload
     if (command.payload && Array.isArray(command.payload.attachments)) {
-      console.log(command.payload);
       await this.uploadAttachments(command);
       command.payload.attachments = command.payload.attachments.map((attachment) => ({
         name: attachment.name,
