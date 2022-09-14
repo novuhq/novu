@@ -88,6 +88,7 @@ export class SendMessagePush extends SendMessageType {
           environmentId: command.environmentId,
           channelType: ChannelTypeEnum.PUSH,
           findOne: true,
+          active: true,
         })
       )
     )[0];
