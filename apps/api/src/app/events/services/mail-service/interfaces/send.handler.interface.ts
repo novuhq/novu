@@ -1,4 +1,4 @@
-import { IEmailOptions, ISendMessageSuccessResponse } from '@novu/stateless';
+import { IEmailOptions, ISendMessageSuccessResponse, ICheckIntegrationResponse } from '@novu/stateless';
 import { ICredentials } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 
@@ -9,5 +9,5 @@ export interface IMailHandler {
 
   send(mailData: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 
-  checkIntegration(): Promise<ISendMessageSuccessResponse>;
+  check(): Promise<ICheckIntegrationResponse>;
 }

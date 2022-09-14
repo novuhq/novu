@@ -16,6 +16,6 @@ export class CheckIntegrationEMail {
       command.credentials.from
     );
 
-    return await mailHandler.checkIntegration();
+    return await mailHandler.check();
   }
 }

@@ -20,7 +20,7 @@ export class CreateIntegration {
     let response: IntegrationEntity;
 
     try {
-      const res = await this.checkIntegration.execute(
+      await this.checkIntegration.execute(
         CheckIntegrationCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -29,6 +29,7 @@ export class CreateIntegration {
           credentials: command.credentials,
         })
       );
+
       response = await this.integrationRepository.create({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
