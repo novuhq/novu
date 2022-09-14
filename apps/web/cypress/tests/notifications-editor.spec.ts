@@ -62,7 +62,7 @@ describe('Notifications Creator', function () {
       });
       fillBasicNotificationDetails('Test SMS Notification Title');
       clickWorkflow();
-      cy.clickWorkflowNode(`node-inAppSelector`).parent().should('have.class', 'selected');
+      cy.clickWorkflowNode(`node-inAppSelector`)?.parent().should('have.class', 'selected');
       cy.getByTestId(`step-properties-side-menu`).should('be.visible');
       cy.clickWorkflowNode(`node-triggerSelector`);
       cy.getByTestId(`drag-side-menu`).should('be.visible');
