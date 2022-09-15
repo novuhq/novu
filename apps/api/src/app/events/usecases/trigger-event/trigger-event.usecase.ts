@@ -12,9 +12,9 @@ import { ProcessSubscriberCommand } from '../process-subscriber/process-subscrib
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { StorageService } from '../../../shared/services/storage/storage.service';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
 import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
+import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 
 @Injectable()
 export class TriggerEvent {
@@ -24,8 +24,8 @@ export class TriggerEvent {
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
     private workflowQueueService: WorkflowQueueService,
-    private storageService: StorageService,
     private verifyPayload: VerifyPayload,
+    private storageHelperServie: StorageHelperService,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -54,10 +54,9 @@ export class TriggerEvent {
       return this.logTemplateNotActive(command, template);
     }
 
-
     // Uploading attachments to S3 and Removing them from payload
     if (command.payload && Array.isArray(command.payload.attachments)) {
-      await this.uploadAttachments(command);
+      await this.storageHelperServie.uploadAttachments(command.payload.attachments);
       command.payload.attachments = command.payload.attachments.map((attachment) => ({
         name: attachment.name,
         mime: attachment.mime,
@@ -72,7 +71,6 @@ export class TriggerEvent {
     );
 
     command.payload = merge({}, command.payload, defaultPayload);
-
 
     const jobs: JobEntity[][] = [];
 
@@ -249,17 +247,5 @@ export class TriggerEvent {
       acknowledged: true,
       status: 'subscriber_id_missing',
     };
-  }
-
-  private async uploadAttachments(command: TriggerEventCommand): Promise<void> {
-    if (!command.payload.attachments) {
-      return;
-    }
-
-    for (const attachment of command.payload.attachments) {
-      if (attachment.file) {
-        await this.storageService.uploadFile(attachment.name, attachment.file, attachment.mime);
-      }
-    }
   }
 }
