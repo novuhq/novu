@@ -4,6 +4,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 
 import { MailService } from '@sendgrid/mail';
@@ -52,7 +53,8 @@ export class SendgridEmailProvider implements IEmailProvider {
     } catch (error) {
       return {
         success: false,
-        message: error?.response?.body?.errors[0]?.message,
+        message:
+          mapResponse(error?.code) || error?.response?.body?.errors[0]?.message,
       };
     }
   }
@@ -74,3 +76,15 @@ export class SendgridEmailProvider implements IEmailProvider {
     };
   }
 }
+
+const mapResponse = (statusCode: number) => {
+  switch (statusCode) {
+    case 400:
+    case 401:
+      return CheckIntegrationResponseEnum.BAD_CREDENTIALS;
+    case 403:
+      return CheckIntegrationResponseEnum.INVALID_EMAIL;
+    default:
+      return null;
+  }
+};
