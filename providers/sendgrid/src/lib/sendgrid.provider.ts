@@ -55,13 +55,6 @@ export class SendgridEmailProvider implements IEmailProvider {
         message: error?.response?.body?.errors[0]?.message,
       };
     }
-
-    /*
-     * if (response.statusCode !== 202) {
-     *   const data = await response.json();
-     *   throw new Error(data?.errors[0]?.message);
-     * }
-     */
   }
 
   private createMailData(options: IEmailOptions) {
