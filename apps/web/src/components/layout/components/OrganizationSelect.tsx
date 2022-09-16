@@ -6,6 +6,7 @@ import { IOrganizationEntity } from '@novu/shared';
 import { Select } from '../../../design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
 import { AuthContext } from '../../../store/authContext';
+import { registerSpotlightActions, removeSpotlightActions } from '@mantine/spotlight';
 
 export default function OrganizationSelect() {
   const [value, setValue] = useState<string>('');
@@ -51,6 +52,21 @@ export default function OrganizationSelect() {
   useEffect(() => {
     setValue(currentOrganization?._id || '');
   }, [currentOrganization]);
+
+  useEffect(() => {
+    registerSpotlightActions(
+      (organizations || [])
+        .filter((item) => item._id !== value)
+        .map((item) => ({
+          id: 'change-org-' + item._id,
+          title: 'Change org to ' + capitalize(item.name),
+          onTrigger: () => {
+            switchOrg(item._id);
+          },
+        }))
+    );
+    removeSpotlightActions(['change-org-' + value]);
+  }, [value]);
 
   return (
     <>

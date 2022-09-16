@@ -8,6 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import styled from '@emotion/styled';
 import OrganizationSelect from './OrganizationSelect';
+import { registerSpotlightActions } from '@mantine/spotlight';
 
 type Props = {};
 
@@ -26,6 +27,18 @@ export function SideNav({}: Props) {
       navigate('/');
     }
   }, [readonly]);
+
+  useEffect(() => {
+    registerSpotlightActions([
+      {
+        id: 'toggle-environment',
+        title: `Toggle to ${environment?.name === 'Production' ? 'Development' : 'Production'} environment`,
+        onTrigger: () => {
+          setEnvironment(environment?.name === 'Production' ? 'Development' : 'Production');
+        },
+      },
+    ]);
+  }, [environment]);
 
   const menuItems = [
     {

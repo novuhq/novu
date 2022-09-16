@@ -29,6 +29,7 @@ import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import QuickStartPage from './pages/quick-start/QuickStartPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
+import { SpotLight } from './components/utils/Spotlight';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -81,7 +82,9 @@ function App() {
                     path="/*"
                     element={
                       <RequiredAuth>
-                        <HomePage />
+                        <SpotLight>
+                          <HomePage />
+                        </SpotLight>
                       </RequiredAuth>
                     }
                   />
@@ -91,7 +94,9 @@ function App() {
                       <RequiredAuth>
                         <TemplateFormProvider>
                           <TemplateEditorProvider>
-                            <TemplateEditorPage />
+                            <SpotLight>
+                              <TemplateEditorPage />
+                            </SpotLight>
                           </TemplateEditorProvider>
                         </TemplateFormProvider>
                       </RequiredAuth>
@@ -103,7 +108,9 @@ function App() {
                       <RequiredAuth>
                         <TemplateFormProvider>
                           <TemplateEditorProvider>
-                            <TemplateEditorPage />
+                            <SpotLight>
+                              <TemplateEditorPage />
+                            </SpotLight>
                           </TemplateEditorProvider>
                         </TemplateFormProvider>
                       </RequiredAuth>
@@ -113,7 +120,9 @@ function App() {
                     path="/templates"
                     element={
                       <RequiredAuth>
-                        <NotificationList />
+                        <SpotLight>
+                          <NotificationList />
+                        </SpotLight>
                       </RequiredAuth>
                     }
                   />
@@ -121,7 +130,9 @@ function App() {
                     path="/quickstart"
                     element={
                       <RequiredAuth>
-                        <QuickStartPage />
+                        <SpotLight>
+                          <QuickStartPage />
+                        </SpotLight>
                       </RequiredAuth>
                     }
                   />
@@ -129,7 +140,9 @@ function App() {
                     path="/activities"
                     element={
                       <RequiredAuth>
-                        <ActivitiesPage />
+                        <SpotLight>
+                          <ActivitiesPage />
+                        </SpotLight>
                       </RequiredAuth>
                     }
                   />
@@ -137,7 +150,9 @@ function App() {
                     path="/settings"
                     element={
                       <RequiredAuth>
-                        <SettingsPage />
+                        <SpotLight>
+                          <SettingsPage />
+                        </SpotLight>
                       </RequiredAuth>
                     }
                   />
@@ -145,7 +160,9 @@ function App() {
                     path="/integrations"
                     element={
                       <RequiredAuth>
-                        <IntegrationsStore />
+                        <SpotLight>
+                          <IntegrationsStore />
+                        </SpotLight>
                       </RequiredAuth>
                     }
                   />
@@ -153,7 +170,9 @@ function App() {
                     path="/team"
                     element={
                       <RequiredAuth>
-                        <MembersInvitePage />
+                        <SpotLight>
+                          <MembersInvitePage />
+                        </SpotLight>
                       </RequiredAuth>
                     }
                   />
@@ -161,7 +180,9 @@ function App() {
                     path="/changes"
                     element={
                       <RequiredAuth>
-                        <PromoteChangesPage />
+                        <SpotLight>
+                          <PromoteChangesPage />
+                        </SpotLight>
                       </RequiredAuth>
                     }
                   />

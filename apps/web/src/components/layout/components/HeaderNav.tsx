@@ -13,11 +13,12 @@ import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
-import { Sun, Moon, Ellipse, Bell, Trash, Mail } from '../../../design-system/icons';
+import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks/use-localThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
+import { registerSpotlightActions } from '@mantine/spotlight';
 
 type Props = {};
 const menuItem = [
@@ -74,6 +75,27 @@ export function HeaderNav({}: Props) {
 
     return <Ellipse {...headerIconsSettings} height={24} width={24} />;
   };
+
+  useEffect(() => {
+    registerSpotlightActions([
+      {
+        id: 'toggle-theme',
+        title: themeTitle(),
+        icon: Icon(),
+        onTrigger: () => {
+          toggleColorScheme();
+        },
+      },
+      {
+        id: 'sign-out',
+        title: 'Sign out',
+        icon: <Trash />,
+        onTrigger: () => {
+          logout();
+        },
+      },
+    ]);
+  }, [colorScheme]);
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
