@@ -342,6 +342,16 @@ export const fcmConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const expoConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Access Token',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const gupshupConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
