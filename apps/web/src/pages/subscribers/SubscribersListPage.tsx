@@ -12,11 +12,11 @@ import { Data } from '../../design-system/table/Table';
 
 const columns: ColumnWithStrictAccessor<Data>[] = [
   {
-    accessor: '_id',
+    accessor: 'subscriberId',
     Header: 'Subscriber Id',
-    Cell: ({ _id }: any) => (
-      <Tooltip label={_id}>
-        <Text rows={1}>{_id}</Text>
+    Cell: ({ subscriberId }: any) => (
+      <Tooltip label={subscriberId}>
+        <Text rows={1}>{subscriberId}</Text>
       </Tooltip>
     ),
   },
@@ -35,15 +35,6 @@ const columns: ColumnWithStrictAccessor<Data>[] = [
     Cell: ({ lastName }: any) => (
       <Tooltip label={lastName}>
         <Text rows={1}>{lastName}</Text>
-      </Tooltip>
-    ),
-  },
-  {
-    accessor: 'deleted',
-    Header: 'Deleted',
-    Cell: ({ deleted }: any) => (
-      <Tooltip label={deleted ? 'true' : 'false'}>
-        <Text rows={1}>{deleted ? 'true' : 'false'}</Text>
       </Tooltip>
     ),
   },
@@ -87,7 +78,7 @@ function SubscribersList() {
       <SubscibersListTableWrapper>
         <Table
           loading={isLoading}
-          data-test-id="notifications-template"
+          data-test-id="subscribers-table"
           columns={columns}
           data={subscibers || []}
           pagination={{
