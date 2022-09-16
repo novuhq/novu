@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
 import { useMutation } from 'react-query';
 import { showNotification } from '@mantine/notifications';
-import { Image, useMantineColorScheme } from '@mantine/core';
+import { Image, useMantineColorScheme, Stack } from '@mantine/core';
 import { Button, colors, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, updateIntegration } from '../../../api/integration';
@@ -32,11 +32,18 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
+  const [isCheckIntegration, setIsCheckIntegration] = useState<boolean>(true);
 
   const { mutateAsync: createIntegrationApi } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
-    { providerId: string; channel: ChannelTypeEnum | null; credentials: ICredentialsDto; active: boolean }
+    {
+      providerId: string;
+      channel: ChannelTypeEnum | null;
+      credentials: ICredentialsDto;
+      active: boolean;
+      check: boolean;
+    }
   >(createIntegration);
 
   const { mutateAsync: updateIntegrationApi } = useMutation<
@@ -64,6 +71,7 @@ export function ConnectIntegrationForm({
           channel: provider?.channel ? provider?.channel : null,
           credentials,
           active: isActive,
+          check: isCheckIntegration,
         });
       } else {
         await updateIntegrationApi({
@@ -90,6 +98,10 @@ export function ConnectIntegrationForm({
 
   function handlerSwitchChange() {
     setIsActive((prev) => !prev);
+  }
+
+  function handlerCheckIntegrationChange() {
+    setIsCheckIntegration((prev) => !prev);
   }
 
   const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
@@ -120,7 +132,7 @@ export function ConnectIntegrationForm({
             />
           </InputWrapper>
         ))}
-        <RowDiv>
+        <Stack my={30}>
           <ActiveWrapper active={isActive}>
             <Controller
               control={control}
@@ -131,7 +143,25 @@ export function ConnectIntegrationForm({
             />
             <StyledText>{isActive ? 'Active' : 'Disabled'}</StyledText>
           </ActiveWrapper>
-        </RowDiv>
+          {createModel && provider?.channel === ChannelTypeEnum.EMAIL && (
+            <CheckIntegrationWrapper>
+              <Controller
+                control={control}
+                name="check"
+                render={({ field }) => (
+                  <Switch
+                    checked={isCheckIntegration}
+                    data-test-id="is_check_integration_id"
+                    {...field}
+                    onChange={handlerCheckIntegrationChange}
+                  />
+                )}
+              />
+              <StyledText>Send a test email to verify the credentials?</StyledText>
+            </CheckIntegrationWrapper>
+          )}
+        </Stack>
+
         <Button submit fullWidth>
           {createModel ? 'Connect' : 'Update'}
         </Button>
@@ -149,6 +179,9 @@ const StyledText = styled(Text)`
 const SideElementBase = styled.div`
   display: flex;
   justify-content: flex-start;
+  & > :first-child {
+    width: auto;
+  }
 `;
 
 const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
@@ -162,13 +195,6 @@ const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
 const ColumnDiv = styled.div`
   display: flex;
   flex-direction: column;
-`;
-
-const RowDiv = styled.div`
-  justify-content: space-between;
-  display: flex;
-  flex-direction: row;
-  margin: 30px 0 30px 0;
 `;
 
 const InlineDiv = styled.div`
@@ -207,4 +233,12 @@ const InputWrapper = styled.div`
 
 const Form = styled.form`
   position: relative;
+`;
+
+const CheckIntegrationWrapper = styled(SideElementBase)`
+  width: 100%;
+  align-items: center;
+  ${StyledText} {
+    flex-grow: 1;
+  }
 `;

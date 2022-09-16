@@ -90,6 +90,7 @@ export class IntegrationsController {
         channel: body.channel,
         credentials: body.credentials,
         active: body.active,
+        check: body.check,
       })
     );
   }

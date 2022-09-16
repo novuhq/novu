@@ -20,15 +20,17 @@ export class CreateIntegration {
     let response: IntegrationEntity;
 
     try {
-      await this.checkIntegration.execute(
-        CheckIntegrationCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          providerId: command.providerId,
-          channel: command.channel,
-          credentials: command.credentials,
-        })
-      );
+      if (command.check) {
+        await this.checkIntegration.execute(
+          CheckIntegrationCommand.create({
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            providerId: command.providerId,
+            channel: command.channel,
+            credentials: command.credentials,
+          })
+        );
+      }
 
       response = await this.integrationRepository.create({
         _environmentId: command.environmentId,
