@@ -1,12 +1,15 @@
+import { ChannelTypeEnum } from '@novu/shared';
 import { IsNumber, IsOptional } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class GetSubscribersCommand extends EnvironmentCommand {
+export class GetMessagesCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
   page: number;
 
-  @IsNumber()
   @IsOptional()
-  limit: number;
+  subscriberId?: string;
+
+  @IsOptional()
+  channel?: ChannelTypeEnum;
 }
