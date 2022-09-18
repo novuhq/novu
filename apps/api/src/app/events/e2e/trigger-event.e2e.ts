@@ -8,6 +8,7 @@ import {
   JobRepository,
   JobEntity,
   JobStatusEnum,
+  IntegrationRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 
@@ -26,6 +27,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   const notificationRepository = new NotificationRepository();
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
+  const integrationRepository = new IntegrationRepository();
   const logRepository = new LogRepository();
   const jobRepository = new JobRepository();
 
@@ -473,6 +475,63 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
     expect(message.subject).to.equal('Test email a subject nested');
+  });
+
+  it('should not trigger notification with subscriber data if integration is inactive', async function () {
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    const integration = await integrationRepository.findOne({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: 'sendgrid',
+    });
+
+    await integrationRepository.update(
+      {
+        _id: integration._id,
+      },
+      { active: false }
+    );
+
+    template = await createTemplate(session, channelType);
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email {{nested.subject}}',
+          type: StepTypeEnum.EMAIL,
+          content: [
+            {
+              type: 'text',
+              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
+      nested: {
+        subject: 'a subject nested',
+      },
+    });
+
+    await session.awaitRunningJobs(template._id);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    expect(message).to.be.null;
   });
 
   it('should fail to trigger with missing variables', async function () {
