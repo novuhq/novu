@@ -312,7 +312,7 @@ export class SubscribersController {
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page: page != null ? parseInt(page) : undefined,
+      page: page != null ? parseInt(page) : 0,
       feedId: feedsQuery,
       seen: isSeen,
     });
