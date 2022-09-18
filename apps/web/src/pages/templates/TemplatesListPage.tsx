@@ -123,9 +123,7 @@ function NotificationList() {
             total: totalTemplatesCount,
             onPageChange: handleTableChange,
           }}
-        >
-          {' '}
-        </Table>
+        />
       </TemplateListTableWrapper>
     </PageContainer>
   );

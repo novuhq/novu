@@ -1,9 +1,8 @@
-import { ChannelTypeEnum, DigestUnitEnum } from '@novu/shared';
-
-export interface IChannelCredentials {
-  webhookUrl?: string;
-  deviceTokens?: string[];
-}
+import {
+  ChannelTypeEnum,
+  DigestUnitEnum,
+  IChannelCredentials,
+} from '@novu/shared';
 
 export interface ISubscribers {
   identify(subscriberId: string, data: ISubscriberPayload);

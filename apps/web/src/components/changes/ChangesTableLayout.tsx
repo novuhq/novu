@@ -98,9 +98,5 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
     },
   ];
 
-  return (
-    <Table data-test-id="changes-table" loading={loading} data={changes || []} columns={columns}>
-      {' '}
-    </Table>
-  );
+  return <Table data-test-id="changes-table" loading={loading} data={changes || []} columns={columns} />;
 };

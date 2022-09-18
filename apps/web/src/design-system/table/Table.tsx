@@ -6,7 +6,7 @@ import { colors } from '../config';
 
 export type Data = Record<string, any>;
 
-export interface ITableProps extends JSX.ElementChildrenAttribute {
+export interface ITableProps {
   columns?: ColumnWithStrictAccessor<Data>[];
   data?: Data[];
   loading?: boolean;
@@ -23,7 +23,6 @@ export function Table({
   data: userData,
   pagination = false,
   loading = false,
-  children,
   onRowClick,
   ...props
 }: ITableProps) {
