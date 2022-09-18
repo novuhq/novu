@@ -2,7 +2,7 @@ import React from 'react';
 import { createStyles, Box } from '@mantine/core';
 import { ThemeProvider } from '../../../design-system/ThemeProvider';
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({ children }: { children?: React.ReactNode }) {
   const { classes } = useStyles();
 
   return (

@@ -39,6 +39,7 @@ export class GetInvite {
         logo: organization.logo,
       },
       email: member.invite.email,
+      _userId: member._userId,
     };
   }
 }

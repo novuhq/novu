@@ -11,9 +11,12 @@ import { PasswordInput, Button, colors, Input, Text } from '../../design-system'
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 
-type Props = {};
+type Props = {
+  token?: string;
+  email?: string;
+};
 
-export function LoginForm({}: Props) {
+export function LoginForm({ email, token }: Props) {
   const navigate = useNavigate();
   const { setToken } = useContext(AuthContext);
   const { isLoading, mutateAsync, isError, error } = useMutation<
@@ -29,7 +32,12 @@ export function LoginForm({}: Props) {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({});
+  } = useForm({
+    defaultValues: {
+      email: email || '',
+      password: '',
+    },
+  });
 
   const onLogin = async (data) => {
     const itemData = {
@@ -39,9 +47,9 @@ export function LoginForm({}: Props) {
 
     try {
       const response = await mutateAsync(itemData);
-
       setToken((response as any).token);
-      navigate('/templates');
+
+      if (!token) navigate('/templates');
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
