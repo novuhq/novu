@@ -42,6 +42,7 @@
     "@novu/fcm": "^0.8.0",
     "@novu/gupshup": "^0.8.0",
     "@novu/mailgun": "^0.8.0",
+    "@novu/ms-teams": "^0.8.0",
     "@novu/mailjet": "^0.8.0",
     "@novu/mandrill": "^0.8.0",
     "@novu/netcore": "^0.8.0",

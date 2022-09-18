@@ -20,4 +20,13 @@ export const chatProviders: IProviderConfig[] = [
     docReference: 'https://discord.com/developers/docs/intro',
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
+  {
+    id: ChatProviderIdEnum.MsTeams,
+    displayName: 'MSTeams',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference:
+      'https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook',
+    logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
+  },
 ];
