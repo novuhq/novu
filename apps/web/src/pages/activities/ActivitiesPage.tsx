@@ -236,9 +236,7 @@ export function ActivitiesPage() {
           total: data?.totalCount,
           onPageChange: handleTableChange,
         }}
-      >
-        {' '}
-      </Table>
+      />
     </PageContainer>
   );
 }
