@@ -79,12 +79,17 @@ export class SubscribersController {
     description: 'Returns a list of subscribers, could paginated using the `page` query parameter',
   })
   @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
-  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
+  async getSubscribers(
+    @UserSession() user: IJwtPayload,
+    @Query('page') page = 0,
+    @Query('limit') limit = 10
+  ): Promise<SubscribersResponseDto> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         page: page ? Number(page) : 0,
+        limit: limit ? Number(limit) : 10,
       })
     );
   }
