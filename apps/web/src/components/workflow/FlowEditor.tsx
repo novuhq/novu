@@ -336,7 +336,11 @@ function getChannelErrors(index: number, errors: any, step: any) {
     }
   }
 
-  if (step.template.content.length === 0 && step.template.type !== StepTypeEnum.DIGEST) {
+  if (
+    step.template.content.length === 0 &&
+    step.template.type !== StepTypeEnum.DIGEST &&
+    step.template.type !== StepTypeEnum.DELAY
+  ) {
     return 'Something is missing here';
   }
 }
