@@ -25,7 +25,15 @@ export class StorageHelperService {
     }
 
     for (const attachment of attachments) {
-      attachment.file = await this.storageService.getFile(attachment.name);
+      try {
+        attachment.file = await this.storageService.getFile(attachment.name);
+      } catch (error) {
+        if (error.message === 'The specified key does not exist.') {
+          attachment.file = null;
+        } else {
+          throw error;
+        }
+      }
     }
   }
 
