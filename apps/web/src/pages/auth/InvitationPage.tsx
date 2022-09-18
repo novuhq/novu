@@ -33,7 +33,7 @@ export default function InvitationPage() {
 
   const acceptToken = async () => {
     if (existingUser && currentUser && currentUser._id === data._userId && isLoggedIn) {
-      const result = await submitToken(tokenParam, true);
+      const result = await submitToken(tokenParam as string, true);
       if (result) navigate('/templates');
     }
   };
@@ -84,23 +84,15 @@ export default function InvitationPage() {
         <AuthContainer
           title="Get Started"
           customDescription={
-            <Center inline mb={60} mt={20}>
-              <Text size="lg" mr={4} color={colors.B60}>
-                You've been invited by
+            <div>
+              <Text size="lg" mr={4} color={colors.B60} mt={10} mb={15}>
+                You've been invited by <b>{capitalize(data?.inviter?.firstName) || ''}</b> to join{' '}
+                <b>{data?.organization.name || ''}.</b>{' '}
+                {existingUser
+                  ? 'You already have an account, please log in to accept the invite.'
+                  : 'Please create an account to join.'}
               </Text>
-              <Text size="lg" weight="bold" mr={4}>
-                {capitalize(data?.inviter?.firstName) || ''}
-              </Text>
-              <Text size="lg" mr={4} color={colors.B60}>
-                to join
-              </Text>
-              <Text size="lg" weight="bold">
-                {data?.organization.name || ''}
-              </Text>
-              <Text size="lg" color={colors.B60}>
-                .
-              </Text>
-            </Center>
+            </div>
           }
         >
           <div style={{ position: 'relative', minHeight: 'inherit' }}>
