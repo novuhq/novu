@@ -20,4 +20,8 @@ export abstract class BaseHandler implements IMailHandler {
 
     return await this.provider.sendMessage(mailData);
   }
+
+  public getProvider(): IEmailProvider {
+    return this.provider;
+  }
 }

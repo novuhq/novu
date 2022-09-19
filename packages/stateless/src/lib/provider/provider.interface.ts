@@ -15,6 +15,7 @@ export interface IEmailOptions {
   from?: string;
   text?: string;
   attachments?: IAttachmentOptions[];
+  id?: string;
 }
 
 export interface ISmsOptions {
@@ -59,6 +60,10 @@ export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
   sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
+
+  getMessageId?: (body: any) => string;
+
+  parseEventBody?: (body: any) => any;
 }
 
 export interface ISmsProvider extends IProvider {

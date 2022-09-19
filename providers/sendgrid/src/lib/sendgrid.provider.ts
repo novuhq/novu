@@ -41,7 +41,7 @@ export class SendgridEmailProvider implements IEmailProvider {
     });
 
     return {
-      id: response[0]?.headers['x-message-id'],
+      id: options.id || response[0]?.headers['x-message-id'],
       date: response[0]?.headers?.date,
     };
   }
