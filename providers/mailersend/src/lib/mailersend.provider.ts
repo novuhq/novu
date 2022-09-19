@@ -4,6 +4,7 @@ import {
   IEmailOptions,
   IEmailProvider,
   ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
@@ -62,6 +63,7 @@ export class MailersendEmailProvider implements IEmailProvider {
     return {
       success: true,
       message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

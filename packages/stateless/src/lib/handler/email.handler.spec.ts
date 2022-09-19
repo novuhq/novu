@@ -1,3 +1,4 @@
+import { CheckIntegrationResponseEnum } from '../provider/provider.enum';
 import { IEmailProvider } from '../provider/provider.interface';
 import {
   ChannelTypeEnum,
@@ -12,7 +13,12 @@ test('it should be able to accept subject as a function and read message configu
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
-    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   };
 
   const theme: ITheme = {
@@ -56,7 +62,12 @@ test('it should be able to accept subject as a function and access outer scope',
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
-    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   };
 
   const theme: ITheme = {
@@ -102,7 +113,12 @@ test('it should be able to accept subject as a function', async () => {
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
-    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   };
 
   const theme: ITheme = {
@@ -146,7 +162,12 @@ test('send should call the provider method correctly', async () => {
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
-    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   };
 
   const theme: ITheme = {
@@ -188,7 +209,12 @@ test('send should call template method correctly', async () => {
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
-    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   };
 
   const theme: ITheme = {
@@ -233,7 +259,12 @@ test('send should handle attachments correctly', async () => {
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
-    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   };
 
   const theme: ITheme = {

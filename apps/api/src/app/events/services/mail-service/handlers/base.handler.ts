@@ -28,17 +28,19 @@ export abstract class BaseHandler implements IMailHandler {
       to: 'no-reply@novu.co',
     };
 
-    const { message, success } = await this.provider.checkIntegration(mailData);
+    const { message, success, code } = await this.provider.checkIntegration(mailData);
 
     if (!success) {
       throw new ApiException({
         success,
+        code,
         message: message || 'Something went wrong! Please double check your account details(Email/API key)',
       });
     }
 
     return {
       success,
+      code,
       message: 'Integration successful',
     };
   }

@@ -4,6 +4,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { IEmailJsConfig } from './emailjs.config';
@@ -67,6 +68,7 @@ export class EmailJsProvider implements IEmailProvider {
     return {
       success: true,
       message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

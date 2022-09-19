@@ -1,4 +1,6 @@
 export enum CheckIntegrationResponseEnum {
-  INVALID_EMAIL = 'From Email id is invalid/incorrect',
-  BAD_CREDENTIALS = 'Bad credentials(API key, Email, etc)',
+  INVALID_EMAIL = 'invalid_email',
+  BAD_CREDENTIALS = 'bad_credentials',
+  SUCCESS = 'success',
+  FAILED = 'failed',
 }

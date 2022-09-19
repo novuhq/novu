@@ -48,13 +48,14 @@ export class SendgridEmailProvider implements IEmailProvider {
         return {
           success: true,
           message: 'Integration Successful',
+          code: CheckIntegrationResponseEnum.SUCCESS,
         };
       }
     } catch (error) {
       return {
         success: false,
-        message:
-          mapResponse(error?.code) || error?.response?.body?.errors[0]?.message,
+        message: error?.response?.body?.errors[0]?.message,
+        code: mapResponse(error?.code),
       };
     }
   }
@@ -85,6 +86,6 @@ const mapResponse = (statusCode: number) => {
     case 403:
       return CheckIntegrationResponseEnum.INVALID_EMAIL;
     default:
-      return null;
+      return CheckIntegrationResponseEnum.FAILED;
   }
 };

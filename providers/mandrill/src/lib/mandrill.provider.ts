@@ -4,6 +4,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 
 import mailchimp from '@mailchimp/mailchimp_transactional';
@@ -69,6 +70,7 @@ export class MandrillProvider implements IEmailProvider {
     return {
       success: true,
       message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

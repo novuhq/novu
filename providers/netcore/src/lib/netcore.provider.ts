@@ -4,6 +4,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 
 export class NetCoreProvider implements IEmailProvider {
@@ -70,6 +71,7 @@ export class NetCoreProvider implements IEmailProvider {
     return {
       success: true,
       message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

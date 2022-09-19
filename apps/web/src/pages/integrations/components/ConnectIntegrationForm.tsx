@@ -1,15 +1,69 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useReducer } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
 import { useMutation } from 'react-query';
 import { showNotification } from '@mantine/notifications';
-import { Image, useMantineColorScheme, Stack } from '@mantine/core';
+import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { Button, colors, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IntegrationInput } from './IntegrationInput';
+import { WarningOutlined } from '@ant-design/icons';
+
+enum ACTION_TYPE_ENUM {
+  HANDLE_SHOW_SWITCH = 'handle_show_switch',
+  HANLDE_ALERT_AND_ERROR_MSG = 'handle_alert_and_error_msg',
+  TOGGLE_CHECK = 'toggle_check',
+}
+
+type ActionType =
+  | { type: ACTION_TYPE_ENUM.TOGGLE_CHECK }
+  | {
+      type: ACTION_TYPE_ENUM.HANDLE_SHOW_SWITCH;
+      payload: boolean;
+    }
+  | {
+      type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG;
+      payload: {
+        isShowAlert: boolean;
+        errorMsg: string;
+      };
+    };
+
+const checkIntegrationInitialState = {
+  check: true,
+  isShowSwitch: false,
+  isShowAlert: false,
+  errorMsg: '',
+};
+
+const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, action: ActionType) => {
+  switch (action.type) {
+    case ACTION_TYPE_ENUM.HANDLE_SHOW_SWITCH:
+      return {
+        ...state,
+        isShowSwitch: action.payload,
+      };
+
+    case ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG:
+      return {
+        ...state,
+        isShowAlert: action.payload.isShowAlert,
+        errorMsg: action.payload.errorMsg,
+      };
+
+    case ACTION_TYPE_ENUM.TOGGLE_CHECK:
+      return {
+        ...state,
+        check: !state.check,
+      };
+
+    default:
+      return state;
+  }
+};
 
 export function ConnectIntegrationForm({
   provider,
@@ -32,7 +86,8 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
-  const [isCheckIntegration, setIsCheckIntegration] = useState<boolean>(true);
+
+  const [checkIntegrationState, dispatch] = useReducer(checkIntegrationReducer, checkIntegrationInitialState);
 
   const { mutateAsync: createIntegrationApi } = useMutation<
     { res: string },
@@ -51,7 +106,7 @@ export function ConnectIntegrationForm({
     { error: string; message: string; statusCode: number },
     {
       integrationId: string;
-      data: { credentials: ICredentialsDto; active: boolean };
+      data: { credentials: ICredentialsDto; active: boolean; check: boolean };
     }
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
@@ -65,24 +120,40 @@ export function ConnectIntegrationForm({
 
   async function onCreatIntegration(credentials: ICredentialsDto) {
     try {
+      if (checkIntegrationState.isShowAlert) {
+        dispatch({
+          type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG,
+          payload: {
+            isShowAlert: false,
+            errorMsg: '',
+          },
+        });
+      }
       if (createModel) {
         await createIntegrationApi({
           providerId: provider?.providerId ? provider?.providerId : '',
           channel: provider?.channel ? provider?.channel : null,
           credentials,
           active: isActive,
-          check: isCheckIntegration,
+          check: checkIntegrationState.check,
         });
       } else {
         await updateIntegrationApi({
           integrationId: provider?.integrationId ? provider?.integrationId : '',
-          data: { credentials, active: isActive },
+          data: { credentials, active: isActive, check: checkIntegrationInitialState.check },
         });
       }
     } catch (e: any) {
-      showNotification({
-        message: `Exception occurred while fetching integration: ${e?.messages.toString()}`,
-        color: 'red',
+      dispatch({
+        type: ACTION_TYPE_ENUM.HANDLE_SHOW_SWITCH,
+        payload: true,
+      });
+      dispatch({
+        type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG,
+        payload: {
+          isShowAlert: true,
+          errorMsg: e?.message,
+        },
       });
 
       return;
@@ -101,7 +172,9 @@ export function ConnectIntegrationForm({
   }
 
   function handlerCheckIntegrationChange() {
-    setIsCheckIntegration((prev) => !prev);
+    dispatch({
+      type: ACTION_TYPE_ENUM.TOGGLE_CHECK,
+    });
   }
 
   const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
@@ -143,22 +216,28 @@ export function ConnectIntegrationForm({
             />
             <StyledText>{isActive ? 'Active' : 'Disabled'}</StyledText>
           </ActiveWrapper>
-          {createModel && provider?.channel === ChannelTypeEnum.EMAIL && (
+          {provider?.channel === ChannelTypeEnum.EMAIL && checkIntegrationState.isShowSwitch && (
             <CheckIntegrationWrapper>
               <Controller
                 control={control}
                 name="check"
                 render={({ field }) => (
                   <Switch
-                    checked={isCheckIntegration}
+                    checked={checkIntegrationState.check}
                     data-test-id="is_check_integration_id"
                     {...field}
                     onChange={handlerCheckIntegrationChange}
                   />
                 )}
               />
-              <StyledText>Send a test email to verify the credentials?</StyledText>
+              <StyledText>Verify provider credentials</StyledText>
             </CheckIntegrationWrapper>
+          )}
+
+          {checkIntegrationState.isShowAlert && (
+            <Alert icon={<WarningOutlined size={16} />} title="An error occurred!" color="red" mb={30}>
+              {checkIntegrationState.errorMsg}
+            </Alert>
           )}
         </Stack>
 

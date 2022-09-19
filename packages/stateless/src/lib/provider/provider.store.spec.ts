@@ -1,4 +1,5 @@
 import { ChannelTypeEnum } from '../template/template.interface';
+import { CheckIntegrationResponseEnum } from './provider.enum';
 import { ProviderStore } from './provider.store';
 
 test('should register a provider', async () => {
@@ -32,7 +33,12 @@ test('should get a provider by id', async () => {
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
-    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   });
 
   const provider = await store.getProviderByInternalId('test');
@@ -56,7 +62,12 @@ test('should get a provider by channel', async () => {
     channelType: ChannelTypeEnum.EMAIL,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
-    checkIntegration: () => Promise.resolve({ message: 'test', success: true }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   });
 
   const provider = await store.getProviderByChannel(ChannelTypeEnum.EMAIL);

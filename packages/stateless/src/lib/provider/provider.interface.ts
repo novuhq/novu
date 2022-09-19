@@ -2,6 +2,7 @@ import {
   ChannelTypeEnum,
   IAttachmentOptions,
 } from '../template/template.interface';
+import { CheckIntegrationResponseEnum } from './provider.enum';
 
 export interface IProvider {
   id: string;
@@ -83,4 +84,5 @@ export interface IPushProvider extends IProvider {
 export interface ICheckIntegrationResponse {
   success: boolean;
   message: string;
+  code: CheckIntegrationResponseEnum;
 }
