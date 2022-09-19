@@ -17,6 +17,12 @@ export const SpotLight = ({ children }) => {
         icon: <Bolt />,
       },
       {
+        id: 'navigate-subscribers',
+        title: 'Go to Subscribers',
+        onTrigger: () => navigate('/subscribers'),
+        icon: <Team />,
+      },
+      {
         id: 'navigate-activity-feed',
         title: 'Go to Activity feed',
         onTrigger: () => navigate('/activities'),
@@ -50,21 +56,21 @@ export const SpotLight = ({ children }) => {
         id: 'navigate-docs',
         title: 'Go to Documentation',
         onTrigger: () => {
-          window.location.href = 'https://docs.novu.co/';
+          window?.open('https://docs.novu.co/', '_blank')?.focus();
         },
       },
       {
         id: 'navigate-support',
         title: 'Go to Support',
         onTrigger: () => {
-          window.location.href = 'https://discord.com/invite/novu';
+          window?.open('https://discord.com/invite/novu', '_blank')?.focus();
         },
       },
     ]);
   }, []);
 
   return (
-    <SpotlightProvider limit={6} shortcut={['mod + K']} actions={items}>
+    <SpotlightProvider limit={7} shortcut={['mod + K']} actions={items}>
       {children}
     </SpotlightProvider>
   );
