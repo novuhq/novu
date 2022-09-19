@@ -53,6 +53,7 @@ describe('Create Integration - /integration (POST)', function () {
       channel: 'email',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
 
     const secondInsertResponse = await insertIntegrationTwice(session, payload, false);
@@ -65,6 +66,7 @@ describe('Create Integration - /integration (POST)', function () {
       providerId: 'sendgrid',
       channel: 'email',
       active: true,
+      cehck: false,
     };
 
     const body = (await session.testAgent.post('/v1/integrations').send(payload)).body.data as IntegrationEntity;
@@ -78,6 +80,7 @@ describe('Create Integration - /integration (POST)', function () {
       channel: 'email',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
 
     const environmentId = (await session.testAgent.get(`/v1/integrations`)).body.data[0]._environmentId;
