@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import styled from '@emotion/styled';
 import OrganizationSelect from './OrganizationSelect';
-import { registerSpotlightActions } from '@mantine/spotlight';
+import { SpotlightContext } from '../../../store/spotlightContext';
 
 type Props = {};
 
@@ -20,6 +20,7 @@ export function SideNav({}: Props) {
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
+  const { addItem } = useContext(SpotlightContext);
 
   useEffect(() => {
     setOpened(readonly);
@@ -29,7 +30,7 @@ export function SideNav({}: Props) {
   }, [readonly]);
 
   useEffect(() => {
-    registerSpotlightActions([
+    addItem([
       {
         id: 'toggle-environment',
         title: `Toggle to ${environment?.name === 'Production' ? 'Development' : 'Production'} environment`,

@@ -6,12 +6,13 @@ import { IOrganizationEntity } from '@novu/shared';
 import { Select } from '../../../design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
 import { AuthContext } from '../../../store/authContext';
-import { registerSpotlightActions, removeSpotlightActions } from '@mantine/spotlight';
+import { SpotlightContext } from '../../../store/spotlightContext';
 
 export default function OrganizationSelect() {
   const [value, setValue] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [loadingSwitch, setLoadingSwitch] = useState<boolean>(false);
+  const { addItem, removeItem } = useContext(SpotlightContext);
 
   const queryClient = useQueryClient();
   const { currentOrganization, organizations, setToken } = useContext(AuthContext);
@@ -54,7 +55,7 @@ export default function OrganizationSelect() {
   }, [currentOrganization]);
 
   useEffect(() => {
-    registerSpotlightActions(
+    addItem(
       (organizations || [])
         .filter((item) => item._id !== value)
         .map((item) => ({
@@ -65,7 +66,7 @@ export default function OrganizationSelect() {
           },
         }))
     );
-    removeSpotlightActions(['change-org-' + value]);
+    removeItem('change-org-' + value);
   }, [value]);
 
   return (

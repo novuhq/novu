@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -30,6 +30,7 @@ import QuickStartPage from './pages/quick-start/QuickStartPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { SpotLight } from './components/utils/Spotlight';
+import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -70,124 +71,126 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <AuthHandlerComponent>
             <ThemeHandlerComponent>
-              <Routes>
-                <Route path="/auth/signup" element={<SignUpPage />} />
-                <Route path="/auth/login" element={<LoginPage />} />
-                <Route path="/auth/reset/request" element={<PasswordResetPage />} />
-                <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
-                <Route path="/auth/invitation/:token" element={<InvitationPage />} />
-                <Route path="/auth/application" element={<CreateOrganizationPage />} />
-                <Route element={<AppLayout />}>
-                  <Route
-                    path="/*"
-                    element={
-                      <RequiredAuth>
-                        <SpotLight>
-                          <HomePage />
-                        </SpotLight>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/templates/create"
-                    element={
-                      <RequiredAuth>
-                        <TemplateFormProvider>
-                          <TemplateEditorProvider>
-                            <SpotLight>
-                              <TemplateEditorPage />
-                            </SpotLight>
-                          </TemplateEditorProvider>
-                        </TemplateFormProvider>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/templates/edit/:templateId"
-                    element={
-                      <RequiredAuth>
-                        <TemplateFormProvider>
-                          <TemplateEditorProvider>
-                            <SpotLight>
-                              <TemplateEditorPage />
-                            </SpotLight>
-                          </TemplateEditorProvider>
-                        </TemplateFormProvider>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/templates"
-                    element={
-                      <RequiredAuth>
-                        <SpotLight>
-                          <NotificationList />
-                        </SpotLight>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/quickstart"
-                    element={
-                      <RequiredAuth>
-                        <SpotLight>
-                          <QuickStartPage />
-                        </SpotLight>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/activities"
-                    element={
-                      <RequiredAuth>
-                        <SpotLight>
-                          <ActivitiesPage />
-                        </SpotLight>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <RequiredAuth>
-                        <SpotLight>
-                          <SettingsPage />
-                        </SpotLight>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/integrations"
-                    element={
-                      <RequiredAuth>
-                        <SpotLight>
-                          <IntegrationsStore />
-                        </SpotLight>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/team"
-                    element={
-                      <RequiredAuth>
-                        <SpotLight>
-                          <MembersInvitePage />
-                        </SpotLight>
-                      </RequiredAuth>
-                    }
-                  />
-                  <Route
-                    path="/changes"
-                    element={
-                      <RequiredAuth>
-                        <SpotLight>
-                          <PromoteChangesPage />
-                        </SpotLight>
-                      </RequiredAuth>
-                    }
-                  />
-                </Route>
-              </Routes>
+              <SpotLightProvider>
+                <Routes>
+                  <Route path="/auth/signup" element={<SignUpPage />} />
+                  <Route path="/auth/login" element={<LoginPage />} />
+                  <Route path="/auth/reset/request" element={<PasswordResetPage />} />
+                  <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
+                  <Route path="/auth/invitation/:token" element={<InvitationPage />} />
+                  <Route path="/auth/application" element={<CreateOrganizationPage />} />
+                  <Route element={<AppLayout />}>
+                    <Route
+                      path="/*"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <HomePage />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/templates/create"
+                      element={
+                        <RequiredAuth>
+                          <TemplateFormProvider>
+                            <TemplateEditorProvider>
+                              <SpotLight>
+                                <TemplateEditorPage />
+                              </SpotLight>
+                            </TemplateEditorProvider>
+                          </TemplateFormProvider>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/templates/edit/:templateId"
+                      element={
+                        <RequiredAuth>
+                          <TemplateFormProvider>
+                            <TemplateEditorProvider>
+                              <SpotLight>
+                                <TemplateEditorPage />
+                              </SpotLight>
+                            </TemplateEditorProvider>
+                          </TemplateFormProvider>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/templates"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <NotificationList />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/quickstart"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <QuickStartPage />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/activities"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <ActivitiesPage />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <SettingsPage />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/integrations"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <IntegrationsStore />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/team"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <MembersInvitePage />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/changes"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <PromoteChangesPage />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                  </Route>
+                </Routes>
+              </SpotLightProvider>
             </ThemeHandlerComponent>
           </AuthHandlerComponent>
         </QueryClientProvider>
@@ -265,6 +268,36 @@ function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+function SpotLightProvider({ children }) {
+  const [items, setItems] = useState<SpotlightItem[]>([]);
+
+  const addItem = (item: SpotlightItem | SpotlightItem[]) => {
+    if (!Array.isArray(item)) {
+      item = [item];
+    }
+
+    const newItems = [...items, ...item];
+    newItems.sort((a, b) => {
+      if ((a.order || 10000000) > (b.order || 10000000)) {
+        return 1;
+      }
+      if ((a.order || 10000000) < (b.order || 10000000)) {
+        return -1;
+      }
+
+      return 0;
+    });
+
+    setItems(newItems);
+  };
+
+  const removeItem = (id: string) => {
+    setItems(items.filter((item) => item.id !== id));
+  };
+
+  return <SpotlightContext.Provider value={{ items, addItem, removeItem }}>{children}</SpotlightContext.Provider>;
 }
 
 export default Sentry.withProfiler(App);
