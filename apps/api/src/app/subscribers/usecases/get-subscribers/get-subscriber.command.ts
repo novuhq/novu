@@ -5,4 +5,8 @@ export class GetSubscribersCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
   page: number;
+
+  @IsNumber()
+  @IsOptional()
+  limit: number;
 }
