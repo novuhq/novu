@@ -5,6 +5,7 @@ import { Button, colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { When } from '../../../components/utils/When';
 
 export function ProviderCard({
   provider,
@@ -39,11 +40,12 @@ export function ProviderCard({
         }
       }}
     >
-      {provider.comingSoon && (
+      <When truthy={provider.comingSoon || provider.betaVersion}>
         <RibbonWrapper>
-          <ComingSoonRibbon>COMING SOON</ComingSoonRibbon>
+          <Ribbon>{provider.comingSoon ? 'COMING SOON' : 'BETA'}</Ribbon>
         </RibbonWrapper>
-      )}
+      </When>
+
       <StyledGroup position="apart" direction="column">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
@@ -85,11 +87,12 @@ const RibbonWrapper = styled.div`
   transform: rotate(45deg);
 `;
 
-const ComingSoonRibbon = styled.div`
+const Ribbon = styled.div`
   background: ${colors.horizontal};
   font-size: 9px;
   width: 100%;
   text-align: center;
+  color: ${colors.white};
   line-height: 20px;
   font-weight: bold;
 `;

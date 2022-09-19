@@ -19,5 +19,6 @@ export const pushProviders: IProviderConfig[] = [
     credentials: apnsConfig,
     docReference: 'https://docs.novu.co/channels/push/apns',
     logoFileName: { light: 'apns.png', dark: 'apns.png' },
+    betaVersion: true,
   },
 ];
