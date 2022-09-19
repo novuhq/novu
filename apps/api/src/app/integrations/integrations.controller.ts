@@ -116,6 +116,7 @@ export class IntegrationsController {
         integrationId,
         credentials: body.credentials,
         active: body.active,
+        check: body.check,
       })
     );
   }
