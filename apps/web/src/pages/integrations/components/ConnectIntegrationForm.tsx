@@ -140,7 +140,7 @@ export function ConnectIntegrationForm({
       } else {
         await updateIntegrationApi({
           integrationId: provider?.integrationId ? provider?.integrationId : '',
-          data: { credentials, active: isActive, check: checkIntegrationInitialState.check },
+          data: { credentials, active: isActive, check: checkIntegrationState.check },
         });
       }
     } catch (e: any) {
