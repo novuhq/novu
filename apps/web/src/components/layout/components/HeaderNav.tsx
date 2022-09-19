@@ -120,7 +120,7 @@ export function HeaderNav({}: Props) {
       </Group>
     </MantineMenu.Item>,
     ...menuItem.map(({ title, icon, path }) => (
-      <Link to={path}>
+      <Link to={path} key={title}>
         <MantineMenu.Item key={title} icon={icon} component="div">
           {title}
         </MantineMenu.Item>
