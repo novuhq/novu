@@ -66,7 +66,7 @@ describe('Create Integration - /integration (POST)', function () {
       providerId: 'sendgrid',
       channel: 'email',
       active: true,
-      cehck: false,
+      check: false,
     };
 
     const body = (await session.testAgent.post('/v1/integrations').send(payload)).body.data as IntegrationEntity;
