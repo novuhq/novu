@@ -49,7 +49,7 @@ export function ProviderCard({
       <StyledGroup position="apart" direction="column">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
-          {provider.connected ? <Settings data-test-id="provider-card-settings-svg" /> : null}
+          {provider.connected && !provider.betaVersion ? <Settings data-test-id="provider-card-settings-svg" /> : null}
         </CardHeader>
 
         <CardFooter>
