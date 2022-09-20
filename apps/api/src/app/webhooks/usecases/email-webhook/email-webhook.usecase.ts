@@ -1,37 +1,33 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IntegrationEntity, MessageRepository } from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { IEmailProvider } from '@novu/stateless';
+import { IEmailEventBody, IEmailProvider } from '@novu/stateless';
 import { MailFactory } from '../../../events/services/mail-service/mail.factory';
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../../../integrations/usecases/get-decrypted-integrations';
+import { decryptCredentials } from '../../../shared/services/encryption';
 import { EmailWebhookCommand } from './email-webhook.command';
+
+interface IWebhookResult {
+  id: string;
+  event: IEmailEventBody;
+}
 
 @Injectable()
 export class EmailWebhook {
   private mailFactory = new MailFactory();
   private provider: IEmailProvider;
 
-  constructor(
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
-    private messageRepository: MessageRepository
-  ) {}
+  constructor(private integrationRepository: IntegrationRepository, private messageRepository: MessageRepository) {}
 
-  async execute(command: EmailWebhookCommand): Promise<any[]> {
+  async execute(command: EmailWebhookCommand): Promise<IWebhookResult[]> {
     const providerId = command.providerId as EmailProviderIdEnum;
     const body = command.body;
 
-    const integration: IntegrationEntity = await this.getDecryptedIntegrationsUsecase.execute(
-      GetDecryptedIntegrationsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        providerId: providerId,
-        channelType: ChannelTypeEnum.EMAIL,
-        findOne: true,
-      })
-    )[0];
+    const integration: IntegrationEntity = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      providerId,
+      channel: ChannelTypeEnum.EMAIL,
+    });
 
     if (!integration) {
       throw new NotFoundException(`Integration for ${providerId} was not found`);
@@ -46,14 +42,14 @@ export class EmailWebhook {
     return this.parseEvents(body);
   }
 
-  private async parseEvents(body) {
+  private async parseEvents(body): Promise<IWebhookResult[]> {
     let messageIdentifiers: string | string[] = this.provider.getMessageId(body);
 
     if (!Array.isArray(messageIdentifiers)) {
       messageIdentifiers = [messageIdentifiers];
     }
 
-    const events = [];
+    const events: IWebhookResult[] = [];
 
     for (const messageIdentifier of messageIdentifiers) {
       const event = await this.parseEvent(messageIdentifier, body);
@@ -71,7 +67,7 @@ export class EmailWebhook {
     return events;
   }
 
-  private async parseEvent(messageIdentifier, body) {
+  private async parseEvent(messageIdentifier, body): Promise<IEmailEventBody> {
     let message = await this.messageRepository.findById(messageIdentifier);
 
     if (!message) {
@@ -94,7 +90,7 @@ export class EmailWebhook {
     if (!handler) {
       throw new NotFoundException(`Handler for integration of ${providerId} was not found`);
     }
-    handler.buildProvider(integration.credentials);
+    handler.buildProvider(decryptCredentials(integration.credentials));
 
     this.provider = handler.getProvider();
   }
