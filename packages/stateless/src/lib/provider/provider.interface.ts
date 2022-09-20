@@ -56,6 +56,25 @@ export interface ISendMessageSuccessResponse {
   date?: string;
 }
 
+export enum EmailEventStatusEnum {
+  OPEN = 'open',
+  DELIVERY = 'delivery',
+  BOUNCE = 'bounce',
+  DROPPED = 'dropped',
+}
+
+export interface IEventBody {
+  status: string;
+  date: string;
+  attempts?: number;
+  response?: string;
+  externalId?: string;
+}
+
+export interface IEmailEventBody extends IEventBody {
+  status: EmailEventStatusEnum;
+}
+
 export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
@@ -63,7 +82,10 @@ export interface IEmailProvider extends IProvider {
 
   getMessageId?: (body: any) => string | string[];
 
-  parseEventBody?: (body: any, identifier: string) => any;
+  parseEventBody?: (
+    body: any,
+    identifier: string
+  ) => IEmailEventBody | undefined;
 }
 
 export interface ISmsProvider extends IProvider {
