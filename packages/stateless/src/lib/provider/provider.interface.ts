@@ -61,9 +61,9 @@ export interface IEmailProvider extends IProvider {
 
   sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 
-  getMessageId?: (body: any) => string;
+  getMessageId?: (body: any) => string | string[];
 
-  parseEventBody?: (body: any) => any;
+  parseEventBody?: (body: any, identifier: string) => any;
 }
 
 export interface ISmsProvider extends IProvider {

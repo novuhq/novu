@@ -7,7 +7,7 @@ export class MailjetHandler extends BaseHandler {
   constructor() {
     super('mailjet', ChannelTypeEnum.EMAIL);
   }
-  buildProvider(credentials: ICredentials, from: string) {
+  buildProvider(credentials: ICredentials, from?: string) {
     const config: { apiKey: string; apiSecret: string; from: string } = {
       from,
       apiKey: credentials.apiKey,

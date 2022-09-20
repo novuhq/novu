@@ -7,7 +7,7 @@ export class NetCoreHandler extends BaseHandler {
     super('netcore', ChannelTypeEnum.EMAIL);
   }
 
-  buildProvider(credentials, from: string) {
+  buildProvider(credentials, from?: string) {
     const config: { apiKey: string; from: string } = { apiKey: credentials.apiKey, from };
 
     this.provider = new NetCoreProvider(config);

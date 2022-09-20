@@ -7,7 +7,7 @@ export class SendgridHandler extends BaseHandler {
     super('sendgrid', ChannelTypeEnum.EMAIL);
   }
 
-  buildProvider(credentials, from: string) {
+  buildProvider(credentials, from?: string) {
     const config: { apiKey: string; from: string } = { apiKey: credentials.apiKey, from };
 
     this.provider = new SendgridEmailProvider(config);

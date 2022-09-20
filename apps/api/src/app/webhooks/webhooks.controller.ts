@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Logger,
   NotFoundException,
   Param,
   Post,
@@ -25,17 +26,17 @@ export class WebhooksController {
     private messageRepository: MessageRepository
   ) {}
 
-  @Post('/:orgId/:envId/email/:providerId')
+  @Post('/:organizationId/:environmentId/email/:providerId')
   public async emailWebhook(
-    @Param('orgId') orgId: string,
-    @Param('envId') envId: string,
+    @Param('organizationId') organizationId: string,
+    @Param('environmentId') environmentId: string,
     @Param('providerId') providerId: string,
     @Body() body: any
   ) {
     const integration: IntegrationEntity = await this.getDecryptedIntegrationsUsecase.execute(
       GetDecryptedIntegrationsCommand.create({
-        environmentId: envId,
-        organizationId: orgId,
+        environmentId,
+        organizationId,
         providerId: providerId as EmailProviderIdEnum,
         channelType: ChannelTypeEnum.EMAIL,
         findOne: true,
@@ -46,38 +47,47 @@ export class WebhooksController {
       throw new NotFoundException(`Integration for ${providerId} was not found`);
     }
 
-    const from = integration?.credentials.from || 'no-reply@novu.co';
-
-    const handler = this.mailFactory.getHandler(integration, from);
+    const handler = this.mailFactory.getHandler(integration);
     if (!handler) {
       throw new NotFoundException(`Handler for integration of ${providerId} was not found`);
     }
-    handler.buildProvider(integration.credentials, from);
+    handler.buildProvider(integration.credentials);
 
     const provider = handler.getProvider();
     if (!provider.getMessageId || !provider.parseEventBody) {
       throw new NotFoundException(`Provider with ${providerId} can not handle webhooks`);
     }
 
-    const messageIdentifire = provider.getMessageId(body);
+    let messageIdentifiers: string | string[] = provider.getMessageId(body);
 
-    let message = await this.messageRepository.findById(messageIdentifire);
+    if (!Array.isArray(messageIdentifiers)) {
+      messageIdentifiers = [messageIdentifiers];
+    }
 
-    if (!message) {
-      message = await this.messageRepository.findOne({
-        identifier: messageIdentifire,
+    const events = [];
+
+    for (const messageIdentifier of messageIdentifiers) {
+      let message = await this.messageRepository.findById(messageIdentifier);
+
+      if (!message) {
+        message = await this.messageRepository.findOne({
+          identifier: messageIdentifier,
+        });
+      }
+
+      if (!message) {
+        Logger.error(`Message with ${messageIdentifier} as identifier was not found`);
+        continue;
+      }
+
+      const event = provider.parseEventBody(body, messageIdentifier);
+
+      events.push({
+        id: message._id,
+        event,
       });
     }
 
-    if (!message) {
-      throw new NotFoundException(`Message with ${messageIdentifire} as identifire was not found`);
-    }
-
-    const event = provider.parseEventBody(body);
-
-    return {
-      id: message._id,
-      event,
-    };
+    return events;
   }
 }

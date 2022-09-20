@@ -7,7 +7,7 @@ export class SendinblueHandler extends BaseHandler {
   constructor() {
     super('sendinblue', ChannelTypeEnum.EMAIL);
   }
-  buildProvider(credentials: ICredentials, from: string) {
+  buildProvider(credentials: ICredentials, from?: string) {
     const config: { apiKey: string } = { apiKey: credentials.apiKey };
 
     this.provider = new SendinblueEmailProvider(config);

@@ -8,7 +8,7 @@ export class MailgunHandler extends BaseHandler {
     super('mailgun', ChannelTypeEnum.EMAIL);
   }
 
-  buildProvider(credentials: ICredentials, from: string) {
+  buildProvider(credentials: ICredentials, from?: string) {
     const config: {
       apiKey: string;
       username: string;

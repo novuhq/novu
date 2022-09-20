@@ -8,7 +8,7 @@ export class EmailJsHandler extends BaseHandler {
   constructor() {
     super('emailjs', ChannelTypeEnum.EMAIL);
   }
-  buildProvider(credentials: ICredentials, from: string) {
+  buildProvider(credentials: ICredentials, from?: string) {
     const config: IEmailJsConfig = {
       from,
       host: credentials.host,

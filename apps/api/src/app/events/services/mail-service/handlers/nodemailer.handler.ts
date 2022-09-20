@@ -7,7 +7,7 @@ export class NodemailerHandler extends BaseHandler {
   constructor() {
     super('nodemailer', ChannelTypeEnum.EMAIL);
   }
-  buildProvider(credentials: ICredentials, from: string) {
+  buildProvider(credentials: ICredentials, from?: string) {
     const config: {
       from: string;
       host: string;
