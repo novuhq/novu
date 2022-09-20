@@ -1,4 +1,14 @@
+<div align="center">
+  
+![hacktoberfest-readme-dark](https://user-images.githubusercontent.com/63902456/191170980-c010daeb-f8ff-454d-bda1-543695b32c80.jpeg#gh-dark-mode-only)
 
+</div>
+
+<div align="center">
+  
+ ![hacktoberfest-readme-light](https://user-images.githubusercontent.com/63902456/191171065-d8f349e5-7250-43ff-8078-fa02dd859bc8.jpeg#gh-light-mode-only)
+
+</div>
 
 <div align="center">
   
