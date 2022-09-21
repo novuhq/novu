@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  ArgumentMetadata,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -66,12 +78,17 @@ export class SubscribersController {
     description: 'Returns a list of subscribers, could paginated using the `page` query parameter',
   })
   @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
-  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
+  async getSubscribers(
+    @UserSession() user: IJwtPayload,
+    @Query('page') page = 0,
+    @Query('limit') limit = 10
+  ): Promise<SubscribersResponseDto> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         page: page ? Number(page) : 0,
+        limit: limit ? Number(limit) : 10,
       })
     );
   }
@@ -271,10 +288,15 @@ export class SubscribersController {
     type: Boolean,
     required: false,
   })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+  })
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Query('page') page: number,
+    @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
     @Query() query?: StoreQuery
   ) {
@@ -287,7 +309,7 @@ export class SubscribersController {
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page,
+      page: page != null ? parseInt(page) : 0,
       feedId: feedsQuery,
       query: query,
     });

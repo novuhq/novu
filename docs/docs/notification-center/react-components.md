@@ -81,6 +81,21 @@ To support dark mode in your application the notification center component can r
 </PopoverNotificationCenter>
 ```
 
+## Modify the Popover's `position`
+
+Use `position` prop to position the popover relative to the Bell icon
+
+```tsx
+<PopoverNotificationCenter position="left-start">
+  {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
+</PopoverNotificationCenter>
+```
+
+| Prop     | Type                                                                                                                                                               | Default      | Description                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ | ------------------------------------------------- |
+| position | 'top' \| 'bottom' \| 'left' \| 'right' \| 'top-start' \| 'top-end' \| 'bottom-start' \| 'bottom-end' \| 'left-start' \| 'left-end' \| 'right-start' \| 'right-end' | 'bottom-end' | Position of the popover relative to the bell icon |
+| offset   | number                                                                                                                                                             |              | Gap between the Bell icon and Popover in px       |
+
 ## Custom UI
 
 If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our react library.
@@ -167,6 +182,10 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ru</code> (Russian)</li>
           <li><code>es</code> (Spanish)</li>
           <li><code>uk</code> (Ukrainian)</li>
+          <li><code>bn</code> (Bengali)</li>
+          <li><code>ml</code> (Malayalam)</li>
+          <li><code>zh</code> (Chinese)</li>
+          <li><code>hr</code> (Croatian)</li>
         </ul>
       </div>
   </details>
@@ -555,4 +574,4 @@ const { notifications } = useNotifications({ storeId });
 By default, Novu will show the subscriber preferences cog icon on the notification center component.
 If you want to hide it, you can use the prop `showUserPreferences` on the `PopoverNotificationCenter` component.
 
-![Notification Center with a cog](/img/notification-list-cog.png);
+![Notification Center with a cog](/img/notification-list-cog.png)

@@ -13,6 +13,7 @@ import { DE } from './languages/de';
 import { BN } from './languages/bn';
 import { ML } from './languages/ml';
 import { ZH } from './languages/zh';
+import { HR } from './languages/hr';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -42,6 +43,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   bn: BN,
   ml: ML,
   zh: ZH,
+  hr: HR,
 };
 
 /**
@@ -70,4 +72,5 @@ export type I18NLanguage =
   | 'de'
   | 'bn'
   | 'ml'
-  | 'zh';
+  | 'zh'
+  | 'hr';

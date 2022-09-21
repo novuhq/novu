@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { colors, Dropdown, Text } from '../../../design-system';
 import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp } from '../../../design-system/icons';
+import { Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
 import { StepTypeEnum } from '@novu/shared';
 import { Digest } from '../../../design-system/icons/general/Digest';
 
@@ -73,16 +73,7 @@ export default memo(({ data }: { data: NodeData }) => {
         >
           Digest
         </DropdownItem>
-        <DropdownItem
-          data-test-id={`add-delay-node`}
-          icon={
-            /* Hack to manage the size of the SVG, which can't be changed with height and width attributes */
-            <div style={{ zoom: 0.65, width: 28, marginLeft: 4 }}>
-              <Digest color={theme.colorScheme === 'dark' ? colors.white : colors.B40} />
-            </div>
-          }
-          onClick={() => addNewNode(StepTypeEnum.DELAY)}
-        >
+        <DropdownItem data-test-id={`add-delay-node`} icon={<Timer />} onClick={() => addNewNode(StepTypeEnum.DELAY)}>
           Delay
         </DropdownItem>
       </Dropdown>

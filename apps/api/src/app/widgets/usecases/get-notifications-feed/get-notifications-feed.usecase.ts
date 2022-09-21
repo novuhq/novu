@@ -4,6 +4,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -15,6 +16,13 @@ export class GetNotificationsFeed {
 
   async execute(command: GetNotificationsFeedCommand): Promise<MessageEntity[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    if (!subscriber) {
+      throw new ApiException(
+        'Subscriber not found for this environment with the id: ' +
+          command.subscriberId +
+          '. Make sure to create a subscriber before fetching the feed.'
+      );
+    }
     const feed = await this.messageRepository.findBySubscriberChannel(
       command.environmentId,
       subscriber._id,

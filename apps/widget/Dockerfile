@@ -1,4 +1,4 @@
-FROM node:16-buster-slim
+FROM nikolaik/python-nodejs:python3.10-nodejs16-slim
 
 WORKDIR /usr/src/app
 
@@ -29,6 +29,7 @@ COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
 RUN pnpm install
+RUN pnpm build
 
 RUN pnpm build:widget
 

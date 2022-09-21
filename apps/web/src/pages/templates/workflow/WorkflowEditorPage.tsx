@@ -107,7 +107,7 @@ const WorkflowEditorPage = ({
   return (
     <>
       <Grid gutter={0} grow style={{ minHeight: '100%' }}>
-        <Grid.Col md={9} sm={6}>
+        <Grid.Col md={9} sm={6} style={{ display: 'flex', flexDirection: 'column' }}>
           <TemplatePageHeader
             loading={isLoading || isUpdateLoading}
             disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
@@ -200,6 +200,7 @@ const WorkflowEditorPage = ({
                       onClick={() => {
                         setFilterOpen(true);
                       }}
+                      dark={colorScheme === 'dark'}
                     >
                       <PlusCircle
                         style={{
@@ -253,7 +254,7 @@ const WorkflowEditorPage = ({
                     </ButtonWrapper>
 
                     <Text mr={10} mt={10} size="md" color={colors.B60}>
-                      Configure the delay parameters.
+                      Configure the delay parameters. Set await time.
                     </Text>
                   </NavSection>
                   <NavSection>
@@ -379,7 +380,10 @@ const DeleteStepButton = styled(Button)`
   }
 `;
 
-const FilterButton = styled(Button)`
-  background: ${colors.B20};
+const FilterButton = styled(Button)<{ dark: boolean }>`
+  background: ${({ dark }) => (dark ? colors.B20 : colors.white)};
   box-shadow: 0px 5px 20px rgb(0 0 0 / 20%);
+  :hover {
+    background-color: ${({ dark }) => (dark ? colors.B20 : colors.white)};
+  }
 `;

@@ -4,7 +4,8 @@ import { StoreQuery } from '../../querys/store.query';
 
 export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
   @IsNumber()
-  page: number;
+  @IsOptional()
+  page?: number = 0;
 
   @IsOptional()
   @IsArray()
