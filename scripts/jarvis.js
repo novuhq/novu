@@ -1,4 +1,5 @@
 const fs = require('fs');
+const ora = require('ora');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
@@ -20,7 +21,8 @@ async function reInstallProject() {
     if (answers.reinstall === 'No') {
       return;
     }
-    await setupProject();
+
+    return await setupProject();
   });
 }
 
@@ -115,7 +117,7 @@ Everything is running 🎊
   API: http://localhost:3000
     `);
     } else if (answers.runConfiguration === 'Docs') {
-      ora('Building docs...').start();
+      const spinner = ora('Building docs...').start();
       shell.exec('npm run start:docs', { async: true });
 
       await waitPort({
@@ -123,6 +125,8 @@ Everything is running 🎊
         port: 4040,
       });
 
+      spinner.stop();
+      // eslint-disable-next-line no-console
       console.clear();
       // eslint-disable-next-line no-console
       console.log(`
