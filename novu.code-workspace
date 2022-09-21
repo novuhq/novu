@@ -17,6 +17,10 @@
       "path": "apps/ws"
     },
     {
+      "name": "🚀 @novu/webhook",
+      "path": "apps/webhook"
+    },
+    {
       "name": "🚀 @novu/widget",
       "path": "apps/widget"
     },
