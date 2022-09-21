@@ -12,7 +12,7 @@ const StyledSwitch = styled(Switch)`
   margin-top: 15px;
 `;
 
-export const DigestMetadata = ({ control, index, loading, disableSubmit }) => {
+export const DigestMetadata = ({ control, index, loading, disableSubmit, setSelectedChannel }) => {
   const { readonly } = useEnvController();
   const {
     formState: { errors },
@@ -215,7 +215,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit }) => {
         data-test-id="delete-step-button"
         loading={loading}
         disabled={disableSubmit}
-        submit
+        onClick={() => setSelectedChannel(null)}
       >
         Save
       </Button>

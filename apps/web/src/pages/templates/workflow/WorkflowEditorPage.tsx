@@ -191,6 +191,7 @@ const WorkflowEditorPage = ({
                           index={index}
                           loading={isLoading || isUpdateLoading}
                           disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+                          setSelectedChannel={setSelectedChannel}
                         />
                       ) : null;
                     })}
