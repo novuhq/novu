@@ -5,6 +5,12 @@ export interface IStoreQuery {
   seen?: boolean;
 }
 
+export interface ITabCountQuery {
+  feedIdentifier?: string | string[];
+  seen?: boolean;
+  read?: boolean;
+}
+
 export interface IUserPreferenceSettings {
   template: { _id: string; name: string; critical: boolean };
   preference: { enabled: boolean; channels: IPreferenceChannels };

@@ -5,7 +5,7 @@ import {
   MessageActionStatusEnum,
   IParamObject,
 } from '@novu/shared';
-import { IStoreQuery, IUserPreferenceSettings } from '../index';
+import { ITabCountQuery, IStoreQuery, IUserPreferenceSettings } from '../index';
 
 export class ApiService {
   private httpClient: HttpClient;
@@ -93,6 +93,13 @@ export class ApiService {
   async getUnseenCount(query: IStoreQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unseen',
+      query as unknown as IParamObject
+    );
+  }
+
+  async getTabCount(query: ITabCountQuery = {}) {
+    return await this.httpClient.get(
+      '/widgets/notifications/count',
       query as unknown as IParamObject
     );
   }
