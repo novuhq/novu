@@ -8,9 +8,10 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
+import { addSeconds, differenceInMilliseconds } from 'date-fns';
 
 const axiosInstance = axios.create();
 
@@ -78,7 +79,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            type: DigestTypeEnum.REGULAR,
+            type: DelayTypeEnum.REGULAR,
           },
         },
         {
@@ -132,7 +133,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            type: DigestTypeEnum.REGULAR,
+            type: DelayTypeEnum.REGULAR,
           },
         },
         {
@@ -159,6 +160,46 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     expect(messages.length).to.equal(1);
   });
 
+  it('should delay for scheduled delay', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DELAY,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DelayTypeEnum.SCHEDULED,
+            delayPath: 'sendAt',
+          },
+        },
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      sendAt: addSeconds(new Date(), 30),
+    });
+    await awaitRunningJobs(1);
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: StepTypeEnum.DELAY,
+    });
+
+    const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(delayedJob?.updatedAt));
+
+    const delay = await workflowQueueService.queue.getDelayed();
+    expect(diff).to.equal(delay[0].opts.delay);
+
+    await workflowQueueService.work(delayedJob);
+    await awaitRunningJobs(0);
+  });
+
   it('should be able to cancel delay', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
@@ -173,7 +214,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            type: DigestTypeEnum.REGULAR,
+            type: DelayTypeEnum.REGULAR,
           },
         },
         {

@@ -1,11 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { differenceInMilliseconds } from 'date-fns';
 import { Queue, Worker, QueueBaseOptions, JobsOptions, QueueScheduler } from 'bullmq';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { SendMessageCommand } from '../usecases/send-message/send-message.command';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { StepTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { StepTypeEnum, DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
 
 interface IJobEntityExtended extends JobEntity {
   presend?: boolean;
@@ -173,22 +174,37 @@ export class WorkflowQueueService {
   }
 
   private async addDelayJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
-    const isValidDelayStep = data.type === StepTypeEnum.DELAY && data.step.metadata.amount && data.step.metadata.unit;
+    const isValidDelayStep =
+      data.type === StepTypeEnum.DELAY &&
+      (data.digest.type === DelayTypeEnum.REGULAR
+        ? data.step.metadata.amount && data.step.metadata.unit
+        : data.step.metadata.delayPath);
+
     if (!isValidDelayStep) {
       return false;
     }
 
+    const timeNow = new Date();
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
 
     let delay: number;
-    if (WorkflowQueueService.checkValidDelayOverride(data)) {
-      delay = WorkflowQueueService.toMilliseconds(
-        data.overrides.delay.amount as number,
-        data.overrides.delay.unit as DigestUnitEnum
-      );
+
+    if (data.step.metadata.type === DelayTypeEnum.SCHEDULED) {
+      const temp = data.step.metadata.delayPath;
+      const val = data.payload[temp];
+
+      delay = differenceInMilliseconds(new Date(val), timeNow);
     } else {
-      delay = WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+      if (WorkflowQueueService.checkValidDelayOverride(data)) {
+        delay = WorkflowQueueService.toMilliseconds(
+          data.overrides.delay.amount as number,
+          data.overrides.delay.unit as DigestUnitEnum
+        );
+      } else {
+        delay = WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+      }
     }
+
     await this.queue.add(data._id, data, { delay, ...options });
 
     return true;
