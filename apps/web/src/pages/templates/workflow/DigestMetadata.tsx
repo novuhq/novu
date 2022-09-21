@@ -40,6 +40,7 @@ export const DigestMetadata = ({ control, index }) => {
                 return (
                   <Input
                     {...field}
+                    value={field.value || ''}
                     error={errors?.steps ? errors.steps[index]?.metadata?.amount?.message : undefined}
                     min={0}
                     max={100}
@@ -83,14 +84,13 @@ export const DigestMetadata = ({ control, index }) => {
       >
         <Controller
           control={control}
-          defaultValue="regular"
+          defaultValue={DigestTypeEnum.REGULAR}
           name={`steps.${index}.metadata.type`}
           render={({ field }) => {
             return (
               <Select
                 label="Type of digest"
                 disabled={readonly}
-                placeholder="Regular"
                 data={[
                   { value: DigestTypeEnum.REGULAR, label: 'Regular' },
                   { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
@@ -103,7 +103,7 @@ export const DigestMetadata = ({ control, index }) => {
         />
       </div>
 
-      <When truthy={type === 'backoff'}>
+      <When truthy={type === DigestTypeEnum.BACKOFF}>
         <InputWrapper
           label="Backoff Time Interval"
           description="A digest will only be created if a message was previously sent in this time interval"
@@ -122,6 +122,7 @@ export const DigestMetadata = ({ control, index }) => {
                   return (
                     <Input
                       {...field}
+                      value={field.value || ''}
                       error={errors?.steps ? errors.steps[index]?.metadata?.backoffAmount?.message : undefined}
                       min={0}
                       max={100}
@@ -196,6 +197,7 @@ export const DigestMetadata = ({ control, index }) => {
             return (
               <Input
                 {...field}
+                value={field.value || ''}
                 label="Digest Key (Optional)"
                 placeholder="For example: post_id"
                 description="Used to group messages using this payload key, by default only subscriberId is used"

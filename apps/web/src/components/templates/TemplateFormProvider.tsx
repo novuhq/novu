@@ -3,7 +3,7 @@ import { FieldArrayProvider } from './FieldArrayProvider';
 import { IForm } from './use-template-controller.hook';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
 
 const schema = z
   .object({
@@ -99,12 +99,39 @@ const schema = z
           })
           .passthrough()
           .superRefine((step: any, ctx) => {
-            if (step.template.type !== StepTypeEnum.DIGEST) {
+            if (step.template.type !== StepTypeEnum.DIGEST && step.template.type !== StepTypeEnum.DELAY) {
               return;
             }
 
+            if (step.template.type === StepTypeEnum.DELAY && step.metadata?.type === DelayTypeEnum.SCHEDULED) {
+              if (!step.metadata?.delayPath) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.too_small,
+                  minimum: 1,
+                  type: 'string',
+                  inclusive: true,
+                  message: 'Required - Message Content',
+                  path: ['metadata', 'delayPath'],
+                });
+              }
+            }
             let amount = parseInt(step.metadata?.amount, 10);
             let unit = step.metadata?.unit;
+
+            if (!amount) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: '*Required',
+                path: ['metadata', 'amount'],
+              });
+            }
+            if (!unit) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: '*Required',
+                path: ['metadata', 'unit'],
+              });
+            }
 
             if (unit === 'hours' && amount > 24) {
               ctx.addIssue({
