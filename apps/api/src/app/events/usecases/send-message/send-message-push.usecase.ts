@@ -175,7 +175,6 @@ export class SendMessagePush extends SendMessageType {
 
     try {
       const pushHandler = this.pushFactory.getHandler(integration);
-
       await pushHandler.send({
         target: (overrides as { deviceTokens?: string[] }).deviceTokens || target,
         title,

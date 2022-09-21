@@ -12,7 +12,7 @@ export class FCMHandler extends BasePushHandler {
     const credentialConfig: IFcmConfig = { user: credentials.user, serviceAccount: credentials.serviceAccount };
 
     if (!credentials.user && !credentials.serviceAccount) {
-      throw Error('Config is not valid for fcm');
+      throw new Error('Config is not valid for fcm');
     }
     const updatedCredentials = credentialConfig.serviceAccount
       ? credentialConfig.serviceAccount
