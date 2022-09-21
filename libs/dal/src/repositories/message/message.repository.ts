@@ -20,7 +20,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery: FilterQuery<MessageEntity> = {
@@ -52,6 +52,10 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       requestQuery.seen = query.seen;
     }
 
+    if (query.read != null) {
+      requestQuery.read = query.read;
+    }
+
     return await this.find(requestQuery, '', {
       limit: options.limit,
       skip: options.skip,
@@ -60,7 +64,6 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
   }
 
   async getCount(
-    mark: string,
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
@@ -69,7 +72,6 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     const requestQuery: FilterQuery<MessageEntity> = {
       _environmentId: new Types.ObjectId(environmentId),
       _subscriberId: new Types.ObjectId(subscriberId),
-      [mark]: false,
       channel,
     };
 
@@ -92,26 +94,15 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       };
     }
 
-    if (query[mark] != null) {
-      requestQuery[mark] = query[mark];
+    if (query.seen != null) {
+      requestQuery.seen = query.seen;
+    }
+
+    if (query.read != null) {
+      requestQuery.read = query.read;
     }
 
     return await this.count(requestQuery);
-  }
-
-  async changeSeenStatus(subscriberId: string, messageId: string, isSeen: boolean) {
-    return this.update(
-      {
-        _subscriberId: subscriberId,
-        _id: messageId,
-      },
-      {
-        $set: {
-          seen: isSeen,
-          lastSeenDate: new Date(),
-        },
-      }
-    );
   }
 
   async updateFeedByMessageTemplateId(messageId: string, feedId: string) {
@@ -226,7 +217,9 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     };
   }
 
-  async changeStatus(subscriberId: string, messageIds: string[], mark: string) {
+  async changeStatus(subscriberId: string, messageIds: string[], mark: string, markResult: boolean) {
+    const dateKey = this.buildDateMarkKey(mark);
+
     await this.update(
       {
         _subscriberId: subscriberId,
@@ -238,11 +231,17 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       },
       {
         $set: {
-          [mark]: true,
-          lastReadDate: new Date(),
+          [mark]: markResult,
+          [dateKey]: new Date(),
         },
       }
     );
+  }
+
+  private buildDateMarkKey(mark: string) {
+    const pascalMark = `${mark.charAt(0).toUpperCase()}${mark.slice(1)}`;
+
+    return `last${pascalMark}Date`;
   }
 
   async delete(query: FilterQuery<MessageEntity & Document>) {

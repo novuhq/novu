@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useApi, useNovuContext } from '../hooks';
+import { useApi } from '../hooks';
 import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { NotificationsContext } from './notifications.context';
-import { ApiService } from '@novu/client';
+import { useFeed } from '../hooks/use-feed.hook';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { api } = useApi();
-  const { stores } = useNovuContext();
+  const { stores } = useFeed();
   const [notifications, setNotifications] = useState<Record<string, IMessage[]>>({ default_store: [] });
   const [page, setPage] = useState<Map<string, number>>(new Map([['default_store', 0]]));
   const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['default_store', true]]));
@@ -17,8 +17,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     setFetching(true);
 
     const newNotifications = await api.getNotificationsList(pageToFetch, getStoreQuery(storeId));
-
-    await markNotificationsAsSeen(newNotifications, api);
 
     if (newNotifications?.length < 10) {
       setHasNextPage(hasNextPage.set(storeId, false));
@@ -32,10 +30,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     if (isRefetch) {
       notifications[storeId] = newNotifications;
-      setNotifications(notifications);
+      setNotifications(Object.assign({}, notifications));
     } else {
       notifications[storeId] = [...(notifications[storeId] || []), ...newNotifications];
-      setNotifications(notifications);
+      setNotifications(Object.assign({}, notifications));
     }
 
     setFetching(false);
@@ -97,19 +95,28 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return stores?.find((store) => store.storeId === storeId)?.query || {};
   }
 
+  async function markNotificationsAsSeen(storeId = 'default_store') {
+    const notificationsToMarkAsSeen = notifications[storeId].filter((notification) => notification.seen == false);
+    if (notificationsToMarkAsSeen.length) {
+      const messageIds = notificationsToMarkAsSeen.map((notification) => notification._id);
+      await api.markMessageAsSeen(messageIds);
+    }
+  }
+
   return (
     <NotificationsContext.Provider
-      value={{ notifications, fetchNextPage, hasNextPage, fetching, markAsRead, updateAction, refetch }}
+      value={{
+        notifications,
+        fetchNextPage,
+        hasNextPage,
+        fetching,
+        markAsRead,
+        updateAction,
+        refetch,
+        markNotificationsAsSeen,
+      }}
     >
       {children}
     </NotificationsContext.Provider>
   );
-}
-
-async function markNotificationsAsSeen(newNotifications: IMessage[], api: ApiService) {
-  const notificationsToMarkAsSeen = newNotifications.filter((notification) => notification.seen == false);
-  if (notificationsToMarkAsSeen.length) {
-    const messageIds = notificationsToMarkAsSeen.map((notification) => notification._id);
-    await api.markMessageAsSeen(messageIds);
-  }
 }

@@ -1,20 +1,28 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tab } from '@mantine/core';
 import styled from 'styled-components';
 import { NotificationsListTab } from './NotificationsListTab';
 import { UnseenBadge } from './UnseenBadge';
 import { Tabs } from './layout/tabs/Tabs';
-import { useApi, useNovuContext, useUnseenCount } from '../../../hooks';
-import { NotificationCenterContext } from '../../../store/notification-center.context';
-import { INotificationCenterContext } from '../../../shared/interfaces';
+import { useApi, useNotificationCenter, useNotifications, useUnseenCount } from '../../../hooks';
+import { useFeed } from '../../../hooks/use-feed.hook';
+import { IStore } from '../../../shared/interfaces';
 
 export function FeedsTabs() {
-  const { tabs, onTabClick } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { tabs, onTabClick } = useNotificationCenter();
+  const { activeTabStoreId, setActiveTabStoreId } = useFeed();
+  const { markNotificationsAsSeen, refetch } = useNotifications({ storeId: activeTabStoreId });
+
+  async function handleOnTabChange(tabIndex: number) {
+    await markNotificationsAsSeen();
+    await refetch();
+    setActiveTabStoreId(tabs[tabIndex].storeId);
+  }
 
   return (
     <>
       {tabs?.length ? (
-        <Tabs>
+        <Tabs onTabChange={handleOnTabChange}>
           {tabs.map((tab, index) => (
             <Tab
               key={index}
@@ -47,20 +55,29 @@ const TabLabelWrapper = styled.div`
 
 function UnseenBadgeContainer({ storeId }: { storeId: string }) {
   const { api } = useApi();
-  const { stores } = useNovuContext();
+  const { stores } = useFeed();
   const { unseenCount: generalUnseenCount } = useUnseenCount();
 
   const [unseenCount, setUnseenCount] = useState<number>();
 
   useEffect(() => {
-    (async () => {
-      const query = stores?.find((i) => i.storeId === storeId)?.query || {};
-
-      const { count } = await api.getUnseenCount(query);
-
-      setUnseenCount(count);
-    })();
+    setCount(stores, storeId, api, setUnseenCount);
   }, [generalUnseenCount]);
 
   return <UnseenBadge unseenCount={unseenCount} />;
+}
+
+async function setCount(
+  stores: IStore[],
+  storeId: string,
+  api,
+  setCountBadge: (value: ((prevState: number) => number) | number) => void
+) {
+  const query = stores?.find((i) => i.storeId === storeId)?.query || {};
+
+  const unseenQuery = Object.assign({}, query, { seen: false });
+
+  const { count } = query.seen ? 0 : await api.getTabCount(unseenQuery);
+
+  setCountBadge(count);
 }

@@ -3,12 +3,17 @@ import { Tabs as MantineTabs } from '@mantine/core';
 import useStyles from './Tabs.styles';
 import { useNovuTheme } from '../../../../../hooks';
 
-export function Tabs({ children }: { children: React.ReactNode }) {
+interface ITabsProps {
+  children: React.ReactNode;
+  onTabChange?(tabIndex: number, tabKey?: string): void;
+}
+
+export function Tabs({ children, onTabChange }: ITabsProps) {
   const { theme: novuTheme, common, colorScheme } = useNovuTheme();
   const { classes } = useStyles({ novuTheme, common, colorScheme });
 
   return (
-    <MantineTabs variant="unstyled" classNames={classes}>
+    <MantineTabs onTabChange={onTabChange} variant="unstyled" classNames={classes}>
       {children}
     </MantineTabs>
   );

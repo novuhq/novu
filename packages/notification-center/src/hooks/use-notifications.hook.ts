@@ -16,6 +16,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     markAsRead,
     updateAction: mapUpdateAction,
     refetch: mapRefetch,
+    markNotificationsAsSeen: mapMarkNotificationsAsSeen,
   } = useContext<INotificationsContext>(NotificationsContext);
 
   const storeId = props?.storeId ? props?.storeId : 'default_store';
@@ -41,6 +42,10 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapRefetch(storeId);
   }
 
+  async function markNotificationsAsSeen() {
+    await mapMarkNotificationsAsSeen(storeId);
+  }
+
   return {
     notifications,
     fetchNextPage,
@@ -49,5 +54,6 @@ export function useNotifications(props?: IUseNotificationsProps) {
     markAsRead,
     updateAction,
     refetch,
+    markNotificationsAsSeen,
   };
 }

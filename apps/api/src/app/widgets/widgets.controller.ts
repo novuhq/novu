@@ -7,8 +7,6 @@ import { InitializeSession } from './usecases/initialize-session/initialize-sess
 import { GetNotificationsFeed } from './usecases/get-notifications-feed/get-notifications-feed.usecase';
 import { GetNotificationsFeedCommand } from './usecases/get-notifications-feed/get-notifications-feed.command';
 import { SubscriberSession } from '../shared/framework/user.decorator';
-import { GetUnseenCount } from './usecases/get-unseen-count/get-unseen-count.usecase';
-import { GetUnseenCountCommand } from './usecases/get-unseen-count/get-unseen-count.command';
 import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
@@ -32,6 +30,10 @@ import {
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
 import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
+import { StoreQuery } from './querys/store.query';
+import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
+import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
+import { GetCountQuery } from './querys/get-count.query';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -39,7 +41,7 @@ export class WidgetsController {
   constructor(
     private initializeSessionUsecase: InitializeSession,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
-    private genUnseenCountUsecase: GetUnseenCount,
+    private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
@@ -74,10 +76,8 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen?: string
+    @Query() query: StoreQuery
   ) {
-    const isSeen = initializeSeenParam(seen);
-
     const feedsQuery = this.toArray(feedId);
 
     const command = GetNotificationsFeedCommand.create({
@@ -86,7 +86,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       page,
       feedId: feedsQuery,
-      seen: isSeen,
+      query,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -101,7 +101,7 @@ export class WidgetsController {
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
-    const command = GetUnseenCountCommand.create({
+    const command = GetFeedCountCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
@@ -109,7 +109,27 @@ export class WidgetsController {
       seen,
     });
 
-    return await this.genUnseenCountUsecase.execute(command);
+    return await this.getFeedCountUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/notifications/count')
+  async getCount(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query() query: GetCountQuery
+  ): Promise<UnseenCountResponse> {
+    const feedsQuery = this.toArray(query.feedIdentifier);
+
+    const command = GetFeedCountCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      feedId: feedsQuery,
+      seen: query.seen,
+      read: query.read,
+    });
+
+    return await this.getFeedCountUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

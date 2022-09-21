@@ -12,6 +12,7 @@ import { UnseenProvider } from '../../store/unseen-provider.context';
 import { SocketInitializationProvider } from '../../store/socket-initialization-provider.context';
 import { ApiContext } from '../../store/api.context';
 import { INovuProviderContext, IStore } from '../../shared/interfaces';
+import { FeedProvider } from '../../store/feed-provider';
 
 interface INovuProviderProps {
   stores?: IStore[];
@@ -51,22 +52,26 @@ export function NovuProvider(props: INovuProviderProps) {
         socketUrl: socketUrl,
         onLoad: props.onLoad,
         subscriberHash: props.subscriberHash,
-        stores,
       }}
     >
-      <ApiContext.Provider value={{ api }}>
-        <AuthProvider>
-          <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
-            <NotificationsProvider>
-              <SocketInitializationProvider>
-                <NovuI18NProvider i18n={props.i18n}>
-                  <UnseenProvider>{props.children}</UnseenProvider>
-                </NovuI18NProvider>
-              </SocketInitializationProvider>
-            </NotificationsProvider>
-          </SessionInitialization>
-        </AuthProvider>
-      </ApiContext.Provider>
+      <FeedProvider stores={stores}>
+        <ApiContext.Provider value={{ api }}>
+          <AuthProvider>
+            <SessionInitialization
+              applicationIdentifier={props.applicationIdentifier}
+              subscriberId={props.subscriberId}
+            >
+              <NotificationsProvider>
+                <SocketInitializationProvider>
+                  <NovuI18NProvider i18n={props.i18n}>
+                    <UnseenProvider>{props.children}</UnseenProvider>
+                  </NovuI18NProvider>
+                </SocketInitializationProvider>
+              </NotificationsProvider>
+            </SessionInitialization>
+          </AuthProvider>
+        </ApiContext.Provider>
+      </FeedProvider>
     </NovuContext.Provider>
   );
 }

@@ -68,7 +68,6 @@ export interface INovuProviderContext {
   socketUrl?: string;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash: string;
-  stores?: IStore[];
 }
 
 export interface INotificationsContext {
@@ -85,6 +84,7 @@ export interface INotificationsContext {
     storeId?: string
   ) => void;
   refetch?: (storeId?: string, query?: IStoreQuery) => void;
+  markNotificationsAsSeen?: (storeId?: string) => void;
 }
 
 export interface ITab {

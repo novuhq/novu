@@ -17,7 +17,6 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
-import { MarkEnum } from '../../../widgets/usecases/mark-message-as/mark-message-as.command';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -127,17 +126,17 @@ export class SendMessageInApp extends SendMessageType {
     }
 
     const unseenCount = await this.messageRepository.getCount(
-      MarkEnum.SEEN,
       command.environmentId,
       command.subscriberId,
-      ChannelTypeEnum.IN_APP
+      ChannelTypeEnum.IN_APP,
+      { seen: false }
     );
 
     const unreadCount = await this.messageRepository.getCount(
-      MarkEnum.READ,
       command.environmentId,
       command.subscriberId,
-      ChannelTypeEnum.IN_APP
+      ChannelTypeEnum.IN_APP,
+      { read: false }
     );
 
     await this.createLogUsecase.execute(

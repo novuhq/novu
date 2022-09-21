@@ -18,14 +18,11 @@ export class MarkMessageAs {
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
-    await this.messageRepository.changeStatus(subscriber._id, command.messageIds, command.mark);
+    await this.messageRepository.changeStatus(subscriber._id, command.messageIds, command.mark, true);
 
-    const count = await this.messageRepository.getCount(
-      command.mark,
-      command.environmentId,
-      subscriber._id,
-      ChannelTypeEnum.IN_APP
-    );
+    const count = await this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
+      [command.mark]: false,
+    });
 
     this.updateSocketCount(subscriber, count, command.mark);
 
