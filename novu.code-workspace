@@ -69,6 +69,10 @@
       "path": "packages/react-native"
     },
     {
+      "name": "📦 @novu/application-generic",
+      "path": "packages/application-generic"
+    },
+    {
       "name": "🔔 @novu/discord",
       "path": "providers/discord"
     },

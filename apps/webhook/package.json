@@ -33,6 +33,7 @@
     "@novu/dal": "^0.8.0",
     "@novu/shared": "^0.8.0",
     "@novu/testing": "^0.8.0",
+    "@novu/stateless": "^0.8.0",
     "@sentry/node": "^6.3.3",
     "bull": "^4.4.0",
     "class-transformer": "^0.5.1",
@@ -65,7 +66,8 @@
     "ts-loader": "^8.0.8",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "4.3.5"
+    "typescript": "4.3.5",
+    "@novu/application-generic": "^0.8.0"
   },
   "workspaces": {
     "nohoist": [

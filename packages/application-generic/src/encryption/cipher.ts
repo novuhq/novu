@@ -18,7 +18,11 @@ export function decrypt(text) {
   const textParts = text.split(':');
   const iv = Buffer.from(textParts.shift(), 'hex');
   const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-  const decipher = createDecipheriv(CIPHER_ALGO, Buffer.from(ENCRYPTION_KEY), iv);
+  const decipher = createDecipheriv(
+    CIPHER_ALGO,
+    Buffer.from(ENCRYPTION_KEY),
+    iv
+  );
   let decrypted = decipher.update(encryptedText);
 
   decrypted = Buffer.concat([decrypted, decipher.final()]);
