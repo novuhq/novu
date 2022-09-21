@@ -69,7 +69,7 @@ export interface IEventBody {
   externalId?: string;
   attempts?: number;
   response?: string;
-  // the hole event
+  // Contains the raw content from the provider webhook
   row?: string;
 }
 
