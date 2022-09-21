@@ -6,7 +6,7 @@ import { MailFactory } from '../../../events/services/mail-service/mail.factory'
 import { decryptCredentials } from '../../../shared/services/encryption';
 import { EmailWebhookCommand } from './email-webhook.command';
 
-interface IWebhookResult {
+export interface IWebhookResult {
   id: string;
   event: IEmailEventBody;
 }
@@ -58,23 +58,18 @@ export class EmailWebhook {
         continue;
       }
 
-      events.push({
-        id: messageIdentifier,
-        event,
-      });
+      events.push(event);
     }
 
     return events;
   }
 
-  private async parseEvent(messageIdentifier, body): Promise<IEmailEventBody> {
-    let message = await this.messageRepository.findById(messageIdentifier);
-
-    if (!message) {
-      message = await this.messageRepository.findOne({
-        identifier: messageIdentifier,
-      });
-    }
+  private async parseEvent(messageIdentifier, command: EmailWebhookCommand): Promise<IWebhookResult> {
+    const message = await this.messageRepository.findOne({
+      identifier: messageIdentifier,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
 
     if (!message) {
       Logger.error(`Message with ${messageIdentifier} as identifier was not found`);
@@ -82,7 +77,12 @@ export class EmailWebhook {
       return;
     }
 
-    return this.provider.parseEventBody(body, messageIdentifier);
+    const event = this.provider.parseEventBody(command.body, messageIdentifier);
+
+    return {
+      id: messageIdentifier,
+      event,
+    };
   }
 
   private createProvider(integration: IntegrationEntity, providerId: EmailProviderIdEnum) {

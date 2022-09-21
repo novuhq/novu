@@ -1,5 +1,5 @@
 import { Body, ClassSerializerInterceptor, Controller, Param, Post, UseInterceptors } from '@nestjs/common';
-import { EmailWebhook } from './usecases/email-webhook/email-webhook.usecase';
+import { EmailWebhook, IWebhookResult } from './usecases/email-webhook/email-webhook.usecase';
 import { EmailWebhookCommand } from './usecases/email-webhook/email-webhook.command';
 
 @Controller('/webhooks')
@@ -13,7 +13,7 @@ export class WebhooksController {
     @Param('environmentId') environmentId: string,
     @Param('providerId') providerId: string,
     @Body() body: any
-  ) {
+  ): Promise<IWebhookResult[]> {
     return this.emailWebhookUsecase.execute(
       EmailWebhookCommand.create({
         environmentId,

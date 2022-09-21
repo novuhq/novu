@@ -61,14 +61,17 @@ export enum EmailEventStatusEnum {
   DELIVERY = 'delivery',
   BOUNCE = 'bounce',
   DROPPED = 'dropped',
+  CLICK = 'click',
 }
 
 export interface IEventBody {
   status: string;
   date: string;
+  externalId?: string;
   attempts?: number;
   response?: string;
-  externalId?: string;
+  // the hole event
+  row?: string;
 }
 
 export interface IEmailEventBody extends IEventBody {
