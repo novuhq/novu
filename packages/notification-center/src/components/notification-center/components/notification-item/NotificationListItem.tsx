@@ -7,6 +7,7 @@ import { useNovuTheme, useNotificationCenter, useDefaultBellColors } from '../..
 import { ActionContainer } from './ActionContainer';
 import { useTranslations } from 'packages/notification-center/src/hooks/use-translations';
 import { INovuTheme } from '../../../../store/novu-theme.context';
+import { When } from '../../../../shared/utils/When';
 
 export function NotificationListItem({
   notification,
@@ -35,7 +36,7 @@ export function NotificationListItem({
     <ItemWrapper
       novuTheme={novuTheme}
       data-test-id="notification-list-item"
-      unread={!notification.read}
+      unread={readSupportAdded(notification) ? !notification.read : !notification.seen}
       onClick={() => handleNotificationClick()}
     >
       <NotificationItemContainer>
@@ -58,7 +59,7 @@ export function NotificationListItem({
       <SettingsActionWrapper style={{ display: 'none' }}>
         <DotsHorizontal />
       </SettingsActionWrapper>
-      {!notification.seen && <GradientDotWrapper />}
+      <When truthy={readSupportAdded(notification)}>{!notification.seen && <GradientDotWrapper />}</When>
     </ItemWrapper>
   );
 }
@@ -86,6 +87,8 @@ function ActionWrapper({
     </>
   );
 }
+
+export const readSupportAdded = (notification: IMessage) => typeof notification?.read !== 'undefined';
 
 function ActionContainerOrNone({
   action,

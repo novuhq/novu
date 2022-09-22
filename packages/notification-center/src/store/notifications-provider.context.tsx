@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApi } from '../hooks';
-import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { ButtonTypeEnum, IMessage, MessageActionStatusEnum } from '@novu/shared';
 import { NotificationsContext } from './notifications.context';
 import { useFeed } from '../hooks/use-feed.hook';
 
@@ -95,11 +95,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return stores?.find((store) => store.storeId === storeId)?.query || {};
   }
 
-  async function markNotificationsAsSeen(storeId = 'default_store') {
-    const notificationsToMarkAsSeen = notifications[storeId].filter((notification) => notification.seen == false);
-    if (notificationsToMarkAsSeen.length) {
-      const messageIds = notificationsToMarkAsSeen.map((notification) => notification._id);
-      await api.markMessageAsSeen(messageIds);
+  async function markNotificationsAsSeen(
+    readExist?: boolean,
+    messagesToMark?: IMessage | IMessage[],
+    storeId = 'default_store'
+  ) {
+    const notificationsToMark = getNotificationsToMark(messagesToMark, notifications, storeId);
+
+    if (notificationsToMark.length) {
+      const notificationsToUpdate = filterReadNotifications(readExist, notificationsToMark);
+
+      await api.markMessageAsSeen(notificationsToUpdate.map((notification) => notification._id));
     }
   }
 
@@ -119,4 +125,20 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       {children}
     </NotificationsContext.Provider>
   );
+}
+
+function getNotificationsToMark(
+  messagesToMark?: IMessage | IMessage[],
+  notifications?: Record<string, IMessage[]>,
+  storeId?: string
+) {
+  if (messagesToMark) {
+    return Array.isArray(messagesToMark) ? messagesToMark : [messagesToMark];
+  } else {
+    return notifications[storeId].filter((notification) => !notification.seen);
+  }
+}
+
+function filterReadNotifications(readExist: boolean | undefined, notificationsToMark) {
+  return readExist ? notificationsToMark.filter((msg) => typeof msg?.read !== 'undefined') : notificationsToMark;
 }

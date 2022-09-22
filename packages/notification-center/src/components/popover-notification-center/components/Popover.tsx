@@ -22,14 +22,14 @@ export function Popover({ children, bell, theme, offset, position = 'bottom' }: 
 
   function handlerBellClick() {
     if (isVisible) {
-      markNotificationsAsSeen();
+      markNotificationsAsSeen(true);
     }
     setIsVisible(!isVisible);
   }
 
   function handlerOnClose() {
     setIsVisible(false);
-    markNotificationsAsSeen();
+    markNotificationsAsSeen(true);
   }
 
   const [modPosition, modPlacement] = useMemo<PositionType>(() => {

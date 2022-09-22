@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { NotificationsContext } from '../store/notifications.context';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { INotificationsContext } from '../shared/interfaces';
+import { IMessage } from '@novu/shared';
 
 interface IUseNotificationsProps {
   storeId?: string;
@@ -42,8 +43,8 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapRefetch(storeId);
   }
 
-  async function markNotificationsAsSeen() {
-    await mapMarkNotificationsAsSeen(storeId);
+  async function markNotificationsAsSeen(readExist?: boolean, messagesToMark?: IMessage | IMessage[]) {
+    await mapMarkNotificationsAsSeen(readExist, messagesToMark, storeId);
   }
 
   return {

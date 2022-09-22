@@ -14,8 +14,8 @@ export function FeedsTabs() {
   const { markNotificationsAsSeen, refetch } = useNotifications({ storeId: activeTabStoreId });
 
   async function handleOnTabChange(tabIndex: number) {
-    await markNotificationsAsSeen();
-    await refetch();
+    markNotificationsAsSeen(true);
+    refetch();
     setActiveTabStoreId(tabs[tabIndex].storeId);
   }
 
@@ -77,7 +77,11 @@ async function setCount(
 
   const unseenQuery = Object.assign({}, query, { seen: false });
 
-  const { count } = query.seen ? 0 : await api.getTabCount(unseenQuery);
+  const { count } = await getTabCount(query, api, unseenQuery);
 
   setCountBadge(count);
+}
+
+async function getTabCount(query, api, unseenQuery: { seen: boolean }) {
+  return query.seen ? 0 : await api.getTabCount(unseenQuery);
 }

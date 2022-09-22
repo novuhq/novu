@@ -84,7 +84,7 @@ export interface INotificationsContext {
     storeId?: string
   ) => void;
   refetch?: (storeId?: string, query?: IStoreQuery) => void;
-  markNotificationsAsSeen?: (storeId?: string) => void;
+  markNotificationsAsSeen?: (readExist?: boolean, messageIdsToMark?: IMessage | IMessage[], storeId?: string) => void;
 }
 
 export interface ITab {
