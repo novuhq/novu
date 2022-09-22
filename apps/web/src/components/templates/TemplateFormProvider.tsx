@@ -103,32 +103,35 @@ const schema = z
               return;
             }
 
-            if (step.template.type === StepTypeEnum.DELAY && step.metadata?.type === DelayTypeEnum.SCHEDULED) {
+            if (step.metadata?.type === DelayTypeEnum.SCHEDULED) {
               if (!step.metadata?.delayPath) {
                 ctx.addIssue({
                   code: z.ZodIssueCode.too_small,
                   minimum: 1,
                   type: 'string',
                   inclusive: true,
-                  message: 'Required - Message Content',
+                  message: 'Path required',
                   path: ['metadata', 'delayPath'],
                 });
               }
+
+              return;
             }
+
             let amount = parseInt(step.metadata?.amount, 10);
             let unit = step.metadata?.unit;
 
             if (!amount) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: '*Required',
+                message: 'Amount Required',
                 path: ['metadata', 'amount'],
               });
             }
             if (!unit) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: '*Required',
+                message: 'Unit Required',
                 path: ['metadata', 'unit'],
               });
             }
@@ -139,7 +142,7 @@ const schema = z
                 maximum: 24,
                 type: 'number',
                 inclusive: true,
-                message: 'Digest time amount must be 24 or below',
+                message: 'Hours must be 24 or below',
                 path: ['metadata', 'amount'],
               });
             }
@@ -150,7 +153,7 @@ const schema = z
                 maximum: 31,
                 type: 'number',
                 inclusive: true,
-                message: 'Digest time amount must be 31 or below',
+                message: 'Days must be 31 or below',
                 path: ['metadata', 'amount'],
               });
             }
@@ -163,7 +166,7 @@ const schema = z
             if (!unit) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Digest backoff time is required',
+                message: 'Backoff Unit Required',
                 path: ['metadata', 'backoffUnit'],
               });
             }
@@ -171,7 +174,7 @@ const schema = z
             if (!amount) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Digest backoff time is required',
+                message: 'Backoff Amount Required',
                 path: ['metadata', 'backoffAmount'],
               });
             }

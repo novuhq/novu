@@ -334,6 +334,12 @@ function getChannelErrors(index: number, errors: any, step: any) {
 
       return keys.map((key) => stepErrors[key]?.message);
     }
+    const actionErrors = errors.steps[index]?.metadata;
+    if (actionErrors) {
+      const keys = Object.keys(actionErrors);
+
+      return keys.map((key) => actionErrors[key]?.message);
+    }
   }
 
   if (

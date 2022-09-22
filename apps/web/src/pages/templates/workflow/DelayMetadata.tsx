@@ -108,9 +108,10 @@ export const DelayMetadata = ({ control, index }) => {
               <Input
                 {...field}
                 value={field.value || ''}
-                label="Path for Date"
+                disabled={readonly}
+                label="Path for scheduled date"
                 placeholder="For example: sendAt"
-                description="Your payload path for the scheduled delay date"
+                description="The path in payload for the scheduled delay date"
                 error={errors?.steps ? errors.steps[index]?.metadata?.delayPath?.message : undefined}
                 type="text"
                 data-test-id="batch-key"
