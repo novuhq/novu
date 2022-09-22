@@ -9,6 +9,7 @@ import {
   NotificationRepository,
   MessageRepository,
   MemberRepository,
+  IntegrationRepository,
 } from '@novu/dal';
 import { JwtModule } from '@nestjs/jwt';
 
@@ -21,6 +22,7 @@ const DAL_MODELS = [
   NotificationRepository,
   MessageRepository,
   MemberRepository,
+  IntegrationRepository,
 ];
 
 const dalService = new DalService();
