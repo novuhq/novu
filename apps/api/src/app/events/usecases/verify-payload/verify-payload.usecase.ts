@@ -1,14 +1,9 @@
 import { ITemplateVariable } from '@novu/dal';
-import { TemplateSystemVariables, DelayTypeEnum, StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { TemplateSystemVariables, DelayTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayloadCommand } from './verify-payload.command';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
-import { Injectable } from '@nestjs/common';
 
-@Injectable()
 export class VerifyPayload {
-  constructor(private createLogUsecase: CreateLog) {}
   execute(command: VerifyPayloadCommand): Record<string, unknown> {
     const invalidKeys = [];
     let defaultPayload;
@@ -24,7 +19,6 @@ export class VerifyPayload {
     }
 
     if (invalidKeys.length) {
-      this.logMissingVariables(command, invalidKeys.join(', '));
       throw new ApiException(`payload is missing required key(s) and type(s): ${invalidKeys.join(', ')}`);
     }
 
@@ -116,23 +110,5 @@ export class VerifyPayload {
 
   private isSystemVariable(variableName: string): boolean {
     return TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
-  }
-
-  private async logMissingVariables(command: VerifyPayloadCommand, missingVariables: string) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.template._environmentId,
-        organizationId: command.template._organizationId,
-        text: 'Missing required payload variable',
-        userId: command.template._organizationId,
-        code: LogCodeEnum.MISSING_PAYLOAD_VARIABLE,
-        raw: {
-          payload: command.payload,
-          missingVariables,
-        },
-      })
-    );
   }
 }
