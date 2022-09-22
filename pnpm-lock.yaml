@@ -580,12 +580,17 @@ importers:
       '@novu/stateless': ^0.8.0
       '@novu/testing': ^0.8.0
       '@sentry/node': ^6.3.3
+      '@types/chai': ^4.2.11
       '@types/express': ^4.17.8
       '@types/jest': ^27.0.2
+      '@types/mocha': ^8.0.1
       '@types/node': ^14.14.6
+      '@types/sinon': ^9.0.0
       '@types/socket.io': ^2.1.13
       '@types/supertest': ^2.0.10
+      axios: ^0.24.0
       bull: ^4.4.0
+      chai: ^4.2.0
       class-transformer: ^0.5.1
       cross-env: ^7.0.3
       dotenv: ^8.2.0
@@ -593,12 +598,14 @@ importers:
       jest: ^27.0.6
       jsonwebtoken: 8.5.1
       lodash: ^4.17.15
+      mocha: ^8.1.1
       nest-raven: ^7.2.0
       nodemon: ^2.0.7
       prettier: ^2.1.2
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       rxjs: ^6.5.5
+      sinon: ^9.2.4
       socket.io: ^4.0.0
       socket.io-redis: ^5.4.0
       supertest: ^6.0.0
@@ -621,6 +628,7 @@ importers:
       '@novu/stateless': link:../../packages/stateless
       '@novu/testing': link:../../libs/testing
       '@sentry/node': 6.19.3
+      axios: 0.24.0
       bull: 4.8.1
       class-transformer: 0.5.1
       dotenv: 8.6.0
@@ -638,15 +646,21 @@ importers:
       '@nestjs/schematics': 7.3.1_typescript@4.3.5
       '@nestjs/testing': 7.6.18_ttipsy5on4236kecc7spdrc4wq
       '@novu/application-generic': link:../../packages/application-generic
+      '@types/chai': 4.3.0
       '@types/express': 4.17.13
       '@types/jest': 27.4.1
+      '@types/mocha': 8.2.3
       '@types/node': 14.18.12
+      '@types/sinon': 9.0.11
       '@types/socket.io': 2.1.13
       '@types/supertest': 2.0.12
+      chai: 4.3.6
       cross-env: 7.0.3
       jest: 27.5.1_ts-node@9.1.1
+      mocha: 8.4.0
       nodemon: 2.0.15
       prettier: 2.7.1
+      sinon: 9.2.4
       supertest: 6.2.2
       ts-jest: 27.1.4_zorco6kbqtso4tbodg3tzvjobe
       ts-loader: 8.3.0_actwkd5w3rxts7lmypgqrtezda
@@ -25120,7 +25134,7 @@ packages:
     dev: false
 
   /check-error/1.0.2:
-    resolution: {integrity: sha1-V00xLt2Iu13YkS6Sht1sCu1KrII=}
+    resolution: {integrity: sha512-BrgHpW9NURQgzoNyjfq0Wu6VFO6D7IZEmJNdtgNqpzGG8RuNFHt2jQxWlAs4HMe119chBnv+34syEZtc6IhLtA==}
     dev: true
 
   /check-more-types/2.24.0:
@@ -31707,7 +31721,7 @@ packages:
     engines: {node: 6.* || 8.* || >= 10.*}
 
   /get-func-name/2.0.0:
-    resolution: {integrity: sha1-6td0q+5y4gQJQzoGY2YCPdaIekE=}
+    resolution: {integrity: sha512-Hm0ixYtaSZ/V7C8FJrtZIuBBI+iSgL+1Aq82zSu8VQNB4S3Gk8e7Qs3VwBDJAhmRZcFqkl3tQu36g/Foh5I5ig==}
     dev: true
 
   /get-intrinsic/1.1.1:

@@ -12,7 +12,7 @@ export interface IWebhookResult {
 
 @Injectable()
 export class EmailWebhook {
-  private mailFactory = new MailFactory();
+  public readonly mailFactory = new MailFactory();
   private provider: IEmailProvider;
 
   constructor(private integrationRepository: IntegrationRepository, private messageRepository: MessageRepository) {}
@@ -38,10 +38,11 @@ export class EmailWebhook {
       throw new NotFoundException(`Provider with ${providerId} can not handle webhooks`);
     }
 
-    return this.parseEvents(body);
+    return this.parseEvents(command);
   }
 
-  private async parseEvents(body): Promise<IWebhookResult[]> {
+  private async parseEvents(command: EmailWebhookCommand): Promise<IWebhookResult[]> {
+    const body = command.body;
     let messageIdentifiers: string | string[] = this.provider.getMessageId(body);
 
     if (!Array.isArray(messageIdentifiers)) {
@@ -51,7 +52,7 @@ export class EmailWebhook {
     const events: IWebhookResult[] = [];
 
     for (const messageIdentifier of messageIdentifiers) {
-      const event = await this.parseEvent(messageIdentifier, body);
+      const event = await this.parseEvent(messageIdentifier, command);
 
       if (!event) {
         continue;
