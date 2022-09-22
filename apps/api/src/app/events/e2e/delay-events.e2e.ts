@@ -167,8 +167,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           type: StepTypeEnum.DELAY,
           content: '',
           metadata: {
-            unit: DigestUnitEnum.MINUTES,
-            amount: 5,
             type: DelayTypeEnum.SCHEDULED,
             delayPath: 'sendAt',
           },
@@ -195,9 +193,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
 
     const delay = await workflowQueueService.queue.getDelayed();
     expect(diff).to.equal(delay[0].opts.delay);
-
-    await workflowQueueService.work(delayedJob);
-    await awaitRunningJobs(0);
   });
 
   it('should be able to cancel delay', async function () {

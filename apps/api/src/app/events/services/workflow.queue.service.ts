@@ -174,35 +174,24 @@ export class WorkflowQueueService {
   }
 
   private async addDelayJob(data: JobEntity, options: JobsOptions): Promise<boolean> {
-    const isValidDelayStep =
-      data.type === StepTypeEnum.DELAY &&
-      (data.digest.type === DelayTypeEnum.REGULAR
-        ? data.step.metadata.amount && data.step.metadata.unit
-        : data.step.metadata.delayPath);
+    const isDelayStep = data.type === StepTypeEnum.DELAY;
 
-    if (!isValidDelayStep) {
+    if (!isDelayStep) {
       return false;
     }
-
     const timeNow = new Date();
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
 
     let delay: number;
-
     if (data.step.metadata.type === DelayTypeEnum.SCHEDULED) {
-      const temp = data.step.metadata.delayPath;
-      const val = data.payload[temp];
-
-      delay = differenceInMilliseconds(new Date(val), timeNow);
+      const delayPath = data.step.metadata.delayPath;
+      const delayDate = data.payload[delayPath];
+      delay = differenceInMilliseconds(new Date(delayDate), timeNow);
     } else {
-      if (WorkflowQueueService.checkValidDelayOverride(data)) {
-        delay = WorkflowQueueService.toMilliseconds(
-          data.overrides.delay.amount as number,
-          data.overrides.delay.unit as DigestUnitEnum
-        );
-      } else {
-        delay = WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
-      }
+      const isDelayOverride = WorkflowQueueService.checkValidDelayOverride(data);
+      const amount = isDelayOverride ? (data.overrides.delay.amount as number) : data.step.metadata.amount;
+      const unit = isDelayOverride ? (data.overrides.delay.unit as DigestUnitEnum) : data.step.metadata.unit;
+      delay = WorkflowQueueService.toMilliseconds(amount, unit);
     }
 
     await this.queue.add(data._id, data, { delay, ...options });

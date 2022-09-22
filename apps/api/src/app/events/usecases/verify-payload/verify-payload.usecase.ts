@@ -1,5 +1,5 @@
 import { ITemplateVariable } from '@novu/dal';
-import { TemplateSystemVariables } from '@novu/shared';
+import { TemplateSystemVariables, DelayTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayloadCommand } from './verify-payload.command';
 
@@ -10,6 +10,12 @@ export class VerifyPayload {
 
     for (const step of command.template.steps) {
       invalidKeys.push(...this.checkRequired(step.template.variables || [], command.payload));
+      if (step.template.type === StepTypeEnum.DELAY && step.metadata.type === DelayTypeEnum.SCHEDULED) {
+        const invalidKey = this.checkRequiredDelayPath(step.metadata.delayPath, command.payload);
+        if (invalidKey) {
+          invalidKeys.push(invalidKey);
+        }
+      }
     }
 
     if (invalidKeys.length)
@@ -58,6 +64,22 @@ export class VerifyPayload {
     }
 
     return invalidKeys;
+  }
+
+  private checkRequiredDelayPath(delayPath: string, payload: Record<string, unknown>): string {
+    const invalidKey = `${delayPath} (ISO Date)`;
+
+    if (!payload.hasOwnProperty(delayPath)) {
+      return invalidKey;
+    } else {
+      const delayDate = payload[delayPath];
+      const strDate = new Date(delayDate as unknown as string).toString();
+      if (strDate === 'Invalid Date') {
+        return invalidKey;
+      }
+    }
+
+    // return '';
   }
 
   private fillDefaults(variables: ITemplateVariable[]): Record<string, unknown> {
