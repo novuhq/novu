@@ -621,6 +621,12 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
               type: TemplateVariableTypeEnum.STRING,
               defaultValue: 'John Doe',
             },
+            {
+              name: 'organizationName',
+              required: false,
+              type: TemplateVariableTypeEnum.STRING,
+              defaultValue: 'Novu Corp',
+            },
           ],
           content: [
             {

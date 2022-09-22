@@ -1,6 +1,5 @@
-import { Textarea } from '@mantine/core';
 import { CredentialsKeyEnum, IConfigCredentials, secureCredentials } from '@novu/shared';
-import { Input, PasswordInput } from '../../../design-system';
+import { Input, PasswordInput, Textarea } from '../../../design-system';
 
 export function IntegrationInput({
   credential,
