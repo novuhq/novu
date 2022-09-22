@@ -1,4 +1,4 @@
-import { IsDefined } from 'class-validator';
+import { IsDefined, IsString } from 'class-validator';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { BaseCommand } from '../../../shared/commands/base.command';
 
@@ -8,4 +8,8 @@ export class VerifyPayloadCommand extends BaseCommand {
 
   @IsDefined()
   template: NotificationTemplateEntity;
+
+  @IsString()
+  @IsDefined()
+  transactionId: string;
 }

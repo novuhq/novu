@@ -56,6 +56,7 @@ export class TriggerEvent {
       VerifyPayloadCommand.create({
         payload: command.payload,
         template,
+        transactionId: command.transactionId,
       })
     );
 
