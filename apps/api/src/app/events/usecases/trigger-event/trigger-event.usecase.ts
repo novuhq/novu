@@ -59,7 +59,7 @@ export class TriggerEvent {
       })
     );
 
-    command.payload = merge({}, command.payload, defaultPayload);
+    command.payload = merge({}, defaultPayload, command.payload);
 
     const jobs: JobEntity[][] = [];
 
