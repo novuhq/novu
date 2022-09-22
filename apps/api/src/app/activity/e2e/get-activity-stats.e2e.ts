@@ -1,7 +1,7 @@
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository, JobRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import * as moment from 'moment';
+import { subDays } from 'date-fns';
 
 describe('Get activity stats - /activity/stats (GET)', async () => {
   let session: UserSession;
@@ -53,7 +53,7 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
       },
       {
         $set: {
-          createdAt: moment().subtract(12, 'days').toDate(),
+          createdAt: subDays(new Date(), 12),
         },
       },
       {

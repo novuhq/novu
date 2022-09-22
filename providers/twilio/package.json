@@ -1,6 +1,6 @@
 {
   "name": "@novu/twilio",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A twilio wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -10,6 +10,7 @@
   "license": "MIT",
   "keywords": [],
   "scripts": {
+    "prebuild": "rimraf build",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
@@ -43,7 +44,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@novu/stateless": "^0.7.0",
+    "@novu/stateless": "^0.8.0",
     "twilio": "^3.67.2"
   },
   "devDependencies": {
@@ -58,6 +59,7 @@
     "nyc": "^15.1.0",
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
+    "rimraf": "^3.0.2",
     "standard-version": "9.3.2",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",

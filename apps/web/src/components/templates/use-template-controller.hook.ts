@@ -4,9 +4,12 @@ import {
   ICreateNotificationTemplateDto,
   IMessageTemplate,
   INotificationTemplate,
-  IUpdateNotificationTemplate,
+  IUpdateNotificationTemplateDto,
   StepTypeEnum,
   IPreferenceChannels,
+  BuilderFieldType,
+  BuilderGroupValues,
+  BuilderFieldOperator,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
@@ -67,7 +70,7 @@ export function useTemplateController(templateId: string) {
   const { isLoading: isUpdateLoading, mutateAsync: updateNotification } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
-    { id: string; data: Partial<IUpdateNotificationTemplate> }
+    { id: string; data: Partial<IUpdateNotificationTemplateDto> }
   >(({ id, data }) => updateTemplate(id, data));
 
   useEffect(() => {
@@ -80,6 +83,7 @@ export function useTemplateController(templateId: string) {
         name: template.name,
         description: template.description as string,
         tags: template.tags,
+        identifier: template.triggers[0].identifier,
         critical: template.critical,
         preferenceSettings: template.preferenceSettings,
         steps: [],
@@ -129,7 +133,8 @@ export function useTemplateController(templateId: string) {
 
       return step;
     });
-    const payload: ICreateNotificationTemplateDto = {
+
+    const payloadToCreate: ICreateNotificationTemplateDto = {
       notificationGroupId: data.notificationGroup,
       name: data.name,
       description: data.description,
@@ -139,28 +144,30 @@ export function useTemplateController(templateId: string) {
       steps: stepsToSave,
     };
 
+    const payloadToUpdate: IUpdateNotificationTemplateDto = {
+      ...payloadToCreate,
+      identifier: data.identifier,
+    };
+
     try {
       if (editMode) {
         await updateNotification({
           id: templateId,
-          data: payload,
+          data: payloadToUpdate,
         });
 
         refetch();
-        reset(payload);
+        reset(payloadToUpdate);
         setIsDirty(false);
 
         await client.refetchQueries(QueryKeys.changesCount);
-        showNotification({
-          message: 'Template updated successfully',
-          color: 'green',
-        });
+        successMessage('Template updated successfully');
       } else {
-        const response = await createNotification({ ...payload, active: true, draft: false });
+        const response = await createNotification({ ...payloadToCreate, active: true, draft: false });
 
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
-        reset(payload);
+        reset(payloadToCreate);
         setIsDirty(false);
         await client.refetchQueries(QueryKeys.changesCount);
         successMessage('Template saved successfully');
@@ -188,6 +195,7 @@ export function useTemplateController(templateId: string) {
         contentType: 'editor',
         subject: '',
         name: 'Email Message Template',
+        variables: [],
       },
       active: true,
       filters: [],
@@ -235,7 +243,20 @@ export interface StepEntity {
 
   template: ITemplates;
 
-  filters?: any[];
+  filters?: {
+    isNegated?: boolean;
+
+    type?: BuilderFieldType;
+
+    value?: BuilderGroupValues;
+
+    children?: {
+      on?: 'payload' | 'subscriber';
+      field?: string;
+      value?: string;
+      operator?: BuilderFieldOperator;
+    }[];
+  }[];
 
   active: boolean;
 
@@ -250,6 +271,7 @@ export interface IForm {
   notificationGroup: string;
   name: string;
   description: string;
+  identifier: string;
   tags: string[];
   critical: boolean;
   steps: StepEntity[];

@@ -3,18 +3,21 @@ import styled from '@emotion/styled';
 import { Button, colors, DragButton, Text, Title } from '../../../design-system';
 import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
 import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
 import { StepActiveSwitch } from './StepActiveSwitch';
 import { useEnvController } from '../../../store/use-env-controller';
 import { When } from '../../../components/utils/When';
-import { Trash } from '../../../design-system/icons';
+import { PlusCircle, Trash } from '../../../design-system/icons';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { DigestMetadata } from './DigestMetadata';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
+import { DelayMetadata } from './DelayMetadata';
+import { FilterModal } from '../filter/FilterModal';
+import { Filters } from '../filter/Filters';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -65,7 +68,9 @@ const WorkflowEditorPage = ({
   };
   const { addStep, deleteStep, control, watch, errors } = useTemplateController(templateId);
   const { isLoading, isUpdateLoading, loadingEditTemplate, isDirty } = useTemplateController(templateId);
+  const [filterOpen, setFilterOpen] = useState(false);
   const steps = watch('steps');
+
   const { readonly } = useEnvController();
   const [toDelete, setToDelete] = useState<string>('');
 
@@ -100,9 +105,9 @@ const WorkflowEditorPage = ({
   };
 
   return (
-    <div style={{ minHeight: 500 }}>
-      <Grid gutter={0} grow style={{ minHeight: 500 }}>
-        <Grid.Col md={9} sm={6}>
+    <>
+      <Grid gutter={0} grow style={{ minHeight: '100%' }}>
+        <Grid.Col md={9} sm={6} style={{ display: 'flex', flexDirection: 'column' }}>
           <TemplatePageHeader
             loading={isLoading || isUpdateLoading}
             disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
@@ -111,6 +116,7 @@ const WorkflowEditorPage = ({
             activePage={activePage}
           />
           <FlowEditor
+            activePage={activePage}
             onDelete={onDelete}
             setActivePage={setActivePage}
             dragging={dragging}
@@ -120,12 +126,30 @@ const WorkflowEditorPage = ({
             addStep={addStep}
             setSelectedNodeId={setSelectedNodeId}
           />
+          <When truthy={selectedChannel !== null && getChannel(selectedChannel)?.type !== NodeTypeEnum.ACTION}>
+            {steps.map((i, index) => {
+              return index === activeStep ? (
+                <FilterModal
+                  key={index}
+                  isOpen={filterOpen}
+                  cancel={() => {
+                    setFilterOpen(false);
+                  }}
+                  confirm={() => {
+                    setFilterOpen(false);
+                  }}
+                  control={control}
+                  stepIndex={activeStep}
+                />
+              ) : null;
+            })}
+          </When>
         </Grid.Col>
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
             {selectedChannel ? (
               <StyledNav data-test-id="step-properties-side-menu">
-                <When truthy={selectedChannel !== StepTypeEnum.DIGEST}>
+                <When truthy={selectedChannel !== StepTypeEnum.DIGEST && selectedChannel !== StepTypeEnum.DELAY}>
                   <NavSection>
                     <ButtonWrapper>
                       <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
@@ -159,6 +183,33 @@ const WorkflowEditorPage = ({
                       ) : null;
                     })}
                   </NavSection>
+                  <NavSection>
+                    <Divider
+                      style={{
+                        marginBottom: '15px',
+                      }}
+                      label="Filters"
+                      labelPosition="center"
+                    />
+                    {steps.map((i, index) => {
+                      return index !== activeStep ? null : <Filters step={i} />;
+                    })}
+                    <FilterButton
+                      fullWidth
+                      variant="outline"
+                      onClick={() => {
+                        setFilterOpen(true);
+                      }}
+                      dark={colorScheme === 'dark'}
+                    >
+                      <PlusCircle
+                        style={{
+                          marginRight: '7px',
+                        }}
+                      />{' '}
+                      Add filter
+                    </FilterButton>
+                  </NavSection>
                 </When>
                 <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
                   <NavSection>
@@ -189,6 +240,31 @@ const WorkflowEditorPage = ({
                     })}
                   </NavSection>
                 </When>
+                <When truthy={selectedChannel === StepTypeEnum.DELAY}>
+                  <NavSection>
+                    <ButtonWrapper>
+                      <Title size={2}>Delay Properties</Title>
+                      <ActionIcon
+                        data-test-id="close-side-menu-btn"
+                        variant="transparent"
+                        onClick={() => setSelectedChannel(null)}
+                      >
+                        <Close />
+                      </ActionIcon>
+                    </ButtonWrapper>
+
+                    <Text mr={10} mt={10} size="md" color={colors.B60}>
+                      Configure the delay parameters. Set await time.
+                    </Text>
+                  </NavSection>
+                  <NavSection>
+                    {steps.map((i, index) => {
+                      return index === activeStep ? (
+                        <DelayMetadata key={index} control={control} index={index} />
+                      ) : null;
+                    })}
+                  </NavSection>
+                </When>
                 <NavSection>
                   <DeleteStepButton
                     mt={10}
@@ -203,7 +279,7 @@ const WorkflowEditorPage = ({
                         marginRight: '5px',
                       }}
                     />
-                    Delete {selectedChannel !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
+                    Delete {getChannel(selectedChannel)?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
                   </DeleteStepButton>
                 </NavSection>
               </StyledNav>
@@ -261,7 +337,7 @@ const WorkflowEditorPage = ({
         </Grid.Col>
       </Grid>
       <DeleteConfirmModal target="step" isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
-    </div>
+    </>
   );
 };
 
@@ -301,5 +377,13 @@ const DeleteStepButton = styled(Button)`
   box-shadow: none;
   :hover {
     background: rgba(229, 69, 69, 0.15);
+  }
+`;
+
+const FilterButton = styled(Button)<{ dark: boolean }>`
+  background: ${({ dark }) => (dark ? colors.B20 : colors.white)};
+  box-shadow: 0px 5px 20px rgb(0 0 0 / 20%);
+  :hover {
+    background-color: ${({ dark }) => (dark ? colors.B20 : colors.white)};
   }
 `;

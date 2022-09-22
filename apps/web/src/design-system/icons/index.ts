@@ -25,6 +25,7 @@ export { Mobile } from './general/Mobile';
 export { ErrorIcon } from './general/ErrorIcon';
 export { Chat } from './general/Chat';
 export { InApp } from './general/InApp';
+export { Timer } from './general/Timer';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
@@ -50,5 +51,7 @@ export { TapeGradient } from './gradient/TapeGradient';
 export { BoltGradient } from './gradient/BoltGradient';
 export { ConnectGradient } from './gradient/ConnectGradient';
 export { ChatGradient } from './gradient/ChatGradient';
+export { LevelsGradient } from './gradient/LevelsGradient';
+export { TimerGradient } from './gradient/TimerGradient';
 
 export { Github } from './social/Github';

@@ -5,8 +5,10 @@ import {
   IOrganizationEntity,
   ISubscriberJwt,
   MessageActionStatusEnum,
-  IPreferenceChannels,
 } from '@novu/shared';
+import { IStoreQuery } from '@novu/client';
+export { IStoreQuery };
+export { IUserPreferenceSettings } from '@novu/client';
 
 export { IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
 
@@ -20,6 +22,7 @@ export * from './hooks/use-subscriber-preference.hook';
 export { ScreensEnum } from './store/screens-provider.context';
 
 export * from './store/novu-theme-provider.context';
+export * from './i18n/lang';
 export { INovuPopoverTheme } from './store/novu-theme.context';
 
 export { SubscriberPreference } from './components/notification-center/components/user-preference/SubscriberPreference';
@@ -62,6 +65,7 @@ export interface INotificationCenterContext {
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  onTabClick?: (tab: ITab) => void;
 }
 
 export interface IStore {
@@ -107,14 +111,4 @@ export declare type ColorScheme = 'light' | 'dark';
 export interface ITab {
   name: string;
   storeId: string;
-}
-
-export interface IStoreQuery {
-  feedIdentifier?: string | string[];
-  seen?: boolean;
-}
-
-export interface IUserPreferenceSettings {
-  template: { _id: string; name: string; critical: boolean };
-  preference: { enabled: boolean; channels: IPreferenceChannels };
 }

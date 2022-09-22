@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { colors, Dropdown, Text } from '../../../design-system';
 import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp } from '../../../design-system/icons';
+import { Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
 import { StepTypeEnum } from '@novu/shared';
 import { Digest } from '../../../design-system/icons/general/Digest';
 
@@ -34,7 +34,7 @@ export default memo(({ data }: { data: NodeData }) => {
               transparent: {
                 zIndex: 9999,
                 pointerEvents: 'all',
-                color: theme.colorScheme === 'dark' ? (data.showDropZone ? colors.white : colors.B30) : colors.B80,
+                color: theme.colorScheme === 'dark' ? (data.showDropZone ? colors.white : colors.B60) : colors.B60,
                 '&:hover': {
                   color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
                 },
@@ -72,6 +72,9 @@ export default memo(({ data }: { data: NodeData }) => {
           onClick={() => addNewNode(StepTypeEnum.DIGEST)}
         >
           Digest
+        </DropdownItem>
+        <DropdownItem data-test-id={`add-delay-node`} icon={<Timer />} onClick={() => addNewNode(StepTypeEnum.DELAY)}>
+          Delay
         </DropdownItem>
       </Dropdown>
       <Dropzone data-test-id="dropzone-area" dark={theme.colorScheme === 'dark'} visible={data.showDropZone}>

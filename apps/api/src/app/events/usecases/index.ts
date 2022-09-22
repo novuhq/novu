@@ -8,13 +8,14 @@ import { SendMessageChat } from './send-message/send-message-chat.usecase';
 import { SendMessagePush } from './send-message/send-message-push.usecase';
 import { QueueNextJob } from './queue-next-job/queue-next-job.usecase';
 import { Digest } from './send-message/digest/digest.usecase';
-import { CancelDigest } from './cancel-digest/cancel-digest.usecase';
+import { CancelDelayed } from './cancel-delayed/cancel-delayed.usecase';
 import { TriggerEventToAll } from './trigger-event-to-all/trigger-event-to-all.usecase';
-import { FilterSteps } from './filter-steps/filter-steps.usecase';
-import { FilterStepsBackoff } from './filter-steps/filter-steps-backoff.usecase';
-import { FilterStepsRegular } from './filter-steps/filter-steps-regular.usecase';
+import { DigestFilterSteps } from './digest-filter-steps/digest-filter-steps.usecase';
+import { DigestFilterStepsBackoff } from './digest-filter-steps/digest-filter-steps-backoff.usecase';
+import { DigestFilterStepsRegular } from './digest-filter-steps/digest-filter-steps-regular.usecase';
 import { GetDigestEventsRegular } from './send-message/digest/get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './send-message/digest/get-digest-events-backoff.usecase';
+import { VerifyPayload } from './verify-payload/verify-payload.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -27,11 +28,12 @@ export const USE_CASES = [
   SendMessagePush,
   QueueNextJob,
   Digest,
-  CancelDigest,
+  CancelDelayed,
   TriggerEventToAll,
-  FilterSteps,
-  FilterStepsRegular,
-  FilterStepsBackoff,
+  DigestFilterSteps,
+  DigestFilterStepsRegular,
+  DigestFilterStepsBackoff,
   GetDigestEventsBackoff,
   GetDigestEventsRegular,
+  VerifyPayload,
 ];

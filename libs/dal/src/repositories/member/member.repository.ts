@@ -54,6 +54,15 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
     ];
   }
 
+  async getOrganizationAdminAccount(organizationId: string) {
+    const member = await Member.findOne({
+      _organizationId: organizationId,
+      roles: MemberRoleEnum.ADMIN,
+    });
+
+    return member;
+  }
+
   async getOrganizationAdmins(organizationId: string) {
     const members = await Member.find({
       _organizationId: organizationId,

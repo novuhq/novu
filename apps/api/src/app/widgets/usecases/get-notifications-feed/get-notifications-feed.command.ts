@@ -3,7 +3,8 @@ import { EnvironmentWithSubscriber } from '../../../shared/commands/project.comm
 
 export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
   @IsNumber()
-  page: number;
+  @IsOptional()
+  page?: number = 0;
 
   @IsOptional()
   @IsArray()

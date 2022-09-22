@@ -1,15 +1,19 @@
 import { ChannelTypeEnum } from '@novu/shared';
+import { SoftDeleteModel } from 'mongoose-delete';
 import { FilterQuery, Types } from 'mongoose';
 import { BaseRepository } from '../base-repository';
 import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { NotificationTemplateEntity } from '../notification-template';
 import { FeedRepository } from '../feed';
+import { DalException } from '../../shared';
 
 export class MessageRepository extends BaseRepository<MessageEntity> {
+  private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
   constructor() {
     super(Message, MessageEntity);
+    this.message = Message;
   }
 
   async findBySubscriberChannel(
@@ -219,5 +223,19 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       totalCount,
       data: this.mapEntities(response),
     };
+  }
+
+  async delete(query: FilterQuery<MessageEntity & Document>) {
+    const message = await this.findOne({ _id: query._id });
+    if (!message) {
+      throw new DalException(`Could not find a message with id ${query._id}`);
+    }
+    await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
+  }
+
+  async findDeleted(query: FilterQuery<MessageEntity & Document>): Promise<MessageEntity> {
+    const res = await this.message.findDeleted(query);
+
+    return this.mapEntity(res);
   }
 }
