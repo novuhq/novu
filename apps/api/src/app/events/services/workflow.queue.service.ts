@@ -7,6 +7,7 @@ import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase'
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
+import { ApiException } from '../../shared/exceptions/api.exception';
 
 interface IJobEntityExtended extends JobEntity {
   presend?: boolean;
@@ -205,8 +206,13 @@ export class WorkflowQueueService {
     if (data.step.metadata.type === DelayTypeEnum.SCHEDULED) {
       const delayPath = data.step.metadata.delayPath;
       const delayDate = data.payload[delayPath];
+      const delay = differenceInMilliseconds(new Date(delayDate), new Date());
 
-      return differenceInMilliseconds(new Date(delayDate), new Date());
+      if (delay < 0) {
+        throw new ApiException(`Delay date at path ${delayPath} must be a future date`);
+      }
+
+      return delay;
     }
 
     if (WorkflowQueueService.checkValidDelayOverride(data)) {
