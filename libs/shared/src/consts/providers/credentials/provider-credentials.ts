@@ -352,6 +352,28 @@ export const expoConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const apnsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Private Key',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Key ID',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ProjectName,
+    displayName: 'Team ID',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const gupshupConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,

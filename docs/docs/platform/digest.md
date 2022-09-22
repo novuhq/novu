@@ -53,11 +53,11 @@ In many cases, you will need to access all the digested events payload in order 
 
 As port of the digested template you will have access to a few properties:
 
-| Property | Description |
-| -------- | ----------- |
-| `step.events` | An array of all the events aggregated under this digest. This will be the "payload" object passed to each `trigger.event` sent in the digest period |
-| `step.total_count` | The number of total events in this digest |
-| `step.digest` | A `boolean` flag to indicate if we are in a digest mode right now |
+| Property           | Description                                                                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `step.events`      | An array of all the events aggregated under this digest. This will be the "payload" object passed to each `trigger.event` sent in the digest period |
+| `step.total_count` | The number of total events in this digest                                                                                                           |
+| `step.digest`      | A `boolean` flag to indicate if we are in a digest mode right now                                                                                   |
 
 Let's look at a handlebars syntax example for the following triggers:
 
@@ -80,11 +80,12 @@ novu.trigger('template-name', {
 Using the following template:
 
 ```handlebars
-Total events in digest: {{step.total_count}}
+Total events in digest:
+{{step.total_count}}
 
 {{#if step.digest}}
   {{#each step.events}}
-      {{name}}
+    {{name}}
   {{/each}}
 {{else}}
   Not a digested template

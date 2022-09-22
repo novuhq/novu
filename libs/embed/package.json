@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "private": true,
   "description": "",
   "keywords": [],
@@ -28,7 +28,7 @@
     "build:prod": "tsc && cross-env ENVIRONMENT=production rollup -c rollup.config.ts",
     "start": "cross-env ENVIRONMENT=local rollup -c rollup.config.ts -w",
     "start:dev": "concurrently \"pnpm start\"",
-    "start:docker": "http-server -p 4701 dist",
+    "start:docker": "pnpm build && http-server -p 4701 dist",
     "start:test:web": "http-server -p 4701 -o test",
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
@@ -127,7 +127,7 @@
     "typescript": "4.3.5"
   },
   "dependencies": {
-    "@novu/notification-center": "^0.7.3",
+    "@novu/notification-center": "^0.8.0",
     "@types/iframe-resizer": "^3.5.8",
     "iframe-resizer": "^4.3.1"
   }

@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '../../../entities/message-template';
-import { fcmConfig, expoConfig } from '../credentials';
+import { apnsConfig, fcmConfig, expoConfig } from '../credentials';
 import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
 
@@ -9,7 +9,7 @@ export const pushProviders: IProviderConfig[] = [
     displayName: 'Firebase Cloud Messaging',
     channel: ChannelTypeEnum.PUSH,
     credentials: fcmConfig,
-    docReference: 'https://docs.novu.co/channels/push#firebase-cloud-messages',
+    docReference: 'https://docs.novu.co/channels/push/fcm',
     logoFileName: { light: 'fcm.svg', dark: 'fcm.svg' },
   },
   {
@@ -19,5 +19,14 @@ export const pushProviders: IProviderConfig[] = [
     credentials: expoConfig,
     docReference: 'https://docs.expo.dev/push-notifications/overview/',
     logoFileName: { light: 'expo.svg', dark: 'expo.svg' },
+  },
+  {
+    id: PushProviderIdEnum.APNS,
+    displayName: 'APNs',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: apnsConfig,
+    docReference: 'https://docs.novu.co/channels/push/apns',
+    logoFileName: { light: 'apns.png', dark: 'apns.png' },
+    betaVersion: true,
   },
 ];
