@@ -131,6 +131,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### 📱 Push 
 
 - [x] FCM
+- [x] Expo
 - [ ] Pushwoosh
 - [ ] SNS
 
