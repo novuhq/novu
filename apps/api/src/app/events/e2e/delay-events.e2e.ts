@@ -225,7 +225,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     try {
       await triggerEvent({
         customVar: 'Testing of User Name',
-        sendAt: 'just a string',
+        sendAt: '20-09-2025',
       });
       expect(true).to.equal(false);
     } catch (e) {

@@ -74,8 +74,9 @@ export class VerifyPayload {
     }
 
     const delayDate = payload[delayPath];
-    const strDate = new Date(delayDate as unknown as string).toString();
-    if (strDate === 'Invalid Date') {
+    const isoRegExp = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
+    const isoDate = (delayDate as unknown as string).match(isoRegExp);
+    if (!isoDate) {
       return invalidKey;
     }
   }
