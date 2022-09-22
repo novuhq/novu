@@ -179,20 +179,10 @@ export class WorkflowQueueService {
     if (!isDelayStep) {
       return false;
     }
-    const timeNow = new Date();
+
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
 
-    let delay: number;
-    if (data.step.metadata.type === DelayTypeEnum.SCHEDULED) {
-      const delayPath = data.step.metadata.delayPath;
-      const delayDate = data.payload[delayPath];
-      delay = differenceInMilliseconds(new Date(delayDate), timeNow);
-    } else {
-      const isDelayOverride = WorkflowQueueService.checkValidDelayOverride(data);
-      const amount = isDelayOverride ? (data.overrides.delay.amount as number) : data.step.metadata.amount;
-      const unit = isDelayOverride ? (data.overrides.delay.unit as DigestUnitEnum) : data.step.metadata.unit;
-      delay = WorkflowQueueService.toMilliseconds(amount, unit);
-    }
+    const delay = WorkflowQueueService.calculateDelayAmount(data);
 
     await this.queue.add(data._id, data, { delay, ...options });
 
@@ -209,6 +199,24 @@ export class WorkflowQueueService {
       typeof data.overrides.delay.amount === 'number' &&
       values.includes(data.overrides.delay.unit as unknown as DigestUnitEnum)
     );
+  }
+
+  private static calculateDelayAmount(data: JobEntity): number {
+    if (data.step.metadata.type === DelayTypeEnum.SCHEDULED) {
+      const delayPath = data.step.metadata.delayPath;
+      const delayDate = data.payload[delayPath];
+
+      return differenceInMilliseconds(new Date(delayDate), new Date());
+    }
+
+    if (WorkflowQueueService.checkValidDelayOverride(data)) {
+      return WorkflowQueueService.toMilliseconds(
+        data.overrides.delay.amount as number,
+        data.overrides.delay.unit as DigestUnitEnum
+      );
+    }
+
+    return WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
   }
 
   private async delayedEventIsCanceled(job: JobEntity) {

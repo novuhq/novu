@@ -71,15 +71,13 @@ export class VerifyPayload {
 
     if (!payload.hasOwnProperty(delayPath)) {
       return invalidKey;
-    } else {
-      const delayDate = payload[delayPath];
-      const strDate = new Date(delayDate as unknown as string).toString();
-      if (strDate === 'Invalid Date') {
-        return invalidKey;
-      }
     }
 
-    // return '';
+    const delayDate = payload[delayPath];
+    const strDate = new Date(delayDate as unknown as string).toString();
+    if (strDate === 'Invalid Date') {
+      return invalidKey;
+    }
   }
 
   private fillDefaults(variables: ITemplateVariable[]): Record<string, unknown> {

@@ -192,7 +192,45 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(delayedJob?.updatedAt));
 
     const delay = await workflowQueueService.queue.getDelayed();
-    expect(diff).to.equal(delay[0].opts.delay);
+    expect(delay[0].opts.delay).to.approximately(diff, 5);
+  });
+
+  it('should fail for missing or invalid path for scheduled delay', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DELAY,
+          content: '',
+          metadata: {
+            type: DelayTypeEnum.SCHEDULED,
+            delayPath: 'sendAt',
+          },
+        },
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    try {
+      await triggerEvent({
+        customVar: 'Testing of User Name',
+      });
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.response.data.message).to.equal('payload is missing required key(s) and type(s): sendAt (ISO Date)');
+    }
+
+    try {
+      await triggerEvent({
+        customVar: 'Testing of User Name',
+        sendAt: 'just a string',
+      });
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.response.data.message).to.equal('payload is missing required key(s) and type(s): sendAt (ISO Date)');
+    }
   });
 
   it('should be able to cancel delay', async function () {
