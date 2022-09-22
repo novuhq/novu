@@ -1,5 +1,4 @@
 const fs = require('fs');
-const ora = require('ora');
 
 const nodeModulesExist = fs.existsSync('node_modules');
 const envInitialized = fs.existsSync('apps/api/src/.env');
@@ -27,6 +26,7 @@ async function reInstallProject() {
 }
 
 async function setupRunner() {
+  const ora = require('ora');
   const shell = require('shelljs');
   const waitPort = require('wait-port');
   const inquirer = require('inquirer');
