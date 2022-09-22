@@ -13,39 +13,21 @@ describe('Update seen/read', function () {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    template = await session.createTemplate();
+    template = await createTemplate(session);
 
-    // template = await createTemplate(session);
-
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 7; i++) {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       await sendTrigger(session, template, newSubscriberIdInAppNotification);
-
-      template = await session.createTemplate({
-        steps: [
-          {
-            type: StepTypeEnum.SMS,
-            content: 'Welcome to {{organizationName}}' as string,
-          },
-          {
-            type: StepTypeEnum.IN_APP,
-            content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
-          },
-          {
-            type: StepTypeEnum.EMAIL,
-            content: [
-              {
-                type: 'text',
-                content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
-              },
-            ],
-          },
-        ],
-      });
     }
-    await new Promise((r) => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, 1000));
 
     await messageRepository.update({}, { $unset: { read: 1 } });
+
+    for (let i = 0; i < 3; i++) {
+      const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
+      await sendTrigger(session, template, newSubscriberIdInAppNotification);
+    }
+    await new Promise((r) => setTimeout(r, 1000));
   });
 
   it('should update all seen to read', async function () {
@@ -54,20 +36,7 @@ describe('Update seen/read', function () {
     const messages = await messageRepository.find({});
 
     messages.forEach((msg) => {
-      expect(msg.seen).to.not.exist;
       expect(msg.read).to.exist;
-    });
-  });
-
-  it('should add in app seen as true', async function () {
-    await seenToRead();
-
-    await inAppAsSeen();
-
-    const messages = await messageRepository.find({ channel: StepTypeEnum.IN_APP });
-
-    messages.forEach((msg) => {
-      expect(msg.seen).to.equal(true);
     });
   });
 
@@ -85,3 +54,27 @@ describe('Update seen/read', function () {
     });
   });
 });
+
+async function createTemplate(session) {
+  return await session.createTemplate({
+    steps: [
+      {
+        type: StepTypeEnum.SMS,
+        content: 'Welcome to {{organizationName}}' as string,
+      },
+      {
+        type: StepTypeEnum.IN_APP,
+        content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+      },
+      {
+        type: StepTypeEnum.EMAIL,
+        content: [
+          {
+            type: 'text',
+            content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+          },
+        ],
+      },
+    ],
+  });
+}

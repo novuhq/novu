@@ -26,13 +26,14 @@ export async function updateSeenRead() {
 }
 
 export async function seenToRead() {
-  await messageRepository.update({}, { $rename: { seen: 'read' } });
+  await messageRepository.update({ read: { $exists: false } }, { $rename: { seen: 'read' } });
 }
 
 export async function inAppAsSeen() {
   await messageRepository.update(
     {
       channel: 'in_app',
+      seen: { $exists: false },
     },
     { $set: { seen: true } }
   );
@@ -42,6 +43,7 @@ export async function notInAppAsUnseen() {
   await messageRepository.update(
     {
       channel: { $ne: 'in_app' },
+      seen: { $exists: false },
     },
     { $set: { seen: false } }
   );
