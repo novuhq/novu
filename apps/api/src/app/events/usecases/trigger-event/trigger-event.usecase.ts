@@ -9,11 +9,11 @@ import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.c
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
-import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
 import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
+import { AddJob } from '../add-job/add-job.usecase';
 
 @Injectable()
 export class TriggerEvent {
@@ -22,9 +22,9 @@ export class TriggerEvent {
     private createLogUsecase: CreateLog,
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
-    private workflowQueueService: WorkflowQueueService,
     private verifyPayload: VerifyPayload,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private addJobUsecase: AddJob
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -96,7 +96,13 @@ export class TriggerEvent {
 
     for (const job of jobs) {
       const firstJob = await this.jobRepository.storeJobs(job);
-      await this.workflowQueueService.addJob(firstJob);
+      await this.addJobUsecase.execute({
+        userId: firstJob._userId,
+        environmentId: firstJob._environmentId,
+        organizationId: firstJob._organizationId,
+        presend: false,
+        jobId: firstJob._id,
+      });
     }
 
     if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
