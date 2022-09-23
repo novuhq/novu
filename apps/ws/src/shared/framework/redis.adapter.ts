@@ -9,7 +9,14 @@ export class RedisIoAdapter extends IoAdapter {
     const redisAdapter = redisIoAdapter({
       host: process.env.REDIS_HOST,
       port: process.env.REDIS_PORT,
-      prefix: getRedisPrefix(),
+      prefix: () => {
+        // if custom prefix is empty ensure that the default prefix is set
+        if (getRedisPrefix()) {
+          return 'socket.io';
+        } else {
+          return getRedisPrefix();
+        }
+      },
     });
 
     server.adapter(redisAdapter);
