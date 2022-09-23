@@ -61,7 +61,7 @@ export class WorkflowQueueService {
     await this.runJob.execute(
       RunJobCommand.create({
         jobId: job._id,
-        presend: job.presend,
+        presend: false,
         environmentId: job._environmentId,
         organizationId: job._organizationId,
         userId: job._userId,

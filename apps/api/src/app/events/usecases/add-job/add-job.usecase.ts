@@ -14,7 +14,7 @@ export class AddJob {
     private addDelayJob: AddDelayJob
   ) {}
 
-  public async execute(command: AddJobCommand): Promise<JobEntity | undefined> {
+  public async execute(command: AddJobCommand): Promise<undefined> {
     const digestAdded = await this.addDigestJob.execute(command);
     const delayAdded = await this.addDelayJob.execute(command);
 
