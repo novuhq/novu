@@ -3,6 +3,7 @@ import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { SendMessageCommand } from './send-message.command';
+import * as Sentry from '@sentry/node';
 
 export abstract class SendMessageType {
   protected constructor(protected messageRepository: MessageRepository, protected createLogUsecase: CreateLog) {}
@@ -13,12 +14,22 @@ export abstract class SendMessageType {
     message,
     status: 'error' | 'sent' | 'warning',
     errorId: string,
-    errorMessage: string,
+    errorMessage: string | any,
     command: SendMessageCommand,
     notification: NotificationEntity,
-    logCodeEnum: LogCodeEnum
+    logCodeEnum: LogCodeEnum,
+    error?: any
   ) {
-    await this.messageRepository.updateMessageStatus(message._id, status, null, errorId, errorMessage);
+    if (error) {
+      Sentry.captureException(error?.response?.body || error?.response || error?.errors || error);
+    }
+
+    const errorString = (toStringify(errorMessage?.response?.body) ||
+      toStringify(errorMessage?.response) ||
+      toStringify(errorMessage) ||
+      JSON.stringify(errorMessage)) as string;
+
+    await this.messageRepository.updateMessageStatus(message._id, status, null, errorId, errorString);
 
     await this.createLogUsecase.execute(
       CreateLogCommand.create({
@@ -27,7 +38,7 @@ export abstract class SendMessageType {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         notificationId: notification._id,
-        text: errorMessage,
+        text: errorString,
         userId: command.userId,
         subscriberId: command.subscriberId,
         code: logCodeEnum,
@@ -35,4 +46,16 @@ export abstract class SendMessageType {
       })
     );
   }
+}
+
+function toStringify(message: any): string | boolean {
+  if (typeof message === 'string' || message instanceof String) {
+    return message.toString();
+  }
+
+  if (Object.keys(message).length > 0) {
+    return JSON.stringify(message);
+  }
+
+  return false;
 }

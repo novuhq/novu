@@ -180,29 +180,15 @@ export class SendMessageChat extends SendMessageType {
         content,
       });
     } catch (e) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: e.message || e.name || 'Un-expect CHAT provider error',
-          userId: command.userId,
-          code: LogCodeEnum.CHAT_ERROR,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
-
-      await this.messageRepository.updateMessageStatus(
-        message._id,
+      await this.sendErrorStatus(
+        message,
         'error',
-        e,
         'unexpected_chat_error',
-        e.message || e.name || 'Un-expect CHAT provider error'
+        e.message || e.name || 'Un-expect CHAT provider error',
+        command,
+        notification,
+        LogCodeEnum.CHAT_ERROR,
+        e
       );
     }
   }
