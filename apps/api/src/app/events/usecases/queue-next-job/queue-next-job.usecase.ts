@@ -26,7 +26,6 @@ export class QueueNextJob {
       userId: job._userId,
       environmentId: job._environmentId,
       organizationId: job._organizationId,
-      presend: false,
       jobId: job._id,
     });
 

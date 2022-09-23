@@ -41,9 +41,7 @@ export class RunJob {
         events: job.digest.events,
       })
     );
-    if (command.presend === true) {
-      return;
-    }
+
     await this.queueNextJob.execute(
       QueueNextJobCommand.create({
         parentId: job._id,

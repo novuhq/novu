@@ -100,7 +100,6 @@ export class TriggerEvent {
         userId: firstJob._userId,
         environmentId: firstJob._environmentId,
         organizationId: firstJob._organizationId,
-        presend: false,
         jobId: firstJob._id,
       });
     }

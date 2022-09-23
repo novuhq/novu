@@ -5,10 +5,6 @@ import { DigestUnitEnum } from '@novu/shared';
 import { RunJob } from '../usecases/run-job/run-job.usecase';
 import { RunJobCommand } from '../usecases/run-job/run-job.command';
 
-interface IJobEntityExtended extends JobEntity {
-  presend?: boolean;
-}
-
 @Injectable()
 export class WorkflowQueueService {
   private bullConfig: QueueBaseOptions = {
@@ -38,7 +34,7 @@ export class WorkflowQueueService {
     });
     this.worker = new Worker(
       'standard',
-      async ({ data }: { data: IJobEntityExtended }) => {
+      async ({ data }: { data: JobEntity }) => {
         return await this.work(data);
       },
       {
@@ -57,11 +53,10 @@ export class WorkflowQueueService {
     this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
   }
 
-  public async work(job: IJobEntityExtended) {
+  public async work(job: JobEntity) {
     await this.runJob.execute(
       RunJobCommand.create({
         jobId: job._id,
-        presend: false,
         environmentId: job._environmentId,
         organizationId: job._organizationId,
         userId: job._userId,

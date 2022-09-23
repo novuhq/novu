@@ -27,14 +27,7 @@ export class AddDelayJob {
 
     const delay = this.calculateDelayAmount(data);
 
-    await await this.workflowQueueService.addToQueue(
-      data._id,
-      {
-        ...data,
-        presend: command.presend,
-      },
-      delay
-    );
+    await await this.workflowQueueService.addToQueue(data._id, data, delay);
 
     return true;
   }

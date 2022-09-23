@@ -36,14 +36,7 @@ export class AddDigestJob {
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
     const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
 
-    await await this.workflowQueueService.addToQueue(
-      data._id,
-      {
-        ...data,
-        presend: command.presend,
-      },
-      delay
-    );
+    await await this.workflowQueueService.addToQueue(data._id, data, delay);
 
     return true;
   }

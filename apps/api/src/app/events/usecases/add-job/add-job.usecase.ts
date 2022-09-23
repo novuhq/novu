@@ -29,9 +29,6 @@ export class AddJob {
     }
 
     await this.jobRepository.updateStatus(job._id, JobStatusEnum.QUEUED);
-    await this.workflowQueueService.addToQueue(job._id, {
-      ...job,
-      presend: command.presend,
-    });
+    await this.workflowQueueService.addToQueue(job._id, job);
   }
 }
