@@ -13,7 +13,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./src",
-    "types": ["node"]
+    "types": ["node", "mocha"]
   },
   "include": [".eslintrc.js", "src/**/*", "src/**/*.d.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]

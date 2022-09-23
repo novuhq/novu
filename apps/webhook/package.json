@@ -34,6 +34,7 @@
     "@sentry/node": "^6.3.3",
     "bull": "^4.4.0",
     "class-transformer": "^0.5.1",
+    "class-validator": "^0.13.2",
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",
     "jsonwebtoken": "8.5.1",
