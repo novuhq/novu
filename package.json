@@ -115,6 +115,7 @@
     "markdownlint-cli": "^0.31.1",
     "meow": "^10.1.1",
     "mississippi": "^4.0.0",
+    "ora": "~5.4.1",
     "pnpm": "7.5.0",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
