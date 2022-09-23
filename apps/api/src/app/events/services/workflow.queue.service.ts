@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Queue, Worker, QueueBaseOptions, JobsOptions, QueueScheduler } from 'bullmq';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { DigestUnitEnum } from '@novu/shared';
 import { RunJob } from '../usecases/run-job/run-job.usecase';
 import { RunJobCommand } from '../usecases/run-job/run-job.command';
 
@@ -35,7 +34,14 @@ export class WorkflowQueueService {
     this.worker = new Worker(
       'standard',
       async ({ data }: { data: JobEntity }) => {
-        return await this.work(data);
+        return await this.runJob.execute(
+          RunJobCommand.create({
+            jobId: data._id,
+            environmentId: data._environmentId,
+            organizationId: data._organizationId,
+            userId: data._userId,
+          })
+        );
       },
       {
         ...this.bullConfig,
@@ -53,38 +59,12 @@ export class WorkflowQueueService {
     this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
   }
 
-  public async work(job: JobEntity) {
-    await this.runJob.execute(
-      RunJobCommand.create({
-        jobId: job._id,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        userId: job._userId,
-      })
-    );
-  }
-
-  public async addToQueue(id: string, data: any, delay?: number | undefined) {
+  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined) {
     const options: JobsOptions = {
       removeOnComplete: true,
       removeOnFail: true,
       delay,
     };
     await this.queue.add(id, data, options);
-  }
-
-  public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {
-    let delay = 1000 * amount;
-    if (unit === DigestUnitEnum.DAYS) {
-      delay = 60 * 60 * 24 * delay;
-    }
-    if (unit === DigestUnitEnum.HOURS) {
-      delay = 60 * 60 * delay;
-    }
-    if (unit === DigestUnitEnum.MINUTES) {
-      delay = 60 * delay;
-    }
-
-    return delay;
   }
 }

@@ -20,6 +20,7 @@ import { RunJob } from './run-job/run-job.usecase';
 import { AddJob } from './add-job/add-job.usecase';
 import { AddDigestJob } from './add-job/add-digest-job.usecase';
 import { AddDelayJob } from './add-job/add-delay-job.usecase';
+import { ShouldAddDigestJob } from './add-job/should-add-digest-job.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -44,4 +45,5 @@ export const USE_CASES = [
   AddJob,
   AddDigestJob,
   AddDelayJob,
+  ShouldAddDigestJob,
 ];

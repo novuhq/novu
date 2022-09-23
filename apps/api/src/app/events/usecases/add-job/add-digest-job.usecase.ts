@@ -1,43 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { AddJobCommand } from './add-job.command';
+import { AddJob } from './add-job.usecase';
 
 @Injectable()
 export class AddDigestJob {
-  constructor(private jobRepository: JobRepository, private workflowQueueService: WorkflowQueueService) {}
+  constructor(private jobRepository: JobRepository) {}
 
-  public async execute(command: AddJobCommand): Promise<boolean> {
+  public async execute(command: AddJobCommand): Promise<number | undefined> {
     const data = await this.jobRepository.findById(command.jobId);
 
-    if (!data) {
-      return false;
-    }
-
     const isValidDigestStep = data.type === StepTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
-    if (!isValidDigestStep) {
-      return false;
-    }
-
-    const where: Partial<JobEntity> = {
-      status: JobStatusEnum.DELAYED,
-      type: StepTypeEnum.DIGEST,
-      _subscriberId: data._subscriberId,
-      _templateId: data._templateId,
-      _environmentId: data._environmentId,
-    };
-    const delayedDigest = await this.jobRepository.findOne(where);
-
-    if (delayedDigest) {
-      return true;
+    if (!isValidDigestStep || !data) {
+      return undefined;
     }
 
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
-    const delay = WorkflowQueueService.toMilliseconds(data.digest.amount, data.digest.unit);
 
-    await await this.workflowQueueService.addToQueue(data._id, data, delay);
-
-    return true;
+    return AddJob.toMilliseconds(data.digest.amount, data.digest.unit);
   }
 }

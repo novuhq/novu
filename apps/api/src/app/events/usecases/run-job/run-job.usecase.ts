@@ -28,8 +28,8 @@ export class RunJob {
     await this.sendMessage.execute(
       SendMessageCommand.create({
         identifier: job.identifier,
-        payload: job.payload ? job.payload : {},
-        overrides: job.overrides ? job.overrides : {},
+        payload: job.payload ?? {},
+        overrides: job.overrides ?? {},
         step: job.step,
         transactionId: job.transactionId,
         notificationId: job._notificationId,
@@ -52,7 +52,7 @@ export class RunJob {
     );
   }
 
-  private async delayedEventIsCanceled(job: JobEntity) {
+  private async delayedEventIsCanceled(job: JobEntity): Promise<boolean> {
     if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
       return false;
     }

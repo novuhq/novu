@@ -2,34 +2,25 @@ import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { DigestUnitEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { AddJobCommand } from './add-job.command';
 import { differenceInMilliseconds } from 'date-fns';
+import { AddJob } from './add-job.usecase';
 
 @Injectable()
 export class AddDelayJob {
-  constructor(private jobRepository: JobRepository, private workflowQueueService: WorkflowQueueService) {}
+  constructor(private jobRepository: JobRepository) {}
 
-  public async execute(command: AddJobCommand): Promise<boolean> {
+  public async execute(command: AddJobCommand): Promise<number | undefined> {
     const data = await this.jobRepository.findById(command.jobId);
-
-    if (!data) {
-      return false;
-    }
-
     const isDelayStep = data.type === StepTypeEnum.DELAY;
 
-    if (!isDelayStep) {
-      return false;
+    if (!data || !isDelayStep) {
+      return undefined;
     }
 
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
 
-    const delay = this.calculateDelayAmount(data);
-
-    await await this.workflowQueueService.addToQueue(data._id, data, delay);
-
-    return true;
+    return this.calculateDelayAmount(data);
   }
 
   private checkValidDelayOverride(data: JobEntity): boolean {
@@ -58,12 +49,9 @@ export class AddDelayJob {
     }
 
     if (this.checkValidDelayOverride(data)) {
-      return WorkflowQueueService.toMilliseconds(
-        data.overrides.delay.amount as number,
-        data.overrides.delay.unit as DigestUnitEnum
-      );
+      return AddJob.toMilliseconds(data.overrides.delay.amount as number, data.overrides.delay.unit as DigestUnitEnum);
     }
 
-    return WorkflowQueueService.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+    return AddJob.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
   }
 }
