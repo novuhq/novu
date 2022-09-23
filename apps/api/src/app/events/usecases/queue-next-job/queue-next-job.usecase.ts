@@ -1,11 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository } from '@novu/dal';
 import { AddJob } from '../add-job/add-job.usecase';
 import { QueueNextJobCommand } from './queue-next-job.command';
 
 @Injectable()
 export class QueueNextJob {
-  constructor(private jobRepository: JobRepository, private addJobUsecase: AddJob) {}
+  constructor(
+    private jobRepository: JobRepository,
+    @Inject(forwardRef(() => AddJob))
+    private addJobUsecase: AddJob
+  ) {}
 
   public async execute(command: QueueNextJobCommand): Promise<JobEntity | undefined> {
     const job = await this.jobRepository.findOne({
