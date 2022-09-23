@@ -71,7 +71,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     workflowQueueService = session.testServer.getService(WorkflowQueueService);
 
     runJob = new RunJob(
-      session.testServer.getService(JobRepository),
+      jobRepository,
       session.testServer.getService(SendMessage),
       session.testServer.getService(QueueNextJob)
     );
