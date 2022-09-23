@@ -8,6 +8,7 @@ import { getApiKeys } from '../../../api/environment';
 import styled from 'styled-components';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
+import { Regenerate } from './components/Regenerate';
 
 export const ApiKeysCard = () => {
   const clipboardApiKey = useClipboard({ timeout: 1000 });
@@ -60,6 +61,7 @@ export const ApiKeysCard = () => {
           />
         </InputWrapper>
       </ParamContainer>
+      <Regenerate />
     </>
   );
 };

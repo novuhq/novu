@@ -12,6 +12,10 @@ export function getApiKeys() {
   return api.get(`/v1/environments/api-keys`);
 }
 
+export function regenerateApiKeys() {
+  return api.get(`/v1/environments/api-keys/regenerate`);
+}
+
 export function updateEmailSettings(payload: { senderEmail: string; senderName: string }) {
   return api.put(`/v1/channels/email/settings`, payload);
 }

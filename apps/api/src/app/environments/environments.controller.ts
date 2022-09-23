@@ -118,7 +118,7 @@ export class EnvironmentsController {
     return await this.getApiKeysUsecase.execute(command);
   }
 
-  @Post('/api-keys/regenerate')
+  @Get('/api-keys/regenerate')
   @ApiOperation({
     summary: 'Regenerate api keys',
   })
