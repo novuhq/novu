@@ -14,20 +14,20 @@ export abstract class SendMessageType {
     message,
     status: 'error' | 'sent' | 'warning',
     errorId: string,
-    errorMessage: string | any,
+    errorMessageFallback: string | any,
     command: SendMessageCommand,
     notification: NotificationEntity,
     logCodeEnum: LogCodeEnum,
     error?: any
   ) {
-    if (error) {
-      Sentry.captureException(error?.response?.body || error?.response || error?.errors || error);
-    }
+    const errorString = (toStringify(error?.response?.body) ||
+      toStringify(error?.response) ||
+      toStringify(error) ||
+      JSON.stringify(errorMessageFallback)) as string;
 
-    const errorString = (toStringify(errorMessage?.response?.body) ||
-      toStringify(errorMessage?.response) ||
-      toStringify(errorMessage) ||
-      JSON.stringify(errorMessage)) as string;
+    if (error) {
+      Sentry.captureException(errorString);
+    }
 
     await this.messageRepository.updateMessageStatus(message._id, status, null, errorId, errorString);
 
@@ -48,13 +48,15 @@ export abstract class SendMessageType {
   }
 }
 
-function toStringify(message: any): string | boolean {
-  if (typeof message === 'string' || message instanceof String) {
-    return message.toString();
+function toStringify(error: any): string | boolean {
+  if (!error) return false;
+
+  if (typeof error === 'string' || error instanceof String) {
+    return error.toString();
   }
 
-  if (Object.keys(message).length > 0) {
-    return JSON.stringify(message);
+  if (Object.keys(error)?.length > 0) {
+    return JSON.stringify(error);
   }
 
   return false;
