@@ -11,11 +11,12 @@ export class RedisIoAdapter extends IoAdapter {
       port: process.env.REDIS_PORT,
       prefix: () => {
         // if custom prefix is empty ensure that the default prefix is set
+        let prefix = 'socket.io';
         if (getRedisPrefix()) {
-          return 'socket.io';
-        } else {
-          return getRedisPrefix();
+          prefix += '#' + getRedisPrefix();
         }
+
+        return prefix;
       },
     });
 
