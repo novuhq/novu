@@ -22,9 +22,15 @@ class MessageFilterChild {
       'NOT_BETWEEN',
       'LIKE',
       'NOT_LIKE',
+      'IN',
     ],
   })
   operator: BuilderFieldOperator;
+
+  @ApiProperty({
+    enum: ['payload', 'subscriber'],
+  })
+  on?: 'payload' | 'subscriber';
 }
 
 export class MessageFilter {

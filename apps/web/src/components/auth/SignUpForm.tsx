@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { Divider, Button as MantineButton, Center } from '@mantine/core';
+import { Divider, Button as MantineButton, Center, Alert } from '@mantine/core';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
@@ -102,6 +102,13 @@ export function SignUpForm({ token, email }: Props) {
     return '';
   }, [serverErrorString]);
 
+  const accountCreationError = useMemo<string>(() => {
+    if (serverErrorString === 'Account creation is disabled')
+      return 'The creation of new accounts is currently disabled. Please contact your administrator.';
+
+    return '';
+  }, [serverErrorString]);
+
   return (
     <>
       {!IS_DOCKER_HOSTED && !token && (
@@ -169,10 +176,18 @@ export function SignUpForm({ token, email }: Props) {
           label={<Accept />}
           data-test-id="accept-cb"
           mt={20}
+          mb={20}
         />
+
+        {accountCreationError && (
+          <Text mt={20} size="lg" align="center" color={colors.error}>
+            {accountCreationError}
+          </Text>
+        )}
+
         <Button
           disabled={!accepted}
-          mt={60}
+          mt={20}
           inherit
           loading={isLoading || loadingAcceptInvite}
           submit
@@ -189,7 +204,8 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
-      {isError && !emailServerError && (
+
+      {isError && !emailServerError && !accountCreationError && (
         <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}

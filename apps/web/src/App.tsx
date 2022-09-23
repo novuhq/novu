@@ -14,6 +14,7 @@ import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
 import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
+import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import InvitationPage from './pages/auth/InvitationPage';
 import { api } from './api/api.client';
@@ -114,6 +115,14 @@ function App() {
                     element={
                       <RequiredAuth>
                         <NotificationList />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/subscribers"
+                    element={
+                      <RequiredAuth>
+                        <SubscribersList />
                       </RequiredAuth>
                     }
                   />
@@ -227,13 +236,14 @@ function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
 }
 
 function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
-  const { token, setToken, user, organization, logout, jwtPayload } = useAuthController();
+  const { token, setToken, user, organization, logout, jwtPayload, organizations } = useAuthController();
 
   return (
     <AuthContext.Provider
       value={{
         currentUser: user,
         currentOrganization: organization,
+        organizations,
         token,
         logout,
         setToken,

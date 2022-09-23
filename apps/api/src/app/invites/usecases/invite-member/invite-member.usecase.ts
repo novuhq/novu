@@ -1,11 +1,12 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InviteMemberCommand } from './invite-member.command';
-import { MailService } from '../../../shared/services/mail/mail.service';
 import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -14,7 +15,8 @@ export class InviteMember {
   constructor(
     private organizationRepository: OrganizationRepository,
     private userRepository: UserRepository,
-    private memberRepository: MemberRepository
+    private memberRepository: MemberRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: InviteMemberCommand) {
@@ -56,6 +58,11 @@ export class InviteMember {
         email: command.email,
         invitationDate: new Date(),
       },
+    });
+
+    this.analyticsService.track('Invite Organization Member', command.userId, {
+      _organization: command.organizationId,
+      role: command.role,
     });
   }
 }

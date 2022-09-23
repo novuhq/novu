@@ -11,7 +11,7 @@ export function useNovu() {
       (function (n, o, t, i, f) {
         /* eslint-disable */
         let m;
-        (n[i] = {}), (m = ['init']);
+        (n[i] = {}), (m = ['init', 'on']);
         n[i]._c = [];
         m.forEach(
           (me) =>

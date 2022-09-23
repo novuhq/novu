@@ -1,5 +1,5 @@
-import { CredentialsKeyEnum } from './provider.enum';
-import { IConfigCredentials } from './provider.interface';
+import { CredentialsKeyEnum } from '../provider.enum';
+import { IConfigCredentials } from '../provider.interface';
 
 const mailConfigBase: IConfigCredentials[] = [
   {
@@ -50,6 +50,12 @@ export const mailgunConfig: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'string',
     required: true,
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: false,
   },
   {
     key: CredentialsKeyEnum.User,
@@ -328,8 +334,30 @@ export const slackConfig: IConfigCredentials[] = [
 
 export const fcmConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.User,
+    key: CredentialsKeyEnum.ServiceAccount,
     displayName: 'Service Account',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const apnsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Private Key',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Key ID',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ProjectName,
+    displayName: 'Team ID',
     type: 'text',
     required: true,
   },

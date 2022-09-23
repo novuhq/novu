@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 import {
   Box,
   Select as MantineSelect,
@@ -24,11 +24,13 @@ interface ISelectProps extends SpacingProps {
   onChange?: (value: string[] | string | null) => void;
   label?: React.ReactNode;
   error?: React.ReactNode;
+  itemComponent?: FC<any>;
   placeholder?: string;
   description?: string;
   getCreateLabel?: (query: string) => React.ReactNode;
   onCreate?: (query: string) => void;
   onDropdownOpen?: () => void;
+  onSearchChange?: (query: string) => void;
   searchable?: boolean;
   creatable?: boolean;
   disabled?: boolean;
@@ -36,6 +38,8 @@ interface ISelectProps extends SpacingProps {
   loading?: boolean;
   type?: 'multiselect' | 'select';
   filter?: (value: string, item: SelectItem) => boolean;
+  allowDeselect?: boolean;
+  dataTestId?: string;
 }
 
 /**

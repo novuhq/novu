@@ -29,7 +29,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     // update integration
     await session.testAgent.put(`/v1/integrations/${integrationId}`).send(payload);
 
-    const integration = (await integrationRepository.findByEnvironmentId(session.environment._id))[0];
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data[0];
 
     expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
     expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);

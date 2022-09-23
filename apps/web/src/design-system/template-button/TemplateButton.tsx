@@ -52,12 +52,11 @@ export function TemplateButton({
         type={'button'}
         onMouseEnter={() => setPopoverOpened(true)}
         onMouseLeave={() => setPopoverOpened(false)}
-        onClick={async (e) => {
-          e.preventDefault();
-
+        onClick={async () => {
           if (active) {
             return;
           }
+
           if (tabKey === ActivePageEnum.WORKFLOW) {
             const valid = await trigger(['name', 'notificationGroup'], { shouldFocus: true });
 
