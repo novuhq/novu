@@ -25,7 +25,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
-import { ENV, SENTRY_DSN } from './config/index';
+import { ENV, SENTRY_DSN, CONTEXT_PATH } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import QuickStartPage from './pages/quick-start/QuickStartPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
@@ -66,7 +66,7 @@ applyToken(tokenStoredToken);
 function App() {
   return (
     <HelmetProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={CONTEXT_PATH}>
         <QueryClientProvider client={queryClient}>
           <AuthHandlerComponent>
             <ThemeHandlerComponent>
