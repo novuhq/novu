@@ -44,6 +44,7 @@ module.exports = (on, config) => {
       await dal.destroy();
       return true;
     },
+
     async seedDatabase() {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
@@ -52,7 +53,8 @@ module.exports = (on, config) => {
 
       return true;
     },
-    async getSession(settings: { noEnvironment?: boolean } = {}) {
+
+    async getSession({ settings, templateOverride }) {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
 
@@ -70,15 +72,15 @@ module.exports = (on, config) => {
       let templates;
       if (!settings?.noEnvironment) {
         templates = await Promise.all([
-          notificationTemplateService.createTemplate(),
+          notificationTemplateService.createTemplate(templateOverride),
           notificationTemplateService.createTemplate({
             active: false,
             draft: true,
           }),
-          notificationTemplateService.createTemplate(),
-          notificationTemplateService.createTemplate(),
-          notificationTemplateService.createTemplate(),
-          notificationTemplateService.createTemplate(),
+          notificationTemplateService.createTemplate(templateOverride),
+          notificationTemplateService.createTemplate(templateOverride),
+          notificationTemplateService.createTemplate(templateOverride),
+          notificationTemplateService.createTemplate(templateOverride),
         ]);
       }
 
@@ -92,6 +94,7 @@ module.exports = (on, config) => {
         session,
       };
     },
+
     async enableEnvironmentHmac({
       environment,
     }: {

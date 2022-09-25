@@ -1,3 +1,6 @@
+import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared/src';
+import { IInitializeSessionSettings } from '../global';
+
 describe('Shell Embed', function () {
   beforeEach(function () {
     cy.initializeSession({ shell: true }).as('session');
@@ -59,3 +62,40 @@ describe('Shell Embed', function () {
     cy.get('#notification-bell .ntf-counter').should('be.visible');
   });
 });
+
+describe('Shell Embed - Seen Read', function () {
+  beforeEach(function () {
+    cy.initializeSession(initializeSessionSettings, templateOverride).as('session');
+    cy.wait(1000);
+    cy.viewport(1280, 800);
+  });
+});
+
+const initializeSessionSettings = {
+  shell: true,
+  tabs: [
+    { name: 'Seen', storeId: 'seen' },
+    { name: 'Unseen', storeId: 'unseen' },
+    { name: 'Read', storeId: 'read' },
+    { name: 'Unread', storeId: 'unread' },
+  ],
+  stores: [
+    { storeId: 'seen', query: { seen: true } },
+    { storeId: 'unseen', query: { seen: false } },
+    { storeId: 'read', query: { read: true } },
+    { storeId: 'unread', query: { read: false } },
+  ],
+} as IInitializeSessionSettings;
+
+const templateOverride = {
+  steps: [
+    {
+      type: ChannelTypeEnum.IN_APP,
+      content: 'Test content for <b>{{firstName}}</b>',
+      cta: {
+        type: ChannelCTATypeEnum.REDIRECT,
+        data: {},
+      },
+    },
+  ],
+};
