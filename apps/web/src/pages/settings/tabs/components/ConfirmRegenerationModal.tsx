@@ -1,5 +1,5 @@
 import { Group, Modal, useMantineTheme } from '@mantine/core';
-import { Button, colors, shadows, Title, Text } from '../../design-system';
+import { Button, colors, shadows, Title, Text } from '../../../../design-system';
 
 export function ConfirmRegenerationModal({
   isOpen,
@@ -40,9 +40,8 @@ export function ConfirmRegenerationModal({
       >
         <div>
           <Text>
-            You are about to regenerate the API key of the selected environment.
-            This action is irreversible and will render inoperative the access to
-            the API of all your applications that use the current key. Proceed anyway?
+            You are about to regenerate the API key of the selected environment. This action is irreversible and will
+            render inoperative the access to the API of all your applications that use the current key. Proceed anyway?
           </Text>
           <Group position="right">
             <Button variant="outline" size="md" mt={30} onClick={() => cancelAction()}>

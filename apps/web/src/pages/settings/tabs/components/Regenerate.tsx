@@ -5,6 +5,7 @@ import { useMutation } from 'react-query';
 import { regenerateApiKeys } from '../../../../api/environment';
 import { useEnvController } from '../../../../store/use-env-controller';
 import { ConfirmRegenerationModal } from './ConfirmRegenerationModal';
+import { showNotification } from '@mantine/notifications';
 
 export const Regenerate = () => {
   const { refetchEnvironment } = useEnvController();
@@ -31,6 +32,10 @@ export const Regenerate = () => {
   async function confirmAction() {
     await regenerate();
     setModalIsOpened(false);
+    showNotification({
+      message: `Successfully regenereated API keys!`,
+      color: 'red',
+    });
   }
 
   return (
@@ -41,15 +46,10 @@ export const Regenerate = () => {
           Regenerate
         </Button>
       </div>
-      <ConfirmRegenerationModal
-        isOpen={isModalOpened}
-        cancelAction={cancelAction}
-        confirmAction={confirmAction}
-      />
+      <ConfirmRegenerationModal isOpen={isModalOpened} cancelAction={cancelAction} confirmAction={confirmAction} />
     </>
   );
 };
-
 
 const Title = styled(Text)`
   padding-bottom: 17px;
