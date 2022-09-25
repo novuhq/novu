@@ -45,7 +45,8 @@ export interface IPushOptions {
 }
 
 export interface IChatOptions {
-  webhookUrl: string;
+  webhookUrl?: string;
+  to?: string;
   content: string;
 }
 
