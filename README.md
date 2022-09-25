@@ -166,6 +166,7 @@ Just <a href="https://discord.gg/novu">Join Our Discord</a> server and ask for h
 
 - [Home page](https://novu.co/)
 - [Contribution Guidelines](https://github.com/AmanNegi/novu/blob/main/CONTRIBUTING.md)
+- [Run Novu Locally](https://docs.novu.co/community/run-locally)
 
 ## 🛡️ License
 
