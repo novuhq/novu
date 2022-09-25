@@ -90,5 +90,11 @@ module.exports = {
         leadingUnderscore: 'allow',
       },
     ],
+    'prettier/prettier': [
+      'error',
+      {
+        endOfLine: 'auto',
+      },
+    ],
   },
 };
