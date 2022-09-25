@@ -55,6 +55,7 @@
     "@novu/ses": "^0.8.0",
     "@novu/shared": "^0.8.0",
     "@novu/slack": "^0.8.0",
+    "@novu/whatsapp": "^0.1.0",
     "@novu/sms77": "^0.8.0",
     "@novu/sns": "^0.8.0",
     "@novu/stateless": "^0.8.0",
