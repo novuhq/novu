@@ -27,7 +27,10 @@ export class MailFactory {
     new SESHandler(),
   ];
 
-  getHandler(integration: IntegrationEntity, from: string): IMailHandler {
+  getHandler(
+    integration: Pick<IntegrationEntity, '_id' | 'credentials' | 'channel' | 'providerId'>,
+    from: string
+  ): IMailHandler {
     try {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
