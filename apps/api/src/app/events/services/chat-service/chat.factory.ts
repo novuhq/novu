@@ -2,9 +2,10 @@ import { IChatFactory, IChatHandler } from './interfaces';
 import { SlackHandler } from './handlers/slack.handler';
 import { IntegrationEntity } from '@novu/dal';
 import { DiscordHandler } from './handlers/discord.handler';
+import { WhatsappHandler } from './handlers/whatsapp.handler';
 
 export class ChatFactory implements IChatFactory {
-  handlers: IChatHandler[] = [new SlackHandler(), new DiscordHandler()];
+  handlers: IChatHandler[] = [new SlackHandler(), new DiscordHandler(), new WhatsappHandler()];
 
   getHandler(integration: IntegrationEntity): IChatHandler {
     try {

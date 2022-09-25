@@ -16,6 +16,7 @@ export interface ICredentials {
   from?: string;
   senderName?: string;
   applicationId?: string;
+  phoneNumberId?: string;
   clientId?: string;
   projectName?: string;
   serviceAccount?: string;

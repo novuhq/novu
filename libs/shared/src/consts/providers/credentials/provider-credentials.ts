@@ -332,6 +332,21 @@ export const slackConfig: IConfigCredentials[] = [
   },
 ];
 
+export const whatsappConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.PhoneNumberId,
+    displayName: 'Phone Number ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'App Token',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
