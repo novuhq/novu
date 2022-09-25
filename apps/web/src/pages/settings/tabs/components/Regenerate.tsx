@@ -3,23 +3,16 @@ import { useState } from 'react';
 import styled from '@emotion/styled';
 import { useMutation } from 'react-query';
 import { regenerateApiKeys } from '../../../../api/environment';
-import { useEnvController } from '../../../../store/use-env-controller';
 import { ConfirmRegenerationModal } from './ConfirmRegenerationModal';
 import { showNotification } from '@mantine/notifications';
 
-export const Regenerate = () => {
-  const { refetchEnvironment } = useEnvController();
+export const Regenerate = ({ fetchApiKeys }: { fetchApiKeys: () => void }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
 
   const { mutateAsync: regenerateApiKeysMutation } = useMutation<
     { key: string }[],
     { error: string; message: string; statusCode: number }
   >(regenerateApiKeys);
-
-  async function regenerate() {
-    await regenerateApiKeysMutation();
-    await refetchEnvironment();
-  }
 
   async function handleModal() {
     setModalIsOpened(true);
@@ -30,11 +23,12 @@ export const Regenerate = () => {
   }
 
   async function confirmAction() {
-    await regenerate();
+    await regenerateApiKeysMutation();
+    await fetchApiKeys();
     setModalIsOpened(false);
     showNotification({
       message: `Successfully regenereated API keys!`,
-      color: 'red',
+      color: 'green',
     });
   }
 

@@ -1,7 +1,7 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { ActionIcon, InputWrapper } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation } from 'react-query';
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';
@@ -11,13 +11,26 @@ import { useEnvController } from '../../../store/use-env-controller';
 import { Regenerate } from './components/Regenerate';
 
 export const ApiKeysCard = () => {
+  const [apiKeys, setApiKeys] = useState<{ key: string }[]>([]);
   const clipboardApiKey = useClipboard({ timeout: 1000 });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
-  const { data: apiKeys } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
+  const { mutateAsync: getApiKeysMutation } = useMutation<
+    { key: string }[],
+    { error: string; message: string; statusCode: number }
+  >(getApiKeys);
+  const { data } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
+  useEffect(() => {
+    setApiKeys(data || []);
+  }, [data]);
   const { environment } = useEnvController();
 
-  const apiKey = apiKeys?.length ? apiKeys[0].key : '';
+  const apiKey = apiKeys.length ? apiKeys[0].key : '';
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
+
+  async function fetchApiKeys() {
+    const keys = await getApiKeysMutation();
+    setApiKeys(keys);
+  }
 
   return (
     <>
@@ -61,7 +74,7 @@ export const ApiKeysCard = () => {
           />
         </InputWrapper>
       </ParamContainer>
-      <Regenerate />
+      <Regenerate fetchApiKeys={fetchApiKeys} />
     </>
   );
 };
