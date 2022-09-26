@@ -50,7 +50,7 @@
     "release:minor": "lerna version minor --no-push",
     "release:preminor": "lerna version preminor --no-push",
     "release:prerelease": "lerna version prerelease --no-push",
-    "start:e2e:api": "cd apps/api && pnpm start:test",
+    "start:e2e:api": "cd apps/api && pnpm test:e2e",
     "g:module": "hygen module new --name=$npm_config_name",
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
     "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env",
