@@ -83,7 +83,7 @@ export interface IEmailProvider extends IProvider {
 
   sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 
-  getMessageId?: (body: any) => string | string[];
+  getMessageId?: (body: any) => string[];
 
   parseEventBody?: (
     body: any,
