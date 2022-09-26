@@ -12,19 +12,19 @@ describe('Environment - Regenerate Api Key', async () => {
   it('should regenerate an Api Key', async () => {
     const {
       body: { data: oldApiKeys },
-    } = await session.testAgent.get('/v1/environments/api-keys');
+    } = await session.testAgent.post('/v1/environments/api-keys').send({});
     const oldApiKey = oldApiKeys[0].key;
 
     const {
       body: { data: newApiKeys },
-    } = await session.testAgent.get('/v1/environments/api-keys/regenerate');
+    } = await session.testAgent.post('/v1/environments/api-keys/regenerate').send({});
     const newApiKey = newApiKeys[0].key;
 
     expect(oldApiKey).to.not.equal(newApiKey);
 
     const {
       body: { data: organizations },
-    } = await session.testAgent.get('/v1/organizations');
+    } = await session.testAgent.post('/v1/organizations').send({});
 
     expect(organizations).not.to.be.empty;
   });

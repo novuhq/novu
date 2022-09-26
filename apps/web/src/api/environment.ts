@@ -13,7 +13,7 @@ export function getApiKeys() {
 }
 
 export function regenerateApiKeys() {
-  return api.get(`/v1/environments/api-keys/regenerate`);
+  return api.post(`/v1/environments/api-keys/regenerate`, {});
 }
 
 export function updateEmailSettings(payload: { senderEmail: string; senderName: string }) {
