@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { GetMessagesCommand } from './get-messages.command';
 
@@ -7,7 +7,11 @@ export class GetMessages {
   constructor(private messageRepository: MessageRepository, private subscriberRepository: SubscriberRepository) {}
 
   async execute(command: GetMessagesCommand) {
-    const LIMIT = 10;
+    const LIMIT = command.limit;
+
+    if (LIMIT > 1000) {
+      throw new BadRequestException('Limit can not be larger then 1000');
+    }
 
     const query: Partial<MessageEntity> = {
       _environmentId: command.environmentId,
