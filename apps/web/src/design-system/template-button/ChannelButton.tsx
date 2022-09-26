@@ -118,6 +118,7 @@ export function ChannelButton({
       onMouseLeave={() => setPopoverOpened(false)}
       data-test-id={testId}
       className={cx(classes.button, { [classes.active]: active })}
+      style={{ pointerEvents: 'all' }}
       sx={{
         backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
       }}
@@ -237,6 +238,7 @@ export function ChannelButton({
           mb={20}
           placement="center"
           position="right"
+          zIndex={4}
           target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
         >
           {errors.toString() || 'Something is missing here'}

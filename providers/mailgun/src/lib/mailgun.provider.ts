@@ -3,6 +3,8 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
@@ -53,6 +55,15 @@ export class MailgunEmailProvider implements IEmailProvider {
     return {
       id: response.id,
       date: new Date().toISOString(),
+    };
+  }
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

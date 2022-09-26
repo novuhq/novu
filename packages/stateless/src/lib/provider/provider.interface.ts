@@ -2,6 +2,7 @@ import {
   ChannelTypeEnum,
   IAttachmentOptions,
 } from '../template/template.interface';
+import { CheckIntegrationResponseEnum } from './provider.enum';
 
 export interface IProvider {
   id: string;
@@ -88,6 +89,8 @@ export interface IEmailProvider extends IProvider {
     body: any,
     identifier: string
   ) => IEmailEventBody | undefined;
+
+  checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse>;
 }
 
 export interface ISmsProvider extends IProvider {
@@ -105,4 +108,10 @@ export interface IPushProvider extends IProvider {
   sendMessage(options: IPushOptions): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.PUSH;
+}
+
+export interface ICheckIntegrationResponse {
+  success: boolean;
+  message: string;
+  code: CheckIntegrationResponseEnum;
 }
