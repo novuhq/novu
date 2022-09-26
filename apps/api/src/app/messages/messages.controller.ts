@@ -26,6 +26,12 @@ export class MessagesController {
   })
   @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
   @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'The number of messages to fetch, defaults to 10',
+  })
+  @ApiQuery({
     name: 'subscriberId',
     type: String,
     required: false,
@@ -40,6 +46,7 @@ export class MessagesController {
   async getMessages(
     @UserSession() user: IJwtPayload,
     @Query('page') page = 0,
+    @Query('limit') limit = 10,
     @Query('subscriberId') subscriberId,
     @Query('channel') channel: ChannelTypeEnum
   ): Promise<ActivitiesResponseDto> {
@@ -50,6 +57,7 @@ export class MessagesController {
         page: page ? Number(page) : 0,
         channel,
         subscriberId,
+        limit: limit ? Number(limit) : 10,
       })
     );
   }
