@@ -1,16 +1,22 @@
-
-
 <div align="center">
   
-  ![Logo Dark](https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png#gh-dark-mode-only)
+![hacktoberfest-readme-dark](https://user-images.githubusercontent.com/63902456/191170980-c010daeb-f8ff-454d-bda1-543695b32c80.jpeg#gh-dark-mode-only)
 
 </div>
 
-
 <div align="center">
   
-  ![Logo Light](https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png#gh-light-mode-only)
-  
+ ![hacktoberfest-readme-light](https://user-images.githubusercontent.com/63902456/191171065-d8f349e5-7250-43ff-8078-fa02dd859bc8.jpeg#gh-light-mode-only)
+
+</div>
+</br>
+</br>
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
+    <img src="https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png" width="280" alt="Logo"/>
+  </picture>
 </div>
 
 <h1 align="center">Notification management simplified.</h1>
@@ -160,6 +166,7 @@ Just <a href="https://discord.gg/novu">Join Our Discord</a> server and ask for h
 
 - [Home page](https://novu.co/)
 - [Contribution Guidelines](https://github.com/AmanNegi/novu/blob/main/CONTRIBUTING.md)
+- [Run Novu Locally](https://docs.novu.co/community/run-locally)
 
 ## 🛡️ License
 

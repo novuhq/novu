@@ -2,6 +2,7 @@ export { Button } from './button/Button';
 export { Checkbox } from './checkbox/Checkbox';
 export { colors, shadows } from './config';
 export { Input } from './input/Input';
+export { Textarea } from './textarea/Textarea';
 export { Radio } from './radio/Radio';
 export { Select } from './select/Select';
 export { Switch } from './switch/Switch';
