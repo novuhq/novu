@@ -87,7 +87,7 @@ export class SendgridEmailProvider implements IEmailProvider {
 
   parseEventBody(body: any, identifier: string) {
     return {
-      status: EmailEventStatusEnum.DELIVERY,
+      status: EmailEventStatusEnum.DELIVERED,
       date: new Date().toISOString(),
       externalId: body.id,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
