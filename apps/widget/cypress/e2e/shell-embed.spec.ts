@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared/src';
+import { ChannelTypeEnum } from '@novu/shared';
 import { IInitializeSessionSettings } from '../global';
 
 describe('Shell Embed', function () {
@@ -69,8 +69,106 @@ describe('Shell Embed - Seen Read', function () {
     cy.wait(1000);
     cy.viewport(1280, 800);
   });
+
+  it('should display 0 seen 5 unseen 0 read 5 unread', function () {
+    cy.task('createNotifications', {
+      identifier: this.session.templates[0].triggers[0].identifier,
+      token: this.session.token,
+      subscriberId: this.session.subscriber.subscriberId,
+      count: 5,
+    });
+
+    cy.get('#notification-bell').click();
+
+    getNotifications().should('have.length', 0);
+
+    clickOnTab('unseen');
+
+    getNotifications().should('have.length', 5);
+
+    clickOnTab('read');
+
+    getNotifications().should('have.length', 0);
+
+    clickOnTab('unread');
+
+    getNotifications().should('have.length', 5);
+  });
+
+  it('should display notification under seen after tab change', function () {
+    cy.task('createNotifications', {
+      identifier: this.session.templates[0].triggers[0].identifier,
+      token: this.session.token,
+      subscriberId: this.session.subscriber.subscriberId,
+      count: 5,
+    });
+
+    cy.get('#notification-bell').click();
+
+    getNotifications().should('have.length', 0);
+
+    clickOnTab('unseen');
+
+    cy.intercept('**/notifications/feed?page=0&seen=false').as('unseenFeedRequest');
+    cy.wait('@unseenFeedRequest');
+
+    clickOnTab('seen');
+
+    cy.intercept('**/notifications/feed?page=0&seen=true').as('seenFeedRequest');
+    cy.wait('@seenFeedRequest');
+
+    getNotifications().should('have.length', 5);
+  });
+
+  it('should display notification as read after been clicked', function () {
+    cy.task('createNotifications', {
+      identifier: this.session.templates[0].triggers[0].identifier,
+      token: this.session.token,
+      subscriberId: this.session.subscriber.subscriberId,
+      count: 5,
+    });
+
+    cy.get('#notification-bell').click();
+
+    clickOnTab('unread');
+
+    clickOnFirstNotification();
+
+    getNotifications().should('have.length', 4);
+
+    clickOnTab('read');
+
+    getNotifications().should('have.length', 1);
+  });
 });
 
+function clickOnTab(tab: string) {
+  cy.get('#novu-iframe-element')
+    .its('0.contentDocument.body')
+    .should('not.be.empty')
+    .then((body) => {
+      cy.wrap(body).find(`[data-test-id="tab-${tab}"]`).first().click();
+    });
+}
+
+function clickOnFirstNotification() {
+  cy.get('#novu-iframe-element')
+    .its('0.contentDocument.body')
+    .should('not.be.empty')
+    .then((body) => {
+      cy.wrap(body).find('[data-test-id="notification-list-item"]').first().click();
+    });
+}
+
+function getNotifications() {
+  return cy
+    .get('#novu-iframe-element')
+    .its('0.contentDocument.body')
+    .should('not.be.empty')
+    .then((body) => {
+      cy.wrap(body).find(`[data-test-id="notification-list-item"]`);
+    });
+}
 const initializeSessionSettings = {
   shell: true,
   tabs: [
@@ -92,10 +190,6 @@ const templateOverride = {
     {
       type: ChannelTypeEnum.IN_APP,
       content: 'Test content for <b>{{firstName}}</b>',
-      cta: {
-        type: ChannelCTATypeEnum.REDIRECT,
-        data: {},
-      },
     },
   ],
 };
