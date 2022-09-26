@@ -290,16 +290,7 @@ function SpotLightProvider({ children }) {
     }
 
     const newItems = [...items, ...item];
-    newItems.sort((a, b) => {
-      if ((a.order || 10000000) > (b.order || 10000000)) {
-        return 1;
-      }
-      if ((a.order || 10000000) < (b.order || 10000000)) {
-        return -1;
-      }
-
-      return 0;
-    });
+    newItems.sort((a, b) => (b.order || 0) - (a.order || 0));
 
     setItems(newItems);
   };
