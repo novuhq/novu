@@ -1,7 +1,7 @@
 import { IEmailOptions, IEmailProvider } from '@novu/stateless';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IMailHandler } from '../interfaces/send.handler.interface';
-
+import { ApiException } from '../../../../shared/exceptions/api.exception';
 export abstract class BaseHandler implements IMailHandler {
   protected provider: IEmailProvider;
 
@@ -23,5 +23,29 @@ export abstract class BaseHandler implements IMailHandler {
 
   public getProvider(): IEmailProvider {
     return this.provider;
+  }
+
+  async check() {
+    const mailData: IEmailOptions = {
+      html: '<div>checking integration</div>',
+      subject: 'Checking Integration',
+      to: 'no-reply@novu.co',
+    };
+
+    const { message, success, code } = await this.provider.checkIntegration(mailData);
+
+    if (!success) {
+      throw new ApiException({
+        success,
+        code,
+        message: message || 'Something went wrong! Please double check your account details(Email/API key)',
+      });
+    }
+
+    return {
+      success,
+      code,
+      message: 'Integration successful',
+    };
   }
 }

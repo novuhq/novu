@@ -2,6 +2,7 @@ import {
   ChannelTypeEnum,
   IAttachmentOptions,
 } from '../template/template.interface';
+import { CheckIntegrationResponseEnum } from './provider.enum';
 
 export interface IProvider {
   id: string;
@@ -57,11 +58,11 @@ export interface ISendMessageSuccessResponse {
 }
 
 export enum EmailEventStatusEnum {
-  OPEN = 'open',
-  DELIVERY = 'delivery',
-  BOUNCE = 'bounce',
+  OPENED = 'opened',
+  DELIVERED = 'delivered',
+  BOUNCED = 'bounced',
   DROPPED = 'dropped',
-  CLICK = 'click',
+  CLICKED = 'clicked',
 }
 
 export interface IEventBody {
@@ -70,7 +71,7 @@ export interface IEventBody {
   externalId?: string;
   attempts?: number;
   response?: string;
-  // the hole event
+  // Contains the raw content from the provider webhook
   row?: string;
 }
 
@@ -83,12 +84,14 @@ export interface IEmailProvider extends IProvider {
 
   sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 
-  getMessageId?: (body: any) => string | string[];
+  getMessageId?: (body: any) => string[];
 
   parseEventBody?: (
     body: any,
     identifier: string
   ) => IEmailEventBody | undefined;
+
+  checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse>;
 }
 
 export interface ISmsProvider extends IProvider {
@@ -106,4 +109,10 @@ export interface IPushProvider extends IProvider {
   sendMessage(options: IPushOptions): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.PUSH;
+}
+
+export interface ICheckIntegrationResponse {
+  success: boolean;
+  message: string;
+  code: CheckIntegrationResponseEnum;
 }
