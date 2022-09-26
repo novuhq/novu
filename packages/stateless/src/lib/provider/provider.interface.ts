@@ -57,11 +57,11 @@ export interface ISendMessageSuccessResponse {
 }
 
 export enum EmailEventStatusEnum {
-  OPEN = 'open',
-  DELIVERY = 'delivery',
-  BOUNCE = 'bounce',
+  OPENED = 'opened',
+  DELIVERED = 'delivered',
+  BOUNCED = 'bounced',
   DROPPED = 'dropped',
-  CLICK = 'click',
+  CLICKED = 'clicked',
 }
 
 export interface IEventBody {
