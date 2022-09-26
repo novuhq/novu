@@ -12,6 +12,10 @@ import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
 import { addSeconds, differenceInMilliseconds } from 'date-fns';
+import { RunJob } from '../usecases/run-job/run-job.usecase';
+import { SendMessage } from '../usecases/send-message/send-message.usecase';
+import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
+import { RunJobCommand } from '../usecases/run-job/run-job.command';
 
 const axiosInstance = axios.create();
 
@@ -23,6 +27,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   const jobRepository = new JobRepository();
   let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
+  let runJob: RunJob;
 
   const awaitRunningJobs = async (unfinishedJobs = 0) => {
     let runningJobs = 0;
@@ -64,6 +69,12 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
     workflowQueueService = session.testServer.getService(WorkflowQueueService);
+
+    runJob = new RunJob(
+      jobRepository,
+      session.testServer.getService(SendMessage),
+      session.testServer.getService(QueueNextJob)
+    );
   });
 
   it('should delay event for time interval', async function () {
@@ -111,7 +122,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     expect(messages.length).to.equal(1);
     expect(messages[0].content).to.include('Not Delayed');
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
     await awaitRunningJobs(0);
 
     const messagesAfter = await messageRepository.find({
@@ -276,7 +294,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       type: StepTypeEnum.DELAY,
     });
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     const pendingJobs = await jobRepository.count({
       _templateId: template._id,
