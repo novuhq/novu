@@ -3,6 +3,7 @@ import { Queue, Worker, QueueBaseOptions, JobsOptions, QueueScheduler } from 'bu
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { RunJob } from '../usecases/run-job/run-job.usecase';
 import { RunJobCommand } from '../usecases/run-job/run-job.command';
+import { getRedisPrefix } from '@novu/shared';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -14,6 +15,7 @@ export class WorkflowQueueService {
       connectTimeout: 50000,
       keepAlive: 30000,
       family: 4,
+      keyPrefix: getRedisPrefix(),
     },
   };
   public readonly queue: Queue;
