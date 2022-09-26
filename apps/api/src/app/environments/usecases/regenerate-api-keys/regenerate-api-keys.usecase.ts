@@ -15,6 +15,6 @@ export class RegenerateApiKeys {
       throw new ApiException(`Environment id: ${command.environmentId} not found`);
     }
 
-    return await this.environmentRepository.regenerateApiKeys(command.environmentId, hat(), command.userId);
+    return await this.environmentRepository.updateApiKey(command.environmentId, hat(), command.userId);
   }
 }

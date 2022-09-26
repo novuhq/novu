@@ -67,7 +67,7 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentEntity> {
     return environment.apiKeys;
   }
 
-  async regenerateApiKeys(environmentId: string, key: string, userId: string) {
+  async updateApiKey(environmentId: string, key: string, userId: string) {
     await this.update(
       {
         _id: environmentId,
