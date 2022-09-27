@@ -1,4 +1,4 @@
 # Application generic
 
-Generic backend code used inside of Novus different services
+Generic backend code used inside of Novu's different services
 
