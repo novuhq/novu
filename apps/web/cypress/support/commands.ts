@@ -17,10 +17,6 @@ Cypress.Commands.add('clickWorkflowNode', (selector: string, last?: boolean) => 
   return cy.getByTestId(selector).click({ force: true });
 });
 
-Cypress.Commands.add('seed', () => {
-  return cy.request('POST', `${Cypress.env('apiUrl')}/v1/testing/seed`, {});
-});
-
 Cypress.Commands.add(
   'initializeSession',
   (settings: { disableLocalStorage?: boolean } = { disableLocalStorage: false }) => {

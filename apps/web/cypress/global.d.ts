@@ -14,8 +14,6 @@ declare namespace Cypress {
      */
     window(options?: Partial<Loggable & Timeoutable>): Chainable<CustomWindow>;
 
-    seed(): Chainable<any>;
-
     clear(): Chainable<any>;
     /**
      * Logs-in user by using UI

@@ -10,15 +10,17 @@ export class SeedData {
   constructor(private authService: AuthService, private userRegister: UserRegister) {}
 
   async execute(command: SeedDataCommand) {
-    const { user } = await this.userRegister.execute(
-      UserRegisterCommand.create({
-        email: 'test-user-1@example.com',
-        firstName: faker.name.firstName(),
-        lastName: faker.name.lastName(),
-        password: '123qwe!@#',
-        organizationName: 'Test Organization',
-      })
-    );
+    const data = {
+      email: 'test-user-1@example.com',
+      firstName: faker.name.firstName(),
+      lastName: faker.name.lastName(),
+      password: '123qwe!@#',
+      organizationName: 'Test Organization',
+    };
+
+    const userRegisterCommand = UserRegisterCommand.create(data);
+
+    const { user } = await this.userRegister.execute(userRegisterCommand);
 
     return {
       password_user: user,
