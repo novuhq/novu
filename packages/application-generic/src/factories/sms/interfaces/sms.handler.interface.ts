@@ -1,4 +1,8 @@
-import { ISendMessageSuccessResponse, ISmsOptions } from '@novu/stateless';
+import {
+  ISendMessageSuccessResponse,
+  ISmsOptions,
+  ISmsProvider,
+} from '@novu/stateless';
 import { ICredentials } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 
@@ -8,4 +12,6 @@ export interface ISmsHandler {
   buildProvider(credentials: ICredentials);
 
   send(smsOptions: ISmsOptions): Promise<ISendMessageSuccessResponse>;
+
+  getProvider(): ISmsProvider;
 }

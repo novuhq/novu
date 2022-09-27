@@ -65,6 +65,12 @@ export enum EmailEventStatusEnum {
   CLICKED = 'clicked',
 }
 
+export enum SmsEventStatusEnum {
+  CREATED = 'created',
+  DELIVERED = 'delivered',
+  RECEIVED = 'received',
+}
+
 export interface IEventBody {
   status: string;
   date: string;
@@ -77,6 +83,10 @@ export interface IEventBody {
 
 export interface IEmailEventBody extends IEventBody {
   status: EmailEventStatusEnum;
+}
+
+export interface ISMSEventBody extends IEventBody {
+  status: SmsEventStatusEnum;
 }
 
 export interface IEmailProvider extends IProvider {
@@ -98,6 +108,10 @@ export interface ISmsProvider extends IProvider {
   sendMessage(options: ISmsOptions): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.SMS;
+
+  getMessageId?: (body: any) => string[];
+
+  parseEventBody?: (body: any, identifier: string) => ISMSEventBody | undefined;
 }
 
 export interface IChatProvider extends IProvider {

@@ -11,6 +11,10 @@ export abstract class BaseSmsHandler implements ISmsHandler {
     private channelType: string
   ) {}
 
+  getProvider(): ISmsProvider {
+    return this.provider;
+  }
+
   canHandle(providerId: string, channelType: ChannelTypeEnum) {
     return providerId === this.providerId && channelType === this.channelType;
   }

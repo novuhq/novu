@@ -1,11 +1,11 @@
 import { Body, ClassSerializerInterceptor, Controller, Param, Post, UseInterceptors } from '@nestjs/common';
-import { EmailWebhook, IWebhookResult } from './usecases/email-webhook/email-webhook.usecase';
-import { EmailWebhookCommand } from './usecases/email-webhook/email-webhook.command';
+import { Webhook, IWebhookResult } from './usecases/webhook/webhook.usecase';
+import { WebhookCommand } from './usecases/webhook/webhook.command';
 
 @Controller('/webhooks')
 @UseInterceptors(ClassSerializerInterceptor)
 export class WebhooksController {
-  constructor(private emailWebhookUsecase: EmailWebhook) {}
+  constructor(private webhookUsecase: Webhook) {}
 
   @Post('/:organizationId/:environmentId/email/:providerId')
   public emailWebhook(
@@ -14,12 +14,31 @@ export class WebhooksController {
     @Param('providerId') providerId: string,
     @Body() body: any
   ): Promise<IWebhookResult[]> {
-    return this.emailWebhookUsecase.execute(
-      EmailWebhookCommand.create({
+    return this.webhookUsecase.execute(
+      WebhookCommand.create({
         environmentId,
         organizationId,
         providerId,
         body,
+        type: 'email',
+      })
+    );
+  }
+
+  @Post('/:organizationId/:environmentId/sms/:providerId')
+  public smsWebhook(
+    @Param('organizationId') organizationId: string,
+    @Param('environmentId') environmentId: string,
+    @Param('providerId') providerId: string,
+    @Body() body: any
+  ): Promise<IWebhookResult[]> {
+    return this.webhookUsecase.execute(
+      WebhookCommand.create({
+        environmentId,
+        organizationId,
+        providerId,
+        body,
+        type: 'sms',
       })
     );
   }
