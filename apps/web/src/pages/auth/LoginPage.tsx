@@ -56,6 +56,11 @@ export default function LoginPage() {
             alignItems: 'center',
             flexDirection: 'column',
             minHeight: '100vh',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
           }}
         >
           <Loader color={colors.error} size={32} />
