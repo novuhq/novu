@@ -6,7 +6,7 @@ import axios from 'axios';
 import { IEmailEventBody } from '@novu/stateless';
 const axiosInstance = axios.create();
 
-describe('Email webhook - /:organizationId/:environmentId/email/:providerId (POST)', function () {
+describe('Email webhook - /organizations/:organizationId/environments/:environmentId/email/:providerId (POST)', function () {
   const serverUrl = `http://localhost:${process.env.PORT}`;
   const messageRepository = new MessageRepository();
   const integrationRepository = new IntegrationRepository();
@@ -60,7 +60,7 @@ describe('Email webhook - /:organizationId/:environmentId/email/:providerId (POS
     };
 
     const { data: body } = await axiosInstance.post(
-      `${serverUrl}/webhooks/${orgId}/${envId}/email/sendgrid`,
+      `${serverUrl}/webhooks//organizations/${orgId}/environments/${envId}/email/sendgrid`,
       webhookBody
     );
     const event: IEmailEventBody = body[0].event;

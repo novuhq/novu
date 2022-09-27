@@ -7,7 +7,7 @@ import { WebhookCommand } from './usecases/webhook/webhook.command';
 export class WebhooksController {
   constructor(private webhookUsecase: Webhook) {}
 
-  @Post('/:organizationId/:environmentId/email/:providerId')
+  @Post('/organizations/:organizationId/environments/:environmentId/email/:providerId')
   public emailWebhook(
     @Param('organizationId') organizationId: string,
     @Param('environmentId') environmentId: string,
@@ -25,7 +25,7 @@ export class WebhooksController {
     );
   }
 
-  @Post('/:organizationId/:environmentId/sms/:providerId')
+  @Post('/organizations/:organizationId/environments/:environmentId/sms/:providerId')
   public smsWebhook(
     @Param('organizationId') organizationId: string,
     @Param('environmentId') environmentId: string,

@@ -10,6 +10,8 @@ export interface IWebhookResult {
   event: IEventBody;
 }
 
+export type WebhookTypes = 'sms' | 'email';
+
 @Injectable()
 export class Webhook {
   public readonly mailFactory = new MailFactory();
@@ -85,7 +87,7 @@ export class Webhook {
     };
   }
 
-  private getHandler(integration, type: 'sms' | 'email'): ISmsHandler | IMailHandler {
+  private getHandler(integration, type: WebhookTypes): ISmsHandler | IMailHandler {
     switch (type) {
       case 'sms':
         return this.smsFactory.getHandler(integration);
