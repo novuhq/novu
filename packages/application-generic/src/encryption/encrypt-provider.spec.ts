@@ -14,9 +14,9 @@ describe('Encrypt provider secrets', function () {
     const password = '1234';
     const encrypted = encryptProviderSecret(password);
 
-    expect(encrypted).to.contain(novuSubMask);
-    expect(encrypted).not.to.equal(password);
-    expect(encrypted.length).to.equal(70);
+    expect(encrypted).toContain(novuSubMask);
+    expect(encrypted).not.toEqual(password);
+    expect(encrypted.length).toEqual(70);
   });
 
   it('should decrypt provider secret', async function () {
@@ -24,7 +24,7 @@ describe('Encrypt provider secrets', function () {
     const encrypted = encryptProviderSecret(password);
     const decrypted = decryptProviderSecret(encrypted);
 
-    expect(decrypted).to.equal(password);
+    expect(decrypted).toEqual(password);
   });
 });
 
@@ -41,12 +41,12 @@ describe('Encrypt provider credentials', function () {
 
     const encrypted = encryptCredentials(credentials);
 
-    expect(encrypted.apiKey).to.contain(novuSubMask);
-    expect(encrypted.apiKey).not.to.equal(credentials.apiKey);
-    expect(encrypted.user).to.equal(credentials.user);
-    expect(encrypted.secretKey).to.contain(novuSubMask);
-    expect(encrypted.secretKey).not.to.equal(credentials.secretKey);
-    expect(encrypted.domain).to.equal(credentials.domain);
+    expect(encrypted.apiKey).toContain(novuSubMask);
+    expect(encrypted.apiKey).not.toEqual(credentials.apiKey);
+    expect(encrypted.user).toEqual(credentials.user);
+    expect(encrypted.secretKey).toContain(novuSubMask);
+    expect(encrypted.secretKey).not.toEqual(credentials.secretKey);
+    expect(encrypted.domain).toEqual(credentials.domain);
   });
 
   it('should decrypt provider credentials', async function () {
@@ -60,9 +60,9 @@ describe('Encrypt provider credentials', function () {
     const encrypted = encryptCredentials(credentials);
     const decrypted = decryptCredentials(encrypted);
 
-    expect(decrypted.apiKey).to.equal(credentials.apiKey);
-    expect(decrypted.user).to.equal(credentials.user);
-    expect(decrypted.secretKey).to.equal(credentials.secretKey);
-    expect(decrypted.domain).to.equal(credentials.domain);
+    expect(decrypted.apiKey).toEqual(credentials.apiKey);
+    expect(decrypted.user).toEqual(credentials.user);
+    expect(decrypted.secretKey).toEqual(credentials.secretKey);
+    expect(decrypted.domain).toEqual(credentials.domain);
   });
 });

@@ -5,8 +5,8 @@ describe('Encrypt secret', function () {
     const password = '123';
     const encrypted = encrypt(password);
 
-    expect(encrypted).not.to.equal(password);
-    expect(encrypted.length).to.equal(65);
+    expect(encrypted).not.toEqual(password);
+    expect(encrypted.length).toEqual(65);
   });
 
   it('should decrypt a credential', async function () {
@@ -14,6 +14,6 @@ describe('Encrypt secret', function () {
     const encrypted = encrypt(password);
     const decrypted = decrypt(encrypted);
 
-    expect(decrypted).to.equal(password);
+    expect(decrypted).toEqual(password);
   });
 });
