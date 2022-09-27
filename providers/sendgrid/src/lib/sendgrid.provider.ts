@@ -6,6 +6,7 @@ import {
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
+  IEmailEventBody,
 } from '@novu/stateless';
 
 import { MailService } from '@sendgrid/mail';
@@ -81,19 +82,55 @@ export class SendgridEmailProvider implements IEmailProvider {
     };
   }
 
-  getMessageId(body) {
-    return body.id;
+  getMessageId(body: any | any[]): string[] {
+    if (Array.isArray(body)) {
+      return body.map((item) => item.id);
+    }
+
+    return [body.id];
   }
 
-  parseEventBody(body: any, identifier: string) {
+  parseEventBody(
+    body: any | any[],
+    identifier: string
+  ): IEmailEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item.id === identifier);
+    }
+
+    if (!body) {
+      return undefined;
+    }
+
+    const status = this.getStatus(body.event);
+
+    if (status === undefined) {
+      return undefined;
+    }
+
     return {
-      status: EmailEventStatusEnum.DELIVERED,
+      status: status,
       date: new Date().toISOString(),
       externalId: body.id,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
       response: body.response ? body.response : '',
       row: body,
     };
+  }
+
+  private getStatus(event: string): EmailEventStatusEnum | undefined {
+    switch (event) {
+      case 'open':
+        return EmailEventStatusEnum.OPENED;
+      case 'bounce':
+        return EmailEventStatusEnum.BOUNCED;
+      case 'click':
+        return EmailEventStatusEnum.CLICKED;
+      case 'dropped':
+        return EmailEventStatusEnum.DROPPED;
+      case 'delivered':
+        return EmailEventStatusEnum.DELIVERED;
+    }
   }
 }
 

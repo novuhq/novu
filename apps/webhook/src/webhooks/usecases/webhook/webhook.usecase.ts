@@ -43,18 +43,14 @@ export class Webhook {
 
   private async parseEvents(command: WebhookCommand): Promise<IWebhookResult[]> {
     const body = command.body;
-    let messageIdentifiers: string | string[] = this.provider.getMessageId(body);
-
-    if (!Array.isArray(messageIdentifiers)) {
-      messageIdentifiers = [messageIdentifiers];
-    }
+    const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
     const events: IWebhookResult[] = [];
 
     for (const messageIdentifier of messageIdentifiers) {
       const event = await this.parseEvent(messageIdentifier, command);
 
-      if (!event) {
+      if (event === undefined) {
         continue;
       }
 
@@ -64,7 +60,7 @@ export class Webhook {
     return events;
   }
 
-  private async parseEvent(messageIdentifier, command: WebhookCommand): Promise<IWebhookResult> {
+  private async parseEvent(messageIdentifier, command: WebhookCommand): Promise<IWebhookResult | undefined> {
     const message = await this.messageRepository.findOne({
       identifier: messageIdentifier,
       _environmentId: command.environmentId,
@@ -78,6 +74,10 @@ export class Webhook {
     }
 
     const event = this.provider.parseEventBody(command.body, messageIdentifier);
+
+    if (event === undefined) {
+      return undefined;
+    }
 
     return {
       id: messageIdentifier,

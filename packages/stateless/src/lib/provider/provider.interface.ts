@@ -94,10 +94,10 @@ export interface IEmailProvider extends IProvider {
 
   sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 
-  getMessageId?: (body: any) => string[];
+  getMessageId?: (body: any | any[]) => string[];
 
   parseEventBody?: (
-    body: any,
+    body: any | any[],
     identifier: string
   ) => IEmailEventBody | undefined;
 
@@ -111,7 +111,10 @@ export interface ISmsProvider extends IProvider {
 
   getMessageId?: (body: any) => string[];
 
-  parseEventBody?: (body: any, identifier: string) => ISMSEventBody | undefined;
+  parseEventBody?: (
+    body: any | any[],
+    identifier: string
+  ) => ISMSEventBody | undefined;
 }
 
 export interface IChatProvider extends IProvider {
