@@ -217,7 +217,7 @@ export class SendMessageEmail extends SendMessageType {
         },
         {
           $set: {
-            identifire: result.id,
+            identifier: result.id,
           },
         }
       );
