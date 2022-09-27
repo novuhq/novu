@@ -5,7 +5,7 @@ import { SendMessageCommand } from '../usecases/send-message/send-message.comman
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { QueueNextJobCommand } from '../usecases/queue-next-job/queue-next-job.command';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { StepTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { StepTypeEnum, DigestUnitEnum, getRedisPrefix } from '@novu/shared';
 import { StorageHelperService } from './storage-helper-service/storage-helper.service';
 
 interface IJobEntityExtended extends JobEntity {
@@ -22,6 +22,7 @@ export class WorkflowQueueService {
       connectTimeout: 50000,
       keepAlive: 30000,
       family: 4,
+      keyPrefix: getRedisPrefix(),
     },
   };
   public readonly queue: Queue;

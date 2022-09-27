@@ -11,4 +11,7 @@ export class UpdateIntegrationCommand extends EnvironmentCommand {
 
   @IsDefined()
   active: boolean;
+
+  @IsDefined()
+  check: boolean;
 }
