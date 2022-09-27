@@ -1,5 +1,5 @@
 import { useContext, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import styled from '@emotion/styled';
 import { useForm } from 'react-hook-form';
@@ -24,6 +24,10 @@ export function LoginForm({}: Props) {
       password: string;
     }
   >((data) => api.post(`/v1/auth/login`, data));
+  const [params] = useSearchParams();
+  const code = params.get('code');
+  const next = params.get('next');
+  const isFromVercel = code && next;
 
   const {
     register,
@@ -41,6 +45,7 @@ export function LoginForm({}: Props) {
       const response = await mutateAsync(itemData);
 
       setToken((response as any).token);
+      if (isFromVercel) return;
       navigate('/templates');
     } catch (e: any) {
       if (e.statusCode !== 400) {
@@ -108,11 +113,13 @@ export function LoginForm({}: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        <Link to="/auth/reset/request">
-          <Text my={30} gradient align="center">
-            Forgot Your Password?
-          </Text>
-        </Link>
+        {!isFromVercel && (
+          <Link to="/auth/reset/request">
+            <Text my={30} gradient align="center">
+              Forgot Your Password?
+            </Text>
+          </Link>
+        )}
         <Button mt={60} inherit loading={isLoading} submit data-test-id="submit-btn">
           Sign In
         </Button>
@@ -120,7 +127,7 @@ export function LoginForm({}: Props) {
           <Text mr={10} size="md" color={colors.B60}>
             Don't have an account yet?
           </Text>
-          <Link to="/auth/signup">
+          <Link to={isFromVercel ? `/auth/signup?code=${code}&next=${next}` : '/auth/signup'}>
             <Text gradient>Sign Up</Text>
           </Link>
         </Center>

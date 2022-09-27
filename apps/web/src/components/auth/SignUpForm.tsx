@@ -1,5 +1,5 @@
 import { useContext, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
@@ -19,6 +19,11 @@ type Props = {
 
 export function SignUpForm({ token, email }: Props) {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const code = params.get('code');
+  const next = params.get('next');
+  const isFromVercel = code && next;
+
   const { setToken } = useContext(AuthContext);
   const { isLoading: loadingAcceptInvite, mutateAsync: acceptInvite } = useMutation<
     string,
@@ -72,7 +77,7 @@ export function SignUpForm({ token, email }: Props) {
       setToken((response as any).token);
     }
 
-    navigate('/auth/application');
+    navigate(isFromVercel ? `/auth/application?code=${code}&next=${next}` : '/auth/application');
 
     return true;
   };
