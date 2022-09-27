@@ -45,7 +45,8 @@
     "rxjs": "^6.5.5",
     "socket.io": "^4.0.0",
     "socket.io-redis": "^5.4.0",
-    "axios": "^0.24.0"
+    "axios": "^0.24.0",
+    "@novu/application-generic": "^0.8.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^7.6.0",
@@ -71,8 +72,7 @@
     "ts-loader": "^8.0.8",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "4.3.5",
-    "@novu/application-generic": "^0.8.0"
+    "typescript": "4.3.5"
   },
   "workspaces": {
     "nohoist": [

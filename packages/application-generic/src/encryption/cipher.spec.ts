@@ -1,12 +1,12 @@
 import { decrypt, encrypt } from './cipher';
 
-xdescribe('Encrypt secret', function () {
+describe('Encrypt secret', function () {
   it('should encrypt a credential', async function () {
     const password = '123';
     const encrypted = encrypt(password);
 
-    expect(encrypted).not.toEqual(password);
-    expect(encrypted.length).toEqual(65);
+    expect(encrypted).not.to.equal(password);
+    expect(encrypted.length).to.equal(65);
   });
 
   it('should decrypt a credential', async function () {
@@ -14,6 +14,6 @@ xdescribe('Encrypt secret', function () {
     const encrypted = encrypt(password);
     const decrypted = decrypt(encrypted);
 
-    expect(decrypted).toEqual(password);
+    expect(decrypted).to.equal(password);
   });
 });
