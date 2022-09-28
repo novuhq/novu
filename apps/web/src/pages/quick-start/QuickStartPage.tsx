@@ -1,12 +1,12 @@
 import { Center } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useMutation, useQueryClient } from 'react-query';
+import { IUserEntity } from '@novu/shared';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { colors, Text, Title } from '../../design-system';
-import React from 'react';
-import { useMutation, useQueryClient } from 'react-query';
 import { updateUserOnBoarding } from '../../api/user';
-import { IUserEntity } from '@novu/shared';
 import { OnboardingSteps } from './components/OnboardingSteps';
 
 function QuickStart() {

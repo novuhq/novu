@@ -1,6 +1,6 @@
 import { IsOptional, IsString, ValidateNested } from 'class-validator';
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { ChannelCredentials, SubscriberChannel } from '../../../shared/dtos/subscriber-channel';
 
 export class IChannelCredentialsCommand implements ChannelCredentials {

@@ -3,12 +3,12 @@ import { ActionIcon, Grid } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { INotificationTrigger } from '@novu/shared';
+import { Controller, useFormContext } from 'react-hook-form';
 import { getNotificationGroups } from '../../../api/notifications';
 import { api } from '../../../api/api.client';
 import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
-import { Controller, useFormContext } from 'react-hook-form';
 
 export const NotificationSettingsForm = ({
   editMode,

@@ -18,6 +18,9 @@ import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { IJwtPayload } from '@novu/shared';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { UserSession } from '../shared/framework/user.decorator';
+import { ApiException } from '../shared/exceptions/api.exception';
 import { AuthService } from './services/auth.service';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';
@@ -25,7 +28,6 @@ import { UserRegisterCommand } from './usecases/register/user-register.command';
 import { Login } from './usecases/login/login.usecase';
 import { LoginBodyDto } from './dtos/login.dto';
 import { LoginCommand } from './usecases/login/login.command';
-import { UserSession } from '../shared/framework/user.decorator';
 import { SwitchEnvironment } from './usecases/switch-environment/switch-environment.usecase';
 import { SwitchEnvironmentCommand } from './usecases/switch-environment/switch-environment.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
@@ -35,8 +37,6 @@ import { PasswordResetRequestCommand } from './usecases/password-reset-request/p
 import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
-import { ApiException } from '../shared/exceptions/api.exception';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)

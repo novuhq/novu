@@ -1,18 +1,15 @@
-import { CONTEXT_PATH } from './config';
 import 'newrelic';
 import '@sentry/tracing';
-
 import { INestApplication, ValidationPipe, Logger } from '@nestjs/common';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
-
 import * as Sentry from '@sentry/node';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { version } from '../package.json';
+import { CONTEXT_PATH } from './config';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { RolesGuard } from './app/auth/framework/roles.guard';

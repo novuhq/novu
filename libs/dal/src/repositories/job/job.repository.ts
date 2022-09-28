@@ -1,7 +1,7 @@
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { BaseRepository } from '../base-repository';
 import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 export class JobRepository extends BaseRepository<JobEntity> {
   constructor() {

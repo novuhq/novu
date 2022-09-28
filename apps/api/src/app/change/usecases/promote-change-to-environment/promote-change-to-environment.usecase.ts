@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
+import { applyDiff } from 'recursive-diff';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { PromoteNotificationTemplateChange } from '../promote-notification-template-change/promote-notification-template-change';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
-import { applyDiff } from 'recursive-diff';
 import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
+import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 
 @Injectable()
 export class PromoteChangeToEnvironment {

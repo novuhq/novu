@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { encryptCredentials } from '../../../shared/services/encryption';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { CreateIntegrationCommand } from './create-integration.command';
 @Injectable()
 export class CreateIntegration {
   @Inject()

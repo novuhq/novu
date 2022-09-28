@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button as MantineButton, SharedButtonProps } from '@mantine/core';
-import useStyles from './Button.styles';
 import { SpacingProps } from '../shared/spacing.props';
+import useStyles from './Button.styles';
 
 interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   loading?: boolean;

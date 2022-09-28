@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Popover } from '@mantine/core';
 import styled from '@emotion/styled';
+import { useFormContext } from 'react-hook-form';
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
-import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
-import { useFormContext } from 'react-hook-form';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { useStyles } from './TemplateButton.styles';
 import { Button } from './Button';
 import { IconWrapper } from './IconWrapper';
 

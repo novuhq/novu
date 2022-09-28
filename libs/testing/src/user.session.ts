@@ -4,7 +4,6 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
-
 import { StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
@@ -21,14 +20,13 @@ import {
   ChangeEntity,
   SubscriberRepository,
 } from '@novu/dal';
+import { TriggerRecipientsType } from '@novu/node';
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
-
 import { OrganizationService } from './organization.service';
 import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
-import { TriggerRecipientsType } from '@novu/node';
 
 export class UserSession {
   private userRepository = new UserRepository();

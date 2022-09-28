@@ -1,5 +1,5 @@
-import { NotificationStepDto } from './notification-template.dto';
 import { IPreferenceChannels } from '../../entities/subscriber-preference';
+import { NotificationStepDto } from './notification-template.dto';
 
 export interface ICreateNotificationTemplateDto {
   name: string;

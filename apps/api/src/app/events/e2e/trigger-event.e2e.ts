@@ -11,7 +11,6 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-
 import { expect } from 'chai';
 import { ChannelTypeEnum, StepTypeEnum, IEmailBlock, TemplateVariableTypeEnum } from '@novu/shared';
 import axios from 'axios';

@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Tabs } from '../../../design-system';
-import { EmailMessageEditor } from './EmailMessageEditor';
-import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { VariableManager } from '../VariableManager';
+import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
+import { EmailMessageEditor } from './EmailMessageEditor';
 
 export function EmailContentCard({
   index,

@@ -5,9 +5,9 @@ import {
   SegmentedControlItem,
   LoadingOverlay,
 } from '@mantine/core';
-import useStyles from './SegmentedControl.styles';
-import { colors } from '../config';
 import styled from '@emotion/styled';
+import { colors } from '../config';
+import useStyles from './SegmentedControl.styles';
 
 interface ISegmentedControlProps {
   data: string[] | SegmentedControlItem[];

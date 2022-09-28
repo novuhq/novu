@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { encryptCredentials } from '../../../shared/services/encryption';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
+import { UpdateIntegrationCommand } from './update-integration.command';
 
 @Injectable()
 export class UpdateIntegration {

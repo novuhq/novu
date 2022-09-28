@@ -1,7 +1,7 @@
 import { Injectable, Scope, UnauthorizedException } from '@nestjs/common';
-import { GetMyOrganizationCommand } from './get-my-organization.command';
 import { GetOrganization } from '../get-organization/get-organization.usecase';
 import { GetOrganizationCommand } from '../get-organization/get-organization.command';
+import { GetMyOrganizationCommand } from './get-my-organization.command';
 
 @Injectable({
   scope: Scope.REQUEST,

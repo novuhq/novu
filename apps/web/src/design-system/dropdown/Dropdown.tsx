@@ -1,7 +1,7 @@
 import React from 'react';
 import { Menu, MenuProps, Sx } from '@mantine/core';
-import useStyles from './Dropdown.styles';
 import { shadows } from '../config';
+import useStyles from './Dropdown.styles';
 
 interface IDropdownProps extends JSX.ElementChildrenAttribute {
   control?: React.ReactElement;

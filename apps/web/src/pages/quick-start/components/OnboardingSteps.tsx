@@ -1,15 +1,15 @@
 import { Center, Grid, Timeline } from '@mantine/core';
-import { Button, colors, Text } from '../../../design-system';
-import { CheckCircle } from '../../../design-system/icons';
-import { TriggerCard } from './TriggerCard';
 import { Prism } from '@mantine/prism';
 import React, { useEffect, useState } from 'react';
-import useStyles, { ActiveWrapper, StyledDescription, StyledTitle } from './OnboardingSteps.styles';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from 'react-query';
 import { useTemplates } from '../../../api/hooks/use-templates';
 import { useIntegrations } from '../../../api/hooks';
-import { useQuery } from 'react-query';
+import { CheckCircle } from '../../../design-system/icons';
+import { Button, colors, Text } from '../../../design-system';
 import { getActivityStats } from '../../../api/activity';
+import useStyles, { ActiveWrapper, StyledDescription, StyledTitle } from './OnboardingSteps.styles';
+import { TriggerCard } from './TriggerCard';
 
 export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }) => {
   const navigate = useNavigate();

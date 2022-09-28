@@ -1,10 +1,10 @@
-import { BaseRepository } from '../base-repository';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { FeedEntity } from './feed.entity';
-import { Feed } from './feed.schema';
 import { Document, FilterQuery } from 'mongoose';
+import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import { MessageTemplateRepository } from '../message-template';
+import { Feed } from './feed.schema';
+import { FeedEntity } from './feed.entity';
 
 export class FeedRepository extends BaseRepository<FeedEntity> {
   private feed: SoftDeleteModel;

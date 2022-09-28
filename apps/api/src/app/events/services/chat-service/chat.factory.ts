@@ -1,6 +1,6 @@
+import { IntegrationEntity } from '@novu/dal';
 import { IChatFactory, IChatHandler } from './interfaces';
 import { SlackHandler } from './handlers/slack.handler';
-import { IntegrationEntity } from '@novu/dal';
 import { DiscordHandler } from './handlers/discord.handler';
 
 export class ChatFactory implements IChatFactory {

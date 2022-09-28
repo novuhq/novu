@@ -1,8 +1,6 @@
 import { Badge, Card, Container, Group, Space, useMantineTheme } from '@mantine/core';
-
 import { useState } from 'react';
 import { IMessageAction } from '@novu/shared';
-
 import { formatDistanceToNow, subMinutes } from 'date-fns';
 import { colors, shadows, Text, Title } from '../../design-system';
 import { ButtonsTemplatesPopover } from '../templates/in-app-editor/ButtonsTemplatesPopover';

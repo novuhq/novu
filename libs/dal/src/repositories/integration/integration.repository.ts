@@ -1,9 +1,9 @@
 import { Document, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { BaseRepository } from '../base-repository';
+import { DalException } from '../../shared';
 import { IntegrationEntity } from './integration.entity';
 import { Integration } from './integration.schema';
-import { DalException } from '../../shared';
 
 export class IntegrationRepository extends BaseRepository<IntegrationEntity> {
   private integration: SoftDeleteModel;

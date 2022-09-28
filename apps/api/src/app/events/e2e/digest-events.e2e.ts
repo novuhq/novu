@@ -6,7 +6,6 @@ import {
   JobStatusEnum,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-
 import { expect } from 'chai';
 import { ChannelTypeEnum, StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';

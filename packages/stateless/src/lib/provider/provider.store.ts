@@ -1,5 +1,4 @@
 import { ChannelTypeEnum } from '../template/template.interface';
-
 import {
   IEmailProvider,
   ISmsProvider,

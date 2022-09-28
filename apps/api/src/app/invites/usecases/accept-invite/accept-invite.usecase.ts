@@ -3,9 +3,9 @@ import { MemberEntity, OrganizationRepository, UserEntity, MemberRepository, Use
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { AcceptInviteCommand } from './accept-invite.command';
 import { AuthService } from '../../../auth/services/auth.service';
 import { capitalize } from '../../../shared/services/helper/helper.service';
+import { AcceptInviteCommand } from './accept-invite.command';
 
 @Injectable({
   scope: Scope.REQUEST,

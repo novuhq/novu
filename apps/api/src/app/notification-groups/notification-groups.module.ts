@@ -1,9 +1,9 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { USE_CASES } from './usecases';
-import { NotificationGroupsController } from './notification-groups.controller';
 import { SharedModule } from '../shared/shared.module';
 import { ChangeModule } from '../change/change.module';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationGroupsController } from './notification-groups.controller';
+import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, forwardRef(() => AuthModule), ChangeModule],

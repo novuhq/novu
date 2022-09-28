@@ -9,7 +9,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ApiKey } from '../shared/dtos/api-key';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
@@ -18,14 +22,10 @@ import { GetApiKeys } from './usecases/get-api-keys/get-api-keys.usecase';
 import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environment';
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UpdateWidgetSettingsRequestDto } from './dtos/update-widget-settings-request.dto';
 import { UpdateWidgetSettings } from './usecases/update-widget-settings/update-widget-settings.usecase';
 import { UpdateWidgetSettingsCommand } from './usecases/update-widget-settings/update-widget-settings.command';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 
 @Controller('/environments')

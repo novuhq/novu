@@ -13,19 +13,19 @@ import ReactFlow, {
   Controls,
   useReactFlow,
 } from 'react-flow-renderer';
-import ChannelNode from './node-types/ChannelNode';
-import { colors } from '../../design-system';
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import TriggerNode from './node-types/TriggerNode';
-import { getChannel } from '../../pages/templates/shared/channels';
-import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
 import { StepTypeEnum } from '@novu/shared';
 import { v4 as uuid4 } from 'uuid';
-import AddNode from './node-types/AddNode';
+import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
+import { getChannel } from '../../pages/templates/shared/channels';
+import { colors } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
-import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import AddNode from './node-types/AddNode';
+import TriggerNode from './node-types/TriggerNode';
+import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
+import ChannelNode from './node-types/ChannelNode';
 
 const nodeTypes = {
   channelNode: ChannelNode,

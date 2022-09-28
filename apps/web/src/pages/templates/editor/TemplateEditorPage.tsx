@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ReactFlowProvider } from 'react-flow-renderer';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
 import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
@@ -9,7 +10,6 @@ import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
-import { ReactFlowProvider } from 'react-flow-renderer';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { usePrompt } from '../../../hooks/use-prompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';

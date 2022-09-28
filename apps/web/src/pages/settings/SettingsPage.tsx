@@ -5,8 +5,8 @@ import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
-import { BrandingForm, ApiKeysCard, InAppCenterCard } from './tabs';
 import { AuthContext } from '../../store/authContext';
+import { BrandingForm, ApiKeysCard, InAppCenterCard } from './tabs';
 
 export function SettingsPage() {
   const location = useLocation();

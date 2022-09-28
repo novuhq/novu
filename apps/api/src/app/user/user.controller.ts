@@ -1,15 +1,15 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Put, UseGuards, UseInterceptors } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
+import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetMyProfileUsecase } from './usecases/get-my-profile/get-my-profile.usecase';
 import { GetMyProfileCommand } from './usecases/get-my-profile/get-my-profile.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UpdateOnBoardingCommand } from './usecases/update-on-boarding/update-on-boarding.command';
 import { UpdateOnBoardingUsecase } from './usecases/update-on-boarding/update-on-boarding.usecase';
-import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserOnboardingRequestDto } from './dtos/user-onboarding-request.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/users')
 @ApiTags('Users')

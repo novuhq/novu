@@ -3,8 +3,8 @@ import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/da
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 
 @Injectable()
 export class GetNotificationsFeed {

@@ -5,12 +5,12 @@ import styled from '@emotion/styled';
 import * as Sentry from '@sentry/react';
 import { IFeedEntity } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
-import { FeedChip } from './FeedChip';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { colors, shadows, Text, Tooltip, Button } from '../../../design-system';
 import { Copy, Trash } from '../../../design-system/icons';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { deleteFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
+import { FeedChip } from './FeedChip';
 
 interface IFeedItemPopoverProps {
   showFeed: boolean;

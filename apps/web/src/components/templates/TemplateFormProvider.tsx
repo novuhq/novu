@@ -1,9 +1,9 @@
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
-import { FieldArrayProvider } from './FieldArrayProvider';
-import { IForm } from './use-template-controller.hook';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
+import { IForm } from './use-template-controller.hook';
+import { FieldArrayProvider } from './FieldArrayProvider';
 
 const schema = z
   .object({

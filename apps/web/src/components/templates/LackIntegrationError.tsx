@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { useNavigate } from 'react-router-dom';
 import { Text } from '../../design-system';
 import { DoubleArrowRight } from '../../design-system/icons/arrows/CircleArrowRight';
-import { useNavigate } from 'react-router-dom';
 
 export function LackIntegrationError({ channelType }: { channelType: string }) {
   const navigate = useNavigate();

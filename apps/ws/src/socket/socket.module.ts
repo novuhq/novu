@@ -1,7 +1,7 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
 import { QueueService } from '../shared/queue';
+import { WSGateway } from './ws.gateway';
 
 @Module({
   imports: [SharedModule],

@@ -1,6 +1,6 @@
+import * as fs from 'fs';
 import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
-import * as fs from 'fs';
 import { CompileTemplateCommand } from './compile-template.command';
 
 Handlebars.registerHelper('equals', function (arg1, arg2, options) {

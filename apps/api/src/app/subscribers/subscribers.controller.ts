@@ -11,36 +11,17 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
-import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
-import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
+import { ButtonTypeEnum, IJwtPayload, MessageActionStatusEnum } from '@novu/shared';
+import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse, ApiQuery } from '@nestjs/swagger';
+import { MessageEntity } from '@novu/dal';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ButtonTypeEnum, IJwtPayload, MessageActionStatusEnum } from '@novu/shared';
-import {
-  CreateSubscriberRequestDto,
-  DeleteSubscriberResponseDto,
-  SubscriberResponseDto,
-  SubscribersResponseDto,
-  UpdateSubscriberChannelRequestDto,
-  UpdateSubscriberRequestDto,
-} from './dtos';
-import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
-import { GetSubscribers } from './usecases/get-subscribers';
-import { GetSubscribersCommand } from './usecases/get-subscribers';
-import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse, ApiQuery } from '@nestjs/swagger';
-import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
-import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
-import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
-import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
 import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
 import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
 import { GetUnseenCountCommand } from '../widgets/usecases/get-unseen-count/get-unseen-count.command';
-import { MessageEntity } from '@novu/dal';
 import { MarkMessageAsSeenCommand } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.command';
 import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
@@ -49,6 +30,25 @@ import { GetUnseenCount } from '../widgets/usecases/get-unseen-count/get-unseen-
 import { MarkMessageAsSeen } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
 import { initializeSeenParam } from '../widgets/widgets.controller';
+import { GetSubscribersCommand } from './usecases/get-subscribers';
+import { GetSubscribers } from './usecases/get-subscribers';
+import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
+import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
+import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
+import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
+import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
+import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
+import {
+  CreateSubscriberRequestDto,
+  DeleteSubscriberResponseDto,
+  SubscriberResponseDto,
+  SubscribersResponseDto,
+  UpdateSubscriberChannelRequestDto,
+  UpdateSubscriberRequestDto,
+} from './dtos';
+import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
+import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
+import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')

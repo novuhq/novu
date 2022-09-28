@@ -1,9 +1,8 @@
 import * as Bull from 'bull';
 import { Queue } from 'bull';
-import { IWsQueuePayload } from './queue.interface';
-
-export const WS_SOCKET_QUEUE = 'ws_socket_queue';
 import { getRedisPrefix } from '@novu/shared';
+import { IWsQueuePayload } from './queue.interface';
+export const WS_SOCKET_QUEUE = 'ws_socket_queue';
 
 export class QueueService {
   private bullConfig: Bull.QueueOptions = {

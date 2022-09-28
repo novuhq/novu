@@ -1,9 +1,9 @@
 import { Avatar, Divider, Container, LoadingOverlay, Group, MenuItem as DropdownItem, Text } from '@mantine/core';
-import { colors, Dropdown, Tag } from '../../design-system';
-import { DotsHorizontal, Mail, Trash } from '../../design-system/icons';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
 import * as capitalize from 'lodash.capitalize';
+import { DotsHorizontal, Mail, Trash } from '../../design-system/icons';
+import { colors, Dropdown, Tag } from '../../design-system';
 import useStyles from '../../design-system/config/text.styles';
 import { MemberRole } from './MemberRole';
 

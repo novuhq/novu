@@ -6,8 +6,8 @@ import {
   DigestTypeEnum,
   DelayTypeEnum,
 } from '@novu/shared';
-import { MessageTemplate } from './message-template';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { MessageTemplate } from './message-template';
 
 class NotificationStepMetadata {
   @ApiPropertyOptional()

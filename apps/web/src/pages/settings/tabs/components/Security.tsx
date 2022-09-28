@@ -1,10 +1,10 @@
-import { Button, colors, Switch, Text } from '../../../../design-system';
 import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { ColorScheme, InputWrapper, useMantineTheme } from '@mantine/core';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
+import { inputStyles } from '../../../../design-system/config/inputs.styles';
+import { Button, colors, Switch, Text } from '../../../../design-system';
 import { updateWidgetSettings } from '../../../../api/environment';
 import { useEnvController } from '../../../../store/use-env-controller';
 

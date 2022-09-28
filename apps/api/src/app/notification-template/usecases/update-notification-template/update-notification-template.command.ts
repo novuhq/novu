@@ -1,6 +1,6 @@
 import { IsArray, IsBoolean, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { IPreferenceChannels } from '@novu/shared';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { NotificationStep } from '../../../shared/dtos/notification-step';
 
 export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {

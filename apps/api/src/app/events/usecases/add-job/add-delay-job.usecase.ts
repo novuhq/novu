@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { DigestUnitEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
+import { differenceInMilliseconds } from 'date-fns';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AddJobCommand } from './add-job.command';
-import { differenceInMilliseconds } from 'date-fns';
 import { AddJob } from './add-job.usecase';
 
 @Injectable()

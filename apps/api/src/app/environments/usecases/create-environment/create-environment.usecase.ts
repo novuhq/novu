@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import { nanoid } from 'nanoid';
-
-import { CreateEnvironmentCommand } from './create-environment.command';
-
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 // eslint-disable-next-line max-len
 import { CreateNotificationGroupCommand } from '../../../notification-groups/usecases/create-notification-group/create-notification-group.command';
 import { CreateNotificationGroup } from '../../../notification-groups/usecases/create-notification-group/create-notification-group.usecase';
+import { CreateEnvironmentCommand } from './create-environment.command';
 
 @Injectable()
 export class CreateEnvironment {

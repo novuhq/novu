@@ -1,9 +1,9 @@
 import { SoftDeleteModel } from 'mongoose-delete';
+import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository } from '../base-repository';
+import { DalException } from '../../shared';
 import { SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
-import { DalException } from '../../shared';
-import { Document, FilterQuery } from 'mongoose';
 
 export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
   private subscriber: SoftDeleteModel;

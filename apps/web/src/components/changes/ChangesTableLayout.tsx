@@ -2,7 +2,6 @@ import * as capitalize from 'lodash.capitalize';
 import { format } from 'date-fns';
 import { useMantineColorScheme } from '@mantine/core';
 import { ColumnWithStrictAccessor } from 'react-table';
-
 import { useMutation, useQueryClient } from 'react-query';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';

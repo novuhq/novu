@@ -1,12 +1,12 @@
 import { Controller, Delete, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
+import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
+import { ApiTags, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
-import { ApiTags, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
 import { ActivitiesResponseDto } from '../activity/dtos/activities-response.dto';
+import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
+import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 
 @Controller('/messages')

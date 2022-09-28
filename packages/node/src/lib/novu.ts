@@ -1,6 +1,6 @@
+import { EventEmitter } from 'events';
 import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
-import { EventEmitter } from 'events';
 import { INovu, INovuConfiguration } from './novu.interface';
 import {
   IBroadcastPayloadOptions,

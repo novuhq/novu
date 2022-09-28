@@ -3,7 +3,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { merge } from 'lodash';
-import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
@@ -14,6 +13,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
 import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
 import { AddJob } from '../add-job/add-job.usecase';
+import { TriggerEventCommand } from './trigger-event.command';
 
 @Injectable()
 export class TriggerEvent {

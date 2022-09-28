@@ -11,23 +11,23 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
+import { Roles } from '../auth/framework/roles.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
 import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
 import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
-import { Roles } from '../auth/framework/roles.decorator';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)

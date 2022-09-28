@@ -1,7 +1,7 @@
-import { OrganizationEntity } from './organization.entity';
 import { BaseRepository } from '../base-repository';
-import { Organization } from './organization.schema';
 import { MemberRepository } from '../member';
+import { OrganizationEntity } from './organization.entity';
+import { Organization } from './organization.schema';
 
 export class OrganizationRepository extends BaseRepository<OrganizationEntity> {
   private memberRepository = new MemberRepository();

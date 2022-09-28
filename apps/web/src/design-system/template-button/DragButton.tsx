@@ -2,9 +2,9 @@ import React from 'react';
 import { UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
-import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
 import { When } from '../../components/utils/When';
+import { useStyles } from './TemplateButton.styles';
 
 interface IDragButtonProps {
   Icon: React.FC<any>;

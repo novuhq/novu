@@ -1,12 +1,12 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
-import { GetSignedUrl } from './usecases/get-signed-url/get-signed-url.usecase';
-import { GetSignedUrlCommand } from './usecases/get-signed-url/get-signed-url.command';
+import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UploadUrlResponse } from './dtos/upload-url-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { GetSignedUrl } from './usecases/get-signed-url/get-signed-url.usecase';
+import { GetSignedUrlCommand } from './usecases/get-signed-url/get-signed-url.command';
+import { UploadUrlResponse } from './dtos/upload-url-response.dto';
 
 @Controller('/storage')
 @ApiTags('Storage')

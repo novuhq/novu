@@ -1,5 +1,5 @@
-import { Button } from './Button';
 import { TestWrapper } from '../../testing';
+import { Button } from './Button';
 
 it('should display the button text when passed as children', () => {
   cy.mount(

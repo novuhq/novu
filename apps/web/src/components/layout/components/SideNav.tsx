@@ -1,14 +1,14 @@
 import { Navbar, Popover, useMantineColorScheme } from '@mantine/core';
+import { useContext, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import styled from '@emotion/styled';
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
-import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
-import styled from '@emotion/styled';
-import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
+import OrganizationSelect from './OrganizationSelect';
 
 type Props = {};
 

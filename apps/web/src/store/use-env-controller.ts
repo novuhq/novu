@@ -1,10 +1,10 @@
 import { useQuery, useQueryClient } from 'react-query';
 import { IEnvironment } from '@novu/shared';
-import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 import { useContext, useEffect, useState } from 'react';
+import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 import { api } from '../api/api.client';
-import { AuthContext } from './authContext';
 import { QueryKeys } from '../api/query.keys';
+import { AuthContext } from './authContext';
 
 export type EnvironmentContext = {
   readonly: boolean;

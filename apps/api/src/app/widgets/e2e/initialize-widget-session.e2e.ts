@@ -1,7 +1,7 @@
+import { createHmac } from 'crypto';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository } from '@novu/dal';
-import { createHmac } from 'crypto';
 
 describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
   let session: UserSession;

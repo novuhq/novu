@@ -4,12 +4,12 @@ import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center, Alert } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
-import { showNotification } from '@mantine/notifications';
 import { applyToken } from '../../store/use-auth-controller';
 
 type Props = {

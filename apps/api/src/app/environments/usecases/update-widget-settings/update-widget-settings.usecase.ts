@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
-import { UpdateWidgetSettingsCommand } from './update-widget-settings.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { IWidgetSettings } from '@novu/dal';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { UpdateWidgetSettingsCommand } from './update-widget-settings.command';
 
 @Injectable()
 export class UpdateWidgetSettings {

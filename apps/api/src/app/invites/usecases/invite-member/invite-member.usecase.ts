@@ -3,10 +3,10 @@ import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { InviteMemberCommand } from './invite-member.command';
 import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { InviteMemberCommand } from './invite-member.command';
 
 @Injectable({
   scope: Scope.REQUEST,

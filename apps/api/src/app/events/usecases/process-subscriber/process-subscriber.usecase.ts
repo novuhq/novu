@@ -10,17 +10,17 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum, IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
+import { ISubscribersDefine } from '@novu/node';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
-import { ProcessSubscriberCommand } from './process-subscriber.command';
-import { ISubscribersDefine } from '@novu/node';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
 import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
+import { ProcessSubscriberCommand } from './process-subscriber.command';
 
 @Injectable()
 export class ProcessSubscriber {

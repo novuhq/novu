@@ -9,9 +9,9 @@ import { GetOrganizationCommand } from '../get-organization/get-organization.com
 import { GetOrganization } from '../get-organization/get-organization.usecase';
 import { AddMemberCommand } from '../membership/add-member/add-member.command';
 import { AddMember } from '../membership/add-member/add-member.usecase';
-import { CreateOrganizationCommand } from './create-organization.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { CreateOrganizationCommand } from './create-organization.command';
 
 @Injectable({
   scope: Scope.REQUEST,

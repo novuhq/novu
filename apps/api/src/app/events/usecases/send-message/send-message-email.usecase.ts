@@ -19,12 +19,12 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { SendMessageCommand } from './send-message.command';
+import { SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageType {

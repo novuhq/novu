@@ -1,9 +1,9 @@
 import { Document, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { BaseRepository } from '../base-repository';
+import { DalException } from '../../shared';
 import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateEntity } from './notification-template.entity';
-import { DalException } from '../../shared';
 
 export class NotificationTemplateRepository extends BaseRepository<NotificationTemplateEntity> {
   private notifcationTemplate: SoftDeleteModel;

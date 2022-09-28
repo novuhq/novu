@@ -1,9 +1,9 @@
 import React, { memo } from 'react';
-import { colors, Dropdown, Text } from '../../../design-system';
 import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
 import { StepTypeEnum } from '@novu/shared';
+import { Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
+import { colors, Dropdown, Text } from '../../../design-system';
 import { Digest } from '../../../design-system/icons/general/Digest';
 
 interface NodeData {

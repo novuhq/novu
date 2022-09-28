@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { TableProps, Table as MantineTable, LoadingOverlay, Pagination } from '@mantine/core';
 import { useTable, Column, ColumnWithStrictAccessor, usePagination } from 'react-table';
-import useStyles from './Table.styles';
 import { colors } from '../config';
+import useStyles from './Table.styles';
 
 export type Data = Record<string, any>;
 

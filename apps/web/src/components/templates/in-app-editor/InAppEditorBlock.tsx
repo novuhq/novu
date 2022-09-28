@@ -1,7 +1,7 @@
 import { Control, Controller } from 'react-hook-form';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
-import { ContentContainer } from './content/ContentContainer';
 import { IForm } from '../use-template-controller.hook';
+import { ContentContainer } from './content/ContentContainer';
 
 export function InAppEditorBlock({
   contentPlaceholder,

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { MantineProvider, Global, ColorSchemeProvider, ColorScheme } from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
-import { mantineConfig } from './config/theme.config';
-import { colors, shadows } from './config';
 import { useColorScheme } from '@mantine/hooks';
 import { useLocalThemePreference } from '../hooks/use-localThemePreference';
+import { mantineConfig } from './config/theme.config';
+import { colors, shadows } from './config';
 
 declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';

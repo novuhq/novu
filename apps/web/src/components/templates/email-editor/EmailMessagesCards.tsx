@@ -1,6 +1,6 @@
 import { useContext } from 'react';
-import { EmailContentCard } from './EmailContentCard';
 import { AuthContext } from '../../../store/authContext';
+import { EmailContentCard } from './EmailContentCard';
 
 export function EmailMessagesCards({
   index,

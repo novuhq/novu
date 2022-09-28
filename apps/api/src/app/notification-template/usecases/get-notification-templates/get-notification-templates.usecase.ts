@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository, OrganizationEntity } from '@novu/dal';
-import { GetNotificationTemplatesCommand } from './get-notification-templates.command';
 import { NotificationTemplatesResponseDto } from '../../dto/notification-templates.response.dto';
+import { GetNotificationTemplatesCommand } from './get-notification-templates.command';
 @Injectable()
 export class GetNotificationTemplates {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}

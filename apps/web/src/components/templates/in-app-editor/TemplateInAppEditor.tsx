@@ -6,14 +6,14 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { showNotification } from '@mantine/notifications';
 import { IForm } from '../use-template-controller.hook';
-import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { createFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
-import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
+import { FeedItems } from './FeedItems';
+import { InAppEditorBlock } from './InAppEditorBlock';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();

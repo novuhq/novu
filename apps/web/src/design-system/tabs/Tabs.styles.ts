@@ -1,5 +1,4 @@
 import { createStyles, MantineTheme } from '@mantine/core';
-
 import { colors } from '../config';
 
 export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => {

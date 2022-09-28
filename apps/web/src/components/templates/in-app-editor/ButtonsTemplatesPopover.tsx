@@ -1,8 +1,8 @@
 import { Popover, useMantineColorScheme } from '@mantine/core';
-import { colors } from '../../../design-system';
 import React from 'react';
-import { ButtonsTemplates } from './ButtonsTemplates';
 import { IMessageAction, IMessageButton, MessageActionStatusEnum } from '@novu/shared';
+import { colors } from '../../../design-system';
+import { ButtonsTemplates } from './ButtonsTemplates';
 
 interface IButtonsTemplatesPopoverProps {
   isVisible: boolean;

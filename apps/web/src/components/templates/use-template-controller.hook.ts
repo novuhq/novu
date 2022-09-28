@@ -17,11 +17,11 @@ import { useNavigate } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
-import { useTemplateFetcher } from './use-template.fetcher';
 import { QueryKeys } from '../../api/query.keys';
+import { successMessage } from '../../utils/notifications';
+import { useTemplateFetcher } from './use-template.fetcher';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { useFieldArrayContext } from './FieldArrayProvider';
-import { successMessage } from '../../utils/notifications';
 
 export function useTemplateController(templateId: string) {
   const {

@@ -1,5 +1,5 @@
-import merge from 'lodash.merge';
 import { EventEmitter } from 'events';
+import merge from 'lodash.merge';
 import { INovuConfig } from './novu.interface';
 import {
   IEmailProvider,

@@ -10,19 +10,19 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApplyChange } from '../change/usecases/apply-change/apply-change.usecase';
 import { ApplyChangeCommand } from '../change/usecases/apply-change/apply-change.command';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetChanges } from './usecases/get-changes/get-changes.usecase';
 import { GetChangesCommand } from './usecases/get-changes/get-changes.command';
 import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.usecase';
 import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-change.command';
 import { CountChanges } from './usecases/count-changes/count-changes.usecase';
 import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChangeResponseDto } from './dtos/change-response.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)

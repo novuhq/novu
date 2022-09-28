@@ -1,6 +1,4 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { ApplyChange } from '../apply-change/apply-change.usecase';
 import { ChangeRepository } from '@novu/dal';
 import {
   NotificationTemplateEntity,
@@ -10,6 +8,8 @@ import {
   NotificationGroupRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ApplyChange } from '../apply-change/apply-change.usecase';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { ApplyChangeCommand } from '../apply-change/apply-change.command';
 
 @Injectable()

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum, JobRepository, NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { sub } from 'date-fns';
+import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterSteps } from './digest-filter-steps.usecase';
 
 @Injectable()

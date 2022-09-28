@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { StepTypeEnum } from '@novu/shared';
+import { FeedRepository } from '@novu/dal';
 import {
   CreateNotificationTemplateRequestDto,
   UpdateNotificationTemplateRequestDto,
 } from '../../notification-template/dto';
-import { FeedRepository } from '@novu/dal';
 
 describe('Create A Feed - /feeds (POST)', async () => {
   let session: UserSession;

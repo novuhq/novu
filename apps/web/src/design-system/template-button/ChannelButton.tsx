@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { UnstyledButton, Popover, ActionIcon, MenuItem, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Text } from '../typography/text/Text';
-import { Switch } from '../switch/Switch';
-import { useStyles } from './TemplateButton.styles';
+import { useFormContext } from 'react-hook-form';
+import { ChannelTypeEnum } from '@novu/shared';
+import { useClickOutside } from '@mantine/hooks';
 import { colors, shadows } from '../config';
 import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
-import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../store/use-env-controller';
-import { ChannelTypeEnum } from '@novu/shared';
-import { useClickOutside } from '@mantine/hooks';
+import { Switch } from '../switch/Switch';
+import { Text } from '../typography/text/Text';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
+import { useStyles } from './TemplateButton.styles';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);

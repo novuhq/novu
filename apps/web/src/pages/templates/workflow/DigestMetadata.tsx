@@ -1,11 +1,11 @@
 import { Grid, InputWrapper } from '@mantine/core';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
+import styled from '@emotion/styled';
 import { When } from '../../../components/utils/When';
 import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
-import styled from '@emotion/styled';
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;

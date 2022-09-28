@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 
 class ChannelSettings {
   @ApiProperty({

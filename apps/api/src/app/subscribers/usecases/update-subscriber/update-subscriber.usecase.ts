@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { UpdateSubscriberCommand } from './update-subscriber.command';
 
 @Injectable()
 export class UpdateSubscriber {

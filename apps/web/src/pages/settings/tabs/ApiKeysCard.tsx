@@ -1,10 +1,10 @@
 import { ActionIcon, InputWrapper } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useQuery, useMutation } from 'react-query';
+import styled from 'styled-components';
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';
-import styled from 'styled-components';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
 import { Regenerate } from './components/Regenerate';

@@ -1,17 +1,17 @@
 import { Body, ClassSerializerInterceptor, Controller, Put, UseGuards, UseInterceptors } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { Roles } from '../auth/framework/roles.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UpdateMailSettings } from './usecases/update-mail-settings/update-mail-settings.usecase';
 import { UpdateMailSettingsCommand } from './usecases/update-mail-settings/update-mail-settings.command';
 import { UpdateSmsSettings } from './usecases/update-sms-settings/update-sms-settings.usecase';
 import { UpdateSmsSettingsCommand } from './usecases/update-sms-settings/update-sms-settings.command';
-import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateMailSettingsRequestDto } from './dtos/update-mail-settings-request.dto';
 import { UpdateSmsSettingsRequestDto } from './dtos/update-sms-settings-request.dto';
 import { UpdateSettingsResponseDto } from './dtos/update-settings-response.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/channels')
 @UseInterceptors(ClassSerializerInterceptor)

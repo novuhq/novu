@@ -1,11 +1,11 @@
 import { Grid, InputWrapper, useMantineColorScheme } from '@mantine/core';
+import styled from 'styled-components';
+import React from 'react';
+import { useFormContext, Controller } from 'react-hook-form';
 import { useEnvController } from '../../../store/use-env-controller';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Checkbox, colors, Switch } from '../../../design-system';
-import styled from 'styled-components';
 import { channels } from '../../../pages/templates/shared/channels';
-import React from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
 
 export function TemplatePreference() {
   return (
