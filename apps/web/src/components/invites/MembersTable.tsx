@@ -19,6 +19,7 @@ export function MembersTable({
 }) {
   const { classes, theme } = useStyles();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
+  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
   function isEnableMemberActions(currentMember): boolean {
     const currentUserRoles = members?.find((memberEntity) => memberEntity._userId == currentUser?._id)?.roles || [];
@@ -74,7 +75,7 @@ export function MembersTable({
                 />
               </div>
             </ActionsSider>
-            {isEnableMemberActions(member) ? (
+            <When truthy={isEnableMemberActions(member)}>
               <div>
                 <Dropdown
                   control={
@@ -93,27 +94,28 @@ export function MembersTable({
                   </DropdownItem>
                   <When truthy={memberInvited(member)}>
                     <DropdownItem
-                      key="resendInviteBtn"
-                      data-test-id="resend-invite-btn"
+                      key="copyInviteBtn"
+                      data-test-id="copy-invite-btn"
                       onClick={() => onCopyInviteLinkClick(member.invite.token)}
                       icon={<Mail />}
                     >
                       Copy Invite Link
                     </DropdownItem>
 
-                    <DropdownItem
-                      key="resendInviteBtn"
-                      data-test-id="resend-invite-btn"
-                      onClick={() => onResendInviteMember(member)}
-                      icon={<Mail />}
-                    >
-                      Resend Invite
-                    </DropdownItem>
+                    <When truthy={!selfHosted}>
+                      <DropdownItem
+                        key="resendInviteBtn"
+                        data-test-id="resend-invite-btn"
+                        onClick={() => onResendInviteMember(member)}
+                        icon={<Mail />}
+                      >
+                        Resend Invite
+                      </DropdownItem>
+                    </When>
                   </When>
                 </Dropdown>
               </div>
-            ) : null}
-
+            </When>
             <Divider className={classes.seperator} />
           </MemberRowWrapper>
         );
@@ -121,11 +123,6 @@ export function MembersTable({
     </Container>
   );
 }
-
-const AddMemberRow = styled.div`
-  margin-top: 30px;
-`;
-
 const ActionsSider = styled.div`
   margin-left: auto;
 `;

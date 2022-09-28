@@ -1,12 +1,15 @@
 import { Form } from 'antd';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import styled from 'styled-components';
 import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
+import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum } from '@novu/shared';
+import { When } from '../../components/utils/When';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
+import PageContainer from '../../components/layout/components/PageContainer';
 import {
   changeMemberRole,
   getOrganizationMembers,
@@ -14,20 +17,23 @@ import {
   removeMember,
   resendInviteMember,
 } from '../../api/organization';
-import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, Input } from '../../design-system';
+import { MembersTable } from '../../components/invites/MembersTable';
+import { Button, Input, Text } from '../../design-system';
 import { Invite } from '../../design-system/icons';
 import { AuthContext } from '../../store/authContext';
-import { MembersTable } from '../../components/invites/MembersTable';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
+  const clipboardInviteLink = useClipboard({ timeout: 1000 });
+  const [invitedMember, setInvitedMember] = useState<string>('');
+  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
   const {
     data: members,
     isLoading: loadingMembers,
     refetch,
   } = useQuery<any[]>('getOrganizationMembers', getOrganizationMembers);
+
   const { isLoading: loadingSendInvite, mutateAsync: sendInvite } = useMutation<
     string,
     { error: string; message: string; statusCode: number },
@@ -36,16 +42,36 @@ export function MembersInvitePage() {
 
   const { currentUser } = useContext(AuthContext);
 
+  useEffect(() => {
+    if (!invitedMember) return;
+    const currentMember = members?.find((member) => member?.invite?.email === invitedMember);
+    if (!currentMember) return;
+
+    const inviteLink = `${window.location.origin.toString()}/auth/invitation/${currentMember.invite.token}`;
+    clipboardInviteLink.copy(inviteLink);
+
+    showNotification({
+      message: `Successfully copied invite link.`,
+      color: 'green',
+    });
+  }, [members]);
+
   async function onSubmit({ email }) {
     if (!email) return;
+
+    if (selfHosted) {
+      setInvitedMember(email);
+    }
 
     await sendInvite(email);
     await refetch();
 
-    showNotification({
-      message: `Invite sent to ${email}`,
-      color: 'green',
-    });
+    if (!selfHosted) {
+      showNotification({
+        message: `Invite sent to ${email}`,
+        color: 'green',
+      });
+    }
 
     form.resetFields(['email']);
   }
@@ -108,16 +134,21 @@ export function MembersInvitePage() {
       <PageHeader
         title="Team Members"
         actions={
-          <Form onFinish={onSubmit} form={form}>
-            <Group align="center" spacing={10}>
-              <Form.Item name="email" style={{ marginBottom: 0 }}>
-                <StyledInput required data-test-id="invite-email-field" placeholder="Invite user by email" />
-              </Form.Item>
-              <Button submit icon={<Invite />} loading={loadingSendInvite} data-test-id="submit-btn">
-                Invite
-              </Button>
-            </Group>
-          </Form>
+          <>
+            <Form onFinish={onSubmit} form={form}>
+              <Group align="center" spacing={10}>
+                <Form.Item name="email" style={{ marginBottom: 0 }}>
+                  <StyledInput required data-test-id="invite-email-field" placeholder="Invite user by email" />
+                </Form.Item>
+                <Button submit icon={<Invite />} loading={loadingSendInvite} data-test-id="submit-btn">
+                  {selfHosted ? 'Invite By Link' : 'Invite'}
+                </Button>
+              </Group>
+            </Form>
+            <When truthy={selfHosted}>
+              <StyledText> Provide copies link to the new member </StyledText>
+            </When>
+          </>
         }
       />
 
@@ -145,4 +176,8 @@ const StyledInput = styled(Input)`
   }
   position: relative;
   top: -2px;
+`;
+
+const StyledText = styled(Text)`
+  padding-top: 10px;
 `;
