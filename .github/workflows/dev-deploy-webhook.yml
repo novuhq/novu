@@ -1,1 +1,7 @@
 name: Deploy DEV WEBHOOK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
