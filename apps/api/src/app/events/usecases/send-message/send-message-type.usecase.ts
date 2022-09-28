@@ -14,16 +14,17 @@ export abstract class SendMessageType {
     message,
     status: 'error' | 'sent' | 'warning',
     errorId: string,
-    errorMessageFallback: string | any,
+    errorMessageFallback: string,
     command: SendMessageCommand,
     notification: NotificationEntity,
     logCodeEnum: LogCodeEnum,
     error?: any
   ) {
-    const errorString = (toStringify(error?.response?.body) ||
-      toStringify(error?.response) ||
-      toStringify(error) ||
-      JSON.stringify(errorMessageFallback)) as string;
+    const errorString =
+      stringifyObject(error?.response?.body) ||
+      stringifyObject(error?.response) ||
+      stringifyObject(error) ||
+      errorMessageFallback;
 
     if (error) {
       Sentry.captureException(errorString);
@@ -48,16 +49,18 @@ export abstract class SendMessageType {
   }
 }
 
-function toStringify(error: any): string | boolean {
-  if (!error) return false;
+function stringifyObject(error: any): string {
+  if (!error) return;
 
-  if (typeof error === 'string' || error instanceof String) {
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error instanceof String) {
     return error.toString();
   }
 
   if (Object.keys(error)?.length > 0) {
     return JSON.stringify(error);
   }
-
-  return false;
 }
