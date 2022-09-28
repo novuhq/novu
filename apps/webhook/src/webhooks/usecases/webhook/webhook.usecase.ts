@@ -27,7 +27,7 @@ export class Webhook {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       providerId,
-      channel: ChannelTypeEnum.EMAIL,
+      channel: command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS,
     });
 
     if (!integration) {
