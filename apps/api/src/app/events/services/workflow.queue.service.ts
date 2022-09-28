@@ -70,8 +70,7 @@ export class WorkflowQueueService {
     if (canceled) {
       return;
     }
-
-    await this.storageHelperService.getAttachments(job.payload.attachments);
+    await this.storageHelperService.getAttachments(job.payload?.attachments);
 
     await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
 
@@ -103,7 +102,7 @@ export class WorkflowQueueService {
       })
     );
 
-    await this.storageHelperService.deleteAttachments(job.payload.attachments);
+    await this.storageHelperService.deleteAttachments(job.payload?.attachments);
   }
 
   public async addJob(data: JobEntity | undefined, presend = false) {
