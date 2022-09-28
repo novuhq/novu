@@ -95,6 +95,7 @@ class NotificationStepCommand {
     amount?: number;
     unit?: DigestUnitEnum;
     digestKey?: string;
+    delayPath?: string;
   };
 }
 

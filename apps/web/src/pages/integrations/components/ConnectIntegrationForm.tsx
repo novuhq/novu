@@ -89,7 +89,7 @@ export function ConnectIntegrationForm({
 
   const [checkIntegrationState, dispatch] = useReducer(checkIntegrationReducer, checkIntegrationInitialState);
 
-  const { mutateAsync: createIntegrationApi } = useMutation<
+  const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
     {
@@ -101,7 +101,7 @@ export function ConnectIntegrationForm({
     }
   >(createIntegration);
 
-  const { mutateAsync: updateIntegrationApi } = useMutation<
+  const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
     {
@@ -241,7 +241,7 @@ export function ConnectIntegrationForm({
           )}
         </Stack>
 
-        <Button submit fullWidth>
+        <Button submit fullWidth loading={isLoadingUpdate || isLoadingCreate}>
           {createModel ? 'Connect' : 'Update'}
         </Button>
       </ColumnDiv>

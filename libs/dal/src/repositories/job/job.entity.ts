@@ -1,4 +1,4 @@
-import { StepTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
+import { StepTypeEnum, DigestUnitEnum, DigestTypeEnum, DelayTypeEnum } from '@novu/shared';
 import { NotificationStepEntity } from '../notification-template';
 
 export enum JobStatusEnum {
@@ -31,13 +31,14 @@ export class JobEntity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error?: any;
   createdAt?: string;
+  updatedAt?: string;
   _templateId: string;
   digest?: {
     events?: any[];
     amount?: number;
     unit?: DigestUnitEnum;
     digestKey?: string;
-    type: DigestTypeEnum;
+    type: DigestTypeEnum | DelayTypeEnum;
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;
     updateMode?: boolean;

@@ -5,6 +5,7 @@ import {
   DigestUnitEnum,
   DigestTypeEnum,
   IPreferenceChannels,
+  DelayTypeEnum,
 } from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
@@ -84,7 +85,8 @@ export class NotificationStepEntity {
     amount?: number;
     unit?: DigestUnitEnum;
     digestKey?: string;
-    type: DigestTypeEnum;
+    delayPath?: string;
+    type: DigestTypeEnum | DelayTypeEnum;
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;
     updateMode?: boolean;

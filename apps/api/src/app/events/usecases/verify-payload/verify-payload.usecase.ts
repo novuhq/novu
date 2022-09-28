@@ -1,5 +1,5 @@
 import { ITemplateVariable } from '@novu/dal';
-import { TemplateSystemVariables } from '@novu/shared';
+import { TemplateSystemVariables, DelayTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayloadCommand } from './verify-payload.command';
 
@@ -10,10 +10,17 @@ export class VerifyPayload {
 
     for (const step of command.template.steps) {
       invalidKeys.push(...this.checkRequired(step.template.variables || [], command.payload));
+      if (step.template.type === StepTypeEnum.DELAY && step.metadata.type === DelayTypeEnum.SCHEDULED) {
+        const invalidKey = this.checkRequiredDelayPath(step.metadata.delayPath, command.payload);
+        if (invalidKey) {
+          invalidKeys.push(invalidKey);
+        }
+      }
     }
 
-    if (invalidKeys.length)
+    if (invalidKeys.length) {
       throw new ApiException(`payload is missing required key(s) and type(s): ${invalidKeys.join(', ')}`);
+    }
 
     for (const step of command.template.steps) {
       defaultPayload = this.fillDefaults(step.template.variables || []);
@@ -58,6 +65,21 @@ export class VerifyPayload {
     }
 
     return invalidKeys;
+  }
+
+  private checkRequiredDelayPath(delayPath: string, payload: Record<string, unknown>): string {
+    const invalidKey = `${delayPath} (ISO Date)`;
+
+    if (!payload.hasOwnProperty(delayPath)) {
+      return invalidKey;
+    }
+
+    const delayDate = payload[delayPath];
+    const isoRegExp = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
+    const isoDate = (delayDate as unknown as string).match(isoRegExp);
+    if (!isoDate) {
+      return invalidKey;
+    }
   }
 
   private fillDefaults(variables: ITemplateVariable[]): Record<string, unknown> {
