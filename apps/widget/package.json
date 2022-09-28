@@ -21,7 +21,7 @@
     "cypress:open": "cypress open",
     "start:shell:test": "http-server . -p 4700",
     "start:shell:embed": "http-server ../../libs/embed/dist -p 4702",
-    "start:api": "cd ../../ && pnpm run start:e2e:api"
+    "start:api": "cd ../../ && pnpm run start:api:test"
   },
   "dependencies": {
     "@ant-design/icons": "^4.5.0",
