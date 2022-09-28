@@ -7,6 +7,14 @@ import { GetEnvironment, GetEnvironmentCommand } from '../../../environments/use
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SetupIntegrationCommand } from './setup-integration.command';
 
+interface ISetEnvironment {
+  token: string;
+  projectIds: string[];
+  teamId: string;
+  identifier: string;
+  secretKey: string;
+}
+
 @Injectable()
 export class SetupIntegration {
   @Inject()
@@ -20,7 +28,7 @@ export class SetupIntegration {
     success: boolean;
   }> {
     try {
-      const tokenData = await this.getVercelToken(command.code);
+      const tokenData = await this.getVercelToken(command.vercelIntegrationCode);
 
       const projects = await this.getVercelProjects(tokenData.accessToken, tokenData.teamId);
 
@@ -49,10 +57,11 @@ export class SetupIntegration {
   async getVercelToken(code: string) {
     const postData = new URLSearchParams({
       code,
-      client_id: process.env.VERCEL_CLIENT_ID || 'oac_wwSTKHT6nQ2hdosgHavoOG2U',
-      client_secret: process.env.VERCEL_CLIENT_SECRET || 'NLuf2j7avAVJLh8VhLzxs4M1',
-      redirect_uri: process.env.VERCEL_REDIRECT_URI || 'http://localhost:4200/auth/login',
+      client_id: process.env.VERCEL_CLIENT_ID,
+      client_secret: process.env.VERCEL_CLIENT_SECRET,
+      redirect_uri: process.env.VERCEL_REDIRECT_URI,
     });
+
     const response = await lastValueFrom(
       this.httpService.post(`${process.env.VERCEL_BASE_URL}/v2/oauth/access_token`, postData, {
         headers: {
@@ -60,6 +69,7 @@ export class SetupIntegration {
         },
       })
     );
+
     const data = await response.data;
 
     return {
@@ -106,7 +116,6 @@ export class SetupIntegration {
 
   async setEnvironments({ identifier, projectIds, secretKey, teamId, token }: ISetEnvironment) {
     const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v9/projects`;
-
     const target = ['production', 'preview', 'development'];
     const type = 'encrypted';
 
@@ -138,12 +147,4 @@ export class SetupIntegration {
       )
     );
   }
-}
-
-interface ISetEnvironment {
-  token: string;
-  projectIds: string[];
-  teamId: string;
-  identifier: string;
-  secretKey: string;
 }

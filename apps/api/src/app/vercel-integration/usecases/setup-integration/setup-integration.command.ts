@@ -3,5 +3,5 @@ import { IsDefined } from 'class-validator';
 
 export class SetupIntegrationCommand extends EnvironmentWithUserCommand {
   @IsDefined()
-  code: string;
+  vercelIntegrationCode: string;
 }
