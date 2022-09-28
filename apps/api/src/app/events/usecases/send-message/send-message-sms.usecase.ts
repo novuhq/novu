@@ -189,29 +189,15 @@ export class SendMessageSms extends SendMessageType {
         attachments: null,
       });
     } catch (e) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: e.message || e.name || 'Un-expect SMS provider error',
-          userId: command.userId,
-          code: LogCodeEnum.SMS_ERROR,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
-
-      await this.messageRepository.updateMessageStatus(
-        message._id,
+      await this.sendErrorStatus(
+        message,
         'error',
-        e,
         'unexpected_sms_error',
-        e.message || e.name || 'Un-expect SMS provider error'
+        e.message || e.name || 'Un-expect SMS provider error',
+        command,
+        notification,
+        LogCodeEnum.SMS_ERROR,
+        e
       );
     }
   }
