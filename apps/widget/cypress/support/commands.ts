@@ -17,8 +17,6 @@ Cypress.Commands.add('openWidget', (settings = {}) => {
 Cypress.Commands.add(
   'initializeShellSession',
   ({ subscriberId, identifier, encryptedHmacHash, tabs, stores }: IInitializeShellSessionSettings) => {
-    // eslint-disable-next-line no-console
-    console.log('tabs ', tabs);
     cy.visit('http://localhost:4700/cypress/test-shell', { log: false });
 
     return cy
