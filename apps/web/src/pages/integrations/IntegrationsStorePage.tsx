@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, providers, IConfigCredentials, ILogoFileName } from '@novu/shared';
+import { ChannelTypeEnum, IConfigCredentials, ILogoFileName, providers, PushProviderIdEnum } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
 import PageMeta from '../../components/layout/components/PageMeta';
@@ -118,6 +118,7 @@ export interface IIntegratedProvider {
   active: boolean;
   connected: boolean;
   logoFileName: ILogoFileName;
+  betaVersion: boolean;
 }
 
 export interface ICredentials {
@@ -138,6 +139,7 @@ export interface ICredentials {
   applicationId?: string;
   clientId?: string;
   projectName?: string;
+  serviceAccount?: string;
 }
 
 export interface IntegrationEntity {
@@ -175,6 +177,9 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       });
     }
 
+    // Remove this like after the run of the fcm-credentials-migration script
+    fcmFallback(integration, clonedCredentials);
+
     return {
       providerId: providerItem.id,
       integrationId: integration?._id ? integration._id : '',
@@ -183,9 +188,27 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
       docReference: providerItem.docReference,
       comingSoon: !!providerItem.comingSoon,
+      betaVersion: !!providerItem.betaVersion,
       active: integration?.active ?? true,
       connected: !!integration,
       logoFileName: providerItem.logoFileName,
     };
   });
+}
+
+/*
+ * temporary patch before migration script
+ */
+function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentials) {
+  if (integration?.providerId === PushProviderIdEnum.FCM) {
+    const serviceAccount = integration?.credentials.serviceAccount
+      ? integration?.credentials.serviceAccount
+      : integration?.credentials.user;
+
+    clonedCredentials?.map((cred) => {
+      if (cred.key === 'serviceAccount') {
+        cred.value = serviceAccount;
+      }
+    });
+  }
 }

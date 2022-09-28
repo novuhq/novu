@@ -1,4 +1,4 @@
-import './config';
+import { CONTEXT_PATH } from './config';
 import 'newrelic';
 import '@sentry/tracing';
 
@@ -24,6 +24,7 @@ if (process.env.SENTRY_DSN) {
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${version}`,
+    ignoreErrors: ['Non-Error exception captured'],
     integrations: [
       // enable HTTP calls tracing
       new Sentry.Integrations.Http({ tracing: true }),
@@ -49,7 +50,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.enableCors(corsOptionsDelegate);
 
-  app.setGlobalPrefix('v1');
+  app.setGlobalPrefix(CONTEXT_PATH + 'v1');
 
   app.use(passport.initialize());
 

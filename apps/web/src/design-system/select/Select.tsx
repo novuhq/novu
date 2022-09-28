@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC, useMemo } from 'react';
 import {
   Box,
   Select as MantineSelect,
@@ -7,8 +7,8 @@ import {
   InputBaseProps,
   MultiSelectValueProps,
   useMantineTheme,
-  LoadingOverlay,
   SelectItem,
+  Loader,
 } from '@mantine/core';
 import styled from '@emotion/styled';
 import useStyles from './Select.styles';
@@ -24,11 +24,13 @@ interface ISelectProps extends SpacingProps {
   onChange?: (value: string[] | string | null) => void;
   label?: React.ReactNode;
   error?: React.ReactNode;
+  itemComponent?: FC<any>;
   placeholder?: string;
   description?: string;
   getCreateLabel?: (query: string) => React.ReactNode;
   onCreate?: (query: string) => void;
   onDropdownOpen?: () => void;
+  onSearchChange?: (query: string) => void;
   searchable?: boolean;
   creatable?: boolean;
   disabled?: boolean;
@@ -36,6 +38,8 @@ interface ISelectProps extends SpacingProps {
   loading?: boolean;
   type?: 'multiselect' | 'select';
   filter?: (value: string, item: SelectItem) => boolean;
+  allowDeselect?: boolean;
+  dataTestId?: string;
 }
 
 /**
@@ -91,15 +95,22 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
       };
     }
 
+    const loadingProps = useMemo(() => {
+      const loadingStyle = { ...inputStyles(theme), ...{ rightSection: { width: '100%' } } };
+
+      return loading
+        ? {
+            rightSection: <Loader color={colors.B70} size={32} />,
+            styles: loadingStyle,
+            value: undefined,
+            placeholder: '',
+            disabled: true,
+          }
+        : {};
+    }, [loading, theme]);
+
     return (
       <Wrapper style={{ position: 'relative' }}>
-        <LoadingOverlay
-          visible={loading}
-          overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
-          loaderProps={{
-            color: colors.error,
-          }}
-        />
         {multiselect ? (
           <MantineMultiSelect
             ref={ref}
@@ -114,6 +125,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             required={required}
             valueComponent={Value}
             {...props}
+            {...loadingProps}
           />
         ) : (
           <MantineSelect
@@ -129,6 +141,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             data={data}
             required={required}
             {...props}
+            {...loadingProps}
           />
         )}
       </Wrapper>

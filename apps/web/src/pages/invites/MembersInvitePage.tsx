@@ -1,15 +1,22 @@
 import { Form } from 'antd';
+import { useContext } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import styled from 'styled-components';
 import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
+import { MemberRoleEnum } from '@novu/shared';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { getOrganizationMembers, inviteMember, removeMember, resendInviteMember } from '../../api/organization';
+import {
+  changeMemberRole,
+  getOrganizationMembers,
+  inviteMember,
+  removeMember,
+  resendInviteMember,
+} from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Button, Input } from '../../design-system';
 import { Invite } from '../../design-system/icons';
-import { useContext } from 'react';
 import { AuthContext } from '../../store/authContext';
 import { MembersTable } from '../../components/invites/MembersTable';
 
@@ -49,6 +56,24 @@ export function MembersInvitePage() {
 
       showNotification({
         message: `Successfully deleted member .`,
+        color: 'green',
+      });
+
+      refetch();
+    } catch (err: any) {
+      showNotification({
+        message: err.message,
+        color: 'red',
+      });
+    }
+  }
+
+  async function changeMemberRoleClick(member, memberRole: MemberRoleEnum) {
+    try {
+      await changeMemberRole(member._id, memberRole);
+
+      showNotification({
+        message: `Successfully changed role of member.`,
         color: 'green',
       });
 
@@ -103,6 +128,7 @@ export function MembersInvitePage() {
           currentUser={currentUser}
           onRemoveMember={removeMemberClick}
           onResendInviteMember={resendInviteMemberClick}
+          onChangeMemberRole={changeMemberRoleClick}
         />
       </Container>
     </PageContainer>

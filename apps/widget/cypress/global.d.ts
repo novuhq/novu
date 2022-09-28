@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+import { INovuThemeProvider, ITranslationEntry } from '@novu/notification-center';
+
 declare namespace Cypress {
   interface Chainable {
     getByTestId(dataTestAttribute: string, args?: any): Chainable<Element>;
@@ -26,7 +28,13 @@ declare namespace Cypress {
 
     initializeShellSession(userId: string, identifier: string, encryptedHmacHash?: string): Chainable<Response>;
 
-    initializeWidget(session: any, shell?: boolean, encryptedHmacHash?: string): Chainable<Response>;
+    initializeWidget(
+      session: any,
+      shell?: boolean,
+      encryptedHmacHash?: string,
+      theme?: INovuThemeProvider,
+      i18n?: ITranslationEntry
+    ): Chainable<Response>;
     /**
      * Logs-in user by using API request
      */
@@ -34,6 +42,8 @@ declare namespace Cypress {
       noEnvironment?: boolean;
       shell?: boolean;
       hmacEncryption?: boolean;
+      theme?: INovuThemeProvider;
+      i18n?: ITranslationEntry;
     }): Chainable<Response>;
 
     logout(): Chainable<Response>;

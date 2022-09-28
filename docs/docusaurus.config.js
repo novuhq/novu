@@ -6,7 +6,7 @@ const codeTheme = require('./src/utils/prism');
   module.exports = {
     title: 'Novu',
     tagline: 'All the tools you need to build modern transactional notification experience',
-    url: 'https://novu.co',
+    url: 'https://docs.novu.co',
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
@@ -26,6 +26,8 @@ const codeTheme = require('./src/utils/prism');
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
             breadcrumbs: false,
             routeBasePath: '/',
+            showLastUpdateAuthor: true,
+            showLastUpdateTime: true,
           },
           theme: {
             customCss: require.resolve('./src/css/custom.scss'),
@@ -37,12 +39,21 @@ const codeTheme = require('./src/utils/prism');
     themeConfig:
       /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
       ({
+        metadata: [
+          { name: 'robots', content: 'max-image-preview:large' },
+          {
+            name: 'keywords',
+            content:
+              'novu,novu documentation,novu docs,notification,notification insfrastructure,open source,oss',
+          },
+        ],
         image: '/img/social-preview.jpg',
         algolia: {
           appId: '5AG4YK0YDV',
           apiKey: '67ce2424b44097b63a6f21a6615de538',
           indexName: 'novu',
           contextualSearch: true,
+          externalUrlRegex: 'https://docs.novu.co/api/.*',
         },
         docs: {
           sidebar: {
@@ -59,7 +70,7 @@ const codeTheme = require('./src/utils/prism');
             srcDark: 'img/logo-dark-bg.svg',
             href: '/',
             target: '_self',
-            width: 102,
+            width: 114,
             height: 32,
           },
           items: [
@@ -69,19 +80,16 @@ const codeTheme = require('./src/utils/prism');
             },
             {
               href: 'https://docs.novu.co/api',
-              className: 'navbar-item-api',
               label: 'API Reference',
               position: 'right',
             },
             {
               href: 'https://github.com/novuhq/novu',
-              className: 'navbar-item-github',
               label: 'GitHub',
               position: 'right',
             },
             {
               href: 'https://discord.gg/9wcGSf22PM',
-              className: 'navbar-item-discord',
               label: 'Community',
               position: 'right',
             },
@@ -94,7 +102,7 @@ const codeTheme = require('./src/utils/prism');
             src: 'img/logo-light-bg.svg',
             srcDark: 'img/logo-dark-bg.svg',
             href: '/',
-            width: 102,
+            width: 114,
             height: 32,
           },
           links: [

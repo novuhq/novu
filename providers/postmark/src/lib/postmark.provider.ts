@@ -3,6 +3,8 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { ServerClient, Models } from 'postmark';
 
@@ -42,6 +44,16 @@ export class PostmarkEmailProvider implements IEmailProvider {
     return {
       id: response.MessageID,
       date: response.SubmittedAt,
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

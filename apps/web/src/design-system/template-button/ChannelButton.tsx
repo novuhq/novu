@@ -9,8 +9,9 @@ import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
 import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../store/use-env-controller';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { useClickOutside } from '@mantine/hooks';
+import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -118,6 +119,7 @@ export function ChannelButton({
       onMouseLeave={() => setPopoverOpened(false)}
       data-test-id={testId}
       className={cx(classes.button, { [classes.active]: active })}
+      style={{ pointerEvents: 'all' }}
       sx={{
         backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
       }}
@@ -162,7 +164,7 @@ export function ChannelButton({
                 </ActionIcon>
               }
             >
-              <When truthy={tabKey !== StepTypeEnum.DIGEST}>
+              <When truthy={getChannel(tabKey)?.type === NodeTypeEnum.CHANNEL}>
                 <MenuItem
                   key="edit"
                   style={{
@@ -197,7 +199,7 @@ export function ChannelButton({
                   onDelete(id || '');
                 }}
               >
-                Delete {tabKey !== StepTypeEnum.DIGEST ? 'Step' : 'Action'}
+                Delete {getChannel(tabKey)?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
               </MenuItem>
             </Menu>
           </When>
@@ -237,6 +239,7 @@ export function ChannelButton({
           mb={20}
           placement="center"
           position="right"
+          zIndex={4}
           target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
         >
           {errors.toString() || 'Something is missing here'}

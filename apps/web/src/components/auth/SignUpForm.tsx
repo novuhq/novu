@@ -1,9 +1,9 @@
-import { useContext, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { Divider, Button as MantineButton, Center } from '@mantine/core';
+import { Divider, Button as MantineButton, Center, Alert } from '@mantine/core';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
@@ -91,6 +91,24 @@ export function SignUpForm({ token, email }: Props) {
 
   const [accepted, setAccepted] = useState<boolean>(false);
 
+  const serverErrorString = useMemo<string>(() => {
+    return Array.isArray(error?.message) ? error?.message[0] : error?.message;
+  }, [error]);
+
+  const emailServerError = useMemo<string>(() => {
+    if (serverErrorString === 'User already exists') return 'An account with this email already exists';
+    if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
+
+    return '';
+  }, [serverErrorString]);
+
+  const accountCreationError = useMemo<string>(() => {
+    if (serverErrorString === 'Account creation is disabled')
+      return 'The creation of new accounts is currently disabled. Please contact your administrator.';
+
+    return '';
+  }, [serverErrorString]);
+
   return (
     <>
       {!IS_DOCKER_HOSTED && !token && (
@@ -124,7 +142,7 @@ export function SignUpForm({ token, email }: Props) {
           mt={5}
         />
         <Input
-          error={errors.email?.message}
+          error={errors.email?.message || emailServerError}
           disabled={!!email}
           {...register('email', {
             required: 'Please provide an email',
@@ -158,10 +176,18 @@ export function SignUpForm({ token, email }: Props) {
           label={<Accept />}
           data-test-id="accept-cb"
           mt={20}
+          mb={20}
         />
+
+        {accountCreationError && (
+          <Text mt={20} size="lg" align="center" color={colors.error}>
+            {accountCreationError}
+          </Text>
+        )}
+
         <Button
           disabled={!accepted}
-          mt={60}
+          mt={20}
           inherit
           loading={isLoading || loadingAcceptInvite}
           submit
@@ -178,7 +204,8 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
-      {isError && (
+
+      {isError && !emailServerError && !accountCreationError && (
         <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}

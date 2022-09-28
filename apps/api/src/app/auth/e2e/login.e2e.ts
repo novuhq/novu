@@ -38,6 +38,19 @@ describe('User login - /auth/login (POST)', async () => {
     expect(jwtContent.email).to.equal('testytest22@gmail.com');
   });
 
+  it('should login the user correctly with uppercase email', async () => {
+    const { body } = await session.testAgent.post('/v1/auth/login').send({
+      email: userCredentials.email.toUpperCase(),
+      password: userCredentials.password,
+    });
+
+    const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
+
+    expect(jwtContent.firstName).to.equal('test');
+    expect(jwtContent.lastName).to.equal('user');
+    expect(jwtContent.email).to.equal('testytest22@gmail.com');
+  });
+
   it('should fail on bad password', async () => {
     const { body } = await session.testAgent.post('/v1/auth/login').send({
       email: userCredentials.email,

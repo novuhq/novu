@@ -2,7 +2,7 @@ FROM nikolaik/python-nodejs:python3.10-nodejs16-slim
 
 WORKDIR /usr/src/app
 
-RUN npm install -g pnpm@7.3.0 --loglevel notice
+RUN npm install -g pnpm@7.5.0 --loglevel notice
 
 COPY .npmrc .
 COPY package.json .
@@ -11,6 +11,7 @@ COPY apps/web ./apps/web
 
 COPY libs/dal ./libs/dal
 COPY libs/testing ./libs/testing
+COPY packages/client ./packages/client
 COPY libs/shared ./libs/shared
 COPY packages/notification-center ./packages/notification-center
 COPY packages/stateless ./packages/stateless

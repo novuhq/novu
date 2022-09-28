@@ -1,3 +1,4 @@
+export const WIDGET_READY = 'WIDGET_READY';
 export const INIT_IFRAME = 'INIT_IFRAME';
 export const SET_COOKIE = 'SET_COOKIE';
 

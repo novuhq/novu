@@ -23,4 +23,8 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ApiProperty()
   @IsDefined()
   active: boolean;
+
+  @ApiProperty()
+  @IsDefined()
+  check: boolean;
 }

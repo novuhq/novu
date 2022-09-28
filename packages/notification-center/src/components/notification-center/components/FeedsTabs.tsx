@@ -1,16 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Center, Tab } from '@mantine/core';
+import { Tab } from '@mantine/core';
 import styled from 'styled-components';
 import { NotificationsListTab } from './NotificationsListTab';
-import { INotificationCenterContext } from '../../../index';
+import { INotificationCenterContext, useUnseenCount } from '../../../index';
 import { UnseenBadge } from './UnseenBadge';
-import { UnseenCountContext } from '../../../store/unseen-count.context';
 import { Tabs } from './layout/tabs/Tabs';
-import { NotificationCenterContext } from '../../../store/notification-center.context';
+import { NotificationCenterContext } from '../../../store';
 import { useApi, useNovuContext } from '../../../hooks';
 
 export function FeedsTabs() {
-  const { tabs } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { tabs, onTabClick } = useContext<INotificationCenterContext>(NotificationCenterContext);
 
   return (
     <>
@@ -25,6 +24,9 @@ export function FeedsTabs() {
                   <UnseenBadgeContainer storeId={tab.storeId} />
                 </TabLabelWrapper>
               }
+              onClick={() => {
+                onTabClick(tab);
+              }}
             >
               <NotificationsListTab tab={tab} />
             </Tab>
@@ -46,7 +48,7 @@ const TabLabelWrapper = styled.div`
 function UnseenBadgeContainer({ storeId }: { storeId: string }) {
   const { api } = useApi();
   const { stores } = useNovuContext();
-  const { unseenCount: generalUnseenCount } = useContext(UnseenCountContext);
+  const { unseenCount: generalUnseenCount } = useUnseenCount();
 
   const [unseenCount, setUnseenCount] = useState<number>();
 

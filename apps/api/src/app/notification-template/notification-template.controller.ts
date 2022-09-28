@@ -9,6 +9,7 @@ import {
   Put,
   UseGuards,
   UseInterceptors,
+  Query,
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -32,7 +33,9 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationTemplateResponse } from './dto/notification-template-response.dto';
+import { NotificationTemplatesResponseDto } from './dto/notification-templates.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { NotificationTemplatesRequestDto } from './dto/notification-templates-request.dto';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -49,7 +52,6 @@ export class NotificationTemplateController {
   ) {}
 
   @Get('')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })
@@ -57,18 +59,22 @@ export class NotificationTemplateController {
     summary: 'Get notification templates',
   })
   @ExternalApiAccessible()
-  getNotificationTemplates(@UserSession() user: IJwtPayload): Promise<NotificationTemplateResponse[]> {
+  getNotificationTemplates(
+    @UserSession() user: IJwtPayload,
+    @Query() query: NotificationTemplatesRequestDto
+  ): Promise<NotificationTemplatesResponseDto> {
     return this.getNotificationTemplatesUsecase.execute(
       GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
+        page: query.page ? Number(query.page) : 0,
+        limit: query.limit ? Number(query.limit) : 10,
       })
     );
   }
 
   @Put('/:templateId')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })
@@ -90,6 +96,7 @@ export class NotificationTemplateController {
         name: body.name,
         tags: body.tags,
         description: body.description,
+        identifier: body.identifier,
         critical: body.critical,
         preferenceSettings: body.preferenceSettings,
         steps: body.steps,
@@ -120,7 +127,6 @@ export class NotificationTemplateController {
   }
 
   @Get('/:templateId')
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })

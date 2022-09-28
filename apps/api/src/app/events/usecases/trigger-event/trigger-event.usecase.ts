@@ -2,16 +2,18 @@ import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTempl
 import { Inject, Injectable } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
+import { merge } from 'lodash';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
-import { matchMessageWithFilters } from './message-filter.matcher';
-import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
+import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
+import { AddJob } from '../add-job/add-job.usecase';
 
 @Injectable()
 export class TriggerEvent {
@@ -20,8 +22,9 @@ export class TriggerEvent {
     private createLogUsecase: CreateLog,
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
-    private workflowQueueService: WorkflowQueueService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private verifyPayload: VerifyPayload,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private addJobUsecase: AddJob
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -49,6 +52,15 @@ export class TriggerEvent {
       return this.logTemplateNotActive(command, template);
     }
 
+    const defaultPayload = this.verifyPayload.execute(
+      VerifyPayloadCommand.create({
+        payload: command.payload,
+        template,
+      })
+    );
+
+    command.payload = merge({}, defaultPayload, command.payload);
+
     const jobs: JobEntity[][] = [];
 
     for (const subscriberToTrigger of command.to) {
@@ -69,7 +81,7 @@ export class TriggerEvent {
       );
     }
 
-    const steps = matchMessageWithFilters(template.steps, command.payload);
+    const steps = template.steps;
 
     this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
       _template: template._id,
@@ -84,7 +96,12 @@ export class TriggerEvent {
 
     for (const job of jobs) {
       const firstJob = await this.jobRepository.storeJobs(job);
-      await this.workflowQueueService.addJob(firstJob);
+      await this.addJobUsecase.execute({
+        userId: firstJob._userId,
+        environmentId: firstJob._environmentId,
+        organizationId: firstJob._organizationId,
+        jobId: firstJob._id,
+      });
     }
 
     if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {

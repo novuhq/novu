@@ -33,7 +33,45 @@ describe('App Branding', function () {
       expect(contentValueColor).to.eq('rgba(0, 0, 0, 0)');
       expect(contentValueImage).to.eq('linear-gradient(0deg, rgb(255, 81, 47) 0%, rgb(221, 36, 118) 100%)');
     });
+  });
+});
 
-    cy.get('body').first().should('have.css', 'font-family', 'Lato, Helvetica, sans-serif');
+describe('App custom theme', function () {
+  beforeEach(function () {
+    const theme = {
+      light: {
+        layout: {
+          background: 'red',
+        },
+      },
+    };
+
+    cy.initializeSession({ theme }).as('session');
+  });
+
+  it('should have branding applied', function () {
+    cy.getByTestId('layout-wrapper').should(
+      'have.css',
+      'background',
+      'rgb(255, 0, 0) none repeat scroll 0% 0% / auto padding-box border-box'
+    );
+    cy.getByTestId('notifications-header-title').should('contain', 'Notifications');
+  });
+});
+
+describe('App custom i18n', function () {
+  beforeEach(function () {
+    const i18n = {
+      lang: 'xyz',
+      translations: {
+        notifications: 'My custom notifications!',
+      },
+    };
+
+    cy.initializeSession({ i18n }).as('session');
+  });
+
+  it('should have custom language applied', function () {
+    cy.getByTestId('notifications-header-title').should('contain', 'My custom notifications!');
   });
 });

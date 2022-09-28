@@ -7,6 +7,6 @@ export interface ICreateOrganizationDto {
 export interface IOrganizationDTO {
   _id: string;
   name: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }

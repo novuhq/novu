@@ -17,6 +17,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE)', function (
       channel: 'EMAIL',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
 
     const integration = await session.testAgent.post('/v1/integrations').send(payload);

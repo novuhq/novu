@@ -5,6 +5,8 @@ import useStyles from './Tooltip.styles';
 interface ITooltipProps extends JSX.ElementChildrenAttribute {
   label: React.ReactNode;
   opened?: boolean;
+  position?: 'top' | 'left' | 'bottom' | 'right';
+  disabled?: boolean;
 }
 
 /**

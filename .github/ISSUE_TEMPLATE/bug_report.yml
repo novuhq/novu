@@ -85,3 +85,9 @@ body:
       options:
         - label: "I have read the [Contributing Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)"
           required: true 
+  - type: dropdown
+    attributes:
+      label: Are you willing to submit PR?
+      description: This is absolutely not required, but we are happy to guide you in the contribution process. Find us in help-needed channel on [Discord](https://discord.gg/9wcGSf22PM)!
+      options:
+        - "Yes I am willing to submit a PR!"

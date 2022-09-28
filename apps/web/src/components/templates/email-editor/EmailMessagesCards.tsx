@@ -1,7 +1,6 @@
-import { useQuery } from 'react-query';
-import { IOrganizationEntity } from '@novu/shared';
+import { useContext } from 'react';
 import { EmailContentCard } from './EmailContentCard';
-import { getCurrentOrganization } from '../../../api/organization';
+import { AuthContext } from '../../../store/authContext';
 
 export function EmailMessagesCards({
   index,
@@ -12,12 +11,12 @@ export function EmailMessagesCards({
   variables: { name: string }[];
   isIntegrationActive: boolean;
 }) {
-  const { data: organization } = useQuery<IOrganizationEntity>('/v1/organizations/me', getCurrentOrganization);
+  const { currentOrganization } = useContext(AuthContext);
 
   return (
     <EmailContentCard
       key={index}
-      organization={organization}
+      organization={currentOrganization}
       variables={variables}
       index={index}
       isIntegrationActive={isIntegrationActive}

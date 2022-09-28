@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import slugify from 'slugify';
@@ -9,13 +9,16 @@ import { CreateMessageTemplate } from '../../../message-template/usecases/create
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class CreateNotificationTemplate {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
-    private createChange: CreateChange
+    private createChange: CreateChange,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateNotificationTemplateCommand) {
@@ -95,11 +98,7 @@ export class CreateNotificationTemplate {
       _notificationGroupId: command.notificationGroupId,
     });
 
-    const item = await this.notificationTemplateRepository.findOne({
-      _id: savedTemplate._id,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-    });
+    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
 
     await this.createChange.execute(
       CreateChangeCommand.create({
@@ -112,6 +111,12 @@ export class CreateNotificationTemplate {
       })
     );
 
-    return await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
+    this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
+      _organization: command.organizationId,
+      steps: command.steps?.length,
+      channels: command.steps?.map((i) => i.template.type),
+    });
+
+    return item;
   }
 }

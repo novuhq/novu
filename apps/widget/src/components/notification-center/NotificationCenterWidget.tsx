@@ -1,6 +1,7 @@
-import { NotificationCenter, NovuProvider } from '@novu/notification-center';
+import { I18NLanguage, NotificationCenter, NovuProvider, ITranslationEntry } from '@novu/notification-center';
+import { INovuThemeProvider } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
 import { API_URL, WS_URL } from '../../config';
 import { createGlobalStyle } from 'styled-components';
@@ -17,8 +18,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
   const [backendUrl, setBackendUrl] = useState(API_URL);
   const [socketUrl, setSocketUrl] = useState(WS_URL);
+  const [theme, setTheme] = useState<INovuThemeProvider>({});
   const [fontFamily, setFontFamily] = useState<string>('Lato');
   const [frameInitialized, setFrameInitialized] = useState(false);
+  const [i18n, setI18n] = useState<ITranslationEntry>();
 
   useEffect(() => {
     WebFont.load({
@@ -30,16 +33,24 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = async (event: { data: any }) => {
-      if (event.data.type === 'INIT_IFRAME') {
-        setUserDataPayload(event.data.value.data);
+    const handler = ({ data }: any) => {
+      if (data && data.type === 'INIT_IFRAME') {
+        setUserDataPayload(data.value.data);
 
-        if (event.data.value.backendUrl) {
-          setBackendUrl(event.data.value.backendUrl);
+        if (data.value.backendUrl) {
+          setBackendUrl(data.value.backendUrl);
         }
 
-        if (event.data.value.socketUrl) {
-          setSocketUrl(event.data.value.socketUrl);
+        if (data.value.socketUrl) {
+          setSocketUrl(data.value.socketUrl);
+        }
+
+        if (data.value.theme) {
+          setTheme(data.value.theme);
+        }
+
+        if (data.value.i18n) {
+          setI18n(data.value.i18n);
         }
 
         setFrameInitialized(true);
@@ -52,6 +63,8 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     }
 
     window.addEventListener('message', handler);
+
+    window.parent.postMessage({ type: 'WIDGET_READY' }, '*');
 
     return () => window.removeEventListener('message', handler);
   }, []);
@@ -73,6 +86,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           subscriberId={userDataPayload.subscriberId}
           onLoad={onLoad}
           subscriberHash={userDataPayload.subscriberHash}
+          i18n={i18n}
         >
           <NotificationCenter
             colorScheme="light"
@@ -80,6 +94,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
             onUrlChange={props.onUrlChange}
             onUnseenCountChanged={props.onUnseenCountChanged}
             onActionClick={props.onActionClick}
+            theme={theme}
           />
         </NovuProvider>
       )}

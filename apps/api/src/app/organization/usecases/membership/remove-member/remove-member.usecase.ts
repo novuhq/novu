@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { OrganizationRepository, MemberRepository } from '@novu/dal';
+import { OrganizationRepository, MemberRepository, EnvironmentRepository } from '@novu/dal';
 import { RemoveMemberCommand } from './remove-member.command';
 import { ApiException } from '../../../../shared/exceptions/api.exception';
 
@@ -7,7 +7,11 @@ import { ApiException } from '../../../../shared/exceptions/api.exception';
   scope: Scope.REQUEST,
 })
 export class RemoveMember {
-  constructor(private organizationRepository: OrganizationRepository, private memberRepository: MemberRepository) {}
+  constructor(
+    private organizationRepository: OrganizationRepository,
+    private memberRepository: MemberRepository,
+    private environmentRepository: EnvironmentRepository
+  ) {}
 
   async execute(command: RemoveMemberCommand) {
     const members = await this.memberRepository.getOrganizationMembers(command.organizationId);
@@ -19,6 +23,20 @@ export class RemoveMember {
     }
 
     await this.memberRepository.removeMemberById(command.organizationId, memberToRemove._id);
+    const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
+    const isMemberAssociatedWithEnvironment = environments.some((i) =>
+      i.apiKeys.some((key) => key._userId === memberToRemove._userId)
+    );
+
+    if (isMemberAssociatedWithEnvironment) {
+      const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
+
+      await this.environmentRepository.updateApiKeyUserId(
+        command.organizationId,
+        memberToRemove._userId,
+        admin._userId
+      );
+    }
 
     return memberToRemove;
   }

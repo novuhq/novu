@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  ArgumentMetadata,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -36,6 +48,7 @@ import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed
 import { GetUnseenCount } from '../widgets/usecases/get-unseen-count/get-unseen-count.usecase';
 import { MarkMessageAsSeen } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
+import { initializeSeenParam } from '../widgets/widgets.controller';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -66,12 +79,17 @@ export class SubscribersController {
     description: 'Returns a list of subscribers, could paginated using the `page` query parameter',
   })
   @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
-  async getSubscribers(@UserSession() user: IJwtPayload, @Query('page') page = 0): Promise<SubscribersResponseDto> {
+  async getSubscribers(
+    @UserSession() user: IJwtPayload,
+    @Query('page') page = 0,
+    @Query('limit') limit = 10
+  ): Promise<SubscribersResponseDto> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         page: page ? Number(page) : 0,
+        limit: limit ? Number(limit) : 10,
       })
     );
   }
@@ -266,13 +284,25 @@ export class SubscribersController {
   @ApiOkResponse({
     type: [MessageResponseDto],
   })
+  @ApiQuery({
+    name: 'seen',
+    type: Boolean,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+  })
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Query('page') page: number,
+    @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
-    @Query('seen') seen?: boolean
+    @Query('seen') seen?: string
   ) {
+    const isSeen = initializeSeenParam(seen);
+
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -282,9 +312,9 @@ export class SubscribersController {
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page,
+      page: page != null ? parseInt(page) : 0,
       feedId: feedsQuery,
-      seen,
+      seen: isSeen,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);

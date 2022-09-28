@@ -10,10 +10,12 @@ export * from './entities/log';
 export * from './entities/change';
 export * from './entities/step';
 export * from './entities/subscriber-preference';
+export * from './entities/subscriber';
 export * from './types/builder/builder.types';
 export * from './dto';
 export * from './consts';
 export * from './ui';
 export * from './services';
+export * from './config';
 
 //

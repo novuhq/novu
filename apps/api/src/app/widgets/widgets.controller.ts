@@ -18,7 +18,7 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { ApiExcludeController } from '@nestjs/swagger';
+import { ApiExcludeController, ApiQuery } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
@@ -68,12 +68,19 @@ export class WidgetsController {
 
   @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/feed')
+  @ApiQuery({
+    name: 'seen',
+    type: Boolean,
+    required: false,
+  })
   async getNotificationsFeed(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen: boolean | undefined = undefined
+    @Query('seen') seen?: string
   ) {
+    const isSeen = initializeSeenParam(seen);
+
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -81,11 +88,11 @@ export class WidgetsController {
 
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       page,
       feedId: feedsQuery,
-      seen,
+      seen: isSeen,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -105,7 +112,7 @@ export class WidgetsController {
 
     const command = GetUnseenCountCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       feedId: feedsQuery,
       seen,
@@ -122,7 +129,7 @@ export class WidgetsController {
   ): Promise<MessageEntity> {
     const command = MarkMessageAsSeenCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       messageId,
     });
@@ -153,7 +160,7 @@ export class WidgetsController {
     return await this.updateMessageActionsUsecase.execute(
       UpdateMessageActionsCommand.create({
         organizationId: subscriberSession._organizationId,
-        subscriberId: subscriberSession._id,
+        subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         messageId,
         type,
@@ -182,7 +189,7 @@ export class WidgetsController {
   async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
     const command = GetSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
     });
 
@@ -198,7 +205,7 @@ export class WidgetsController {
   ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       templateId: templateId,
       channel: body.channel,
@@ -223,4 +230,18 @@ export class WidgetsController {
       success: true,
     };
   }
+}
+
+/*
+ * ValidationPipe convert boolean undefined params default (false)
+ * Therefore we need to get string and convert it to boolean
+ */
+export function initializeSeenParam(seen: string): boolean | null {
+  let isSeen: boolean = null;
+
+  if (seen) {
+    isSeen = seen == 'true';
+  }
+
+  return isSeen;
 }

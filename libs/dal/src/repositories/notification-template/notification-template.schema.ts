@@ -61,6 +61,7 @@ const notificationTemplateSchema = new Schema(
                 field: Schema.Types.String,
                 value: Schema.Types.String,
                 operator: Schema.Types.String,
+                on: Schema.Types.String,
               },
             ],
           },
@@ -80,6 +81,9 @@ const notificationTemplateSchema = new Schema(
             type: Schema.Types.String,
           },
           digestKey: {
+            type: Schema.Types.String,
+          },
+          delayPath: {
             type: Schema.Types.String,
           },
           type: {

@@ -1,26 +1,35 @@
-import styled from 'styled-components';
+import React, { useContext, useEffect } from 'react';
 import { ActionIcon, Badge } from '@mantine/core';
+import styled from 'styled-components';
 import { colors } from '../../../../../shared/config/colors';
-import React, { useContext } from 'react';
-import { useNovuThemeProvider } from '../../../../../hooks';
+import { useNotificationCenter, useNovuTheme, useScreens, useTranslations, useUnseenCount } from '../../../../../hooks';
 import { INotificationCenterContext, INotificationsContext } from '../../../../../index';
-import { NotificationCenterContext } from '../../../../../store/notification-center.context';
-import { useTranslations } from '../../../../../hooks/use-translations';
+import { NotificationCenterContext, ScreensEnum } from '../../../../../store';
 import { Cogs } from '../../../../../shared/icons';
-import { ScreensEnum } from '../Layout';
 import { UnseenBadge } from '../../UnseenBadge';
 import { NotificationsContext } from '../../../../../store/notifications.context';
 
-export function Header({ unseenCount, setScreen }: { unseenCount: number; setScreen: (screen: ScreensEnum) => void }) {
-  const { theme, common } = useNovuThemeProvider();
+export function Header() {
+  const { onUnseenCountChanged } = useNotificationCenter();
+  const { unseenCount } = useUnseenCount();
+  const { theme, common } = useNovuTheme();
+  const { setScreen } = useScreens();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { markAllAsSeen } = useContext<INotificationsContext>(NotificationsContext);
   const { t } = useTranslations();
 
+  useEffect(() => {
+    if (onUnseenCountChanged) {
+      onUnseenCountChanged(unseenCount);
+    }
+  }, [unseenCount, (window as any).parentIFrame]);
+
   return (
     <HeaderWrapper>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-        <Text fontColor={theme.header.fontColor}>{t('notifications')}</Text>
+        <Text fontColor={theme.header.fontColor} data-test-id="notifications-header-title">
+          {t('notifications')}
+        </Text>
         {!tabs && <UnseenBadge unseenCount={unseenCount} />}
       </div>
       <ActionItems>

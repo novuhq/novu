@@ -14,8 +14,15 @@ export enum StepTypeEnum {
   PUSH = 'push',
   DIGEST = 'digest',
   TRIGGER = 'trigger',
+  DELAY = 'delay',
 }
 
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
+}
+
+export enum TemplateVariableTypeEnum {
+  STRING = 'String',
+  ARRAY = 'Array',
+  BOOLEAN = 'Boolean',
 }

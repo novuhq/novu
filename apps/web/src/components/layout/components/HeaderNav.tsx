@@ -9,14 +9,16 @@ import {
 } from '@mantine/core';
 import { useContext, useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
+import { useIntercom } from 'react-use-intercom';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
-import { Sun, Moon, Ellipse, Bell, Trash, Mail } from '../../../design-system/icons';
+import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks/use-localThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
-import { useIntercom } from 'react-use-intercom';
+import { SpotlightContext } from '../../../store/spotlightContext';
 
 type Props = {};
 const menuItem = [
@@ -31,8 +33,9 @@ const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const { themeStatus, setThemeStatus } = useLocalThemePreference();
+  const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
+  const { addItem } = useContext(SpotlightContext);
 
   if (INTERCOM_APP_ID) {
     const { boot } = useIntercom();
@@ -74,6 +77,27 @@ export function HeaderNav({}: Props) {
     return <Ellipse {...headerIconsSettings} height={24} width={24} />;
   };
 
+  useEffect(() => {
+    addItem([
+      {
+        id: 'toggle-theme',
+        title: themeTitle(),
+        icon: Icon(),
+        onTrigger: () => {
+          toggleColorScheme();
+        },
+      },
+      {
+        id: 'sign-out',
+        title: 'Sign out',
+        icon: <Trash />,
+        onTrigger: () => {
+          logout();
+        },
+      },
+    ]);
+  }, [colorScheme]);
+
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
       <Group spacing={15}>
@@ -96,9 +120,11 @@ export function HeaderNav({}: Props) {
       </Group>
     </MantineMenu.Item>,
     ...menuItem.map(({ title, icon, path }) => (
-      <MantineMenu.Item key={title} icon={icon} component="a" href={path}>
-        {title}
-      </MantineMenu.Item>
+      <Link to={path} key={title}>
+        <MantineMenu.Item key={title} icon={icon} component="div">
+          {title}
+        </MantineMenu.Item>
+      </Link>
     )),
     <MantineMenu.Item key="logout" icon={<Trash />} onClick={logout} data-test-id="logout-button">
       Sign Out

@@ -17,6 +17,10 @@ class Novu {
 
   private socketUrl?: string = '';
 
+  private theme?: Record<string, unknown>;
+
+  private i18n?: Record<string, unknown>;
+
   private debugMode: boolean;
 
   private onloadFunc: (b: any) => void;
@@ -60,6 +64,8 @@ class Novu {
       this.options = selectorOrOptions;
       this.backendUrl = selectorOrOptions.backendUrl;
       this.socketUrl = selectorOrOptions.socketUrl;
+      this.theme = selectorOrOptions.theme;
+      this.i18n = selectorOrOptions.i18n;
     }
 
     this.clientId = clientId;
@@ -116,13 +122,9 @@ class Novu {
       }
     }
 
-    window.addEventListener('resize', () => {
-      positionIframe();
-    });
-
-    window.addEventListener('click', (e: any) => {
-      if (document.querySelector(this.selector)?.contains(e.target)) {
-        this.widgetVisible = !this.widgetVisible;
+    function handleClick(e: MouseEvent | TouchEvent) {
+      if (document.querySelector(_scope.selector)?.contains(e.target as Node)) {
+        _scope.widgetVisible = !_scope.widgetVisible;
         positionIframe();
 
         var elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
@@ -131,7 +133,7 @@ class Novu {
           elem.style.display = 'inline-block';
         }
 
-        this.iframe?.contentWindow?.postMessage(
+        _scope.iframe?.contentWindow?.postMessage(
           {
             type: EventTypes.SHOW_WIDGET,
             value: {},
@@ -141,7 +143,11 @@ class Novu {
       } else {
         hideWidget();
       }
-    });
+    }
+
+    window.addEventListener('resize', positionIframe);
+    window.addEventListener('click', handleClick);
+    window.addEventListener('touchstart', handleClick);
   };
 
   // PRIVATE METHODS
@@ -189,6 +195,32 @@ class Novu {
   initializeIframe = (clientId: string, options: any) => {
     if (!document.getElementById(IFRAME_ID)) {
       const iframe = document.createElement('iframe');
+      window.addEventListener(
+        'message',
+        (event) => {
+          if (!event.target || event?.data?.type !== EventTypes.WIDGET_READY) {
+            return;
+          }
+
+          iframe?.contentWindow?.postMessage(
+            {
+              type: EventTypes.INIT_IFRAME,
+              value: {
+                clientId: this.clientId,
+                backendUrl: this.backendUrl,
+                socketUrl: this.socketUrl,
+                theme: this.theme,
+                i18n: this.i18n,
+                topHost: window.location.host,
+                data: options,
+              },
+            },
+            '*'
+          );
+        },
+        true
+      );
+
       iframe.onload = () => {
         (iFrameResize as any).iframeResize(
           {
@@ -246,26 +278,11 @@ class Novu {
                 }
               }
             },
-            enablePublicMethods: true, // Enable methods within iframe hosted page
             heightCalculationMethod: 'max',
             widthCalculationMethod: 'max',
             sizeWidth: true,
           },
           `#${IFRAME_ID}`
-        );
-
-        this.iframe?.contentWindow?.postMessage(
-          {
-            type: EventTypes.INIT_IFRAME,
-            value: {
-              clientId: this.clientId,
-              backendUrl: this.backendUrl,
-              socketUrl: this.socketUrl,
-              topHost: window.location.host,
-              data: options,
-            },
-          },
-          '*'
         );
       };
 
@@ -325,9 +342,11 @@ export default ((window: any) => {
     // eslint-disable-next-line prefer-spread
     novuApi[initCall[0]].apply(novuApi, initCall[1]);
 
-    const onCall = window.novu._c.find((call: string[]) => call[0] === 'on');
-    if (onCall) {
-      novuApi[onCall[0]].apply(novuApi, onCall[1]);
+    const onCalls = window.novu._c.filter((call: string[]) => call[0] === 'on');
+    if (onCalls.length) {
+      for (const onCall of onCalls) {
+        novuApi[onCall[0]].apply(novuApi, onCall[1]);
+      }
     }
   } else {
     // eslint-disable-next-line no-param-reassign
@@ -350,6 +369,8 @@ interface IOptions {
   unseenBadgeSelector: string;
   backendUrl?: string;
   socketUrl?: string;
+  theme?: Record<string, unknown>;
+  i18n?: Record<string, unknown>;
   position?: {
     top?: number | string;
     left?: number | string;

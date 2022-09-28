@@ -1,6 +1,13 @@
-import { port, str, url, ValidatorSpec } from 'envalid';
+import { makeValidator, port, str, url, ValidatorSpec } from 'envalid';
 import * as envalid from 'envalid';
 
+const str32 = makeValidator((variable) => {
+  if (!(typeof variable === 'string') || variable.length != 32) {
+    throw new Error('Expected to be string 32 char long');
+  }
+
+  return variable;
+});
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NODE_ENV: str({
@@ -14,6 +21,10 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   S3_REGION: str(),
   PORT: port(),
   FRONT_BASE_URL: url(),
+  DISABLE_USER_REGISTRATION: str({
+    default: 'false',
+    choices: ['false', 'true'],
+  }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
   JWT_SECRET: str(),
@@ -26,6 +37,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NOVU_API_KEY: str({
     default: '',
   }),
+  STORE_ENCRYPTION_KEY: str32(),
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {

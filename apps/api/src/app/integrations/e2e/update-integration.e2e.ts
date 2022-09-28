@@ -18,6 +18,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       channel: ChannelTypeEnum.EMAIL,
       credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
       active: true,
+      check: false,
     };
 
     payload.credentials = { apiKey: 'new_key', secretKey: 'new_secret' };
@@ -29,7 +30,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     // update integration
     await session.testAgent.put(`/v1/integrations/${integrationId}`).send(payload);
 
-    const integration = (await integrationRepository.findByEnvironmentId(session.environment._id))[0];
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data[0];
 
     expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
     expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
@@ -41,12 +42,14 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       channel: 'EMAIL',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
     const secondProviderPayload = {
       providerId: 'mailgun',
       channel: 'EMAIL',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: false,
+      check: false,
     };
 
     // create integrations
