@@ -4,6 +4,7 @@ import {
   BuilderGroupValues,
   DigestUnitEnum,
   DigestTypeEnum,
+  DelayTypeEnum,
 } from '@novu/shared';
 import { MessageTemplate } from './message-template';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -20,10 +21,13 @@ class NotificationStepMetadata {
   @ApiPropertyOptional()
   digestKey?: string;
 
+  @ApiPropertyOptional()
+  delayPath?: string;
+
   @ApiProperty({
-    enum: DigestTypeEnum,
+    enum: { ...DigestTypeEnum, ...DelayTypeEnum },
   })
-  type: DigestTypeEnum;
+  type: DigestTypeEnum | DelayTypeEnum;
 
   @ApiPropertyOptional({
     enum: DigestUnitEnum,

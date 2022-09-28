@@ -83,6 +83,9 @@ const notificationTemplateSchema = new Schema(
           digestKey: {
             type: Schema.Types.String,
           },
+          delayPath: {
+            type: Schema.Types.String,
+          },
           type: {
             type: Schema.Types.String,
           },
