@@ -1,13 +1,13 @@
 import { useForm } from 'react-hook-form';
 import { useContext, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
 import { Button, Input } from '../../design-system';
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
-import useVercelIntegration from '../../api/hooks/use-vercel-integration';
+import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
 
 type Props = {};
 
@@ -17,14 +17,12 @@ export function CreateOrganization({}: Props) {
     handleSubmit,
     formState: { errors },
   } = useForm({});
-  const [params] = useSearchParams();
-  const code = params.get('code');
-  const next = params.get('next');
-  const isFromVercel = code && next;
+
   const navigate = useNavigate();
   const { setToken, token } = useContext(AuthContext);
-  const { startVercelSetup } = useVercelIntegration();
   const [loading, setLoading] = useState<boolean>();
+  const { startVercelSetup, isFromVercel } = useVercelIntegration();
+
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
     { error: string; message: string; statusCode: number },

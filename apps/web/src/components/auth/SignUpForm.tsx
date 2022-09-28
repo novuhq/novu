@@ -2,15 +2,16 @@ import { useContext, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
+import { showNotification } from '@mantine/notifications';
 import styled from '@emotion/styled';
-import { Divider, Button as MantineButton, Center, Alert } from '@mantine/core';
+import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
-import { showNotification } from '@mantine/notifications';
 import { applyToken } from '../../store/use-auth-controller';
+import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
 
 type Props = {
   token?: string;
@@ -19,12 +20,11 @@ type Props = {
 
 export function SignUpForm({ token, email }: Props) {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const code = params.get('code');
-  const next = params.get('next');
-  const isFromVercel = code && next;
 
   const { setToken } = useContext(AuthContext);
+  const { isFromVercel, code, next } = useVercelIntegration();
+  const loginLink = isFromVercel ? `/auth/login?code=${code}&next=${next}` : '/auth/login';
+
   const { isLoading: loadingAcceptInvite, mutateAsync: acceptInvite } = useMutation<
     string,
     { error: string; message: string; statusCode: number },
@@ -204,7 +204,7 @@ export function SignUpForm({ token, email }: Props) {
           <Text mr={10} size="md" color={colors.B60}>
             Already have an account?
           </Text>
-          <Link to="/auth/login">
+          <Link to={loginLink}>
             <Text gradient> Sign In</Text>
           </Link>
         </Center>

@@ -47,7 +47,17 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
-  validators.SENTRY_DSN = str({
+  validators.SENTRY_DSN = str();
+  validators.VERCEL_CLIENT_ID = str({
+    default: '',
+  });
+  validators.VERCEL_CLIENT_SECRET = str({
+    default: '',
+  });
+  validators.VERCEL_REDIRECT_URI = url({
+    default: '',
+  });
+  validators.VERCEL_BASE_URL = url({
     default: '',
   });
 }

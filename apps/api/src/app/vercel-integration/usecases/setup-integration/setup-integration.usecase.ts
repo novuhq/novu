@@ -1,10 +1,11 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { GetApiKeysCommand } from '../../../environments/usecases/get-api-keys/get-api-keys.command';
 import { GetApiKeys } from '../../../environments/usecases/get-api-keys/get-api-keys.usecase';
 import { GetEnvironment, GetEnvironmentCommand } from '../../../environments/usecases/get-environment';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { SetupIntegrationResponseDto } from '../../dtos/setup-integration-response.dto';
 import { SetupIntegrationCommand } from './setup-integration.command';
 
 interface ISetEnvironment {
@@ -17,16 +18,13 @@ interface ISetEnvironment {
 
 @Injectable()
 export class SetupIntegration {
-  @Inject()
-  private getApiKeyUsecase: GetApiKeys;
-  @Inject()
-  private getEnvironmentUsecase: GetEnvironment;
+  constructor(
+    private httpService: HttpService,
+    private getApiKeyUsecase: GetApiKeys,
+    private getEnvironmentUsecase: GetEnvironment
+  ) {}
 
-  constructor(private httpService: HttpService) {}
-
-  async execute(command: SetupIntegrationCommand): Promise<{
-    success: boolean;
-  }> {
+  async execute(command: SetupIntegrationCommand): Promise<SetupIntegrationResponseDto> {
     try {
       const tokenData = await this.getVercelToken(command.vercelIntegrationCode);
 
@@ -54,7 +52,11 @@ export class SetupIntegration {
     }
   }
 
-  async getVercelToken(code: string) {
+  async getVercelToken(code: string): Promise<{
+    accessToken: string;
+    userId: string;
+    teamId: string;
+  }> {
     const postData = new URLSearchParams({
       code,
       client_id: process.env.VERCEL_CLIENT_ID,
@@ -91,7 +93,10 @@ export class SetupIntegration {
     return response.data.projects;
   }
 
-  async getEnvKeys(command: SetupIntegrationCommand) {
+  async getEnvKeys(command: SetupIntegrationCommand): Promise<{
+    privateKey: string;
+    clientKey: string;
+  }> {
     const apiKeysResponse = await this.getApiKeyUsecase.execute(
       GetApiKeysCommand.create({
         environmentId: command.environmentId,
@@ -100,6 +105,9 @@ export class SetupIntegration {
       })
     );
 
+    if (!Array.isArray(apiKeysResponse) || !apiKeysResponse[0].key) {
+      throw new NotFoundException("Couldn't get the api keys for the user");
+    }
     const envResponse = await this.getEnvironmentUsecase.execute(
       GetEnvironmentCommand.create({
         organizationId: command.organizationId,
@@ -108,13 +116,17 @@ export class SetupIntegration {
       })
     );
 
+    if (!envResponse.identifier) {
+      throw new NotFoundException("Couldn't get the environment identifier");
+    }
+
     return {
       privateKey: apiKeysResponse[0].key,
       clientKey: envResponse.identifier,
     };
   }
 
-  async setEnvironments({ identifier, projectIds, secretKey, teamId, token }: ISetEnvironment) {
+  async setEnvironments({ identifier, projectIds, secretKey, teamId, token }: ISetEnvironment): Promise<void> {
     const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v9/projects`;
     const target = ['production', 'preview', 'development'];
     const type = 'encrypted';

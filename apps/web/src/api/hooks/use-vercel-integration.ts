@@ -1,13 +1,12 @@
-import { useContext, useState, useCallback } from 'react';
 import axios from 'axios';
+import { useContext, useState, useCallback } from 'react';
 import { useQuery } from 'react-query';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../store/authContext';
-
-import { vercelIntegration } from '../vercel-integration';
 import { errorMessage } from '../../utils/notifications';
+import { vercelIntegrationSetup } from '../vercel-integration';
 
-function useVercelIntegration() {
+export function useVercelIntegration() {
   const [startSetup, setStartSetup] = useState(false);
   const { token } = useContext(AuthContext);
   const isLoggedIn = !!token;
@@ -16,9 +15,10 @@ function useVercelIntegration() {
   const [params] = useSearchParams();
   const code = params.get('code');
   const next = params.get('next');
-  const { data, isError, isLoading, error, isFetching, isFetched, isRefetching } = useQuery<{
+  const isFromVercel = !!(code && next);
+  const { isError, isLoading, error } = useQuery<{
     success: boolean;
-  }>('vercelData', () => vercelIntegration(code as string), {
+  }>('vercelData', () => vercelIntegrationSetup(code as string), {
     enabled: Boolean(code && next && isLoggedIn && isAxiosAuthorized && startSetup),
     staleTime: Infinity,
     retry: false,
@@ -46,7 +46,8 @@ function useVercelIntegration() {
     isLoading,
     error,
     startVercelSetup,
+    isFromVercel,
+    code,
+    next,
   };
 }
-
-export default useVercelIntegration;

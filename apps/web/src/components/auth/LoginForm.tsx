@@ -10,6 +10,7 @@ import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
+import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
 
 type Props = {};
 
@@ -24,10 +25,10 @@ export function LoginForm({}: Props) {
       password: string;
     }
   >((data) => api.post(`/v1/auth/login`, data));
-  const [params] = useSearchParams();
-  const code = params.get('code');
-  const next = params.get('next');
-  const isFromVercel = code && next;
+
+  const { isFromVercel, code, next } = useVercelIntegration();
+
+  const signupLink = isFromVercel ? `/auth/signup?code=${code}&next=${next}` : '/auth/signup';
 
   const {
     register,
@@ -127,7 +128,7 @@ export function LoginForm({}: Props) {
           <Text mr={10} size="md" color={colors.B60}>
             Don't have an account yet?
           </Text>
-          <Link to={isFromVercel ? `/auth/signup?code=${code}&next=${next}` : '/auth/signup'}>
+          <Link to={signupLink}>
             <Text gradient>Sign Up</Text>
           </Link>
         </Center>
