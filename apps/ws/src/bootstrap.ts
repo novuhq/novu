@@ -5,6 +5,7 @@ import { RedisIoAdapter } from './shared/framework/redis.adapter';
 import { version } from '../package.json';
 
 import { AppModule } from './app.module';
+import { CONTEXT_PATH } from './config';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -16,6 +17,8 @@ if (process.env.SENTRY_DSN) {
 
 export async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.setGlobalPrefix(CONTEXT_PATH);
 
   app.enableCors({
     origin: '*',
