@@ -35,9 +35,15 @@ export const Regenerate = ({ fetchApiKeys }: { fetchApiKeys: () => void }) => {
   return (
     <>
       <div>
-        <Title>Regenerate API key</Title>
-        <Button mb={20} mt={10} data-test-id="show-regenerate-api-key-modal" onClick={() => handleModal()}>
-          Regenerate
+        <Title>Danger Zone</Title>
+        <Button
+          mb={20}
+          mt={10}
+          data-test-id="show-regenerate-api-key-modal"
+          onClick={() => handleModal()}
+          variant={'outline'}
+        >
+          Regenerate API Key
         </Button>
       </div>
       <ConfirmRegenerationModal isOpen={isModalOpened} cancelAction={cancelAction} confirmAction={confirmAction} />
