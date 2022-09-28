@@ -55,10 +55,10 @@ if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
     default: '',
   });
   validators.VERCEL_REDIRECT_URI = url({
-    default: '',
+    default: 'https://web.novu.co/auth/login',
   });
   validators.VERCEL_BASE_URL = url({
-    default: '',
+    default: 'https://api.vercel.com',
   });
 }
 

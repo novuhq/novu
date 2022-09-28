@@ -1,5 +1,4 @@
 import { Controller, Post, Param, UseInterceptors, UseGuards, ClassSerializerInterceptor, Body } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -11,11 +10,10 @@ import { SetupIntegration } from './usecases/setup-integration/setup-integration
 @Controller('/vercel-integration')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiTags('Integrations')
 export class VercelIntegrationController {
   constructor(private setupIntegrationUsecase: SetupIntegration) {}
 
-  @Post('/setup')
+  @Post('/')
   async setupIntegration(
     @UserSession() user: IJwtPayload,
     @Body() body: SetupIntegrationRequestDto
