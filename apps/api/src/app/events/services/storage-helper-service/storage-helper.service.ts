@@ -7,7 +7,7 @@ export class StorageHelperService {
   constructor(private storageService: StorageService) {}
 
   async uploadAttachments(attachments?: IAttachmentOptions[]) {
-    if (!Array.isArray(attachments) || attachments.length === 0) {
+    if (!(Array.isArray(attachments) && attachments.length > 0)) {
       return;
     }
 
@@ -20,7 +20,7 @@ export class StorageHelperService {
   }
 
   async getAttachments(attachments?: IAttachmentOptions[]) {
-    if (!Array.isArray(attachments) || attachments.length === 0) {
+    if (!(Array.isArray(attachments) && attachments.length > 0)) {
       return;
     }
 
@@ -38,7 +38,7 @@ export class StorageHelperService {
   }
 
   async deleteAttachments(attachments?: IAttachmentOptions[]) {
-    if (!Array.isArray(attachments) || attachments.length === 0) {
+    if (!(Array.isArray(attachments) && attachments.length > 0)) {
       return;
     }
 
