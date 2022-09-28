@@ -36,7 +36,4 @@ envalid.cleanEnv(process.env, {
     default: 'local',
   }),
   PORT: port(),
-  REDIS_HOST: str(),
-  REDIS_PORT: port(),
-  JWT_SECRET: str(),
 });

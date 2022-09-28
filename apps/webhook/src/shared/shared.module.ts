@@ -11,7 +11,6 @@ import {
   MemberRepository,
   IntegrationRepository,
 } from '@novu/dal';
-import { JwtModule } from '@nestjs/jwt';
 
 const DAL_MODELS = [
   UserRepository,
@@ -40,15 +39,8 @@ const PROVIDERS = [
 ];
 
 @Module({
-  imports: [
-    JwtModule.register({
-      secretOrKeyProvider: () => process.env.JWT_SECRET as string,
-      signOptions: {
-        expiresIn: 360000,
-      },
-    }),
-  ],
+  imports: [],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, JwtModule],
+  exports: [...PROVIDERS],
 })
 export class SharedModule {}
