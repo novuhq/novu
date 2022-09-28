@@ -49,7 +49,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
       email: 'example@test.com',
       timestamp: 1513299569,
       'smtp-id': '<14c5d75ce93.dfd.64b469@ismtpd-555>',
-      event: 'deferred',
+      event: 'delivered',
       ip: '168.1.1.1',
       category: 'cat facts',
       sg_event_id: 'sg_event_id',
@@ -60,9 +60,10 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
     };
 
     const { data: body } = await axiosInstance.post(
-      `${serverUrl}/webhooks//organizations/${orgId}/environments/${envId}/email/sendgrid`,
+      `${serverUrl}/webhooks/organizations/${orgId}/environments/${envId}/email/sendgrid`,
       webhookBody
     );
+
     const event: IEmailEventBody = body[0].event;
     expect(body[0].id).to.equal(webhookBody.id);
     expect(event.externalId).to.equal(webhookBody.id);
