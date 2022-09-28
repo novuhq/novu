@@ -1,4 +1,5 @@
 module.exports = {
+  extends: ['../../.eslintrc.js'],
   rules: {
     'func-names': 'off',
     'react/jsx-props-no-spreading': 'off',

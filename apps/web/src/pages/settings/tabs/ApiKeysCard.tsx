@@ -1,18 +1,19 @@
-import React from 'react';
 import { ActionIcon, InputWrapper } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation } from 'react-query';
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';
 import styled from 'styled-components';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
+import { Regenerate } from './components/Regenerate';
 
 export const ApiKeysCard = () => {
   const clipboardApiKey = useClipboard({ timeout: 1000 });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
-  const { data: apiKeys } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
+  const { data: apiKeys, refetch: refetchApiKeys } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
+
   const { environment } = useEnvController();
 
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
@@ -60,6 +61,7 @@ export const ApiKeysCard = () => {
           />
         </InputWrapper>
       </ParamContainer>
+      <Regenerate fetchApiKeys={refetchApiKeys} />
     </>
   );
 };
