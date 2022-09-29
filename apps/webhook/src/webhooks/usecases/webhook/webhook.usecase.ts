@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IEmailProvider, IEventBody, ISmsProvider } from '@novu/stateless';
-import { MailFactory, decryptCredentials, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
+import { MailFactory, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
 import { WebhookCommand } from './webhook.command';
 
 export interface IWebhookResult {
@@ -101,7 +101,7 @@ export class Webhook {
     if (!handler) {
       throw new NotFoundException(`Handler for integration of ${providerId} was not found`);
     }
-    handler.buildProvider(decryptCredentials(integration.credentials));
+    handler.buildProvider({});
 
     this.provider = handler.getProvider();
   }
