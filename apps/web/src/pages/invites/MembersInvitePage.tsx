@@ -62,8 +62,17 @@ export function MembersInvitePage() {
       setInvitedMember(email);
     }
 
-    await sendInvite(email);
-    await refetch();
+    try {
+      await sendInvite(email);
+      await refetch();
+    } catch (e: any) {
+      if (e?.message === 'Already invited') {
+        showNotification({
+          message: `User with email: ${email} is already invited`,
+          color: 'red',
+        });
+      } else throw e;
+    }
 
     if (!selfHosted) {
       showNotification({
