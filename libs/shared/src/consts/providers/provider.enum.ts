@@ -53,6 +53,7 @@ export enum ChatProviderIdEnum {
 export enum PushProviderIdEnum {
   FCM = 'fcm',
   APNS = 'apns',
+  EXPO = 'expo',
 }
 
 export enum InAppProviderIdEnum {

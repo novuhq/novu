@@ -32,7 +32,7 @@ export interface IPushOptions {
     tag?: string;
     body?: string;
     icon?: string;
-    badge?: string | number;
+    badge?: number;
     color?: string;
     sound?: string;
     title?: string;
