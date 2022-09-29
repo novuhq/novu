@@ -6,7 +6,6 @@ import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum } from '@novu/shared';
-import { When } from '../../components/utils/When';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -18,7 +17,7 @@ import {
   resendInviteMember,
 } from '../../api/organization';
 import { MembersTable } from '../../components/invites/MembersTable';
-import { Button, Input, Text } from '../../design-system';
+import { Button, Input } from '../../design-system';
 import { Invite } from '../../design-system/icons';
 import { AuthContext } from '../../store/authContext';
 
@@ -27,6 +26,7 @@ export function MembersInvitePage() {
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
   const [invitedMember, setInvitedMember] = useState<string>('');
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+  const { currentOrganization, currentUser } = useContext(AuthContext);
 
   const {
     data: members,
@@ -40,20 +40,19 @@ export function MembersInvitePage() {
     string
   >((email) => inviteMember(email));
 
-  const { currentUser } = useContext(AuthContext);
-
   useEffect(() => {
     if (!invitedMember) return;
     const currentMember = members?.find((member) => member?.invite?.email === invitedMember);
     if (!currentMember) return;
 
-    const inviteLink = `${window.location.origin.toString()}/auth/invitation/${currentMember.invite.token}`;
-    clipboardInviteLink.copy(inviteLink);
+    const inviteHref = buildInviteHref(currentMember, currentOrganization?.name, currentUser, generateInviteLink);
 
     showNotification({
-      message: `Successfully copied invite link.`,
+      message: getInviteMemberByLinkDiv(inviteHref, currentMember),
       color: 'green',
     });
+
+    setInvitedMember('');
   }, [members]);
 
   async function onSubmit({ email }) {
@@ -128,6 +127,27 @@ export function MembersInvitePage() {
     }
   }
 
+  const clipboardCopyInviteLink = (memberToken: string) => {
+    clipboardInviteLink.copy(generateInviteLink(memberToken));
+  };
+
+  const generateInviteLink = (memberToken: string) => {
+    return `${window.location.origin.toString()}/auth/invitation/${memberToken}`;
+  };
+
+  function getInviteMemberByLinkDiv(inviteHref: string, currentMember) {
+    return (
+      <div>
+        The invite link was successfully created. You can send it by clicking
+        <a href={inviteHref} style={{ color: '#0000FF', paddingLeft: '3px' }}>
+          here
+        </a>
+        . Or copy it directly clicking
+        <StyledButton onClick={() => clipboardCopyInviteLink(currentMember.invite.token)}>here.</StyledButton>
+      </div>
+    );
+  }
+
   return (
     <PageContainer>
       <PageMeta title="Team" />
@@ -141,13 +161,10 @@ export function MembersInvitePage() {
                   <StyledInput required data-test-id="invite-email-field" placeholder="Invite user by email" />
                 </Form.Item>
                 <Button submit icon={<Invite />} loading={loadingSendInvite} data-test-id="submit-btn">
-                  {selfHosted ? 'Invite By Link' : 'Invite'}
+                  Invite
                 </Button>
               </Group>
             </Form>
-            <When truthy={selfHosted}>
-              <StyledText> Provide copies link to the new member </StyledText>
-            </When>
           </>
         }
       />
@@ -166,6 +183,21 @@ export function MembersInvitePage() {
   );
 }
 
+function buildInviteHref(
+  currentMember,
+  currentOrganization,
+  currentUser,
+  generateInviteLink: (memberToken: string) => string
+) {
+  const mailTo = `mailto:${currentMember.invite.email}`;
+  const subject = `You've been invited to ${currentOrganization}`;
+  const body = `\nHi!\n\nYou have been invited to ${currentOrganization} by ${currentUser?.firstName} ${
+    currentUser?.lastName
+  }.\n\nClick on the link below to accept ${generateInviteLink(currentMember.invite.token)}.`;
+
+  return `${mailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 const StyledInput = styled(Input)`
   width: 300px;
 
@@ -178,6 +210,10 @@ const StyledInput = styled(Input)`
   top: -2px;
 `;
 
-const StyledText = styled(Text)`
-  padding-top: 10px;
+const StyledButton = styled.button`
+  color: #0000ff;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 `;
