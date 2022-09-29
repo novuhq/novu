@@ -6,8 +6,12 @@ import { StorageService } from '../../../shared/services/storage/storage.service
 export class StorageHelperService {
   constructor(private storageService: StorageService) {}
 
+  private areAttachmentsMissing(attachments?: IAttachmentOptions[]) {
+    return !(Array.isArray(attachments) && attachments.length > 0);
+  }
+
   async uploadAttachments(attachments?: IAttachmentOptions[]) {
-    if (!(Array.isArray(attachments) && attachments.length > 0)) {
+    if (this.areAttachmentsMissing(attachments)) {
       return;
     }
 
@@ -20,7 +24,7 @@ export class StorageHelperService {
   }
 
   async getAttachments(attachments?: IAttachmentOptions[]) {
-    if (!(Array.isArray(attachments) && attachments.length > 0)) {
+    if (this.areAttachmentsMissing(attachments)) {
       return;
     }
 
@@ -38,7 +42,7 @@ export class StorageHelperService {
   }
 
   async deleteAttachments(attachments?: IAttachmentOptions[]) {
-    if (!(Array.isArray(attachments) && attachments.length > 0)) {
+    if (this.areAttachmentsMissing(attachments)) {
       return;
     }
 
