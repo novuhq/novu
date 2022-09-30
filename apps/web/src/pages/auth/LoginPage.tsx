@@ -17,7 +17,7 @@ export default function LoginPage() {
   const queryToken = params.get('token');
   const source = params.get('source');
 
-  const { startVercelSetup, isLoading, isFromVercel } = useVercelIntegration();
+  const { startVercelSetup, isLoading, isFromVercel, code, next } = useVercelIntegration();
 
   useEffect(() => {
     if (queryToken) {
@@ -30,7 +30,8 @@ export default function LoginPage() {
       const user = jwtDecode<IJwtPayload>(token);
 
       if (!user.organizationId || !user.environmentId) {
-        navigate('/auth/application');
+        const authApplicationLink = isFromVercel ? `/auth/application?code=${code}&next=${next}` : '/auth/application';
+        navigate(authApplicationLink);
       } else {
         if (isFromVercel) {
           startVercelSetup();
