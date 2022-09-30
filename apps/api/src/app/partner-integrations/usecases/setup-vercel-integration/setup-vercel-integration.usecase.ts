@@ -5,26 +5,26 @@ import { GetApiKeysCommand } from '../../../environments/usecases/get-api-keys/g
 import { GetApiKeys } from '../../../environments/usecases/get-api-keys/get-api-keys.usecase';
 import { GetEnvironment, GetEnvironmentCommand } from '../../../environments/usecases/get-environment';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { SetupIntegrationResponseDto } from '../../dtos/setup-integration-response.dto';
-import { SetupIntegrationCommand } from './setup-integration.command';
+import { SetupVercelIntegrationResponseDto } from '../../dtos/setup-vercel-integration-response.dto';
+import { SetupVercelIntegrationCommand } from './setup-vercel-integration.command';
 
 interface ISetEnvironment {
   token: string;
   projectIds: string[];
-  teamId: string;
+  teamId: string | null;
   identifier: string;
   secretKey: string;
 }
 
 @Injectable()
-export class SetupIntegration {
+export class SetupVercelIntegration {
   constructor(
     private httpService: HttpService,
     private getApiKeyUsecase: GetApiKeys,
     private getEnvironmentUsecase: GetEnvironment
   ) {}
 
-  async execute(command: SetupIntegrationCommand): Promise<SetupIntegrationResponseDto> {
+  async execute(command: SetupVercelIntegrationCommand): Promise<SetupVercelIntegrationResponseDto> {
     try {
       const tokenData = await this.getVercelToken(command.vercelIntegrationCode);
 
@@ -55,7 +55,7 @@ export class SetupIntegration {
   async getVercelToken(code: string): Promise<{
     accessToken: string;
     userId: string;
-    teamId: string;
+    teamId: string | null;
   }> {
     const postData = new URLSearchParams({
       code,
@@ -72,7 +72,7 @@ export class SetupIntegration {
       })
     );
 
-    const data = await response.data;
+    const data = response.data;
 
     return {
       accessToken: data.access_token,
@@ -81,7 +81,7 @@ export class SetupIntegration {
     };
   }
 
-  async getVercelProjects(token: string, teamId: string) {
+  async getVercelProjects(token: string, teamId: string | null) {
     const response = await lastValueFrom(
       this.httpService.get(`${process.env.VERCEL_BASE_URL}/v4/projects${teamId ? `?teamId=${teamId}` : ''}`, {
         headers: {
@@ -93,7 +93,7 @@ export class SetupIntegration {
     return response.data.projects;
   }
 
-  async getEnvKeys(command: SetupIntegrationCommand): Promise<{
+  async getEnvKeys(command: SetupVercelIntegrationCommand): Promise<{
     privateKey: string;
     clientKey: string;
   }> {
@@ -105,9 +105,6 @@ export class SetupIntegration {
       })
     );
 
-    if (!Array.isArray(apiKeysResponse) || !apiKeysResponse[0].key) {
-      throw new NotFoundException("Couldn't get the api keys for the user");
-    }
     const envResponse = await this.getEnvironmentUsecase.execute(
       GetEnvironmentCommand.create({
         organizationId: command.organizationId,
@@ -115,10 +112,6 @@ export class SetupIntegration {
         environmentId: command.environmentId,
       })
     );
-
-    if (!envResponse.identifier) {
-      throw new NotFoundException("Couldn't get the environment identifier");
-    }
 
     return {
       privateKey: apiKeysResponse[0].key,

@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { useContext, useState, useCallback } from 'react';
-import { useQuery } from 'react-query';
+import { useContext, useState, useCallback, useEffect } from 'react';
+import { useMutation } from 'react-query';
 import { useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../store/authContext';
 import { errorMessage } from '../../utils/notifications';
@@ -16,23 +16,18 @@ export function useVercelIntegration() {
   const code = params.get('code');
   const next = params.get('next');
   const isFromVercel = !!(code && next);
-  const { isError, isLoading, error } = useQuery<{
-    success: boolean;
-  }>('vercelData', () => vercelIntegrationSetup(code as string), {
-    enabled: Boolean(code && next && isLoggedIn && isAxiosAuthorized && startSetup),
-    staleTime: Infinity,
-    retry: false,
-    refetchOnWindowFocus: false,
-    retryOnMount: false,
-    refetchInterval: false,
-    onError: (err: any) => {
-      if (err?.message) {
-        errorMessage(err?.message);
-      }
-    },
+
+  const canStartSetup = Boolean(code && next && isLoggedIn && isAxiosAuthorized && startSetup);
+
+  const { mutate, isLoading } = useMutation(vercelIntegrationSetup, {
     onSuccess: () => {
       if (next) {
         window.location.replace(next);
+      }
+    },
+    onError: (err: any) => {
+      if (err?.message) {
+        errorMessage(err?.message);
       }
     },
   });
@@ -41,10 +36,20 @@ export function useVercelIntegration() {
     setStartSetup(true);
   }, []);
 
+  useEffect(() => {
+    const initiateSetup = () => {
+      if (!canStartSetup || !code) {
+        return;
+      }
+      mutate(code);
+      setStartSetup(false);
+    };
+
+    initiateSetup();
+  }, [canStartSetup, code]);
+
   return {
-    isError,
     isLoading,
-    error,
     startVercelSetup,
     isFromVercel,
     code,
