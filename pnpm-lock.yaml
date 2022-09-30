@@ -384,6 +384,7 @@ importers:
       '@mantine/hooks': 4.2.12
       '@mantine/notifications': 4.1.0
       '@mantine/prism': 4.1.0
+      '@mantine/spotlight': ^5.3.2
       '@novu/dal': ^0.8.0
       '@novu/notification-center': ^0.8.0
       '@novu/shared': ^0.8.0
@@ -480,6 +481,7 @@ importers:
       '@mantine/hooks': 4.2.12_react@17.0.2
       '@mantine/notifications': 4.1.0_3ti3pstfevj7ngnpjpzwas3f5e
       '@mantine/prism': 4.1.0_3ti3pstfevj7ngnpjpzwas3f5e
+      '@mantine/spotlight': 5.4.1_3ti3pstfevj7ngnpjpzwas3f5e
       '@novu/notification-center': link:../../packages/notification-center
       '@novu/shared': link:../../libs/shared
       '@sentry/react': 6.19.3_react@17.0.2
@@ -13391,6 +13393,21 @@ packages:
       react-dom: 17.0.2_react@17.0.2
     dev: false
 
+  /@mantine/spotlight/5.4.1_3ti3pstfevj7ngnpjpzwas3f5e:
+    resolution: {integrity: sha512-JD20+p0pp3k6OyJynbo93xCpBpJjvI1oSXcFLTi4OC4wfopY9XDSAYVkxmhyKTLwBO5L974mEKngTmHrVz5WHA==}
+    peerDependencies:
+      '@mantine/core': 5.4.1
+      '@mantine/hooks': 5.4.1
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      '@mantine/core': 4.1.1_2jev7vnekycungnoo7dax3e42u
+      '@mantine/hooks': 4.2.12_react@17.0.2
+      '@mantine/utils': 5.4.1_react@17.0.2
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
   /@mantine/styles/4.1.0_tu3rgcjzty7lgk22cirrkqwelq:
     resolution: {integrity: sha512-mWFNSE5DqE/5C9TDYIkQVbTef8QyWnW8a8MADHl6S52K0iGU8nqw4jnyozB+6y9JEIxdl+sp0o16L2JnAsq7bA==}
     peerDependencies:
@@ -13446,6 +13463,14 @@ packages:
     transitivePeerDependencies:
       - '@babel/core'
       - '@types/react'
+    dev: false
+
+  /@mantine/utils/5.4.1_react@17.0.2:
+    resolution: {integrity: sha512-yaZ7gv9dkr98L65EjaAniZmJpVEPzHbe5aDDljIePLgcU5hVCdUls2v31YXslTf1/CJ5yZp/L7LPYLN86EXlEA==}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 17.0.2
     dev: false
 
   /@mapbox/node-pre-gyp/1.0.9:
@@ -23003,7 +23028,7 @@ packages:
     resolution: {integrity: sha512-O0yuUDnZeQDL+ncNGlJ78BiO4jnYI3bvMsD5prT0/nsgijG/LpNBIr63gTjVTNsiGkgQhiyCShTgxt8oXOrklA==}
     engines: {node: '>=4'}
     dependencies:
-      tslib: 2.3.1
+      tslib: 2.4.0
 
   /astral-regex/2.0.0:
     resolution: {integrity: sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==}
@@ -24603,7 +24628,7 @@ packages:
       minipass-pipeline: 1.2.4
       mkdirp: 1.0.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1
+      promise-inflight: 1.0.1_bluebird@3.7.2
       rimraf: 3.0.2
       ssri: 8.0.1
       tar: 6.1.11
@@ -40193,7 +40218,7 @@ packages:
     resolution: {integrity: sha512-7Wjy+9E3WwLOEL30D+m8TSTF7qJJUJLONBnwQp0518siuMxUQUbgZwssaFX+QKlZkjHZcw/IpZCt/H0srrntSg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.3.5
+      ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
 
@@ -40218,7 +40243,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.3.5
+      ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -41882,6 +41907,7 @@ packages:
     peerDependenciesMeta:
       bluebird:
         optional: true
+    dev: true
 
   /promise-inflight/1.0.1_bluebird@3.7.2:
     resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
@@ -43439,7 +43465,7 @@ packages:
       semver: 7.3.2
       style-loader: 1.3.0_webpack@4.44.2
       terser-webpack-plugin: 4.2.3_webpack@4.44.2
-      ts-pnp: 1.2.0_typescript@4.3.5
+      ts-pnp: 1.2.0_typescript@4.5.4
       typescript: 4.3.5
       url-loader: 4.1.1_7hroj2mdu577asu2zyhaasbvae
       webpack: 4.44.2
@@ -48453,17 +48479,6 @@ packages:
       typescript: 4.6.3
       yn: 3.1.1
     dev: true
-
-  /ts-pnp/1.2.0_typescript@4.3.5:
-    resolution: {integrity: sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==}
-    engines: {node: '>=6'}
-    peerDependencies:
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      typescript: 4.3.5
 
   /ts-pnp/1.2.0_typescript@4.5.4:
     resolution: {integrity: sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==}

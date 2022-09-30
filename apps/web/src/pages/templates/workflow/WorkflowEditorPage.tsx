@@ -235,7 +235,14 @@ const WorkflowEditorPage = ({
                   <NavSection>
                     {steps.map((i, index) => {
                       return index === activeStep ? (
-                        <DigestMetadata key={index} control={control} index={index} />
+                        <DigestMetadata
+                          key={index}
+                          control={control}
+                          index={index}
+                          loading={isLoading || isUpdateLoading}
+                          disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+                          setSelectedChannel={setSelectedChannel}
+                        />
                       ) : null;
                     })}
                   </NavSection>
@@ -254,7 +261,7 @@ const WorkflowEditorPage = ({
                     </ButtonWrapper>
 
                     <Text mr={10} mt={10} size="md" color={colors.B60}>
-                      Configure the delay parameters. Set await time.
+                      Configure the delay parameters.
                     </Text>
                   </NavSection>
                   <NavSection>

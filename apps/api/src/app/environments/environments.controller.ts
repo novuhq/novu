@@ -26,6 +26,7 @@ import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestj
 import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -35,6 +36,7 @@ export class EnvironmentsController {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
+    private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private updateWidgetSettingsUsecase: UpdateWidgetSettings
@@ -114,6 +116,24 @@ export class EnvironmentsController {
     });
 
     return await this.getApiKeysUsecase.execute(command);
+  }
+
+  @Post('/api-keys/regenerate')
+  @ApiOperation({
+    summary: 'Regenerate api keys',
+  })
+  @ApiOkResponse({
+    type: [ApiKey],
+  })
+  @ExternalApiAccessible()
+  async regenerateOrganizationApiKeys(@UserSession() user: IJwtPayload): Promise<ApiKey[]> {
+    const command = GetApiKeysCommand.create({
+      userId: user._id,
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+    });
+
+    return await this.regenerateApiKeysUsecase.execute(command);
   }
 
   @Put('/widget/settings')

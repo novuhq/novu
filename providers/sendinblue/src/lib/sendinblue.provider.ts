@@ -3,6 +3,8 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import {
   SendSmtpEmail,
@@ -49,6 +51,16 @@ export class SendinblueEmailProvider implements IEmailProvider {
     return {
       id: body?.messageId,
       date: response?.headers?.date,
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }
