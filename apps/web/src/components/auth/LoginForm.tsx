@@ -27,8 +27,10 @@ export function LoginForm({}: Props) {
   >((data) => api.post(`/v1/auth/login`, data));
 
   const { isFromVercel, code, next } = useVercelIntegration();
-
   const signupLink = isFromVercel ? `/auth/signup?code=${code}&next=${next}` : '/auth/signup';
+  const githubLink = isFromVercel
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}`
+    : `${API_ROOT}/v1/auth/github`;
 
   const {
     register,
@@ -77,7 +79,7 @@ export function LoginForm({}: Props) {
         <>
           <GithubButton
             component="a"
-            href={`${API_ROOT}/v1/auth/github`}
+            href={githubLink}
             my={30}
             variant="white"
             fullWidth

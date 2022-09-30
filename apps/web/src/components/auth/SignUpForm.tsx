@@ -24,6 +24,9 @@ export function SignUpForm({ token, email }: Props) {
   const { setToken } = useContext(AuthContext);
   const { isFromVercel, code, next } = useVercelIntegration();
   const loginLink = isFromVercel ? `/auth/login?code=${code}&next=${next}` : '/auth/login';
+  const githubLink = isFromVercel
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}`
+    : `${API_ROOT}/v1/auth/github`;
 
   const { isLoading: loadingAcceptInvite, mutateAsync: acceptInvite } = useMutation<
     string,
@@ -121,7 +124,7 @@ export function SignUpForm({ token, email }: Props) {
           <GithubButton
             my={30}
             component="a"
-            href={`${API_ROOT}/v1/auth/github`}
+            href={githubLink}
             variant="white"
             fullWidth
             radius="md"
