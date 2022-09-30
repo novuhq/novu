@@ -1,4 +1,3 @@
-import { encryptCredentials } from '@novu/application-generic';
 import { IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -38,10 +37,9 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
       _organizationId: orgId,
       providerId: 'sendgrid',
       channel: ChannelTypeEnum.EMAIL,
-      credentials: encryptCredentials({
-        apiKey: 'apikey',
-        from: 'test@novu.co',
-      }),
+      credentials: {
+        apiKey: '',
+      },
       active: true,
     });
 
