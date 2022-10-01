@@ -1,19 +1,16 @@
 import * as sinon from 'sinon';
-import { expect } from 'chai';
 import { File } from '@google-cloud/storage';
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { mockClient } from 'aws-sdk-client-mock';
+import { S3Client } from '@aws-sdk/client-s3';
+import { BlockBlobClient } from '@azure/storage-blob';
+import { StorageHelperService } from './storage-helper.service';
 import {
   S3StorageService,
   GCSStorageService,
   AzureBlobStorageService,
 } from '../../../shared/services/storage/storage.service';
-import { StorageHelperService } from './storage-helper.service';
-import { BlockBlobClient } from '@azure/storage-blob';
-
-const s3Mock = mockClient(S3Client);
 
 describe('Storage-Helper service', function () {
+  // mocking the S3 Storage service with sinon
   describe('S3', function () {
     let S3StorageHelperService = new StorageHelperService(new S3StorageService());
     let attachments = [
@@ -30,13 +27,14 @@ describe('Storage-Helper service', function () {
 
     it('should upload file', async function () {
       // resolve PutObjectCommand
-      s3Mock.on(PutObjectCommand).resolves({});
+      sinon.stub(S3Client.prototype, 'send').resolves({});
       await S3StorageHelperService.uploadAttachments(attachments);
+    });
 
+    it('should get file', async function () {
       // resolve GetObjectCommand with the file
-      s3Mock.on(GetObjectCommand).resolves({
+      sinon.stub(S3Client.prototype, 'send').resolves({
         Body: {
-          // @ts-ignore
           on: (event, callback) => {
             if (event === 'data') {
               callback(Buffer.from('test'));
@@ -47,23 +45,17 @@ describe('Storage-Helper service', function () {
           },
         },
       });
-      await S3StorageHelperService.getAttachments(resultAttachments);
-      expect(resultAttachments).to.not.be.null;
+      await S3StorageHelperService.getAttachments(attachments);
     });
 
     it('should delete file', async function () {
-      // resolve DeleteObjetCommand
-      s3Mock.on(DeleteObjectCommand).resolves({});
-      await S3StorageHelperService.deleteAttachments(attachments);
-
-      // reject GetObjectCommand with error
-      s3Mock.on(GetObjectCommand).rejects('The specified key does not exist.');
-      await S3StorageHelperService.getAttachments(resultAttachments);
-      expect(resultAttachments[0].file).to.be.null;
+      // resolve DeleteObjectCommand
+      sinon.stub(S3Client.prototype, 'send').resolves({});
+      await S3StorageHelperService.deleteAttachments(resultAttachments);
     });
   });
 
-  // mocking the storage service with sinon
+  // mocking the google cloud storage service with sinon
   describe('Google Cloud', function () {
     afterEach(() => {
       sinon.restore();
