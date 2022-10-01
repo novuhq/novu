@@ -9,14 +9,8 @@
  ![hacktoberfest-readme-light](https://user-images.githubusercontent.com/63902456/191171065-d8f349e5-7250-43ff-8078-fa02dd859bc8.jpeg#gh-light-mode-only)
 
 </div>
-</br>
-<div align="center">
-<details>
-  <summary>How to get Novu's swag?</summary>
-  Have 3 merged PRs during October 2022
 
-</details>
-</div>
+</br>
 </br>
 
 <div align="center">
@@ -162,6 +156,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### Other (Coming Soon...)
 
 - [ ] PagerDuty
+
+<div align="center">
+<details>
+  <summary>How to get Novu's swag?</summary>
+  Have 3 merged PRs during October 2022
+
+</details>
+</div>
 
 ## 💻  Need Help?
 
