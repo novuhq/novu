@@ -2,9 +2,9 @@
 
 When using Slack you will have to save the integration credentials on the subscriber entity.
 
-In this guide we will perform the flow you have to do in order to obtain the `webhookUrl` that Novu needs to send chat messages to your customers.
+In this guide, we will perform the flow you have to do to obtain the `webhookUrl` that Novu needs to send chat messages to your customers.
 
-We will provide the basic flow that the user needs to perform in order to successfully send notifications via the Slack integration.
+We will provide the basic flow that the user needs to perform to successfully send notifications via the Slack integration.
 
 ## Application Setup
 
@@ -38,7 +38,7 @@ await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, 
 - The third parameter is the credentials object, in this case we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
 
 :::info
-You need to set credentials for every subscriber because slack generate new Webhook URL on every new app install.
+You need to set credentials for every subscriber because Slack generates a new Webhook URL on every new app install.
 :::
 
 <!-- markdownlint-disable MD029 -->
