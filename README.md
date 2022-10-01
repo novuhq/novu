@@ -10,6 +10,13 @@
 
 </div>
 </br>
+<div align="center">
+<details>
+  <summary>How to get Novu's swag?</summary>
+  Have 3 merged PRs during October 2022
+
+</details>
+</div>
 </br>
 
 <div align="center">
