@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.8.0",
-    "node-fetch": "^3.2.10",
+    "node-fetch": "^2.6.7",
     "sms77-client": "^2.14.0"
   },
   "devDependencies": {

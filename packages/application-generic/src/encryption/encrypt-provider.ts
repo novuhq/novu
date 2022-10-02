@@ -19,17 +19,23 @@ export function decryptProviderSecret(text: string): string {
   return decrypt(encryptedSecret);
 }
 
-export function encryptCredentials(credentials: ICredentialsDto): ICredentialsDto {
+export function encryptCredentials(
+  credentials: ICredentialsDto
+): ICredentialsDto {
   const encryptedCredentials: ICredentialsDto = {};
 
   for (const key in credentials) {
-    encryptedCredentials[key] = needEncryption(key) ? encryptProviderSecret(credentials[key]) : credentials[key];
+    encryptedCredentials[key] = needEncryption(key)
+      ? encryptProviderSecret(credentials[key])
+      : credentials[key];
   }
 
   return encryptedCredentials;
 }
 
-export function decryptCredentials(credentials: ICredentialsDto): ICredentialsDto {
+export function decryptCredentials(
+  credentials: ICredentialsDto
+): ICredentialsDto {
   const decryptedCredentials: ICredentialsDto = {};
 
   for (const key in credentials) {
