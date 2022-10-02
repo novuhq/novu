@@ -31,6 +31,8 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { DeleteEnvironment } from './usecases/delete-environment/delete-environment.usecase';
 import { DeleteEnvironmentCommand } from './usecases/delete-environment/delete-environment.command';
+import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
+import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -39,6 +41,7 @@ import { DeleteEnvironmentCommand } from './usecases/delete-environment/delete-e
 export class EnvironmentsController {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
+    private updateEnvironmentUsecase: UpdateEnvironment,
     private deleteEnvironmentUsecase: DeleteEnvironment,
     private getApiKeysUsecase: GetApiKeys,
     private regenerateApiKeysUsecase: RegenerateApiKeys,
@@ -100,6 +103,27 @@ export class EnvironmentsController {
       GetMyEnvironmentsCommand.create({
         userId: user._id,
         organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Put('/:envId')
+  @ApiOperation({
+    summary: 'Update env by id',
+  })
+  async updateMyEnvironment(
+    @UserSession() user: IJwtPayload,
+    @Param('envId') envId: string,
+    @Body() payload: UpdateEnvironmentRequestDto
+  ) {
+    return await this.updateEnvironmentUsecase.execute(
+      UpdateEnvironmentCommand.create({
+        _id: envId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        name: payload.name,
+        identifier: payload.identifier,
+        _parentId: payload.parentId,
       })
     );
   }
