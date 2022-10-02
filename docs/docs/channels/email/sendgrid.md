@@ -27,7 +27,7 @@ SendGrid allows you to authenticate your sender identity using one of the follow
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on the Novu.
 - Locate SendGrid and click on the **Connect** button.
-- Enter your SendGrid API starting with `SG.`
+- Enter your SendGrid API Key.
 - Fill the `From email address` using the authenticated email from the previous step.
 - Click on the **Save** button.
 - You should now be able to send notifications using SendGrid in Novu.
