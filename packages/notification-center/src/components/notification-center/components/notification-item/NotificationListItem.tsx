@@ -8,6 +8,7 @@ import { ActionContainer } from './ActionContainer';
 import { useTranslations } from 'packages/notification-center/src/hooks/use-translations';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { When } from '../../../../shared/utils/When';
+import { ColorScheme } from '../../../../shared/config/colors';
 
 export function NotificationListItem({
   notification,
@@ -16,7 +17,7 @@ export function NotificationListItem({
   notification: IMessage;
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
-  const { theme: novuTheme } = useNovuTheme();
+  const { theme: novuTheme, colorScheme } = useNovuTheme();
   const { onActionClick, listItem } = useNotificationCenter();
   const { dateFnsLocale } = useTranslations();
 
@@ -59,7 +60,9 @@ export function NotificationListItem({
       <SettingsActionWrapper style={{ display: 'none' }}>
         <DotsHorizontal />
       </SettingsActionWrapper>
-      <When truthy={readSupportAdded(notification)}>{!notification.seen && <GradientDotWrapper />}</When>
+      <When truthy={readSupportAdded(notification)}>
+        {!notification.seen && <GradientDotWrapper colorScheme={colorScheme} />}
+      </When>
     </ItemWrapper>
   );
 }
@@ -100,9 +103,12 @@ function ActionContainerOrNone({
   return <>{action ? <ActionContainer onActionClick={handleActionButtonClick} action={action} /> : null}</>;
 }
 
-function GradientDotWrapper() {
+function GradientDotWrapper({ colorScheme }: { colorScheme: ColorScheme }) {
   const { bellColors } = useDefaultBellColors({
-    unreadBadgeBackgroundColor: 'transparent',
+    colorScheme: colorScheme,
+    bellColors: {
+      unseenBadgeBackgroundColor: 'transparent',
+    },
   });
 
   return <StyledGradientDot colors={bellColors} />;
