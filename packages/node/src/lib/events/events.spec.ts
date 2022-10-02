@@ -99,4 +99,15 @@ describe('test use of novus node package - Events', () => {
       },
     });
   });
+
+  test('should cancel correctly', async () => {
+    mockedAxios.delete.mockResolvedValue({});
+
+    await novu.events.cancel('transactionId');
+
+    expect(mockedAxios.delete).toHaveBeenCalled();
+    expect(mockedAxios.delete).toHaveBeenCalledWith(
+      '/events/trigger/transactionId'
+    );
+  });
 });
