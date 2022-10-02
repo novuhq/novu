@@ -75,7 +75,7 @@ export interface INotificationsContext {
   fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
   hasNextPage?: Map<string, boolean>;
   fetching?: boolean;
-  markAsRead?: (messageId: string) => Promise<IMessage>;
+  markAsRead?: (messageId: string, storeId?: string) => Promise<IMessage>;
   updateAction?: (
     messageId: string,
     actionButtonType: ButtonTypeEnum,
@@ -85,6 +85,8 @@ export interface INotificationsContext {
   ) => void;
   refetch?: (storeId?: string, query?: IStoreQuery) => void;
   markNotificationsAsSeen?: (readExist?: boolean, messageIdsToMark?: IMessage | IMessage[], storeId?: string) => void;
+  onWidgetClose?: () => void;
+  onTabChange?: (storeId?: string) => void;
 }
 
 export interface ITab {

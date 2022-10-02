@@ -59,8 +59,6 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     if (hasCta && notification.cta?.data?.url && onUrlChange) {
       onUrlChange(notification.cta.data.url);
     }
-
-    refetch();
   }
 
   return (

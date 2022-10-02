@@ -14,7 +14,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     fetchNextPage: mapFetchNextPage,
     hasNextPage: mapHasNextPage,
     fetching,
-    markAsRead,
+    markAsRead: mapMarkAsRead,
     updateAction: mapUpdateAction,
     refetch: mapRefetch,
     markNotificationsAsSeen: mapMarkNotificationsAsSeen,
@@ -31,6 +31,10 @@ export function useNotifications(props?: IUseNotificationsProps) {
   }
 
   const hasNextPage = mapHasNextPage?.has(storeId) ? mapHasNextPage.get(storeId) : true;
+
+  async function markAsRead(messageId: string) {
+    await mapMarkAsRead(messageId, storeId);
+  }
 
   async function updateAction(
     messageId: string,

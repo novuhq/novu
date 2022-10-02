@@ -50,7 +50,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     await fetchPage(nextPage, false, storeId);
   }
 
-  async function markAsRead(messageId: string): Promise<IMessage> {
+  async function markAsRead(messageId: string, storeId = 'default_store'): Promise<IMessage> {
+    notifications[storeId] = notifications[storeId].map((message) => {
+      if (message._id === messageId) {
+        message.read = true;
+      }
+
+      return message;
+    });
+
+    setNotifications(Object.assign({}, notifications));
+
     return await api.markMessageAsRead(messageId);
   }
 
