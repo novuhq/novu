@@ -18,6 +18,7 @@ import { OR } from './languages/or';
 import { SA } from './languages/sa';
 import { NE } from './languages/ne';
 import { UR } from './languages/ur';
+import { PU } from './languages/pu';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -51,6 +52,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   or: OR,
   sa: SA,
   ur: UR,
+  pu: PU,
   ne: NE,
 };
 
@@ -85,4 +87,5 @@ export type I18NLanguage =
   | 'or'
   | 'sa'
   | 'ur'
+  | 'pu'
   | 'ne';

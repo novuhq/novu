@@ -190,6 +190,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>or</code> (Odia)</li>
           <li><code>sa</code> (Sanskrit)</li>
           <li><code>ur</code> (Urdu)</li>
+          <li><code>pu</code> (Punjabi)</li>
         </ul>
       </div>
   </details>
