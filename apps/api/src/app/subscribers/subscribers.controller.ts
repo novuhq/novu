@@ -1,16 +1,4 @@
-import {
-  ArgumentMetadata,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -353,6 +341,8 @@ export class SubscribersController {
   @Post('/:subscriberId/messages/:messageId/seen')
   @ApiOperation({
     summary: 'Mark a subscriber feed message as seen',
+    description: 'This endpoint is deprecated please address /:subscriberId/messages/markAs instead',
+    deprecated: true,
   })
   @ApiCreatedResponse({
     type: MessageResponseDto,
@@ -369,7 +359,34 @@ export class SubscribersController {
       environmentId: user.environmentId,
       subscriberId: subscriberId,
       messageIds,
-      mark: MarkEnum.SEEN,
+      mark: { [MarkEnum.SEEN]: true },
+    });
+
+    return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/:subscriberId/messages/markAs')
+  @ApiOperation({
+    summary: 'Mark a subscriber feed message as seen',
+  })
+  @ApiCreatedResponse({
+    type: MessageResponseDto,
+  })
+  async markMessageAs(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(body.messageId);
+
+    const command = MarkMessageAsCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+      messageIds,
+      mark: body.mark,
     });
 
     return await this.markMessageAsUsecase.execute(command);

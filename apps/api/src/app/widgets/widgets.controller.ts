@@ -14,7 +14,7 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { ApiExcludeController, ApiQuery } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
@@ -120,6 +120,10 @@ export class WidgetsController {
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(query.feedIdentifier);
 
+    if (query.seen === undefined && query.read === undefined) {
+      query.seen = true;
+    }
+
     const command = GetFeedCountCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
@@ -132,6 +136,11 @@ export class WidgetsController {
     return await this.getFeedCountUsecase.execute(command);
   }
 
+  @ApiOperation({
+    summary: 'Mark a subscriber feed message as seen',
+    description: 'This endpoint is deprecated please address /messages/markAs instead',
+    deprecated: true,
+  })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/:messageId/seen')
   async markMessageAsSeen(
@@ -145,12 +154,17 @@ export class WidgetsController {
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       messageIds,
-      mark: MarkEnum.SEEN,
+      mark: { [MarkEnum.SEEN]: true },
     });
 
     return await this.markMessageAsUsecase.execute(command);
   }
 
+  @ApiOperation({
+    summary: 'Mark a subscriber feed message as read',
+    description: 'This endpoint is deprecated please address /messages/markAs instead',
+    deprecated: true,
+  })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/:messageId/read')
   async markMessageAsRead(
@@ -164,7 +178,29 @@ export class WidgetsController {
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
       messageIds,
-      mark: MarkEnum.READ,
+      mark: { [MarkEnum.READ]: true },
+    });
+
+    return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: 'Mark a subscriber feed message or messages as seen or as read',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/markAs')
+  async markMessageAs(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(body.messageId);
+
+    const command = MarkMessageAsCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      messageIds,
+      mark: body.mark,
     });
 
     return await this.markMessageAsUsecase.execute(command);

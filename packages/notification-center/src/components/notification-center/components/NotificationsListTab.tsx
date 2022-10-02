@@ -4,7 +4,6 @@ import { useNotifications, useApi, useNotificationCenter, useUnseenCount } from 
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
 import { ITab } from '../../../shared/interfaces';
-import { readSupportAdded } from './notification-item/NotificationListItem';
 
 export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();
@@ -18,7 +17,6 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     notifications: data,
     fetching: isLoading,
     hasNextPage,
-    markNotificationsAsSeen,
   } = useNotifications({ storeId: storeId });
 
   const { unseenCount } = useUnseenCount();
@@ -40,11 +38,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
   }
 
   async function onNotificationClicked(notification: IMessage) {
-    if (readSupportAdded(notification)) {
-      markNotificationAsRead(notification._id);
-    } else {
-      markNotificationsAsSeen(false, notification);
-    }
+    markNotificationAsRead(notification._id);
 
     if (onNotificationClick) {
       onNotificationClick(notification);

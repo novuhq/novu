@@ -6,7 +6,7 @@ export class MarkMessageAsCommand extends EnvironmentWithSubscriber {
   messageIds: string[];
 
   @IsDefined()
-  mark: MarkEnum;
+  mark: { seen?: boolean; read?: boolean };
 }
 
 export enum MarkEnum {

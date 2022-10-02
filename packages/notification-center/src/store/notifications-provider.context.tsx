@@ -54,6 +54,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     notifications[storeId] = notifications[storeId].map((message) => {
       if (message._id === messageId) {
         message.read = true;
+        message.seen = true;
       }
 
       return message;
@@ -61,7 +62,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     setNotifications(Object.assign({}, notifications));
 
-    return await api.markMessageAsRead(messageId);
+    return await api.markMessageAs(messageId, { seen: true, read: true });
   }
 
   async function updateAction(

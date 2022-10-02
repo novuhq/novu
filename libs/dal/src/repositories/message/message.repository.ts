@@ -217,11 +217,27 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     };
   }
 
-  async changeStatus(subscriberId: string, messageIds: string[], mark: string, markResult: boolean) {
-    const dateKey = this.buildDateMarkKey(mark);
+  async changeStatus(
+    environmentId: string,
+    subscriberId: string,
+    messageIds: string[],
+    mark: { seen?: boolean; read?: boolean }
+  ) {
+    const requestQuery: FilterQuery<MessageEntity> = {};
+
+    if (mark.seen != null) {
+      requestQuery.seen = mark.seen;
+      requestQuery.lastSeenDate = new Date();
+    }
+
+    if (mark.read != null) {
+      requestQuery.read = mark.read;
+      requestQuery.lastReadDate = new Date();
+    }
 
     await this.update(
       {
+        _environmentId: environmentId,
         _subscriberId: subscriberId,
         _id: {
           $in: messageIds.map((id) => {
@@ -230,18 +246,9 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
         },
       },
       {
-        $set: {
-          [mark]: markResult,
-          [dateKey]: new Date(),
-        },
+        $set: requestQuery,
       }
     );
-  }
-
-  private buildDateMarkKey(mark: string) {
-    const pascalMark = `${mark.charAt(0).toUpperCase()}${mark.slice(1)}`;
-
-    return `last${pascalMark}Date`;
   }
 
   async delete(query: FilterQuery<MessageEntity & Document>) {

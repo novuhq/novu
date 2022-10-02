@@ -63,6 +63,21 @@ export class ApiService {
     );
   }
 
+  async markMessageAs(
+    messageId: string | string[],
+    mark: { seen?: boolean; read?: boolean }
+  ): Promise<any> {
+    const markPayload =
+      mark.seen === undefined && mark.read === undefined
+        ? { seen: true }
+        : mark;
+
+    return await this.httpClient.post(`/widgets/messages/markAs`, {
+      messageId,
+      markPayload,
+    });
+  }
+
   async getNotificationsList(
     page: number,
     query: IStoreQuery = {}

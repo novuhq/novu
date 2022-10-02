@@ -4,7 +4,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { MarkMessageAsCommand } from './mark-message-as.command';
+import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 
 @Injectable()
 export class MarkMessageAs {
@@ -18,13 +18,7 @@ export class MarkMessageAs {
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
-    await this.messageRepository.changeStatus(subscriber._id, command.messageIds, command.mark, true);
-
-    const count = await this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
-      [command.mark]: false,
-    });
-
-    this.updateSocketCount(subscriber, count, command.mark);
+    await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
 
     const messages = await this.messageRepository.find({
       _id: {
@@ -32,15 +26,31 @@ export class MarkMessageAs {
       },
     });
 
+    if (command.mark.seen != null) {
+      await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
+    }
+
+    if (command.mark.read != null) {
+      await this.updateServices(command, subscriber, messages, MarkEnum.READ);
+    }
+
+    return messages;
+  }
+
+  private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: string) {
+    const count = await this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
+      [marked]: false,
+    });
+
+    this.updateSocketCount(subscriber, count, marked);
+
     for (const message of messages) {
-      this.analyticsService.track(`Mark as ${command.mark} - [Notification Center]`, command.organizationId, {
+      this.analyticsService.track(`Mark as ${marked} - [Notification Center]`, command.organizationId, {
         _subscriber: message._subscriberId,
         _organization: command.organizationId,
         _template: message._templateId,
       });
     }
-
-    return messages;
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, count: number, mark: string) {
