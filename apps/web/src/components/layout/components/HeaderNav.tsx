@@ -18,6 +18,7 @@ import { useLocalThemePreference } from '../../../hooks/use-localThemePreference
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
+import { SpotlightContext } from '../../../store/spotlightContext';
 
 type Props = {};
 const menuItem = [
@@ -34,6 +35,7 @@ export function HeaderNav({}: Props) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
+  const { addItem } = useContext(SpotlightContext);
 
   if (INTERCOM_APP_ID) {
     const { boot } = useIntercom();
@@ -74,6 +76,27 @@ export function HeaderNav({}: Props) {
 
     return <Ellipse {...headerIconsSettings} height={24} width={24} />;
   };
+
+  useEffect(() => {
+    addItem([
+      {
+        id: 'toggle-theme',
+        title: themeTitle(),
+        icon: Icon(),
+        onTrigger: () => {
+          toggleColorScheme();
+        },
+      },
+      {
+        id: 'sign-out',
+        title: 'Sign out',
+        icon: <Trash />,
+        onTrigger: () => {
+          logout();
+        },
+      },
+    ]);
+  }, [colorScheme]);
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">

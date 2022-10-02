@@ -9,6 +9,7 @@
  ![hacktoberfest-readme-light](https://user-images.githubusercontent.com/63902456/191171065-d8f349e5-7250-43ff-8078-fa02dd859bc8.jpeg#gh-light-mode-only)
 
 </div>
+
 </br>
 </br>
 
@@ -156,6 +157,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [ ] PagerDuty
 
+<div align="center">
+<details>
+  <summary>How to get Novu's swag?</summary>
+  Have 3 merged PRs during October 2022
+
+</details>
+</div>
+
 ## 💻  Need Help?
 
 We are more than happy to help you. If you are getting some errors or problems while working with the project, or want to discuss something related to the project.
@@ -165,7 +174,8 @@ Just <a href="https://discord.gg/novu">Join Our Discord</a> server and ask for h
 ## 🔗 Links
 
 - [Home page](https://novu.co/)
-- [Contribution Guidelines](https://github.com/AmanNegi/novu/blob/main/CONTRIBUTING.md)
+- [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
+- [Run Novu Locally](https://docs.novu.co/community/run-locally)
 
 ## 🛡️ License
 

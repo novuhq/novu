@@ -13,4 +13,8 @@ export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
   })
   @IsDefined()
   credentials: CredentialsDto;
+
+  @ApiProperty()
+  @IsDefined()
+  check: boolean;
 }

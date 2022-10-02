@@ -20,11 +20,13 @@ async function reInstallProject() {
     if (answers.reinstall === 'No') {
       return;
     }
-    await setupProject();
+
+    return await setupProject();
   });
 }
 
 async function setupRunner() {
+  const ora = require('ora');
   const shell = require('shelljs');
   const waitPort = require('wait-port');
   const inquirer = require('inquirer');
@@ -115,7 +117,7 @@ Everything is running 🎊
   API: http://localhost:3000
     `);
     } else if (answers.runConfiguration === 'Docs') {
-      ora('Building docs...').start();
+      const spinner = ora('Building docs...').start();
       shell.exec('npm run start:docs', { async: true });
 
       await waitPort({
@@ -123,6 +125,8 @@ Everything is running 🎊
         port: 4040,
       });
 
+      spinner.stop();
+      // eslint-disable-next-line no-console
       console.clear();
       // eslint-disable-next-line no-console
       console.log(`

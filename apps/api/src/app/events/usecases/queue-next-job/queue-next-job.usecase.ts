@@ -1,14 +1,14 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository } from '@novu/dal';
-import { WorkflowQueueService } from '../../services/workflow.queue.service';
+import { AddJob } from '../add-job/add-job.usecase';
 import { QueueNextJobCommand } from './queue-next-job.command';
 
 @Injectable()
 export class QueueNextJob {
   constructor(
     private jobRepository: JobRepository,
-    @Inject(forwardRef(() => WorkflowQueueService))
-    private workflowQueueService: WorkflowQueueService
+    @Inject(forwardRef(() => AddJob))
+    private addJobUsecase: AddJob
   ) {}
 
   public async execute(command: QueueNextJobCommand): Promise<JobEntity | undefined> {
@@ -22,7 +22,12 @@ export class QueueNextJob {
       return;
     }
 
-    await this.workflowQueueService.addJob(job);
+    await this.addJobUsecase.execute({
+      userId: job._userId,
+      environmentId: job._environmentId,
+      organizationId: job._organizationId,
+      jobId: job._id,
+    });
 
     return job;
   }

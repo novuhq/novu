@@ -43,3 +43,17 @@ test('should trigger sendgrid correctly', async () => {
     ],
   });
 });
+
+test('should check provider integration correctly', async () => {
+  const provider = new SendgridEmailProvider(mockConfig);
+  const spy = jest
+    .spyOn(MailService.prototype, 'send')
+    .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return [{ statusCode: 202 }] as any;
+    });
+
+  const response = await provider.checkIntegration(mockNovuMessage);
+  expect(spy).toHaveBeenCalled();
+  expect(response.success).toBe(true);
+});

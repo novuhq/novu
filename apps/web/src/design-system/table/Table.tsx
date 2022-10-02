@@ -145,7 +145,7 @@ export function Table({
           })}
         </tbody>
       </MantineTable>
-      {pagination && total > 0 && pageSize > 1 && (
+      {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
         <Pagination
           styles={{
             active: {
