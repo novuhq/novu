@@ -47,6 +47,7 @@ export interface IThemeHeader {
 
 export interface IThemePopover {
   arrowColor?: string;
+  tabBorderColor?: string;
 }
 
 export interface IThemeNotificationListItem {
