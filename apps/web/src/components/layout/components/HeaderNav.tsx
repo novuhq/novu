@@ -13,7 +13,7 @@ import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
-import { Sun, Moon, Ellipse, Bell, Trash, Mail } from '../../../design-system/icons';
+import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks/use-localThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
@@ -97,7 +97,7 @@ export function HeaderNav({}: Props) {
       </Group>
     </MantineMenu.Item>,
     ...menuItem.map(({ title, icon, path }) => (
-      <Link to={path}>
+      <Link to={path} key={title}>
         <MantineMenu.Item key={title} icon={icon} component="div">
           {title}
         </MantineMenu.Item>
