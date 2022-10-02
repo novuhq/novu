@@ -26,6 +26,7 @@ export function FeedsTabs() {
           {tabs.map((tab, index) => (
             <Tab
               key={index}
+              data-test-id={`tab-${tab.storeId}`}
               label={
                 <TabLabelWrapper>
                   {tab.name}
