@@ -8,7 +8,7 @@ interface IGradientDotProps {
 
 /* eslint-disable */
 export function GradientDot(props: IGradientDotProps) {
-  const color = props.colors.unreadBadgeColor;
+  const color = props.colors.unseenBadgeColor;
   const regularColor = typeof color === 'string';
 
   return (
@@ -20,7 +20,7 @@ export function GradientDot(props: IGradientDotProps) {
         height="13"
         rx="6.5"
         fill="url(#paint0_linear_1722_2699)"
-        stroke={props.colors.unreadBadgeBackgroundColor}
+        stroke={props.colors.unseenBadgeBackgroundColor}
         strokeWidth="3"
       />
       <defs>

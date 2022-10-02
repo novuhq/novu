@@ -90,8 +90,8 @@ export interface IThemeFooter {
 }
 
 export interface INotificationBellColors {
-  unreadBadgeColor?: string | ISvgStopColor;
-  unreadBadgeBackgroundColor?: string;
+  unseenBadgeColor?: string | ISvgStopColor;
+  unseenBadgeBackgroundColor?: string;
 }
 
 export interface ISvgStopColor {
