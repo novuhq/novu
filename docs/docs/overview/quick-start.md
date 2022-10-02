@@ -49,7 +49,7 @@ You can specify custom variables using the [{{handlebars}}](https://handlebarsjs
 
 #### SMS
 
-Similiar to the the email, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
+Similar to the the email, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
 
 #### In-app
 
@@ -88,7 +88,7 @@ The `to` parameter contains the information about the subscriber of the notifica
 
 #### Pass the subscriber information in trigger (Quickest)
 
-You can pass the subscriber object containing the following keys as this paramter:
+You can pass the subscriber object containing the following keys as this parameter:
 
 ```typescript
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {

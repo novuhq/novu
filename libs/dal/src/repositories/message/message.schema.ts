@@ -91,6 +91,7 @@ const messageSchema = new Schema(
       type: Schema.Types.String,
       index: true,
     },
+    identifier: Schema.Types.String,
     payload: Schema.Types.Mixed,
     overrides: Schema.Types.Mixed,
   },

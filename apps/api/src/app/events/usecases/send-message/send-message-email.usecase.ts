@@ -146,6 +146,7 @@ export class SendMessageEmail extends SendMessageType {
       html,
       from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
       attachments,
+      id: message._id,
     };
 
     if (email && integration) {
@@ -205,7 +206,20 @@ export class SendMessageEmail extends SendMessageType {
     const mailHandler = this.mailFactory.getHandler(integration, mailData.from);
 
     try {
-      await mailHandler.send(mailData);
+      const result = await mailHandler.send(mailData);
+      if (!result.id) {
+        return;
+      }
+      await this.messageRepository.update(
+        {
+          _id: message._id,
+        },
+        {
+          $set: {
+            identifier: result.id,
+          },
+        }
+      );
     } catch (error) {
       await this.sendErrorStatus(
         message,
