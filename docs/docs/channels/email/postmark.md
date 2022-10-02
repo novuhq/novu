@@ -13,7 +13,7 @@ To use the Postmark channel, you will need to create a Postmark account and add 
 
 ## Authenticate your sender identity
 
-Before you send email in full scale, you will need to authenticate your send indentity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Postmark require you to authenticate your sender identity before you can send emails.
+Before you send email in full scale, you will need to authenticate your sender's indentity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Postmark require you to authenticate your sender identity before you can send emails.
 
 Note: Postmark allows you to send emails to the domains you have added.
 
