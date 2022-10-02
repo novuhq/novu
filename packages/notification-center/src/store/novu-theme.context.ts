@@ -42,6 +42,7 @@ export interface IThemeHeader {
   badgeColor?: string;
   badgeTextColor?: string;
   fontColor?: string;
+  markAllAsReadButtonColor?: string;
 }
 
 export interface IThemePopover {

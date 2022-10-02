@@ -1,7 +1,6 @@
 import React, { useContext, useEffect } from 'react';
-import { ActionIcon, Badge } from '@mantine/core';
+import { ActionIcon } from '@mantine/core';
 import styled from 'styled-components';
-import { colors } from '../../../../../shared/config/colors';
 import { useNotificationCenter, useNovuTheme, useScreens, useTranslations, useUnseenCount } from '../../../../../hooks';
 import { INotificationCenterContext, INotificationsContext } from '../../../../../index';
 import { NotificationCenterContext, ScreensEnum } from '../../../../../store';
@@ -33,7 +32,11 @@ export function Header() {
         {!tabs && <UnseenBadge unseenCount={unseenCount} />}
       </div>
       <ActionItems>
-        <MarkReadAction disabled={unseenCount === 0} onClick={markAllAsSeen}>
+        <MarkReadAction
+          disabled={unseenCount === 0}
+          fontColor={theme.header?.markAllAsReadButtonColor}
+          onClick={markAllAsSeen}
+        >
           {t('markAllAsRead')}
         </MarkReadAction>
         <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
@@ -72,13 +75,13 @@ const Text = styled.div<{ fontColor: string }>`
   text-align: center;
 `;
 
-const MarkReadAction = styled.div<{ disabled: boolean }>`
+const MarkReadAction = styled.div<{ disabled: boolean; fontColor: string }>`
   margin-right: 10px;
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 17px;
-  color: ${colors.B60};
+  color: ${({ fontColor }) => fontColor};
   cursor: pointer;
   pointer-events: ${({ disabled }) => (disabled ? 'none' : 'auto')};
   opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
