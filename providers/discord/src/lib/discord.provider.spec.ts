@@ -1,6 +1,6 @@
 import { DiscordProvider } from './discord.provider';
 
-test('should trigger Slack correctly', async () => {
+test('should trigger Discord provider correctly', async () => {
   const provider = new DiscordProvider({});
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

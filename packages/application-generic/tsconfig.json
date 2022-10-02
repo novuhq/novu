@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "outDir": "build/main",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "strict": true,
+    "types": ["node", "jest"],
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules/**"]
+}
