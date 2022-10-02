@@ -2,7 +2,9 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
   UseGuards,
@@ -27,6 +29,8 @@ import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
+import { DeleteEnvironment } from './usecases/delete-environment/delete-environment.usecase';
+import { DeleteEnvironmentCommand } from './usecases/delete-environment/delete-environment.command';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -35,6 +39,7 @@ import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api
 export class EnvironmentsController {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
+    private deleteEnvironmentUsecase: DeleteEnvironment,
     private getApiKeysUsecase: GetApiKeys,
     private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
@@ -95,6 +100,23 @@ export class EnvironmentsController {
       GetMyEnvironmentsCommand.create({
         userId: user._id,
         organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Delete('/:envId')
+  @ApiOperation({
+    summary: 'Delete env by id',
+  })
+  @ApiOkResponse({
+    status: 200,
+  })
+  async deleteMyEnvironment(@UserSession() user: IJwtPayload, @Param('envId') envId: string) {
+    return await this.deleteEnvironmentUsecase.execute(
+      DeleteEnvironmentCommand.create({
+        _id: envId,
+        organizationId: user.organizationId,
+        userId: user._id,
       })
     );
   }
