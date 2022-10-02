@@ -61,7 +61,7 @@ export interface IThemeNotificationListItem {
     notificationItemBeforeBrandColor?: string;
     timeMarkFontColor?: string;
   };
-  buttons: IStyleButtons;
+  buttons?: IStyleButtons;
 }
 
 export interface IThemeUserPreferences {

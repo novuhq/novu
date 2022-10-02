@@ -11,6 +11,10 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
+import { SendMessage } from '../usecases/send-message/send-message.usecase';
+import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
+import { RunJob } from '../usecases/run-job/run-job.usecase';
+import { RunJobCommand } from '../usecases/run-job/run-job.command';
 
 const axiosInstance = axios.create();
 
@@ -22,6 +26,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   const jobRepository = new JobRepository();
   let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
+  let runJob: RunJob;
 
   const awaitRunningJobs = async (unfinishedJobs = 0) => {
     let runningJobs = 0;
@@ -62,6 +67,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
     workflowQueueService = session.testServer.getService(WorkflowQueueService);
+
+    runJob = new RunJob(
+      jobRepository,
+      session.testServer.getService(SendMessage),
+      session.testServer.getService(QueueNextJob)
+    );
   });
 
   it('should digest events within time interval', async function () {
@@ -104,7 +115,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     await awaitRunningJobs(2);
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     const jobs = await jobRepository.find({
       _templateId: template._id,
@@ -176,7 +194,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     await awaitRunningJobs(2);
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     await awaitRunningJobs(0);
 
@@ -233,7 +258,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     const jobs = await jobRepository.find({
       _templateId: template._id,
@@ -290,7 +322,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(delayedJobs.length).to.equal(2);
 
     for (const job of delayedJobs) {
-      await workflowQueueService.work(job);
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: job._id,
+          environmentId: job._environmentId,
+          organizationId: job._organizationId,
+          userId: job._userId,
+        })
+      );
     }
 
     await awaitRunningJobs(0);
@@ -407,7 +446,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     const pendingJobs = await jobRepository.count({
       _templateId: template._id,
@@ -473,7 +519,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       transactionId: id,
     });
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     await awaitRunningJobs(0);
 
@@ -533,7 +586,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(pendingJobs.length).to.equal(1);
     const pendingJob = pendingJobs[0];
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
     await awaitRunningJobs(0);
     const job = await jobRepository.findById(pendingJob._id);
 
@@ -591,7 +651,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     await awaitRunningJobs(0);
 
@@ -648,7 +715,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     await awaitRunningJobs(0);
 
@@ -713,7 +787,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     for (const digest of digests) {
-      await workflowQueueService.work(digest);
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: digest._id,
+          environmentId: digest._environmentId,
+          organizationId: digest._organizationId,
+          userId: digest._userId,
+        })
+      );
     }
 
     await awaitRunningJobs(0);
@@ -790,7 +871,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     for (const digest of digests) {
-      await workflowQueueService.work(digest);
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: digest._id,
+          environmentId: digest._environmentId,
+          organizationId: digest._organizationId,
+          userId: digest._userId,
+        })
+      );
     }
 
     await awaitRunningJobs(0);
@@ -855,7 +943,15 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     await awaitRunningJobs(2);
-    await workflowQueueService.work(delayedJob);
+
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     await awaitRunningJobs(0);
 
@@ -902,7 +998,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     await awaitRunningJobs(2);
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     await awaitRunningJobs(0);
 

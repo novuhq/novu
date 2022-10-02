@@ -25,6 +25,8 @@
   // MD014/commands-show-output - Dollar signs used before commands without showing output
   "MD014": false,
 
+  "MD013/line-length": false,
+
   // MD044/proper-names - Proper names should have the correct capitalization
   "MD044": {
     "code_blocks": false,

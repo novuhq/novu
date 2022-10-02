@@ -118,6 +118,7 @@ export interface IIntegratedProvider {
   active: boolean;
   connected: boolean;
   logoFileName: ILogoFileName;
+  betaVersion: boolean;
 }
 
 export interface ICredentials {
@@ -187,6 +188,7 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
       docReference: providerItem.docReference,
       comingSoon: !!providerItem.comingSoon,
+      betaVersion: !!providerItem.betaVersion,
       active: integration?.active ?? true,
       connected: !!integration,
       logoFileName: providerItem.logoFileName,

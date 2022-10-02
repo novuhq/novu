@@ -3,6 +3,8 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import Client, { Email } from 'node-mailjet';
 import { MailjetResponse } from './mailjet-response.interface';
@@ -58,6 +60,16 @@ export class MailjetEmailProvider implements IEmailProvider {
     return {
       id: response.response.header['x-mj-request-guid'],
       date: response.response.header.date,
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

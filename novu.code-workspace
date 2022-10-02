@@ -61,6 +61,10 @@
       "path": "packages/notification-center"
     },
     {
+      "name": "🔔 @novu/apns",
+      "path": "providers/apns"
+    },
+    {
       "name": "📦 @novu/react-native",
       "path": "packages/react-native"
     },

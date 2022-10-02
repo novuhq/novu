@@ -1,4 +1,4 @@
-import './config';
+import { CONTEXT_PATH } from './config';
 import 'newrelic';
 import '@sentry/tracing';
 
@@ -50,7 +50,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.enableCors(corsOptionsDelegate);
 
-  app.setGlobalPrefix('v1');
+  app.setGlobalPrefix(CONTEXT_PATH + 'v1');
 
   app.use(passport.initialize());
 

@@ -18,6 +18,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       channel: ChannelTypeEnum.EMAIL,
       credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
       active: true,
+      check: false,
     };
 
     payload.credentials = { apiKey: 'new_key', secretKey: 'new_secret' };
@@ -41,12 +42,14 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       channel: 'EMAIL',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
     const secondProviderPayload = {
       providerId: 'mailgun',
       channel: 'EMAIL',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: false,
+      check: false,
     };
 
     // create integrations

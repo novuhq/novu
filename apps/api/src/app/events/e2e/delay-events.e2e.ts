@@ -8,9 +8,14 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
+import { addSeconds, differenceInMilliseconds } from 'date-fns';
+import { RunJob } from '../usecases/run-job/run-job.usecase';
+import { SendMessage } from '../usecases/send-message/send-message.usecase';
+import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
+import { RunJobCommand } from '../usecases/run-job/run-job.command';
 
 const axiosInstance = axios.create();
 
@@ -22,6 +27,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   const jobRepository = new JobRepository();
   let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
+  let runJob: RunJob;
 
   const awaitRunningJobs = async (unfinishedJobs = 0) => {
     let runningJobs = 0;
@@ -63,6 +69,12 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
     workflowQueueService = session.testServer.getService(WorkflowQueueService);
+
+    runJob = new RunJob(
+      jobRepository,
+      session.testServer.getService(SendMessage),
+      session.testServer.getService(QueueNextJob)
+    );
   });
 
   it('should delay event for time interval', async function () {
@@ -78,7 +90,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            type: DigestTypeEnum.REGULAR,
+            type: DelayTypeEnum.REGULAR,
           },
         },
         {
@@ -110,7 +122,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     expect(messages.length).to.equal(1);
     expect(messages[0].content).to.include('Not Delayed');
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
     await awaitRunningJobs(0);
 
     const messagesAfter = await messageRepository.find({
@@ -132,7 +151,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            type: DigestTypeEnum.REGULAR,
+            type: DelayTypeEnum.REGULAR,
           },
         },
         {
@@ -159,6 +178,79 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     expect(messages.length).to.equal(1);
   });
 
+  it('should delay for scheduled delay', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DELAY,
+          content: '',
+          metadata: {
+            type: DelayTypeEnum.SCHEDULED,
+            delayPath: 'sendAt',
+          },
+        },
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'Testing of User Name',
+      sendAt: addSeconds(new Date(), 30),
+    });
+    await awaitRunningJobs(1);
+
+    const delayedJob = await jobRepository.findOne({
+      _templateId: template._id,
+      type: StepTypeEnum.DELAY,
+    });
+
+    const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(delayedJob?.updatedAt));
+
+    const delay = await workflowQueueService.queue.getDelayed();
+    expect(delay[0].opts.delay).to.approximately(diff, 5);
+  });
+
+  it('should fail for missing or invalid path for scheduled delay', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DELAY,
+          content: '',
+          metadata: {
+            type: DelayTypeEnum.SCHEDULED,
+            delayPath: 'sendAt',
+          },
+        },
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    try {
+      await triggerEvent({
+        customVar: 'Testing of User Name',
+      });
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.response.data.message).to.equal('payload is missing required key(s) and type(s): sendAt (ISO Date)');
+    }
+
+    try {
+      await triggerEvent({
+        customVar: 'Testing of User Name',
+        sendAt: '20-09-2025',
+      });
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.response.data.message).to.equal('payload is missing required key(s) and type(s): sendAt (ISO Date)');
+    }
+  });
+
   it('should be able to cancel delay', async function () {
     const id = MessageRepository.createObjectId();
     template = await session.createTemplate({
@@ -173,7 +265,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           metadata: {
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
-            type: DigestTypeEnum.REGULAR,
+            type: DelayTypeEnum.REGULAR,
           },
         },
         {
@@ -202,7 +294,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       type: StepTypeEnum.DELAY,
     });
 
-    await workflowQueueService.work(delayedJob);
+    await runJob.execute(
+      RunJobCommand.create({
+        jobId: delayedJob._id,
+        environmentId: delayedJob._environmentId,
+        organizationId: delayedJob._organizationId,
+        userId: delayedJob._userId,
+      })
+    );
 
     const pendingJobs = await jobRepository.count({
       _templateId: template._id,

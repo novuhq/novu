@@ -12,11 +12,10 @@ import {
   OrganizationEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
@@ -208,36 +207,15 @@ export class SendMessageEmail extends SendMessageType {
     try {
       await mailHandler.send(mailData);
     } catch (error) {
-      console.error(error);
-      Sentry.captureException(error?.response?.body || error?.response || error?.errors || error);
-      const text =
-        String(error?.response?.body || error?.response || error) || 'Error while sending email with provider';
-      this.messageRepository.updateMessageStatus(
-        message._id,
+      await this.sendErrorStatus(
+        message,
         'error',
-        String(error?.response?.body || error?.response || error),
         'mail_unexpected_error',
-        text
-      );
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          notificationId: notification._id,
-          messageId: message._id,
-          text,
-          userId: command.userId,
-          subscriberId: command.subscriberId,
-          code: LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
-          templateId: notification._templateId,
-          raw: {
-            error: String(error?.response?.body || error?.response || error),
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
+        'Error while sending email with provider',
+        command,
+        notification,
+        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
+        error
       );
     }
   }
