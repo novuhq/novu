@@ -14,6 +14,7 @@ import { BN } from './languages/bn';
 import { ML } from './languages/ml';
 import { ZH } from './languages/zh';
 import { HR } from './languages/hr';
+import { SA } from './languages/sa';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -44,6 +45,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ml: ML,
   zh: ZH,
   hr: HR,
+  sa: SA,
 };
 
 /**
@@ -73,4 +75,5 @@ export type I18NLanguage =
   | 'bn'
   | 'ml'
   | 'zh'
-  | 'hr';
+  | 'hr'
+  | 'sa';
