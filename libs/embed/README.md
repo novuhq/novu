@@ -103,7 +103,7 @@ There is already set a `precommit` hook for formatting your code with Prettier :
 
 By default, there are two disabled git hooks. They're set up when you run the `npm run semantic-release-prepare` script. They make sure:
  - You follow a [conventional commit message](https://github.com/conventional-changelog/conventional-changelog)
- - Your build is not going to fail in [Travis](https://travis-ci.org) (or your CI server), since it's runned locally before `git push`
+ - Your build is not going to fail in [Travis](https://travis-ci.org) (or your CI server), since it's ran locally before `git push`
 
 This makes more sense in combination with [automatic releases](#automatic-releases)
 

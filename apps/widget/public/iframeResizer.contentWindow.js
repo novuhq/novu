@@ -221,7 +221,7 @@
     mouseEvents = undefined !== data[15] ? Boolean(data[15]) : mouseEvents
   }
 
-  function depricate(key) {
+  function deprecate(key) {
     var splitName = key.split('Callback')
 
     if (splitName.length === 2) {
@@ -244,7 +244,7 @@
       var data = window.iFrameResizer
 
       log('Reading data from page: ' + JSON.stringify(data))
-      Object.keys(data).forEach(depricate, data)
+      Object.keys(data).forEach(deprecate, data)
 
       onMessage = 'onMessage' in data ? data.onMessage : onMessage
       onReady = 'onReady' in data ? data.onReady : onReady
@@ -762,7 +762,7 @@
   // Not testable in PhantomJS
   /* istanbul ignore next */
   function setupBodyMutationObserver() {
-    function addImageLoadListners(mutation) {
+    function addImageLoadListeners(mutation) {
       function addImageLoadListener(element) {
         if (false === element.complete) {
           log('Attach listeners to ' + element.src)
@@ -813,7 +813,7 @@
       )
 
       // Deal with WebKit / Blink asyncing image loading when tags are injected into the page
-      mutations.forEach(addImageLoadListners)
+      mutations.forEach(addImageLoadListeners)
     }
 
     function createMutationObserver() {
