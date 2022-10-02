@@ -16,6 +16,7 @@ describe('test use of novu node package', () => {
     novu = new Novu(mockConfig.apiKey);
   });
 
+  // TODO: remove this in the a future major version
   test('should trigger correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 
@@ -37,6 +38,7 @@ describe('test use of novu node package', () => {
     });
   });
 
+  // TODO: remove this in the a future major version
   test('should broadcast correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 
@@ -56,6 +58,7 @@ describe('test use of novu node package', () => {
     });
   });
 
+  // TODO: remove this in the a future major version
   test('should trigger correctly for all subscribers definitions ', async () => {
     mockedAxios.post.mockResolvedValue({});
 
