@@ -335,7 +335,7 @@ export const slackConfig: IConfigCredentials[] = [
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
-    displayName: 'Service Account',
+    displayName: 'Service Account (entire JSON file)',
     type: 'text',
     required: true,
   },
