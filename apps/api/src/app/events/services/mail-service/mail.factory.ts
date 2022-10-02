@@ -29,7 +29,7 @@ export class MailFactory {
 
   getHandler(
     integration: Pick<IntegrationEntity, '_id' | 'credentials' | 'channel' | 'providerId'>,
-    from: string
+    from?: string
   ): IMailHandler {
     try {
       const handler =
