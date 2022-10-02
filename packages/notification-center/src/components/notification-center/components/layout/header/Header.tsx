@@ -1,11 +1,12 @@
 import React, { useContext, useEffect } from 'react';
-import { ActionIcon, Badge } from '@mantine/core';
+import { ActionIcon } from '@mantine/core';
 import styled from 'styled-components';
-import { colors } from '../../../../../shared/config/colors';
 import { useNotificationCenter, useNovuTheme, useScreens, useTranslations, useUnseenCount } from '../../../../../hooks';
-import { INotificationCenterContext } from '../../../../../index';
+import { INotificationCenterContext, INotificationsContext } from '../../../../../index';
 import { NotificationCenterContext, ScreensEnum } from '../../../../../store';
 import { Cogs } from '../../../../../shared/icons';
+import { UnseenBadge } from '../../UnseenBadge';
+import { NotificationsContext } from '../../../../../store/notifications.context';
 
 export function Header() {
   const { onUnseenCountChanged } = useNotificationCenter();
@@ -13,6 +14,7 @@ export function Header() {
   const { theme, common } = useNovuTheme();
   const { setScreen } = useScreens();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
+  const { markAllAsSeen } = useContext<INotificationsContext>(NotificationsContext);
   const { t } = useTranslations();
 
   useEffect(() => {
@@ -27,38 +29,26 @@ export function Header() {
         <Text fontColor={theme.header.fontColor} data-test-id="notifications-header-title">
           {t('notifications')}
         </Text>
-        {!tabs && unseenCount && unseenCount > 0 ? (
-          <Badge
-            data-test-id="unseen-count-label"
-            sx={{
-              padding: 0,
-              width: 20,
-              height: 20,
-              pointerEvents: 'none',
-              border: 'none',
-              background: theme.header?.badgeColor,
-              fontFamily: common.fontFamily,
-              lineHeight: '14px',
-              color: theme.header?.badgeTextColor,
-              fontWeight: 'bold',
-              fontSize: '12px',
-            }}
-            radius={100}
-          >
-            {unseenCount}
-          </Badge>
-        ) : null}
+        {!tabs && <UnseenBadge unseenCount={unseenCount} />}
       </div>
-      <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
-        <ActionIcon
-          data-test-id="user-preference-cog"
-          variant="transparent"
-          onClick={() => setScreen(ScreensEnum.SETTINGS)}
+      <ActionItems>
+        <MarkReadAction
+          disabled={unseenCount === 0}
+          fontColor={theme.header?.markAllAsReadButtonColor}
+          onClick={markAllAsSeen}
         >
-          <Cogs style={{ color: theme?.userPreferences?.settingsButtonColor }} />
-        </ActionIcon>
-      </div>
-      <MarkReadAction style={{ display: 'none' }}>{t('markAllAsRead')}</MarkReadAction>
+          {t('markAllAsRead')}
+        </MarkReadAction>
+        <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
+          <ActionIcon
+            data-test-id="user-preference-cog"
+            variant="transparent"
+            onClick={() => setScreen(ScreensEnum.SETTINGS)}
+          >
+            <Cogs style={{ color: theme?.userPreferences?.settingsButtonColor }} />
+          </ActionIcon>
+        </div>
+      </ActionItems>
     </HeaderWrapper>
   );
 }
@@ -71,6 +61,11 @@ const HeaderWrapper = styled.div`
   height: 55px;
 `;
 
+const ActionItems = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 const Text = styled.div<{ fontColor: string }>`
   color: ${({ fontColor }) => fontColor};
   font-size: 20px;
@@ -79,10 +74,15 @@ const Text = styled.div<{ fontColor: string }>`
   line-height: 24px;
   text-align: center;
 `;
-const MarkReadAction = styled.div`
+
+const MarkReadAction = styled.div<{ disabled: boolean; fontColor: string }>`
+  margin-right: 10px;
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 17px;
-  color: ${colors.B60};
+  color: ${({ fontColor }) => fontColor};
+  cursor: pointer;
+  pointer-events: ${({ disabled }) => (disabled ? 'none' : 'auto')};
+  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
 `;
