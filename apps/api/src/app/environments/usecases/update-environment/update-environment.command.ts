@@ -4,7 +4,7 @@ import { OrganizationCommand } from '../../../shared/commands/organization.comma
 export class UpdateEnvironmentCommand extends OrganizationCommand {
   @IsDefined()
   @IsMongoId()
-  _id: string;
+  environmentId: string;
 
   @IsOptional()
   @IsString()

@@ -2,7 +2,6 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
@@ -29,9 +28,8 @@ import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
-import { DeleteEnvironment } from './usecases/delete-environment/delete-environment.usecase';
-import { DeleteEnvironmentCommand } from './usecases/delete-environment/delete-environment.command';
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
+import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
 
 @Controller('/environments')
@@ -42,7 +40,6 @@ export class EnvironmentsController {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
     private updateEnvironmentUsecase: UpdateEnvironment,
-    private deleteEnvironmentUsecase: DeleteEnvironment,
     private getApiKeysUsecase: GetApiKeys,
     private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
@@ -107,40 +104,23 @@ export class EnvironmentsController {
     );
   }
 
-  @Put('/:envId')
+  @Put('/:environmentId')
   @ApiOperation({
     summary: 'Update env by id',
   })
   async updateMyEnvironment(
     @UserSession() user: IJwtPayload,
-    @Param('envId') envId: string,
+    @Param('environmentId') environmentId: string,
     @Body() payload: UpdateEnvironmentRequestDto
   ) {
     return await this.updateEnvironmentUsecase.execute(
       UpdateEnvironmentCommand.create({
-        _id: envId,
+        environmentId: environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         name: payload.name,
         identifier: payload.identifier,
         _parentId: payload.parentId,
-      })
-    );
-  }
-
-  @Delete('/:envId')
-  @ApiOperation({
-    summary: 'Delete env by id',
-  })
-  @ApiOkResponse({
-    status: 200,
-  })
-  async deleteMyEnvironment(@UserSession() user: IJwtPayload, @Param('envId') envId: string) {
-    return await this.deleteEnvironmentUsecase.execute(
-      DeleteEnvironmentCommand.create({
-        _id: envId,
-        organizationId: user.organizationId,
-        userId: user._id,
       })
     );
   }

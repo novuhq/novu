@@ -23,7 +23,8 @@ export class UpdateEnvironment {
 
     return await this.environmentRepository.update(
       {
-        _id: command._id,
+        _id: command.environmentId,
+        _organizationId: command.organizationId,
       },
       { $set: updatePayload }
     );
