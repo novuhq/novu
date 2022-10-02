@@ -5,7 +5,7 @@ When using Discord you will have to save the integration credentials on the subs
 1. Using the **Discord Webhook** integration.
 2. Using the **Discord Bot** integration.
 
-Right now Novu only supports the **Discord Webhook** integration, since the easiest way to setup when you know in advance where the notifications should be sent. This is a common approach when you need to notify a particular channel about updates.
+Right now Novu only supports the **Discord Webhook** integration, since the easiest way to setup is when you know in advance where the notifications should be sent. This is a common approach when you need to notify a particular channel about updates.
 
 ## Quickstart
 
@@ -14,7 +14,7 @@ Let's follow a simple guide on how you can generate a webhook token for testing 
 1. Go to the channel you want to add the webhook to
 2. Right-click the channel and select "Edit Channel"
 3. Integrations -> Webhooks -> New Webhook
-4. Copy webhook URL
+4. Copy the webhook URL
 5. Persist the webhook URL on the subscriber entity
 
 ```typescript
@@ -29,7 +29,7 @@ await novu.subscribers.setCredentials('SUBSCRIBER_ID', ChatProviderIdEnum.Discor
 
 - `subscriberId` is a custom identifier used when identifying your users within the Novu platform.
 - `providerId` is a unique provider identifier, we recommend using our ChatProviderIdEnum to specify the provider.
-- The third parameter is the credentials object, in this case we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
+- The third parameter is the credentials object, in this case, we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
 
 <!-- markdownlint-disable MD029 -->
 
