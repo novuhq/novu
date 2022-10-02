@@ -8,8 +8,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const { api } = useApi();
   const { stores } = useFeed();
   const [notifications, setNotifications] = useState<Record<string, IMessage[]>>({ default_store: [] });
-  const [page, setPage] = useState<Map<string, number>>(new Map([['default_store', 0]]));
-  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['default_store', true]]));
+  const [page, setPage] = useState<Map<string, number>>(new Map<string, number>([['default_store', 0]]));
+  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(
+    new Map<string, boolean>([['default_store', true]])
+  );
   const [fetching, setFetching] = useState<boolean>(false);
   const [refetchTimeout, setRefetchTimeout] = useState<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -109,6 +111,18 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
   }
 
+  function onWidgetClose() {
+    resetPageState();
+  }
+
+  function onTabChange(storeId = 'default_store') {
+    setPage(page.set(storeId, 0));
+  }
+
+  function resetPageState() {
+    setPage(new Map<string, number>([['default_store', 0]]));
+  }
+
   return (
     <NotificationsContext.Provider
       value={{
@@ -120,6 +134,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         updateAction,
         refetch,
         markNotificationsAsSeen,
+        onWidgetClose,
+        onTabChange,
       }}
     >
       {children}

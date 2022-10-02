@@ -11,11 +11,12 @@ import { IStore } from '../../../shared/interfaces';
 export function FeedsTabs() {
   const { tabs, onTabClick } = useNotificationCenter();
   const { activeTabStoreId, setActiveTabStoreId } = useFeed();
-  const { markNotificationsAsSeen, refetch } = useNotifications({ storeId: activeTabStoreId });
+  const { markNotificationsAsSeen, refetch, onTabChange } = useNotifications({ storeId: activeTabStoreId });
 
   async function handleOnTabChange(tabIndex: number) {
     markNotificationsAsSeen(true);
     refetch();
+    onTabChange();
     setActiveTabStoreId(tabs[tabIndex].storeId);
   }
 
