@@ -1,52 +1,65 @@
-import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import * as capitalize from 'lodash.capitalize';
 
 describe('Invites module', function () {
-  let organization;
   beforeEach(function () {
     cy.task('clearDatabase');
-    cy.initializeSession()
-      .then((session) => {
-        organization = session.organization;
-
-        cy.request({
-          method: 'POST',
-          url: `${Cypress.env('apiUrl')}/v1/invites`,
-          body: {
-            email: 'testing-amazing@user.com',
-            role: MemberRoleEnum.ADMIN,
-          },
-          auth: {
-            bearer: session.token,
-          },
-        });
-        cy.request({
-          method: 'GET',
-          url: `${Cypress.env('apiUrl')}/v1/organizations/members`,
-          auth: {
-            bearer: session.token,
-          },
-        })
-          .then((response) => {
-            const member = response.body.data.find((i) => i.memberStatus === MemberStatusEnum.INVITED);
-            return member.invite.token;
-          })
-          .as('token');
-
-        cy.logout();
-      })
-      .as('session');
+    cy.inviteUser('testing-amazing@user.com');
   });
 
   it('should accept invite to organization', function () {
-    cy.visit('/auth/invitation/' + this.token);
-    cy.getByTestId('fullName').type('Invited to org user');
-    cy.getByTestId('password').type('asd#Faf4fd');
-    cy.getByTestId('accept-cb').click();
-    cy.getByTestId('submitButton').click();
-
-    cy.url().should('include', '/templates');
+    doRegister(this.token);
 
     cy.getByTestId('header-profile-avatar').click();
-    cy.getByTestId('header-dropdown-organization-name').contains(organization.name.split(' ')[0]);
+    cy.getByTestId('header-dropdown-organization-name').contains(capitalize(this.organization.name.split(' ')[0]));
+  });
+
+  it('should login if already existing user', function () {
+    doRegister(this.token);
+    cy.inviteUser('testing-amazing@user.com').then(() => {
+      cy.visit('/auth/invitation/' + this.token);
+      cy.getByTestId('email').should('have.value', 'testing-amazing@user.com');
+      cy.getByTestId('password').type('asd#Faf4fd');
+      cy.getByTestId('submit-btn').click();
+
+      cy.url().should('include', '/templates');
+
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('organization-switch').focus();
+      cy.get('.mantine-Select-item').contains(capitalize(this.organization.name)).click();
+    });
+  });
+
+  it('should also accept invite if already logged in with right user', function () {
+    doRegister(this.token);
+    cy.inviteUser('testing-amazing@user.com').then(() => {
+      doLogin('testing-amazing@user.com', 'asd#Faf4fd');
+
+      cy.visit('/auth/invitation/' + this.token);
+
+      cy.url().should('include', '/templates');
+
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('organization-switch').focus();
+      cy.get('.mantine-Select-item').contains(capitalize(this.organization.name)).click();
+    });
   });
 });
+
+function doRegister(token: string) {
+  cy.visit('/auth/invitation/' + token);
+  cy.getByTestId('fullName').type('Invited to org user');
+  cy.getByTestId('password').type('asd#Faf4fd');
+  cy.getByTestId('accept-cb').click();
+  cy.getByTestId('submitButton').click();
+
+  cy.url().should('include', '/templates');
+}
+
+function doLogin(email: string, password: string) {
+  cy.visit('/auth/login');
+  cy.getByTestId('email').type(email);
+  cy.getByTestId('password').type(password);
+  cy.getByTestId('submit-btn').click();
+
+  cy.url().should('include', '/templates');
+}
