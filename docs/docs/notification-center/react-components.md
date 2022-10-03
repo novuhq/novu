@@ -192,6 +192,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>sa</code> (Sanskrit)</li>
           <li><code>ur</code> (Urdu)</li>
           <li><code>pl</code> (Polish)</li>
+          <li><code>cs</code> (Czech)</li>
         </ul>
       </div>
   </details>
