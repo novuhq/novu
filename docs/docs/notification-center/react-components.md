@@ -189,6 +189,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>hr</code> (Croatian)</li>
           <li><code>or</code> (Odia)</li>
           <li><code>sa</code> (Sanskrit)</li>
+          <li><code>mr</code> (Marathi)</li>
         </ul>
       </div>
   </details>
