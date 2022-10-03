@@ -18,6 +18,7 @@ import { HR } from './languages/hr';
 import { OR } from './languages/or';
 import { SA } from './languages/sa';
 import { NE } from './languages/ne';
+import { UR } from './languages/ur';
 import { PL } from './languages/pl';
 
 export interface ITranslationContent {
@@ -52,6 +53,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   hr: HR,
   or: OR,
   sa: SA,
+  ur: UR,
   ne: NE,
   pl: PL,
 };
@@ -87,5 +89,6 @@ export type I18NLanguage =
   | 'hr'
   | 'or'
   | 'sa'
+  | 'ur'
   | 'ne' 
   | 'pl';
