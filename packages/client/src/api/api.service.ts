@@ -74,7 +74,7 @@ export class ApiService {
 
     return await this.httpClient.post(`/widgets/messages/markAs`, {
       messageId,
-      markPayload,
+      mark: markPayload,
     });
   }
 
