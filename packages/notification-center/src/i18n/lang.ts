@@ -3,6 +3,7 @@ import { FI } from './languages/fi';
 import { FR } from './languages/fr';
 import { HI } from './languages/hi';
 import { IT } from './languages/it';
+import { KA } from './languages/ka';
 import { RU } from './languages/ru';
 import { UK } from './languages/uk';
 import { ES } from './languages/es';
@@ -17,6 +18,8 @@ import { HR } from './languages/hr';
 import { OR } from './languages/or';
 import { SA } from './languages/sa';
 import { NE } from './languages/ne';
+import { UR } from './languages/ur';
+import { PL } from './languages/pl';
 import { CS } from './languages/cs';
 
 export interface ITranslationContent {
@@ -40,6 +43,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ru: RU,
   es: ES,
   it: IT,
+  ka: KA,
   ar: AR,
   fa: FA,
   uk: UK,
@@ -50,7 +54,9 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   hr: HR,
   or: OR,
   sa: SA,
+  ur: UR,
   ne: NE,
+  pl: PL,
   cs: CS,
 };
 
@@ -70,6 +76,7 @@ export type I18NLanguage =
   | 'fi'
   | 'hi'
   | 'it'
+  | 'ka'
   | 'gj'
   | 'ru'
   | 'uk'
@@ -85,4 +92,7 @@ export type I18NLanguage =
   | 'or'
   | 'sa'
   | 'ne'
+  | 'ur'
+  | 'ne' 
+  | 'pl'
   | 'cs';
