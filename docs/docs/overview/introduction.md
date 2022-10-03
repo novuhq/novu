@@ -14,7 +14,7 @@ Building a notification layer is the thing that we as developers have to do for 
 
 Today, users tend to receive communication across multiple providers. [Sendgrid](https://sendgrid.com/) for Email, [Twilio](https://www.twilio.com/) for SMS, Mailchimp, Push, Web-Push, Chat messaging (Slack, etc...). The main reason behind this is that users expect to customize the communication channels to fit their needs and goals. This forces developers to manage all of those APIs across the codebase.
 
-As developers, we tend to create abstractions, but following the growing number of integrations, channels of communication are sent this becomes a burden on the team and is usually implemented only on an as just-make-it-work-mode.
+As developers, we tend to create abstractions, but following the growing number of integrations, channels of communication that are sent becomes a burden on the team and is usually implemented only on an as just-make-it-work-mode.
 
 Novu provides a single API to manage all your customer communication. Need to add a new provider? Switch your email provider. Fallback to mailgun when SendGrid is down? We've got you covered!
 
