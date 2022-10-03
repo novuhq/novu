@@ -1,6 +1,6 @@
 import { ITranslationEntry } from '../lang';
 
-export const HR: ITranslationEntry = {
+export const MR: ITranslationEntry = {
   translations: {
     notifications: 'सुचना',
     markAllAsRead: 'सर्व वाचल्याप्रमाणे चिन्हांकित करा',
