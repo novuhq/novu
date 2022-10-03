@@ -52,7 +52,6 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   or: OR,
   sa: SA,
   ur: UR,
-  pu: PU,
   ne: NE,
   pl: PL,
 };
