@@ -21,7 +21,7 @@ Postmark allows you to authenticate your sender identity using one of the follow
 - [Single Sender Verification](https://account.postmarkapp.com/signatures/new) - This is the easiest way to authenticate your sender identity.
 - [Entire Domain Authentication](https://postmarkapp.com/support/article/1046-how-do-i-verify-a-domain#:~:text=be%20verified%20automatically.-,Navigate%20to%20Sender%20Signatures.,to%20your%20DNS%2C%20choose%20Verify.) - This is recommended if you are sending emails from multiple accounts under your domain.
 
-## Create a SendGrid integration with Novu
+## Create a Postmark integration with Novu
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate Postmark and click on the **Connect** button.
