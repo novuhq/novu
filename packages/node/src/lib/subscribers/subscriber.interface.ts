@@ -159,3 +159,9 @@ export interface IUpdateSubscriberPreferencePayload {
 
   enabled?: boolean;
 }
+
+export interface IGetSubscriberNotificationFeedParams {
+  page?: number;
+  feedIdentifier: string;
+  seen?: boolean;
+}
