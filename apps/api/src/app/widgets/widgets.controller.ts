@@ -27,6 +27,8 @@ import {
   UpdateSubscriberPreference,
   UpdateSubscriberPreferenceCommand,
 } from '../subscribers/usecases/update-subscriber-preference';
+import { MarkAllMessageAsSeenCommand } from './usecases/mark-all-message-as-seen/mark-all-message-as-seen.command';
+import { MarkAllMessageAsSeen } from './usecases/mark-all-message-as-seen/mark-all-message-as-seen.usecase';
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
 import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
@@ -43,6 +45,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
+    private markAllMessageAsSeenUseCase: MarkAllMessageAsSeen,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -204,6 +207,18 @@ export class WidgetsController {
     });
 
     return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/seen')
+  async markAllUnseenAsSeen(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<number> {
+    const command = MarkAllMessageAsSeenCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession._id,
+      environmentId: subscriberSession._environmentId,
+    });
+
+    return await this.markAllMessageAsSeenUseCase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

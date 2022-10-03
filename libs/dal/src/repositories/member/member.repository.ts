@@ -3,7 +3,7 @@ import { MemberEntity } from './member.entity';
 import { BaseRepository } from '../base-repository';
 import { Member } from './member.schema';
 
-interface IAddMemberData {
+export interface IAddMemberData {
   _userId?: string;
   roles: MemberRoleEnum[];
   invite?: IMemberInvite;

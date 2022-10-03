@@ -141,4 +141,8 @@ export class ApiService {
       channel: { type: channelType, enabled },
     });
   }
+
+  async markAllAsSeen() {
+    return this.httpClient.post('/widgets/messages/seen', {});
+  }
 }

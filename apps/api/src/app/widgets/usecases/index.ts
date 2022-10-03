@@ -4,15 +4,17 @@ import { GetNotificationsFeed } from './get-notifications-feed/get-notifications
 import { InitializeSession } from './initialize-session/initialize-session.usecase';
 import { GetWidgetSettings } from './get-widget-settings/get-widget-settings.usecase';
 import { UpdateMessageActions } from './mark-action-as-done/update-message-actions.usecause';
+import { MarkAllMessageAsSeen } from './mark-all-message-as-seen/mark-all-message-as-seen.usecase';
 import { GetFeedCount } from './get-feed-count/get-feed-count.usecase';
 
 export const USE_CASES = [
   GetOrganizationData,
-  MarkMessageAs,
   UpdateMessageActions,
+  MarkMessageAs,
   GetFeedCount,
   GetNotificationsFeed,
   InitializeSession,
   GetWidgetSettings,
+  MarkAllMessageAsSeen,
   //
 ];

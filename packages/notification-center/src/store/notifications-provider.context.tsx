@@ -65,6 +65,10 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return await api.markMessageAs(messageId, { seen: true, read: true });
   }
 
+  async function markAllAsSeen(): Promise<number> {
+    return await api.markAllAsSeen();
+  }
+
   async function updateAction(
     messageId: string,
     actionButtonType: ButtonTypeEnum,
@@ -147,6 +151,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         markNotificationsAsSeen,
         onWidgetClose,
         onTabChange,
+        markAllAsSeen,
       }}
     >
       {children}

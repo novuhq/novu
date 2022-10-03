@@ -16,6 +16,7 @@ const defaultLightTheme: INovuTheme = {
     fontColor: colors.B40,
     badgeColor: colors.vertical,
     badgeTextColor: colors.white,
+    markAllAsReadButtonColor: colors.B60,
   },
   popover: { arrowColor: colors.white },
   notificationItem: {
@@ -64,6 +65,7 @@ const defaultDarkTheme: INovuTheme = {
     fontColor: colors.white,
     badgeColor: colors.vertical,
     badgeTextColor: colors.white,
+    markAllAsReadButtonColor: colors.B60,
   },
   popover: { arrowColor: colors.B15 },
   notificationItem: {
