@@ -1,0 +1,129 @@
+name: Deploy PROD WEBHOOK
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    tags:
+      - '**@novu/webhook@**'
+      - '**@novu/node@**'
+      - '**@novu/shared@**'
+  workflow_dispatch:
+
+jobs:
+  test_webhook:
+    uses: ./.github/workflows/reusable-webhook-e2e.yml
+
+  deploy_prod_webhook:
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    needs: test_webhook
+    timeout-minutes: 80
+    environment: Production
+    permissions:
+      contents: read
+      packages: write 
+      deployments: write
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Setup kernel for react native, increase watchers
+        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.15.1'
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.3.0
+        with:
+          mongodb-version: 4.2.8
+
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.5.0
+          run_install: false
+
+      - name: Install root dependencies
+        run: pnpm --filter novuhq install
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          REGISTERY_OWNER: novuhq
+          DOCKER_NAME: novu/webhook
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          cd apps/webhook && DOCKER_BUILDKIT=1 npm run build:docker
+          docker tag novu-webhook ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
+          docker tag novu-webhook ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
+          docker tag novu-webhook ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          
+          docker run --network=host --name webhook -dit --env NODE_ENV=test ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1341/v1/health-check | grep 'ok'
+
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
+          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+
+      - name: Checkout cloud infra
+        uses: actions/checkout@master
+        with:
+          repository: novuhq/cloud-infra
+          token: ${{ secrets.GH_PACKAGES }} 
+          path: cloud-infra
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Terraform setup
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.7
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: cloud-infra/terraform
+        run: terraform init
+
+      - name: Terraform Change Workspace
+        working-directory: cloud-infra/terraform
+        run: terraform workspace select prod
+
+      - name: Terraform get output
+        working-directory: cloud-infra/terraform
+        id: terraform
+        run: |
+          echo "webhook_ecs_container_name=$(terraform output -json webhook_ecs_container_name | jq -r .)" >> $GITHUB_ENV
+          echo "webhook_ecs_service=$(terraform output -json webhook_ecs_service | jq -r .)" >> $GITHUB_ENV
+          echo "webhook_ecs_cluster=$(terraform output -json webhook_ecs_cluster | jq -r .)" >> $GITHUB_ENV
+          echo "webhook_task_name=$(terraform output -json webhook_task_name | jq -r .)" >> $GITHUB_ENV
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.webhook_task_name }} \
+          --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: render-web-container
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.webhook_ecs_container_name }}
+          image: ${{ steps.build-image.outputs.IMAGE }}
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          service: ${{ env.webhook_ecs_service }}
+          cluster: ${{ env.webhook_ecs_cluster }}
+          wait-for-service-stability: true
