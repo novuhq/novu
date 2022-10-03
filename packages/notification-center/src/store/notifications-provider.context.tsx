@@ -65,8 +65,21 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return await api.markMessageAs(messageId, { seen: true, read: true });
   }
 
-  async function markAllAsSeen(): Promise<number> {
-    return await api.markAllAsSeen();
+  async function markAllAsRead(storeId = 'default_store'): Promise<number> {
+    notifications[storeId] = notifications[storeId].map((message) => {
+      message.read = true;
+      message.seen = true;
+
+      return message;
+    });
+
+    setNotifications(Object.assign({}, notifications));
+
+    const messageIds = notifications[storeId].map((message) => {
+      return message._id;
+    });
+
+    return await api.markMessageAs(messageIds, { seen: true, read: true });
   }
 
   async function updateAction(
@@ -151,7 +164,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         markNotificationsAsSeen,
         onWidgetClose,
         onTabChange,
-        markAllAsSeen,
+        markAllAsRead,
       }}
     >
       {children}

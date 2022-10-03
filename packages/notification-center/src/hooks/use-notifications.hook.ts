@@ -20,6 +20,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     markNotificationsAsSeen: mapMarkNotificationsAsSeen,
     onWidgetClose,
     onTabChange: mapOnTabChange,
+    markAllAsRead: mapMarkAllAsRead,
   } = useContext<INotificationsContext>(NotificationsContext);
 
   const storeId = props?.storeId ? props?.storeId : 'default_store';
@@ -57,6 +58,10 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapOnTabChange(storeId);
   }
 
+  async function markAllAsRead() {
+    await mapMarkAllAsRead(storeId);
+  }
+
   return {
     notifications,
     fetchNextPage,
@@ -68,5 +73,6 @@ export function useNotifications(props?: IUseNotificationsProps) {
     markNotificationsAsSeen,
     onWidgetClose,
     onTabChange,
+    markAllAsRead,
   };
 }
