@@ -5,19 +5,10 @@ import { UpdateEnvironmentRequestDto } from '../../dtos/update-environment-reque
 
 describe('Update Environment - /environments (PUT)', async () => {
   let session: UserSession;
-  let createdEnv: EnvironmentEntity;
-  const environmentRepository = new EnvironmentRepository();
-  const demoEnvironment = {
-    name: 'Hello App',
-  };
 
   before(async () => {
     session = new UserSession();
-    await session.initialize({
-      noEnvironment: true,
-    });
-
-    createdEnv = await environmentRepository.create(demoEnvironment);
+    await session.initialize();
   });
 
   it('should update environment entity correctly', async () => {
@@ -25,10 +16,15 @@ describe('Update Environment - /environments (PUT)', async () => {
       name: 'New Name',
       identifier: 'New Identifier',
     };
-    const { body } = await session.testAgent.put(`/v1/environments/${createdEnv._id}`).send(updatePayload).expect(200);
+    const { updateBody } = await session.testAgent
+      .put(`/v1/environments/${session.environment._id}`)
+      .send(updatePayload)
+      .expect(200);
+    const { foundEnv } = await session.testAgent.get('/v1/environments/me');
 
-    expect(body.data.name).to.eq(updatePayload.name);
-    expect(body.data._organizationId).to.eq(session.organization._id);
-    expect(body.data.identifier).to.eq(updatePayload.identifier);
+    expect(updateBody.matched).to.eq(1);
+    expect(updateBody.modified).to.eq(1);
+    expect(foundEnv.data.name).to.eq(updatePayload.name);
+    expect(foundEnv.data.identifier).to.equal(updatePayload.identifier);
   });
 });
