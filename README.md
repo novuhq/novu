@@ -157,13 +157,6 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [ ] PagerDuty
 
-<div align="center">
-<details>
-  <summary>How to get Novu's swag?</summary>
-  Have 3 merged PRs during October 2022
-
-</details>
-</div>
 
 ## 💻  Need Help?
 
