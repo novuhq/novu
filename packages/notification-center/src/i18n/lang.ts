@@ -91,7 +91,6 @@ export type I18NLanguage =
   | 'hr'
   | 'or'
   | 'sa'
-  | 'ne'
   | 'ur'
   | 'ne' 
   | 'pl'
