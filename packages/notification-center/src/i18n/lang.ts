@@ -21,6 +21,8 @@ import { NE } from './languages/ne';
 import { UR } from './languages/ur';
 import { PL } from './languages/pl';
 import { CS } from './languages/cs';
+import { PU } from './languages/pu';
+
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -58,6 +60,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ne: NE,
   pl: PL,
   cs: CS,
+  pu: PU,
 };
 
 /**
@@ -94,4 +97,5 @@ export type I18NLanguage =
   | 'ur'
   | 'ne' 
   | 'pl'
+  | 'pu'
   | 'cs';
