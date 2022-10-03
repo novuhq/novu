@@ -16,14 +16,10 @@ describe('Update Environment - /environments (PUT)', async () => {
       name: 'New Name',
       identifier: 'New Identifier',
     };
-    const { updateBody } = await session.testAgent
-      .put(`/v1/environments/${session.environment._id}`)
-      .send(updatePayload)
-      .expect(200);
+
+    await session.testAgent.put(`/v1/environments/${session.environment._id}`).send(updatePayload).expect(200);
     const { foundEnv } = await session.testAgent.get('/v1/environments/me');
 
-    expect(updateBody.matched).to.eq(1);
-    expect(updateBody.modified).to.eq(1);
     expect(foundEnv.data.name).to.eq(updatePayload.name);
     expect(foundEnv.data.identifier).to.equal(updatePayload.identifier);
   });
