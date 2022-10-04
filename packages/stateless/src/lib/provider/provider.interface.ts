@@ -16,6 +16,7 @@ export interface IEmailOptions {
   from?: string;
   text?: string;
   attachments?: IAttachmentOptions[];
+  id?: string;
 }
 
 export interface ISmsOptions {
@@ -23,6 +24,7 @@ export interface ISmsOptions {
   content: string;
   from?: string;
   attachments?: IAttachmentOptions[];
+  id?: string;
 }
 export interface IPushOptions {
   target: string[];
@@ -64,6 +66,12 @@ export enum EmailEventStatusEnum {
   CLICKED = 'clicked',
 }
 
+export enum SmsEventStatusEnum {
+  CREATED = 'created',
+  DELIVERED = 'delivered',
+  RECEIVED = 'received',
+}
+
 export interface IEventBody {
   status: string;
   date: string;
@@ -78,15 +86,19 @@ export interface IEmailEventBody extends IEventBody {
   status: EmailEventStatusEnum;
 }
 
+export interface ISMSEventBody extends IEventBody {
+  status: SmsEventStatusEnum;
+}
+
 export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
   sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 
-  getMessageId?: (body: any) => string[];
+  getMessageId?: (body: any | any[]) => string[];
 
   parseEventBody?: (
-    body: any,
+    body: any | any[],
     identifier: string
   ) => IEmailEventBody | undefined;
 
@@ -97,6 +109,13 @@ export interface ISmsProvider extends IProvider {
   sendMessage(options: ISmsOptions): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.SMS;
+
+  getMessageId?: (body: any) => string[];
+
+  parseEventBody?: (
+    body: any | any[],
+    identifier: string
+  ) => ISMSEventBody | undefined;
 }
 
 export interface IChatProvider extends IProvider {
