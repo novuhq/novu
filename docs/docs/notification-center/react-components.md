@@ -194,6 +194,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>pl</code> (Polish)</li>
           <li><code>cs</code> (Czech)</li>
           <li><code>pu</code> (Punjabi)</li>
+          <li><code>ta</code> (Tamil)</li>
         </ul>
       </div>
   </details>
