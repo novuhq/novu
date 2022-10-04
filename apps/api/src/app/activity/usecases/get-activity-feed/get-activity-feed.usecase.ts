@@ -1,21 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import {
-  MessageEntity,
-  MessageRepository,
-  NotificationEntity,
-  NotificationRepository,
-  SubscriberRepository,
-} from '@novu/dal';
+import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ActivitiesResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 
 @Injectable()
 export class GetActivityFeed {
-  constructor(
-    private notificationRepository: NotificationRepository,
-    private messageRepository: MessageRepository,
-    private subscribersRepository: SubscriberRepository
-  ) {}
+  constructor(private messageRepository: MessageRepository, private subscribersRepository: SubscriberRepository) {}
 
   async execute(command: GetActivityFeedCommand): Promise<ActivitiesResponseDto> {
     const LIMIT = 10;
@@ -38,7 +28,7 @@ export class GetActivityFeed {
 
     const { data: messages, totalCount } = await this.messageRepository.getFeed(
       command.environmentId,
-      { channels: command.channels, templates: command.templates, emails: command.emails },
+      { channels: command.channels, templates: command.templates, emails: command.emails, subscriberId },
       command.page * LIMIT,
       LIMIT
     );
