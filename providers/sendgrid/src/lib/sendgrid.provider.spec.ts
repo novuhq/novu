@@ -4,6 +4,7 @@ import { SendgridEmailProvider } from './sendgrid.provider';
 const mockConfig = {
   apiKey: 'SG.1234',
   from: 'test@tet.com',
+  senderName: 'test',
 };
 
 const mockNovuMessage = {

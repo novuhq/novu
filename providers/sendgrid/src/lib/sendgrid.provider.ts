@@ -20,6 +20,7 @@ export class SendgridEmailProvider implements IEmailProvider {
     private config: {
       apiKey: string;
       from: string;
+      senderName: string;
     }
   ) {
     this.sendgridMail = new MailService();
@@ -64,7 +65,10 @@ export class SendgridEmailProvider implements IEmailProvider {
 
   private createMailData(options: IEmailOptions) {
     return {
-      from: options.from || this.config.from,
+      from: {
+        email: options.from || this.config.from,
+        name: this.config.senderName,
+      },
       to: options.to,
       html: options.html,
       subject: options.subject,
