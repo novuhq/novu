@@ -79,11 +79,11 @@ describe('Input Component', () => {
 
   it('should copy Api Key and Application Identifier to the clipboard', () => {
     cy.wait('@getApiKeys');
-    cy.get("[data-test-id='api-key-Tooltip']").click();
+    cy.get("[data-test-id='api-key-tooltip']").click();
     cy.window().its('navigator.clipboard').invoke('readText').should('equal', apiKeys[0].key);
 
     cy.wait('@currentEnvironment');
-    cy.get("[data-test-id='api-identifier-Tooltip']").click();
+    cy.get("[data-test-id='application-identifier-tooltip']").click();
     cy.window().its('navigator.clipboard').invoke('readText').should('equal', currentEnvironment.identifier);
   });
 });
