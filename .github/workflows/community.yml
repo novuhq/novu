@@ -1,0 +1,24 @@
+on:
+  fork:
+  push:
+    branches: [develop]
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: EddieHubCommunity/gh-action-community/src/welcome@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: "Hey @${{ github.actor }}, Thanks for contributing to Novu and Congrats on opening Issue :tada:"
+          pr-message: "Hey @${{ github.actor }}, Thanks for contributing to Novu and Congrats on opening PR :tada:."
+          footer: "We will try to review as soon as possible and a maintainer will get back to you soon!"
