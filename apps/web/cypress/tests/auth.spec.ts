@@ -1,10 +1,10 @@
-before(function () {
-  cy.task('clearDatabase');
-  cy.task('seedDatabase');
-});
-
 describe('User Sign-up and Login', function () {
   describe('Sign up', function () {
+    beforeEach(function () {
+      cy.clearDatabase();
+      cy.seedDatabase();
+    });
+
     it('should allow a visitor to sign-up, login, and logout', function () {
       cy.intercept('**/organization/**/switch').as('appSwitch');
       cy.visit('/auth/signup');
@@ -42,6 +42,8 @@ describe('User Sign-up and Login', function () {
 
   describe('Password Reset', function () {
     before(() => {
+      cy.clearDatabase();
+      cy.seedDatabase();
       cy.initializeSession().as('session');
     });
 
@@ -61,6 +63,11 @@ describe('User Sign-up and Login', function () {
   });
 
   describe('Login', function () {
+    beforeEach(() => {
+      cy.clearDatabase();
+      cy.seedDatabase();
+    });
+
     it('should redirect to the dashboard page when a token exists in query', function () {
       cy.initializeSession({ disableLocalStorage: true }).then((session) => {
         cy.visit('/auth/login?token=' + session.token);
@@ -111,6 +118,11 @@ describe('User Sign-up and Login', function () {
   });
 
   describe('Logout', function () {
+    beforeEach(function () {
+      cy.clearDatabase();
+      cy.seedDatabase();
+    });
+
     it('should logout user when auth token is expired', function () {
       // login the user
       cy.visit('/auth/login');
@@ -129,27 +141,6 @@ describe('User Sign-up and Login', function () {
       cy.getLocalStorage('auth_token').should('be.null');
       // checking if user is redirected to login page
       cy.location('pathname').should('equal', '/auth/login');
-    });
-  });
-
-  describe('Invitation', function () {
-    before(() => {
-      cy.initializeSession().as('session');
-    });
-
-    it('should redirect to invitation page again if invitation open with an active user session', function () {
-      cy.visit('/team');
-      cy.getByTestId('invite-email-field').type('test-user-2@example.com');
-      cy.getByTestId('submit-btn').click();
-
-      const invitationPath = '/auth/invitation/given-token';
-      cy.visit(invitationPath);
-      cy.getByTestId('success-screen-reset').click();
-
-      // checkig if token is removed from local storage
-      cy.getLocalStorage('auth_token').should('be.null');
-      // checking if user is redirected to the given invitation page
-      cy.location('pathname').should('equal', invitationPath);
     });
   });
 });

@@ -34,4 +34,12 @@ Cypress.Commands.add('logout', (settings = {}) => {
   return window.localStorage.removeItem('auth_token');
 });
 
+Cypress.Commands.add('seedDatabase', () => {
+  return cy.task('seedDatabase');
+});
+
+Cypress.Commands.add('clearDatabase', () => {
+  return cy.task('clearDatabase');
+});
+
 export {};

@@ -20,6 +20,9 @@ declare namespace Cypress {
      */
     login(username: string, password: string): void;
 
+    clearDatabase(): Chainable<any>;
+    seedDatabase(): Chainable<any>;
+
     /**
      * Logs-in user by using API request
      */
