@@ -17,6 +17,10 @@
       "path": "apps/ws"
     },
     {
+      "name": "🚀 @novu/webhook",
+      "path": "apps/webhook"
+    },
+    {
       "name": "🚀 @novu/widget",
       "path": "apps/widget"
     },
@@ -67,6 +71,10 @@
     {
       "name": "📦 @novu/react-native",
       "path": "packages/react-native"
+    },
+    {
+      "name": "📦 @novu/application-generic",
+      "path": "packages/application-generic"
     },
     {
       "name": "🔔 @novu/discord",

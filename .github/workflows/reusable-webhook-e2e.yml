@@ -1,0 +1,82 @@
+name: E2E WEBHOOK Tests
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  e2e_webhook:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+    - name: Setup kernel for react native, increase watchers
+      run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16.15.1'
+
+    - name: Start MongoDB
+      uses: supercharge/mongodb-github-action@1.3.0
+      with:
+        mongodb-version: 4.2.8
+
+    - name: Cache pnpm modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.pnpm-store
+        key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-
+
+    - uses: pnpm/action-setup@v2.0.1
+      with:
+        version: 7.5.0
+        run_install: true
+
+    - uses: mansagroup/nrwl-nx-action@v2
+      with:
+        targets: lint
+        projects: "@novu/webhook"
+
+    - name: Start Local Stack
+      env:
+        AWS_DEFAULT_REGION: us-east-1
+        DEFAULT_REGION: us-east-1
+        AWS_ACCOUNT_ID: "000000000000"
+        AWS_ACCESS_KEY_ID: test
+        AWS_SECRET_ACCESS_KEY: test
+        AWS_EC2_METADATA_DISABLED: true
+      working-directory: environment/test
+      run: |
+        docker-compose up -d
+        sleep 10
+        max_retry=30
+        counter=0
+        until $command
+        do
+          sleep 1
+          [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
+          aws --endpoint-url=http://localhost:4566 s3 ls
+          echo "Trying again. Try #$counter"
+          ((counter++))
+        done
+        docker-compose logs --tail="all"
+        aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
+
+      # Runs a single command using the runners shell
+    - name: Build API
+      run: CI='' pnpm build:webhook
+
+    # Runs a set of commands using the runners shell
+    - name: Run a test
+      run: |
+        cd apps/webhook && pnpm test:e2e
+        pnpm test
+

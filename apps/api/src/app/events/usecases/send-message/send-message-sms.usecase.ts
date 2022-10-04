@@ -182,12 +182,26 @@ export class SendMessageSms extends SendMessageType {
     try {
       const smsHandler = this.smsFactory.getHandler(integration);
 
-      await smsHandler.send({
+      const result = await smsHandler.send({
         to: phone,
         from: integration.credentials.from,
         content,
         attachments: null,
+        id: message._id,
       });
+      if (!result.id) {
+        return;
+      }
+      await this.messageRepository.update(
+        {
+          _id: message._id,
+        },
+        {
+          $set: {
+            identifier: result.id,
+          },
+        }
+      );
     } catch (e) {
       await this.sendErrorStatus(
         message,
