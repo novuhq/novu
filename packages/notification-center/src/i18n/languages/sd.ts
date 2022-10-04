@@ -1,6 +1,6 @@
 import { ITranslationEntry } from '../lang';
 
-export const EN: ITranslationEntry = {
+export const SD: ITranslationEntry = {
   translations: {
     notifications: 'نوٽيفڪيشن',
     markAllAsRead: 'سڀني کي پڙهيل طور نشان لڳايو',
