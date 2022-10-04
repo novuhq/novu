@@ -18,11 +18,11 @@ The name will be used to identify the notification template when triggering it. 
 
 ### Notification Group
 
-Used to group multiple notification templates to a single group, currently only used behind the scenes for organisational purposes. But in the upcoming subscriber preferences management will be used to group multiple notifications for the subscriber.
+Used to group multiple notification templates into a single group, currently only used behind the scenes for organisational purposes. But in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
 
 ## Template steps
 
-The templates steps are used to organization the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that including actions like: Delay, Digest and other conditional steps.
+The templates steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that including actions like: Delay, Digest and other conditional steps.
 
 ## Messages
 
@@ -89,7 +89,7 @@ To render a specific block conditionally you can use the `#if`
 
 ## Trigger
 
-After a notification template will be created a trigger key will be automatically generated for it. To use the trigger you can install the server side sdk with:
+After a notification template is created, a trigger key will be automatically generated for it. To use the trigger you can install the server side sdk with:
 
 ```bash
   npm install @novu/node
