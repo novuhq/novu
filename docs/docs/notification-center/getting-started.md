@@ -5,7 +5,7 @@ position: 1
 
 Novu provides you with a set of APIs and components to create rich customized notification center experiences. You can either choose to work headless with our notification feed API and create your own custom notification center user interface, or use our ready-to-use UI and customize it partially.
 
-![Notification Center](/docs/static/img/notification-center.png)
+![Notification Center](/img/notification-center.png)
 
 ## React component
 
