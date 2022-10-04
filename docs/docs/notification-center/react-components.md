@@ -583,4 +583,4 @@ const { notifications } = useNotifications({ storeId });
 By default, Novu will show the subscriber preferences cog icon on the notification center component.
 If you want to hide it, you can use the prop `showUserPreferences` on the `PopoverNotificationCenter` component.
 
-![Notification Center with a cog](/docs/static/img/notification-list-cog.png)
+![Notification Center with a cog](/img/notification-list-cog.png)
