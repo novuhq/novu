@@ -105,5 +105,5 @@ export type I18NLanguage =
   | 'cs'
   | 'pu'
   | 'ta'
-  | 'sd';;
+  | 'sd';
 
