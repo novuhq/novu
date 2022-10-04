@@ -23,7 +23,7 @@ In those cases you will be able to mark a template as **Critical**, this will hi
 
 The Notifications component will show the user the available preferences, he will be able to modify on the channel level. Critical templates will be excluded from the list.
 
-![User preference in the component](/img/user-preference.png)
+![User preference in the component](/docs/static/img/user-preference.png)
 
 :::info
 
