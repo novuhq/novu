@@ -4,7 +4,7 @@ export const ES: ITranslationEntry = {
   translations: {
     notifications: 'Notificaciones',
     markAllAsRead: 'marcar todo como leido',
-    poweredBy: 'Energizado por',
+    poweredBy: 'Con tecnología de',
   },
   lang: 'es',
 };
