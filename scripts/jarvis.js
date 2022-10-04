@@ -25,6 +25,10 @@ async function reInstallProject() {
   });
 }
 
+const RUN_CYPRESS_UI = 'Open Cypress UI';
+const RUN_CYPRESS_CLI = 'Run Cypress tests - CLI';
+const RUN_CYPRESS_COMPONENT_CLI = 'Run Cypress Component test - CLI';
+
 async function setupRunner() {
   const ora = require('ora');
   const shell = require('shelljs');
@@ -60,7 +64,7 @@ async function setupRunner() {
       type: 'list',
       name: 'runWebConfiguration',
       message: 'What section of the project you want to run?',
-      choices: ['Open Cypress UI', 'Run Cypress test - CLI', 'Run Cypress Component test - CLI'],
+      choices: [RUN_CYPRESS_UI, RUN_CYPRESS_CLI, RUN_CYPRESS_COMPONENT_CLI],
       when(answers) {
         return answers.runConfiguration === 'WEB tests';
       },
@@ -138,8 +142,7 @@ Everything is running 🎊
       shell.exec('npm run nx build @novu/api');
       shell.exec('npm run start:api');
     } else if (
-      answers.runWebConfiguration === 'Open Cypress UI' ||
-      answers.runWebConfiguration === 'Run Cypress tests - CLI'
+      [RUN_CYPRESS_CLI, RUN_CYPRESS_UI, RUN_CYPRESS_COMPONENT_CLI].includes(answers.runWebConfiguration)
     ) {
       shell.exec('npm run nx build @novu/api');
       shell.exec('npm run nx build @novu/ws');
@@ -163,12 +166,12 @@ Everything is running 🎊
         port: 4200,
       });
 
-      if (answers.runWebConfiguration === 'Open Cypress UI') {
+      if (answers.runWebConfiguration === RUN_CYPRESS_UI) {
         shell.exec('cd apps/web && npm run cypress:open');
-      } else if (answers.runWebConfiguration === 'Run Cypress tests - CLI') {
+      } else if (answers.runWebConfiguration === RUN_CYPRESS_CLI) {
         shell.exec('cd apps/web && npm run cypress:run');
       }
-    } else if (answers.runWebConfiguration === 'Run Cypress Component test - CLI') {
+    } else if (answers.runWebConfiguration === RUN_CYPRESS_COMPONENT_CLI) {
       shell.exec('npm run nx build @novu/web');
       shell.exec('cd apps/web && npm run cypress:run:components');
     }
