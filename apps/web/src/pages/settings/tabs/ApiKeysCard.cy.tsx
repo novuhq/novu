@@ -34,33 +34,41 @@ const apiKeys: { key: string }[] = [
   },
 ];
 
+const regenerateApiKeys: { key: string }[] = [
+  {
+    key: 'b34e0a6e117da332106d9173e1dd043c',
+  },
+];
+
 const queryClient = new QueryClient();
 
+const renderComponent = () => {
+  cy.intercept('GET', '/v1/environments/api-keys', {
+    body: {
+      data: apiKeys,
+    },
+  }).as('getApiKeys');
+  cy.intercept('GET', '/v1/environments/me', {
+    body: {
+      data: currentEnvironment,
+    },
+  }).as('currentEnvironment');
+  cy.intercept('GET', 'v1/environments', {
+    body: {
+      data: [myEnvironments],
+    },
+  }).as('myEnvironments');
+  cy.mount(
+    <QueryClientProvider client={queryClient}>
+      <TestWrapper>
+        <ApiKeysCard />
+      </TestWrapper>
+    </QueryClientProvider>
+  );
+};
+
 describe('Input Component', () => {
-  beforeEach(() => {
-    cy.intercept('GET', '/v1/environments/api-keys', {
-      body: {
-        data: apiKeys,
-      },
-    }).as('getApiKeys');
-    cy.intercept('GET', '/v1/environments/me', {
-      body: {
-        data: currentEnvironment,
-      },
-    }).as('currentEnvironment');
-    cy.intercept('GET', 'v1/environments', {
-      body: {
-        data: [myEnvironments],
-      },
-    }).as('myEnvironments');
-    cy.mount(
-      <QueryClientProvider client={queryClient}>
-        <TestWrapper>
-          <ApiKeysCard />
-        </TestWrapper>
-      </QueryClientProvider>
-    );
-  });
+  beforeEach(renderComponent);
 
   it('should render Api Key and Application Identifier in each input form', () => {
     cy.wait('@getApiKeys');
@@ -77,5 +85,48 @@ describe('Input Component', () => {
     cy.wait('@currentEnvironment');
     cy.get("[data-test-id='api-identifier-Tooltip']").click();
     cy.window().its('navigator.clipboard').invoke('readText').should('equal', currentEnvironment.identifier);
+  });
+});
+
+describe('Regenerate Keys', () => {
+  beforeEach(renderComponent);
+
+  it('should open modals', () => {
+    cy.wait('@getApiKeys');
+    cy.wait('@currentEnvironment');
+
+    cy.get("[data-test-id='show-regenerate-api-key-modal']").click();
+    cy.get("[data-test-id='regenerate-api-key-modal']").should('be.visible');
+  });
+
+  it('should regenerate an api key and update api key in the input field', () => {
+    cy.wait('@getApiKeys');
+    cy.wait('@currentEnvironment');
+
+    cy.get("[data-test-id='show-regenerate-api-key-modal']").click();
+    cy.intercept('POST', '/v1/environments/api-keys/regenerate', {
+      body: {
+        data: regenerateApiKeys,
+      },
+    }).as('regenerateApiKeysConfirmAction');
+    cy.get("[data-test-id='regenerate-api-key-modal-button']").click();
+    cy.wait('@regenerateApiKeysConfirmAction');
+
+    cy.intercept('GET', '/v1/environments/api-keys', {
+      body: {
+        data: regenerateApiKeys,
+      },
+    }).as('getRegeneratedApiKeys');
+
+    cy.mount(
+      <QueryClientProvider client={queryClient}>
+        <TestWrapper>
+          <ApiKeysCard />
+        </TestWrapper>
+      </QueryClientProvider>
+    );
+
+    cy.wait('@getRegeneratedApiKeys');
+    cy.get("[data-test-id='api-key-container']").should('have.value', regenerateApiKeys[0].key);
   });
 });
