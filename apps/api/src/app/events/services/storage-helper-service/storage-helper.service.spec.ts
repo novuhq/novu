@@ -120,8 +120,10 @@ describe('Storage-Helper service', function () {
     });
 
     it('should get file', async function () {
+      // @ts-ignore
+      sinon.stub(BlockBlobClient.prototype, 'downloadToBuffer').resolves({ _response: { status: 200 } });
       const downloadStub = sinon
-        .stub(BlockBlobClient.prototype, 'downloadToBuffer')
+        .stub(BlockBlobClient.prototype, 'download')
         // @ts-ignore
         .resolves({ _response: { status: 200 } });
       await AzureStorageHelperService.getAttachments(azureAttachments);

@@ -16,6 +16,7 @@ import {
   generateBlobSASQueryParameters,
   SASProtocol,
 } from '@azure/storage-blob';
+import { NonExistingFileError } from '../../errors/non-existing-file.error';
 
 export interface IFilePath {
   path: string;
@@ -59,14 +60,21 @@ export class S3StorageService implements StorageService {
   }
 
   async getFile(key: string): Promise<Buffer> {
-    const command = new GetObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: key,
-    });
-    const data = await this.s3.send(command);
-    const bodyContents = await streamToString(data.Body as Readable);
+    try {
+      const command = new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: key,
+      });
+      const data = await this.s3.send(command);
+      const bodyContents = await streamToString(data.Body as Readable);
 
-    return bodyContents as unknown as Buffer;
+      return bodyContents as unknown as Buffer;
+    } catch (error) {
+      if (error.code === 404 || error.message === 'The specified key does not exist.') {
+        throw new NonExistingFileError();
+      }
+      throw error;
+    }
   }
 
   async deleteFile(key: string): Promise<void> {
@@ -112,10 +120,18 @@ export class GCSStorageService implements StorageService {
   }
 
   async getFile(key: string): Promise<Buffer> {
-    const bucket = this.gcs.bucket(process.env.GCS_BUCKET_NAME);
-    const fileObject = bucket.file(key);
+    try {
+      const bucket = this.gcs.bucket(process.env.GCS_BUCKET_NAME);
+      const fileObject = bucket.file(key);
+      const [file] = await fileObject.download();
 
-    return (await fileObject.download())[0] as unknown as Buffer;
+      return file;
+    } catch (error) {
+      if (error.code === 404) {
+        throw new NonExistingFileError();
+      }
+      throw error;
+    }
   }
 
   async deleteFile(key: string): Promise<void> {
@@ -168,6 +184,11 @@ export class AzureBlobStorageService implements StorageService {
   async getFile(key: string): Promise<Buffer> {
     const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
     const blockBlobClient = containerClient.getBlockBlobClient(key);
+
+    const downloadBlockBlobResponse = await blockBlobClient.download(0);
+    if (downloadBlockBlobResponse.readableStreamBody === null) {
+      throw new NonExistingFileError();
+    }
 
     return (await blockBlobClient.downloadToBuffer())[0] as unknown as Buffer;
   }

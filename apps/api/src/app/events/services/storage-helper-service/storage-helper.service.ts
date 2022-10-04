@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IAttachmentOptions } from '@novu/stateless';
+import { NonExistingFileError } from '../../../shared/errors/non-existing-file.error';
 import { StorageService } from '../../../shared/services/storage/storage.service';
 
 @Injectable()
@@ -32,7 +33,7 @@ export class StorageHelperService {
       try {
         attachment.file = await this.storageService.getFile(attachment.name);
       } catch (error) {
-        if (error.message === 'The specified key does not exist.') {
+        if (error instanceof NonExistingFileError) {
           attachment.file = null;
         } else {
           throw error;
