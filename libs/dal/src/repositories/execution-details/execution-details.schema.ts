@@ -9,7 +9,7 @@ import {
 
 import { schemaOptions } from '../schema-default.options';
 
-const jobSchema = new Schema(
+const executionDetailsSchema = new Schema(
   {
     _jobId: {
       type: Schema.Types.String,
@@ -82,4 +82,5 @@ interface IExecutionDetailsDocument extends ExecutionDetailsEntity, Document {
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
-  mongoose.models.ExecutionDetails || mongoose.model<IExecutionDetailsDocument>('ExecutionDetails', jobSchema);
+  mongoose.models.ExecutionDetails ||
+  mongoose.model<IExecutionDetailsDocument>('ExecutionDetails', executionDetailsSchema);
