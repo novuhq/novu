@@ -58,8 +58,6 @@ main {
 
 .main-wrapper {
   max-width: $container-width;
-  padding-left: 16px;
-  padding-right: 16px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
@@ -86,6 +84,10 @@ article {
   @include mobile-screen {
     margin-top: 0;
   }
+}
+
+.docMainContainer {
+  padding-left: 40px;
 }
 
 .docusaurus-highlight-code-line {
@@ -190,7 +192,11 @@ html[data-theme='light'] {
   --ifm-toc-border-color: #e6e6e6;
   --ifm-link-color: #0055ff;
   --ifm-color-primary: #0055ff;
-  --ifm-menu-color-background-active: rgba(227, 0, 189, 0.08);
+  --ifm-menu-color-background-active: rgba(0, 85, 255, 0.08);
+
+  body {
+    background-color: $color-gray-12;
+  }
 
   main {
     .container {
