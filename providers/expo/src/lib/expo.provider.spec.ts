@@ -11,7 +11,7 @@ test('should trigger expo correctly', async () => {
     .spyOn(provider.expo, 'sendPushNotificationsAsync')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return [{}] as any;
     });
 
   await provider.sendMessage({
@@ -26,11 +26,16 @@ test('should trigger expo correctly', async () => {
   // @ts-ignore
   expect(provider.expo).toBeDefined();
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    notification: {
-      title: 'Test',
+  expect(spy).toHaveBeenCalledWith([
+    {
+      badge: undefined,
       body: 'Test push',
+      data: {
+        sound: 'test_sound',
+      },
+      sound: null,
+      title: 'Test',
+      to: ['tester'],
     },
-    tokens: ['tester'],
-  });
+  ]);
 });
