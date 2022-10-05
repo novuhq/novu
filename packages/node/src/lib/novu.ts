@@ -27,16 +27,8 @@ export class Novu extends EventEmitter {
     this.broadcast = this.events.broadcast;
   }
 
-  // TODO: remove this in the a future major version
-  /**
-   * @deprecated Use {@link Events.trigger} instead.
-   */
   public trigger: typeof Events.prototype.trigger;
 
-  // TODO: remove this in the a future major version
-  /**
-   * @deprecated Use {@link Events.trigger} instead.
-   */
   public broadcast: typeof Events.prototype.broadcast;
 
   private buildBackendUrl(config: INovuConfiguration) {
