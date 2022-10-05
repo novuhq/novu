@@ -876,7 +876,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
+      ts-jest: 27.1.4_zorco6kbqtso4tbodg3tzvjobe
       ts-loader: 8.3.0_actwkd5w3rxts7lmypgqrtezda
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -969,7 +969,6 @@ importers:
       '@types/node': ^14.6.0
       '@types/twilio': ^3.19.3
       '@typescript-eslint/parser': ^4.14.2
-      JSONStream: ^1.3.5
       agenda: ^4.0.1
       apollo-boost: 0.4.9
       archiver: ^5.0.0
@@ -986,6 +985,7 @@ importers:
       googleapis: ^60.0.1
       intercom-client: ^2.11.0
       jsonfile: ^6.0.1
+      JSONStream: ^1.3.5
       mixpanel: ^0.13.0
       mongoose: 6.4.6
       mongoose-delete: ^0.5.4
@@ -1007,7 +1007,6 @@ importers:
       '@novu/shared': link:../shared
       '@octokit/graphql': 4.8.0
       '@sendgrid/mail': 7.6.2
-      JSONStream: 1.3.5
       agenda: 4.2.1
       archiver: 5.3.0
       async: 3.2.3
@@ -1022,6 +1021,7 @@ importers:
       googleapis: 60.0.1
       intercom-client: 2.11.2
       jsonfile: 6.1.0
+      JSONStream: 1.3.5
       mixpanel: 0.13.0
       mongoose: 6.4.6
       mongoose-delete: 0.5.4_mongoose@6.4.6
@@ -1156,7 +1156,6 @@ importers:
       '@types/bluebird': ^3.5.30
       '@types/node': ^14.6.0
       '@typescript-eslint/parser': ^4.14.2
-      JSONStream: ^1.3.5
       apollo-boost: 0.4.9
       async: ^3.2.0
       axios: 0.25.0
@@ -1166,6 +1165,7 @@ importers:
       event-stream: ^4.0.1
       fs-extra: ^9.0.0
       jsonfile: ^6.0.1
+      JSONStream: ^1.3.5
       mongoose: 6.4.6
       ng-intercom: ^8.0.2
       nodemon: ^2.0.3
@@ -1182,7 +1182,6 @@ importers:
       '@novu/dal': link:../dal
       '@novu/node': link:../../packages/node
       '@novu/shared': link:../shared
-      JSONStream: 1.3.5
       async: 3.2.3
       axios: 0.25.0
       class-transformer: 0.5.1
@@ -1190,6 +1189,7 @@ importers:
       event-stream: 4.0.1
       fs-extra: 9.1.0
       jsonfile: 6.1.0
+      JSONStream: 1.3.5
       mongoose: 6.4.6
       ng-intercom: 8.0.2
       reflect-metadata: 0.1.13
@@ -1307,7 +1307,7 @@ importers:
       rimraf: 3.0.2
       sinon: 9.2.4
       standard-version: 9.3.2
-      ts-jest: 27.1.4_vqlr6pm7mnv5rngd46vdqt4eby
+      ts-jest: 27.1.4_gxtntv5dwbdy7daxb4td26n5ra
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -1491,7 +1491,6 @@ importers:
       chroma-js: ^2.4.2
       date-fns: ^2.29.1
       lodash.merge: ^4.6.2
-      react: '>=16.8.0'
       react-infinite-scroll-component: ^6.0.0
       react-query: ^3.34.19
       rimraf: ^3.0.2
@@ -1515,7 +1514,6 @@ importers:
       chroma-js: 2.4.2
       date-fns: 2.29.1
       lodash.merge: 4.6.2
-      react: 17.0.2
       react-infinite-scroll-component: 6.1.0_react@17.0.2
       react-query: 3.34.19_sfoxds7t5ydpegc3knd667wn6m
       rollup-plugin-node-externals: 4.0.0_rollup@2.70.1
@@ -1755,7 +1753,7 @@ importers:
       prettier: 2.7.1
       rimraf: 3.0.2
       standard-version: 9.3.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_7xtbyf6wfs43tumtyyqiqibi24
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -26297,8 +26295,8 @@ packages:
     resolution: {integrity: sha512-BoMaddIEJ6B4QVMSDu9IkVImlGOSGA1I2BQyOZHeLQ6qVOJLcLKn97+fL6dGbzWEiqDzfH4OkcveULmeq2MHFQ==}
     hasBin: true
     dependencies:
-      JSONStream: 1.3.5
       is-text-path: 1.0.1
+      JSONStream: 1.3.5
       lodash: 4.17.21
       meow: 4.0.1
       split2: 2.2.0
@@ -26311,8 +26309,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
-      JSONStream: 1.3.5
       is-text-path: 1.0.1
+      JSONStream: 1.3.5
       lodash: 4.17.21
       meow: 8.1.2
       split2: 3.2.2
@@ -26808,8 +26806,8 @@ packages:
       '@cspell/dict-django': 1.0.26
       '@cspell/dict-dotnet': 1.0.32
       '@cspell/dict-elixir': 1.0.26
-      '@cspell/dict-en-gb': 1.1.33
       '@cspell/dict-en_us': 1.2.45
+      '@cspell/dict-en-gb': 1.1.33
       '@cspell/dict-filetypes': 1.1.8
       '@cspell/dict-fonts': 1.0.14
       '@cspell/dict-fullstack': 1.0.39
@@ -40458,7 +40456,7 @@ packages:
     resolution: {integrity: sha512-7Wjy+9E3WwLOEL30D+m8TSTF7qJJUJLONBnwQp0518siuMxUQUbgZwssaFX+QKlZkjHZcw/IpZCt/H0srrntSg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.3.5
     transitivePeerDependencies:
       - typescript
 
@@ -40483,7 +40481,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.3.5
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -43705,7 +43703,7 @@ packages:
       semver: 7.3.2
       style-loader: 1.3.0_webpack@4.44.2
       terser-webpack-plugin: 4.2.3_webpack@4.44.2
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.3.5
       typescript: 4.3.5
       url-loader: 4.1.1_7hroj2mdu577asu2zyhaasbvae
       webpack: 4.44.2
@@ -48424,40 +48422,6 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-jest/27.1.4_vqlr6pm7mnv5rngd46vdqt4eby:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@types/jest': 27.4.0
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.7
-      typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
   /ts-jest/27.1.4_zorco6kbqtso4tbodg3tzvjobe:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -48688,6 +48652,17 @@ packages:
       typescript: 4.6.3
       yn: 3.1.1
     dev: true
+
+  /ts-pnp/1.2.0_typescript@4.3.5:
+    resolution: {integrity: sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==}
+    engines: {node: '>=6'}
+    peerDependencies:
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      typescript: 4.3.5
 
   /ts-pnp/1.2.0_typescript@4.5.4:
     resolution: {integrity: sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==}
