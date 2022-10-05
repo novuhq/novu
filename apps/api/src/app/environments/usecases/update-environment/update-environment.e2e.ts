@@ -18,9 +18,9 @@ describe('Update Environment - /environments (PUT)', async () => {
     };
 
     await session.testAgent.put(`/v1/environments/${session.environment._id}`).send(updatePayload).expect(200);
-    const { foundEnv } = await session.testAgent.get('/v1/environments/me');
+    const { body } = await session.testAgent.get('/v1/environments/me');
 
-    expect(foundEnv.data.name).to.eq(updatePayload.name);
-    expect(foundEnv.data.identifier).to.equal(updatePayload.identifier);
+    expect(body.data.name).to.eq(updatePayload.name);
+    expect(body.data.identifier).to.equal(updatePayload.identifier);
   });
 });
