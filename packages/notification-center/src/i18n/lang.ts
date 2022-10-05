@@ -9,7 +9,7 @@ import { UK } from './languages/uk';
 import { ES } from './languages/es';
 import { FA } from './languages/fa';
 import { AR } from './languages/ar';
-import { GJ } from './languages/gj';
+import { GU } from './languages/gu';
 import { DE } from './languages/de';
 import { BN } from './languages/bn';
 import { ML } from './languages/ml';
@@ -40,7 +40,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   fi: FI,
   hi: HI,
   fr: FR,
-  gj: GJ,
+  gu: GU,
   ru: RU,
   es: ES,
   it: IT,
@@ -79,7 +79,7 @@ export type I18NLanguage =
   | 'hi'
   | 'it'
   | 'ka'
-  | 'gj'
+  | 'gu'
   | 'ru'
   | 'uk'
   | 'es'
