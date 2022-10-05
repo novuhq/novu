@@ -22,7 +22,7 @@ Used to group multiple notification templates into a single group, currently onl
 
 ## Template steps
 
-The templates steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that including actions like: Delay, Digest and other conditional steps.
+The templates steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that includes actions like: Delay, Digest and other conditional steps.
 
 ## Messages
 
