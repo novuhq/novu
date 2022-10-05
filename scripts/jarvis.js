@@ -25,6 +25,18 @@ async function reInstallProject() {
   });
 }
 
+const RUN_PROJECT = 'Run the project';
+const TEST_PROJECT = 'Test the project';
+
+const API_ONLY = 'API only';
+const API_TESTS = 'API tests';
+const API_E2E_TESTS = 'API E2E tests';
+const API_INTEGRATION_TESTS = 'API integration tests';
+const DOCS = 'Docs';
+const FULL_PROJECT = 'Full project';
+const WEB_AND_API = 'WEB & API';
+const WEB_TESTS = 'WEB tests';
+
 const RUN_CYPRESS_UI = 'Open Cypress UI';
 const RUN_CYPRESS_CLI = 'Run Cypress tests - CLI';
 const RUN_CYPRESS_COMPONENT_CLI = 'Run Cypress Component test - CLI';
@@ -40,24 +52,33 @@ async function setupRunner() {
       type: 'list',
       name: 'action',
       message: 'How can I help today?',
-      choices: ['Run the project', 'Test the project'],
+      choices: [RUN_PROJECT, TEST_PROJECT],
     },
     {
       type: 'list',
       name: 'runConfiguration',
       message: 'What section of the project you want to run?',
-      choices: ['Full project', 'Web & API', 'API Only', 'Docs'],
+      choices: [FULL_PROJECT, WEB_AND_API, API_ONLY, DOCS],
       when(answers) {
-        return answers.action === 'Run the project';
+        return answers.action === RUN_PROJECT;
       },
     },
     {
       type: 'list',
       name: 'runConfiguration',
       message: 'What section of the project you want to run?',
-      choices: ['WEB tests', 'API tests'],
+      choices: [WEB_TESTS, API_TESTS],
       when(answers) {
-        return answers.action === 'Test the project';
+        return answers.action === TEST_PROJECT;
+      },
+    },
+    {
+      type: 'list',
+      name: 'runApiConfiguration',
+      message: 'What section of the project you want to run?',
+      choices: [API_INTEGRATION_TESTS, API_E2E_TESTS],
+      when(answers) {
+        return answers.runConfiguration === API_TESTS;
       },
     },
     {
@@ -66,13 +87,13 @@ async function setupRunner() {
       message: 'What section of the project you want to run?',
       choices: [RUN_CYPRESS_UI, RUN_CYPRESS_CLI, RUN_CYPRESS_COMPONENT_CLI],
       when(answers) {
-        return answers.runConfiguration === 'WEB tests';
+        return answers.runConfiguration === WEB_TESTS;
       },
     },
   ];
 
   inquirer.prompt(questions).then(async (answers) => {
-    if (answers.runConfiguration === 'Full project') {
+    if (answers.runConfiguration === FULL_PROJECT) {
       shell.exec('npm run nx build @novu/api');
       shell.exec('npm run start:dev', { async: true });
 
@@ -96,7 +117,7 @@ Everything is running 🎊
   Web: http://localhost:4200
   API: http://localhost:3000
     `);
-    } else if (answers.runConfiguration === 'Web & API') {
+    } else if (answers.runConfiguration === WEB_AND_API) {
       shell.exec('npm run nx build @novu/api');
       shell.exec('npm run start:web', { async: true });
 
@@ -120,7 +141,7 @@ Everything is running 🎊
   Web: http://localhost:4200
   API: http://localhost:3000
     `);
-    } else if (answers.runConfiguration === 'Docs') {
+    } else if (answers.runConfiguration === DOCS) {
       const spinner = ora('Building docs...').start();
       shell.exec('npm run start:docs', { async: true });
 
@@ -138,12 +159,16 @@ Everything is running 🎊
 
   Docs: http://localhost:4040
     `);
-    } else if (answers.runConfiguration === 'API Only') {
+    } else if (answers.runConfiguration === API_ONLY) {
       shell.exec('npm run nx build @novu/api');
       shell.exec('npm run start:api');
-    } else if (
-      [RUN_CYPRESS_CLI, RUN_CYPRESS_UI, RUN_CYPRESS_COMPONENT_CLI].includes(answers.runWebConfiguration)
-    ) {
+    } else if (answers.runApiConfiguration === API_INTEGRATION_TESTS) {
+      shell.exec('npm run nx build @novu/api');
+      shell.exec('npm run start:integration:api', { async: true });
+    } else if (answers.runApiConfiguration === API_E2E_TESTS) {
+      shell.exec('npm run nx build @novu/api');
+      shell.exec('npm run start:e2e:api', { async: true });
+    } else if ([RUN_CYPRESS_CLI, RUN_CYPRESS_UI].includes(answers.runWebConfiguration)) {
       shell.exec('npm run nx build @novu/api');
       shell.exec('npm run nx build @novu/ws');
 
