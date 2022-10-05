@@ -101,7 +101,7 @@ export function EmailContentCard({
       <div data-test-id="editor-type-selector">
         <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
       </div>
-      <VariableManager index={index} contents={['content', 'htmlContent']} />
+      <VariableManager index={index} contents={['content', 'htmlContent', 'subject']} />
     </>
   );
 }
