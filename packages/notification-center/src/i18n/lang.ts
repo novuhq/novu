@@ -25,6 +25,7 @@ import { CS } from './languages/cs';
 import { PU } from './languages/pu';
 import { TA } from './languages/ta';
 import { KO } from './languages/ko';
+import { GK } from './languages/gk';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -66,6 +67,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   pu: PU,
   ta: TA,
   ko: KO,
+  gk: GK,
 };
 
 /**
@@ -106,4 +108,5 @@ export type I18NLanguage =
   | 'cs'
   | 'pu'
   | 'ta'
-  | 'ko';
+  | 'ko'
+  | 'gk';
