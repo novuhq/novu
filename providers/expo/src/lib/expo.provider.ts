@@ -22,7 +22,7 @@ export class ExpoPushProvider implements IPushProvider {
   async sendMessage(
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const { sound, ...overrides } = options.overrides ?? {};
+    const { sound, badge, ...overrides } = options.overrides ?? {};
 
     const res = await this.expo.sendPushNotificationsAsync([
       {
@@ -30,6 +30,7 @@ export class ExpoPushProvider implements IPushProvider {
         title: options.title,
         body: options.content,
         data: options.payload,
+        badge: badge as unknown as number,
         sound:
           typeof sound === 'string'
             ? (sound as ExpoPushMessage['sound'])
