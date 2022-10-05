@@ -119,10 +119,14 @@ export class MailjetEmailProvider implements IEmailProvider {
         return EmailEventStatusEnum.BOUNCED;
       case 'click':
         return EmailEventStatusEnum.CLICKED;
-      case 'dropped':
-        return EmailEventStatusEnum.DROPPED;
-      case 'delivered':
-        return EmailEventStatusEnum.DELIVERED;
+      case 'sent':
+        return EmailEventStatusEnum.SENT;
+      case 'blocked':
+        return EmailEventStatusEnum.BLOCKED;
+      case 'spam':
+        return EmailEventStatusEnum.SPAM;
+      case 'unsub':
+        return EmailEventStatusEnum.UNSUB;
     }
   }
 }
