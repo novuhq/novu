@@ -1,16 +1,14 @@
 import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
 import { EventEmitter } from 'events';
-import { INovu, INovuConfiguration } from './novu.interface';
-import {
-  IBroadcastPayloadOptions,
-  ITriggerPayloadOptions,
-} from './subscribers/subscriber.interface';
+import { INovuConfiguration } from './novu.interface';
+import { Events } from './events/events';
 
-export class Novu extends EventEmitter implements INovu {
+export class Novu extends EventEmitter {
   private readonly apiKey?: string;
   private readonly http: AxiosInstance;
   readonly subscribers: Subscribers;
+  readonly events: Events;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -24,28 +22,14 @@ export class Novu extends EventEmitter implements INovu {
     });
 
     this.subscribers = new Subscribers(this.http);
+    this.events = new Events(this.http);
+    this.trigger = this.events.trigger;
+    this.broadcast = this.events.broadcast;
   }
 
-  async trigger(eventId: string, data: ITriggerPayloadOptions) {
-    return await this.http.post(`/events/trigger`, {
-      name: eventId,
-      to: data.to,
-      payload: {
-        ...data?.payload,
-      },
-      overrides: data.overrides || {},
-    });
-  }
+  public trigger: typeof Events.prototype.trigger;
 
-  async broadcast(eventId: string, data: IBroadcastPayloadOptions) {
-    return await this.http.post(`/events/trigger/broadcast`, {
-      name: eventId,
-      payload: {
-        ...data?.payload,
-      },
-      overrides: data.overrides || {},
-    });
-  }
+  public broadcast: typeof Events.prototype.broadcast;
 
   private buildBackendUrl(config: INovuConfiguration) {
     const novuVersion = 'v1';

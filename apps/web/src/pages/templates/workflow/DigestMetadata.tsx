@@ -36,12 +36,12 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             <Controller
               control={control}
               name={`steps.${index}.metadata.amount`}
-              render={({ field }) => {
+              render={({ field, fieldState }) => {
                 return (
                   <Input
                     {...field}
                     value={field.value || ''}
-                    error={errors?.steps ? errors.steps[index]?.metadata?.amount?.message : undefined}
+                    error={fieldState.error?.message}
                     min={0}
                     max={100}
                     type="number"
@@ -118,12 +118,12 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.backoffAmount`}
-                render={({ field }) => {
+                render={({ field, fieldState }) => {
                   return (
                     <Input
                       {...field}
                       value={field.value || ''}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffAmount?.message : undefined}
+                      error={fieldState.error?.message}
                       min={0}
                       max={100}
                       type="number"
@@ -193,7 +193,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
         <Controller
           control={control}
           name={`steps.${index}.metadata.digestKey`}
-          render={({ field }) => {
+          render={({ field, fieldState }) => {
             return (
               <Input
                 {...field}
@@ -201,7 +201,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                 label="Digest Key (Optional)"
                 placeholder="For example: post_id"
                 description="Used to group messages using this payload key, by default only subscriberId is used"
-                error={errors?.steps ? errors.steps[index]?.metadata?.digestKey?.message : undefined}
+                error={fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"
               />
