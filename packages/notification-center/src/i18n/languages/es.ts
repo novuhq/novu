@@ -5,6 +5,7 @@ export const ES: ITranslationEntry = {
     notifications: 'Notificaciones',
     markAllAsRead: 'marcar todo como leido',
     poweredBy: 'Con tecnología de',
+    settings: 'Configuración',
   },
   lang: 'es',
 };
