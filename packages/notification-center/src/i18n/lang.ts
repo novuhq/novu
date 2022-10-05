@@ -106,8 +106,6 @@ export type I18NLanguage =
   | 'ne'
   | 'pl'
   | 'cs'
-  | 'pu'
-  | 'ta'
   | 'sd'
   | 'pa'
   | 'ta'
