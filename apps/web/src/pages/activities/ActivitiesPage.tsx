@@ -105,17 +105,16 @@ export function ActivitiesPage() {
     {
       accessor: 'recipient',
       Header: 'Recipient',
-      Cell: ({ channel, email, phone, deviceTokens }: any) => (
+      Cell: ({ type: channel, subscriber: { email, phone }, deviceTokens }: any) => (
         <Text rows={1}>
-          {channel === ChannelTypeEnum.EMAIL ? email : ''} {channel === ChannelTypeEnum.SMS ? phone : ''}{' '}
-          {channel === ChannelTypeEnum.PUSH ? deviceTokens.join(',') : ''}
+          {email || ''} {phone || ''} {deviceTokens?.join(',') || ''}
         </Text>
       ),
     },
     {
-      accessor: 'channel',
+      accessor: 'type',
       Header: 'Channel',
-      Cell: ({ channel }: any) => (
+      Cell: ({ type: channel }: any) => (
         <>
           {channel === ChannelTypeEnum.EMAIL ? (
             <Tooltip label="Delivered on Email Channel">
@@ -145,18 +144,6 @@ export function ActivitiesPage() {
         </>
       ),
     },
-    {
-      accessor: 'providerId',
-      Header: 'Provider',
-      Cell: ({ providerId }: any) => {
-        return (
-          <Text data-test-id="provider-id" rows={1}>
-            {providerId ? capitalize(providerId) : ''}
-          </Text>
-        );
-      },
-    },
-
     {
       accessor: 'createdAt',
       Header: 'Sent On',

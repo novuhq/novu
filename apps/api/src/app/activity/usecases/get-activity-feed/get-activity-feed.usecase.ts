@@ -1,22 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository, SubscriberRepository } from '@novu/dal';
+import { SubscriberRepository, NotificationRepository } from '@novu/dal';
 import { ActivitiesResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityFeedCommand } from './get-activity-feed.command';
 
 @Injectable()
 export class GetActivityFeed {
-  constructor(private messageRepository: MessageRepository, private subscribersRepository: SubscriberRepository) {}
+  constructor(
+    private subscribersRepository: SubscriberRepository,
+    private notificationRepository: NotificationRepository
+  ) {}
 
-  async execute(command: GetActivityFeedCommand): Promise<ActivitiesResponseDto> {
+  async execute(command: GetActivityFeedCommand): Promise<any> {
     const LIMIT = 10;
 
-    let subscriberId: string;
-    if (command.search) {
-      const foundSubscriber = await this.subscribersRepository.searchSubscriber(command.environmentId, command.search);
-
-      subscriberId = foundSubscriber?._id;
-
-      if (!subscriberId) {
+    const subscriberIds = [];
+    if (command.emails) {
+      const ids = await this.subscribersRepository.find(
+        {
+          email: {
+            $in: command.emails,
+          },
+        },
+        '_id'
+      );
+      subscriberIds.push(...ids);
+      if (subscriberIds.length === 0) {
         return {
           page: 0,
           totalCount: 0,
@@ -26,9 +34,25 @@ export class GetActivityFeed {
       }
     }
 
-    const { data: messages, totalCount } = await this.messageRepository.getFeed(
+    if (command.search) {
+      const foundSubscriber = await this.subscribersRepository.searchSubscriber(command.environmentId, command.search);
+
+      const subscriberId = foundSubscriber?._id;
+
+      if (!subscriberId) {
+        return {
+          page: 0,
+          totalCount: 0,
+          pageSize: LIMIT,
+          data: [],
+        };
+      }
+      subscriberIds.push(subscriberId);
+    }
+
+    const { data: messages, totalCount } = await this.notificationRepository.getFeed(
       command.environmentId,
-      { channels: command.channels, templates: command.templates, emails: command.emails, subscriberId },
+      { channels: command.channels, templates: command.templates, subscriberIds },
       command.page * LIMIT,
       LIMIT
     );

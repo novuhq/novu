@@ -53,6 +53,12 @@ notificationSchema.virtual('subscriber', {
   justOne: true,
 });
 
+notificationSchema.virtual('jobs', {
+  ref: 'Job',
+  localField: '_id',
+  foreignField: '_notificationId',
+});
+
 interface INotificationDocument extends NotificationEntity, Document {
   _id: never;
 }
