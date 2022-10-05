@@ -180,6 +180,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>hi</code> (Hindi)</li>
           <li><code>it</code> (Italian)</li>
           <li><code>ka</code> (Kannada)</li>
+          <li><code>mr</code> (Marathi)</li>
           <li><code>ne</code> (Nepali)</li>
           <li><code>ru</code> (Russian)</li>
           <li><code>es</code> (Spanish)</li>
@@ -196,6 +197,8 @@ The `i18n` prop can accept 2 different types of values
           <li><code>pu</code> (Punjabi)</li>
           <li><code>ta</code> (Tamil)</li>
           <li><code>da</code> (Danish)</li>
+          <li><code>ko</code> (Korean)</li>
+
         </ul>
       </div>
   </details>
