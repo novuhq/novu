@@ -200,7 +200,6 @@ The `i18n` prop can accept 2 different types of values
           <li><code>da</code> (Danish)</li>
           <li><code>ko</code> (Korean)</li>
           <li><code>ca</code> (Catalan)</li>
-          <li><code>ko</code> (Korean)</li>
           <li><code>hu</code> (Hungarian)</li>
         </ul>
       </div>
