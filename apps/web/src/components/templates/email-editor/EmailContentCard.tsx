@@ -83,12 +83,12 @@ export function EmailContentCard({
       <Controller
         name={`steps.${index}.template.subject` as any}
         control={control}
-        render={({ field }) => {
+        render={({ field, fieldState }) => {
           return (
             <Input
               {...field}
               mb={40}
-              error={errors?.steps ? errors?.steps[index]?.template?.subject?.message : undefined}
+              error={fieldState.error?.message}
               label="Subject line"
               disabled={readonly}
               value={field.value}
