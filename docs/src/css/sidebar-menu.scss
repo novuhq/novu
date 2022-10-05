@@ -4,7 +4,7 @@
   }
 }
 
-aside {
+.main-wrapper {
   position: relative;
 
   &::before {
@@ -12,7 +12,6 @@ aside {
     position: absolute;
     top: 0;
     right: 100%;
-    background-color: inherit;
     width: 100vw;
     height: 100%;
 
@@ -173,7 +172,7 @@ html[data-theme='dark'] {
 }
 
 html[data-theme='light'] {
-  aside {
+  .main-wrapper:before, aside {
     background-color: $color-white;
   }
   .menu {
