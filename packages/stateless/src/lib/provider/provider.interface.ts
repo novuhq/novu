@@ -35,7 +35,7 @@ export interface IPushOptions {
     tag?: string;
     body?: string;
     icon?: string;
-    badge?: string;
+    badge?: number;
     color?: string;
     sound?: string;
     title?: string;
@@ -44,6 +44,13 @@ export interface IPushOptions {
     clickAction?: string;
     titleLocKey?: string;
     titleLocArgs?: string;
+    ttl?: number;
+    expiration?: number;
+    priority?: 'default' | 'normal' | 'high';
+    subtitle?: string;
+    channelId?: string;
+    categoryId?: string;
+    mutableContent?: boolean;
   };
 }
 
