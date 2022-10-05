@@ -29,6 +29,7 @@ import { CA } from './languages/ca';
 import { KO } from './languages/ko';
 import { JA } from './languages/ja';
 import { HU } from './languages/hu';
+import { AS } from './languages/as';
 
 
 export interface ITranslationContent {
@@ -75,6 +76,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ko: KO,
   ja: JA,
   hu: HU,
+  as: AS,
 };
 
 /**
@@ -118,5 +120,6 @@ export type I18NLanguage =
   | 'pa'
   | 'ta'
   | 'ko'
+  | 'as'
   | 'ja'
   | 'hu';
