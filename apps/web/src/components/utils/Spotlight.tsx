@@ -19,7 +19,7 @@ export const SpotLight = ({ children }) => {
 
       {
         id: 'navigate-integration',
-        title: 'Go to Integration',
+        title: 'Go to Integrations',
         onTrigger: () => navigate('/integrations'),
         icon: <Box />,
       },
