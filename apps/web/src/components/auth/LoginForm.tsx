@@ -84,7 +84,7 @@ export function LoginForm({}: Props) {
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
       )}
-      <form onSubmit={handleSubmit(onLogin)}>
+      <form noValidate onSubmit={handleSubmit(onLogin)}>
         <Input
           error={errors.email?.message || emailServerError}
           {...register('email', {

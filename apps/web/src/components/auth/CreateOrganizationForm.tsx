@@ -81,7 +81,7 @@ export function CreateOrganization({}: Props) {
   };
 
   return (
-    <form name="create-app-form" onSubmit={handleSubmit(onCreateEnvironment)}>
+    <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateEnvironment)}>
       <Input
         error={errors.organizationName?.message}
         {...register('organizationName', {
