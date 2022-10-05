@@ -2,6 +2,7 @@ import { EN } from './languages/en';
 import { FI } from './languages/fi';
 import { FR } from './languages/fr';
 import { HI } from './languages/hi';
+import { ID } from './languages/id';
 import { IT } from './languages/it';
 import { KA } from './languages/ka';
 import { MR } from './languages/mr';
@@ -47,6 +48,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   gj: GJ,
   ru: RU,
   es: ES,
+	id: ID,
   it: IT,
   ka: KA,
   mr: MR,
@@ -85,6 +87,7 @@ export type I18NLanguage =
   | 'en'
   | 'fi'
   | 'hi'
+	| 'id'
   | 'it'
   | 'ka'
   | 'mr'
