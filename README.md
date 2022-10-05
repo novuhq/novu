@@ -1,13 +1,13 @@
 <div align="center">
   
-![hacktoberfest-readme-dark (1)](https://user-images.githubusercontent.com/63902456/193565711-96d0e494-998f-4f4b-aeb9-9aec80b24851.jpeg#gh-dark-mode-only)
+[![hacktoberfest-readme-dark](https://user-images.githubusercontent.com/63902456/193565711-96d0e494-998f-4f4b-aeb9-9aec80b24851.jpeg#gh-dark-mode-only)](https://novu.co/hacktoberfest#gh-dark-mode-only)
 
 </div>
 
 <div align="center">
   
- ![hacktoberfest-readme-light (1)](https://user-images.githubusercontent.com/63902456/193565889-24b3ac7a-2df9-40f6-83c3-f0d04e531f2e.jpeg#gh-light-mode-only)
- 
+ [![hacktoberfest-readme-light](https://user-images.githubusercontent.com/63902456/193565889-24b3ac7a-2df9-40f6-83c3-f0d04e531f2e.jpeg#gh-light-mode-only)](https://novu.co/hacktoberfest#gh-light-mode-only)
+
 </div>
 
 </br>
