@@ -1718,7 +1718,7 @@ importers:
   providers/expo:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.7.2
+      '@novu/stateless': ^0.8.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1737,7 +1737,7 @@ importers:
       typedoc: ^0.19.0
       typescript: 4.6.2
     dependencies:
-      '@novu/stateless': 0.7.2
+      '@novu/stateless': link:../../packages/stateless
       expo-server-sdk: 3.6.0
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -14492,18 +14492,6 @@ packages:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.13.0
-
-  /@novu/stateless/0.7.2:
-    resolution: {integrity: sha512-hZPVjtdckROXF4WpcpUJGigA+7Nfz1mM5dIHwuDfh6MZ6cRGOgjQVq2TKhiOjHcu2umcKORem4cuyz47KoSA5w==}
-    engines: {node: '>=10'}
-    dependencies:
-      axios: 0.26.1
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
 
   /@npmcli/arborist/5.2.0:
     resolution: {integrity: sha512-zWV7scFGL0SmpvfQyIWnMFbU/0YgtMNyvJiJwR98kyjUSntJGWFFR0O600d5W+TrDcTg0GyDbY+HdzGEg+GXLg==}

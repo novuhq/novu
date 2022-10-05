@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.7.2",
+    "@novu/stateless": "^0.8.0",
     "expo-server-sdk": "^3.6.0"
   },
   "devDependencies": {
