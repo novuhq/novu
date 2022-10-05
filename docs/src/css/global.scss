@@ -58,11 +58,28 @@ main {
 
 .main-wrapper {
   max-width: $container-width;
-  padding-left: 16px;
-  padding-right: 16px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+  position: relative;
+
+  @include mobile-screen {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 100%;
+    width: 100vw;
+    height: 100%;
+
+    @include tablet-screen {
+      display: none;
+    }
+  }
 }
 
 article,
@@ -86,6 +103,10 @@ article {
   @include mobile-screen {
     margin-top: 0;
   }
+}
+
+.docMainContainer {
+  padding-left: 40px;
 }
 
 .docusaurus-highlight-code-line {
@@ -144,13 +165,14 @@ article {
 }
 
 html[data-theme='dark'] {
-  --ifm-background-color: #0d0d0d;
+  --ifm-background-color: #000000;
   --ifm-hover-overlay: rgba(0, 213, 255, 0.1);
   --ifm-font-color-base: #e6e6e6;
   --ifm-toc-border-color: #262626;
   --ifm-heading-color: #ffffff;
   --ifm-color-primary: #00d5ff;
   --ifm-link-color: #00d5ff;
+  --ifm-menu-color-background-active: rgba(0, 213, 255, 0.1);
 
   main {
     .container {
@@ -190,7 +212,11 @@ html[data-theme='light'] {
   --ifm-toc-border-color: #e6e6e6;
   --ifm-link-color: #0055ff;
   --ifm-color-primary: #0055ff;
-  --ifm-menu-color-background-active: rgba(227, 0, 189, 0.08);
+  --ifm-menu-color-background-active: rgba(0, 85, 255, 0.08);
+
+  body {
+    background-color: $color-gray-12;
+  }
 
   main {
     .container {

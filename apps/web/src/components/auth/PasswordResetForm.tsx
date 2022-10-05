@@ -65,7 +65,7 @@ export function PasswordResetForm({ token }: Props) {
 
   return (
     <>
-      <form name="reset-form" onSubmit={handleSubmit(onForgotPassword)}>
+      <form noValidate name="reset-form" onSubmit={handleSubmit(onForgotPassword)}>
         <PasswordInput
           error={errors.password?.message}
           mt={20}
