@@ -45,6 +45,7 @@
     "@novu/mailgun": "^0.8.0",
     "@novu/mailjet": "^0.8.0",
     "@novu/mandrill": "^0.8.0",
+    "@novu/expo": "^0.8.0",
     "@novu/netcore": "^0.8.0",
     "@novu/node": "^0.8.0",
     "@novu/nodemailer": "^0.8.0",

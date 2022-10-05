@@ -129,7 +129,7 @@ export function SignUpForm({ token, email }: Props) {
         </>
       )}
 
-      <form name="login-form" onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>
         <Input
           error={errors.fullName?.message}
           {...register('fullName', {

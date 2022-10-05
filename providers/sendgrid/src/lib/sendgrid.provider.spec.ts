@@ -4,6 +4,7 @@ import { SendgridEmailProvider } from './sendgrid.provider';
 const mockConfig = {
   apiKey: 'SG.1234',
   from: 'test@tet.com',
+  senderName: 'test',
 };
 
 const mockNovuMessage = {
@@ -32,7 +33,7 @@ test('should trigger sendgrid correctly', async () => {
     to: mockNovuMessage.to,
     subject: mockNovuMessage.subject,
     html: mockNovuMessage.html,
-    from: mockNovuMessage.from,
+    from: { email: mockNovuMessage.from, name: mockConfig.senderName },
     substitutions: {},
     attachments: [
       {
@@ -41,6 +42,9 @@ test('should trigger sendgrid correctly', async () => {
         filename: 'test.txt',
       },
     ],
+    customArgs: {
+      id: undefined,
+    },
   });
 });
 

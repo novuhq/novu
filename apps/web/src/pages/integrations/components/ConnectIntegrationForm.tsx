@@ -180,7 +180,7 @@ export function ConnectIntegrationForm({
   const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
 
   return (
-    <Form onSubmit={handleSubmit(onCreatIntegration)}>
+    <Form noValidate onSubmit={handleSubmit(onCreatIntegration)}>
       <CloseButton type="button" onClick={onClose}>
         <Close />
       </CloseButton>
