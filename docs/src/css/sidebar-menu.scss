@@ -6,9 +6,9 @@
 
 .menu__link {
   font-size: 14px;
-  line-height: 1.25;
-  padding-left: 14px;
-  padding-right: 14px;
+  line-height: 1.375;
+  padding: 10px 14px;
+  border-radius: 0;
 
   &:hover {
     background: transparent;
@@ -34,6 +34,7 @@
 
   &--active:not(.menu__link--sublist) {
     background: var(--ifm-menu-color-background-active);
+    font-weight: 500;
 
     &:hover {
       background: var(--ifm-menu-color-background-active) !important;
@@ -62,11 +63,12 @@
 
 nav.menu {
   padding: 0;
-  margin-right: 40px;
+  padding-right: 40px;
   padding-top: 20px;
   padding-bottom: 20px;
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+  position: relative;
 
   @include tablet-screen {
     margin-right: 20px;
@@ -75,6 +77,16 @@ nav.menu {
   &::-webkit-scrollbar {
     display: none;
   }
+
+  .menu__list-item:not(:first-child) {
+    margin-top: 0;
+  }
+
+  .menu__list-item-collapsible {
+    text-transform: uppercase;
+    line-height: 1.25;
+  }
+
 
   .menu__list-item-collapsible:hover {
     background-color: transparent;
@@ -103,12 +115,15 @@ nav.menu {
 }
 
 html[data-theme='dark'] {
-  .menu {
-    background-color: $color-gray-1;
+  .main-wrapper:before:before {
+      display: none;
+  }
 
+  .menu {
     .menu__link:hover,
     .menu__caret:hover {
       color: $color-primary-blue;
+      background: var(--ifm-menu-color-background-active);
     }
 
     .menu__list-item-collapsible:hover {
@@ -136,15 +151,20 @@ html[data-theme='dark'] {
 }
 
 html[data-theme='light'] {
+  .main-wrapper:before, aside {
+    background-color: $color-white;
+  }
   .menu {
     .menu__link:hover,
     .menu__caret:hover {
-      color: $color-secondary-purple;
+      color: $color-secondary-blue;
+      background: var(--ifm-menu-color-background-active);
     }
 
     .menu__list-item-collapsible:hover {
       .menu__link {
-        color: $color-secondary-purple;
+        color: $color-secondary-blue;
+      background: var(--ifm-menu-color-background-active);
       }
     }
 
@@ -156,7 +176,7 @@ html[data-theme='light'] {
       }
 
       &--active:not(.menu__link--sublist) {
-        color: $color-secondary-purple;
+        color: $color-secondary-blue;
       }
     }
 
