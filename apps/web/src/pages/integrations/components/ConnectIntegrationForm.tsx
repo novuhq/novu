@@ -181,7 +181,7 @@ export function ConnectIntegrationForm({
 
   return (
     <Form onSubmit={handleSubmit(onCreatIntegration)}>
-      <CloseButton onClick={onClose}>
+      <CloseButton type="button" onClick={onClose}>
         <Close />
       </CloseButton>
 
