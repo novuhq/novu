@@ -61,6 +61,25 @@ main {
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+  position: relative;
+
+  @include mobile-screen {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 100%;
+    width: 100vw;
+    height: 100%;
+
+    @include tablet-screen {
+      display: none;
+    }
+  }
 }
 
 article,

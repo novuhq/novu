@@ -4,23 +4,6 @@
   }
 }
 
-.main-wrapper {
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 100%;
-    width: 100vw;
-    height: 100%;
-
-    @include tablet-screen {
-      display: none;
-    }
-  }
-}
-
 .menu__link {
   font-size: 14px;
   line-height: 1.375;
@@ -86,7 +69,6 @@ nav.menu {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
   position: relative;
-  border-right: 1px solid var(--ifm-toc-border-color);
 
   @include tablet-screen {
     margin-right: 20px;
