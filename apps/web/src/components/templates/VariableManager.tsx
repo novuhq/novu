@@ -53,8 +53,16 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
           <Controller
             name={`${template}.variables.${index}.defaultValue`}
             control={control}
-            render={({ field }) => {
-              return <Input type="text" placeholder="Default Value" value={field.value} onChange={field.onChange} />;
+            render={({ field, fieldState }) => {
+              return (
+                <Input
+                  error={fieldState.error?.message}
+                  type="text"
+                  placeholder="Default Value"
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              );
             }}
           />
         )}

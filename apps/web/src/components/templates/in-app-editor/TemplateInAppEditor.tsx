@@ -103,9 +103,10 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
           <Controller
             name={`steps.${index}.template.cta.data.url` as any}
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <Input
                 {...field}
+                error={fieldState.error?.message}
                 value={field.value || ''}
                 disabled={readonly}
                 description="The URL that will be opened when the user clicks the CTA button."
