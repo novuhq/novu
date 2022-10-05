@@ -38,7 +38,7 @@ Using an identifier like email might cause issues locating a specific subscriber
 
 ### Updating subscriber data
 
-In some cases you want to access subscribers to update a specific field or data attribute. For example when user changes their email address or personal details.
+In some cases you want to access subscribers to update a specific field or data attribute. For example when the user changes their email address or personal details.
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -52,7 +52,7 @@ await novu.subscribers.update(user.id, {
 
 ### Updating subscriber credentials
 
-In case the user want to use chat channel, he will need to set the credentials that needed to be authentication with.
+In case the user want to use chat channel, he will need to set the credentials that needed to be authenticated with.
 
 ```typescript
 import { Novu, ChatProviderIdEnum } from '@novu/node';
@@ -66,7 +66,7 @@ await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, 
 
 - subscriberId is a custom identifier used when identifying your users within the Novu platform.
 - providerId is a unique provider identifier (we recommend using ChatProviderIdEnum).
-- credentials are the argument you need to be authentication with your provider workspace. At this point, we support chat messages through webhook, so a webhookUrl is needed to be provided.
+- credentials are the argument you need to be authenticated with your provider workspace. At this point, we support chat messages through webhook, so a webhookUrl is needed to be provided.
 
 ### Removing a subscriber
 
