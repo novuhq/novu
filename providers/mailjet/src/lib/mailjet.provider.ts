@@ -80,7 +80,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       return body.map((item) => item.MessageID);
     }
 
-    return [body.id];
+    return [body.MessageID];
   }
   
   parseEventBody(
