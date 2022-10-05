@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "target": "esnext",
+    "outDir": "build/module",
+    "module": "esnext",
+    "esModuleInterop": true,
+    "types": ["jest", "node"],
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+  },
+  "exclude": ["node_modules/**"]
+}

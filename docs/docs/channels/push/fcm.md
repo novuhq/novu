@@ -4,7 +4,7 @@ Firebase Cloud Messages is a free notification delivery service provided by Goog
 
 To enable the FCM integration, you need to get your service account key from the Firebase dashboard. You can acquire the account key JSON by selecting your project, clicking the gear icon in top of the sidebar, going to service account tab and download the JSON.
 
-After that, manually get the values from the JSON to the right fields. You can use a tool like [JSON Formatter](https://jsonformatter.curiousconcept.com/) to get the values more easily.
+After that, paste the entire JSON file in the Service Account field.
 
 The overrides field supports all [NotificationMessagePayload](https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.notificationmessagepayload.md#notificationmessagepayload_interface) values, example below.
 

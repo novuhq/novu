@@ -1,14 +1,15 @@
 <div align="center">
   
-![hacktoberfest-readme-dark](https://user-images.githubusercontent.com/63902456/191170980-c010daeb-f8ff-454d-bda1-543695b32c80.jpeg#gh-dark-mode-only)
+![hacktoberfest-readme-dark (1)](https://user-images.githubusercontent.com/63902456/193565711-96d0e494-998f-4f4b-aeb9-9aec80b24851.jpeg#gh-dark-mode-only)
 
 </div>
 
 <div align="center">
   
- ![hacktoberfest-readme-light](https://user-images.githubusercontent.com/63902456/191171065-d8f349e5-7250-43ff-8078-fa02dd859bc8.jpeg#gh-light-mode-only)
-
+ ![hacktoberfest-readme-light (1)](https://user-images.githubusercontent.com/63902456/193565889-24b3ac7a-2df9-40f6-83c3-f0d04e531f2e.jpeg#gh-light-mode-only)
+ 
 </div>
+
 </br>
 </br>
 
@@ -44,7 +45,7 @@ The ultimate service for managing multi-channel notifications with a single API.
 
 ## ⭐️ Why
 
-Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, chat and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
+Building a notification system is hard; at first it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
@@ -156,6 +157,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### Other (Coming Soon...)
 
 - [ ] PagerDuty
+
 
 ## 💻  Need Help?
 
