@@ -71,6 +71,9 @@ export enum EmailEventStatusEnum {
   BOUNCED = 'bounced',
   DROPPED = 'dropped',
   CLICKED = 'clicked',
+  BLOCKED = 'blocked',
+  SPAM = 'spam',
+  UNSUB = 'unsub',
 }
 
 export enum SmsEventStatusEnum {
