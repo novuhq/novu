@@ -48,6 +48,7 @@ importers:
       eslint-plugin-react: 7.29.4
       eslint-plugin-react-hooks: ^4.4.0
       execa: ^6.1.0
+      exportman: 0.0.3
       globby: ^12.0.2
       gradient-string: ^2.0.0
       husky: ^8.0.1
@@ -122,6 +123,7 @@ importers:
       eslint-plugin-react: 7.29.4_eslint@7.32.0
       eslint-plugin-react-hooks: 4.4.0_eslint@7.32.0
       execa: 6.1.0
+      exportman: 0.0.3
       globby: 12.2.0
       gradient-string: 2.0.1
       husky: 8.0.1
@@ -20094,6 +20096,15 @@ packages:
     dev: false
     optional: true
 
+  /@ts-morph/common/0.17.0:
+    resolution: {integrity: sha512-RMSSvSfs9kb0VzkvQ2NWobwnj7TxCA9vI/IjR9bDHqgAyVbu2T0DN4wiKVqomyDWqO7dPr/tErSfq7urQ1Q37g==}
+    dependencies:
+      fast-glob: 3.2.11
+      minimatch: 5.1.0
+      mkdirp: 1.0.4
+      path-browserify: 1.0.1
+    dev: true
+
   /@tsconfig/docusaurus/1.0.5:
     resolution: {integrity: sha512-KM/TuJa9fugo67dTGx+ktIqf3fVc077J6jwHu845Hex4EQf7LABlNonP/mohDKT0cmncdtlYVHHF74xR/YpThg==}
     dev: true
@@ -24809,7 +24820,7 @@ packages:
       minipass-pipeline: 1.2.4
       mkdirp: 1.0.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       rimraf: 3.0.2
       ssri: 8.0.1
       tar: 6.1.11
@@ -25615,6 +25626,10 @@ packages:
     resolution: {integrity: sha512-67ueh2IRGst/51p0n6FvPrnRjAGHY5F8xdjkgrYE7DDzpJe6qA07RYQ9VcoUeo5ATOjSOiWpSL3SWBRRbempMw==}
     dev: false
     optional: true
+
+  /code-block-writer/11.0.3:
+    resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
+    dev: true
 
   /code-point-at/1.1.0:
     resolution: {integrity: sha512-RpAVKQA5T63xEj6/giIbUEtZwJ4UFIc3ZtvEkiaUERylqe8xb5IvqcgOurZLahv93CLKfxcw5YI+DZcUBRyLXA==}
@@ -30269,6 +30284,16 @@ packages:
       jest-get-type: 27.5.1
       jest-matcher-utils: 27.5.1
       jest-message-util: 27.5.1
+
+  /exportman/0.0.3:
+    resolution: {integrity: sha512-Bc4OZLVktUry4wTItNo7AAg3zG5tO0fC9Lb9O6l9x32zmFLzH8s77NbBcdUoGJo6m9pGr4RqV7WAGWK2ftxYvw==}
+    engines: {node: '>=16.17.0'}
+    hasBin: true
+    dependencies:
+      micromatch: 4.0.5
+      ts-morph: 16.0.0
+      ts-morph-helpers: 0.3.0
+    dev: true
 
   /express-handlebars/5.3.5:
     resolution: {integrity: sha512-r9pzDc94ZNJ7FVvtsxLfPybmN0eFAUnR61oimNPRpD0D7nkLcezrkpZzoXS5TI75wYHRbflPLTU39B62pwB4DA==}
@@ -34931,7 +34956,7 @@ packages:
       chalk: 4.1.2
       ci-info: 3.3.0
       deepmerge: 4.2.2
-      glob: 7.2.0
+      glob: 7.2.3
       graceful-fs: 4.2.9
       jest-circus: 27.5.1
       jest-environment-jsdom: 27.5.1
@@ -34948,7 +34973,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 9.1.1_typescript@4.6.2
+      ts-node: 9.1.1_typescript@4.3.5
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -42079,7 +42104,6 @@ packages:
     peerDependenciesMeta:
       bluebird:
         optional: true
-    dev: true
 
   /promise-inflight/1.0.1_bluebird@3.7.2:
     resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
@@ -48452,6 +48476,12 @@ packages:
       webpack: 5.74.0
     dev: true
 
+  /ts-morph-helpers/0.3.0:
+    resolution: {integrity: sha512-iQBFeB5KVVGKJD6FcHcEEq21AE4i1g/PIVpOTqmE95iJ3Xrpoff2mpILH78XLVuQmGM5MkzvKbZbqdnIdsRbHA==}
+    dependencies:
+      ts-morph: 16.0.0
+    dev: true
+
   /ts-morph/11.0.3:
     resolution: {integrity: sha512-ymuPkndv9rzqTLiHWMkVrFXWcN4nBiBGhRP/kTC9F5amAAl7BNLfyrsTzMD1o9A0zishKoF1KQT/0yyFhJnPgA==}
     requiresBuild: true
@@ -48460,6 +48490,13 @@ packages:
       code-block-writer: 10.1.1
     dev: false
     optional: true
+
+  /ts-morph/16.0.0:
+    resolution: {integrity: sha512-jGNF0GVpFj0orFw55LTsQxVYEUOCWBAbR5Ls7fTYE5pQsbW18ssTb/6UXx/GYAEjS+DQTp8VoTw0vqYMiaaQuw==}
+    dependencies:
+      '@ts-morph/common': 0.17.0
+      code-block-writer: 11.0.3
+    dev: true
 
   /ts-node/10.7.0_f6w67sjx3imwytyzb2qhabnzqe:
     resolution: {integrity: sha512-TbIGS4xgJoX2i3do417KSaep1uRAW/Lu+WAL2doDHC0D6ummjirVOXU5/7aiZotbQ5p1Zp9tP7U6cYhA0O7M8A==}

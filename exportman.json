@@ -1,0 +1,10 @@
+{
+  "apps/api": {
+    "entryFiles": ["src/main.ts"],
+    "filePatterns": ["src/**/*.ts", "!**/*.e2e.ts", "!**/*.spec.ts"]
+  },
+  "packages/*": {
+    "entryFiles": ["src/index.ts"],
+    "filePatterns": ["src/**/*.{ts,tsx}", "!**/*.d.ts", "!**/*.stories.tsx", "!**/*.spec.{ts,tsx}"]
+  }
+}
