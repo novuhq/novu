@@ -77,7 +77,7 @@ export class MailjetEmailProvider implements IEmailProvider {
   
   getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
-      return body.map((item) => item.id);
+      return body.map((item) => item.MessageID);
     }
 
     return [body.id];
@@ -88,7 +88,7 @@ export class MailjetEmailProvider implements IEmailProvider {
     identifier: string
   ): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
-      body = body.find((item) => item.id === identifier);
+      body = body.find((item) => item.MessageID === identifier);
     }
 
     if (!body) {
@@ -104,7 +104,7 @@ export class MailjetEmailProvider implements IEmailProvider {
     return {
       status: status,
       date: new Date().toISOString(),
-      externalId: body.id,
+      externalId: body.MessageID,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
       response: body.response ? body.response : '',
       row: body,
