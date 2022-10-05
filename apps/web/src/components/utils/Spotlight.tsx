@@ -1,7 +1,7 @@
 import { SpotlightProvider } from '@mantine/spotlight';
 import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bolt } from '../../design-system/icons';
+import { Bolt, Box } from '../../design-system/icons';
 import { SpotlightContext } from '../../store/spotlightContext';
 
 export const SpotLight = ({ children }) => {
@@ -15,6 +15,13 @@ export const SpotLight = ({ children }) => {
         title: 'Go to Notification Template',
         onTrigger: () => navigate('/templates'),
         icon: <Bolt />,
+      },
+
+      {
+        id: 'navigate-integration',
+        title: 'Go to Integration',
+        onTrigger: () => navigate('/integrations'),
+        icon: <Box />,
       },
       {
         id: 'navigate-docs',
