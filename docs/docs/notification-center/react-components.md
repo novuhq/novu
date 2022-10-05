@@ -176,7 +176,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
-          <li><code>gj</code> (Georgian)</li>
+          <li><code>gu</code> (Gujarati)</li>
           <li><code>hi</code> (Hindi)</li>
           <li><code>it</code> (Italian)</li>
           <li><code>ka</code> (Kannada)</li>
