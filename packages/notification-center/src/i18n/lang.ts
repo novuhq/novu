@@ -27,7 +27,7 @@ import { PA } from './languages/pa';
 import { TA } from './languages/ta';
 import { CA } from './languages/ca';
 import { KO } from './languages/ko';
-import { EL } from './languages/EL';
+import { EL } from './languages/el';
 import { JA } from './languages/ja';
 import { HU } from './languages/hu';
 
