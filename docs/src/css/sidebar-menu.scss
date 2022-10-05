@@ -115,18 +115,15 @@ nav.menu {
 }
 
 html[data-theme='dark'] {
-  aside {
-    &:before {
+  .main-wrapper:before:before {
       display: none;
-    }
   }
 
   .menu {
-    background-color: $color-gray-1;
-
     .menu__link:hover,
     .menu__caret:hover {
       color: $color-primary-blue;
+      background: var(--ifm-menu-color-background-active);
     }
 
     .menu__list-item-collapsible:hover {
