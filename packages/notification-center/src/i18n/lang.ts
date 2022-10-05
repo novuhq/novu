@@ -25,7 +25,7 @@ import { CS } from './languages/cs';
 import { PU } from './languages/pu';
 import { TA } from './languages/ta';
 import { KO } from './languages/ko';
-import { KU } from './languages/ki';
+import { KU } from './languages/ku';
 
 export interface ITranslationContent {
   readonly notifications: string;
