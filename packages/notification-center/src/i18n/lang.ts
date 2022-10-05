@@ -25,10 +25,12 @@ import { PL } from './languages/pl';
 import { CS } from './languages/cs';
 import { PA } from './languages/pa';
 import { TA } from './languages/ta';
+import { SD } from './languages/sd';
 import { CA } from './languages/ca';
 import { KO } from './languages/ko';
 import { JA } from './languages/ja';
 import { HU } from './languages/hu';
+import { AS } from './languages/as';
 
 
 export interface ITranslationContent {
@@ -71,10 +73,12 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   cs: CS,
   pa: PA,
   ta: TA,
+  sd: SD,
   ca: CA,
   ko: KO,
   ja: JA,
   hu: HU,
+  as: AS,
 };
 
 /**
@@ -114,9 +118,11 @@ export type I18NLanguage =
   | 'ne'
   | 'pl'
   | 'cs'
+  | 'sd'
   | 'ca'
   | 'pa'
   | 'ta'
   | 'ko'
+  | 'as'
   | 'ja'
   | 'hu';
