@@ -36,6 +36,7 @@ export function ConfirmRegenerationModal({
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
         size="lg"
+        data-test-id="regenerate-api-key-modal"
         onClose={() => {
           cancelAction();
         }}
@@ -50,7 +51,7 @@ export function ConfirmRegenerationModal({
             <Button variant="outline" size="md" mt={30} onClick={() => cancelAction()}>
               No
             </Button>
-            <Button mt={30} size="md" onClick={() => confirmAction()}>
+            <Button mt={30} size="md" onClick={() => confirmAction()} data-test-id="regenerate-api-key-modal-button">
               Yes
             </Button>
           </Group>

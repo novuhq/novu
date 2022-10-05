@@ -26,9 +26,13 @@ import { CS } from './languages/cs';
 import { PA } from './languages/pa';
 import { TA } from './languages/ta';
 import { DA } from './languages/da';
+import { SD } from './languages/sd';
 import { CA } from './languages/ca';
 import { KO } from './languages/ko';
+import { JA } from './languages/ja';
 import { HU } from './languages/hu';
+import { AS } from './languages/as';
+
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -71,9 +75,12 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   pa: PA,
   ta: TA,
   da: DA,
+  sd: SD,
   ca: CA,
   ko: KO,
+  ja: JA,
   hu: HU,
+  as: AS,
 };
 
 /**
@@ -113,9 +120,12 @@ export type I18NLanguage =
   | 'ne'
   | 'pl'
   | 'cs'
+  | 'sd'
   | 'ca'
   | 'pa'
   | 'ta'
   | 'da'
   | 'ko'
+  | 'as'
+  | 'ja'
   | 'hu';
