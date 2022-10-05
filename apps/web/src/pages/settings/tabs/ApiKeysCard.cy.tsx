@@ -2,7 +2,6 @@ import { ApiKeysCard } from '.';
 import { TestWrapper } from '../../../testing';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { IEnvironment } from '@novu/shared';
-import { IApiKey } from '../../../../../../libs/dal/src/repositories/environment/environment.entity';
 
 const myEnvironments: IEnvironment = {
   _id: '633a68831c6bf8ce582c923e',
@@ -29,10 +28,9 @@ const currentEnvironment = {
   _organizationId: '633a68831c6bf8ce582c9238',
 };
 
-const apiKeys: IApiKey[] = [
+const apiKeys: { key: string }[] = [
   {
     key: 'f9859f757bd8f682a04cd92f3e228eaa',
-    _userId: '633a687c1c6bf8ce582c922f',
   },
 ];
 
