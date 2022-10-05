@@ -8,7 +8,7 @@ Novu manages your users in a specific subscribers data model, that allows the No
 
 A novu subscribers contains the following data points:
 
-- **User data** - data stored on the subscriber object that allows you easily access it in the notification templates you create. This contains basic info such as name, gender, profile picture and etc...
+- **User data** - Data stored on the subscriber object that allows you to easily access it in the notification templates you create. This contains basic info such as name, gender, profile picture and etc...
 - **Contact information** - Things like e-mail, phone number, push tokens and etc... They will be used when a multi-channel template will be configured. Managing all communication credentials will reduce the amount of data you need to pass when triggering a notification.
 
 ## Creating a subscriber
