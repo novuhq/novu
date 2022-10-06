@@ -126,7 +126,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       case 'spam':
         return EmailEventStatusEnum.SPAM;
       case 'unsub':
-        return EmailEventStatusEnum.UNSUB;
+        return EmailEventStatusEnum.UNSUBSCRIBE;
     }
   }
 }
