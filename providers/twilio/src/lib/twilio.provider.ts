@@ -80,7 +80,7 @@ export class TwilioSmsProvider implements ISmsProvider {
       case 'accepted':
         return SmsEventStatusEnum.ACCEPTED;
       case 'queued':
-        return SmsEventStatusEnum.QUEQED;
+        return SmsEventStatusEnum.QUEUED;
       case 'sending':
         return SmsEventStatusEnum.SENDING;
       case 'sent':

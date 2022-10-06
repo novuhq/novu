@@ -78,7 +78,7 @@ export enum SmsEventStatusEnum {
   DELIVERED = 'delivered',
   RECEIVED = 'received',
   ACCEPTED = 'accepted',
-  QUEQED = 'queued',
+  QUEUED = 'queued',
   SENDING = 'sending',
   SENT = 'sent',
   FAILED = 'failed',
