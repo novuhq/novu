@@ -30,7 +30,7 @@ import { CA } from './languages/ca';
 import { KO } from './languages/ko';
 import { JA } from './languages/ja';
 import { HU } from './languages/hu';
-import { DA } from './languages/hu';
+import { DA } from './languages/da';
 import { AS } from './languages/as';
 
 export interface ITranslationContent {
@@ -68,7 +68,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   or: OR,
   sa: SA,
   ur: UR,
-  ne: NE,
+  ne: NE, 
   pl: PL,
   cs: CS,
   pa: PA,
