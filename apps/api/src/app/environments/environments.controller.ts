@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Param,
   Post,
   Put,
   UseGuards,
@@ -27,6 +28,9 @@ import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
+import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
+import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
+import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -35,6 +39,7 @@ import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api
 export class EnvironmentsController {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
+    private updateEnvironmentUsecase: UpdateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
     private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
@@ -95,6 +100,27 @@ export class EnvironmentsController {
       GetMyEnvironmentsCommand.create({
         userId: user._id,
         organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Put('/:environmentId')
+  @ApiOperation({
+    summary: 'Update env by id',
+  })
+  async updateMyEnvironment(
+    @UserSession() user: IJwtPayload,
+    @Param('environmentId') environmentId: string,
+    @Body() payload: UpdateEnvironmentRequestDto
+  ) {
+    return await this.updateEnvironmentUsecase.execute(
+      UpdateEnvironmentCommand.create({
+        environmentId: environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        name: payload.name,
+        identifier: payload.identifier,
+        _parentId: payload.parentId,
       })
     );
   }

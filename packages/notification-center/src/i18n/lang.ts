@@ -2,6 +2,7 @@ import { EN } from './languages/en';
 import { FI } from './languages/fi';
 import { FR } from './languages/fr';
 import { HI } from './languages/hi';
+import { ID } from './languages/id';
 import { IT } from './languages/it';
 import { KA } from './languages/ka';
 import { MR } from './languages/mr';
@@ -10,7 +11,7 @@ import { UK } from './languages/uk';
 import { ES } from './languages/es';
 import { FA } from './languages/fa';
 import { AR } from './languages/ar';
-import { GJ } from './languages/gj';
+import { GU } from './languages/gu';
 import { DE } from './languages/de';
 import { BN } from './languages/bn';
 import { ML } from './languages/ml';
@@ -22,10 +23,17 @@ import { NE } from './languages/ne';
 import { UR } from './languages/ur';
 import { PL } from './languages/pl';
 import { CS } from './languages/cs';
-import { PU } from './languages/pu';
+import { PA } from './languages/pa';
 import { TA } from './languages/ta';
+import { SD } from './languages/sd';
+import { CA } from './languages/ca';
 import { KO } from './languages/ko';
 import { KU } from './languages/ku';
+import { EL } from './languages/el';
+import { JA } from './languages/ja';
+import { HU } from './languages/hu';
+import { DA } from './languages/da';
+import { AS } from './languages/as';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -44,9 +52,10 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   fi: FI,
   hi: HI,
   fr: FR,
-  gj: GJ,
+  gu: GU,
   ru: RU,
   es: ES,
+	id: ID,
   it: IT,
   ka: KA,
   mr: MR,
@@ -61,13 +70,20 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   or: OR,
   sa: SA,
   ur: UR,
-  ne: NE,
+  ne: NE, 
   pl: PL,
   cs: CS,
-  pu: PU,
+  pa: PA,
   ta: TA,
+  sd: SD,
+  ca: CA,
   ko: KO,
   ku: KU,
+  el: EL,
+  ja: JA,
+  hu: HU,
+  da: DA,
+  as: AS,
 };
 
 /**
@@ -85,10 +101,11 @@ export type I18NLanguage =
   | 'en'
   | 'fi'
   | 'hi'
+	| 'id'
   | 'it'
   | 'ka'
+  | 'gu'
   | 'mr'
-  | 'gj'
   | 'ru'
   | 'uk'
   | 'es'
@@ -106,7 +123,14 @@ export type I18NLanguage =
   | 'ne'
   | 'pl'
   | 'cs'
-  | 'pu'
+  | 'sd'
+  | 'ca'
+  | 'pa'
   | 'ta'
   | 'ko'
-  | 'ku';
+  | 'ku'
+  | 'el'
+  | 'as'
+  | 'ja'
+  | 'hu'
+  | 'da';

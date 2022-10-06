@@ -6,3 +6,4 @@ export * from './test-server.service';
 export * from './integration.service';
 export * from './environment.service';
 export * from './organization.service';
+export * from './user.service';

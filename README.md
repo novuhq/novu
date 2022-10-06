@@ -1,13 +1,13 @@
 <div align="center">
   
-![hacktoberfest-readme-dark (1)](https://user-images.githubusercontent.com/63902456/193565711-96d0e494-998f-4f4b-aeb9-9aec80b24851.jpeg#gh-dark-mode-only)
+[![hacktoberfest-readme-dark](https://user-images.githubusercontent.com/63902456/193565711-96d0e494-998f-4f4b-aeb9-9aec80b24851.jpeg#gh-dark-mode-only)](https://novu.co/hacktoberfest#gh-dark-mode-only)
 
 </div>
 
 <div align="center">
   
- ![hacktoberfest-readme-light (1)](https://user-images.githubusercontent.com/63902456/193565889-24b3ac7a-2df9-40f6-83c3-f0d04e531f2e.jpeg#gh-light-mode-only)
- 
+ [![hacktoberfest-readme-light](https://user-images.githubusercontent.com/63902456/193565889-24b3ac7a-2df9-40f6-83c3-f0d04e531f2e.jpeg#gh-light-mode-only)](https://novu.co/hacktoberfest#gh-light-mode-only)
+
 </div>
 
 </br>
@@ -58,6 +58,22 @@ Building a notification system is hard; at first it seems like just sending an e
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
+
+## 📚 Table of Contents
+- [Getting Started](https://github.com/novuhq/novu#-getting-started)
+- [Embeddable notification center](https://github.com/novuhq/novu#embeddable-notification-center)
+-  [Providers](https://github.com/novuhq/novu#providers)
+   - [Email](https://github.com/novuhq/novu#-email)
+   - [SMS](https://github.com/novuhq/novu#-sms)
+   - [Push](https://github.com/novuhq/novu#-push)
+   - [Chat](https://github.com/novuhq/novu#-chat)
+   - [In-App](https://github.com/novuhq/novu#-in-app)
+   - [Others](https://github.com/novuhq/novu#other-coming-soon)
+- [Need Help?](https://github.com/novuhq/novu#--need-help)
+- [Links](https://github.com/novuhq/novu#-links)
+- [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
+
+
 ## 🚀 Getting Started
 
 We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
@@ -100,7 +116,8 @@ await novu.trigger('<TRIGGER_NAME>',
 Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
 
 <div align="center">
-<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://github.com/iampearceman/Design-assets/blob/main/Untitled%20design%20(8).gif?raw=true">
+<img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
+
   
   Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
@@ -138,6 +155,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### 📱 Push 
 
 - [x] FCM
+- [x] Expo
 - [ ] Pushwoosh
 - [ ] SNS
 
