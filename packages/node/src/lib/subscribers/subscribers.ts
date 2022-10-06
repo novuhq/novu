@@ -1,4 +1,5 @@
 import { AxiosInstance } from 'axios';
+import { WithHttp } from '../novu.interface';
 import {
   ISubscriberPayload,
   ISubscribers,
@@ -10,13 +11,7 @@ interface IChannelCredentials {
   deviceTokens?: string[];
 }
 
-export class Subscribers implements ISubscribers {
-  private readonly http: AxiosInstance;
-
-  constructor(http: AxiosInstance) {
-    this.http = http;
-  }
-
+export class Subscribers extends WithHttp implements ISubscribers {
   async list(page: number) {
     return await this.http.get(`/subscribers`, {
       params: {
