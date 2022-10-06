@@ -1,6 +1,6 @@
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 
-import { ExecutionDetailsEntity, ExecutionDetailsStatusEnum } from './execution-details.entity';
+import { ExecutionDetailsEntity } from './execution-details.entity';
 import { ExecutionDetails } from './execution-details.schema';
 
 import { BaseRepository } from '../base-repository';

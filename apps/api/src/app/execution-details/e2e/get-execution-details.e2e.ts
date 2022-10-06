@@ -1,5 +1,5 @@
-import { ExecutionDetailsRepository, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ExecutionDetailsRepository } from '@novu/dal';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';

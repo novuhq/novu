@@ -1,11 +1,8 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
-import {
-  ExecutionDetailsEntity,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-} from './execution-details.entity';
+import { ExecutionDetailsEntity } from './execution-details.entity';
 
 import { schemaOptions } from '../schema-default.options';
 
