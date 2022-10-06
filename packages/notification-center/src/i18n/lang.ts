@@ -28,6 +28,7 @@ import { TA } from './languages/ta';
 import { SD } from './languages/sd';
 import { CA } from './languages/ca';
 import { KO } from './languages/ko';
+import { EL } from './languages/el';
 import { JA } from './languages/ja';
 import { HU } from './languages/hu';
 import { DA } from './languages/da';
@@ -76,6 +77,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   sd: SD,
   ca: CA,
   ko: KO,
+  el: EL,
   ja: JA,
   hu: HU,
   da: DA,
@@ -124,6 +126,7 @@ export type I18NLanguage =
   | 'pa'
   | 'ta'
   | 'ko'
+  | 'el'
   | 'as'
   | 'ja'
   | 'hu'
