@@ -50,12 +50,12 @@ export interface IThemePopover {
 }
 
 export interface IThemeNotificationListItem {
-  seen?: {
+  read?: {
     fontColor?: string;
     background?: string;
     timeMarkFontColor?: string;
   };
-  unseen?: {
+  unread?: {
     fontColor?: string;
     background?: string;
     boxShadow?: string;

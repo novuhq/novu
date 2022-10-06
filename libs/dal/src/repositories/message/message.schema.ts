@@ -75,7 +75,12 @@ const messageSchema = new Schema(
       type: Schema.Types.Boolean,
       default: false,
     },
+    read: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     lastSeenDate: Schema.Types.Date,
+    lastReadDate: Schema.Types.Date,
     createdAt: {
       type: Schema.Types.Date,
       default: Date.now,

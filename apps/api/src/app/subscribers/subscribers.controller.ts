@@ -1,16 +1,4 @@
-import {
-  ArgumentMetadata,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -27,10 +15,9 @@ import {
   UpdateSubscriberRequestDto,
 } from './dtos';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
-import { GetSubscribers } from './usecases/get-subscribers';
-import { GetSubscribersCommand } from './usecases/get-subscribers';
+import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiTags, ApiOkResponse, ApiOperation, ApiCreatedResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
@@ -39,16 +26,16 @@ import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-su
 import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
 import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
-import { GetUnseenCountCommand } from '../widgets/usecases/get-unseen-count/get-unseen-count.command';
 import { MessageEntity } from '@novu/dal';
-import { MarkMessageAsSeenCommand } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.command';
+import { MarkEnum, MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
 import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-done/update-message-actions.command';
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
-import { GetUnseenCount } from '../widgets/usecases/get-unseen-count/get-unseen-count.usecase';
-import { MarkMessageAsSeen } from '../widgets/usecases/mark-message-as-seen/mark-message-as-seen.usecase';
+import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
-import { initializeSeenParam } from '../widgets/widgets.controller';
+import { StoreQuery } from '../widgets/querys/store.query';
+import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
+import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -63,8 +50,8 @@ export class SubscribersController {
     private getPreferenceUsecase: GetPreferences,
     private updatePreferenceUsecase: UpdatePreference,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
-    private genUnseenCountUsecase: GetUnseenCount,
-    private markMessageAsSeenUsecase: MarkMessageAsSeen,
+    private genFeedCountUsecase: GetFeedCount,
+    private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions
   ) {}
 
@@ -299,10 +286,8 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
-    @Query('seen') seen?: string
+    @Query() query?: StoreQuery
   ) {
-    const isSeen = initializeSeenParam(seen);
-
     let feedsQuery: string[];
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -314,7 +299,7 @@ export class SubscribersController {
       subscriberId: subscriberId,
       page: page != null ? parseInt(page) : 0,
       feedId: feedsQuery,
-      seen: isSeen,
+      query: query,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -340,7 +325,7 @@ export class SubscribersController {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
     }
 
-    const command = GetUnseenCountCommand.create({
+    const command = GetFeedCountCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,
       environmentId: user.environmentId,
@@ -348,7 +333,7 @@ export class SubscribersController {
       seen,
     });
 
-    return await this.genUnseenCountUsecase.execute(command);
+    return await this.genFeedCountUsecase.execute(command);
   }
 
   @ExternalApiAccessible()
@@ -356,23 +341,55 @@ export class SubscribersController {
   @Post('/:subscriberId/messages/:messageId/seen')
   @ApiOperation({
     summary: 'Mark a subscriber feed message as seen',
+    description: 'This endpoint is deprecated please address /:subscriberId/messages/markAs instead',
+    deprecated: true,
   })
   @ApiCreatedResponse({
     type: MessageResponseDto,
   })
   async markMessageAsSeen(
     @UserSession() user: IJwtPayload,
-    @Param('messageId') messageId: string,
+    @Param('messageId') messageId: string | string[],
     @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity> {
-    const command = MarkMessageAsSeenCommand.create({
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(messageId);
+
+    const command = MarkMessageAsCommand.create({
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      messageId,
+      messageIds,
+      mark: { [MarkEnum.SEEN]: true },
     });
 
-    return await this.markMessageAsSeenUsecase.execute(command);
+    return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/:subscriberId/messages/markAs')
+  @ApiOperation({
+    summary: 'Mark a subscriber feed message as seen',
+  })
+  @ApiCreatedResponse({
+    type: MessageResponseDto,
+  })
+  async markMessageAs(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(body.messageId);
+
+    const command = MarkMessageAsCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+      messageIds,
+      mark: body.mark,
+    });
+
+    return await this.markMessageAsUsecase.execute(command);
   }
 
   @ExternalApiAccessible()
@@ -402,5 +419,13 @@ export class SubscribersController {
         status: body.status,
       })
     );
+  }
+  private toArray(param: string[] | string): string[] {
+    let paramArray: string[];
+    if (param) {
+      paramArray = Array.isArray(param) ? param : param.split(',');
+    }
+
+    return paramArray;
   }
 }

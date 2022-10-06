@@ -6,6 +6,7 @@ import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
+import { IStore, ITab } from '@novu/notification-center';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
@@ -20,6 +21,10 @@ class Novu {
   private theme?: Record<string, unknown>;
 
   private i18n?: Record<string, unknown>;
+
+  private tabs?: ITab[];
+
+  private stores?: IStore[];
 
   private debugMode: boolean;
 
@@ -66,6 +71,8 @@ class Novu {
       this.socketUrl = selectorOrOptions.socketUrl;
       this.theme = selectorOrOptions.theme;
       this.i18n = selectorOrOptions.i18n;
+      this.tabs = selectorOrOptions.tabs;
+      this.stores = selectorOrOptions.stores;
     }
 
     this.clientId = clientId;
@@ -213,6 +220,8 @@ class Novu {
                 i18n: this.i18n,
                 topHost: window.location.host,
                 data: options,
+                tabs: this.tabs,
+                stores: this.stores,
               },
             },
             '*'
@@ -375,4 +384,6 @@ interface IOptions {
     top?: number | string;
     left?: number | string;
   };
+  tabs: ITab[];
+  stores: IStore[];
 }
