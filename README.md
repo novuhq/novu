@@ -71,7 +71,7 @@ Building a notification system is hard; at first it seems like just sending an e
    - [Others](https://github.com/novuhq/novu#other-coming-soon)
 - [Need Help?](https://github.com/novuhq/novu#--need-help)
 - [Links](https://github.com/novuhq/novu#-links)
-- [Licence](https://github.com/novuhq/novu#%EF%B8%8F-license)
+- [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
 
 
 ## 🚀 Getting Started
