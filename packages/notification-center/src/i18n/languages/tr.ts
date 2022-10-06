@@ -4,7 +4,7 @@ export const TR: ITranslationEntry = {
     translations: {
         notifications: "Bildirimler",
         markAllAsRead: "Hepsini okundu olarak işaretle",
-        poweredBy: "tarafından desteklenmektedir",
+        poweredBy: "Tarafından desteklenmektedir",
         settings: "ayarlar"
     },
     lang: "tr",
