@@ -2,7 +2,7 @@ import { ITranslationEntry } from "../lang";
 
 export const TR: ITranslationEntry = {
     translations: {
-        notifications: "bildirimler",
+        notifications: "Bildirimler",
         markAllAsRead: "hepsini okundu olarak işaretle",
         poweredBy: "tarafından desteklenmektedir",
         settings: "ayarlar"
