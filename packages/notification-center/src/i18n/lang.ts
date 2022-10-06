@@ -30,8 +30,8 @@ import { CA } from './languages/ca';
 import { KO } from './languages/ko';
 import { JA } from './languages/ja';
 import { HU } from './languages/hu';
+import { DA } from './languages/da';
 import { AS } from './languages/as';
-
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -68,7 +68,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   or: OR,
   sa: SA,
   ur: UR,
-  ne: NE,
+  ne: NE, 
   pl: PL,
   cs: CS,
   pa: PA,
@@ -78,6 +78,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ko: KO,
   ja: JA,
   hu: HU,
+  da: DA,
   as: AS,
 };
 
@@ -125,4 +126,5 @@ export type I18NLanguage =
   | 'ko'
   | 'as'
   | 'ja'
-  | 'hu';
+  | 'hu'
+  | 'da';
