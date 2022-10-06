@@ -192,7 +192,7 @@ const WorkflowEditorPage = ({
                       labelPosition="center"
                     />
                     {steps.map((i, index) => {
-                      return index !== activeStep ? null : <Filters step={i} />;
+                      return index !== activeStep ? null : <Filters key={index} step={i} />;
                     })}
                     <FilterButton
                       fullWidth
