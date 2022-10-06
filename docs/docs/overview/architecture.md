@@ -14,7 +14,7 @@ Templates are the blueprints for all notifications in Novu. They provide the bas
 
 ## Environments
 
-This is the context in which all of your subscriber and templates exist. This will usually map to your own environments, so any new changes your are making will first be in the Development environment and once tested, you can use our merging changes tool to promote them to production.
+This is the context in which all of your subscribers and templates exist. This will usually map to your own environments, so any new changes your are making will first be in the Development environment and once tested, you can use our merging changes tool to promote them to production.
 
 The production environment is a read-only environment, meaning that you can only promote changes to it from the Development environment rather than modifying it directly.
 
@@ -34,7 +34,7 @@ The responsibility of each provider is to send the notification to the end-recip
 
 ## Subscribers
 
-Are the recipients of notifications, a subscriber will contain the delivery details such as: Email address, phone number, push tokens and etc...
+Subscribers are the recipients of notifications, a subscriber will contain the delivery details such as: Email address, phone number, push tokens and etc...
 Populating a subscriber with data can be done using our server side SDK. Read more about it [here](/platform/subscribers).
 
 ## Trigger

@@ -179,6 +179,8 @@ The `i18n` prop can accept 2 different types of values
           <li><code>gj</code> (Georgian)</li>
           <li><code>hi</code> (Hindi)</li>
           <li><code>it</code> (Italian)</li>
+          <li><code>ka</code> (Kannada)</li>
+          <li><code>mr</code> (Marathi)</li>
           <li><code>ne</code> (Nepali)</li>
           <li><code>ru</code> (Russian)</li>
           <li><code>es</code> (Spanish)</li>
@@ -189,6 +191,12 @@ The `i18n` prop can accept 2 different types of values
           <li><code>hr</code> (Croatian)</li>
           <li><code>or</code> (Odia)</li>
           <li><code>sa</code> (Sanskrit)</li>
+          <li><code>ur</code> (Urdu)</li>
+          <li><code>pl</code> (Polish)</li>
+          <li><code>cs</code> (Czech)</li>
+          <li><code>pu</code> (Punjabi)</li>
+          <li><code>ta</code> (Tamil)</li>
+          <li><code>ko</code> (Korean)</li>
         </ul>
       </div>
   </details>
