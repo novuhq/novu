@@ -1,4 +1,4 @@
-import AxiosInstance from 'axios';
+import Axios from 'axios';
 import { IChanges } from './changes.interface';
 import { WithHttp } from '../novu.interface';
 
