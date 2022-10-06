@@ -86,8 +86,49 @@ React component library that contains widget bell with the notification center. 
 
 These are the API wrappers created by the community to wrap communication providers in the following channels:
 
-- Email
-- SMS
-- Push
-- Web-Push
-- Chat (Slack, MS Teams, Whatsapp, etc...)
+Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+
+#### 💌 Email
+
+- [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
+- [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
+- [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
+- [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
+- [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
+- [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
+- [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
+- [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
+- [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
+
+
+#### 📞 SMS
+
+- [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
+- [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
+- [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+- [Nexmo - Vonage](https://github.com/novuhq/novu/tree/main/providers/nexmo)
+- [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
+- [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
+- [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
+
+
+#### 📱 Push 
+
+
+- [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+
+#### 👇 Chat 
+
+- [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
+- [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
+
+
+#### 📱 In-App
+
+- [Novu](https://docs.novu.co/notification-center/getting-started)
+
+
+#### Other (Coming Soon...)
+
+- PagerDuty
+

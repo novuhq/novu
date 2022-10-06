@@ -20,7 +20,11 @@ export function IntegrationsStore() {
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
 
-  async function handlerVisible(visible: boolean, createIntegrationModal: boolean, providerConfig: any) {
+  async function handlerVisible(
+    visible: boolean,
+    createIntegrationModal: boolean,
+    providerConfig: IIntegratedProvider
+  ) {
     setModalIsOpened(visible);
     setProvider(providerConfig);
     setIsCreateIntegrationModal(createIntegrationModal);
