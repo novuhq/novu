@@ -31,7 +31,7 @@ export class FiretextSmsProvider implements ISmsProvider {
     return [code, message];
   }
 
-  private getMessageId(headers: Headers) {
+  private parseHeaderId(headers: Headers) {
     return headers.get('X-Message');
   }
 
@@ -57,7 +57,7 @@ export class FiretextSmsProvider implements ISmsProvider {
       throw new Error(`${code}: ${message}`);
     }
 
-    const messageId = this.getMessageId(response.headers);
+    const messageId = this.parseHeaderId(response.headers);
 
     return {
       id: messageId,
