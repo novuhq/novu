@@ -32,26 +32,30 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.4.1"
+    "@novu/stateless": "^0.4.1",
+    "node-fetch": "^3.2.10"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.13.15",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/jest": "^27.0.1",
+    "@types/uuid": "^8.3.4",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
+    "fetch-mock": "^9.11.0",
     "gh-pages": "^3.1.0",
     "jest": "^27.1.0",
     "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
+    "rimraf": "^3.0.2",
     "standard-version": "^9.0.0",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
     "typedoc": "^0.19.0",
-    "typescript": "4.6.2",
-    "rimraf": "^3.0.2"
+    "typescript": "4.6.2"
   },
   "files": [
     "build/main",
