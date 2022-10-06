@@ -58,6 +58,22 @@ Building a notification system is hard; at first it seems like just sending an e
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
+
+## 📚 Table of Contents
+- [Getting Started](https://github.com/novuhq/novu#-getting-started)
+- [Embeddable notification center](https://github.com/novuhq/novu#embeddable-notification-center)
+-  [Providers](https://github.com/novuhq/novu#providers)
+   - [Email](https://github.com/novuhq/novu#-email)
+   - [SMS](https://github.com/novuhq/novu#-sms)
+   - [Push](https://github.com/novuhq/novu#-push)
+   - [Chat](https://github.com/novuhq/novu#-chat)
+   - [In-App](https://github.com/novuhq/novu#-in-app)
+   - [Others](https://github.com/novuhq/novu#other-coming-soon)
+- [Need Help?](https://github.com/novuhq/novu#--need-help)
+- [Links](https://github.com/novuhq/novu#-links)
+- [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
+
+
 ## 🚀 Getting Started
 
 We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
