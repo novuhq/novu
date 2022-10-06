@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Digest Engine
 
-The digest engine collects multiple trigger events, aggregates them into a single message and delivers it to subscriber.
+The digest engine collects multiple trigger events, aggregates them into a single message and delivers it to the subscriber.
 
 This becomes useful when a user needs to be notified on a large amount of triggers and you want to avoid sending too many notifications. Novu will automatically batch the incoming trigger events based on the `subscriberId` and an **optional** `digestKey` that can be added to control the digestion of the events.
 
