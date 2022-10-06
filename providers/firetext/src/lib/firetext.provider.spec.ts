@@ -73,4 +73,23 @@ describe('FiretextSmsProvider', () => {
 
     await expect(result).rejects.toThrowError('1: Authentication error');
   });
+
+  test('should handle unknown return codes', async () => {
+    fetchMock.mock('*', {
+      headers: {
+        'X-Message': 'ID',
+        'Content-Type': 'text/plain',
+      },
+      body: 'gobbledygook',
+    });
+
+    const result = provider.sendMessage({
+      content: 'content',
+      to: '+44123456789',
+    });
+
+    await expect(result).rejects.toThrowError(
+      'Unknown status code: Unknown status message'
+    );
+  });
 });

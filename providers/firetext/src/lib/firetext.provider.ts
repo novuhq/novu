@@ -25,8 +25,8 @@ export class FiretextSmsProvider implements ISmsProvider {
   private parseResponse(body: string) {
     const re = /^(\d+):(\d+)\s(.*)$/i;
     const found = body.match(re);
-    const code = found[1] ?? 'Unknown status code';
-    const message = found[3] ?? 'Unknown status message';
+    const code = found?.[1] ?? 'Unknown status code';
+    const message = found?.[3] ?? 'Unknown status message';
 
     return [code, message];
   }
