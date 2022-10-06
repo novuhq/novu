@@ -121,7 +121,7 @@ export function BrandingForm({
   return (
     <>
       <LoadingOverlay visible={isLoading} />
-      <form onSubmit={handleSubmit(saveBrandsForm)}>
+      <form noValidate onSubmit={handleSubmit(saveBrandsForm)}>
         <Group grow spacing={50} mt={0} align="flex-start">
           <Card title="Brand Setting">
             <Controller

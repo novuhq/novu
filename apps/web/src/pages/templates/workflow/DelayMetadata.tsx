@@ -56,12 +56,12 @@ export const DelayMetadata = ({ control, index }) => {
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.amount`}
-                render={({ field }) => {
+                render={({ field, fieldState }) => {
                   return (
                     <Input
                       {...field}
                       value={field.value || ''}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.amount?.message : undefined}
+                      error={fieldState.error?.message}
                       min={0}
                       max={100}
                       type="number"
@@ -103,7 +103,7 @@ export const DelayMetadata = ({ control, index }) => {
         <Controller
           control={control}
           name={`steps.${index}.metadata.delayPath`}
-          render={({ field }) => {
+          render={({ field, fieldState }) => {
             return (
               <Input
                 {...field}
@@ -112,7 +112,7 @@ export const DelayMetadata = ({ control, index }) => {
                 label="Path for scheduled date"
                 placeholder="For example: sendAt"
                 description="The path in payload for the scheduled delay date"
-                error={errors?.steps ? errors.steps[index]?.metadata?.delayPath?.message : undefined}
+                error={fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"
               />

@@ -2,8 +2,10 @@ import { EN } from './languages/en';
 import { FI } from './languages/fi';
 import { FR } from './languages/fr';
 import { HI } from './languages/hi';
+import { ID } from './languages/id';
 import { IT } from './languages/it';
 import { KA } from './languages/ka';
+import { MR } from './languages/mr';
 import { RU } from './languages/ru';
 import { UK } from './languages/uk';
 import { ES } from './languages/es';
@@ -21,7 +23,16 @@ import { NE } from './languages/ne';
 import { UR } from './languages/ur';
 import { PL } from './languages/pl';
 import { CS } from './languages/cs';
+import { PA } from './languages/pa';
 import { TA } from './languages/ta';
+import { SD } from './languages/sd';
+import { CA } from './languages/ca';
+import { KO } from './languages/ko';
+import { EL } from './languages/el';
+import { JA } from './languages/ja';
+import { HU } from './languages/hu';
+import { DA } from './languages/da';
+import { AS } from './languages/as';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -43,8 +54,10 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   gu: GU,
   ru: RU,
   es: ES,
+	id: ID,
   it: IT,
   ka: KA,
+  mr: MR,
   ar: AR,
   fa: FA,
   uk: UK,
@@ -56,10 +69,19 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   or: OR,
   sa: SA,
   ur: UR,
-  ne: NE,
+  ne: NE, 
   pl: PL,
   cs: CS,
+  pa: PA,
   ta: TA,
+  sd: SD,
+  ca: CA,
+  ko: KO,
+  el: EL,
+  ja: JA,
+  hu: HU,
+  da: DA,
+  as: AS,
 };
 
 /**
@@ -77,9 +99,11 @@ export type I18NLanguage =
   | 'en'
   | 'fi'
   | 'hi'
+	| 'id'
   | 'it'
   | 'ka'
   | 'gu'
+  | 'mr'
   | 'ru'
   | 'uk'
   | 'es'
@@ -94,7 +118,16 @@ export type I18NLanguage =
   | 'or'
   | 'sa'
   | 'ur'
-  | 'ne' 
+  | 'ne'
   | 'pl'
   | 'cs'
-  | 'ta';
+  | 'sd'
+  | 'ca'
+  | 'pa'
+  | 'ta'
+  | 'ko'
+  | 'el'
+  | 'as'
+  | 'ja'
+  | 'hu'
+  | 'da';
