@@ -9,6 +9,7 @@ export class Novu extends EventEmitter {
   private readonly http: AxiosInstance;
   readonly subscribers: Subscribers;
   readonly events: Events;
+  readonly changes: Changes;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -25,6 +26,7 @@ export class Novu extends EventEmitter {
     this.events = new Events(this.http);
     this.trigger = this.events.trigger;
     this.broadcast = this.events.broadcast;
+    this.changes = new Changes(this.http);
   }
 
   public trigger: typeof Events.prototype.trigger;
