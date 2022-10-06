@@ -32,7 +32,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     <br />
 
   <br/>
-    <a href="https://github.com/novuhq/novu/issues">Report Bug</a>
+    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
     ·
     <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
     ·
