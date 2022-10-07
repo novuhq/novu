@@ -21,4 +21,8 @@ Novu is an open-source notification infrastructure built for the engineering tea
 
 ## Discover Novu
 
+<a href="https://novu.co/" target="_blank"><img src="https://novu.co/favicon-32x32.png?v=f69b788fde41a4ad7dd9998b06786e24" alt="Novu Home Page" width="35"/><br><sub><b>Novu Home Page</b></sub></a></td> </a>
+
+<a href="https://github.com/novuhq/novu" target="_blank"><img src="https://github.githubassets.com/favicons/favicon-dark.png" alt="Novu Github" width="35"/><br><sub><b>Novu Github</b></sub></a></td> </a>
+
 <Discover/>
