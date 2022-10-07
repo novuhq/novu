@@ -5,7 +5,7 @@ export const PT: ITranslationEntry = {
     notifications: 'notificações',
     markAllAsRead: 'marcar tudo como lido',
     poweredBy: 'Apoiado por',
-    settings: 'Sistema',
+    settings: 'Configurações',
   },
   lang: 'pt',
 };
