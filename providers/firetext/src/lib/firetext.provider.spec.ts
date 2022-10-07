@@ -2,19 +2,11 @@ import { FiretextSmsProvider } from './firetext.provider';
 import fetchMock from 'fetch-mock';
 
 describe('FiretextSmsProvider', () => {
-  const date = new Date();
+  const date = new Date('2022-01-01T00:00:00.000Z');
 
   const provider = new FiretextSmsProvider({
     apiKey: 'apiKey',
     from: 'testFrom',
-  });
-
-  beforeAll(() => {
-    jest.useFakeTimers('modern').setSystemTime(date);
-  });
-
-  afterAll(() => {
-    jest.clearAllTimers();
   });
 
   afterEach(() => {
@@ -26,6 +18,7 @@ describe('FiretextSmsProvider', () => {
       headers: {
         'X-Message': 'ID',
         'Content-Type': 'text/plain',
+        Date: date.toString(),
       },
       body: '0:12 SMS successfully queued',
     });
