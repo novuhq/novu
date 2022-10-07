@@ -35,10 +35,10 @@ export class FiretextSmsProvider implements ISmsProvider {
     return headers.get('X-Message');
   }
 
-  private parseHeaderDate(headers: Headers): string | undefined {
+  private parseHeaderDate(headers: Headers): string {
     const date = headers.get('Date');
 
-    return date ? new Date(date).toISOString() : undefined;
+    return date ? new Date(date).toISOString() : new Date().toISOString();
   }
 
   async sendMessage(
