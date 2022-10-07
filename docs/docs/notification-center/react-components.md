@@ -200,6 +200,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>sd</code> (Sindhi)</li>
           <li><code>ca</code> (Catalan)</li>
           <li><code>ko</code> (Korean)</li>
+          <li><code>ku</code> (Kurdish)</li>
           <li><code>el</code> (Greek)</li>
           <li><code>ja</code> (Japanese)</li>
           <li><code>hu</code> (Hungarian)</li>
