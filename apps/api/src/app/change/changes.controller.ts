@@ -84,7 +84,10 @@ export class ChangesController {
     summary: 'Apply changes',
   })
   @ExternalApiAccessible()
-  async bulkApplyDiff(@UserSession() user: IJwtPayload, @Body() changeIds: string[]): Promise<ChangeResponseDto[]> {
+  async bulkApplyDiff(
+    @UserSession() user: IJwtPayload,
+    @Body('changeIds') changeIds: string[]
+  ): Promise<ChangeResponseDto[]> {
     return this.bulkApplyChange.execute(
       BulkApplyChangeCommand.create({
         changeIds,
