@@ -3,7 +3,7 @@ import { ITranslationEntry } from '../lang';
 export const PT: ITranslationEntry = {
   translations: {
     notifications: 'notificações',
-    markAllAsRead: 'marcar tudo como lido',
+    markAllAsRead: 'Marcar tudo como lido',
     poweredBy: 'Apoiado por',
     settings: 'Configurações',
   },
