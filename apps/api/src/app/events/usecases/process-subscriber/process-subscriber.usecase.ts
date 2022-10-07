@@ -8,6 +8,7 @@ import {
   JobStatusEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
+  IntegrationRepository,
 } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum, IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -31,7 +32,8 @@ export class ProcessSubscriber {
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private filterSteps: DigestFilterSteps,
-    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    private integrationRepository: IntegrationRepository
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
@@ -78,8 +80,16 @@ export class ProcessSubscriber {
       })
     );
 
-    return steps.map((step): JobEntity => {
-      return {
+    const jobs: JobEntity[] = [];
+
+    for (const step of steps) {
+      const integration = await this.integrationRepository.findOne({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channel: step.template.type,
+        active: true,
+      });
+      jobs.push({
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,
@@ -94,8 +104,11 @@ export class ProcessSubscriber {
         _templateId: notification._templateId,
         digest: step.metadata,
         type: step.template.type,
-      };
-    });
+        providerId: integration?.providerId,
+      });
+    }
+
+    return jobs;
   }
 
   private async getSubscriber(command: ProcessSubscriberCommand): Promise<SubscriberEntity> {

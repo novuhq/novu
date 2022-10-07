@@ -33,6 +33,10 @@ const messageSchema = new Schema(
       ref: 'Subscriber',
       index: true,
     },
+    _jobId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Job',
+    },
     templateIdentifier: Schema.Types.String,
     email: Schema.Types.String,
     subject: Schema.Types.String,
