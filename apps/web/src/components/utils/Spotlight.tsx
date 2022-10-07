@@ -23,16 +23,16 @@ export const SpotLight = ({ children }) => {
         icon: <Box />,
       },
       {
-        id: 'navigate-settings',
-        title: 'Go to Settings',
-        onTrigger: () => navigate('/settings'),
-        icon: <Settings />,
-      },
-      {
         id: 'navigate-changes',
         title: 'Go to Changes',
         onTrigger: () => navigate('/changes'),
         icon: <Repeat />,
+      },
+      {
+        id: 'navigate-settings',
+        title: 'Go to Settings',
+        onTrigger: () => navigate('/settings'),
+        icon: <Settings />,
       },
       {
         id: 'navigate-docs',
