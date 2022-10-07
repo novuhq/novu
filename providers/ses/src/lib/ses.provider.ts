@@ -59,10 +59,35 @@ export class SESEmailProvider implements IEmailProvider {
   async checkIntegration(
     options: IEmailOptions
   ): Promise<ICheckIntegrationResponse> {
+    let success: boolean;
+    let message: string;
+    let code: CheckIntegrationResponseEnum;
+    const transporter = nodemailer.createTransport({
+      SES: { ses: this.ses, aws: { SendRawEmailCommand } },
+    });
+
+    const testResponse = await transporter.sendMail({
+      html: '',
+      text: 'This is an Email to test the integration of your Amazon SES',
+      to: this.config.from,
+      from: this.config.from,
+      subject: 'Test Amazon SES integration',
+    });
+
+    if (testResponse.err === null) {
+      success = true;
+      message = 'Integration test was succesful';
+      code = CheckIntegrationResponseEnum.SUCCESS;
+    } else {
+      success = false;
+      message = 'Integration test failed';
+      code = CheckIntegrationResponseEnum.FAILED;
+    }
+
     return {
-      success: true,
-      message: 'Integrated successfully!',
-      code: CheckIntegrationResponseEnum.SUCCESS,
+      success: success,
+      message: message,
+      code: code,
     };
   }
 }
