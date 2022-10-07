@@ -204,6 +204,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>el</code> (Greek)</li>
           <li><code>ja</code> (Japanese)</li>
           <li><code>hu</code> (Hungarian)</li>
+          <li><code>bg</code> (Bulgarian)</li>
           <li><code>da</code> (Danish)</li>
           <li><code>as</code> (Assamese)</li>
           <li><code>te</code> (Telugu)</li>

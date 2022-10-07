@@ -32,6 +32,7 @@ import { KU } from './languages/ku';
 import { EL } from './languages/el';
 import { JA } from './languages/ja';
 import { HU } from './languages/hu';
+import { BG } from './languages/bg';
 import { DA } from './languages/da';
 import { AS } from './languages/as';
 import { TE } from './languages/te';
@@ -83,6 +84,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   el: EL,
   ja: JA,
   hu: HU,
+  bg: BG,
   da: DA,
   as: AS,
   te: TE,
@@ -130,10 +132,11 @@ export type I18NLanguage =
   | 'pa'
   | 'ta'
   | 'ko'
+  | 'bg'
   | 'ku'
   | 'el'
-  | 'as'
   | 'ja'
-  | 'te'
   | 'hu'
+  | 'as'
+  | 'te'
   | 'da';
