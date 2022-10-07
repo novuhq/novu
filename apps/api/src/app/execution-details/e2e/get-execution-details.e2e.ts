@@ -36,11 +36,14 @@ describe('Execution details - Get execution details by notification id - /v1/exe
 
     const {
       data: { data },
-    } = await axiosInstance.get(`${session.serverUrl}/v1/execution-details/notification/${notificationId}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
+    } = await axiosInstance.get(
+      `${session.serverUrl}/v1/execution-details?notificationId=${notificationId}&subscriberId=${session.subscriberId}`,
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
     const responseDetail = data[0];
     expect(responseDetail._notificationId).to.equal(notificationId);
     expect(responseDetail.channel).to.equal(detail.channel);
