@@ -104,6 +104,7 @@ export class SendMessageInApp extends SendMessageType {
         content,
         payload: messagePayload,
         templateIdentifier: command.identifier,
+        _jobId: command.jobId,
       });
     }
 

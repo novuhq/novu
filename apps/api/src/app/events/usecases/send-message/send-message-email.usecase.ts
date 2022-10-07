@@ -107,6 +107,7 @@ export class SendMessageEmail extends SendMessageType {
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
+      _jobId: command.jobId,
     });
 
     const html = await this.compileTemplate.execute(

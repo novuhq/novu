@@ -102,6 +102,7 @@ export class SendMessageSms extends SendMessageType {
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
+      _jobId: command.jobId,
     });
 
     if (phone && integration) {
