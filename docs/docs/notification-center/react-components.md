@@ -209,6 +209,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>as</code> (Assamese)</li>
           <li><code>tr</code> (Turkish)</li>
           <li><code>te</code> (Telugu)</li>
+          <li><code>ro</code> (Romanian)</li>
         </ul>
       </div>
   </details>
