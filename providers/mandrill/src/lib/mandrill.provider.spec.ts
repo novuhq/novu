@@ -6,10 +6,11 @@ test('should trigger mandrill correctly', async () => {
     from: 'test@test.com',
   });
   const spy = jest
-    .spyOn(provider, 'sendMessage')
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    .spyOn(provider['transporter'].messages, 'send')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return [{}] as any;
     });
 
   await provider.sendMessage({
