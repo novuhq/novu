@@ -35,6 +35,7 @@ import { HU } from './languages/hu';
 import { BG } from './languages/bg';
 import { DA } from './languages/da';
 import { AS } from './languages/as';
+import { TR } from './languages/tr';
 import { TE } from './languages/te';
 
 export interface ITranslationContent {
@@ -87,6 +88,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   bg: BG,
   da: DA,
   as: AS,
+  tr: TR,
   te: TE,
 };
 
@@ -137,6 +139,7 @@ export type I18NLanguage =
   | 'el'
   | 'ja'
   | 'hu'
+  | 'tr'
   | 'as'
   | 'te'
   | 'da';
