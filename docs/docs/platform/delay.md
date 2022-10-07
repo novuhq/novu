@@ -14,7 +14,7 @@ After adding a delay node in the workflow editor, the immediate next step will o
 
 ### Regular Delay
 
-Regular Delay will determine how long will it take before triggering the next step.
+Regular Delay will determine how long it will take before triggering the next step.
 
 #### Time Interval
 
