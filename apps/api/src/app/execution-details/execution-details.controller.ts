@@ -1,4 +1,4 @@
-import { ClassSerializerInterceptor, Controller, Get, Param, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -15,7 +15,7 @@ import { ExecutionDetailsResponseDto } from './dtos/execution-details-response.d
 export class ExecutionDetailsController {
   constructor(private getExecutionDetails: GetExecutionDetails) {}
 
-  @Get('/notification/:notificationId')
+  @Get('/')
   @ApiOperation({
     summary: 'Get execution details',
   })
@@ -25,7 +25,8 @@ export class ExecutionDetailsController {
   @ExternalApiAccessible()
   async getExecutionDetailsForNotification(
     @UserSession() user: IJwtPayload,
-    @Param('notificationId') notificationId: string
+    @Query('notificationId') notificationId: string,
+    @Query('subscriberId') subscriberId: string
   ): Promise<ExecutionDetailsResponseDto[]> {
     return this.getExecutionDetails.execute(
       GetExecutionDetailsCommand.create({
@@ -33,6 +34,7 @@ export class ExecutionDetailsController {
         environmentId: user.environmentId,
         userId: user._id,
         notificationId,
+        subscriberId,
       })
     );
   }
