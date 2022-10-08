@@ -150,5 +150,5 @@ export type I18NLanguage =
   | 'as'
   | 'te'
   | 'da'
-  | 'mai';
+  | 'mai'
   | 'vi';
