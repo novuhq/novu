@@ -12,7 +12,7 @@ Used for testing purposes and validating notification changes prior to committin
 
 ## Production
 
-Will be your live/production environment, you cannot make changes to this environment templates directly. You will first have to make the changes in Development mode and then promote the to Production.
+It will be your live/production environment, you cannot make changes to this environment templates directly. You will first have to make the changes in Development mode and then promote to the Production.
 
 ## Data associated with environment
 
