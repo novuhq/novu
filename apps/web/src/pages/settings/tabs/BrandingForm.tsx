@@ -1,5 +1,5 @@
 import { IOrganizationEntity } from '@novu/shared';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Dropzone, DropzoneStatus } from '@mantine/dropzone';
 import { useMutation } from 'react-query';
@@ -28,6 +28,7 @@ export function BrandingForm({
   const [image, setImage] = useState<string>();
   const [file, setFile] = useState<File>();
   const [imageLoading, setImageLoading] = useState<boolean>(false);
+  const imageRef = useRef(image);
   const { mutateAsync: getSignedUrlAction } = useMutation<
     { signedUrl: string; path: string; additionalHeaders: object },
     { error: string; message: string; statusCode: number },
@@ -60,15 +61,23 @@ export function BrandingForm({
 
   useEffect(() => {
     if (file) {
-      handleUpload();
+      handleChosenImage(file);
     }
   }, [file]);
+
+  function handleChosenImage(chosenFile: File) {
+    if (chosenFile) {
+      const tempImageURL = URL.createObjectURL(chosenFile);
+      setImage(tempImageURL);
+    }
+  }
 
   async function handleUpload() {
     if (!file) return;
 
     setImageLoading(true);
     const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(mimeTypes[file.type]);
+
     const contentTypeHeaders = {
       'Content-Type': file.type,
     };
@@ -89,14 +98,17 @@ export function BrandingForm({
       ],
     });
 
+    imageRef.current = path;
     setImage(path);
     setImageLoading(false);
   }
 
   async function saveBrandsForm({ color, fontFamily }) {
+    await handleUpload();
+
     const brandData = {
       color,
-      logo: image,
+      logo: imageRef.current,
       fontFamily,
     };
 
