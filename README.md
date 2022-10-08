@@ -154,15 +154,15 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 Push 
 
-- [x] FCM
-- [x] Expo
+- [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
+- [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [ ] Pushwoosh
 - [ ] SNS
 
 #### 👇 Chat 
 
-- [x] Slack
-- [x] Discord
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 - [ ] MS Teams
 - [ ] Mattermost
 
