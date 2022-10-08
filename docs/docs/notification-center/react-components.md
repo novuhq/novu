@@ -173,6 +173,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ar</code> (Arabic)</li>
           <li><code>de</code> (German)</li>
           <li><code>en</code> (English)</li>
+          <li><code>nl</code> (Dutch)</li>
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
