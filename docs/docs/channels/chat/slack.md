@@ -4,14 +4,14 @@ When using Slack you will have to save the integration credentials on the subscr
 
 In this guide, we will perform the flow you have to do to obtain the `webhookUrl` that Novu needs to send chat messages to your customers.
 
-We will provide the basic flow that the user needs to perform to successfully send notifications via the Slack integration.
+We will provide the basic flow that the user needs to perform, to successfully send notifications via the Slack integration.
 
 ## Application Setup
 
 1. Go to slack developer dashboard [https://api.slack.com/apps](https://api.slack.com/apps)
 2. Create a new application.
 3. Go to `Incoming Webhooks` from the left menu and Activate Incoming Webhooks
-4. (Optional) here you could generate a test webhook for your own workspace to test your integration with.
+4. (Optional) To test your integration with your workspace, you could generate a test webhook here.
 
 ## Generate webhooks for your users
 
