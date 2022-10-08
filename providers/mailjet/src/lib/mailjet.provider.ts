@@ -106,7 +106,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       date: new Date().toISOString(),
       externalId: body.MessageID,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
-      response: body.response ? body.response : '',
+      response: body.response ?? '',
       row: body,
     };
   }
