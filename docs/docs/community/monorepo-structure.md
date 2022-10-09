@@ -10,7 +10,7 @@ In this guide, we will explore the Novu mono-repo structure and high-level struc
 
 ## Setting up the monorepo
 
-Novu uses [PNPM](https://pnpm.js.org/) as its package manager, and [NX](https://nx.dev/) as its build CLI tool. PNPM help with reducing the installation time and generates symlinks to all the internal packages we use.
+Novu uses [PNPM](https://pnpm.js.org/) as its package manager, and [NX](https://nx.dev/) as its build CLI tool.PNPM reduces the installation time and generates symlinks for all the internal packages we use.
 
 To initialize the monorepo, run the following command from the root of the project:
 
@@ -21,8 +21,8 @@ npm run setup:project
 This will:
 
 - run `pnpm install`, that will download all the needed dependencies and create symlinks for packages.
-- will copy the `.env.example` file to the `.env` file for the API service
-- will execute a `npm run build` command to build all the dependency tree locally.
+- copy the `.env.example` file to the `.env` file for the API service.
+- execute a `npm run build` command to build all the dependency tree locally.
 
 For additional information on running novu locally visit the [run locally](https://docs.novu.co/community/run-locally) guide.
 
@@ -56,7 +56,7 @@ The `DAL` is our Data-Access-Layer, this is our connection to the DB service and
 
 ### @novu/testing
 
-This is a utility library that contains testing helpers, the testing helpers can generate a test session or other functionality for e2e and unit-tests we use between our services.
+This is a utility library that contains testing helpers, the testing helpers can generate test sessions and other functionality for e2e and unit-tests between our services
 
 ### @novu/shared
 
