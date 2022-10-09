@@ -189,6 +189,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>bn</code> (Bengali)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>ig</code> (Igbo)</li>
           <li><code>hr</code> (Croatian)</li>
           <li><code>or</code> (Odia)</li>
           <li><code>sa</code> (Sanskrit)</li>
