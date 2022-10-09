@@ -40,7 +40,7 @@ import { PT } from './languages/pt';
 import { TR } from './languages/tr';
 import { TE } from './languages/te';
 import { VI } from './languages/vi';
-import { ZU } from './languages/vi';
+import { ZU } from './languages/zu';
 
 export interface ITranslationContent {
   readonly notifications: string;
