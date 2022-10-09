@@ -178,9 +178,8 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 💻  Need Help?
 
-We are more than happy to help you. If you are getting some errors or problems while working with the project, or want to discuss something related to the project.
-
-Just <a href="https://discord.gg/novu">Join Our Discord</a> server and ask for help.
+We are more than happy to help you. If you are getting any error or facing problems while working with the project, then <a href="https://discord.gg/novu">Join Our
+Discord</a> server and ask for help. We are open to discuss anything related to the project.
 
 ## 🔗 Links
 
