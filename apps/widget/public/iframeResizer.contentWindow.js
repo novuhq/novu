@@ -882,7 +882,7 @@
     return parseInt(retVal, base)
   }
 
-  function chkEventThottle(timer) {
+  function chkEventThrottle(timer) {
     if (timer > throttledTimer / 2) {
       throttledTimer = 2 * timer
       log('Event throttle increased to ' + throttledTimer + 'ms')
@@ -911,7 +911,7 @@
     log('Parsed ' + elementsLength + ' HTML elements')
     log('Element position calculated in ' + timer + 'ms')
 
-    chkEventThottle(timer)
+    chkEventThrottle(timer)
 
     return maxVal
   }
