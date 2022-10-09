@@ -2,6 +2,7 @@ import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTempl
 import { Inject, Injectable } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
+import * as hat from 'hat';
 import { merge } from 'lodash';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -54,8 +55,9 @@ export class TriggerEvent {
       return this.logTemplateNotActive(command, template);
     }
 
-    // Uploading attachments to S3 and Removing them from payload
+    // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove them from payload
     if (command.payload && Array.isArray(command.payload.attachments)) {
+      this.modifyAttachmentNames(command);
       await this.storageHelperServie.uploadAttachments(command.payload.attachments);
       command.payload.attachments = command.payload.attachments.map((attachment) => ({
         name: attachment.name,
@@ -252,5 +254,12 @@ export class TriggerEvent {
       acknowledged: true,
       status: 'subscriber_id_missing',
     };
+  }
+
+  private modifyAttachmentNames(command: TriggerEventCommand) {
+    command.payload.attachments = command.payload.attachments.map((attachment) => ({
+      ...attachment,
+      name: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
+    }));
   }
 }
