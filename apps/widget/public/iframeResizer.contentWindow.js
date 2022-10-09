@@ -156,7 +156,7 @@
   var getNow =
     Date.now ||
     function () {
-      /* istanbul ignore next */ // Not testable in PhantonJS
+      /* istanbul ignore next */ // Not testable in PhantomJS
       return new Date().getTime()
     }
 
@@ -501,7 +501,7 @@
 
   function disconnectMutationObserver() {
     if (null !== bodyObserver) {
-      /* istanbul ignore next */ // Not testable in PhantonJS
+      /* istanbul ignore next */ // Not testable in PhantomJS
       bodyObserver.disconnect()
     }
   }
@@ -623,7 +623,7 @@
     }
 
     function enableInPageLinks() {
-      /* istanbul ignore else */ // Not testable in phantonJS
+      /* istanbul ignore else */ // Not testable in phantomJS
       if (Array.prototype.forEach && document.querySelectorAll) {
         log('Setting up location.hash handlers')
         bindAnchors()
@@ -874,7 +874,7 @@
   // we have to jump through hoops to get a better value.
   function getComputedStyle(prop, el) {
     var retVal = 0
-    el = el || document.body // Not testable in phantonJS
+    el = el || document.body // Not testable in phantomJS
 
     retVal = document.defaultView.getComputedStyle(el, null)
     retVal = null !== retVal ? retVal[prop] : 0
