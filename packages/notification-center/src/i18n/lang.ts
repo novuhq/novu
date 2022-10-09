@@ -37,6 +37,7 @@ import { DA } from './languages/da';
 import { AS } from './languages/as';
 import { NO } from './languages/no';
 import { PT } from './languages/pt';
+import { SV } from './languages/sv';
 import { TR } from './languages/tr';
 import { TE } from './languages/te';
 import { VI } from './languages/vi';
@@ -87,6 +88,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ku: KU,
   el: EL,
   ja: JA,
+  sv: SV,
   hu: HU,
   bg: BG,
   da: DA,
@@ -135,6 +137,7 @@ export type I18NLanguage =
   | 'ne'
   | 'pl'
   | 'cs'
+  | 'sv'
   | 'sd'
   | 'ca'
   | 'pa'
