@@ -36,7 +36,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
     <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
     ·
-  <a href="https://discord.gg/8KpBEjehEV">Join Our Discord</a>
+  <a href="https://discord.gg/novu">Join Our Discord</a>
     ·
     <a href="https://github.com/orgs/novuhq/projects/2">Roadmap</a>
     ·
@@ -178,8 +178,8 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 💻  Need Help?
 
-We are more than happy to help you. If you are getting any error or facing problems while working with the project, then <a href="https://discord.gg/novu">Join Our
-Discord</a> server and ask for help. We are open to discuss anything related to the project.
+We are more than happy to help you. If you are getting any error or facing problems while working with the project, then join our 
+[Discord server](https://discord.gg/novu) and ask for help. We are open to discuss anything related to the project.
 
 ## 🔗 Links
 
