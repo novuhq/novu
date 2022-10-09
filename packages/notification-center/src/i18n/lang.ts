@@ -40,6 +40,7 @@ import { PT } from './languages/pt';
 import { TR } from './languages/tr';
 import { TE } from './languages/te';
 import { VI } from './languages/vi';
+import { BH } from './languages/bh';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -96,6 +97,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   tr: TR,
   te: TE,
   vi: VI,
+  bh: BH,
 };
 
 /**
@@ -151,4 +153,5 @@ export type I18NLanguage =
   | 'no'
   | 'te'
   | 'da'
-  | 'vi';
+  | 'vi'
+  | 'bh';
