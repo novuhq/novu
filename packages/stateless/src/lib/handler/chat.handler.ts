@@ -13,7 +13,7 @@ export class ChatHandler {
       content = await this.message.template(data);
     }
 
-    if (!data.$wehookUrl) {
+    if (!data.$webhookUrl) {
       throw new Error(
         'webhookUrl is missing in trigger payload. To send an a chat message you must specify a webhookUrl property.'
       );
