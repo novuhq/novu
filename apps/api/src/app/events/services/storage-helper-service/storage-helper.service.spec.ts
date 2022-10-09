@@ -1,4 +1,5 @@
 import * as sinon from 'sinon';
+import { expect } from 'chai';
 import { File } from '@google-cloud/storage';
 import { S3Client } from '@aws-sdk/client-s3';
 import { BlockBlobClient } from '@azure/storage-blob';
@@ -53,6 +54,19 @@ describe('Storage-Helper service', function () {
       sinon.stub(S3Client.prototype, 'send').resolves({});
       await S3StorageHelperService.deleteAttachments(resultAttachments);
     });
+
+    it('should handle error for file which is not found', async function () {
+      let attachments2 = [
+        {
+          name: 'new-image.png',
+          file: null,
+          mime: 'image/png',
+        },
+      ];
+      sinon.stub(S3Client.prototype, 'send').rejects({ message: 'The specified key does not exist.' });
+      await S3StorageHelperService.getAttachments(attachments2);
+      expect(attachments2[0].file).to.be.null;
+    });
   });
 
   // mocking the google cloud storage service with sinon
@@ -89,6 +103,19 @@ describe('Storage-Helper service', function () {
       await GCSStorageHelperService.getAttachments(gcAttachments);
       sinon.assert.calledOnce(bucketStub);
     });
+
+    it('should handle error for file which is not found', async function () {
+      let gcAttachments2 = [
+        {
+          name: 'new-image.png',
+          file: null,
+          mime: 'image/png',
+        },
+      ];
+      sinon.stub(File.prototype, 'download').rejects({ code: 404 });
+      await GCSStorageHelperService.getAttachments(gcAttachments2);
+      expect(gcAttachments2[0].file).to.be.null;
+    });
   });
 
   // mocking the azure storage service with sinon
@@ -120,14 +147,23 @@ describe('Storage-Helper service', function () {
     });
 
     it('should get file', async function () {
-      // @ts-ignore
-      sinon.stub(BlockBlobClient.prototype, 'downloadToBuffer').resolves({ _response: { status: 200 } });
-      const downloadStub = sinon
-        .stub(BlockBlobClient.prototype, 'download')
-        // @ts-ignore
-        .resolves({ _response: { status: 200 } });
+      sinon.stub(BlockBlobClient.prototype, 'downloadToBuffer').resolves(Buffer.from('test'));
       await AzureStorageHelperService.getAttachments(azureAttachments);
-      sinon.assert.calledOnce(downloadStub);
+      expect(azureAttachments[0].file).to.be.an.instanceOf(Buffer);
+    });
+
+    it('should handle error for file which is not found', async function () {
+      let azureAttachments2 = [
+        {
+          name: 'new-image.png',
+          file: null,
+          mime: 'image/png',
+        },
+      ];
+      sinon.stub(BlockBlobClient.prototype, 'downloadToBuffer').rejects({ statusCode: 404 });
+      // sets the file to null if the get-file method throws error with status code 404
+      await AzureStorageHelperService.getAttachments(azureAttachments2);
+      expect(azureAttachments2[0].file).to.be.null;
     });
   });
 });

@@ -70,7 +70,7 @@ export class S3StorageService implements StorageService {
 
       return bodyContents as unknown as Buffer;
     } catch (error) {
-      if (error.code === 404 || error.message === 'The specified key does not exist.') {
+      if (error.code === 'NoSuchKey' || error.message === 'The specified key does not exist.') {
         throw new NonExistingFileError();
       }
       throw error;
@@ -185,12 +185,14 @@ export class AzureBlobStorageService implements StorageService {
     const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
     const blockBlobClient = containerClient.getBlockBlobClient(key);
 
-    const downloadBlockBlobResponse = await blockBlobClient.download(0);
-    if (downloadBlockBlobResponse.readableStreamBody === null) {
-      throw new NonExistingFileError();
+    try {
+      return await blockBlobClient.downloadToBuffer();
+    } catch (error) {
+      if (error.statusCode === 404) {
+        throw new NonExistingFileError();
+      }
+      throw error;
     }
-
-    return (await blockBlobClient.downloadToBuffer())[0] as unknown as Buffer;
   }
 
   async deleteFile(key: string): Promise<void> {
