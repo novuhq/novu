@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useContext, useState, useCallback, useEffect } from 'react';
+import { useContext, useCallback } from 'react';
 import { useMutation } from 'react-query';
 import { useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../../store/authContext';
@@ -7,7 +7,6 @@ import { errorMessage } from '../../utils/notifications';
 import { vercelIntegrationSetup } from '../vercel-integration';
 
 export function useVercelIntegration() {
-  const [startSetup, setStartSetup] = useState(false);
   const { token } = useContext(AuthContext);
   const isLoggedIn = !!token;
   const isAxiosAuthorized = axios.defaults.headers.common.Authorization;
@@ -17,7 +16,7 @@ export function useVercelIntegration() {
   const next = params.get('next');
   const isFromVercel = !!(code && next);
 
-  const canStartSetup = Boolean(code && next && isLoggedIn && isAxiosAuthorized && startSetup);
+  const canStartSetup = Boolean(code && next && isLoggedIn && isAxiosAuthorized);
 
   const { mutate, isLoading } = useMutation(vercelIntegrationSetup, {
     onSuccess: () => {
@@ -33,20 +32,11 @@ export function useVercelIntegration() {
   });
 
   const startVercelSetup = useCallback(() => {
-    setStartSetup(true);
-  }, []);
-
-  useEffect(() => {
-    const initiateSetup = () => {
-      if (!canStartSetup || !code) {
-        return;
-      }
-      mutate(code);
-      setStartSetup(false);
-    };
-
-    initiateSetup();
-  }, [canStartSetup, code]);
+    if (!canStartSetup || !code) {
+      return;
+    }
+    mutate(code);
+  }, [canStartSetup, code, mutate]);
 
   return {
     isLoading,

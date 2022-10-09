@@ -1,14 +1,13 @@
 import { useContext, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import jwtDecode from 'jwt-decode';
-import { Loader, Paper } from '@mantine/core';
 import { IJwtPayload } from '@novu/shared';
 import { AuthContext } from '../../store/authContext';
 import { LoginForm } from '../../components/auth/LoginForm';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
-import { colors, Text } from '../../design-system';
+import VercelSetupLoader from '../../components/auth/VercelSetupLoader';
 
 export default function LoginPage() {
   const { setToken, token } = useContext(AuthContext);
@@ -47,23 +46,7 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       {isLoading ? (
-        <Paper
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'column',
-            minHeight: '100vh',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-          }}
-        >
-          <Loader color={colors.error} size={32} />
-          <Text>Setting up Vercel Integration...</Text>
-        </Paper>
+        <VercelSetupLoader />
       ) : (
         <AuthContainer
           title="Sign In"
