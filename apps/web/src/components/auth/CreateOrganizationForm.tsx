@@ -8,6 +8,7 @@ import { Button, Input } from '../../design-system';
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
 import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
+import { useVercelParams } from '../../hooks/use-vercelParams';
 
 type Props = {};
 
@@ -21,7 +22,8 @@ export function CreateOrganization({}: Props) {
   const navigate = useNavigate();
   const { setToken, token } = useContext(AuthContext);
   const [loading, setLoading] = useState<boolean>();
-  const { startVercelSetup, isFromVercel } = useVercelIntegration();
+  const { startVercelSetup } = useVercelIntegration();
+  const { isFromVercel } = useVercelParams();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useContext, useCallback } from 'react';
 import { useMutation } from 'react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useVercelParams } from '../../hooks/use-vercelParams';
 import { AuthContext } from '../../store/authContext';
 import { errorMessage } from '../../utils/notifications';
 import { vercelIntegrationSetup } from '../vercel-integration';
@@ -11,10 +11,7 @@ export function useVercelIntegration() {
   const isLoggedIn = !!token;
   const isAxiosAuthorized = axios.defaults.headers.common.Authorization;
 
-  const [params] = useSearchParams();
-  const code = params.get('code');
-  const next = params.get('next');
-  const isFromVercel = !!(code && next);
+  const { code, next } = useVercelParams();
 
   const canStartSetup = Boolean(code && next && isLoggedIn && isAxiosAuthorized);
 
@@ -41,8 +38,5 @@ export function useVercelIntegration() {
   return {
     isLoading,
     startVercelSetup,
-    isFromVercel,
-    code,
-    next,
   };
 }

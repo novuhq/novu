@@ -10,7 +10,7 @@ import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
-import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
+import { useVercelParams } from '../../hooks/use-vercelParams';
 
 type Props = {};
 
@@ -26,7 +26,7 @@ export function LoginForm({}: Props) {
     }
   >((data) => api.post(`/v1/auth/login`, data));
 
-  const { isFromVercel, code, next } = useVercelIntegration();
+  const { isFromVercel, code, next } = useVercelParams();
   const signupLink = isFromVercel ? `/auth/signup?code=${code}&next=${next}` : '/auth/signup';
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}`

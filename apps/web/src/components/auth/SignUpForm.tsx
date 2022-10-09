@@ -11,7 +11,7 @@ import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../desi
 import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { applyToken } from '../../store/use-auth-controller';
-import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
+import { useVercelParams } from '../../hooks/use-vercelParams';
 
 type Props = {
   token?: string;
@@ -22,7 +22,7 @@ export function SignUpForm({ token, email }: Props) {
   const navigate = useNavigate();
 
   const { setToken } = useContext(AuthContext);
-  const { isFromVercel, code, next } = useVercelIntegration();
+  const { isFromVercel, code, next } = useVercelParams();
   const loginLink = isFromVercel ? `/auth/login?code=${code}&next=${next}` : '/auth/login';
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}`

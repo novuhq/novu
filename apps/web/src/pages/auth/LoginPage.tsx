@@ -8,6 +8,7 @@ import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
 import VercelSetupLoader from '../../components/auth/VercelSetupLoader';
+import { useVercelParams } from '../../hooks/use-vercelParams';
 
 export default function LoginPage() {
   const { setToken, token } = useContext(AuthContext);
@@ -16,7 +17,8 @@ export default function LoginPage() {
   const queryToken = params.get('token');
   const source = params.get('source');
 
-  const { startVercelSetup, isLoading, isFromVercel, code, next } = useVercelIntegration();
+  const { startVercelSetup, isLoading } = useVercelIntegration();
+  const { code, isFromVercel, next } = useVercelParams();
 
   useEffect(() => {
     if (queryToken) {
