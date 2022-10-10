@@ -8,7 +8,7 @@ Novu manages your users in a specific subscribers data model, that allows the No
 
 A novu subscribers contains the following data points:
 
-- **User data** - Data stored on the subscriber object that allows you to easily access it in the notification templates you create. This contains basic info such as name, gender, profile picture and etc...
+- **User data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as name, gender, profile picture and etc...
 - **Contact information** - Things like e-mail, phone number, push tokens and etc... They will be used when a multi-channel template will be configured. Managing all communication credentials will reduce the amount of data you need to pass when triggering a notification.
 
 ## Creating a subscriber
@@ -33,12 +33,11 @@ Novu will create a subscriber if one does not exist, and will update existing su
 
 ### Subscriber identifier
 
-This is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal id your application uses for a specific user.
-Using an identifier like email might cause issues locating a specific subscriber once they change their email address.
+This is a unique identifier used by Novu to keep track of a specific subscriber. We recommend that you use the internal id that your application uses for a specific user. Using an identifier like email might cause issues locating a specific subscriber once they change their email address.
 
 ### Updating subscriber data
 
-In some cases you want to access subscribers to update a specific field or data attribute. For example when the user changes their email address or personal details.
+In some cases you want to access subscribers to update a specific field or data attribute. For example, when the user changes their email address or personal details.
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -52,7 +51,7 @@ await novu.subscribers.update(user.id, {
 
 ### Updating subscriber credentials
 
-In case the user want to use chat channel, he will need to set the credentials that needed to be authenticated with.
+Users who wish to use chat channels will need to set their credentials to be authenticated.
 
 ```typescript
 import { Novu, ChatProviderIdEnum } from '@novu/node';
