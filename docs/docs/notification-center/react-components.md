@@ -215,6 +215,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>te</code> (Telugu)</li>
           <li><code>ro</code> (Romanian)</li>
           <li><code>vi</code> (Vietnamese)</li>
+          <li><code>ph</code> (Filipino)</li>
         </ul>
       </div>
   </details>
