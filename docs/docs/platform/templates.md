@@ -35,20 +35,20 @@ For email channel you can either use our basic visual editor or a fully custom c
 To use custom payload variables passed to the template you can use the `{{curly}}` syntax for example:
 
 ```typescript
- novu.trigger('template-name', {
-   payload: {
-     name: 'Hello',
-     customObject: {
-       world: 'World'
-     }
-   }
+novu.trigger('template-name', {
+  payload: {
+    name: 'Hello',
+    customObject: {
+      world: 'World',
+    },
+  },
 });
 ```
 
 Can be accessed in a template directly:
 
 ```handlebars
-{{name}}! This is our {{customObject.world}} 
+{{name}}! This is our {{customObject.world}}
 ```
 
 ### Iteration
@@ -56,14 +56,17 @@ Can be accessed in a template directly:
 To iterate over an array passed to the trigger endpoint you can use the following syntax
 
 ```typescript
- novu.trigger('template-name', {
-   payload: {
-     people: [{
-       name: 'Person 1 Name'
-     }, {
-       name: 'Person 2 Name'
-     }]
-   }
+novu.trigger('template-name', {
+  payload: {
+    people: [
+      {
+        name: 'Person 1 Name',
+      },
+      {
+        name: 'Person 2 Name',
+      },
+    ],
+  },
 });
 ```
 
@@ -80,7 +83,7 @@ To iterate over an array passed to the trigger endpoint you can use the followin
 To render a specific block conditionally you can use the `#if`
 
 ```handlebars
-<div class="entry">
+<div class='entry'>
   {{#if enabledFeature}}
     <h1>You can use superpowers now</h1>
   {{/if}}
@@ -102,20 +105,18 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>',
-  {
-    to: {
-      subscriberId: '<USER_IDENTIFIER>',
-      email: 'test@email.com',
-      firstName: 'John',
-      lastName: 'Doe',
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
+  to: {
+    subscriberId: '<USER_IDENTIFIER>',
+    email: 'test@email.com',
+    firstName: 'John',
+    lastName: 'Doe',
+  },
+  payload: {
+    customVariables: 'Test',
+    organization: {
+      logo: 'https://evilcorp.com/logo.png',
     },
-    payload: {
-      customVariables: 'Test',
-      organization: {
-        logo: 'https://evilcorp.com/logo.png',
-      },
-    },
-  }
-);
+  },
+});
 ```

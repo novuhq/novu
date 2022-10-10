@@ -72,8 +72,40 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     expect(unseenFeed.data.count).to.equal(2);
   });
 
+  it('should return unread count with a read filter', async function () {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    const messages = await messageRepository.findBySubscriberChannel(
+      session.environment._id,
+      subscriberProfile._id,
+      ChannelTypeEnum.IN_APP
+    );
+    const messageId = messages[0]._id;
+    expect(messages[0].read).to.equal(false);
+
+    await axios.post(
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/${messageId}/read`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${subscriberToken}`,
+        },
+      }
+    );
+
+    const readFeed = await getFeedCount({ read: true });
+    expect(readFeed.data.count).to.equal(1);
+
+    const unreadFeed = await getFeedCount({ read: false });
+    expect(unreadFeed.data.count).to.equal(2);
+  });
+
   async function getFeedCount(query = {}) {
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/unseen`, {
+    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/count`, {
       params: {
         ...query,
       },

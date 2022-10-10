@@ -15,7 +15,6 @@ To use the Postmark channel, you will need to create a Postmark account and add 
 
 Before you send email in full scale, you will need to authenticate your sender's indentity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Postmark require you to authenticate your sender identity before you can send emails.
 
-
 Postmark allows you to authenticate your sender identity using one of the following methods:
 
 - [Single Sender Verification](https://account.postmarkapp.com/signatures/new) - This is the easiest way to authenticate your sender identity.

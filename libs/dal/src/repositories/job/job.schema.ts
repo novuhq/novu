@@ -92,6 +92,9 @@ const jobSchema = new Schema(
       type: Schema.Types.String,
       index: true,
     },
+    providerId: {
+      type: Schema.Types.String,
+    },
   },
   schemaOptions
 );

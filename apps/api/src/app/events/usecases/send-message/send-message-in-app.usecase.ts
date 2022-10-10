@@ -104,6 +104,7 @@ export class SendMessageInApp extends SendMessageType {
         content,
         payload: messagePayload,
         templateIdentifier: command.identifier,
+        _jobId: command.jobId,
       });
     }
 
@@ -125,10 +126,18 @@ export class SendMessageInApp extends SendMessageType {
       message = await this.messageRepository.findById(oldMessage._id);
     }
 
-    const count = await this.messageRepository.getUnseenCount(
+    const unseenCount = await this.messageRepository.getCount(
       command.environmentId,
       command.subscriberId,
-      ChannelTypeEnum.IN_APP
+      ChannelTypeEnum.IN_APP,
+      { seen: false }
+    );
+
+    const unreadCount = await this.messageRepository.getCount(
+      command.environmentId,
+      command.subscriberId,
+      ChannelTypeEnum.IN_APP,
+      { read: false }
     );
 
     await this.createLogUsecase.execute(
@@ -155,7 +164,15 @@ export class SendMessageInApp extends SendMessageType {
       event: 'unseen_count_changed',
       userId: command.subscriberId,
       payload: {
-        unseenCount: count,
+        unseenCount,
+      },
+    });
+
+    await this.queueService.wsSocketQueue.add({
+      event: 'unread_count_changed',
+      userId: command.subscriberId,
+      payload: {
+        unreadCount,
       },
     });
   }

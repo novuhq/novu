@@ -94,6 +94,7 @@ export class SendMessageChat extends SendMessageType {
       chatWebhookUrl: chatWebhookUrl,
       content,
       providerId: subscriberChannel.providerId,
+      _jobId: command.jobId,
     });
 
     const integration = (

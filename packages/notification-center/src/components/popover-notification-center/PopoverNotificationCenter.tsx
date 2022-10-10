@@ -4,9 +4,9 @@ import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { INovuThemePopoverProvider } from '../../store';
 import { useDefaultTheme, useUnseenCount } from '../../hooks';
-import { ColorScheme, ListItem, ITab } from '../../index';
+import { ColorScheme, INovuThemePopoverProvider } from '../../index';
+import { ITab, ListItem } from '../../shared/interfaces';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;

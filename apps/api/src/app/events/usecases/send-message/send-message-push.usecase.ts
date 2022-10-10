@@ -171,6 +171,7 @@ export class SendMessagePush extends SendMessageType {
       payload: payload as never,
       overrides: overrides as never,
       providerId,
+      _jobId: command.jobId,
     });
 
     try {
