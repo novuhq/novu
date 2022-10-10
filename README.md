@@ -32,7 +32,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     <br />
 
   <br/>
-    <a href="https://github.com/novuhq/novu/issues">Report Bug</a>
+    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
     ·
     <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
     ·
@@ -154,15 +154,15 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 Push 
 
-- [x] FCM
-- [x] Expo
+- [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
+- [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [ ] Pushwoosh
 - [ ] SNS
 
 #### 👇 Chat 
 
-- [x] Slack
-- [x] Discord
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 - [ ] MS Teams
 - [ ] Mattermost
 
@@ -176,10 +176,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] PagerDuty
 
 
-## 💻  Need Help?
+## 💻 Need Help?
 
 We are more than happy to help you. If you are getting any error or facing problems while working with the project, then join our 
 [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
+
+## 📋 Read our Code of Conduct 
+
+Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) throroughly to understand our standards (that you are required to adhere to) regarding how to engage in a community.
 
 ## 🔗 Links
 
