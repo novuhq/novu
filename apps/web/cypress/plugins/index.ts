@@ -1,16 +1,16 @@
 /**
  * @type {Cypress.PluginConfig}
  */
-import { DalService, NotificationTemplateEntity, UserRepository } from '@novu/dal';
+import { DalService, NotificationTemplateEntity } from '@novu/dal';
 import {
   UserSession,
   SubscribersService,
   NotificationTemplateService,
   NotificationsService,
   OrganizationService,
+  UserService,
 } from '@novu/testing';
 
-const userRepository = new UserRepository();
 module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
@@ -43,16 +43,18 @@ module.exports = (on, config) => {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
 
-      new UserSession('http://localhost:1336');
+      const userService = new UserService();
+      await userService.createTestUser();
 
       return true;
     },
     async passwordResetToken(id: string) {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
-      const user = await userRepository.findOne({
-        _id: id,
-      });
+
+      const userService = new UserService();
+      const user = await userService.getUser(id);
+
       return user?.resetToken;
     },
     async addOrganization(userId: string) {

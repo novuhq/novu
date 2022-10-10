@@ -264,6 +264,7 @@ export interface StepEntity {
     amount?: number;
     unit?: DigestUnitEnum;
     digestKey?: string;
+    delayPath?: string;
   };
 }
 

@@ -5,6 +5,7 @@ export const RU: ITranslationEntry = {
     notifications: 'Уведомления',
     markAllAsRead: 'Пометить все как прочитанные',
     poweredBy: 'При поддержке',
+    settings: 'Настройки',
   },
   lang: 'ru',
 };

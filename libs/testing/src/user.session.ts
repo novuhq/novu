@@ -5,10 +5,10 @@ import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 
+import { TriggerRecipientsType } from '@novu/node';
 import { StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
-  UserRepository,
   EnvironmentEntity,
   OrganizationEntity,
   NotificationGroupEntity,
@@ -21,6 +21,7 @@ import {
   ChangeEntity,
   SubscriberRepository,
 } from '@novu/dal';
+
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
 
@@ -28,10 +29,9 @@ import { OrganizationService } from './organization.service';
 import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
-import { TriggerRecipientsType } from '@novu/node';
+import { UserService } from './user.service';
 
 export class UserSession {
-  private userRepository = new UserRepository();
   private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
   private jobRepository = new JobRepository();
@@ -70,14 +70,18 @@ export class UserSession {
       lastName: faker.name.lastName(),
     };
 
-    this.user = await this.userRepository.create({
+    const userService = new UserService();
+    const userEntity: Partial<UserEntity> = {
       lastName: card.lastName,
       firstName: card.firstName,
       email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
+      password: '123qwe!@#',
       showOnBoarding: true,
-    });
+    };
+
+    this.user = await userService.createUser(userEntity);
 
     if (!options.noOrganization) {
       await this.addOrganization();

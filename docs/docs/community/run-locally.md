@@ -4,6 +4,10 @@ sidebar_position: 1
 
 # Run Novu locally
 
+## ⚡ Immediate working space with GitPod
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
+
 ## Requirements
 
 - Node.js version v16.15.1

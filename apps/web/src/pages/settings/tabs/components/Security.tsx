@@ -45,7 +45,7 @@ export const Security = () => {
 
   return (
     <>
-      <form onSubmit={handleSubmit(saveSecurityForm)}>
+      <form noValidate onSubmit={handleSubmit(saveSecurityForm)}>
         <Title>Security</Title>
         <InputWrapper label="Enable HMAC encryption" description={<DescriptionText />} styles={inputStyles}>
           <RowDiv>
