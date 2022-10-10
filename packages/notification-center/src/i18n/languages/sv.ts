@@ -2,10 +2,10 @@ import { ITranslationEntry } from '../lang';
 
 export const SV: ITranslationEntry = {
   translations: {
-    notifications: 'meddelanden',
-    markAllAsRead: 'Markera allt som läst',
-    poweredBy: 'poweredBy',
-    settings: 'inställningar',
+    notifications: 'Meddelanden',
+    markAllAsRead: 'Markera alla som lästa',
+    poweredBy: 'Använder',
+    settings: 'Inställningar',
   },
   lang: 'sv',
 };
