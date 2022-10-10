@@ -444,7 +444,7 @@ describe('Promote changes', () => {
     expect(count).to.eq(1);
   });
 
-  it('should promote notification group if it is not alredy promoted', async () => {
+  it('should promote notification group if it is not already promoted', async () => {
     const {
       body: { data: group },
     } = await session.testAgent.post(`/v1/notification-groups`).send({

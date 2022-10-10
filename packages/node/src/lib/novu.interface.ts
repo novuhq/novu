@@ -1,10 +1,21 @@
-import { EventEmitter } from 'events';
-import { ITriggerPayloadOptions } from './subscribers/subscriber.interface';
-
-export interface INovu extends EventEmitter {
-  trigger(eventId: string, data: ITriggerPayloadOptions);
-}
+import { AxiosInstance } from 'axios';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export interface INovuConfiguration {
   backendUrl?: string;
+}
+
+export interface IAttachmentOptions {
+  mime: string;
+  file: Buffer;
+  name?: string;
+  channels?: ChannelTypeEnum[];
+}
+
+export class WithHttp {
+  protected readonly http: AxiosInstance;
+
+  constructor(http: AxiosInstance) {
+    this.http = http;
+  }
 }

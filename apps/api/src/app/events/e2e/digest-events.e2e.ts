@@ -740,7 +740,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(job.digest.events.length).to.equal(3);
   });
 
-  it('should create multiple digest based on diffrent digestKeys', async function () {
+  it('should create multiple digest based on different digestKeys', async function () {
     const postId = MessageRepository.createObjectId();
     template = await session.createTemplate({
       steps: [
@@ -811,7 +811,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(jobCount).to.equal(6);
   });
 
-  it('should create multiple digest based on diffrent digestKeys with backoff', async function () {
+  it('should create multiple digest based on different digestKeys with backoff', async function () {
     const postId = MessageRepository.createObjectId();
     const postId2 = MessageRepository.createObjectId();
     template = await session.createTemplate({

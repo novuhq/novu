@@ -38,7 +38,7 @@ const columns: ColumnWithStrictAccessor<Data>[] = [
 
 function SubscribersList() {
   const [page, setPage] = useState<number>(0);
-  const { subscibers, loading: isLoading, totalCount, pageSize } = useSubscribers(page);
+  const { subscribers, loading: isLoading, totalCount, pageSize } = useSubscribers(page);
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -52,7 +52,7 @@ function SubscribersList() {
         loading={isLoading}
         data-test-id="subscribers-table"
         columns={columns}
-        data={subscibers || []}
+        data={subscribers || []}
         pagination={{
           pageSize: pageSize,
           current: page,

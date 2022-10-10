@@ -16,6 +16,7 @@ export interface IEmailOptions {
   from?: string;
   text?: string;
   attachments?: IAttachmentOptions[];
+  id?: string;
 }
 
 export interface ISmsOptions {
@@ -23,6 +24,7 @@ export interface ISmsOptions {
   content: string;
   from?: string;
   attachments?: IAttachmentOptions[];
+  id?: string;
 }
 export interface IPushOptions {
   target: string[];
@@ -33,7 +35,7 @@ export interface IPushOptions {
     tag?: string;
     body?: string;
     icon?: string;
-    badge?: string;
+    badge?: number;
     color?: string;
     sound?: string;
     title?: string;
@@ -42,6 +44,13 @@ export interface IPushOptions {
     clickAction?: string;
     titleLocKey?: string;
     titleLocArgs?: string;
+    ttl?: number;
+    expiration?: number;
+    priority?: 'default' | 'normal' | 'high';
+    subtitle?: string;
+    channelId?: string;
+    categoryId?: string;
+    mutableContent?: boolean;
   };
 }
 
@@ -64,6 +73,12 @@ export enum EmailEventStatusEnum {
   CLICKED = 'clicked',
 }
 
+export enum SmsEventStatusEnum {
+  CREATED = 'created',
+  DELIVERED = 'delivered',
+  RECEIVED = 'received',
+}
+
 export interface IEventBody {
   status: string;
   date: string;
@@ -78,15 +93,19 @@ export interface IEmailEventBody extends IEventBody {
   status: EmailEventStatusEnum;
 }
 
+export interface ISMSEventBody extends IEventBody {
+  status: SmsEventStatusEnum;
+}
+
 export interface IEmailProvider extends IProvider {
   channelType: ChannelTypeEnum.EMAIL;
 
   sendMessage(options: IEmailOptions): Promise<ISendMessageSuccessResponse>;
 
-  getMessageId?: (body: any) => string[];
+  getMessageId?: (body: any | any[]) => string[];
 
   parseEventBody?: (
-    body: any,
+    body: any | any[],
     identifier: string
   ) => IEmailEventBody | undefined;
 
@@ -97,6 +116,13 @@ export interface ISmsProvider extends IProvider {
   sendMessage(options: ISmsOptions): Promise<ISendMessageSuccessResponse>;
 
   channelType: ChannelTypeEnum.SMS;
+
+  getMessageId?: (body: any) => string[];
+
+  parseEventBody?: (
+    body: any | any[],
+    identifier: string
+  ) => ISMSEventBody | undefined;
 }
 
 export interface IChatProvider extends IProvider {
