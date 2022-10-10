@@ -194,6 +194,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>it</code> (Italian)</li>
           <li><code>ja</code> (Japanese)</li>
           <li><code>ka</code> (Kannada)</li>
+          <li><code>km</code> (Khmer)</li>
           <li><code>ko</code> (Korean)</li>
           <li><code>ku</code> (Kurdish)</li>
           <li><code>lo</code> (Lao)</li>
