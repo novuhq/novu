@@ -34,6 +34,8 @@ export class Changes extends WithHttp implements IChanges {
    * @returns {promise<object>} - Applies all changes specified in the array
    */
   async applyMany(changeIds: string[]) {
-    return await this.http.post(`/changes/bulk/apply`, { changeIds });
+    return await this.http.post(`/changes/bulk/apply`, {
+      ChangeIDs: changeIds,
+    });
   }
 }
