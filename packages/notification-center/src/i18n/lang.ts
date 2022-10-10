@@ -27,6 +27,7 @@ import { PA } from './languages/pa';
 import { TA } from './languages/ta';
 import { SD } from './languages/sd';
 import { CA } from './languages/ca';
+import { IG } from './languages/ig';
 import { KO } from './languages/ko';
 import { KU } from './languages/ku';
 import { EL } from './languages/el';
@@ -40,6 +41,7 @@ import { PT } from './languages/pt';
 import { SV } from './languages/sv';
 import { TR } from './languages/tr';
 import { TE } from './languages/te';
+import { RO } from './languages/ro';
 import { VI } from './languages/vi';
 
 export interface ITranslationContent {
@@ -56,6 +58,7 @@ export interface ITranslationEntry {
 
 export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
+  ro: RO,
   fi: FI,
   hi: HI,
   fr: FR,
@@ -65,6 +68,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
 	id: ID,
   it: IT,
   ka: KA,
+  ig: IG,
   mr: MR,
   ar: AR,
   fa: FA,
@@ -113,6 +117,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  */
 export type I18NLanguage =
   | 'en'
+  | 'ro'
   | 'fi'
   | 'hi'
 	| 'id'
@@ -127,6 +132,7 @@ export type I18NLanguage =
   | 'fa'
   | 'fr'
   | 'de'
+  | 'ig'
   | 'bn'
   | 'ml'
   | 'zh'
