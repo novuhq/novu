@@ -40,6 +40,7 @@ import { NO } from './languages/no';
 import { PT } from './languages/pt';
 import { TR } from './languages/tr';
 import { TE } from './languages/te';
+import { RO } from './languages/ro';
 import { VI } from './languages/vi';
 
 export interface ITranslationContent {
@@ -56,6 +57,7 @@ export interface ITranslationEntry {
 
 export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
+  ro: RO,
   fi: FI,
   hi: HI,
   fr: FR,
@@ -113,6 +115,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  */
 export type I18NLanguage =
   | 'en'
+  | 'ro'
   | 'fi'
   | 'hi'
 	| 'id'
