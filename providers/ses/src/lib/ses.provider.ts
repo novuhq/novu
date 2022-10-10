@@ -25,6 +25,21 @@ export class SESEmailProvider implements IEmailProvider {
     });
   }
 
+  private async sendMail({ html, text, to, from, subject, attachments }) {
+    const transporter = nodemailer.createTransport({
+      SES: { ses: this.ses, aws: { SendRawEmailCommand } },
+    });
+
+    return await transporter.sendMail({
+      html,
+      text,
+      to,
+      from,
+      subject,
+      attachments,
+    });
+  }
+
   async sendMessage({
     html,
     text,
@@ -37,7 +52,7 @@ export class SESEmailProvider implements IEmailProvider {
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
 
-    const info = await transporter.sendMail({
+    const info = await this.sendMail({
       from: from || this.config.from,
       to: to,
       subject: subject,
@@ -56,22 +71,18 @@ export class SESEmailProvider implements IEmailProvider {
     };
   }
 
-  async checkIntegration(
-    options: IEmailOptions
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(): Promise<ICheckIntegrationResponse> {
     let success: boolean;
     let message: string;
     let code: CheckIntegrationResponseEnum;
-    const transporter = nodemailer.createTransport({
-      SES: { ses: this.ses, aws: { SendRawEmailCommand } },
-    });
 
-    const testResponse = await transporter.sendMail({
+    const testResponse = await this.sendMail({
       html: '',
-      text: 'This is an Email to test the integration of your Amazon SES',
+      text: 'This is a Test mail to test your Amazon SES integration',
       to: this.config.from,
       from: this.config.from,
-      subject: 'Test Amazon SES integration',
+      subject: 'Test SES integration',
+      attachments: {},
     });
 
     if (testResponse.err === null) {
@@ -80,14 +91,14 @@ export class SESEmailProvider implements IEmailProvider {
       code = CheckIntegrationResponseEnum.SUCCESS;
     } else {
       success = false;
-      message = 'Integration test failed';
+      message = testResponse?.err.message;
       code = CheckIntegrationResponseEnum.FAILED;
     }
 
     return {
-      success: success,
-      message: message,
-      code: code,
+      success,
+      message,
+      code,
     };
   }
 }
