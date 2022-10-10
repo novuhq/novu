@@ -43,8 +43,9 @@ import { TR } from './languages/tr';
 import { TE } from './languages/te';
 import { RO } from './languages/ro';
 import { VI } from './languages/vi';
-import { PH } from './languages/ph';
 import { TH } from './languages/th';
+import { HE } from './languages/he';
+import { PH } from './languages/ph';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -106,6 +107,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   vi: VI,
   ph: PH,
   th: TH,
+  he: HE,
 };
 
 /**
@@ -165,5 +167,6 @@ export type I18NLanguage =
   | 'te'
   | 'da'
   | 'vi'
-  | 'ph'
-  | 'th';
+  | 'th'
+  | 'he'
+  | 'ph';
