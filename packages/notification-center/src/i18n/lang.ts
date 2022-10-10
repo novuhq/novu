@@ -38,11 +38,13 @@ import { DA } from './languages/da';
 import { AS } from './languages/as';
 import { NO } from './languages/no';
 import { PT } from './languages/pt';
+import { SV } from './languages/sv';
 import { TR } from './languages/tr';
 import { TE } from './languages/te';
 import { LO } from './languages/lo';
 import { RO } from './languages/ro';
 import { VI } from './languages/vi';
+import { TH } from './languages/th';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -92,6 +94,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ku: KU,
   el: EL,
   ja: JA,
+  sv: SV,
   hu: HU,
   bg: BG,
   da: DA,
@@ -102,6 +105,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   te: TE,
   lo: LO,
   vi: VI,
+  th: TH,
 };
 
 /**
@@ -143,6 +147,7 @@ export type I18NLanguage =
   | 'ne'
   | 'pl'
   | 'cs'
+  | 'sv'
   | 'sd'
   | 'ca'
   | 'pa'
@@ -160,4 +165,5 @@ export type I18NLanguage =
   | 'te'
   | 'da'
   | 'lo'
-  | 'vi';
+  | 'vi'
+  | 'th';
