@@ -1,4 +1,4 @@
-# Novu Slack Provider
+# Novu Whatsapp Provider
 
 A whatsapp chat provider library for [@novu/node](https://github.com/novuhq/novu)
 
