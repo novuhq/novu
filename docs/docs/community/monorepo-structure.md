@@ -10,7 +10,7 @@ In this guide, we will explore the Novu mono-repo structure and high-level struc
 
 ## Setting up the monorepo
 
-Novu uses [PNPM](https://pnpm.js.org/) as its package manager, and [NX](https://nx.dev/) as its build CLI tool. PNPM help with reducing the installation time and generates symlinks to all the internal packages we use.
+Novu uses [PNPM](https://pnpm.js.org/) as its package manager, and [NX](https://nx.dev/) as its build CLI tool.PNPM reduces the installation time and generates symlinks for all the internal packages we use.
 
 To initialize the monorepo, run the following command from the root of the project:
 
@@ -21,8 +21,8 @@ npm run setup:project
 This will:
 
 - run `pnpm install`, that will download all the needed dependencies and create symlinks for packages.
-- will copy the `.env.example` file to the `.env` file for the API service
-- will execute a `npm run build` command to build all the dependency tree locally.
+- copy the `.env.example` file to the `.env` file for the API service.
+- execute a `npm run build` command to build all the dependency tree locally.
 
 For additional information on running novu locally visit the [run locally](https://docs.novu.co/community/run-locally) guide.
 
@@ -56,7 +56,7 @@ The `DAL` is our Data-Access-Layer, this is our connection to the DB service and
 
 ### @novu/testing
 
-This is a utility library that contains testing helpers, the testing helpers can generate a test session or other functionality for e2e and unit-tests we use between our services.
+This is a utility library that contains testing helpers, the testing helpers can generate test sessions and other functionality for e2e and unit-tests between our services
 
 ### @novu/shared
 
@@ -88,7 +88,7 @@ These are the API wrappers created by the community to wrap communication provid
 
 Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
-#### 💌 Email
+### 💌 Email
 
 - [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
 - [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
@@ -100,8 +100,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 - [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
 
-
-#### 📞 SMS
+### 📞 SMS
 
 - [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
 - [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
@@ -111,24 +110,19 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 
-
-#### 📱 Push 
-
+### 📱 Push
 
 - [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 
-#### 👇 Chat 
+### 👇 Chat
 
 - [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 
-
-#### 📱 In-App
+### 📱 In-App
 
 - [Novu](https://docs.novu.co/notification-center/getting-started)
 
-
-#### Other (Coming Soon...)
+### Other (Coming Soon...)
 
 - PagerDuty
-
