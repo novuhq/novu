@@ -81,6 +81,13 @@ export enum SmsEventStatusEnum {
   CREATED = 'created',
   DELIVERED = 'delivered',
   RECEIVED = 'received',
+  ACCEPTED = 'accepted',
+  QUEUED = 'queued',
+  SENDING = 'sending',
+  SENT = 'sent',
+  FAILED = 'failed',
+  UNDELIVERED = 'undelivered',
+  RECEIVING = 'receiving',
 }
 
 export interface IEventBody {
