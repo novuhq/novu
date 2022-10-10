@@ -29,7 +29,7 @@ You can find the embed code in the `Settings` page within the Admin Panel. It wi
 ```
 <!-- prettier-ignore-end -->
 
-Replace the selectors for the bell icon and the unseen badge withing your code. Let's take a look at this example code:
+Replace the selectors for the bell icon and the unseen badge within your code. Let's take a look at this example code:
 
 ```html
 <nav>

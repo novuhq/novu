@@ -175,7 +175,7 @@ function buildDisplayTitle(title) {
   const dateString = `${normalizeDateNumber(dayMonth[1])}-${normalizeDateNumber(dayMonth[0])}`;
   const data = parse(dateString, 'MM-dd', new Date());
 
-  return `${format(data, 'EEEE')}, ${format(data, 'LLLL')} ${format(data, 'Do')}`;
+  return `${format(data, 'EEEE')}, ${format(data, 'LLLL')} ${format(data, 'do')}`;
 }
 
 export function normalizeDateNumber(num: string): string {

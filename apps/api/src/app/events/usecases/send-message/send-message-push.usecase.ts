@@ -183,29 +183,15 @@ export class SendMessagePush extends SendMessageType {
         overrides,
       });
     } catch (e) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: e.message || e.name || 'Un-expect Push provider error',
-          userId: command.userId,
-          code: LogCodeEnum.PUSH_ERROR,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
-
-      await this.messageRepository.updateMessageStatus(
-        message._id,
+      await this.sendErrorStatus(
+        message,
         'error',
-        e,
         'unexpected_push_error',
-        e.message || e.name || 'Un-expect Push provider error'
+        e.message || e.name || 'Un-expect Push provider error',
+        command,
+        notification,
+        LogCodeEnum.PUSH_ERROR,
+        e
       );
     }
   }

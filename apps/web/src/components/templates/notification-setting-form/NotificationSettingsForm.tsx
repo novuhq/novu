@@ -90,9 +90,10 @@ export const NotificationSettingsForm = ({
           <Controller
             name="description"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <Input
                 {...field}
+                error={fieldState.error?.message}
                 value={field.value || ''}
                 disabled={readonly}
                 mb={30}
@@ -109,13 +110,13 @@ export const NotificationSettingsForm = ({
             <Controller
               name="identifier"
               control={control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Input
                   {...field}
                   mb={30}
                   data-test-id="trigger-id"
                   value={field.value || ''}
-                  error={errors.name?.message}
+                  error={fieldState.error?.message}
                   label="Notification Identifier"
                   description="This will be used to identify the notification template using the API."
                   rightSection={
