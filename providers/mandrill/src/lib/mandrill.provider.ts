@@ -12,6 +12,18 @@ import {
 import mailchimp from '@mailchimp/mailchimp_transactional';
 import { MandrillInterface } from './mandrill.interface';
 
+export enum MandrillStatusEnum {
+  OPEN = 'opened',
+  SEND = 'sent',
+  DEFERRAL = 'deferred',
+  HARD_BOUNCE = 'hard_bounced',
+  SOFT_BOUNCE = 'soft_bounced',
+  CLICK = 'clicked',
+  SPAM = 'spam',
+  UNSUB = 'unsubscribed',
+  REJECT = 'rejected',
+}
+  
 export class MandrillProvider implements IEmailProvider {
   id = 'mandrill';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -120,18 +132,26 @@ export class MandrillProvider implements IEmailProvider {
     };
   }
 
-  private getStatus(event: string): EmailEventStatusEnum | undefined {
+  private getStatus(event: string): MandrillStatusEnum | undefined {
     switch (event) {
       case 'open':
-        return EmailEventStatusEnum.OPENED;
+        return MandrillStatusEnum.OPEN;
       case 'hard_bounce':
-        return EmailEventStatusEnum.BOUNCED;
+        return MandrillStatusEnum.HARD_BOUNCE;
       case 'click':
-        return EmailEventStatusEnum.CLICKED;
+        return MandrillStatusEnum.CLICK;
       case 'send':
-        return EmailEventStatusEnum.SENT;
+        return MandrillStatusEnum.SEND;
       case 'spam':
-        return EmailEventStatusEnum.SPAM;
+        return MandrillStatusEnum.SPAM;
+      case 'reject':
+        return MandrillStatusEnum.REJECT;
+      case 'soft_bounce':
+        return MandrillStatusEnum.SOFT_BOUNCE;
+      case 'unsub':
+        return MandrillStatusEnum.UNSUB;
+      case 'deferral':
+        return MandrillStatusEnum.DEFERRAL;
     }
   }
 }
