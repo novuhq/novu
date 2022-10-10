@@ -36,6 +36,7 @@ import { HU } from './languages/hu';
 import { BG } from './languages/bg';
 import { DA } from './languages/da';
 import { AS } from './languages/as';
+import { SI } from './languages/si';
 import { NO } from './languages/no';
 import { PT } from './languages/pt';
 import { SV } from './languages/sv';
@@ -45,6 +46,7 @@ import { LO } from './languages/lo';
 import { RO } from './languages/ro';
 import { VI } from './languages/vi';
 import { TH } from './languages/th';
+import { HE } from './languages/he';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -99,6 +101,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   bg: BG,
   da: DA,
   as: AS,
+  si: SI,
   no: NO,
   pt: PT,
   tr: TR,
@@ -106,6 +109,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   lo: LO,
   vi: VI,
   th: TH,
+  he: HE,
 };
 
 /**
@@ -158,12 +162,14 @@ export type I18NLanguage =
   | 'el'
   | 'ja'
   | 'hu'
+  | 'da'
+  | 'si'
   | 'pt'
   | 'tr'
   | 'as'
   | 'no'
   | 'te'
-  | 'da'
   | 'lo'
   | 'vi'
-  | 'th';
+  | 'th'
+  | 'he';

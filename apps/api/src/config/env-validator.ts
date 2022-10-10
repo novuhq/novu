@@ -38,10 +38,18 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: '',
   }),
   STORE_ENCRYPTION_KEY: str32(),
+  NEW_RELIC_APP_NAME: str({
+    default: '',
+  }),
+  NEW_RELIC_LICENSE_KEY: str({
+    default: '',
+  }),
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
-  validators.SENTRY_DSN = str();
+  validators.SENTRY_DSN = str({
+    default: '',
+  });
 }
 
 export function validateEnv() {
