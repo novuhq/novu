@@ -14,11 +14,11 @@ This will contain general information regarding the notification itself. Let's e
 
 ### Notification name
 
-The name used to identify the notification template when triggering it. A slugified version of the name will be generated after the notification was created. For example, a notification template with the name of "Test Notification" will be converted to "test-notification" as the trigger key.
+The name will be used to identify the notification template when triggering it. A slugified version of the name will be generated after the notification was created. For example, a notification template with the name of "Test Notification" will be converted to "test-notification" as the trigger key.
 
 ### Notification Group
 
-The notification group is used to group multiple notification templates into a single group (currently only used behind the scenes for organizational purposes). But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
+The notification group is used to group multiple notification templates into a single group, currently only used behind the scenes for organisational purposes. But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
 
 ## Template steps
 
@@ -28,7 +28,7 @@ The template steps are used to organize the different messages in a particular f
 
 A message is particularly tied to a specific channel and will create the content template associated with its channel.
 
-For email channels, you can either use our basic visual editor or a fully custom code with [handlebars variables](https://handlebarsjs.com/guide/).
+For email channel, you can either use our basic visual editor or a fully custom code with [handlebars variables](https://handlebarsjs.com/guide/).
 
 ### Variable usage
 
