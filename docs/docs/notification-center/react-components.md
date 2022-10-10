@@ -194,8 +194,10 @@ The `i18n` prop can accept 2 different types of values
           <li><code>it</code> (Italian)</li>
           <li><code>ja</code> (Japanese)</li>
           <li><code>ka</code> (Kannada)</li>
+          <li><code>km</code> (Khmer)</li>
           <li><code>ko</code> (Korean)</li>
           <li><code>ku</code> (Kurdish)</li>
+          <li><code>lo</code> (Lao)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>mr</code> (Marathi)</li>
           <li><code>ne</code> (Nepali)</li>
@@ -208,6 +210,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ru</code> (Russian)</li>
           <li><code>sa</code> (Sanskrit)</li>
           <li><code>sd</code> (Sindhi)</li>
+          <li><code>si</code> (Sinhala)</li>
           <li><code>sv</code> (Swedish)</li>
           <li><code>ta</code> (Tamil)</li>
           <li><code>te</code> (Telugu)</li>
