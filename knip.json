@@ -5,6 +5,7 @@
   },
   "packages/*": {
     "entryFiles": ["src/index.ts"],
-    "projectFiles": ["src/**/*.{ts,tsx}", "!**/*.d.ts", "!**/*.stories.tsx", "!**/*.spec.{ts,tsx}"]
+    "projectFiles": ["src/**/*.{ts,tsx}", "!**/*.d.ts", "!**/*.stories.tsx", "!**/*.spec.{ts,tsx}"],
+    "exclude": ["unlisted"]
   }
 }

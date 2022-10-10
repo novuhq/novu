@@ -1,0 +1,14 @@
+{
+  "apps/api": {
+    "dev": true,
+    "entryFiles": ["src/main.ts", "src/**/*.spec.ts", "src/**/*.e2e.ts"],
+    "projectFiles": ["src/**/*.ts"],
+    "exclude": ["dependencies", "unlisted"]
+  },
+  "packages/*": {
+    "dev": true,
+    "entryFiles": ["src/index.ts", "src/**/*.spec.{ts,tsx}"],
+    "projectFiles": ["src/**/*.{ts,tsx}", "!**/*.d.ts", "!**/*.stories.tsx"],
+    "exclude": ["dependencies", "unlisted"]
+  }
+}

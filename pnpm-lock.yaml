@@ -48,7 +48,6 @@ importers:
       eslint-plugin-react: 7.29.4
       eslint-plugin-react-hooks: ^4.4.0
       execa: ^6.1.0
-      exportman: 0.1.0
       globby: ^12.0.2
       gradient-string: ^2.0.0
       husky: ^8.0.1
@@ -56,6 +55,7 @@ importers:
       inquirer: 8.2.4
       jest: 27.2.3
       jira-prepare-commit-msg: 1.5.2
+      knip: 0.2.0
       lerna: 5.1.6
       lint-staged: ^10.5.4
       listr: ^0.14.3
@@ -123,7 +123,6 @@ importers:
       eslint-plugin-react: 7.29.4_eslint@7.32.0
       eslint-plugin-react-hooks: 4.4.0_eslint@7.32.0
       execa: 6.1.0
-      exportman: 0.1.0
       globby: 12.2.0
       gradient-string: 2.0.1
       husky: 8.0.1
@@ -131,6 +130,7 @@ importers:
       inquirer: 8.2.4
       jest: 27.2.3_ts-node@9.1.1
       jira-prepare-commit-msg: 1.5.2
+      knip: 0.2.0
       lerna: 5.1.6
       lint-staged: 10.5.4
       listr: 0.14.3
@@ -24841,6 +24841,11 @@ packages:
     resolution: {integrity: sha512-lGzLKcioL90C7wMczpkY0n/oART3MbBa8R9OFGE1rJxoVI86u4WAGfEk8Wjv10eKSyTHVGkSo3bvBylCEtk7LA==}
     engines: {node: '>=6'}
 
+  /builtin-modules/3.3.0:
+    resolution: {integrity: sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw==}
+    engines: {node: '>=6'}
+    dev: true
+
   /builtin-status-codes/3.0.0:
     resolution: {integrity: sha1-hZgoeOIbmOHGZCXgPQF0eI9Wnug=}
 
@@ -30499,16 +30504,6 @@ packages:
       jest-matcher-utils: 27.5.1
       jest-message-util: 27.5.1
 
-  /exportman/0.1.0:
-    resolution: {integrity: sha512-SWAd4Dv2jBv4ZaU1+hg8Gztpt9yvDlaHdtdNm1W6iqcBwm+NLI+Rut8tohYXwvkMdgo/Rvx8+kjwGLR+XcbQqA==}
-    engines: {node: '>=16.17.0'}
-    hasBin: true
-    dependencies:
-      micromatch: 4.0.5
-      ts-morph: 16.0.0
-      ts-morph-helpers: 0.5.0
-    dev: true
-
   /express-handlebars/5.3.5:
     resolution: {integrity: sha512-r9pzDc94ZNJ7FVvtsxLfPybmN0eFAUnR61oimNPRpD0D7nkLcezrkpZzoXS5TI75wYHRbflPLTU39B62pwB4DA==}
     engines: {node: '>=v10.24.1'}
@@ -34115,6 +34110,13 @@ packages:
     resolution: {integrity: sha512-i2R6zNFDwgEHJyQUtJEk0XFi1i0dPFn/oqjK3/vPCcDeJvW5NQ83V8QbicfF1SupOaB0h8ntgBC2YiE7dfyctQ==}
     engines: {node: '>=4'}
 
+  /is-builtin-module/3.2.0:
+    resolution: {integrity: sha512-phDA4oSGt7vl1n5tJvTWooWWAsXLY+2xCnxNqvKhGEzujg+A43wPlPOyDg3C8XQHN+6k/JTQWJ/j0dQh/qr+Hw==}
+    engines: {node: '>=6'}
+    dependencies:
+      builtin-modules: 3.3.0
+    dev: true
+
   /is-callable/1.2.4:
     resolution: {integrity: sha512-nsuwtxZfMX67Oryl9LCQ+upnC0Z0BgpwntpS89m1H/TLF0zNfzfLMV/9Wa/6MZsj0acpEjAO0KF1xT6ZdLl95w==}
     engines: {node: '>= 0.4'}
@@ -36449,6 +36451,17 @@ packages:
   /klona/2.0.5:
     resolution: {integrity: sha512-pJiBpiXMbt7dkzXe8Ghj/u4FfXOOa98fPW+bihOJ4SjnoijweJrNThJfd3ifXpXhREjpoF2mZVH1GfS9LV3kHQ==}
     engines: {node: '>= 8'}
+
+  /knip/0.2.0:
+    resolution: {integrity: sha512-3+onMo3PxBWTH4fBAYlKECmXI92r6d21yIXhySSqih0+1fs+/Q7pnvInAF3fY5V0284skVvCK709PQ9j+B+p+Q==}
+    engines: {node: '>=16.17.0'}
+    hasBin: true
+    dependencies:
+      is-builtin-module: 3.2.0
+      micromatch: 4.0.5
+      ts-morph: 16.0.0
+      ts-morph-helpers: 0.5.0
+    dev: true
 
   /known-css-properties/0.25.0:
     resolution: {integrity: sha512-b0/9J1O9Jcyik1GC6KC42hJ41jKwdO/Mq8Mdo5sYN+IuRTXs2YFHZC3kZSx6ueusqa95x3wLYe/ytKjbAfGixA==}
