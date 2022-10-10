@@ -12,8 +12,10 @@ export class SparkPostEmailProvider implements IEmailProvider {
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly client: SparkPost;
 
-  constructor(apiKey: string) {
-    this.client = new SparkPost(apiKey);
+  constructor(apiKey: string, eu: boolean) {
+    this.client = new SparkPost(apiKey, {
+      endpoint: eu ? 'https://api.eu.sparkpost.com:443' : undefined,
+    });
   }
 
   async sendMessage({
