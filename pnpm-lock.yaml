@@ -193,6 +193,7 @@ importers:
       '@novu/termii': ^0.8.0
       '@novu/testing': ^0.8.0
       '@novu/twilio': ^0.8.0
+      '@novu/whatsapp': ^0.1.0
       '@sendgrid/mail': ^7.6.0
       '@sentry/node': ^7.12.1
       '@sentry/tracing': ^7.12.1
@@ -293,6 +294,7 @@ importers:
       '@novu/termii': link:../../providers/termii
       '@novu/testing': link:../../libs/testing
       '@novu/twilio': link:../../providers/twilio
+      '@novu/whatsapp': link:../../providers/whatsapp
       '@sendgrid/mail': 7.6.2
       '@sentry/node': 7.12.1
       '@sentry/tracing': 7.12.1
@@ -2387,6 +2389,51 @@ importers:
       rimraf: 3.0.2
       standard-version: 9.3.2
       ts-jest: 27.1.4_f2nb3ogvi2jblycszsucfjpvle
+      ts-node: 9.1.1_typescript@4.6.2
+      typedoc: 0.19.2_typescript@4.6.2
+      typescript: 4.6.2
+
+  providers/whatsapp:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ^1.0.1
+      '@novu/node': ^0.8.0
+      '@novu/stateless': ^0.8.0
+      '@types/jest': 27.4.0
+      axios: ^0.27.2
+      codecov: ^3.5.0
+      cspell: ^4.1.0
+      cz-conventional-changelog: ^3.3.0
+      gh-pages: ^3.1.0
+      jest: ^27.1.0
+      npm-run-all: ^4.1.5
+      nyc: ^15.1.0
+      open-cli: ^6.0.1
+      prettier: ^2.1.1
+      rimraf: ^3.0.2
+      standard-version: ^9.0.0
+      ts-jest: ^27.0.5
+      ts-node: ^9.0.0
+      typedoc: ^0.19.0
+      typescript: 4.6.2
+    dependencies:
+      '@novu/node': link:../../packages/node
+      '@novu/stateless': link:../../packages/stateless
+      axios: 0.27.2
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.4.0
+      codecov: 3.8.3
+      cspell: 4.2.8
+      cz-conventional-changelog: 3.3.0
+      gh-pages: 3.2.3
+      jest: 27.5.1_ts-node@9.1.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      open-cli: 6.0.1
+      prettier: 2.7.1
+      rimraf: 3.0.2
+      standard-version: 9.3.2
+      ts-jest: 27.1.4_gxtntv5dwbdy7daxb4td26n5ra
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -47323,7 +47370,7 @@ packages:
       schema-utils: 3.1.1
       serialize-javascript: 5.0.1
       source-map: 0.6.1
-      terser: 5.12.1
+      terser: 5.14.1
       webpack: 4.46.0
       webpack-sources: 1.4.3
     transitivePeerDependencies:
