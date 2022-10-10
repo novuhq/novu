@@ -334,7 +334,7 @@ export const slackConfig: IConfigCredentials[] = [
 
 export const whatsappConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.PhoneNumberId,
+    key: CredentialsKeyEnum.AccountSid,
     displayName: 'Phone Number ID',
     type: 'string',
     required: true,

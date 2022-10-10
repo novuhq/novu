@@ -8,7 +8,7 @@ A whatsapp chat provider library for [@novu/node](https://github.com/novuhq/novu
 import { WhatsappProvider } from '@novu/whatsapp';
 
 const provider = new WhatsappProvider({
-  phoneNumberId: process.env.PHONE_NUMBER_ID,
+  accountSid: process.env.PHONE_NUMBER_ID,
   token: process.env.TOKEN,
 });```
 ````

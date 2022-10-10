@@ -2,7 +2,7 @@ import { WhatsappProvider } from './whatsapp.provider';
 
 test('should trigger whatsapp correctly', async () => {
   const provider = new WhatsappProvider({
-    phoneNumberId: 'phoneNumberId_123',
+    accountSid: 'phoneNumberId_123',
     token: 'tokenNumber',
   });
   const spy = jest

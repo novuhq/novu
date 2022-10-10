@@ -16,7 +16,6 @@ export enum CredentialsKeyEnum {
   From = 'from',
   SenderName = 'senderName',
   ApplicationId = 'applicationId',
-  PhoneNumberId = 'phoneNumberId',
   ClientId = 'clientId',
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
@@ -44,12 +43,12 @@ export enum SmsProviderIdEnum {
   Telnyx = 'telnyx',
   Twilio = 'twilio',
   Gupshup = 'gupshup',
+  Whatsapp = 'whatsapp',
 }
 
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
-  Whatsapp = 'whatsapp',
 }
 
 export enum PushProviderIdEnum {

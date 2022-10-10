@@ -9,6 +9,7 @@ import {
   PlivoHandler,
   GupshupSmsHandler,
 } from './handlers';
+import { WhatsappHandler } from './handlers/whatsapp.handler';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [
@@ -19,6 +20,7 @@ export class SmsFactory implements ISmsFactory {
     new TermiiSmsHandler(),
     new PlivoHandler(),
     new GupshupSmsHandler(),
+    new WhatsappHandler(),
   ];
 
   getHandler(integration: IntegrationEntity): ISmsHandler {

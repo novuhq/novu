@@ -20,12 +20,4 @@ export const chatProviders: IProviderConfig[] = [
     docReference: 'https://discord.com/developers/docs/intro',
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
-  {
-    id: ChatProviderIdEnum.Whatsapp,
-    displayName: 'Whatsapp',
-    channel: ChannelTypeEnum.CHAT,
-    credentials: whatsappConfig,
-    docReference: 'https://discord.com/developers/docs/intro',
-    logoFileName: { light: 'whatsapp.svg', dark: 'whatsapp.svg' },
-  },
 ];

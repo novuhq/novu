@@ -8,6 +8,7 @@ import {
   snsConfig,
   telnyxConfig,
   twilioConfig,
+  whatsappConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -68,5 +69,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: gupshupConfig,
     docReference: 'https://docs.gupshup.io/docs/send-single-message',
     logoFileName: { light: 'gupshup.png', dark: 'gupshup.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Whatsapp,
+    displayName: 'Whatsapp',
+    channel: ChannelTypeEnum.SMS,
+    credentials: whatsappConfig,
+    docReference: 'https://developers.facebook.com/docs/whatsapp/',
+    logoFileName: { light: 'whatsapp.svg', dark: 'whatsapp.svg' },
   },
 ];
