@@ -22,7 +22,7 @@ describe('test use of novus node package - Subscribers class', () => {
     await novu.changes.get();
 
     expect(mockedAxios.get).toHaveBeenCalled();
-    expect(mockedAxios.get).toHaveBeenCalledWith('/v1/changes');
+    expect(mockedAxios.get).toHaveBeenCalledWith('/changes');
   });
 
   test('should get count of changes correctly', async () => {
@@ -31,7 +31,7 @@ describe('test use of novus node package - Subscribers class', () => {
     await novu.changes.getCount();
 
     expect(mockedAxios.get).toHaveBeenCalled();
-    expect(mockedAxios.get).toHaveBeenCalledWith('/v1/changes/count');
+    expect(mockedAxios.get).toHaveBeenCalledWith('/changes/count');
   });
 
   test('should apply one change', async () => {
@@ -39,11 +39,8 @@ describe('test use of novus node package - Subscribers class', () => {
 
     await novu.changes.applyOne('change1');
 
-    expect(mockedAxios.get).toHaveBeenCalled();
-    expect(mockedAxios.get).toHaveBeenCalledWith(
-      '/v1/changes/change1/apply',
-      {}
-    );
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/changes/change1/apply', {});
   });
 
   test('should apply one change', async () => {
@@ -51,9 +48,9 @@ describe('test use of novus node package - Subscribers class', () => {
 
     await novu.changes.applyMany(['changeID', 'change2ID']);
 
-    expect(mockedAxios.get).toHaveBeenCalled();
-    expect(mockedAxios.get).toHaveBeenCalledWith('/v1/changes/bulk/apply', {
-      changesIds: ['changeID', 'change2ID'],
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/changes/bulk/apply', {
+      ChangeIDs: ['changeID', 'change2ID'],
     });
   });
 });
