@@ -1,4 +1,4 @@
-import { Novu } from './novu';
+import { Novu } from '../novu';
 import axios from 'axios';
 
 const mockConfig = {
@@ -7,7 +7,7 @@ const mockConfig = {
 
 jest.mock('axios');
 
-describe('test use of novu node package', () => {
+describe('test use of novus node package - Events', () => {
   const mockedAxios = axios as jest.Mocked<typeof axios>;
   let novu: Novu;
 
@@ -19,7 +19,7 @@ describe('test use of novu node package', () => {
   test('should trigger correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.trigger('test-template', {
+    await novu.events.trigger('test-template', {
       to: 'test-user',
       payload: {
         email: 'test-user@sd.com',
@@ -40,7 +40,7 @@ describe('test use of novu node package', () => {
   test('should broadcast correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.broadcast('test-template', {
+    await novu.events.broadcast('test-template', {
       payload: {
         email: 'test-user@sd.com',
       },
@@ -59,7 +59,7 @@ describe('test use of novu node package', () => {
   test('should trigger correctly for all subscribers definitions ', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.trigger('test-template', {
+    await novu.events.trigger('test-template', {
       to: ['test-user', 'test-another-user'],
       payload: {
         organizationName: 'Company',
@@ -76,7 +76,7 @@ describe('test use of novu node package', () => {
       },
     });
 
-    await novu.trigger('test-template', {
+    await novu.events.trigger('test-template', {
       to: [
         { subscriberId: 'test-user', firstName: 'test' },
         { subscriberId: 'test-another-user' },
@@ -98,5 +98,16 @@ describe('test use of novu node package', () => {
         organizationName: 'Company',
       },
     });
+  });
+
+  test('should cancel correctly', async () => {
+    mockedAxios.delete.mockResolvedValue({});
+
+    await novu.events.cancel('transactionId');
+
+    expect(mockedAxios.delete).toHaveBeenCalled();
+    expect(mockedAxios.delete).toHaveBeenCalledWith(
+      '/events/trigger/transactionId'
+    );
   });
 });
