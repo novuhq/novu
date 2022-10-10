@@ -176,9 +176,9 @@ The `i18n` prop can accept 2 different types of values
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
-          <li><code>gj</code> (Georgian)</li>
+          <li><code>gu</code> (Gujarati)</li>
           <li><code>hi</code> (Hindi)</li>
-					<li><code>id</code> (Indonesia)</li>
+					<li><code>id</code> (Indonesian)</li>
           <li><code>it</code> (Italian)</li>
           <li><code>ka</code> (Kannada)</li>
           <li><code>mr</code> (Marathi)</li>
@@ -189,20 +189,33 @@ The `i18n` prop can accept 2 different types of values
           <li><code>bn</code> (Bengali)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>ig</code> (Igbo)</li>
           <li><code>hr</code> (Croatian)</li>
           <li><code>or</code> (Odia)</li>
           <li><code>sa</code> (Sanskrit)</li>
           <li><code>ur</code> (Urdu)</li>
           <li><code>pl</code> (Polish)</li>
+          <li><code>sv</code> (Swedish)</li>
           <li><code>cs</code> (Czech)</li>
           <li><code>pa</code> (Punjabi)</li>
           <li><code>ta</code> (Tamil)</li>
           <li><code>sd</code> (Sindhi)</li>
           <li><code>ca</code> (Catalan)</li>
           <li><code>ko</code> (Korean)</li>
+          <li><code>ku</code> (Kurdish)</li>
+          <li><code>el</code> (Greek)</li>
           <li><code>ja</code> (Japanese)</li>
           <li><code>hu</code> (Hungarian)</li>
+          <li><code>bg</code> (Bulgarian)</li>
+          <li><code>da</code> (Danish)</li>
+          <li><code>no</code> (Norwegian)</li>
           <li><code>as</code> (Assamese)</li>
+          <li><code>pt</code> (Portuguese)</li>
+          <li><code>tr</code> (Turkish)</li>
+          <li><code>te</code> (Telugu)</li>
+          <li><code>ro</code> (Romanian)</li>
+          <li><code>vi</code> (Vietnamese)</li>
+          <li><code>th</code> (Thai)</li>
         </ul>
       </div>
   </details>
@@ -227,7 +240,7 @@ The `i18n` prop can accept 2 different types of values
 
 ## The notification `IMessage` model
 
-When building your custom UI implementation it might be useful to know, how the notification feed model is structured so you can customize the notification items during rendering.
+When building your custom UI implementation it might be useful to know, how the notification feed model is structured, so you can customize the notification items during rendering.
 
 The notifications array returned by the `useNotifications` hook contains an array of `IMessage` objects with the following properties:
 
@@ -270,7 +283,7 @@ The notifications array returned by the `useNotifications` hook contains an arra
 
 ## Realtime sockets
 
-Novu provides a real-time socket API for you to consume to get updates about new notifications added to the user's feed. To use the socket connection you can use the `useSocket` hook provided by the `@novu/notification-center` library. Let's see an example of that:
+Novu provides a real-time socket API for you to consume and get updates about new notifications added to the user's feed. To use the socket connection you can use the `useSocket` hook provided by the `@novu/notification-center` library. Let's see an example of that:
 
 ```tsx
 import { NovuProvider, useSocket } from '@novu/notification-center';
@@ -366,7 +379,7 @@ function PopoverWrapper() {
 }
 ```
 
-Novu manages the state of the actions, so you can actually specify if the user has already performed the actions so you can know when the actions should be hidden.
+Novu manages the state of the actions, so you can actually specify if the user has already performed the actions, so you can know when the actions should be hidden.
 
 ## HMAC Encryption
 
