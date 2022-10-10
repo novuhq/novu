@@ -18,7 +18,7 @@ After adding a digest node in the workflow editor, each node that will be below 
 
 #### Time Interval
 
-Will determine how long the digest engine will wait before sending the message once created. You can specify the amount and the unit that best suites your needs.
+Will determine how long the digest engine will wait before sending the message once created. You can specify the amount and the unit that best suits your needs.
 
 #### Digest Key
 
@@ -41,11 +41,11 @@ Let's explore them in detail:
 
 ### Regular Strategy
 
-In regular strategy, a digest will always be created for the specified window time. Which means that from the first event trigger, if no active digest exists for this subscriber one will be created and the user will receive the message only when the digest window time is reached.
+In regular strategy, a digest will always be created for the specified window time. Which means that from the first event trigger, if no active digest exists for this subscriber, one will be created and the user will receive the message only when the digest window time is reached.
 
 ### Back-off Strategy
 
-In the back-off strategy, before creating a digest, Novu will check if a message was sent to the user in the back-off period. If a message was sent, a digest will be created. Other wise a message will be sent directly to the user and the digest creation will be skipped.
+In the back-off strategy, before creating a digest, Novu will check if a message was sent to the user in the back-off period. If a message was sent, a digest will be created. Otherwise a message will be sent directly to the user and the digest creation will be skipped.
 
 ## Writing digest templates
 
