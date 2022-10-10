@@ -171,45 +171,53 @@ The `i18n` prop can accept 2 different types of values
       <div>
         <ul>
           <li><code>ar</code> (Arabic)</li>
+          <li><code>as</code> (Assamese)</li>
+          <li><code>bg</code> (Bulgarian)</li>
+          <li><code>bn</code> (Bengali)</li>
+          <li><code>ca</code> (Catalan)</li>
+          <li><code>cs</code> (Czech)</li>
+          <li><code>da</code> (Danish)</li>
           <li><code>de</code> (German)</li>
+          <li><code>el</code> (Greek)</li>
           <li><code>en</code> (English)</li>
+          <li><code>es</code> (Spanish)</li>
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
           <li><code>gu</code> (Gujarati)</li>
+          <li><code>he</code> (Hebrew)</li>
           <li><code>hi</code> (Hindi)</li>
-					<li><code>id</code> (Indonesia)</li>
-          <li><code>it</code> (Italian)</li>
-          <li><code>ka</code> (Kannada)</li>
-          <li><code>mr</code> (Marathi)</li>
-          <li><code>ne</code> (Nepali)</li>
-          <li><code>ru</code> (Russian)</li>
-          <li><code>es</code> (Spanish)</li>
-          <li><code>uk</code> (Ukrainian)</li>
-          <li><code>bn</code> (Bengali)</li>
-          <li><code>ml</code> (Malayalam)</li>
-          <li><code>zh</code> (Chinese)</li>
           <li><code>hr</code> (Croatian)</li>
-          <li><code>or</code> (Odia)</li>
-          <li><code>sa</code> (Sanskrit)</li>
-          <li><code>ur</code> (Urdu)</li>
-          <li><code>pl</code> (Polish)</li>
-          <li><code>cs</code> (Czech)</li>
-          <li><code>pa</code> (Punjabi)</li>
-          <li><code>ta</code> (Tamil)</li>
-          <li><code>sd</code> (Sindhi)</li>
-          <li><code>ca</code> (Catalan)</li>
+          <li><code>hu</code> (Hungarian)</li>
+          <li><code>id</code> (Indonesian)</li>
+          <li><code>ig</code> (Igbo)</li>
+          <li><code>it</code> (Italian)</li>
+          <li><code>ja</code> (Japanese)</li>
+          <li><code>ka</code> (Kannada)</li>
           <li><code>ko</code> (Korean)</li>
           <li><code>ku</code> (Kurdish)</li>
-          <li><code>el</code> (Greek)</li>
-          <li><code>ja</code> (Japanese)</li>
-          <li><code>hu</code> (Hungarian)</li>
-          <li><code>bg</code> (Bulgarian)</li>
-          <li><code>da</code> (Danish)</li>
-          <li><code>as</code> (Assamese)</li>
+          <li><code>ml</code> (Malayalam)</li>
+          <li><code>mr</code> (Marathi)</li>
+          <li><code>ne</code> (Nepali)</li>
+          <li><code>no</code> (Norwegian)</li>
+          <li><code>or</code> (Odia)</li>
+          <li><code>pa</code> (Punjabi)</li>
+          <li><code>pl</code> (Polish)</li>
           <li><code>pt</code> (Portuguese)</li>
-          <li><code>tr</code> (Turkish)</li>
+          <li><code>ro</code> (Romanian)</li>
+          <li><code>ru</code> (Russian)</li>
+          <li><code>sa</code> (Sanskrit)</li>
+          <li><code>sd</code> (Sindhi)</li>
+          <li><code>si</code> (Sinhala)</li>
+          <li><code>sv</code> (Swedish)</li>
+          <li><code>ta</code> (Tamil)</li>
           <li><code>te</code> (Telugu)</li>
+          <li><code>th</code> (Thai)</li>
+          <li><code>tr</code> (Turkish)</li>
+          <li><code>uk</code> (Ukrainian)</li>
+          <li><code>ur</code> (Urdu)</li>
+          <li><code>vi</code> (Vietnamese)</li>
+          <li><code>zh</code> (Chinese)</li>
         </ul>
       </div>
   </details>

@@ -27,6 +27,7 @@ import { PA } from './languages/pa';
 import { TA } from './languages/ta';
 import { SD } from './languages/sd';
 import { CA } from './languages/ca';
+import { IG } from './languages/ig';
 import { KO } from './languages/ko';
 import { KU } from './languages/ku';
 import { EL } from './languages/el';
@@ -35,9 +36,16 @@ import { HU } from './languages/hu';
 import { BG } from './languages/bg';
 import { DA } from './languages/da';
 import { AS } from './languages/as';
+import { SI } from './languages/si';
+import { NO } from './languages/no';
 import { PT } from './languages/pt';
+import { SV } from './languages/sv';
 import { TR } from './languages/tr';
 import { TE } from './languages/te';
+import { RO } from './languages/ro';
+import { VI } from './languages/vi';
+import { TH } from './languages/th';
+import { HE } from './languages/he';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -53,6 +61,7 @@ export interface ITranslationEntry {
 
 export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   en: EN,
+  ro: RO,
   fi: FI,
   hi: HI,
   fr: FR,
@@ -62,6 +71,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
 	id: ID,
   it: IT,
   ka: KA,
+  ig: IG,
   mr: MR,
   ar: AR,
   fa: FA,
@@ -85,13 +95,19 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ku: KU,
   el: EL,
   ja: JA,
+  sv: SV,
   hu: HU,
   bg: BG,
   da: DA,
   as: AS,
+  si: SI,
+  no: NO,
   pt: PT,
   tr: TR,
   te: TE,
+  vi: VI,
+  th: TH,
+  he: HE,
 };
 
 /**
@@ -107,6 +123,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  */
 export type I18NLanguage =
   | 'en'
+  | 'ro'
   | 'fi'
   | 'hi'
 	| 'id'
@@ -121,6 +138,7 @@ export type I18NLanguage =
   | 'fa'
   | 'fr'
   | 'de'
+  | 'ig'
   | 'bn'
   | 'ml'
   | 'zh'
@@ -131,6 +149,7 @@ export type I18NLanguage =
   | 'ne'
   | 'pl'
   | 'cs'
+  | 'sv'
   | 'sd'
   | 'ca'
   | 'pa'
@@ -141,8 +160,13 @@ export type I18NLanguage =
   | 'el'
   | 'ja'
   | 'hu'
+  | 'da'
+  | 'si'
   | 'pt'
   | 'tr'
   | 'as'
+  | 'no'
   | 'te'
-  | 'da';
+  | 'vi'
+  | 'th'
+  | 'he';
