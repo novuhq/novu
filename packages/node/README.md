@@ -28,7 +28,7 @@ The ultimate library for managing multi-channel notifications with a single API.
     ·
     <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
     ·
-    <a href="https://blog.novu.co/">Read our blog</a>
+    <a href="https://novu.co/blog">Read our blog</a>
   </p>
   
 ## ⭐️ Why
