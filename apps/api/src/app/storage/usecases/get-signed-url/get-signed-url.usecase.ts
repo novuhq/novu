@@ -4,6 +4,7 @@ import { StorageService } from '../../../shared/services/storage/storage.service
 import { UploadUrlResponse } from '../../dtos/upload-url-response.dto';
 import { GetSignedUrlCommand } from './get-signed-url.command';
 import { GetOrganization } from '../../../organization/usecases/get-organization/get-organization.usecase';
+import { getFileExtensionFromPath } from '../../../shared/services/helper/helper.service';
 
 const mimeTypes = {
   jpeg: 'image/jpeg',
@@ -21,9 +22,8 @@ export class GetSignedUrl {
     let path = `${command.organizationId}/${command.environmentId}/${hat()}.${command.extension}`;
 
     if (organization.branding.logo) {
-      const currentImageName = organization.branding.logo.split('/').pop().split('.');
-      const currentImagePrefix = currentImageName.shift();
-      const currentImageExt = currentImageName.pop();
+      const currentImagePrefix = organization.branding.logo.split('/').pop().split('.').shift();
+      const currentImageExt = getFileExtensionFromPath(organization.branding.logo);
 
       if (currentImageExt === command.extension) {
         path = `${command.organizationId}/${command.environmentId}/${currentImagePrefix}.${currentImageExt}`;
