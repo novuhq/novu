@@ -5,11 +5,14 @@
 <p align="center">Read <a href="https://github.com/novuhq/novu/discussions/70">here</a> our plans for the upcoming weeks.</p>
 
 </p>
-<p align="center">
+<div align="center">
   <a href="https://novu.co">
-    <img width="200" src="https://uploads-ssl.webflow.com/6130b4d29bb0ab09e14ae9ee/6130e6931f755df302203fcc_SideLogo%20-%20BLack-p-800.png">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
+      <img src="https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png" width="280" alt="Logo"/>
+    </picture>
   </a>
-</p>
+</div>
 <h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
