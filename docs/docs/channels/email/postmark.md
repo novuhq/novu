@@ -13,8 +13,7 @@ To use the Postmark channel, you will need to create a Postmark account and add 
 
 ## Authenticate your sender identity
 
-Before you send email in full scale, you will need to authenticate your sender's indentity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Postmark require you to authenticate your sender identity before you can send emails.
-
+Before you can send emails on a large scale, you will need to authenticate your sender's identity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Postmark require you to authenticate your sender identity before you can send emails.
 
 Postmark allows you to authenticate your sender identity using one of the following methods:
 
@@ -26,6 +25,6 @@ Postmark allows you to authenticate your sender identity using one of the follow
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate Postmark and click on the **Connect** button.
 - Enter your Postmark API key.
-- Fill the `From email address` using the authenticated email from the previous step.
+- Fill the `From email address` field using the authenticated email from the previous step.
 - Click on the **Save** button.
 - You should now be able to send notifications using Postmark in Novu.
