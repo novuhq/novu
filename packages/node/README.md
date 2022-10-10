@@ -89,7 +89,8 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
 - [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
-- [ ] SendinBlue
+- [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
+- [x] [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
 - [ ] SparkPost
 
 #### 📞 SMS
@@ -98,24 +99,27 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
 - [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [x] [Nexmo (Vonage)](https://github.com/novuhq/novu/tree/main/providers/nexmo)
+- [x] [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
+- [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
+- [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push (Coming Soon...)
+#### 📱 Push
 
 - [ ] Pushwoosh
-- [ ] SNS
+- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 
-#### 👇 Chat (Coming Soon...)
+#### 👇 Chat
 
-- [ ] Slack
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [ ] MS Teams
-- [ ] Discord
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 - [ ] Mattermost
 
-#### 📱 In-App (Coming Soon...)
+#### 📱 In-App
 
-- [ ] Novu
+- [x] [Novu](https://docs.novu.co/notification-center/getting-started)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)
