@@ -1,6 +1,6 @@
 import { ITranslationEntry } from '../lang';
 
-export const EN: ITranslationEntry = {
+export const GA: ITranslationEntry = {
   translations: {
     notifications: 'Fógraí',
     markAllAsRead: 'Marcáil go léir mar a léitear',
