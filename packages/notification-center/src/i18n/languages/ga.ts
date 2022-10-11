@@ -7,5 +7,5 @@ export const EN: ITranslationEntry = {
     poweredBy: 'Cumhachtaithe ag',
     settings: 'Socruithe',
   },
-  lang: 'en',
+  lang: 'ga',
 };
