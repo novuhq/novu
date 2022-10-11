@@ -1,11 +1,5 @@
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  MessageEntity,
-  MessageRepository,
-  NotificationEntity,
-} from '@novu/dal';
-import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { MessageEntity, MessageRepository, NotificationEntity } from '@novu/dal';
+import { LogCodeEnum, LogStatusEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { SendMessageCommand } from './send-message.command';

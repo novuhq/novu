@@ -7,10 +7,15 @@ import {
   SubscriberEntity,
   MessageEntity,
   IEmailBlock,
+} from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  LogCodeEnum,
+  LogStatusEnum,
+  IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-} from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, IMessageButton } from '@novu/shared';
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';

@@ -13,10 +13,15 @@ import {
   MessageEntity,
   NotificationEntity,
   IntegrationEntity,
-  ExecutionDetailsStatusEnum,
-  ExecutionDetailsSourceEnum,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, ChatProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  LogCodeEnum,
+  LogStatusEnum,
+  ChatProviderIdEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+} from '@novu/shared';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';

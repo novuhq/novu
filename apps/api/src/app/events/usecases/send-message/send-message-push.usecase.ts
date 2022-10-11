@@ -8,10 +8,15 @@ import {
   NotificationEntity,
   MessageEntity,
   IntegrationEntity,
+} from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  LogCodeEnum,
+  LogStatusEnum,
+  PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-} from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, PushProviderIdEnum } from '@novu/shared';
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
