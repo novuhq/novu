@@ -50,6 +50,18 @@ if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
   validators.SENTRY_DSN = str({
     default: '',
   });
+  validators.VERCEL_CLIENT_ID = str({
+    default: '',
+  });
+  validators.VERCEL_CLIENT_SECRET = str({
+    default: '',
+  });
+  validators.VERCEL_REDIRECT_URI = url({
+    default: 'https://web.novu.co/auth/login',
+  });
+  validators.VERCEL_BASE_URL = url({
+    default: 'https://api.vercel.com',
+  });
 }
 
 export function validateEnv() {

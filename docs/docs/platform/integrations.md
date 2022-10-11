@@ -12,7 +12,7 @@ Each provider connects to a specific channel within the platform, currently we s
 
 ## Provider specific configuration
 
-When visiting the integration store and connecting a provider you will be asked to provide a more provider specific configurations such as API Keys and other credentials
+When visiting the integration store and connecting a provider you will be asked to provide more provider-specific configurations such as API Keys and other credentials.
 
 ### Email configurations
 
