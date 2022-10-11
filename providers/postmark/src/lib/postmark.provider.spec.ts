@@ -85,6 +85,7 @@ test('should parse postmark webhook', () => {
     attempts: 1,
     response: '',
     row: mockWebHook,
+  });
 });
 
 test('should check provider integration correctly', async () => {
