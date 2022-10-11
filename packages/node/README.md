@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://discord.gg/9wcGSf22PM">
+  <a href="https://discord.novu.co">
     <img src="https://user-images.githubusercontent.com/8877285/139603641-66966234-84f4-42aa-9c31-9d296fab7ba1.png">
   </a>
 <p align="center">Read <a href="https://github.com/novuhq/novu/discussions/70">here</a> our plans for the upcoming weeks.</p>
