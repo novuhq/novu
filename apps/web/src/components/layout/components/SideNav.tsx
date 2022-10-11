@@ -139,7 +139,7 @@ export function SideNav({}: Props) {
           <OrganizationSelect />
         </Navbar.Section>
         <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-          <a target="_blank" href="https://discord.gg/novu" data-test-id="side-nav-bottom-link-support">
+          <a target="_blank" href="https://discord.novu.co" data-test-id="side-nav-bottom-link-support">
             Support
           </a>
           <p>
