@@ -255,6 +255,7 @@ export class TriggerEvent {
   private modifyAttachmentNames(command: TriggerEventCommand) {
     command.payload.attachments = command.payload.attachments.map((attachment) => ({
       ...attachment,
+      file: Buffer.from(attachment.file, 'base64'),
       name: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
     }));
   }
