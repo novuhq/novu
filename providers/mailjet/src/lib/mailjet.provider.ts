@@ -74,7 +74,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
-  
+
   getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
       return body.map((item) => item.MessageID);
@@ -82,7 +82,7 @@ export class MailjetEmailProvider implements IEmailProvider {
 
     return [body.MessageID];
   }
-  
+
   parseEventBody(
     body: any | any[],
     identifier: string
@@ -110,7 +110,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       row: body,
     };
   }
-  
+
   private getStatus(event: string): EmailEventStatusEnum | undefined {
     switch (event) {
       case 'open':
