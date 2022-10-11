@@ -47,7 +47,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
-  validators.SENTRY_DSN = str();
+  validators.SENTRY_DSN = str({
+    default: '',
+  });
   validators.VERCEL_CLIENT_ID = str({
     default: '',
   });
