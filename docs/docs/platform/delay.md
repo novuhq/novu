@@ -18,7 +18,7 @@ Regular Delay will determine how long it will take before triggering the next st
 
 #### Time Interval
 
-You can specify the amount and time unit that best suites your needs.
+You can specify the amount and time unit that best suits your needs.
 
 Should you wish to, you could override the default delay time interval you set in the creation of the delay node.
 

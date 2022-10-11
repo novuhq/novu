@@ -2,6 +2,7 @@ import { SpotlightProvider } from '@mantine/spotlight';
 import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bolt, Box, Settings, Repeat } from '../../design-system/icons';
+import { Activity, Bolt, Box, Settings, Repeat } from '../../design-system/icons';
 import { SpotlightContext } from '../../store/spotlightContext';
 
 export const SpotLight = ({ children }) => {
@@ -33,6 +34,12 @@ export const SpotLight = ({ children }) => {
         title: 'Go to Settings',
         onTrigger: () => navigate('/settings'),
         icon: <Settings />,
+      },
+      {
+        id: 'navigate-activities',
+        title: 'Go to Activities',
+        onTrigger: () => navigate('/activities'),
+        icon: <Activity />,
       },
       {
         id: 'navigate-docs',
