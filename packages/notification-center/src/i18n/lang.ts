@@ -42,10 +42,12 @@ import { PT } from './languages/pt';
 import { SV } from './languages/sv';
 import { TR } from './languages/tr';
 import { TE } from './languages/te';
+import { LO } from './languages/lo';
 import { RO } from './languages/ro';
 import { VI } from './languages/vi';
 import { TH } from './languages/th';
 import { HE } from './languages/he';
+import { KM } from './languages/km';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -105,9 +107,11 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   pt: PT,
   tr: TR,
   te: TE,
+  lo: LO,
   vi: VI,
   th: TH,
   he: HE,
+  km: KM,
 };
 
 /**
@@ -167,6 +171,8 @@ export type I18NLanguage =
   | 'as'
   | 'no'
   | 'te'
+  | 'lo'
   | 'vi'
   | 'th'
-  | 'he';
+  | 'he'
+  | 'km';
