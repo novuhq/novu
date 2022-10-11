@@ -8,6 +8,8 @@ import {
   NotificationEntity,
   MessageEntity,
   IntegrationEntity,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, PushProviderIdEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -22,6 +24,8 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessagePush extends SendMessageType {
@@ -32,10 +36,11 @@ export class SendMessagePush extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -120,11 +125,35 @@ export class SendMessagePush extends SendMessageType {
       return;
     }
 
-    await this.sendErrors(pushChannels, command, notification);
+    await this.sendErrors(pushChannels, command, notification, integration);
   }
 
-  private async sendErrors(pushChannels, command: SendMessageCommand, notification: NotificationEntity) {
+  private async sendErrors(
+    pushChannels,
+    command: SendMessageCommand,
+    notification: NotificationEntity,
+    integration: IntegrationEntity
+  ) {
     if (!pushChannels) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          providerId: integration.providerId,
+          transactionId: command.transactionId,
+          channel: ChannelTypeEnum.PUSH,
+          detail: 'Subscriber does not have active channel',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,

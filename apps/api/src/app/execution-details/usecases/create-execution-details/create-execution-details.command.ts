@@ -13,7 +13,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   notificationTemplateId: string;
 
   @IsOptional()
-  messageId: string;
+  messageId?: string;
 
   @IsNotEmpty()
   providerId: string;

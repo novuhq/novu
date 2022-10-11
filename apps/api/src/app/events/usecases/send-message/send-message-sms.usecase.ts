@@ -9,6 +9,8 @@ import {
   NotificationEntity,
   MessageEntity,
   IntegrationEntity,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -23,6 +25,8 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageSms extends SendMessageType {
@@ -33,11 +37,12 @@ export class SendMessageSms extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private integrationRepository: IntegrationRepository,
     private compileTemplate: CompileTemplate,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -122,6 +127,26 @@ export class SendMessageSms extends SendMessageType {
     notification: NotificationEntity
   ) {
     if (!phone) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          providerId: integration.providerId,
+          transactionId: command.transactionId,
+          channel: ChannelTypeEnum.CHAT,
+          detail: 'Subscriber does not have active phone',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,

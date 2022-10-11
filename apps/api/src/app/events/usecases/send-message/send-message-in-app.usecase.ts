@@ -7,6 +7,8 @@ import {
   SubscriberEntity,
   MessageEntity,
   IEmailBlock,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, IMessageButton } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -17,6 +19,8 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -25,10 +29,11 @@ export class SendMessageInApp extends SendMessageType {
     protected messageRepository: MessageRepository,
     private queueService: QueueService,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -138,6 +143,26 @@ export class SendMessageInApp extends SendMessageType {
       command.subscriberId,
       ChannelTypeEnum.IN_APP,
       { read: false }
+    );
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        jobId: command.jobId,
+        notificationId: notification._id,
+        notificationTemplateId: notification._templateId,
+        messageId: message._id,
+        providerId: message.providerId,
+        transactionId: command.transactionId,
+        channel: ChannelTypeEnum.IN_APP,
+        detail: 'In App message created',
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+      })
     );
 
     await this.createLogUsecase.execute(

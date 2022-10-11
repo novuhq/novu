@@ -13,6 +13,8 @@ import {
   MessageEntity,
   NotificationEntity,
   IntegrationEntity,
+  ExecutionDetailsStatusEnum,
+  ExecutionDetailsSourceEnum,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, ChatProviderIdEnum } from '@novu/shared';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -22,6 +24,8 @@ import {
   GetDecryptedIntegrationsCommand,
   GetDecryptedIntegrations,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageChat extends SendMessageType {
@@ -32,10 +36,11 @@ export class SendMessageChat extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -121,12 +126,32 @@ export class SendMessageChat extends SendMessageType {
 
   private async sendErrors(
     chatWebhookUrl,
-    integration,
+    integration: IntegrationEntity,
     message: MessageEntity,
     command: SendMessageCommand,
     notification: NotificationEntity
   ) {
     if (!chatWebhookUrl) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          providerId: integration.providerId,
+          transactionId: command.transactionId,
+          channel: ChannelTypeEnum.CHAT,
+          detail: `Subscriber does not have active chat channel Id`,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
