@@ -1,33 +1,63 @@
 import { MandrillProvider } from './mandrill.provider';
 
+const mockConfig = {
+  apiKey: 'API_KEY',
+  from: 'test@test.com',
+};
+
 test('should trigger mandrill correctly', async () => {
-  const provider = new MandrillProvider({
-    apiKey: 'API_KEY',
-    from: 'test@test.com',
-  });
+  const provider = new MandrillProvider(mockConfig);
   const spy = jest
-    .spyOn(provider, 'sendMessage')
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    .spyOn(provider['transporter'].messages, 'send')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return [{}] as any;
     });
-
-  await provider.sendMessage({
+  const mockNovuMessage = {
     to: 'test2@test.com',
     subject: 'test subject',
     html: '<div> Mail Content </div>',
     attachments: [
       { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
     ],
-  });
+  };
+
+  await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    to: 'test2@test.com',
-    html: '<div> Mail Content </div>',
-    subject: 'test subject',
-    attachments: [
-      { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
-    ],
+    message: {
+      from_email: mockConfig.from,
+      subject: mockNovuMessage.subject,
+      html: mockNovuMessage.html,
+      to: [
+        {
+          email: mockNovuMessage.to,
+          type: 'to',
+        },
+      ],
+      attachments: [
+        {
+          content: 'test',
+          type: 'text/plain',
+          name: 'test.txt',
+        },
+      ],
+    },
   });
+});
+
+test('should check provider integration correctly', async () => {
+  const provider = new MandrillProvider(mockConfig);
+  const spy = jest
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    .spyOn(provider['transporter'].users, 'ping')
+    .mockImplementation(async () => {
+      return 'PONG!';
+    });
+
+  const response = await provider.checkIntegration();
+  expect(spy).toHaveBeenCalled();
+  expect(response.success).toBe(true);
 });
