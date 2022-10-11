@@ -36,6 +36,7 @@ import { HU } from './languages/hu';
 import { BG } from './languages/bg';
 import { DA } from './languages/da';
 import { AS } from './languages/as';
+import { AZ } from './languages/az';
 import { SI } from './languages/si';
 import { NO } from './languages/no';
 import { PT } from './languages/pt';
@@ -45,6 +46,8 @@ import { TE } from './languages/te';
 import { LO } from './languages/lo';
 import { RO } from './languages/ro';
 import { VI } from './languages/vi';
+import { NL } from './languages/nl';
+import { UZ } from './languages/uz';
 import { TH } from './languages/th';
 import { HE } from './languages/he';
 import { KM } from './languages/km';
@@ -70,7 +73,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   gu: GU,
   ru: RU,
   es: ES,
-	id: ID,
+  id: ID,
   it: IT,
   ka: KA,
   ig: IG,
@@ -86,7 +89,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   or: OR,
   sa: SA,
   ur: UR,
-  ne: NE, 
+  ne: NE,
   pl: PL,
   cs: CS,
   pa: PA,
@@ -102,6 +105,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   bg: BG,
   da: DA,
   as: AS,
+  az: AZ,
   si: SI,
   no: NO,
   pt: PT,
@@ -109,6 +113,8 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   te: TE,
   lo: LO,
   vi: VI,
+  nl: NL,
+  uz: UZ,
   th: TH,
   he: HE,
   km: KM,
@@ -130,7 +136,7 @@ export type I18NLanguage =
   | 'ro'
   | 'fi'
   | 'hi'
-	| 'id'
+  | 'id'
   | 'it'
   | 'ka'
   | 'gu'
@@ -169,10 +175,14 @@ export type I18NLanguage =
   | 'pt'
   | 'tr'
   | 'as'
+  | 'az'
   | 'no'
   | 'te'
-  | 'lo'
+  | 'da'
   | 'vi'
+  | 'nl'
+  | 'uz'
+  | 'lo'
   | 'th'
   | 'he'
   | 'km';
