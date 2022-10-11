@@ -34,7 +34,7 @@ function Header() {
 
 ## Use your own backend and socket url
 
-By default, Novu's hosted services of api and socket are used. Should you want, you could override them and configure your own.
+By default, Novu's hosted services of API and socket are used. Should you want, you could override them and configure your own.
 
 ```tsx
 import {

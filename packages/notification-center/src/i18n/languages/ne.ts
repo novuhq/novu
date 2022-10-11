@@ -5,6 +5,7 @@ export const NE: ITranslationEntry = {
     notifications: 'सूचनाहरू',
     markAllAsRead: 'सबै पढेको रूपमा चिन्ह लगाउनुहोस्',
     poweredBy: 'द्वारा संचालित',
+    settings: 'सेटिङहरू',
   },
   lang: 'ne',
 };
