@@ -51,6 +51,7 @@ import { UZ } from './languages/uz';
 import { TH } from './languages/th';
 import { HE } from './languages/he';
 import { KM } from './languages/km';
+import { HY } from './languages/hy';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -118,6 +119,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   th: TH,
   he: HE,
   km: KM,
+  hy: HY,
 };
 
 /**
@@ -185,4 +187,5 @@ export type I18NLanguage =
   | 'lo'
   | 'th'
   | 'he'
-  | 'km';
+  | 'km'
+  | 'hy';
