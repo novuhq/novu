@@ -21,6 +21,10 @@ export abstract class BaseHandler implements IMailHandler {
     return await this.provider.sendMessage(mailData);
   }
 
+  public getProvider(): IEmailProvider {
+    return this.provider;
+  }
+
   async check() {
     const mailData: IEmailOptions = {
       html: '<div>checking integration</div>',

@@ -25,7 +25,7 @@ describe('test use of novus node package - Subscribers class', () => {
 
     expect(mockedAxios.put).toHaveBeenCalled();
     expect(mockedAxios.put).toHaveBeenCalledWith(
-      `/test-update-subscriber/subscribers`,
+      `/subscribers/test-update-subscriber`,
       {
         phone: '8989898',
       }

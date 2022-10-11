@@ -33,7 +33,7 @@ After creating the designated channel provider you can create your notification 
 
 This section will contain the metadata for your notification, things such as name, description and group.
 
-The **name** of the notifications will be converted to a slug and will be used as the trigger identifier used when sending the trigger from back-end.
+The **name** of the notifications will be converted to a slug and will be used as the trigger identifier which is used when sending the trigger from back-end.
 
 ### Channel specific content
 
@@ -49,7 +49,7 @@ You can specify custom variables using the [{{handlebars}}](https://handlebarsjs
 
 #### SMS
 
-Similiar to the the email, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
+Similar to the the email, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
 
 #### In-app
 
@@ -60,11 +60,11 @@ In the notification center preview you can type the content, you can select cont
 Custom variables using hbs syntax can be described to create the final message.
 In addition to the integration, any subscriber needs to set credentials in order to have proper authorization on the channel.
 
-The credentials is can be saved through @novu/node package.
+The credentials can be saved through @novu/node package.
 
 ## Trigger the notification
 
-After creating the template trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.
+After creating the template, trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.
 
 ```typescript
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
@@ -88,7 +88,7 @@ The `to` parameter contains the information about the subscriber of the notifica
 
 #### Pass the subscriber information in trigger (Quickest)
 
-You can pass the subscriber object containing the following keys as this paramter:
+You can pass the subscriber object containing the following keys as this parameter:
 
 ```typescript
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
@@ -108,7 +108,7 @@ The `subscriberId` is a custom identifier used when identifying your users withi
 
 Novu will create an upsert command and either create a subscriber with specified payload, or update the existing subscriber with passed information.
 
-**Note:** The api will perform a PATCH command, updating only the fields passed to it. So in order to reset a specific field you must explicitly pass `null` as the fields param.
+**Note:** The API will perform a PATCH command, updating only the fields passed to it. So in order to reset a specific field you must explicitly pass `null` as the fields param.
 
 #### Pass only the subscriberId (Recommended)
 
@@ -123,4 +123,4 @@ In this approach, you will only pass the subscriberId as part of the trigger, ho
 
 ### `payload` object
 
-Can pass any serializible JSON object to be used in the notification templates.
+It can pass any serializible JSON object to be used in the notification templates.

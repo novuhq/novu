@@ -1,6 +1,6 @@
 import { useEffect, useState, useReducer } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
 import { useMutation } from 'react-query';
 import { showNotification } from '@mantine/notifications';
@@ -118,7 +118,7 @@ export function ConnectIntegrationForm({
     }
   }, [provider]);
 
-  async function onCreatIntegration(credentials: ICredentialsDto) {
+  async function onCreateIntegration(credentials: ICredentialsDto) {
     try {
       if (checkIntegrationState.isShowAlert) {
         dispatch({
@@ -180,8 +180,8 @@ export function ConnectIntegrationForm({
   const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
 
   return (
-    <Form onSubmit={handleSubmit(onCreatIntegration)}>
-      <CloseButton onClick={onClose}>
+    <Form noValidate onSubmit={handleSubmit(onCreateIntegration)}>
+      <CloseButton data-test-id="connection-integration-form-close" type="button" onClick={onClose}>
         <Close />
       </CloseButton>
 
@@ -214,7 +214,9 @@ export function ConnectIntegrationForm({
                 <Switch checked={isActive} data-test-id="is_active_id" {...field} onChange={handlerSwitchChange} />
               )}
             />
-            <StyledText>{isActive ? 'Active' : 'Disabled'}</StyledText>
+            <StyledText data-test-id="connect-integration-form-active-text">
+              {isActive ? 'Active' : 'Disabled'}
+            </StyledText>
           </ActiveWrapper>
           {provider?.channel === ChannelTypeEnum.EMAIL && checkIntegrationState.isShowSwitch && (
             <CheckIntegrationWrapper>

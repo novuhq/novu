@@ -1,1 +1,1 @@
-export * from './encrypt-provider';
+export { decryptCredentials, encryptCredentials } from '@novu/application-generic';
