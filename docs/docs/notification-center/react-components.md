@@ -34,7 +34,7 @@ function Header() {
 
 ## Use your own backend and socket url
 
-By default, Novu's hosted services of api and socket are used. Should you want, you could override them and configure your own.
+By default, Novu's hosted services of API and socket are used. Should you want, you could override them and configure your own.
 
 ```tsx
 import {
@@ -172,6 +172,7 @@ The `i18n` prop can accept 2 different types of values
         <ul>
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
+          <li><code>az</code> (Azerbaijani)</li>
           <li><code>bg</code> (Bulgarian)</li>
           <li><code>bn</code> (Bengali)</li>
           <li><code>ca</code> (Catalan)</li>
