@@ -63,7 +63,10 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
     const response = await Notification.find(requestQuery)
       .populate('subscriber', 'firstName _id lastName email')
       .populate('template', 'name _id')
-      .populate('jobs')
+      .populate({
+        path: 'jobs',
+        populate: { path: 'executionDetails' },
+      })
       .skip(skip)
       .limit(limit)
       .sort('-createdAt');

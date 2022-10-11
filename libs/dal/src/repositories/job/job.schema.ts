@@ -99,6 +99,12 @@ const jobSchema = new Schema(
   schemaOptions
 );
 
+jobSchema.virtual('executionDetails', {
+  ref: 'ExecutionDetails',
+  localField: '_id',
+  foreignField: '_jobId',
+});
+
 interface IJobDocument extends JobEntity, Document {
   _id: never;
 }
