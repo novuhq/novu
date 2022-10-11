@@ -7,7 +7,7 @@ sidebar_position: 1
 Novu provides a notification activity feed that monitors every outgoing message associated with its relevant metadata.
 This can be used to monitor activity and discover potential issues with a specific provider or a channel type.
 
-![Activity Screen](https://user-images.githubusercontent.com/58129377/194726971-52f98e3b-acdd-411c-9d5d-ca28960b8288.png)
+![Activity Screen](/img/activity.png)
 
 
 ## Viewing a specific subscriber activity
