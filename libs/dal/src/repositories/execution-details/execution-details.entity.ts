@@ -1,21 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
-
-import { NotificationStepEntity } from '../notification-template';
-
-export enum ExecutionDetailsSourceEnum {
-  CREDENTIALS = 'Credentials',
-  INTERNAL = 'Internal',
-  PAYLOAD = 'Payload',
-  WEBHOOK = 'Webhook',
-}
-
-export enum ExecutionDetailsStatusEnum {
-  FAILED = 'Failed',
-  PENDING = 'Pending',
-  QUEUED = 'Queued',
-  READ_CONFIRMATION = 'ReadConfirmation',
-  SUCCESS = 'Success',
-}
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
 export class ExecutionDetailsEntity {
   _id?: string;

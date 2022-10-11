@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/shared';
 
 export class ExecutionDetailsResponseDto {
@@ -40,6 +40,7 @@ export class ExecutionDetailsResponseDto {
 
   @ApiProperty()
   detail: string;
+
   @ApiProperty({
     enum: ExecutionDetailsSourceEnum,
   })
