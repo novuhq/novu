@@ -1,0 +1,31 @@
+import { TwilioSmsProvider } from './twilio.provider';
+
+test('should trigger Twilio correctly', async () => {
+  const provider = new TwilioSmsProvider({
+    accountSid: 'AC<twilio-account-Sid>',
+    authToken: '<twilio-auth-Token>',
+    from: 'whatsapp:+112345',
+  });
+  const spy = jest
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    .spyOn(provider.twilioClient.messages, 'create')
+    .mockImplementation(async () => {
+      return {
+        dateCreated: new Date(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+    });
+
+  await provider.sendMessage({
+    to: 'whatsapp:+176543',
+    content: 'SMS Content',
+  });
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    from: 'whatsapp:+112345',
+    body: 'Whatsapp Message Content',
+    to: 'whatsapp:+176543',
+  });
+});
