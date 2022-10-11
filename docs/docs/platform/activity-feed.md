@@ -9,15 +9,15 @@ This can be used to monitor activity and discover potential issues with a specif
 
 [Activity Screen](/img/activity.png)
 
-## Viewing a specific subscriber activity
+## Viewing a specific subscriber's activity
 
-To use a subscriber activity feed you can filter the feed by using the subscriberId or email. This will show only the relevant data for this particular subscriber.
+To use a subscriber's activity feed you can filter the feed by using the subscriberId or email. This will show only the relevant data for this particular subscriber.
 
 You can hover over the status icon to get additional information in case there was an error during delivery.
 
 ## Filter by template or channel
 
-The activity feed allows you to filter messages based on the associated notification template or channel. This is helpful when you want to assess or debug a particular template and it's behaviour.
+The activity feed allows you to filter messages based on the associated notification template or channel. This is helpful when you want to assess or debug a particular template and its behaviour.
 
 ## Future plans for this page
 
