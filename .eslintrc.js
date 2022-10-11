@@ -9,7 +9,7 @@ module.exports = {
     'plugin:promise/recommended',
   ],
   ignorePatterns: ['.eslintrc.js', '*.json', 'jest.config.js'],
-  plugins: ['import', 'promise', '@typescript-eslint', 'prettier'],
+  plugins: ['import', 'promise', '@typescript-eslint', 'prettier', 'spellcheck'],
   parser: '@typescript-eslint/parser',
   settings: {
     'import/parsers': {
@@ -96,5 +96,30 @@ module.exports = {
         endOfLine: 'auto',
       },
     ],
+    "spellcheck/spell-checker": [
+      1,
+       {
+           "comments": false,
+           "strings": true,
+           "identifiers": true,
+           "templates": true,
+           "lang": "en_US",
+           "skipWords": [
+               "dict",
+               "aff",
+               "hunspellchecker",
+               "hunspell",
+               "utils"
+           ],
+           "skipIfMatch": [
+               "http://[^s]*",
+               "^[-\\w]+\/[-\\w\\.]+$"
+           ],
+           "skipWordIfMatch": [
+               "^foobar.*$"
+           ],
+           "minLength": 3
+        }
+    ]
   },
 };
