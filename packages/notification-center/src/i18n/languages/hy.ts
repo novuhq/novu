@@ -1,11 +1,11 @@
 import { ITranslationEntry } from '../lang';
 
-export const HM: ITranslationEntry = {
+export const HY: ITranslationEntry = {
   translations: {
     notifications: 'ծանուցումներ',
     markAllAsRead: 'նշել բոլորը որպես կարդացված',
     poweredBy: 'աջակցվում է',
     settings: 'կարգավորումներ',
   },
-  lang: 'hm',
+  lang: 'hy',
 };
