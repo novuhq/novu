@@ -112,7 +112,6 @@ export class GCSStorageService implements StorageService {
 
     return (await fileObject.save(file, {
       contentType,
-      public: true,
       metadata: {
         cacheControl: 'public, max-age=31536000',
       },
