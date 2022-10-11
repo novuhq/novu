@@ -27,14 +27,14 @@ export class NotificationTemplates
 
   /**
    * @param {string} name - Name of the notification-template to create
-   * @param {string} notificationGroupId - Id of the group that it belongs to
+   * @param {string} notificationGroupId - Id of the group that the notification-template belongs
    * @param {INotificationTemplatePayload} data - All the additional parameters to create a notification-template
    * @returns {Promise<AxiosResponse>} - Creates the notification-template with the given parameters
    */
   async create(
     name: string,
     notificationGroupId: string,
-    data: INotificationTemplatePayload
+    data?: INotificationTemplatePayload
   ): Promise<AxiosResponse> {
     return await this.http.post(`/notification-templates`, {
       name,
@@ -52,7 +52,7 @@ export class NotificationTemplates
   async update(
     templateId: string,
     name: string,
-    data: INotificationTemplatePayload
+    data?: INotificationTemplatePayload
   ): Promise<AxiosResponse> {
     return await this.http.put(`notification-templates/${templateId}`, {
       name,
