@@ -40,7 +40,7 @@ export class GetNotificationsFeed {
 
     if (feed.length) {
       this.analyticsService.track('Fetch Feed - [Notification Center]', command.organizationId, {
-        _subscriber: feed[0]._subscriberId,
+        _subscriber: feed[0]?._subscriberId,
         _organization: command.organizationId,
         feedSize: feed.length,
       });
