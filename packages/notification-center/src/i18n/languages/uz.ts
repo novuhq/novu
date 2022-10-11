@@ -2,10 +2,10 @@ import { ITranslationEntry } from '../lang';
 
 export const UZ: ITranslationEntry = {
   translations: {
-    notifications: 'bildirishnomalar',
+    notifications: 'Bildirishnomalar',
     markAllAsRead: 'Hammasini o'qing deb belgilang',
     poweredBy: 'Tomonidan qo'llab-quvvatlanadi',
-    settings: 'sozlamalar',
+    settings: 'Sozlamalar',
   },
   lang: 'uz',
 };
