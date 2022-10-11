@@ -1,4 +1,4 @@
-# Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
 # node-waf configuration
