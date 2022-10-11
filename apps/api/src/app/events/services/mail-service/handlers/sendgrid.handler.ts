@@ -8,7 +8,11 @@ export class SendgridHandler extends BaseHandler {
   }
 
   buildProvider(credentials, from?: string) {
-    const config: { apiKey: string; from: string } = { apiKey: credentials.apiKey, from };
+    const config: { apiKey: string; from: string; senderName: string } = {
+      apiKey: credentials.apiKey,
+      from,
+      senderName: credentials.senderName,
+    };
 
     this.provider = new SendgridEmailProvider(config);
   }

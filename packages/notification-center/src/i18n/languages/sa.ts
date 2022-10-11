@@ -2,9 +2,9 @@ import { ITranslationEntry } from '../lang';
 
 export const SA: ITranslationEntry = {
   translations: {
-    notifications: 'विज्ञप्तयः',
+    notifications: 'अधिसूचनाः',
     markAllAsRead: 'सर्वं पठितम् इति सूचनीयम्',
-    poweredBy: 'नियन्त्रणकृत्',
+    poweredBy: 'द्वारा संचालितः',
     settings: 'संस्थापनम्',
   },
   lang: 'sa',
