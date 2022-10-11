@@ -40,7 +40,7 @@ To learn a detailed guide on running the project locally, visit [https://docs.no
 
 ## Missing a Feature?
 
-If a feature is missing, you can _request_ a new one by [submitting an issue](#submitting-an-issue) to our GitHub Repository.
+If a feature is missing, you can directly _request_ a new one [here](https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+). You also can do the same by choosing "🚀 Feature" when raising a [New Issue](https://github.com/novuhq/novu/issues/new/choose) on our GitHub Repository.
 If you would like to _implement_ it, an issue with your proposal must be submitted first, to be sure that we can use it. Please consider the guidelines given below.
 
 ## Coding guidelines
@@ -52,7 +52,7 @@ To ensure consistency throughout the source code, please keep these rules in min
 
 ## Need help? Questions and suggestions
 
-Questions, suggestions and thoughts are most welcome. Feel free to open a [Github Discussion](https://github.com/novuhq/novu/discussions). We can also be reached in our [Discord Server](https://discord.gg/novu).
+Questions, suggestions and thoughts are most welcome. Feel free to open a [Github Discussion](https://github.com/novuhq/novu/discussions). We can also be reached in our [Discord Server](https://discord.novu.co).
 
 ## Ways to contribute
 

@@ -188,3 +188,17 @@ export class MessageResponseDto {
   })
   overrides: Record<string, unknown>;
 }
+
+export class MessagesResponseDto {
+  @ApiProperty()
+  totalCount: number;
+
+  @ApiProperty()
+  data: MessageResponseDto[];
+
+  @ApiProperty()
+  pageSize: number;
+
+  @ApiProperty()
+  page: number;
+}
