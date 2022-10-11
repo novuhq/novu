@@ -47,6 +47,7 @@ import { LO } from './languages/lo';
 import { RO } from './languages/ro';
 import { VI } from './languages/vi';
 import { NL } from './languages/nl';
+import { UZ } from './languages/uz';
 import { TH } from './languages/th';
 import { HE } from './languages/he';
 import { KM } from './languages/km';
@@ -113,6 +114,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   lo: LO,
   vi: VI,
   nl: NL,
+  uz: UZ,
   th: TH,
   he: HE,
   km: KM,
@@ -179,8 +181,8 @@ export type I18NLanguage =
   | 'da'
   | 'vi'
   | 'nl'
+  | 'uz'
   | 'lo'
-  | 'vi'
   | 'th'
   | 'he'
   | 'km';
