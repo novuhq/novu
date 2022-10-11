@@ -84,7 +84,7 @@ export class SendinblueEmailProvider implements IEmailProvider {
 
     return {
       status: status,
-      date: body.date,
+      date: new Date(body.date).toISOString(),
       externalId: body.id,
       row: body,
     };
@@ -92,36 +92,25 @@ export class SendinblueEmailProvider implements IEmailProvider {
 
   private getStatus(event: string): EmailEventStatusEnum | undefined {
     switch (event) {
-      case 'sent':
-        return EmailEventStatusEnum.SENT;
+      case 'opened':
+      case 'uniqueOpened':
+      case 'proxy_open':
+        return EmailEventStatusEnum.OPENED;
       case 'request':
-        return EmailEventStatusEnum.REQUEST;
       case 'delivered':
+      case 'complaint':
         return EmailEventStatusEnum.DELIVERED;
       case 'hardBounce':
-        return EmailEventStatusEnum.HARD_BOUNCE;
       case 'softBounce':
-        return EmailEventStatusEnum.SOFT_BOUNCE;
       case 'blocked':
-        return EmailEventStatusEnum.BLOCKED;
-      case 'spam':
-        return EmailEventStatusEnum.SPAM;
-      case 'invalid':
-        return EmailEventStatusEnum.INVALID;
-      case 'deferred':
-        return EmailEventStatusEnum.DEFERRED;
+      case 'unsubscribed':
+        return EmailEventStatusEnum.BOUNCED;
       case 'click':
         return EmailEventStatusEnum.CLICKED;
-      case 'opened':
-        return EmailEventStatusEnum.OPENED;
-      case 'uniqueOpened':
-        return EmailEventStatusEnum.UNIQUE_OPENED;
-      case 'unsubscribed':
-        return EmailEventStatusEnum.UNSUBSCRIBED;
-      case 'listAddition':
-        return EmailEventStatusEnum.LIST_ADDITION;
-      case 'inboundEmailProcessed':
-        return EmailEventStatusEnum.INBOUND_EMAIL_PROCESSED;
+      case 'invalid_email':
+      case 'error':
+        return EmailEventStatusEnum.DROPPED;
+      // case 'deferred':
     }
   }
 
