@@ -50,6 +50,7 @@ describe('test use of novus node package - NotificationTemplates class', () => {
       {
         tags: ['mb', 'mickey'],
         description: 'new working package',
+        steps: [],
       }
     );
 
@@ -60,6 +61,7 @@ describe('test use of novus node package - NotificationTemplates class', () => {
         name: 'exactly like suggested',
         tags: ['mb', 'mickey'],
         description: 'new working package',
+        steps: [],
       }
     );
   });
