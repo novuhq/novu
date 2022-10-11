@@ -190,6 +190,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>hi</code> (Hindi)</li>
           <li><code>hr</code> (Croatian)</li>
           <li><code>hu</code> (Hungarian)</li>
+          <li><code>hy</code> (Armenian)</li>
           <li><code>id</code> (Indonesian)</li>
           <li><code>ig</code> (Igbo)</li>
           <li><code>it</code> (Italian)</li>
