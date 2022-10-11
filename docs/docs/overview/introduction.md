@@ -20,6 +20,6 @@ Novu provides a single API to manage all your customer communication. Do you nee
 
 ## Community Driven
 
-When we just started, we felt the frustration of reinventing the wheel of notification infrastructure is a unique problem that most developers have not experienced. After a couple of conversations with fellow engineers, we decided to open-source the initial seed of Novu. Oh boy, how wrong we were. Thousands of developers from around the world reached out to tell us their stories of building such systems in-house.
+When we just started, we felt the frustration of reinventing the wheel of notification infrastructure is a unique problem that not a lot of developers have experienced. After a couple of conversations with fellow engineers, we decided to open-source the initial seed of Novu. Oh boy, how wrong we were. Thousands of developers from around the world reached out to tell us their stories of building such systems in-house.
 
 Building Novu is not an act of an individual, it’s a collaborative work of many. Join us in building the future of notification experiences.
