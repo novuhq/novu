@@ -64,13 +64,21 @@ export class MandrillProvider implements IEmailProvider {
     };
   }
 
-  async checkIntegration(
-    options: IEmailOptions
-  ): Promise<ICheckIntegrationResponse> {
-    return {
-      success: true,
-      message: 'Integrated successfully!',
-      code: CheckIntegrationResponseEnum.SUCCESS,
-    };
+  async checkIntegration(): Promise<ICheckIntegrationResponse> {
+    try {
+      await this.transporter.users.ping();
+
+      return {
+        success: true,
+        message: 'Integrated successfully!',
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error?.message,
+        code: CheckIntegrationResponseEnum.FAILED,
+      };
+    }
   }
 }

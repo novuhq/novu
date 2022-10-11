@@ -85,5 +85,19 @@ test('should parse postmark webhook', () => {
     attempts: 1,
     response: '',
     row: mockWebHook,
-  });
+});
+
+test('should check provider integration correctly', async () => {
+  const provider = new PostmarkEmailProvider(mockConfig);
+  const spy = jest
+    // eslint-disable-next-line @typescript-eslint/dot-notation
+    .spyOn(provider['client'], 'sendEmail')
+    .mockImplementation(async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return {} as any;
+    });
+
+  const response = await provider.checkIntegration(mockNovuMessage);
+  expect(spy).toHaveBeenCalled();
+  expect(response.success).toBe(true);
 });
