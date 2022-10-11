@@ -1,6 +1,13 @@
 
 # Kubernetes Deployment Files
 
+## Prerequisites
+
+To deploy these files, kustomize is required. You can also use a tool such as Argo CD which builds and deploys the files for you.
+
+- [Kustomize](https://kustomize.io/)
+- [Argo CD](https://argo-cd.readthedocs.io/)
+
 ## Build
 
 How to build:
