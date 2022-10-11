@@ -20,7 +20,7 @@ namespace: novu
 
 nameSuffix: -dev
 
-namePrefix: -novu-
+namePrefix: novu-
 
 commonLabels:
   owner: novu
