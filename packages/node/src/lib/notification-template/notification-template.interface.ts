@@ -3,22 +3,16 @@ import {
   IPreferenceChannels,
 } from 'libs/shared/dist';
 
-import { AxiosPromise } from '.pnpm/axios@0.26.1/node_modules/axios';
-
 export interface INotificationTemplates {
   create(
     name: string,
     notificationGroupId: string,
     data: INotificationTemplatePayload
-  ): AxiosPromise;
-  update(
-    templateId: string,
-    name: string,
-    data: INotificationTemplatePayload
-  ): AxiosPromise;
-  delete(templateId: string): AxiosPromise;
-  getOne(templateId: string): AxiosPromise;
-  updateStatus(templateId: string, active: boolean): AxiosPromise;
+  );
+  update(templateId: string, name: string, data: INotificationTemplatePayload);
+  delete(templateId: string);
+  getOne(templateId: string);
+  updateStatus(templateId: string, active: boolean);
 }
 
 export interface INotificationTemplatePayload {
