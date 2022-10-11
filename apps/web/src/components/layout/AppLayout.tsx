@@ -18,7 +18,13 @@ export function AppLayout() {
           header={<HeaderNav />}
           styles={(theme) => ({
             root: { minHeight: '100vh' },
-            body: { height: 'calc(100vh - 65px)' },
+            body: {
+              height: 'calc(100vh - 65px)',
+              '@media (max-width: 768px)': {
+                flexDirection: 'column',
+                height: 'auto',
+              },
+            },
             main: { backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight, overflow: 'auto' },
           })}
         >
