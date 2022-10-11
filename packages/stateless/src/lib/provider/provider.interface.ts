@@ -71,8 +71,18 @@ export enum EmailEventStatusEnum {
   BOUNCED = 'bounced',
   DROPPED = 'dropped',
   CLICKED = 'clicked',
-  SPAM_COMPLAINED = 'spam complained',
-  SUBSCRIPTION_CHANGED = 'subscription changed',
+  SENT = 'sent',
+  REQUEST = 'request',
+  HARD_BOUNCE = 'hardBounce',
+  SOFT_BOUNCE = 'softBounce',
+  BLOCKED = 'blocked',
+  SPAM = 'spam',
+  INVALID = 'invalid',
+  DEFERRED = 'deferred',
+  UNIQUE_OPENED = 'uniqueOpened',
+  UNSUBSCRIBED = 'unsubscribed',
+  LIST_ADDITION = 'listAddition',
+  INBOUND_EMAIL_PROCESSED = 'inboundEmailProcessed',
 }
 
 export enum SmsEventStatusEnum {
