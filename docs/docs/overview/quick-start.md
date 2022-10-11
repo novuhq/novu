@@ -58,7 +58,7 @@ In the notification center preview you can type the content of the notification,
 #### Chat
 
 Custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
-In addition to the integration, any subscriber needs to set credentials in order to have proper authorization on the channel.
+In addition to the integration, any subscriber needs to set credentials to have proper authorization on the channel.
 
 The credentials can be saved through our @novu/node package.
 
