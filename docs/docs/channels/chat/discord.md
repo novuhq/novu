@@ -28,8 +28,8 @@ await novu.subscribers.setCredentials('SUBSCRIBER_ID', ChatProviderIdEnum.Discor
 ```
 
 - `subscriberId` is a custom identifier used when identifying your users within the Novu platform.
-- `providerId` is a unique provider identifier, we recommend using our ChatProviderIdEnum to specify the provider.
-- The third parameter is the credentials object, in this case, we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
+- `providerId` is a unique provider identifier. We recommend using our ChatProviderIdEnum to specify the provider.
+- The third parameter is the credentials object. In this case, we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
 
 <!-- markdownlint-disable MD029 -->
 
