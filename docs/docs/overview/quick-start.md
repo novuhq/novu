@@ -58,7 +58,7 @@ In the notification center preview you can type the content, you can select cont
 #### Chat
 
 Custom variables using hbs syntax can be described to create the final message.
-In addition to the integration, any subscriber needs to set credentials in order to have proper authorization on the channel.
+In addition to the integration, any subscriber needs to set credentials to have proper authorization on the channel.
 
 The credentials can be saved through @novu/node package.
 
@@ -106,7 +106,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 
 The `subscriberId` is a custom identifier used when identifying your users within the Novu platform. We suggest using your internal DB identifier for this field.
 
-Novu will create an upsert command and either create a subscriber with specified payload, or update the existing subscriber with passed information.
+Novu will create an upsert command and either create a subscriber with a specified payload or update the existing subscriber with passed information.
 
 **Note:** The API will perform a PATCH command, updating only the fields passed to it. So in order to reset a specific field you must explicitly pass `null` as the fields param.
 
