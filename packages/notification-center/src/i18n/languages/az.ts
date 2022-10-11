@@ -2,10 +2,10 @@ import { ITranslationEntry } from '../lang';
 
 export const AZ: ITranslationEntry = {
   translations: {
-    notifications: 'bildirişlər',
+    notifications: 'Bildirişlər',
     markAllAsRead: 'Hamısını oxunmuş olaraq işarələ',
-    poweredBy: 'tərəfindən idarə olunur',
-    settings: 'parametrlər',
+    poweredBy: 'tərəfindən təchiz edilmişdir',
+    settings: 'Qəbulu',
   },
   lang: 'az',
 };
