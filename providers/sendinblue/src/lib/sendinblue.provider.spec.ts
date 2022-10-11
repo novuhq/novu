@@ -40,7 +40,7 @@ test('should trigger sendinblue library correctly', async () => {
       return {} as any;
     });
 
-  const response = await provider.sendMessage(mockNovuMessage);
+  await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toBeCalled();
   expect(spy).toBeCalledWith({
