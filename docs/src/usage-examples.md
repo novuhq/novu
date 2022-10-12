@@ -124,7 +124,7 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Porttitor enim, tellus 
 
 ## Callout component
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fermentum ridiculus aliquam, cras lectus egestas ac. Fermentum laoreet vulputate egestas mattis neque eget. Lectus lorem ac blandit lacus scelerisque eget. Risus ipsum urna suspendisse eros at. Varius sem sit sagittis mauris. Hendrerit accumsan varius tincidunt fermentum. Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fermentum ridiculus aliquam, cras lectus egestas ac. Fermentum laoreet vulputate egestas mattis neque eget. Lectus lorem ac blandit lacus scelerisque eget. Risus ipsum urna suspendisse eros at. Various sem sit sagittis mauris. Hendrerit accumsan various tincidunt fermentum. Vulputate mauris elementum enim justo, dignissim tristique sed. Erat in et dui tellus ultricies feugiat ipsum. Aliquam pellentesque lorem id quis sed et vestibulum nibh faucibus. Aliquet amet urna, platea malesuada sed adipiscing auctor. Et ac parturient lobortis hendrerit porta condimentum felis.
 
 :::caution  Warning
 
