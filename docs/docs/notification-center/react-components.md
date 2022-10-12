@@ -34,7 +34,7 @@ function Header() {
 
 ## Use your own backend and socket url
 
-By default, Novu's hosted services of api and socket are used. Should you want, you could override them and configure your own.
+By default, Novu's hosted services of API and socket are used. Should you want, you could override them and configure your own.
 
 ```tsx
 import {
@@ -172,6 +172,7 @@ The `i18n` prop can accept 2 different types of values
         <ul>
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
+          <li><code>az</code> (Azerbaijani)</li>
           <li><code>bg</code> (Bulgarian)</li>
           <li><code>bn</code> (Bengali)</li>
           <li><code>ca</code> (Catalan)</li>
@@ -194,13 +195,16 @@ The `i18n` prop can accept 2 different types of values
           <li><code>it</code> (Italian)</li>
           <li><code>ja</code> (Japanese)</li>
           <li><code>ka</code> (Kannada)</li>
+          <li><code>kk</code> (Kazakh)</li>
           <li><code>km</code> (Khmer)</li>
           <li><code>ko</code> (Korean)</li>
           <li><code>ku</code> (Kurdish)</li>
           <li><code>lo</code> (Lao)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>mr</code> (Marathi)</li>
+          <li><code>ms</code> (Malay)</li>
           <li><code>ne</code> (Nepali)</li>
+          <li><code>nl</code> (Dutch)</li>
           <li><code>no</code> (Norwegian)</li>
           <li><code>or</code> (Odia)</li>
           <li><code>pa</code> (Punjabi)</li>
@@ -218,8 +222,10 @@ The `i18n` prop can accept 2 different types of values
           <li><code>tr</code> (Turkish)</li>
           <li><code>uk</code> (Ukrainian)</li>
           <li><code>ur</code> (Urdu)</li>
+          <li><code>uz</code> (Uzbek)</li>
           <li><code>vi</code> (Vietnamese)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>tl</code> (Tagalog)</li>
         </ul>
       </div>
   </details>

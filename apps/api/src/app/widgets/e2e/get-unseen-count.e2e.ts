@@ -65,14 +65,11 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
       }
     );
 
-    const seenFeed = await getFeedCount({ seen: true });
-    expect(seenFeed.data.count).to.equal(1);
-
-    const unseenFeed = await getFeedCount({ seen: false });
+    const unseenFeed = await getUnseenFeedCount({ seen: false });
     expect(unseenFeed.data.count).to.equal(2);
   });
 
-  async function getFeedCount(query = {}) {
+  async function getUnseenFeedCount(query = {}) {
     const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/unseen`, {
       params: {
         ...query,
