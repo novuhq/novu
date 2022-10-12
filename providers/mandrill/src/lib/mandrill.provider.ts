@@ -13,15 +13,15 @@ import mailchimp from '@mailchimp/mailchimp_transactional';
 import { MandrillInterface } from './mandrill.interface';
 
 export enum MandrillStatusEnum {
-  OPEN = 'opened',
-  SEND = 'sent',
-  DEFERRAL = 'deferred',
-  HARD_BOUNCE = 'hard_bounced',
-  SOFT_BOUNCE = 'soft_bounced',
-  CLICK = 'clicked',
+  OPENED = 'open',
+  SENT = 'send',
+  DEFERRED = 'deferral',
+  HARD_BOUNCED = 'hard_bounce',
+  SOFT_BOUNCED = 'soft_bounce',
+  CLICKED = 'click',
   SPAM = 'spam',
-  UNSUB = 'unsubscribed',
-  REJECT = 'rejected',
+  UNSUBSCRIBED = 'unsub',
+  REJECTED = 'reject',
 }
   
 export class MandrillProvider implements IEmailProvider {
@@ -132,26 +132,26 @@ export class MandrillProvider implements IEmailProvider {
     };
   }
 
-  private getStatus(event: string): MandrillStatusEnum | undefined {
+  private getStatus(event: string): EmailEventStatusEnum | undefined {
     switch (event) {
-      case 'open':
-        return MandrillStatusEnum.OPEN;
-      case 'hard_bounce':
-        return MandrillStatusEnum.HARD_BOUNCE;
-      case 'click':
-        return MandrillStatusEnum.CLICK;
-      case 'send':
-        return MandrillStatusEnum.SEND;
-      case 'spam':
-        return MandrillStatusEnum.SPAM;
-      case 'reject':
-        return MandrillStatusEnum.REJECT;
-      case 'soft_bounce':
-        return MandrillStatusEnum.SOFT_BOUNCE;
-      case 'unsub':
-        return MandrillStatusEnum.UNSUB;
-      case 'deferral':
-        return MandrillStatusEnum.DEFERRAL;
+      case MandrillStatusEnum.OPENED:
+        return EmailEventStatusEnum.OPENED;
+      case MandrillStatusEnum.HARD_BOUNCED:
+        return EmailEventStatusEnum.BOUNCED;
+      case MandrillStatusEnum.CLICKED:
+        return EmailEventStatusEnum.CLICKED;
+      case MandrillStatusEnum.SENT:
+        return EmailEventStatusEnum.SENT;
+      case MandrillStatusEnum.SPAM:
+        return EmailEventStatusEnum.SPAM_COMPLAINED;
+      case MandrillStatusEnum.REJECTED:
+        return EmailEventStatusEnum.REJECTED;
+      case MandrillStatusEnum.SOFT_BOUNCED:
+        return EmailEventStatusEnum.BOUNCED;
+      case MandrillStatusEnum.UNSUBSCRIBED:
+        return EmailEventStatusEnum.SUBSCRIPTION_CHANGED;
+      case MandrillStatusEnum.DEFERRED:
+        return EmailEventStatusEnum.DEFERRED;
     }
   }
 }
