@@ -77,5 +77,6 @@ export const smsProviders: IProviderConfig[] = [
     credentials: whatsappConfig,
     docReference: 'https://developers.facebook.com/docs/whatsapp/',
     logoFileName: { light: 'whatsapp.svg', dark: 'whatsapp.svg' },
+    betaVersion: true,
   },
 ];
