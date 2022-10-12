@@ -1,7 +1,7 @@
 # iFrame Embed
 
 If you are using an (currently) unsupported client framework, you can use our embed script. This will generate the notification center inside an iframe.
-You can find the embed code in the `Settings` page, within the Admin Panel. It will look similar to this:
+You can find the embedded code in the `Settings` page, within the Admin Panel. It will look similar to this:
 
 <!-- prettier-ignore-start -->
 ```html
