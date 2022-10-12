@@ -8,6 +8,7 @@ import {
   TermiiSmsHandler,
   PlivoHandler,
   GupshupSmsHandler,
+  FiretextSmsHandler,
 } from './handlers';
 import { WhatsappHandler } from './handlers/whatsapp.handler';
 
@@ -21,6 +22,7 @@ export class SmsFactory implements ISmsFactory {
     new PlivoHandler(),
     new GupshupSmsHandler(),
     new WhatsappHandler(),
+    new FiretextSmsHandler(),
   ];
 
   getHandler(integration: IntegrationEntity): ISmsHandler {

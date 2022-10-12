@@ -403,3 +403,13 @@ export const gupshupConfig: IConfigCredentials[] = [
     required: true,
   },
 ];
+
+export const firetextConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

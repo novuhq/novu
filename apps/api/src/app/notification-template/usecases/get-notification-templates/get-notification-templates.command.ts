@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class GetNotificationTemplatesCommand extends EnvironmentWithUserCommand {

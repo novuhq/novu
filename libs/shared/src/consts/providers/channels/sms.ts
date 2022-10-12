@@ -9,6 +9,7 @@ import {
   telnyxConfig,
   twilioConfig,
   whatsappConfig,
+  firetextConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -78,5 +79,13 @@ export const smsProviders: IProviderConfig[] = [
     docReference: 'https://developers.facebook.com/docs/whatsapp/',
     logoFileName: { light: 'whatsapp.svg', dark: 'whatsapp.svg' },
     betaVersion: true,
+  },
+  {
+    id: SmsProviderIdEnum.Firetext,
+    displayName: 'Firetext',
+    channel: ChannelTypeEnum.SMS,
+    credentials: firetextConfig,
+    docReference: 'https://www.firetext.co.uk/docs',
+    logoFileName: { light: 'firetext.svg', dark: 'firetext.svg' },
   },
 ];
