@@ -2,7 +2,7 @@
 
 Firebase Cloud Messages is a free notification delivery service provided by Google Firebase.
 
-To enable the FCM integration, you need to get your service account key from the Firebase dashboard. You can acquire the account key JSON by selecting your project, clicking the gear icon in top of the sidebar, going to service account tab and download the JSON.
+To enable the FCM integration, you need to get your service account key from the Firebase dashboard. You can acquire the account key JSON by selecting your project, clicking the gear icon on the top of the sidebar, going to the service account tab and downloading the JSON.
 
 After that, paste the entire JSON file in the Service Account field.
 
@@ -31,7 +31,7 @@ novu.trigger('event-name', {
   </TabItem>
 </Tabs>
 
-Before triggering the notification to a subscriber(user) with push as a step in workflow, make sure you have added subscriber(user) device token as follows:-
+Before triggering the notification to a subscriber(user) with push as a step in the workflow, make sure you have added the subscriber's(user's) device token as follows:-
 
 ```typescript
 import { Novu, PushProviderIdEnum } from '@novu/node';
