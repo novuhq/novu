@@ -45,7 +45,7 @@ The ultimate service for managing multi-channel notifications with a single API.
 
 ## ⭐️ Why
 
-Building a notification system is hard , at first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
+Building a notification system is hard, at first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
@@ -54,7 +54,7 @@ Building a notification system is hard , at first, it seems like just sending an
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
-- 🛡 Debug and analyze multi channel messages in a single dashboard
+- 🛡 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
@@ -76,7 +76,7 @@ Building a notification system is hard , at first, it seems like just sending an
 
 ## 🚀 Getting Started
 
-We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
+We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? Here is how:
 
 ```
 npx novu init
@@ -178,12 +178,12 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any error or facing problems while working with the project, then join our 
+We are more than happy to help you. If you are getting any errors or facing problems while working with the project, then join our 
 [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
 ## 📋 Read our Code of Conduct 
 
-Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) throroughly to understand our standards (that you are required to adhere to) regarding how to engage in a community.
+Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) throroughly to understand our standards (that you are required to adhere to) regarding how to engage in the community.
 
 ## 🔗 Links
 
