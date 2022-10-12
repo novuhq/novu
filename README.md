@@ -76,7 +76,7 @@ Building a notification system is hard, at first, it seems like just sending an 
 
 ## 🚀 Getting Started
 
-We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? Here's how:
+We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? Here is how:
 
 ```
 npx novu init
