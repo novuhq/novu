@@ -67,6 +67,9 @@ export interface ISendMessageSuccessResponse {
 
 export enum EmailEventStatusEnum {
   OPENED = 'opened',
+  REJECTED = 'rejected',
+  SENT = 'sent',
+  DEFERRED = 'deferred',
   DELIVERED = 'delivered',
   BOUNCED = 'bounced',
   DROPPED = 'dropped',
