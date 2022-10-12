@@ -186,6 +186,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
+          <li><code>ga</code> (Irish)</li>
           <li><code>gl</code> (Galician)</li>
           <li><code>gu</code> (Gujarati)</li>
           <li><code>he</code> (Hebrew)</li>
@@ -229,7 +230,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>vi</code> (Vietnamese)</li>
           <li><code>zu</code> (Zulu)</li>
           <li><code>zh</code> (Chinese)</li>
-          <li><code>ga</code> (Irish)</li>
+
         </ul>
       </div>
   </details>
