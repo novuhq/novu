@@ -182,6 +182,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>el</code> (Greek)</li>
           <li><code>en</code> (English)</li>
           <li><code>es</code> (Spanish)</li>
+          <li><code>eu</code> (Basque)</li>
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
