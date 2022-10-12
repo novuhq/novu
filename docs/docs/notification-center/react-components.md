@@ -182,6 +182,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>el</code> (Greek)</li>
           <li><code>en</code> (English)</li>
           <li><code>es</code> (Spanish)</li>
+          <li><code>eu</code> (Basque)</li>
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
@@ -195,13 +196,16 @@ The `i18n` prop can accept 2 different types of values
           <li><code>it</code> (Italian)</li>
           <li><code>ja</code> (Japanese)</li>
           <li><code>ka</code> (Kannada)</li>
+          <li><code>kk</code> (Kazakh)</li>
           <li><code>km</code> (Khmer)</li>
           <li><code>ko</code> (Korean)</li>
           <li><code>ku</code> (Kurdish)</li>
           <li><code>lo</code> (Lao)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>mr</code> (Marathi)</li>
+          <li><code>ms</code> (Malay)</li>
           <li><code>ne</code> (Nepali)</li>
+          <li><code>nl</code> (Dutch)</li>
           <li><code>no</code> (Norwegian)</li>
           <li><code>or</code> (Odia)</li>
           <li><code>pa</code> (Punjabi)</li>
@@ -223,6 +227,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>vi</code> (Vietnamese)</li>
           <li><code>zu</code> (Zulu)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>tl</code> (Tagalog)</li>
         </ul>
       </div>
   </details>

@@ -21,6 +21,9 @@ export default function AuthContainer({
         '@media (max-width: 1500px)': {
           marginRight: '10%',
         },
+        '@media (max-width: 1100px)': {
+          marginRight: 'auto',
+        },
       }}
     >
       <div style={{ marginTop: '30px' }}>
