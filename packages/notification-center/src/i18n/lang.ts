@@ -10,6 +10,7 @@ import { MS } from './languages/ms';
 import { RU } from './languages/ru';
 import { UK } from './languages/uk';
 import { ES } from './languages/es';
+import { GL } from './languages/gl';
 import { FA } from './languages/fa';
 import { AR } from './languages/ar';
 import { GU } from './languages/gu';
@@ -78,6 +79,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   gu: GU,
   ru: RU,
   es: ES,
+  gl: GL,
   id: ID,
   it: IT,
   ka: KA,
@@ -155,6 +157,7 @@ export type I18NLanguage =
   | 'ru'
   | 'uk'
   | 'es'
+  | 'gl'
   | 'ar'
   | 'fa'
   | 'fr'
