@@ -100,6 +100,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
 - [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 - [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
+- [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
 
 ### 📞 SMS
 
@@ -111,12 +112,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 - [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
+- [Firetext](https://github.com/novuhq/novu/tree/main/providers/firetext)
 
 ### 📱 Push
 
 - [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+- [APNs](https://github.com/novuhq/novu/tree/main/providers/apns)
 
 ### 👇 Chat
 
