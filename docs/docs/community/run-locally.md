@@ -88,7 +88,7 @@ After making some changes, you can run the tests for the different package using
 
 ### API
 
-To run the api tests you can simply run the following command:
+To run the API tests you can simply run the following command:
 
 ```shell
 npm run start:e2e:api

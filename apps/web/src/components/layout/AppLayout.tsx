@@ -17,7 +17,7 @@ export function AppLayout() {
           navbar={<SideNav />}
           header={<HeaderNav />}
           styles={(theme) => ({
-            root: { minHeight: '100vh' },
+            root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
             body: { height: 'calc(100vh - 65px)' },
             main: { backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight, overflow: 'auto' },
           })}
