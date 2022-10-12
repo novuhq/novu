@@ -224,6 +224,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>uz</code> (Uzbek)</li>
           <li><code>vi</code> (Vietnamese)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>tl</code> (Tagalog)</li>
         </ul>
       </div>
   </details>
