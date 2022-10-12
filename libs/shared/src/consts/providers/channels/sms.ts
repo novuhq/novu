@@ -8,6 +8,7 @@ import {
   snsConfig,
   telnyxConfig,
   twilioConfig,
+  firetextConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -68,5 +69,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: gupshupConfig,
     docReference: 'https://docs.gupshup.io/docs/send-single-message',
     logoFileName: { light: 'gupshup.png', dark: 'gupshup.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Firetext,
+    displayName: 'Firetext',
+    channel: ChannelTypeEnum.SMS,
+    credentials: firetextConfig,
+    docReference: 'https://www.firetext.co.uk/docs',
+    logoFileName: { light: 'firetext.svg', dark: 'firetext.svg' },
   },
 ];

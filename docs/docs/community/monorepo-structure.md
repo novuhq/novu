@@ -88,7 +88,7 @@ These are the API wrappers created by the community to wrap communication provid
 
 Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
-#### 💌 Email
+### 💌 Email
 
 - [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
 - [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
@@ -100,8 +100,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 - [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
 
-
-#### 📞 SMS
+### 📞 SMS
 
 - [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
 - [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
@@ -111,24 +110,19 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 
-
-#### 📱 Push 
-
+### 📱 Push
 
 - [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 
-#### 👇 Chat 
+### 👇 Chat
 
 - [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 
-
-#### 📱 In-App
+### 📱 In-App
 
 - [Novu](https://docs.novu.co/notification-center/getting-started)
 
-
-#### Other (Coming Soon...)
+### Other (Coming Soon...)
 
 - PagerDuty
-
