@@ -15,6 +15,7 @@ import {
   IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  InAppProviderIdEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -159,7 +160,7 @@ export class SendMessageInApp extends SendMessageType {
         notificationId: notification._id,
         notificationTemplateId: notification._templateId,
         messageId: message._id,
-        providerId: 'in-app',
+        providerId: InAppProviderIdEnum.Novu,
         transactionId: command.transactionId,
         channel: ChannelTypeEnum.IN_APP,
         detail: 'In App message created',
