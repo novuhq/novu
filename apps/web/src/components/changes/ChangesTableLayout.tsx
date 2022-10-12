@@ -12,7 +12,21 @@ import { Button, colors, Text } from '../../design-system';
 import { promoteChange } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
 
-export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: boolean }) => {
+export const ChangesTable = ({
+  changes,
+  loading,
+  handleTableChange,
+  page,
+  pageSize,
+  totalCount,
+}: {
+  changes: Data[];
+  loading: boolean;
+  handleTableChange: (pageIndex) => void;
+  page: Number;
+  pageSize: Number;
+  totalCount: Number;
+}) => {
   const queryClient = useQueryClient();
   const { colorScheme } = useMantineColorScheme();
   const { mutate, isLoading, error } = useMutation(promoteChange, {
@@ -98,5 +112,18 @@ export const ChangesTable = ({ changes, loading }: { changes: Data[]; loading: b
     },
   ];
 
-  return <Table data-test-id="changes-table" loading={loading} data={changes || []} columns={columns} />;
+  return (
+    <Table
+      data-test-id="changes-table"
+      loading={loading}
+      data={changes || []}
+      columns={columns}
+      pagination={{
+        pageSize: pageSize,
+        current: page,
+        total: totalCount,
+        onPageChange: handleTableChange,
+      }}
+    />
+  );
 };

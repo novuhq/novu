@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Quick Start
 
-To create your free managed or docker based Novu environment use our CLI tool:
+To create your free managed, or docker based Novu environment use our CLI tool:
 
 ```shell
 npx novu init
@@ -19,11 +19,11 @@ After creating your cloud or self-hosted account the next steps to sending your 
 
 ## Connect providers
 
-In the “**Integration Store**” page you can configure the different providers and their respective credentials. During the alpha phase only a **single provider** is allowed **per-channel,** adding a second email provider will de-activate the previously added provider.
+In the “**Integration Store**” page, you can configure the different providers and their respective credentials. During the alpha phase only a **single provider** is allowed **per-channel,** adding a second email provider will de-activate the previously added email provider.
 
 ## Create a notification template
 
-After creating the designated channel provider you can create your notification template. You can think of the notification template as the blueprint for the notifications that will be sent. The template includes:
+After configuring the designated channel provider, you can create your notification template. You can think of the notification template as the blueprint for the notifications that will be sent. The template includes:
 
 - Notification details
 - Channel specific content
@@ -31,15 +31,15 @@ After creating the designated channel provider you can create your notification 
 
 ### Notification Details
 
-This section will contain the metadata for your notification, things such as name, description and group.
+This section will contain the metadata for your notification, things such as the name, description and group.
 
-The **name** of the notifications will be converted to a slug and will be used as the trigger identifier which is used when sending the trigger from back-end.
+The **name** of the notifications will be converted to a slug and will be used as the trigger identifier which is used when sending the trigger from the back-end.
 
 ### Channel specific content
 
 #### Email
 
-You can specify the content for email in two ways:
+You can specify the content for emails in two ways:
 
 **Visual template builder** - For simple usecases you can use our visual template editor with limited control over design but easier to get-started.
 
@@ -49,22 +49,22 @@ You can specify custom variables using the [{{handlebars}}](https://handlebarsjs
 
 #### SMS
 
-Similar to the the email, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
+Similar to the the email, with SMS, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
 
 #### In-app
 
-In the notification center preview you can type the content, you can select content and use `CMD` + `B` to make the selected text bold.
+In the notification center preview you can type the content of the notification, you can select content and use `CMD` + `B` to make the selected text bold.
 
 #### Chat
 
-Custom variables using hbs syntax can be described to create the final message.
-In addition to the integration, any subscriber needs to set credentials in order to have proper authorization on the channel.
+Custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
+In addition to the integration, any subscriber needs to set credentials to have proper authorization on the channel.
 
-The credentials can be saved through @novu/node package.
+The credentials can be saved through our @novu/node package.
 
 ## Trigger the notification
 
-After creating the template, trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.
+After creating the template, the trigger will be generated, use the server SDK in your application in the appropriate place for the specific trigger.
 
 ```typescript
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
@@ -106,7 +106,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 
 The `subscriberId` is a custom identifier used when identifying your users within the Novu platform. We suggest using your internal DB identifier for this field.
 
-Novu will create an upsert command and either create a subscriber with specified payload, or update the existing subscriber with passed information.
+Novu will create an upsert command, and either create a subscriber with specified payload, or update the existing subscriber with the passed information.
 
 **Note:** The API will perform a PATCH command, updating only the fields passed to it. So in order to reset a specific field you must explicitly pass `null` as the fields param.
 
@@ -119,8 +119,8 @@ Novu will create an upsert command and either create a subscriber with specified
 }
 ```
 
-In this approach, you will only pass the subscriberId as part of the trigger, however it will require you to identify the subscriber using the `identify` method from the `@novu/node` library.
+In this approach, you will only pass the subscriberId as part of the trigger, however it will require you to identify the subscriber, using the `identify` method from the `@novu/node` library.
 
 ### `payload` object
 
-It can pass any serializible JSON object to be used in the notification templates.
+The `payload` object can pass any serializible JSON object to be used in the notification templates.
