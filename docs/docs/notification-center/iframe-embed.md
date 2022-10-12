@@ -42,7 +42,7 @@ Replace the selectors for the bell icon and the unseen badge within your code. L
 
 ## Customizing the dropdown position
 
-Optionally, the embed init script receives a position object, you can use this to specify the `left` and `top` position of the notification center.
+Optionally, the embedded init script receives a position object, you can use this to specify the `left` and `top` position of the notification center.
 
 ```html
 <script>
