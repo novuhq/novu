@@ -29,15 +29,22 @@ export class SESEmailProvider implements IEmailProvider {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
+    let info;
 
-    return await transporter.sendMail({
-      html,
-      text,
-      to,
-      from,
-      subject,
-      attachments,
-    });
+    try {
+      info = await transporter.sendMail({
+        html,
+        text,
+        to,
+        from,
+        subject,
+        attachments,
+      });
+    } catch (err) {
+      info = err;
+    }
+
+    return info;
   }
 
   async sendMessage({
@@ -48,10 +55,6 @@ export class SESEmailProvider implements IEmailProvider {
     subject,
     attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const transporter = nodemailer.createTransport({
-      SES: { ses: this.ses, aws: { SendRawEmailCommand } },
-    });
-
     const info = await this.sendMail({
       from: from || this.config.from,
       to: to,
@@ -91,7 +94,7 @@ export class SESEmailProvider implements IEmailProvider {
       code = CheckIntegrationResponseEnum.SUCCESS;
     } else {
       success = false;
-      message = testResponse?.err.message;
+      message = testResponse;
       code = CheckIntegrationResponseEnum.FAILED;
     }
 
