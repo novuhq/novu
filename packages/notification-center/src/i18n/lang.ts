@@ -54,6 +54,7 @@ import { UZ } from './languages/uz';
 import { TH } from './languages/th';
 import { HE } from './languages/he';
 import { KM } from './languages/km';
+import { HY } from './languages/hy';
 import { KK } from './languages/kk';
 import { TL } from './languages/tl';
 import { EU } from './languages/eu';
@@ -127,6 +128,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   th: TH,
   he: HE,
   km: KM,
+  hy: HY,
   kk: KK,
   tl: TL,
   eu: EU,
@@ -200,6 +202,7 @@ export type I18NLanguage =
   | 'lo'
   | 'th'
   | 'he'
+  | 'hy'
   | 'kk'
   | 'km'
   | 'tl'
