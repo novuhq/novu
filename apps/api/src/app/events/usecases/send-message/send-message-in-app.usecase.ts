@@ -159,7 +159,7 @@ export class SendMessageInApp extends SendMessageType {
         notificationId: notification._id,
         notificationTemplateId: notification._templateId,
         messageId: message._id,
-        providerId: message.providerId,
+        providerId: 'in-app',
         transactionId: command.transactionId,
         channel: ChannelTypeEnum.IN_APP,
         detail: 'In App message created',
