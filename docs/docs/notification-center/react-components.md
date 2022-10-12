@@ -202,6 +202,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>lo</code> (Lao)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>mr</code> (Marathi)</li>
+          <li><code>ms</code> (Malay)</li>
           <li><code>ne</code> (Nepali)</li>
           <li><code>nl</code> (Dutch)</li>
           <li><code>no</code> (Norwegian)</li>

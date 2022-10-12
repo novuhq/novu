@@ -6,6 +6,7 @@ import { ID } from './languages/id';
 import { IT } from './languages/it';
 import { KA } from './languages/ka';
 import { MR } from './languages/mr';
+import { MS } from './languages/ms';
 import { RU } from './languages/ru';
 import { UK } from './languages/uk';
 import { ES } from './languages/es';
@@ -79,6 +80,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ka: KA,
   ig: IG,
   mr: MR,
+  ms: MS,
   ar: AR,
   fa: FA,
   uk: UK,
@@ -143,6 +145,7 @@ export type I18NLanguage =
   | 'ka'
   | 'gu'
   | 'mr'
+  | 'ms'
   | 'ru'
   | 'uk'
   | 'es'
