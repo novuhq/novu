@@ -7,15 +7,15 @@ import { StepTypeEnum } from '@novu/shared';
 import { Digest } from '../../../design-system/icons/general/Digest';
 
 interface NodeData {
-  label: string;
-  addNewNode: (parentId: string, type: string) => void;
+  addNewNode: (parentId: string, type: string, childId?: string) => void;
   parentId: string;
   showDropZone: boolean;
+  childId?: string;
 }
 export default memo(({ data }: { data: NodeData }) => {
   const theme = useMantineTheme();
   const addNewNode = (type) => {
-    data.addNewNode(data.parentId, type);
+    data.addNewNode(data.parentId, type, data.childId);
   };
 
   return (

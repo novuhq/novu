@@ -1,16 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, {
   addEdge,
-  useNodesState,
-  useEdgesState,
-  Node,
   Background,
   BackgroundVariant,
-  ReactFlowInstance,
-  useUpdateNodeInternals,
-  getOutgoers,
-  ReactFlowProps,
   Controls,
+  Edge,
+  EdgeProps,
+  getBezierEdgeCenter,
+  getBezierPath,
+  getOutgoers,
+  Node,
+  ReactFlowInstance,
+  ReactFlowProps,
+  useEdgesState,
+  useNodesState,
   useReactFlow,
 } from 'react-flow-renderer';
 import ChannelNode from './node-types/ChannelNode';
@@ -44,6 +47,8 @@ const initialNodes: Node[] = [
   },
 ];
 
+const initialEdges: Edge[] = [];
+
 export function FlowEditor({
   activePage,
   setActivePage,
@@ -67,9 +72,8 @@ export function FlowEditor({
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const updateNodeInternals = useUpdateNodeInternals();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<IEdgeData>(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
@@ -86,110 +90,18 @@ export function FlowEditor({
   }, [reactFlowInstance]);
 
   useEffect(() => {
-    let parentId = '1';
-    if (nodes.length === 1) {
-      setNodes([
-        {
-          ...initialNodes[0],
-        },
-      ]);
-    }
-    if (nodes.length > 1) {
-      setNodes([
-        {
-          ...initialNodes[0],
-          position: {
-            ...nodes[0].position,
-          },
-        },
-      ]);
-    }
-    if (steps.length) {
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
-        const newId = step._id || step.id;
-        const newNode = {
-          id: newId,
-          type: 'channelNode',
-          position: { x: oldNode.position.x, y: oldNode.position.y },
-          parentNode: parentId,
-          data: {
-            ...getChannel(step.template.type),
-            active: step.active,
-            index: nodes.length,
-            error: getChannelErrors(i, errors, step),
-            onDelete,
-            setActivePage,
-          },
-        };
-
-        const newEdge = {
-          id: `e-${parentId}-${newId}`,
-          source: parentId,
-          sourceHandle: 'a',
-          targetHandle: 'b',
-          target: newId,
-          type: 'smoothstep',
-        };
-        parentId = newId;
-        setNodes((nds) => nds.concat(newNode));
-        setEdges((eds) => addEdge(newEdge, eds));
-      }
-    }
-    if (!readonly) {
-      const addNodeButton = {
-        id: '2',
-        type: 'addNode',
-        data: {
-          label: '',
-          addNewNode,
-          parentId,
-          showDropZone: dragging,
-        },
-        className: 'nodrag',
-        isConnectable: false,
-        parentNode: parentId,
-        position: { x: 0, y: 90 },
-      };
-      setNodes((nds) => nds.concat(addNodeButton));
-    }
+    initializeWorkflowTree();
   }, [steps, dragging, errors]);
 
-  const addNewNode = useCallback((parentNodeId: string, channelType: string, index = -1) => {
+  const addNewNode = useCallback((parentNodeId: string, channelType: string, childId?: string) => {
     const channel = getChannel(channelType);
 
-    if (!channel) {
-      return;
-    }
+    if (!channel) return;
 
     const newId = uuid4();
-    const newNode = {
-      id: newId,
-      type: 'channelNode',
-      position: { x: 0, y: 120 },
-      parentNode: parentNodeId,
-      data: {
-        ...channel,
-        index: nodes.length,
-        active: true,
-      },
-    };
+    const nodeIndex = childId ? nodes.findIndex((node) => node.id === parentNodeId) : undefined;
 
-    addStep(newNode.data.channelType, newId, index === -1 ? -1 : index === 0 ? 0 : index - 1);
-
-    updateNodeInternals(newId);
-
-    const newEdge = {
-      id: `e-${parentNodeId}-${newId}`,
-      source: parentNodeId,
-      sourceHandle: 'a',
-      targetHandle: 'b',
-      target: newId,
-      curvature: 7,
-    };
-
-    setEdges((eds) => addEdge(newEdge, eds));
+    addStep(channel.channelType, newId, nodeIndex);
   }, []);
 
   const onNodeClick = useCallback((event, node) => {
@@ -219,32 +131,123 @@ export function FlowEditor({
 
       const parentNode = reactFlowInstance?.getNode(parentId);
 
-      if (typeof parentNode === 'undefined') {
+      if (typeof parentNode === 'undefined' || dropId !== '2') {
         return;
       }
 
-      // dropId === 2 condition will active only DropZone and will inactive other nodes
-      if (dropId === '2') {
-        // Add node
-        const childNode = getOutgoers(parentNode, nodes, edges);
-        if (childNode.length) return;
-        addNewNode(parentId, type);
-      } else if (dropId != null) {
-        // Add node to other index
-        const dropNode = reactFlowInstance?.getNode(dropId);
-        const edge = reactFlowInstance?.getEdge(`e-${dropNode?.parentNode}-${dropId}`);
-        setEdges((curEdges) =>
-          curEdges.filter((edg) => {
-            return edg.id !== edge?.id;
-          })
-        );
-        const nodesIdArray = nodes.map((json) => json.id);
-        const dropIndex = nodesIdArray.indexOf(dropId);
-        addNewNode(dropId, type, dropIndex);
+      const childNode = getOutgoers(parentNode, nodes, edges);
+
+      if (childNode.length) {
+        return;
       }
+
+      addNewNode(parentId, type);
     },
     [reactFlowInstance, nodes, edges]
   );
+
+  const edgeTypes = useMemo(() => ({ special: CustomEdge }), []);
+
+  function initializeWorkflowTree() {
+    let parentId = '1';
+    initWorkflowTreeState();
+
+    if (steps.length) {
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
+        const newId = step._id || step.id;
+
+        const newNode = buildNewNode(newId, oldNode, parentId, step, i);
+
+        const newEdge = buildNewEdge(parentId, newId);
+
+        setNodes((nds) => nds.concat(newNode));
+        setEdges((eds) => addEdge(newEdge, eds));
+
+        parentId = newId;
+      }
+    }
+    if (!readonly) {
+      const addNodeButton = buildAddNodeButton(parentId);
+      setNodes((nds) => nds.concat(addNodeButton));
+    }
+  }
+
+  function initWorkflowTreeState() {
+    if (nodes.length === 1) {
+      setNodes([
+        {
+          ...initialNodes[0],
+        },
+      ]);
+      setEdges(initialEdges);
+    } else {
+      if (nodes.length > 1) {
+        setNodes([
+          {
+            ...initialNodes[0],
+            position: {
+              ...nodes[0].position,
+            },
+          },
+        ]);
+        setEdges(initialEdges);
+      }
+    }
+  }
+
+  function buildNewNode(
+    newId: string,
+    oldNode: { position: { x: number; y: number } },
+    parentId: string,
+    step: StepEntity,
+    i: number
+  ): Node {
+    return {
+      id: newId,
+      type: 'channelNode',
+      position: { x: oldNode.position.x, y: oldNode.position.y },
+      parentNode: parentId,
+      data: {
+        ...getChannel(step.template.type),
+        active: step.active,
+        index: nodes.length,
+        error: getChannelErrors(i, errors, step),
+        onDelete,
+        setActivePage,
+      },
+    };
+  }
+
+  function buildNewEdge(parentId: string, newId: string): Edge {
+    return {
+      id: `e-${parentId}-${newId}`,
+      source: parentId,
+      sourceHandle: 'a',
+      targetHandle: 'b',
+      target: newId,
+      type: 'special',
+      data: { addNewNode: addNewNode, parentId: parentId, childId: newId },
+    };
+  }
+
+  function buildAddNodeButton(parentId: string): Node {
+    return {
+      id: '2',
+      type: 'addNode',
+      data: {
+        label: '',
+        addNewNode,
+        parentId,
+        showDropZone: dragging,
+      },
+      className: 'nodrag',
+      connectable: false,
+      parentNode: parentId,
+      position: { x: 0, y: 90 },
+    };
+  }
 
   return (
     <>
@@ -260,6 +263,7 @@ export function FlowEditor({
             onDrop={onDrop}
             onDragOver={onDragOver}
             onNodeClick={onNodeClick}
+            edgeTypes={edgeTypes}
             {...reactFlowDefaultProps}
           >
             <MinimalTemplatesSideBar
@@ -336,6 +340,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
   }
 `;
+
 function getChannelErrors(index: number, errors: any, step: any) {
   if (errors?.steps) {
     const stepErrors = errors.steps[index]?.template;
@@ -373,3 +378,71 @@ const reactFlowDefaultProps: ReactFlowProps = {
   maxZoom: 1.5,
   defaultZoom: 1,
 };
+
+const foreignObjectSize = 40;
+
+function CustomEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  data,
+  markerEnd,
+}: EdgeProps) {
+  const [centerX, centerY] = getBezierEdgeCenter({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+
+  const edgePath = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+
+  const { parentId, addNewNode, childId, edgeStyles } = data;
+
+  return (
+    <>
+      <path style={style} id={id} className="react-flow__edge-path" d={edgePath} markerEnd={markerEnd} />
+      <foreignObject
+        width={foreignObjectSize}
+        height={foreignObjectSize}
+        x={centerX - foreignObjectSize / 2}
+        y={centerY - foreignObjectSize / 2}
+        className="edgebutton-foreignobject"
+        requiredExtensions="http://www.w3.org/1999/xhtml"
+        style={{ display: edgeStyles?.display ? edgeStyles?.display : 'block' }}
+      >
+        <div>
+          <AddNode
+            data={{
+              parentId: parentId,
+              addNewNode: addNewNode,
+              showDropZone: false,
+              childId: childId,
+            }}
+          />
+        </div>
+      </foreignObject>
+    </>
+  );
+}
+
+interface IEdgeData extends EdgeProps {
+  parentId: string;
+  childId?: string;
+  addNewNode: (parentNodeId: string, channelType: string, childId?: string) => void;
+  edgeStyles?: { display: string };
+}
