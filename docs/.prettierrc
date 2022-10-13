@@ -1,6 +1,6 @@
 {
   "printWidth": 100,
-  "tabWidth": 2,
+  "tabWidth": 4,
   "useTabs": false,
   "semi": true,
   "singleQuote": true,
@@ -11,4 +11,12 @@
   "bracketSameLine": false,
   "arrowParens": "always",
   "endOfLine": "lf"
+  {
+  "overrides": [
+    {
+      "files": ".prettierrc",
+      "options": { "parser": "json" }
+    }
+  ]
+}
 }
