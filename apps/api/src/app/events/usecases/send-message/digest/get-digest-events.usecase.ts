@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { JobRepository, JobEntity } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import { CreateExecutionDetailsCommand } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { CreateExecutionDetails } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 
 @Injectable()
 export abstract class GetDigestEvents {
-  constructor(protected jobRepository: JobRepository) {}
+  constructor(protected jobRepository: JobRepository, private createExecutionDetails: CreateExecutionDetails) {}
 
   protected async filterJobs(currentJob: JobEntity, transactionId: string, jobs: JobEntity[]) {
     const batchValue = currentJob?.payload ? currentJob.payload[currentJob?.digest?.digestKey] : undefined;
@@ -19,6 +21,23 @@ export abstract class GetDigestEvents {
       type: StepTypeEnum.TRIGGER,
     });
 
-    return [currentJob.payload, ...jobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload)];
+    const events = [
+      currentJob.payload,
+      ...jobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload),
+    ];
+
+    this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
+        detail: `Digest trigger events`,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(events),
+      })
+    );
+
+    return events;
   }
 }

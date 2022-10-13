@@ -1,17 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
-import { DigestUnitEnum } from '@novu/shared';
+import { ChannelTypeEnum, DigestUnitEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { AddDelayJob } from './add-delay-job.usecase';
 import { AddDigestJob } from './add-digest-job.usecase';
 import { AddJobCommand } from './add-job.command';
 import { ShouldAddDigestJob } from './should-add-digest-job.usecase';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class AddJob {
   constructor(
     private jobRepository: JobRepository,
     private workflowQueueService: WorkflowQueueService,
+    private createExecutionDetails: CreateExecutionDetails,
     private addDigestJob: AddDigestJob,
     private addDelayJob: AddDelayJob,
     private shouldAddDigestJob: ShouldAddDigestJob
@@ -38,6 +41,17 @@ export class AddJob {
     }
 
     const delay = digestAmount ?? delayAmount;
+
+    this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: `Step is queued for execution`,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+      })
+    );
 
     await this.workflowQueueService.addToQueue(job._id, job, delay);
   }

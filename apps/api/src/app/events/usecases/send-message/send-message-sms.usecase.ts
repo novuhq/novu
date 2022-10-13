@@ -10,7 +10,14 @@ import {
   MessageEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  LogCodeEnum,
+  LogStatusEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -23,6 +30,8 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageSms extends SendMessageType {
@@ -33,11 +42,12 @@ export class SendMessageSms extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private integrationRepository: IntegrationRepository,
     private compileTemplate: CompileTemplate,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -52,21 +62,41 @@ export class SendMessageSms extends SendMessageType {
       _id: command.subscriberId,
     });
 
-    const content = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: smsChannel.template.content as string,
-        data: {
-          subscriber,
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
-      })
-    );
+    const payload = {
+      subscriber,
+      step: {
+        digest: !!command.events.length,
+        events: command.events,
+        total_count: command.events.length,
+      },
+      ...command.payload,
+    };
+
+    let content = '';
+
+    try {
+      content = await this.compileTemplate.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          customTemplate: smsChannel.template.content as string,
+          data: payload,
+        })
+      );
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: 'Message content could not be generated',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(payload),
+        })
+      );
+
+      return;
+    }
 
     const phone = command.payload.phone || subscriber.phone;
 
@@ -105,6 +135,19 @@ export class SendMessageSms extends SendMessageType {
       _jobId: command.jobId,
     });
 
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: 'Message created',
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        messageId: message._id,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(messagePayload),
+      })
+    );
+
     if (phone && integration) {
       await this.sendMessage(phone, integration, content, message, command, notification, overrides);
 
@@ -122,6 +165,18 @@ export class SendMessageSms extends SendMessageType {
     notification: NotificationEntity
   ) {
     if (!phone) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: 'Subscriber does not have active phone',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
@@ -148,6 +203,17 @@ export class SendMessageSms extends SendMessageType {
       );
     }
     if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: 'Subscriber does not have an active sms integration',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
       await this.sendErrorStatus(
         message,
         'warning',
@@ -159,6 +225,17 @@ export class SendMessageSms extends SendMessageType {
       );
     }
     if (!integration?.credentials?.from) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: 'Integration does not have from phone configured',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
       await this.sendErrorStatus(
         message,
         'warning',
@@ -190,6 +267,20 @@ export class SendMessageSms extends SendMessageType {
         attachments: null,
         id: message._id,
       });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: 'Message sent',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(result),
+        })
+      );
+
       if (!result.id) {
         return;
       }
@@ -204,6 +295,18 @@ export class SendMessageSms extends SendMessageType {
         }
       );
     } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: 'Unexpected provider error',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(e),
+        })
+      );
       await this.sendErrorStatus(
         message,
         'error',

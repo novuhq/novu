@@ -12,7 +12,13 @@ import {
   OrganizationEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  LogCodeEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -25,6 +31,8 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageType {
@@ -35,11 +43,12 @@ export class SendMessageEmail extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -70,23 +79,46 @@ export class SendMessageEmail extends SendMessageType {
     )[0];
 
     const overrides = command.overrides[integration.providerId] || {};
+    let subject = '';
+    let content: string | IEmailBlock[] = '';
 
-    const subject = await this.renderContent(
-      emailChannel.template.subject,
-      emailChannel.template.subject,
-      organization,
-      subscriber,
-      command
-    );
+    try {
+      subject = await this.renderContent(
+        emailChannel.template.subject,
+        emailChannel.template.subject,
+        organization,
+        subscriber,
+        command
+      );
 
-    const content: string | IEmailBlock[] = await this.getContent(
-      isEditorMode,
-      emailChannel,
-      command,
-      subscriber,
-      subject,
-      organization
-    );
+      content = await this.getContent(isEditorMode, emailChannel, command, subscriber, subject, organization);
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: 'Message subject and content could not be generated',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            subject: emailChannel.template.subject,
+            branding: {
+              logo: organization.branding?.logo,
+              color: organization.branding?.color || '#f47373',
+            },
+            blocks: [],
+            step: {
+              digest: !!command.events.length,
+              events: command.events,
+              total_count: command.events.length,
+            },
+            subscriber,
+            ...command.payload,
+          }),
+        })
+      );
+    }
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -109,6 +141,19 @@ export class SendMessageEmail extends SendMessageType {
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
     });
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: 'Message created',
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        messageId: message._id,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(messagePayload),
+      })
+    );
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -172,6 +217,18 @@ export class SendMessageEmail extends SendMessageType {
     if (!email) {
       const mailErrorMessage = `${errorMessage} email address`;
 
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: mailErrorMessage,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
       await this.sendErrorStatus(
         message,
         status,
@@ -184,6 +241,18 @@ export class SendMessageEmail extends SendMessageType {
     }
     if (!integration) {
       const integrationError = `${errorMessage} active email integration not found`;
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: integrationError,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
 
       await this.sendErrorStatus(
         message,
@@ -208,6 +277,20 @@ export class SendMessageEmail extends SendMessageType {
 
     try {
       const result = await mailHandler.send(mailData);
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: 'Message sent',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(result),
+        })
+      );
+
       if (!result.id) {
         return;
       }
@@ -222,6 +305,18 @@ export class SendMessageEmail extends SendMessageType {
         }
       );
     } catch (error) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: 'Error while sending email with provider',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(error),
+        })
+      );
       await this.sendErrorStatus(
         message,
         'error',
