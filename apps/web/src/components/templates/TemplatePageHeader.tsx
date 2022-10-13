@@ -49,11 +49,19 @@ interface Props {
   loading: boolean;
   disableSubmit: boolean;
   setActivePage: (activePage: ActivePageEnum) => void;
+  setShowTestWorkflow: (showTestWorkflow: boolean) => void;
   activePage: ActivePageEnum;
 }
 
-export const TemplatePageHeader = ({ templateId, loading, disableSubmit, activePage, setActivePage }: Props) => {
-  const { editMode, template } = useTemplateController(templateId);
+export const TemplatePageHeader = ({
+  templateId,
+  loading,
+  disableSubmit,
+  activePage,
+  setActivePage,
+  setShowTestWorkflow,
+}: Props) => {
+  const { editMode, template, trigger } = useTemplateController(templateId);
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const { readonly } = useEnvController();
 
@@ -101,7 +109,7 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, activeP
         <div>
           <Grid align="center" gutter={50}>
             {editMode && (
-              <Grid.Col span={6}>
+              <Grid.Col span={4}>
                 <Switch
                   label={isTemplateActive ? 'Enabled' : 'Disabled'}
                   loading={isStatusChangeLoading}
@@ -112,7 +120,21 @@ export const TemplatePageHeader = ({ templateId, loading, disableSubmit, activeP
                 />
               </Grid.Col>
             )}
-            <Grid.Col span={6}>
+
+            <Grid.Col span={editMode ? 4 : 6}>
+              <Button
+                variant="outline"
+                data-test-id="test-workflow-btn"
+                disabled={!trigger}
+                onClick={() => {
+                  setShowTestWorkflow(true);
+                }}
+              >
+                Test Workflow
+              </Button>
+            </Grid.Col>
+
+            <Grid.Col span={editMode ? 4 : 6}>
               <Button mr={20} data-test-id="submit-btn" loading={loading} disabled={disableSubmit} submit>
                 {editMode ? 'Update' : 'Create'}
               </Button>

@@ -15,6 +15,7 @@ import { usePrompt } from '../../../hooks/use-prompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
 import { When } from '../../../components/utils/When';
 import { UserPreference } from '../../user-preference/UserPreference';
+import { TestWorkflowModal } from '../../../components/templates/TestWorkflowModal';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -33,6 +34,7 @@ export default function TemplateEditorPage() {
   const navigate = useNavigate();
   const { readonly, environment } = useEnvController();
   const [activeStep, setActiveStep] = useState<number>(-1);
+  const [showTestWorkflow, setShowTestWorkflow] = useState<boolean>(false);
   const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
   const {
@@ -78,6 +80,7 @@ export default function TemplateEditorPage() {
               templateId={templateId}
               setActivePage={setActivePage}
               activePage={activePage}
+              setShowTestWorkflow={setShowTestWorkflow}
             />
           </When>
 
@@ -98,6 +101,7 @@ export default function TemplateEditorPage() {
                 setActiveStep={setActiveStep}
                 templateId={templateId}
                 setActivePage={setActivePage}
+                setShowTestWorkflow={setShowTestWorkflow}
               />
             </ReactFlowProvider>
           )}
@@ -116,6 +120,15 @@ export default function TemplateEditorPage() {
           ) : null}
           {trigger && (
             <TemplateTriggerModal trigger={trigger} onDismiss={onTriggerModalDismiss} isVisible={isEmbedModalVisible} />
+          )}
+          {showTestWorkflow && trigger && (
+            <TestWorkflowModal
+              trigger={trigger}
+              onDismiss={() => {
+                setShowTestWorkflow(false);
+              }}
+              isVisible={showTestWorkflow}
+            />
           )}
         </form>
       </PageContainer>
