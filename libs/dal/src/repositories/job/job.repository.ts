@@ -57,29 +57,22 @@ export class JobRepository extends BaseRepository<JobEntity> {
   }
 
   public async findJobsToDigest(from: Date, templateId: string, environmentId: string, subscriberId: string) {
+    /**
+     * Remove digest jobs that have been completed and currently delayed jobs that have a digest pending.
+     */
     const digests = await this.find({
       updatedAt: {
         $gte: from,
       },
       _templateId: templateId,
-      status: JobStatusEnum.COMPLETED,
-      type: StepTypeEnum.DIGEST,
+      $or: [
+        { status: JobStatusEnum.COMPLETED, type: StepTypeEnum.DIGEST },
+        { status: JobStatusEnum.DELAYED, type: StepTypeEnum.DELAY },
+      ],
       _environmentId: environmentId,
       _subscriberId: subscriberId,
     });
     const transactionIds = digests.map((job) => job.transactionId);
-
-    const currDelayedJobs = await this.find({
-      updatedAt: {
-        $gte: from,
-      },
-      _templateId: templateId,
-      status: JobStatusEnum.DELAYED,
-      type: StepTypeEnum.DELAY,
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-    });
-    const transactionIdsDelayed = currDelayedJobs.map((job) => job.transactionId);
 
     const result = await this.find({
       updatedAt: {
@@ -91,12 +84,17 @@ export class JobRepository extends BaseRepository<JobEntity> {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       transactionId: {
-        $nin: [...transactionIds, ...transactionIdsDelayed],
+        $nin: transactionIds,
       },
     });
 
     const transactionIdsTriggers = result.map((job) => job.transactionId);
 
+    /**
+     * Update events that have been digested (events that have been sent) to be of status completed.
+     * To avoid cases of same events being sent multiple times.
+     * Happens in cases of delay followed by digest
+     */
     await this.update(
       {
         updatedAt: {
