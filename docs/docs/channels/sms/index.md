@@ -5,3 +5,4 @@ Novu can be used to send SMS to your customers using a unified delivery API. You
 To read a provider specific documentation:
 
 - [AWS SNS](/channels/sms/sns)
+- [TWILIO](/channels/sms/twilio)
