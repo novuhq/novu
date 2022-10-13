@@ -3,7 +3,8 @@ import { Queue, Worker, QueueBaseOptions, JobsOptions, QueueScheduler } from 'bu
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { RunJob } from '../usecases/run-job/run-job.usecase';
 import { RunJobCommand } from '../usecases/run-job/run-job.command';
-import { getRedisPrefix } from '@novu/shared';
+import { getRedisPrefix, StepTypeEnum } from '@novu/shared';
+import { differenceInMilliseconds } from 'date-fns';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -62,11 +63,47 @@ export class WorkflowQueueService {
   }
 
   public async addToQueue(id: string, data: JobEntity, delay?: number | undefined) {
+    let updatedDelay = delay;
     const options: JobsOptions = {
       removeOnComplete: true,
       removeOnFail: true,
-      delay,
     };
-    await this.queue.add(id, data, options);
+    if (data.type === StepTypeEnum.DELAY) {
+      updatedDelay = await this.calcDelay(data, delay);
+    }
+
+    await this.queue.add(id, data, { delay: updatedDelay, ...options });
+  }
+
+  private async calcDelay(data: JobEntity, delay?: number | undefined) {
+    const delayedJobsInQueue = await this.queue.getDelayed();
+    if (delayedJobsInQueue.length) {
+      const delayedJobs = await this.jobRepository.find(
+        {
+          status: JobStatusEnum.DELAYED,
+          type: StepTypeEnum.DELAY,
+          _subscriberId: data._subscriberId,
+          _templateId: data._templateId,
+          _environmentId: data._environmentId,
+        },
+        '_id'
+      );
+      const delayedJobsIds = delayedJobs.map((job) => job._id);
+      const calcDelayDiffs = delayedJobsInQueue
+        .filter((delayed) => delayedJobsIds.includes(delayed.data._id))
+        .map((delayed) => {
+          return delayed.opts.delay - differenceInMilliseconds(new Date(), new Date(delayed.data.updatedAt));
+        });
+
+      if (calcDelayDiffs?.length) {
+        for (const remainedDelay of calcDelayDiffs) {
+          if (Math.abs(remainedDelay - delay) < 1000) {
+            return delay + 1000;
+          }
+        }
+      }
+    }
+
+    return delay;
   }
 }
