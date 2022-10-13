@@ -69,7 +69,19 @@ export class JobRepository extends BaseRepository<JobEntity> {
     });
     const transactionIds = digests.map((job) => job.transactionId);
 
-    return await this.find({
+    const currDelayedJobs = await this.find({
+      updatedAt: {
+        $gte: from,
+      },
+      _templateId: templateId,
+      status: JobStatusEnum.DELAYED,
+      type: StepTypeEnum.DELAY,
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+    });
+    const transactionIdsDelayed = currDelayedJobs.map((job) => job.transactionId);
+
+    const result = await this.find({
       updatedAt: {
         $gte: from,
       },
@@ -79,8 +91,33 @@ export class JobRepository extends BaseRepository<JobEntity> {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       transactionId: {
-        $nin: transactionIds,
+        $nin: [...transactionIds, ...transactionIdsDelayed],
       },
     });
+
+    const transactionIdsTriggers = result.map((job) => job.transactionId);
+
+    await this.update(
+      {
+        updatedAt: {
+          $gte: from,
+        },
+        _templateId: templateId,
+        status: JobStatusEnum.PENDING,
+        type: StepTypeEnum.DIGEST,
+        _environmentId: environmentId,
+        _subscriberId: subscriberId,
+        transactionId: {
+          $in: transactionIdsTriggers,
+        },
+      },
+      {
+        $set: {
+          status: JobStatusEnum.COMPLETED,
+        },
+      }
+    );
+
+    return result;
   }
 }
