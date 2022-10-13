@@ -2,8 +2,8 @@ import { ITranslationEntry } from '../lang';
 
 export const BN: ITranslationEntry = {
   translations: {
-    notifications: 'জ্ঞাপন',
-    markAllAsRead: 'সবগুলো পঠিত বলে সনাক্ত কর',
+    notifications: 'নোটিফিকেশন',
+    markAllAsRead: 'সবগুলো পঠিত হিসেবে চিহ্নিত করুন',
     poweredBy: 'দ্বারা চালিত',
     settings: 'সেটিংস',
   },
