@@ -6,7 +6,7 @@ sidebar_position: 1
 
 A template holds the entire flow of messages sent to the subscriber. This is where all the different channels are tied together under a single entity.
 
-Let's explore the different parts of a notification template
+Let's explore the different parts of a notification template.
 
 ## Global template metadata
 
@@ -22,7 +22,7 @@ The notification group is used to group multiple notification templates into a s
 
 ## Template steps
 
-The templates steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that includes actions like: Delay, Digest and other conditional steps.
+The template steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that include actions like Delay, Digest and other conditional steps.
 
 ## Messages
 
@@ -32,7 +32,7 @@ For email channel, you can either use our basic visual editor or a fully custom 
 
 ### Variable usage
 
-To use custom payload variables passed to the template you can use the `{{curly}}` syntax for example:
+To use custom payload variables passed to the template you can use the `{{curly}}` syntax. For example:
 
 ```typescript
 novu.trigger('template-name', {
@@ -53,7 +53,7 @@ Can be accessed in a template directly:
 
 ### Iteration
 
-To iterate over an array passed to the trigger endpoint you can use the following syntax
+To iterate over an array passed to the trigger endpoint you can use the following syntax:
 
 ```typescript
 novu.trigger('template-name', {
@@ -80,7 +80,7 @@ novu.trigger('template-name', {
 
 ### Conditional
 
-To render a specific block conditionally you can use the `#if`
+To render a specific block conditionally you can use `#if`:
 
 ```handlebars
 <div class='entry'>
@@ -92,7 +92,7 @@ To render a specific block conditionally you can use the `#if`
 
 ## Trigger
 
-After a notification template is created, a trigger key will be automatically generated for it. To use the trigger you can install the server side sdk with:
+After a notification template is created, a trigger key will be automatically generated for it. To use the trigger you can install the server side SDK with:
 
 ```bash
   npm install @novu/node

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ClassConstructor, plainToClass } from 'class-transformer';
+import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { Document, FilterQuery, Model, Types } from 'mongoose';
 
 export class BaseRepository<T> {
@@ -106,10 +106,10 @@ export class BaseRepository<T> {
   }
 
   protected mapEntity(data: any): T {
-    return plainToClass<T, T>(this.entity, JSON.parse(JSON.stringify(data))) as any;
+    return plainToInstance<T, T>(this.entity, JSON.parse(JSON.stringify(data))) as any;
   }
 
   protected mapEntities(data: any): T[] {
-    return plainToClass<T, T[]>(this.entity, JSON.parse(JSON.stringify(data)));
+    return plainToInstance<T, T[]>(this.entity, JSON.parse(JSON.stringify(data)));
   }
 }

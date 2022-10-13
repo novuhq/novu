@@ -34,7 +34,7 @@ function Header() {
 
 ## Use your own backend and socket url
 
-By default, Novu's hosted services of api and socket are used. Should you want, you could override them and configure your own.
+By default, Novu's hosted services of API and socket are used. Should you want, you could override them and configure your own.
 
 ```tsx
 import {
@@ -172,6 +172,7 @@ The `i18n` prop can accept 2 different types of values
         <ul>
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
+          <li><code>az</code> (Azerbaijani)</li>
           <li><code>bg</code> (Bulgarian)</li>
           <li><code>bn</code> (Bengali)</li>
           <li><code>ca</code> (Catalan)</li>
@@ -181,26 +182,32 @@ The `i18n` prop can accept 2 different types of values
           <li><code>el</code> (Greek)</li>
           <li><code>en</code> (English)</li>
           <li><code>es</code> (Spanish)</li>
+          <li><code>eu</code> (Basque)</li>
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
+          <li><code>gl</code> (Galician)</li>
           <li><code>gu</code> (Gujarati)</li>
           <li><code>he</code> (Hebrew)</li>
           <li><code>hi</code> (Hindi)</li>
           <li><code>hr</code> (Croatian)</li>
           <li><code>hu</code> (Hungarian)</li>
+          <li><code>hy</code> (Armenian)</li>
           <li><code>id</code> (Indonesian)</li>
           <li><code>ig</code> (Igbo)</li>
           <li><code>it</code> (Italian)</li>
           <li><code>ja</code> (Japanese)</li>
           <li><code>ka</code> (Kannada)</li>
+          <li><code>kk</code> (Kazakh)</li>
           <li><code>km</code> (Khmer)</li>
           <li><code>ko</code> (Korean)</li>
           <li><code>ku</code> (Kurdish)</li>
           <li><code>lo</code> (Lao)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>mr</code> (Marathi)</li>
+          <li><code>ms</code> (Malay)</li>
           <li><code>ne</code> (Nepali)</li>
+          <li><code>nl</code> (Dutch)</li>
           <li><code>no</code> (Norwegian)</li>
           <li><code>or</code> (Odia)</li>
           <li><code>pa</code> (Punjabi)</li>
@@ -215,10 +222,13 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ta</code> (Tamil)</li>
           <li><code>te</code> (Telugu)</li>
           <li><code>th</code> (Thai)</li>
+          <li><code>tl</code> (Tagalog)</li>
           <li><code>tr</code> (Turkish)</li>
           <li><code>uk</code> (Ukrainian)</li>
           <li><code>ur</code> (Urdu)</li>
+          <li><code>uz</code> (Uzbek)</li>
           <li><code>vi</code> (Vietnamese)</li>
+          <li><code>zu</code> (Zulu)</li>
           <li><code>zh</code> (Chinese)</li>
         </ul>
       </div>
