@@ -7,4 +7,4 @@ To read a provider specific documentation:
 - [AWS SNS](/channels/sms/sns)
 - [SMS77](/channels/sms/SMS77)
 - [TWILIO](/channels/sms/twilio)
-- [TELNYX](https://github.com/novuhq/novu/blob/84682038213c26c526f577c3668e028f6da4936a/docs/docs/channels/sms/telnyx.md)
+- [TELNYX](/channels/sms/telnyx)
