@@ -7,5 +7,5 @@ You can save a user's notification/device identifiers using [Subscriber Credenti
 You can easily integrate your favorite delivery provider using the built-in [integration store](https://web.novu.co/integrations).
 
 To read a provider specific documentation:
-- [Expo Push]([url](/channels/push/expo))
+- [Expo Push](/channels/push/expo)
 - [Firebase Cloud Messages](/channels/push/fcm) 
