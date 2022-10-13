@@ -10,7 +10,14 @@ import {
   NotificationTemplateEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { LogCodeEnum, LogStatusEnum, IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
+import {
+  LogCodeEnum,
+  LogStatusEnum,
+  IPreferenceChannels,
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+} from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -22,6 +29,7 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -33,7 +41,8 @@ export class ProcessSubscriber {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private filterSteps: DigestFilterSteps,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
-    private integrationRepository: IntegrationRepository
+    private integrationRepository: IntegrationRepository,
+    private createExecutionDetails: CreateExecutionDetails
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
@@ -178,6 +187,8 @@ export class ProcessSubscriber {
     });
 
     const preference = (await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand)).preference;
+
+    // TODO: create execution details for subscriber preferrences.
 
     return template.steps.filter((step) => this.actionStep(step) || this.stepPreferred(preference, step));
   }

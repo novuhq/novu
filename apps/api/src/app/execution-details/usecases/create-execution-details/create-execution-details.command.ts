@@ -1,10 +1,10 @@
-import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
-  @IsNotEmpty()
-  jobId: string;
+  @IsOptional()
+  jobId?: string;
 
   @IsNotEmpty()
   notificationId: string;
@@ -15,14 +15,14 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   messageId?: string;
 
-  @IsNotEmpty()
-  providerId: string;
+  @IsOptional()
+  providerId?: string;
 
   @IsNotEmpty()
   transactionId: string;
 
   @IsNotEmpty()
-  channel: ChannelTypeEnum;
+  channel: StepTypeEnum;
 
   @IsNotEmpty()
   detail: string;
@@ -41,5 +41,5 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   @IsString()
-  search?: string;
+  raw?: string;
 }

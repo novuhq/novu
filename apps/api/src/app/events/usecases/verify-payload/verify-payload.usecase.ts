@@ -19,6 +19,7 @@ export class VerifyPayload {
     }
 
     if (invalidKeys.length) {
+      // TODO: create execution detail for missing keys in payload
       throw new ApiException(`payload is missing required key(s) and type(s): ${invalidKeys.join(', ')}`);
     }
 
@@ -26,6 +27,7 @@ export class VerifyPayload {
       defaultPayload = this.fillDefaults(step.template.variables || []);
     }
 
+    // TODO: create execution detail for payload created
     return defaultPayload;
   }
 

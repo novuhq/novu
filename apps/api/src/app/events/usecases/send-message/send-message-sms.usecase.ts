@@ -16,6 +16,7 @@ import {
   LogStatusEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  StepTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -61,21 +62,48 @@ export class SendMessageSms extends SendMessageType {
       _id: command.subscriberId,
     });
 
-    const content = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: smsChannel.template.content as string,
-        data: {
-          subscriber,
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
-      })
-    );
+    const payload = {
+      subscriber,
+      step: {
+        digest: !!command.events.length,
+        events: command.events,
+        total_count: command.events.length,
+      },
+      ...command.payload,
+    };
+
+    let content = '';
+
+    try {
+      content = await this.compileTemplate.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          customTemplate: smsChannel.template.content as string,
+          data: payload,
+        })
+      );
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.SMS,
+          detail: 'Message content could not be generated',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(payload),
+        })
+      );
+
+      return;
+    }
 
     const phone = command.payload.phone || subscriber.phone;
 
@@ -114,6 +142,27 @@ export class SendMessageSms extends SendMessageType {
       _jobId: command.jobId,
     });
 
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        jobId: command.jobId,
+        notificationId: notification._id,
+        notificationTemplateId: notification._templateId,
+        transactionId: command.transactionId,
+        channel: StepTypeEnum.SMS,
+        detail: 'Message created',
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        providerId: integration.providerId,
+        messageId: message._id,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(messagePayload),
+      })
+    );
+
     if (phone && integration) {
       await this.sendMessage(phone, integration, content, message, command, notification, overrides);
 
@@ -142,7 +191,7 @@ export class SendMessageSms extends SendMessageType {
           messageId: message._id,
           providerId: integration.providerId,
           transactionId: command.transactionId,
-          channel: ChannelTypeEnum.CHAT,
+          channel: StepTypeEnum.SMS,
           detail: 'Subscriber does not have active phone',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -177,6 +226,24 @@ export class SendMessageSms extends SendMessageType {
       );
     }
     if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.SMS,
+          detail: 'Subscriber does not have an active sms integration',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
       await this.sendErrorStatus(
         message,
         'warning',
@@ -188,6 +255,24 @@ export class SendMessageSms extends SendMessageType {
       );
     }
     if (!integration?.credentials?.from) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.SMS,
+          detail: 'Integration does not have from phone configured',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
       await this.sendErrorStatus(
         message,
         'warning',
@@ -219,6 +304,28 @@ export class SendMessageSms extends SendMessageType {
         attachments: null,
         id: message._id,
       });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          providerId: integration.providerId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.SMS,
+          detail: 'Message sent',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(result),
+        })
+      );
+
       if (!result.id) {
         return;
       }
@@ -233,6 +340,26 @@ export class SendMessageSms extends SendMessageType {
         }
       );
     } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          providerId: integration.providerId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.SMS,
+          detail: 'Unexpected provider error',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(e),
+        })
+      );
       await this.sendErrorStatus(
         message,
         'error',

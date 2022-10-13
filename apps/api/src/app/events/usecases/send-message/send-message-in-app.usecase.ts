@@ -16,6 +16,7 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   InAppProviderIdEnum,
+  StepTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -52,13 +53,40 @@ export class SendMessageInApp extends SendMessageType {
       _id: command.subscriberId,
     });
     const inAppChannel: NotificationStepEntity = command.step;
+    let content = '';
 
-    const content = await this.compileInAppTemplate(
-      inAppChannel.template.content,
-      command.payload,
-      subscriber,
-      command
-    );
+    try {
+      content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.IN_APP,
+          detail: 'Message content could not be generated',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            subscriber,
+            step: {
+              digest: !!command.events.length,
+              events: command.events,
+              total_count: command.events.length,
+            },
+            ...command.payload,
+          }),
+        })
+      );
+
+      return;
+    }
 
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
@@ -162,7 +190,7 @@ export class SendMessageInApp extends SendMessageType {
         messageId: message._id,
         providerId: InAppProviderIdEnum.Novu,
         transactionId: command.transactionId,
-        channel: ChannelTypeEnum.IN_APP,
+        channel: StepTypeEnum.IN_APP,
         detail: 'In App message created',
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

@@ -69,6 +69,9 @@ const executionDetailsSchema = new Schema(
     isRetry: {
       type: Schema.Types.Boolean,
     },
+    raw: {
+      type: Schema.Types.String,
+    },
   },
   schemaOptions
 );

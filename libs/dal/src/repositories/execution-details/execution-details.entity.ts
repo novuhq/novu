@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 
 export class ExecutionDetailsEntity {
   _id?: string;
@@ -9,13 +9,14 @@ export class ExecutionDetailsEntity {
   _notificationTemplateId: string;
   _subscriberId: string;
   _messageId?: string;
-  providerId: string;
+  providerId?: string;
   transactionId: string;
-  channel: ChannelTypeEnum;
+  channel: StepTypeEnum;
   detail: string;
   source: ExecutionDetailsSourceEnum;
   status: ExecutionDetailsStatusEnum;
   isTest: boolean;
   isRetry: boolean;
   createdAt?: string;
+  raw?: string;
 }
