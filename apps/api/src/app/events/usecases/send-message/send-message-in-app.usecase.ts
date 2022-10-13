@@ -60,14 +60,7 @@ export class SendMessageInApp extends SendMessageType {
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.IN_APP,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: 'Message content could not be generated',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -181,16 +174,9 @@ export class SendMessageInApp extends SendMessageType {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: notification._id,
-        notificationTemplateId: notification._templateId,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: InAppProviderIdEnum.Novu,
-        transactionId: command.transactionId,
-        channel: StepTypeEnum.IN_APP,
         detail: 'In App message created',
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

@@ -44,15 +44,7 @@ export class AddJob {
 
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: job._subscriberId,
-        jobId: command.jobId,
-        notificationId: job._notificationId,
-        notificationTemplateId: job._templateId,
-        providerId: job.providerId,
-        transactionId: job.transactionId,
-        channel: job.type,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: `Step is queued for execution`,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

@@ -95,14 +95,7 @@ export class SendMessageEmail extends SendMessageType {
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.EMAIL,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: 'Message subject and content could not be generated',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -151,18 +144,10 @@ export class SendMessageEmail extends SendMessageType {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: notification._id,
-        notificationTemplateId: notification._templateId,
-        transactionId: command.transactionId,
-        channel: StepTypeEnum.EMAIL,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: 'Message created',
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
-        providerId: integration.providerId,
         messageId: message._id,
         isTest: false,
         isRetry: false,
@@ -234,16 +219,8 @@ export class SendMessageEmail extends SendMessageType {
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.EMAIL,
           detail: mailErrorMessage,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -267,15 +244,8 @@ export class SendMessageEmail extends SendMessageType {
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.EMAIL,
           detail: integrationError,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -310,16 +280,8 @@ export class SendMessageEmail extends SendMessageType {
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.EMAIL,
           detail: 'Message sent',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -345,16 +307,8 @@ export class SendMessageEmail extends SendMessageType {
     } catch (error) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.EMAIL,
           detail: 'Error while sending email with provider',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,

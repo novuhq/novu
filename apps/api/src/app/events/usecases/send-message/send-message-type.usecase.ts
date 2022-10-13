@@ -46,16 +46,8 @@ export abstract class SendMessageType {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: notification._id,
-        notificationTemplateId: notification._templateId,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
-        providerId: message.providerId,
-        transactionId: command.transactionId,
-        channel: StepTypeEnum[message.channel],
         detail: errorMessageFallback,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.FAILED,

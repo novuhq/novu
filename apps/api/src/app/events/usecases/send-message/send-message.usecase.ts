@@ -34,14 +34,7 @@ export class SendMessage {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: command.notificationId,
-        notificationTemplateId: command.step._templateId,
-        transactionId: command.transactionId,
-        channel: command.step.template.type,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: `Start sending message`,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -73,14 +66,7 @@ export class SendMessage {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: command.notificationId,
-        notificationTemplateId: command.step._templateId,
-        transactionId: command.transactionId,
-        channel: command.step.template.type,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: `Filter step based on filters`,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

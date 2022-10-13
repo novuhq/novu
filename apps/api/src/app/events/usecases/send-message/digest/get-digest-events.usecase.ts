@@ -28,15 +28,7 @@ export abstract class GetDigestEvents {
 
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: currentJob._environmentId,
-        organizationId: currentJob._organizationId,
-        subscriberId: currentJob._subscriberId,
-        jobId: currentJob._id,
-        notificationId: currentJob._notificationId,
-        notificationTemplateId: currentJob._templateId,
-        providerId: currentJob.providerId,
-        transactionId: currentJob.transactionId,
-        channel: currentJob.type,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
         detail: `Digest trigger events`,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

@@ -85,14 +85,7 @@ export class SendMessageSms extends SendMessageType {
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.SMS,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: 'Message content could not be generated',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -144,18 +137,10 @@ export class SendMessageSms extends SendMessageType {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: notification._id,
-        notificationTemplateId: notification._templateId,
-        transactionId: command.transactionId,
-        channel: StepTypeEnum.SMS,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: 'Message created',
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
-        providerId: integration.providerId,
         messageId: message._id,
         isTest: false,
         isRetry: false,
@@ -182,16 +167,8 @@ export class SendMessageSms extends SendMessageType {
     if (!phone) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.SMS,
           detail: 'Subscriber does not have active phone',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -228,15 +205,8 @@ export class SendMessageSms extends SendMessageType {
     if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.SMS,
           detail: 'Subscriber does not have an active sms integration',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -257,15 +227,8 @@ export class SendMessageSms extends SendMessageType {
     if (!integration?.credentials?.from) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.SMS,
           detail: 'Integration does not have from phone configured',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -307,16 +270,8 @@ export class SendMessageSms extends SendMessageType {
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.SMS,
           detail: 'Message sent',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -342,16 +297,8 @@ export class SendMessageSms extends SendMessageType {
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.SMS,
           detail: 'Unexpected provider error',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,

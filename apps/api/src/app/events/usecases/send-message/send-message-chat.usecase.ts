@@ -80,14 +80,7 @@ export class SendMessageChat extends SendMessageType {
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.CHAT,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: 'Message content could not be generated',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -148,18 +141,11 @@ export class SendMessageChat extends SendMessageType {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: notification._id,
-        notificationTemplateId: notification._templateId,
-        transactionId: command.transactionId,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         channel: StepTypeEnum.SMS,
         detail: 'Message created',
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
-        providerId: integration.providerId,
         messageId: message._id,
         isTest: false,
         isRetry: false,
@@ -186,15 +172,8 @@ export class SendMessageChat extends SendMessageType {
     if (!chatWebhookUrl) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration?.providerId,
-          transactionId: command.transactionId,
           channel: StepTypeEnum.CHAT,
           detail: `Subscriber does not have active chat channel Id`,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -232,15 +211,8 @@ export class SendMessageChat extends SendMessageType {
     if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.CHAT,
           detail: `Subscriber does not have an active chat integration`,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -278,16 +250,8 @@ export class SendMessageChat extends SendMessageType {
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.CHAT,
           detail: 'Message sent',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -299,16 +263,8 @@ export class SendMessageChat extends SendMessageType {
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.CHAT,
           detail: 'Unexpected provider error',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,

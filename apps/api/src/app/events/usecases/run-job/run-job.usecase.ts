@@ -39,6 +39,7 @@ export class RunJob {
         subscriberId: job._subscriberId,
         jobId: job._id,
         events: job.digest.events,
+        job,
       })
     );
 

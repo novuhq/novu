@@ -28,13 +28,7 @@ export class Digest extends SendMessageType {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: command.notificationId,
-        transactionId: command.transactionId,
-        channel: StepTypeEnum.DIGEST,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: 'Steps to get digest events found ' + nextJobs.length,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

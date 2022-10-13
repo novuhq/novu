@@ -92,14 +92,7 @@ export class SendMessagePush extends SendMessageType {
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.PUSH,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: 'Message content could not be generated',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -163,15 +156,7 @@ export class SendMessagePush extends SendMessageType {
     if (!pushChannels) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
-          providerId: integration.providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.PUSH,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: 'Subscriber does not have active channel',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -231,18 +216,10 @@ export class SendMessagePush extends SendMessageType {
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        jobId: command.jobId,
-        notificationId: notification._id,
-        notificationTemplateId: notification._templateId,
-        transactionId: command.transactionId,
-        channel: StepTypeEnum.CHAT,
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: 'Message created',
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
-        providerId,
         messageId: message._id,
         isTest: false,
         isRetry: false,
@@ -262,16 +239,8 @@ export class SendMessagePush extends SendMessageType {
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.PUSH,
           detail: 'Message sent',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -283,16 +252,8 @@ export class SendMessagePush extends SendMessageType {
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          subscriberId: command.subscriberId,
-          jobId: command.jobId,
-          notificationId: notification._id,
-          notificationTemplateId: notification._templateId,
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          providerId: providerId,
-          transactionId: command.transactionId,
-          channel: StepTypeEnum.PUSH,
           detail: 'Unexpected provider error',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
