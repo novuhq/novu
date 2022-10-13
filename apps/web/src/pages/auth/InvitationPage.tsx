@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { useContext } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
@@ -11,6 +11,8 @@ import { colors, Text, Button } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
 
 export default function InvitationPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { token, logout } = useContext(AuthContext);
   const isLoggedIn = !!token;
   const { token: tokenParam } = useParams<{ token: string }>();
@@ -21,6 +23,11 @@ export default function InvitationPage() {
       enabled: !!tokenParam,
     }
   );
+
+  const logoutWhenActiveSession = () => {
+    logout();
+    navigate(location.pathname);
+  };
 
   return (
     <AuthLayout>
@@ -36,7 +43,7 @@ export default function InvitationPage() {
             </Center>
           }
         >
-          <Button data-test-id="success-screen-reset" onClick={logout} inherit>
+          <Button data-test-id="success-screen-reset" onClick={logoutWhenActiveSession} inherit>
             Log out
           </Button>
           <Center mt={20}>

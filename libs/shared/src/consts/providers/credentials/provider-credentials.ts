@@ -335,7 +335,17 @@ export const slackConfig: IConfigCredentials[] = [
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
-    displayName: 'Service Account',
+    displayName: 'Service Account (entire JSON file)',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const expoConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Access Token',
     type: 'text',
     required: true,
   },
@@ -377,4 +387,14 @@ export const gupshupConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
+];
+
+export const firetextConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
 ];

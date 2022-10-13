@@ -9,3 +9,8 @@ export enum DigestTypeEnum {
   REGULAR = 'regular',
   BACKOFF = 'backoff',
 }
+
+export enum DelayTypeEnum {
+  REGULAR = 'regular',
+  SCHEDULED = 'scheduled',
+}

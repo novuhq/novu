@@ -18,6 +18,7 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
       channel: 'email',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
 
     await session.testAgent.post('/v1/integrations').send(payload);

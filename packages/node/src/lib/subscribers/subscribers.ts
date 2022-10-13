@@ -1,5 +1,7 @@
 import { AxiosInstance } from 'axios';
+import { WithHttp } from '../novu.interface';
 import {
+  IGetSubscriberNotificationFeedParams,
   ISubscriberPayload,
   ISubscribers,
   IUpdateSubscriberPreferencePayload,
@@ -10,13 +12,7 @@ interface IChannelCredentials {
   deviceTokens?: string[];
 }
 
-export class Subscribers implements ISubscribers {
-  private readonly http: AxiosInstance;
-
-  constructor(http: AxiosInstance) {
-    this.http = http;
-  }
-
+export class Subscribers extends WithHttp implements ISubscribers {
   async list(page: number) {
     return await this.http.get(`/subscribers`, {
       params: {
@@ -74,5 +70,44 @@ export class Subscribers implements ISubscribers {
 
   async delete(subscriberId: string) {
     return await this.http.delete(`/subscribers/${subscriberId}`);
+  }
+
+  async getNotificationsFeed(
+    subscriberId: string,
+    params: IGetSubscriberNotificationFeedParams
+  ) {
+    return await this.http.get(
+      `/subscribers/${subscriberId}/notifications/feed`,
+      {
+        params,
+      }
+    );
+  }
+
+  async getUnseenCount(subscriberId: string, seen: boolean) {
+    return await this.http.get(
+      `/subscribers/${subscriberId}/notifications/unseen`,
+      {
+        params: {
+          seen,
+        },
+      }
+    );
+  }
+
+  async markMessageSeen(subscriberId: string, messageId: string) {
+    return await this.http.post(
+      `/subscribers/${subscriberId}/messages/${messageId}/seen`
+    );
+  }
+
+  async markMessageActionSeen(
+    subscriberId: string,
+    messageId: string,
+    type: string
+  ) {
+    return await this.http.post(
+      `/subscribers/${subscriberId}/messages/${messageId}/actions/${type}`
+    );
   }
 }

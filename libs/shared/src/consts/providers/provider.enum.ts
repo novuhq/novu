@@ -43,6 +43,7 @@ export enum SmsProviderIdEnum {
   Telnyx = 'telnyx',
   Twilio = 'twilio',
   Gupshup = 'gupshup',
+  Firetext = 'firetext',
 }
 
 export enum ChatProviderIdEnum {
@@ -53,6 +54,7 @@ export enum ChatProviderIdEnum {
 export enum PushProviderIdEnum {
   FCM = 'fcm',
   APNS = 'apns',
+  EXPO = 'expo',
 }
 
 export enum InAppProviderIdEnum {

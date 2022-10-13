@@ -50,3 +50,11 @@ test('should trigger nodemailer correctly', async () => {
     ],
   });
 });
+
+test('should check provider integration correctly', async () => {
+  const provider = new NodemailerProvider(mockConfig);
+  const response = await provider.checkIntegration(mockNovuMessage);
+
+  expect(sendMailMock).toHaveBeenCalled();
+  expect(response.success).toBe(true);
+});

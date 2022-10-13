@@ -14,7 +14,7 @@ export function useSubscribers(page = 0, limit = 10) {
   );
 
   return {
-    subscibers: data?.data,
+    subscribers: data?.data,
     loading: isLoading,
     totalCount: data?.totalCount,
     pageSize: data?.pageSize,

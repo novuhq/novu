@@ -182,36 +182,36 @@ export class SendMessageSms extends SendMessageType {
     try {
       const smsHandler = this.smsFactory.getHandler(integration);
 
-      await smsHandler.send({
+      const result = await smsHandler.send({
         to: phone,
         from: integration.credentials.from,
         content,
         attachments: null,
+        id: message._id,
       });
-    } catch (e) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: e.message || e.name || 'Un-expect SMS provider error',
-          userId: command.userId,
-          code: LogCodeEnum.SMS_ERROR,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
+      if (!result.id) {
+        return;
+      }
+      await this.messageRepository.update(
+        {
+          _id: message._id,
+        },
+        {
+          $set: {
+            identifier: result.id,
           },
-        })
+        }
       );
-
-      await this.messageRepository.updateMessageStatus(
-        message._id,
+    } catch (e) {
+      await this.sendErrorStatus(
+        message,
         'error',
-        e,
         'unexpected_sms_error',
-        e.message || e.name || 'Un-expect SMS provider error'
+        e.message || e.name || 'Un-expect SMS provider error',
+        command,
+        notification,
+        LogCodeEnum.SMS_ERROR,
+        e
       );
     }
   }

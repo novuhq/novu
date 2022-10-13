@@ -1,6 +1,7 @@
 import * as Bull from 'bull';
 import { Queue } from 'bull';
 import { IWsQueuePayload } from './queue.interface';
+import { getRedisPrefix } from '@novu/shared';
 
 export const WS_SOCKET_QUEUE = 'ws_socket_queue';
 
@@ -16,6 +17,7 @@ export class QueueService {
       connectTimeout: 50000,
       keepAlive: 30000,
       family: 4,
+      keyPrefix: getRedisPrefix(),
     },
     defaultJobOptions: {
       removeOnComplete: true,

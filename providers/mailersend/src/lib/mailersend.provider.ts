@@ -3,6 +3,8 @@ import {
   ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
+  ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 
 import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
@@ -52,6 +54,16 @@ export class MailersendEmailProvider implements IEmailProvider {
     return {
       id: response[0]?.['X-Message-Id'],
       date: new Date().toISOString(),
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

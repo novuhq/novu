@@ -3,8 +3,10 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
-import nodemailer, { Transporter } from 'nodemailer';
+import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import DKIM from 'nodemailer/lib/dkim';
 
 export class NodemailerProvider implements IEmailProvider {
@@ -46,7 +48,39 @@ export class NodemailerProvider implements IEmailProvider {
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const info = await this.transports.sendMail({
+    const mailData = this.createMailData(options);
+    const info = await this.transports.sendMail(mailData);
+
+    return {
+      id: info?.messageId,
+      date: new Date().toISOString(),
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    try {
+      const mailData = this.createMailData(options);
+      await this.transports.sendMail(mailData);
+
+      return {
+        success: true,
+        message: 'Integrated successfully!',
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error?.message,
+        // nodemailer does not provide a way to distinguish errors
+        code: CheckIntegrationResponseEnum.FAILED,
+      };
+    }
+  }
+
+  private createMailData(options: IEmailOptions): SendMailOptions {
+    return {
       from: options.from || this.config.from,
       to: options.to,
       subject: options.subject,
@@ -57,11 +91,6 @@ export class NodemailerProvider implements IEmailProvider {
         content: attachment.file,
         contentType: attachment.mime,
       })),
-    });
-
-    return {
-      id: info?.messageId,
-      date: new Date().toISOString(),
     };
   }
 }

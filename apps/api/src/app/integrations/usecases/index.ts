@@ -5,6 +5,8 @@ import { RemoveIntegration } from './remove-integration/remove-integration.useca
 import { DeactivateSimilarChannelIntegrations } from './deactivate-integration/deactivate-integration.usecase';
 import { GetActiveIntegrations } from './get-active-integration/get-active-integration.usecase';
 import { GetDecryptedIntegrations } from './get-decrypted-integrations/get-decrypted-integrations.usecase';
+import { CheckIntegration } from './check-integration/check-integration.usecase';
+import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 
 export const USE_CASES = [
   CreateIntegration,
@@ -14,4 +16,6 @@ export const USE_CASES = [
   UpdateIntegration,
   RemoveIntegration,
   DeactivateSimilarChannelIntegrations,
+  CheckIntegration,
+  CheckIntegrationEMail,
 ];

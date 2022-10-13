@@ -2,7 +2,7 @@ import { Grid, InputWrapper } from '@mantine/core';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { When } from '../../../components/utils/When';
-import { Input, Select, Switch } from '../../../design-system';
+import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
 import styled from '@emotion/styled';
@@ -12,7 +12,7 @@ const StyledSwitch = styled(Switch)`
   margin-top: 15px;
 `;
 
-export const DigestMetadata = ({ control, index }) => {
+export const DigestMetadata = ({ control, index, loading, disableSubmit, setSelectedChannel }) => {
   const { readonly } = useEnvController();
   const {
     formState: { errors },
@@ -36,11 +36,12 @@ export const DigestMetadata = ({ control, index }) => {
             <Controller
               control={control}
               name={`steps.${index}.metadata.amount`}
-              render={({ field }) => {
+              render={({ field, fieldState }) => {
                 return (
                   <Input
                     {...field}
-                    error={errors?.steps ? errors.steps[index]?.metadata?.amount?.message : undefined}
+                    value={field.value || ''}
+                    error={fieldState.error?.message}
                     min={0}
                     max={100}
                     type="number"
@@ -83,14 +84,13 @@ export const DigestMetadata = ({ control, index }) => {
       >
         <Controller
           control={control}
-          defaultValue="regular"
+          defaultValue={DigestTypeEnum.REGULAR}
           name={`steps.${index}.metadata.type`}
           render={({ field }) => {
             return (
               <Select
                 label="Type of digest"
                 disabled={readonly}
-                placeholder="Regular"
                 data={[
                   { value: DigestTypeEnum.REGULAR, label: 'Regular' },
                   { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
@@ -103,7 +103,7 @@ export const DigestMetadata = ({ control, index }) => {
         />
       </div>
 
-      <When truthy={type === 'backoff'}>
+      <When truthy={type === DigestTypeEnum.BACKOFF}>
         <InputWrapper
           label="Backoff Time Interval"
           description="A digest will only be created if a message was previously sent in this time interval"
@@ -118,11 +118,12 @@ export const DigestMetadata = ({ control, index }) => {
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.backoffAmount`}
-                render={({ field }) => {
+                render={({ field, fieldState }) => {
                   return (
                     <Input
                       {...field}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffAmount?.message : undefined}
+                      value={field.value || ''}
+                      error={fieldState.error?.message}
                       min={0}
                       max={100}
                       type="number"
@@ -192,14 +193,15 @@ export const DigestMetadata = ({ control, index }) => {
         <Controller
           control={control}
           name={`steps.${index}.metadata.digestKey`}
-          render={({ field }) => {
+          render={({ field, fieldState }) => {
             return (
               <Input
                 {...field}
+                value={field.value || ''}
                 label="Digest Key (Optional)"
                 placeholder="For example: post_id"
                 description="Used to group messages using this payload key, by default only subscriberId is used"
-                error={errors?.steps ? errors.steps[index]?.metadata?.digestKey?.message : undefined}
+                error={fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"
               />
@@ -207,6 +209,18 @@ export const DigestMetadata = ({ control, index }) => {
           }}
         />
       </div>
+      <Button
+        fullWidth
+        mt={10}
+        mb={15}
+        variant="outline"
+        data-test-id="delete-step-button"
+        loading={loading}
+        disabled={disableSubmit}
+        onClick={() => setSelectedChannel(null)}
+      >
+        Save
+      </Button>
     </>
   );
 };
