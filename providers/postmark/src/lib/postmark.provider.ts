@@ -5,6 +5,8 @@ import {
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
+  IEmailEventBody,
+  EmailEventStatusEnum,
 } from '@novu/stateless';
 import { Errors, ServerClient, Message, Models } from 'postmark';
 
@@ -79,6 +81,59 @@ export class PostmarkEmailProvider implements IEmailProvider {
           )
       ),
     };
+  }
+
+  getMessageId(body: any | any[]): string[] {
+    if (Array.isArray(body)) {
+      return body.map((item) => item.MessageID);
+    }
+
+    return [body.MessageID];
+  }
+
+  parseEventBody(
+    body: any | any[],
+    identifier: string
+  ): IEmailEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item.MessageID === identifier);
+    }
+
+    if (!body) {
+      return undefined;
+    }
+
+    const status = this.getStatus(body.RecordType);
+
+    if (status === undefined) {
+      return undefined;
+    }
+
+    return {
+      status: status,
+      date: new Date().toISOString(),
+      externalId: body.MessageID,
+      attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
+      response: body.response ? body.response : '',
+      row: body,
+    };
+  }
+
+  private getStatus(event: string): EmailEventStatusEnum | undefined {
+    switch (event) {
+      case 'Open':
+        return EmailEventStatusEnum.OPENED;
+      case 'Click':
+        return EmailEventStatusEnum.CLICKED;
+      case 'Delivery':
+        return EmailEventStatusEnum.DELIVERED;
+      case 'Bounce':
+        return EmailEventStatusEnum.BOUNCED;
+      case 'SpamComplaint':
+        return EmailEventStatusEnum.SPAM_COMPLAINED;
+      case 'SubscriptionChange':
+        return EmailEventStatusEnum.SUBSCRIPTION_CHANGED;
+    }
   }
 }
 

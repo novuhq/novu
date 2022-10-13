@@ -91,6 +91,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 ### 💌 Email
 
 - [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
+- [Netcore](https://github.com/novuhq/novu/tree/main/providers/netcore)
 - [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
 - [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
 - [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
@@ -109,9 +110,12 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
 - [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
+- [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
 
 ### 📱 Push
 
+- [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
+- [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 
 ### 👇 Chat
