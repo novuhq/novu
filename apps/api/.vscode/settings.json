@@ -1,4 +1,12 @@
 {
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "css.validate": false,
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrapColumn": 120
   "mochaExplorer.configFile": ".mocharc.json",
   "mochaExplorer.files": ["e2e/setup.ts", "e2e/**/*.e2e.ts", "src/**/*.e2e.ts", "src/**/**/*.spec.ts"],
   "mochaExplorer.require": ["ts-node/register"],
