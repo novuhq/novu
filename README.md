@@ -43,14 +43,14 @@ The ultimate service for managing multi-channel notifications with a single API.
     <a href="https://twitter.com/novuhq">Twitter</a>
   </p>
 
-## ⭐️ Why
+## ⭐️ Why Novu?
 
-Building a notification system is hard, at first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
+Building a notification system is hard, at first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the world. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between a system and its users.
 
 ## ✨ Features
 
 - 🌈 Single API for all messaging providers (Email, SMS, Push, Chat)
-- 💅 Easily manage notification over multiple channels
+- 💅 Easily manage notifications over multiple channels
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
@@ -59,7 +59,7 @@ Building a notification system is hard, at first, it seems like just sending an 
 - 👨‍💻 Community driven
 
 
-## 📚 Table of Contents
+## 📚 Table Of Contents
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
 - [Embeddable notification center](https://github.com/novuhq/novu#embeddable-notification-center)
 -  [Providers](https://github.com/novuhq/novu#providers)
@@ -111,9 +111,9 @@ await novu.trigger('<TRIGGER_NAME>',
 );
 ```
 
-## Embeddable notification center
+## Embeddable Notification Center
 
-Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
+Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an IFrame embed if you are not using React.
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
@@ -125,7 +125,7 @@ Using the Novu API and admin panel you can easily add real-time notification cen
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+Novu provides a single API to manage providers across multiple channels with a convenient interface.
 
 #### 💌 Email
 
@@ -180,10 +180,10 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working with the project, then join our 
+We are more than happy to help you. If you are getting any errors or facing problems while working with this project,join our 
 [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
-## 📋 Read our Code of Conduct 
+## 📋 Read Our Code Of Conduct 
 
 Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) throroughly to understand our standards (that you are required to adhere to) regarding how to engage in the community.
 
@@ -197,7 +197,7 @@ Before moving on to coding and collaborating, please read our [Code of Conduct](
 
 Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
 
-## 💪 Thanks to all Contributors
+## 💪 Thanks To All Contributors
 
 Thanks a lot for spending your time helping Novu grow. Thanks a lot! Keep rocking 🥂
 
