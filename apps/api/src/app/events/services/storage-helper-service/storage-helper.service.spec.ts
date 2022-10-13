@@ -9,15 +9,17 @@ import {
   GCSStorageService,
   AzureBlobStorageService,
 } from '../../../shared/services/storage/storage.service';
+import { IAttachmentOptionsExtended } from '@novu/stateless';
 
 describe('Storage-Helper service', function () {
   // mocking the S3 Storage service with sinon
   describe('S3', function () {
     let S3StorageHelperService = new StorageHelperService(new S3StorageService());
-    let attachments = [
+    let attachments: IAttachmentOptionsExtended[] = [
       {
         name: 'test.png',
         file: Buffer.from('test'),
+        storagePath: 'attachments/test.png',
         mime: 'image/png',
       },
     ];
@@ -56,9 +58,10 @@ describe('Storage-Helper service', function () {
     });
 
     it('should handle error for file which is not found', async function () {
-      let attachments2 = [
+      let attachments2: IAttachmentOptionsExtended[] = [
         {
           name: 'new-image.png',
+          storagePath: 'attachments/new-image.png',
           file: null,
           mime: 'image/png',
         },
@@ -75,9 +78,10 @@ describe('Storage-Helper service', function () {
       sinon.restore();
     });
     let GCSStorageHelperService = new StorageHelperService(new GCSStorageService());
-    let gcAttachments = [
+    let gcAttachments: IAttachmentOptionsExtended[] = [
       {
         name: 'test.png',
+        storagePath: 'attachments/test.png',
         file: Buffer.from('test'),
         mime: 'image/png',
       },
@@ -105,9 +109,10 @@ describe('Storage-Helper service', function () {
     });
 
     it('should handle error for file which is not found', async function () {
-      let gcAttachments2 = [
+      let gcAttachments2: IAttachmentOptionsExtended[] = [
         {
           name: 'new-image.png',
+          storagePath: 'attachments/new-image.png',
           file: null,
           mime: 'image/png',
         },
@@ -124,9 +129,10 @@ describe('Storage-Helper service', function () {
       sinon.restore();
     });
     let AzureStorageHelperService = new StorageHelperService(new AzureBlobStorageService());
-    let azureAttachments = [
+    let azureAttachments: IAttachmentOptionsExtended[] = [
       {
         name: 'test.png',
+        storagePath: 'attachments/test.png',
         file: Buffer.from('test'),
         mime: 'image/png',
       },
@@ -153,9 +159,10 @@ describe('Storage-Helper service', function () {
     });
 
     it('should handle error for file which is not found', async function () {
-      let azureAttachments2 = [
+      let azureAttachments2: IAttachmentOptionsExtended[] = [
         {
           name: 'new-image.png',
+          storagePath: 'attachments/new-image.png',
           file: null,
           mime: 'image/png',
         },
