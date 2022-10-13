@@ -11,7 +11,7 @@ export class ExecutionDetailsEntity {
   _messageId?: string;
   providerId?: string;
   transactionId: string;
-  channel: StepTypeEnum;
+  channel?: StepTypeEnum;
   detail: string;
   source: ExecutionDetailsSourceEnum;
   status: ExecutionDetailsStatusEnum;

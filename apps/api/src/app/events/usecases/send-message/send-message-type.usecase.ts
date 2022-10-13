@@ -1,5 +1,11 @@
 import { MessageEntity, MessageRepository, NotificationEntity } from '@novu/dal';
-import { LogCodeEnum, LogStatusEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  LogCodeEnum,
+  LogStatusEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { SendMessageCommand } from './send-message.command';
@@ -49,7 +55,7 @@ export abstract class SendMessageType {
         messageId: message._id,
         providerId: message.providerId,
         transactionId: command.transactionId,
-        channel: message.channel,
+        channel: StepTypeEnum[message.channel],
         detail: errorMessageFallback,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.FAILED,
