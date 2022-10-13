@@ -16,6 +16,7 @@ import {
   PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  StepTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -60,37 +61,57 @@ export class SendMessagePush extends SendMessageType {
       _id: command.subscriberId,
     });
 
-    const content = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: pushChannel.template.content as string,
-        data: {
-          subscriber,
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
-      })
-    );
+    const data = {
+      subscriber,
+      step: {
+        digest: !!command.events.length,
+        events: command.events,
+        total_count: command.events.length,
+      },
+      ...command.payload,
+    };
+    let content = '';
+    let title = '';
 
-    const title = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: pushChannel.template.title as string,
-        data: {
-          subscriber,
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
-      })
-    );
+    try {
+      content = await this.compileTemplate.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          customTemplate: pushChannel.template.content as string,
+          data,
+        })
+      );
+
+      title = await this.compileTemplate.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          customTemplate: pushChannel.template.title as string,
+          data,
+        })
+      );
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.PUSH,
+          detail: 'Message content could not be generated',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(data),
+        })
+      );
+
+      return;
+    }
+
     const integration = (
       await this.getDecryptedIntegrationsUsecase.execute(
         GetDecryptedIntegrationsCommand.create({
@@ -150,7 +171,7 @@ export class SendMessagePush extends SendMessageType {
           notificationTemplateId: notification._templateId,
           providerId: integration.providerId,
           transactionId: command.transactionId,
-          channel: ChannelTypeEnum.PUSH,
+          channel: StepTypeEnum.PUSH,
           detail: 'Subscriber does not have active channel',
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -208,16 +229,78 @@ export class SendMessagePush extends SendMessageType {
       _jobId: command.jobId,
     });
 
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        jobId: command.jobId,
+        notificationId: notification._id,
+        notificationTemplateId: notification._templateId,
+        transactionId: command.transactionId,
+        channel: StepTypeEnum.CHAT,
+        detail: 'Message created',
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        providerId,
+        messageId: message._id,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(content),
+      })
+    );
+
     try {
       const pushHandler = this.pushFactory.getHandler(integration);
-      await pushHandler.send({
+      const result = await pushHandler.send({
         target: (overrides as { deviceTokens?: string[] }).deviceTokens || target,
         title,
         content,
         payload,
         overrides,
       });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          providerId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.PUSH,
+          detail: 'Message sent',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(result),
+        })
+      );
     } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          providerId: providerId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.PUSH,
+          detail: 'Unexpected provider error',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(e),
+        })
+      );
       await this.sendErrorStatus(
         message,
         'error',

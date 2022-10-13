@@ -30,6 +30,7 @@ import {
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -59,7 +60,9 @@ export class ProcessSubscriber {
       command.organizationId,
       command.environmentId,
       subscriber._id,
-      template
+      template,
+      command.templateId,
+      notification._id
     );
 
     const steps: NotificationStepEntity[] = await this.filterSteps.execute(
@@ -177,7 +180,9 @@ export class ProcessSubscriber {
     organizationId: string,
     environmentId: string,
     subscriberId: string,
-    template: NotificationTemplateEntity
+    template: NotificationTemplateEntity,
+    transactionId: string,
+    notificationId: string
   ): Promise<NotificationStepEntity[]> {
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: organizationId,
@@ -188,7 +193,22 @@ export class ProcessSubscriber {
 
     const preference = (await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand)).preference;
 
-    // TODO: create execution details for subscriber preferrences.
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        environmentId: environmentId,
+        organizationId: organizationId,
+        subscriberId: subscriberId,
+        notificationId: notificationId,
+        notificationTemplateId: template._id,
+        transactionId: transactionId,
+        detail: `Steps filtered by subscriber preferences`,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(preference),
+      })
+    );
 
     return template.steps.filter((step) => this.actionStep(step) || this.stepPreferred(preference, step));
   }

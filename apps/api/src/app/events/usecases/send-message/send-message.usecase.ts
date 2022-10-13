@@ -50,7 +50,6 @@ export class SendMessage {
       })
     );
 
-    // TODO: create execution detail for message sent in each usecase below
     switch (command.step.template.type) {
       case StepTypeEnum.SMS:
         return await this.sendMessageSms.execute(command);

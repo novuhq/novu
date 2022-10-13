@@ -9,8 +9,8 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsNotEmpty()
   notificationId: string;
 
-  @IsNotEmpty()
-  notificationTemplateId: string;
+  @IsOptional()
+  notificationTemplateId?: string;
 
   @IsOptional()
   messageId?: string;
@@ -21,8 +21,8 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsNotEmpty()
   transactionId: string;
 
-  @IsNotEmpty()
-  channel: StepTypeEnum;
+  @IsOptional()
+  channel?: StepTypeEnum;
 
   @IsNotEmpty()
   detail: string;

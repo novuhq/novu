@@ -21,6 +21,7 @@ import {
   ChatProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  StepTypeEnum,
 } from '@novu/shared';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
@@ -58,21 +59,46 @@ export class SendMessageChat extends SendMessageType {
       _environmentId: command.environmentId,
       _id: command.subscriberId,
     });
-    const content = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: chatChannel.template.content as string,
-        data: {
-          subscriber,
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
-      })
-    );
+    let content = '';
+    const data = {
+      subscriber,
+      step: {
+        digest: !!command.events.length,
+        events: command.events,
+        total_count: command.events.length,
+      },
+      ...command.payload,
+    };
+    try {
+      content = await this.compileTemplate.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          customTemplate: chatChannel.template.content as string,
+          data,
+        })
+      );
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.CHAT,
+          detail: 'Message content could not be generated',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(data),
+        })
+      );
+
+      return;
+    }
 
     const chatChannels = subscriber.channels.filter((chan) =>
       Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
@@ -120,6 +146,27 @@ export class SendMessageChat extends SendMessageType {
       )
     )[0];
 
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        jobId: command.jobId,
+        notificationId: notification._id,
+        notificationTemplateId: notification._templateId,
+        transactionId: command.transactionId,
+        channel: StepTypeEnum.SMS,
+        detail: 'Message created',
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        providerId: integration.providerId,
+        messageId: message._id,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(content),
+      })
+    );
+
     if (chatWebhookUrl && integration) {
       await this.sendMessage(chatWebhookUrl, integration, content, message, command, notification);
 
@@ -146,9 +193,9 @@ export class SendMessageChat extends SendMessageType {
           notificationId: notification._id,
           notificationTemplateId: notification._templateId,
           messageId: message._id,
-          providerId: integration.providerId,
+          providerId: integration?.providerId,
           transactionId: command.transactionId,
-          channel: ChannelTypeEnum.CHAT,
+          channel: StepTypeEnum.CHAT,
           detail: `Subscriber does not have active chat channel Id`,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -183,6 +230,24 @@ export class SendMessageChat extends SendMessageType {
       );
     }
     if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.CHAT,
+          detail: `Subscriber does not have an active chat integration`,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
       await this.sendErrorStatus(
         message,
         'warning',
@@ -206,11 +271,53 @@ export class SendMessageChat extends SendMessageType {
     try {
       const chatHandler = this.chatFactory.getHandler(integration);
 
-      await chatHandler.send({
+      const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,
         content,
       });
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          providerId: integration.providerId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.CHAT,
+          detail: 'Message sent',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(result),
+        })
+      );
     } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          jobId: command.jobId,
+          notificationId: notification._id,
+          notificationTemplateId: notification._templateId,
+          messageId: message._id,
+          providerId: integration.providerId,
+          transactionId: command.transactionId,
+          channel: StepTypeEnum.CHAT,
+          detail: 'Unexpected provider error',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(e),
+        })
+      );
+
       await this.sendErrorStatus(
         message,
         'error',
