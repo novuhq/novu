@@ -1,4 +1,8 @@
-import { CheckIntegrationResponseEnum, IEmailOptions } from '@novu/stateless';
+import {
+  CheckIntegrationResponseEnum,
+  IEmailOptions,
+  ISendMessageSuccessResponse,
+} from '@novu/stateless';
 import { IEmailJsConfig } from './emailjs.config';
 import { EmailJsProvider } from './emailjs.provider';
 
@@ -10,7 +14,7 @@ const mockNovuMessage = {
   to: ['test@test1.com', 'test@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
-  text: 'Mail Cotent',
+  text: 'Mail Content',
   from: 'test@test.com',
   attachments: [
     { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
@@ -22,8 +26,10 @@ test('should trigger emailjs with expected parameters', async () => {
   const spy = jest
     .spyOn(provider, 'sendMessage')
     .mockImplementation(async () => {
-      // eslint-disanyxt-line @typescript-eslint/no-explicit-any
-      return {} as any;
+      return {
+        id: 'message-id',
+        date: '12/01/2020',
+      } as ISendMessageSuccessResponse;
     });
 
   const response = await provider.sendMessage(mockNovuMessage);
@@ -43,6 +49,9 @@ test('should trigger emailjs with expected parameters', async () => {
       },
     ],
   });
+  expect(response).not.toBeNull();
+  expect(response.date).toBe('12/01/2020');
+  expect(response.id).toBe('message-id');
 });
 
 test('should trigger emailjs checkIntegration correctly', async () => {
