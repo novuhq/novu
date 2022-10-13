@@ -32,7 +32,7 @@ const provider = {
   logoFileName: { light: 'examplelight.svg', dark: 'exampledark.svg' },
 };
 
-it('light theme component', () => {
+it('should change the image based on the colorScheme (light) selected by user', () => {
   const colorScheme = 'light';
 
   cy.mount(
@@ -49,7 +49,7 @@ it('light theme component', () => {
     .should('have.attr', 'alt', provider.displayName);
 });
 
-it('dark theme component', () => {
+it('should change the image based on the colorScheme (dark) selected by user', () => {
   const colorScheme = 'dark';
 
   cy.mount(
@@ -66,7 +66,7 @@ it('dark theme component', () => {
     .should('have.attr', 'alt', provider.displayName);
 });
 
-it('connected component', () => {
+it('should show a connected state when the provider is configured', () => {
   const onClickSpy = cy.spy().as('clickSpy');
   const connectedProvider = { ...provider, connected: true };
 
@@ -86,7 +86,7 @@ it('connected component', () => {
   cy.getByTestId('card-status-bar-active').should('exist');
 });
 
-it('not connected component', () => {
+it('should show the default state when not connected', () => {
   const onClickSpy = cy.spy().as('clickSpy');
 
   cy.mount(
@@ -105,7 +105,7 @@ it('not connected component', () => {
   cy.getByTestId('card-status-bar-active').should('not.be.exist');
 });
 
-it('coming soon component', () => {
+it('should display a coming soon banner when applied', () => {
   const onClickSpy = cy.spy().as('clickSpy');
   const comingSoonProvider = { ...provider, comingSoon: true };
   const colorScheme = 'light';
@@ -126,7 +126,7 @@ it('coming soon component', () => {
   cy.getByTestId('card-status-bar-active').should('not.be.exist');
 });
 
-it('beta version connected component', () => {
+it('should display the beta version banner when in beta', () => {
   const betaVersionProvider = { ...provider, connected: true, betaVersion: true };
 
   cy.mount(
