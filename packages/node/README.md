@@ -78,11 +78,12 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a single to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
 #### 💌 Email
 
 - [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
+- [x] [Netcore](https://github.com/novuhq/novu/tree/main/providers/netcore)
 - [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
 - [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
 - [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
@@ -98,23 +99,26 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
 - [x] [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
 - [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
-- [x] [Nexmo (Vonage)](https://github.com/novuhq/novu/tree/main/providers/nexmo)
+- [x] [Nexmo - Vonage](https://github.com/novuhq/novu/tree/main/providers/nexmo)
 - [x] [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
 - [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
+- [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push
+#### 📱 Push 
 
+- [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
+- [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
+- [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
-- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 
-#### 👇 Chat
+#### 👇 Chat 
 
 - [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
-- [ ] MS Teams
 - [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
+- [ ] MS Teams
 - [ ] Mattermost
 
 #### 📱 In-App
