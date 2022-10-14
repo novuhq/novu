@@ -2,7 +2,7 @@ import { ITranslationEntry } from '../lang';
 
 export const AF: ITranslationEntry = {
   translations: {
-    notifications: 'Kennisgewing',
+    notifications: 'Kennisgewings',
     markAllAsRead: 'Merk alles as gelees',
     poweredBy: 'Aangedryf deur',
     settings: 'Instellings',
