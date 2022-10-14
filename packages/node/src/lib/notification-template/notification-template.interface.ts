@@ -4,21 +4,19 @@ import {
 } from 'libs/shared/dist';
 
 export interface INotificationTemplates {
-  create(
-    name: string,
-    notificationGroupId: string,
-    data: INotificationTemplatePayload
-  );
-  update(templateId: string, name: string, data: INotificationTemplatePayload);
+  create(data: INotificationTemplatePayload);
+  update(templateId: string, data: INotificationTemplatePayload);
   delete(templateId: string);
   getOne(templateId: string);
   updateStatus(templateId: string, active: boolean);
 }
 
 export interface INotificationTemplatePayload {
+  name: string;
+  notificationGroupId: string;
   tags?: string[];
   description?: string;
-  steps: INotificationTemplateStep[];
+  steps?: INotificationTemplateStep[];
   active?: boolean;
   draft?: boolean;
   critical?: boolean;

@@ -36,34 +36,20 @@ export class NotificationTemplates
   }
 
   /**
-   * @param {string} name - Name of the notification-template to create
-   * @param {string} notificationGroupId - Id of the group that the notification-template belongs
    * @param {INotificationTemplatePayload} data - All the additional parameters to create a notification-template
    */
-  async create(
-    name: string,
-    notificationGroupId: string,
-    data?: INotificationTemplatePayload
-  ) {
+  async create(data: INotificationTemplatePayload) {
     return await this.http.post(`/notification-templates`, {
-      name,
-      notificationGroupId,
       ...data,
     });
   }
 
   /**
    * @param {string} templateId - templateId of the notification-template to update
-   * @param {string} name - Name of the notification-template to update
-   * @param {INotificationTemplatePayload} data - All the additional parameters to create a notification-template
+   * @param {INotificationTemplatePayload} data - All the additional parameters to update a notification-template
    */
-  async update(
-    templateId: string,
-    name: string,
-    data?: INotificationTemplatePayload
-  ) {
+  async update(templateId: string, data: INotificationTemplatePayload) {
     return await this.http.put(`/notification-templates/${templateId}`, {
-      name,
       ...data,
     });
   }
