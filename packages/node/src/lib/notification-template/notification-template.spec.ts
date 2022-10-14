@@ -29,30 +29,33 @@ describe('test use of novus node package - NotificationTemplates class', () => {
     });
   });
 
-  test('should apply one change', async () => {
+  test('should create a template wth the given parameters', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.notificationTemplates.create('test1', 'NOTIFGROUPID');
+    await novu.notificationTemplates.create({
+      name: 'test1',
+      notificationGroupId: 'NOTIFGROUPID',
+      steps: [],
+    });
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/notification-templates', {
       name: 'test1',
       notificationGroupId: 'NOTIFGROUPID',
+      steps: [],
     });
   });
 
   test('should update the given template', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.notificationTemplates.update(
-      'TEMPLATE_ID',
-      'exactly like suggested',
-      {
-        tags: ['mb', 'mickey'],
-        description: 'new working package',
-        steps: [],
-      }
-    );
+    await novu.notificationTemplates.update('TEMPLATE_ID', {
+      name: 'exactly like suggested',
+      tags: ['mb', 'mickey'],
+      description: 'new working package',
+      notificationGroupId: 'NOTIFGROUPID',
+      steps: [],
+    });
 
     expect(mockedAxios.put).toHaveBeenCalled();
     expect(mockedAxios.put).toHaveBeenCalledWith(
@@ -62,6 +65,7 @@ describe('test use of novus node package - NotificationTemplates class', () => {
         tags: ['mb', 'mickey'],
         description: 'new working package',
         steps: [],
+        notificationGroupId: 'NOTIFGROUPID',
       }
     );
   });
