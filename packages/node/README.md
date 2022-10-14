@@ -1,15 +1,18 @@
 <p align="center">
-  <a href="https://discord.gg/9wcGSf22PM">
+  <a href="https://discord.novu.co">
     <img src="https://user-images.githubusercontent.com/8877285/139603641-66966234-84f4-42aa-9c31-9d296fab7ba1.png">
   </a>
 <p align="center">Read <a href="https://github.com/novuhq/novu/discussions/70">here</a> our plans for the upcoming weeks.</p>
 
 </p>
-<p align="center">
+<div align="center">
   <a href="https://novu.co">
-    <img width="200" src="https://uploads-ssl.webflow.com/6130b4d29bb0ab09e14ae9ee/6130e6931f755df302203fcc_SideLogo%20-%20BLack-p-800.png">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
+      <img src="https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png" width="280" alt="Logo"/>
+    </picture>
   </a>
-</p>
+</div>
 <h1 align="center">Notification management simplified.</h1>
 
 <div align="center">
@@ -25,7 +28,7 @@ The ultimate library for managing multi-channel notifications with a single API.
     ·
     <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
     ·
-    <a href="https://blog.novu.co/">Read our blog</a>
+    <a href="https://novu.co/blog">Read our blog</a>
   </p>
   
 ## ⭐️ Why
@@ -86,7 +89,8 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
 - [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
-- [ ] SendinBlue
+- [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
+- [x] [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
 - [ ] SparkPost
 
 #### 📞 SMS
@@ -95,24 +99,27 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
 - [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [x] [Nexmo (Vonage)](https://github.com/novuhq/novu/tree/main/providers/nexmo)
+- [x] [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
+- [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
+- [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push (Coming Soon...)
+#### 📱 Push
 
 - [ ] Pushwoosh
-- [ ] SNS
+- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 
-#### 👇 Chat (Coming Soon...)
+#### 👇 Chat
 
-- [ ] Slack
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [ ] MS Teams
-- [ ] Discord
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 - [ ] Mattermost
 
-#### 📱 In-App (Coming Soon...)
+#### 📱 In-App
 
-- [ ] Novu
+- [x] [Novu](https://docs.novu.co/notification-center/getting-started)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)

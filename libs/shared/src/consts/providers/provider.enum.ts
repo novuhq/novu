@@ -43,6 +43,7 @@ export enum SmsProviderIdEnum {
   Telnyx = 'telnyx',
   Twilio = 'twilio',
   Gupshup = 'gupshup',
+  Firetext = 'firetext',
 }
 
 export enum ChatProviderIdEnum {
