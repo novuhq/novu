@@ -55,6 +55,11 @@ import { TH } from './languages/th';
 import { HE } from './languages/he';
 import { KM } from './languages/km';
 import { GA } from './languages/ga';
+import { HY } from './languages/hy';
+import { KK } from './languages/kk';
+import { TL } from './languages/tl';
+import { EU } from './languages/eu';
+import { AF } from './languages/af';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -126,6 +131,11 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   he: HE,
   km: KM,
   ga: GA,
+  hy: HY,
+  kk: KK,
+  tl: TL,
+  eu: EU,
+  af: AF,
 };
 
 /**
@@ -197,4 +207,6 @@ export type I18NLanguage =
   | 'th'
   | 'he'
   | 'km'
-  | 'ga';
+  | 'tl'
+  | 'af'
+  | 'eu';
