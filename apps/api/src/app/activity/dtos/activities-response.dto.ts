@@ -1,13 +1,3 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { MessageResponseDto } from '../../widgets/dtos/message-response.dto';
+import { MessagesResponseDto } from '../../widgets/dtos/message-response.dto';
 
-export class ActivitiesResponseDto {
-  @ApiProperty()
-  totalCount: number;
-  @ApiProperty()
-  data: MessageResponseDto[];
-  @ApiProperty()
-  pageSize: number;
-  @ApiProperty()
-  page: number;
-}
+export class ActivitiesResponseDto extends MessagesResponseDto {}

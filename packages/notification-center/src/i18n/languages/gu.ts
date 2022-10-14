@@ -5,6 +5,7 @@ export const GU: ITranslationEntry = {
     notifications: 'સૂચના',
     markAllAsRead: 'બધાને વાંચેલા તરીકે ચિહ્નિત કરો',
     poweredBy: 'દ્વારા સંચાલિત',
+    settings: 'સેટિંગ્સ',
   },
   lang: 'gu',
 };
