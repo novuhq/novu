@@ -75,6 +75,8 @@ export enum EmailEventStatusEnum {
   SPAM = 'spam',
   UNSUBSCRIBED = 'unsubscribed',
   SENT = 'sent',
+  SPAM_COMPLAINED = 'spam complained',
+  SUBSCRIPTION_CHANGED = 'subscription changed',
 }
 
 export enum SmsEventStatusEnum {

@@ -8,6 +8,7 @@ import {
   FeedRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangesResponseDto } from '../../dtos/change-response.dto';
 import { GetChangesCommand } from './get-changes.command';
 
 interface IViewEntity {
@@ -32,14 +33,16 @@ export class GetChanges {
     private feedRepository: FeedRepository
   ) {}
 
-  async execute(command: GetChangesCommand): Promise<IChangeViewEntity[]> {
-    const changes: ChangeEntity[] = await this.changeRepository.getList(
+  async execute(command: GetChangesCommand): Promise<ChangesResponseDto> {
+    const { data: changeItems, totalCount } = await this.changeRepository.getList(
       command.organizationId,
       command.environmentId,
-      command.promoted
+      command.promoted,
+      command.page * command.limit,
+      command.limit
     );
 
-    return await changes.reduce(async (prev, change) => {
+    const changes = await changeItems.reduce(async (prev, change) => {
       const list = await prev;
       let item: Record<string, unknown> | IViewEntity = {};
       if (change.type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE) {
@@ -62,6 +65,8 @@ export class GetChanges {
 
       return list;
     }, Promise.resolve([]));
+
+    return { data: changes, totalCount: totalCount, page: command.page, pageSize: command.limit };
   }
 
   private async getTemplateDataForMessageTemplate(

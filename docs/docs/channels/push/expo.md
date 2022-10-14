@@ -27,7 +27,7 @@ novu.trigger('event-name', {
   </TabItem>
 </Tabs>
 
-Before triggering the notification to a subscriber(user) with push as a step in workflow, make sure you have added subscriber(user) device token as follows:-
+Before triggering the notification to a subscriber(user) with push as a step in the workflow, make sure you have added the subscriber's device token as follows:-
 
 ```typescript
 import { Novu, PushProviderIdEnum } from '@novu/node';
