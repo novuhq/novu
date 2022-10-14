@@ -953,7 +953,7 @@ importers:
       sass-loader: 13.0.0_sass@1.52.3+webpack@5.74.0
       stylelint: 14.9.1
       stylelint-config-recess-order: 3.0.0_stylelint@14.9.1
-      stylelint-config-recommended-scss: 6.0.0_uyk3cwxn3favstz4untq233szu
+      stylelint-config-recommended-scss: 6.0.0_tbxkegwovyw2ffmso5mcdjcnyu
       stylelint-config-standard: 25.0.0_stylelint@14.9.1
       stylelint-order: 5.0.0_stylelint@14.9.1
       stylelint-scss: 4.2.0_stylelint@14.9.1
