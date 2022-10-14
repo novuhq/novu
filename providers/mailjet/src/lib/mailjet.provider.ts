@@ -5,6 +5,8 @@ import {
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
+  IEmailEventBody,
+  EmailEventStatusEnum,
 } from '@novu/stateless';
 import Client, { Email } from 'node-mailjet';
 import { MailjetResponse } from './mailjet-response.interface';
@@ -71,5 +73,60 @@ export class MailjetEmailProvider implements IEmailProvider {
       message: 'Integrated successfully!',
       code: CheckIntegrationResponseEnum.SUCCESS,
     };
+  }
+
+  getMessageId(body: any | any[]): string[] {
+    if (Array.isArray(body)) {
+      return body.map((item) => item.MessageID);
+    }
+
+    return [body.MessageID];
+  }
+
+  parseEventBody(
+    body: any | any[],
+    identifier: string
+  ): IEmailEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item.MessageID === identifier);
+    }
+
+    if (!body) {
+      return undefined;
+    }
+
+    const status = this.getStatus(body.event);
+
+    if (status === undefined) {
+      return undefined;
+    }
+
+    return {
+      status: status,
+      date: new Date().toISOString(),
+      externalId: body.MessageID,
+      attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
+      response: body.response ?? '',
+      row: body,
+    };
+  }
+
+  private getStatus(event: string): EmailEventStatusEnum | undefined {
+    switch (event) {
+      case 'open':
+        return EmailEventStatusEnum.OPENED;
+      case 'bounce':
+        return EmailEventStatusEnum.BOUNCED;
+      case 'click':
+        return EmailEventStatusEnum.CLICKED;
+      case 'sent':
+        return EmailEventStatusEnum.SENT;
+      case 'blocked':
+        return EmailEventStatusEnum.BLOCKED;
+      case 'spam':
+        return EmailEventStatusEnum.SPAM;
+      case 'unsub':
+        return EmailEventStatusEnum.UNSUBSCRIBED;
+    }
   }
 }
