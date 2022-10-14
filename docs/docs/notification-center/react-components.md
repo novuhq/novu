@@ -170,6 +170,7 @@ The `i18n` prop can accept 2 different types of values
       <summary>Supported languages</summary>
       <div>
         <ul>
+          <li><code>af</code> (Afrikaans)</li>
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
           <li><code>az</code> (Azerbaijani)</li>
