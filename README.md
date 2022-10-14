@@ -113,7 +113,7 @@ await novu.trigger('<TRIGGER_NAME>',
 
 ## Embeddable Notification Center
 
-Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an IFrame embed if you are not using React.
+Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
@@ -125,7 +125,7 @@ Using the Novu API and admin panel you can easily add real-time notification cen
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a convenient interface.
+Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
 #### 💌 Email
 
@@ -180,7 +180,7 @@ Novu provides a single API to manage providers across multiple channels with a c
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working with this project,join our 
+We are more than happy to help you. If you are getting any errors or facing problems while working with the project, then join our 
 [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
 ## 📋 Read Our Code Of Conduct 
