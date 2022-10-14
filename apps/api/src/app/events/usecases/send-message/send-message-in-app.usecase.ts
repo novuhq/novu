@@ -8,7 +8,16 @@ import {
   MessageEntity,
   IEmailBlock,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, IMessageButton } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  LogCodeEnum,
+  LogStatusEnum,
+  IMessageButton,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  InAppProviderIdEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -17,6 +26,8 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -25,10 +36,11 @@ export class SendMessageInApp extends SendMessageType {
     protected messageRepository: MessageRepository,
     private queueService: QueueService,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -41,13 +53,33 @@ export class SendMessageInApp extends SendMessageType {
       _id: command.subscriberId,
     });
     const inAppChannel: NotificationStepEntity = command.step;
+    let content = '';
 
-    const content = await this.compileInAppTemplate(
-      inAppChannel.template.content,
-      command.payload,
-      subscriber,
-      command
-    );
+    try {
+      content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: 'Message content could not be generated',
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            subscriber,
+            step: {
+              digest: !!command.events.length,
+              events: command.events,
+              total_count: command.events.length,
+            },
+            ...command.payload,
+          }),
+        })
+      );
+
+      return;
+    }
 
     if (inAppChannel.template.cta?.data?.url) {
       inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
@@ -138,6 +170,19 @@ export class SendMessageInApp extends SendMessageType {
       command.subscriberId,
       ChannelTypeEnum.IN_APP,
       { read: false }
+    );
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        messageId: message._id,
+        providerId: InAppProviderIdEnum.Novu,
+        detail: 'In App message created',
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+      })
     );
 
     await this.createLogUsecase.execute(

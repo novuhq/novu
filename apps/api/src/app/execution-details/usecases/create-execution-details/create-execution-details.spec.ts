@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { ExecutionDetailsRepository } from '@novu/dal';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 import { CreateExecutionDetails } from './create-execution-details.usecase';
@@ -37,7 +37,7 @@ describe('Create Execution Details', function () {
       messageId: ExecutionDetailsRepository.createObjectId(),
       providerId: 'test-provider-id',
       transactionId: 'test-transaction-id',
-      channel: ChannelTypeEnum.SMS,
+      channel: StepTypeEnum.SMS,
       detail: 'test',
       source: ExecutionDetailsSourceEnum.WEBHOOK,
       status: ExecutionDetailsStatusEnum.SUCCESS,
