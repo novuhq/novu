@@ -61,7 +61,6 @@ import { TL } from './languages/tl';
 import { EU } from './languages/eu';
 import { AF } from './languages/af';
 
-
 export interface ITranslationContent {
   readonly notifications: string;
   readonly markAllAsRead: string;
