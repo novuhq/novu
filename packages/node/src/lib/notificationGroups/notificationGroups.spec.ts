@@ -25,10 +25,10 @@ describe('test use of novus node package - NotificationGroups class', () => {
     expect(mockedAxios.get).toHaveBeenCalledWith('/notification-groups');
   });
 
-  test('should update notification groups correctly', async () => {
+  test('should create notification groups correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.notificationGroups.post({ name: 'test' });
+    await novu.notificationGroups.create('test');
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/notification-groups', {

@@ -1,8 +1,5 @@
 import { WithHttp } from '../novu.interface';
-import {
-  INotificationGroups,
-  INotificationGroupsPayloadOptions,
-} from './notificationGroups.interface';
+import { INotificationGroups } from './notificationGroups.interface';
 
 export class NotificationGroups
   extends WithHttp
@@ -12,7 +9,7 @@ export class NotificationGroups
     return await this.http.get(`/notification-groups`);
   }
 
-  async post(data: INotificationGroupsPayloadOptions) {
-    return await this.http.post(`/notification-groups`, data);
+  async create(name: string) {
+    return await this.http.post(`/notification-groups`, { name });
   }
 }
