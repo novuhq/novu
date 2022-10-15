@@ -143,7 +143,7 @@ export class MandrillProvider implements IEmailProvider {
       case MandrillStatusEnum.SENT:
         return EmailEventStatusEnum.SENT;
       case MandrillStatusEnum.SPAM:
-        return EmailEventStatusEnum.SPAM_COMPLAINED;
+        return EmailEventStatusEnum.SPAM;
       case MandrillStatusEnum.REJECTED:
         return EmailEventStatusEnum.REJECTED;
       case MandrillStatusEnum.SOFT_BOUNCED:
