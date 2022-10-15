@@ -32,34 +32,34 @@ The ultimate service for managing multi-channel notifications with a single API.
     <br />
 
   <br/>
-    <a href="https://github.com/novuhq/novu/issues">Report Bug</a>
+    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
     ·
-    <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
+    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
     ·
-  <a href="https://discord.gg/8KpBEjehEV">Join Our Discord</a>
+  <a href="https://discord.novu.co">Join Our Discord</a>
     ·
     <a href="https://github.com/orgs/novuhq/projects/2">Roadmap</a>
     ·
     <a href="https://twitter.com/novuhq">Twitter</a>
   </p>
 
-## ⭐️ Why
+## ⭐️ Why Novu?
 
-Building a notification system is hard; at first it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
+Building a notification system is hard, at first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
 - 🌈 Single API for all messaging providers (Email, SMS, Push, Chat)
-- 💅 Easily manage notification over multiple channels
+- 💅 Easily manage notifications over multiple channels
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
-- 🛡 Debug and analyze multi channel messages in a single dashboard
+- 🛡 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
 
-## 📚 Table of Contents
+## 📚 Table Of Contents
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
 - [Embeddable notification center](https://github.com/novuhq/novu#embeddable-notification-center)
 -  [Providers](https://github.com/novuhq/novu#providers)
@@ -76,7 +76,7 @@ Building a notification system is hard; at first it seems like just sending an e
 
 ## 🚀 Getting Started
 
-We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? here is how:
+We are excited to launch the complete Novu API and admin panel. Want to give it a test before the official release? Here is how:
 
 ```
 npx novu init
@@ -111,7 +111,7 @@ await novu.trigger('<TRIGGER_NAME>',
 );
 ```
 
-## Embeddable notification center
+## Embeddable Notification Center
 
 Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
 
@@ -130,6 +130,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### 💌 Email
 
 - [x] [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
+- [x] [Netcore](https://github.com/novuhq/novu/tree/main/providers/netcore)
 - [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
 - [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
 - [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
@@ -149,20 +150,21 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
 - [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
+- [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
 - [ ] Bandwidth
 - [ ] RingCentral
 
 #### 📱 Push 
 
-- [x] FCM
-- [x] Expo
+- [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
+- [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
+- [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
-- [ ] SNS
 
 #### 👇 Chat 
 
-- [x] Slack
-- [x] Discord
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 - [ ] MS Teams
 - [ ] Mattermost
 
@@ -176,11 +178,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] PagerDuty
 
 
-## 💻  Need Help?
+## 💻 Need Help?
 
-We are more than happy to help you. If you are getting some errors or problems while working with the project, or want to discuss something related to the project.
+We are more than happy to help you. If you are getting any errors or facing problems while working with the project, then join our 
+[Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
-Just <a href="https://discord.gg/novu">Join Our Discord</a> server and ask for help.
+## 📋 Read Our Code Of Conduct 
+
+Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) throroughly to understand our standards (that you are required to adhere to) regarding how to engage in the community.
 
 ## 🔗 Links
 
@@ -192,7 +197,7 @@ Just <a href="https://discord.gg/novu">Join Our Discord</a> server and ask for h
 
 Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
 
-## 💪 Thanks to all Contributors
+## 💪 Thanks To All Contributors
 
 Thanks a lot for spending your time helping Novu grow. Thanks a lot! Keep rocking 🥂
 
