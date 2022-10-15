@@ -5,3 +5,4 @@ export { ChatProviderIdEnum, PushProviderIdEnum };
 export * from './lib/novu';
 export * from './lib/subscribers/subscriber.interface';
 export * from './lib/events/events.interface';
+export * from './lib/notificationGroups/notificationGroups.interface';
