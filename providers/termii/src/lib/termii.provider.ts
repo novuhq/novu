@@ -3,6 +3,8 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
+  SmsEventStatusEnum,
+  ISMSEventBody,
 } from '@novu/stateless';
 import {
   SmsParams,
@@ -57,5 +59,62 @@ export class TermiiSmsProvider implements ISmsProvider {
       id: body.message_id,
       date: new Date().toISOString(),
     };
+  }
+  getMessageId(body: any | any[]): string[] {
+    if (Array.isArray(body)) {
+      return body.map((item) => item.message_id);
+    }
+
+    return [body.message_id];
+  }
+
+  parseEventBody(
+    body: any | any[],
+    identifier: string
+  ): ISMSEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item.message_id === identifier);
+    }
+
+    if (!body) {
+      return undefined;
+    }
+
+    const status = this.getStatus(body.MessageStatus);
+
+    if (status === undefined) {
+      return undefined;
+    }
+
+    return {
+      status: status,
+      date: new Date().toISOString(),
+      externalId: body.message_id,
+      attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
+      response: body.response ? body.response : '',
+      row: body,
+    };
+  }
+
+
+  private getStatus(event: string): SmsEventStatusEnum | undefined {
+    switch (event) {
+      case 'DND Active on Phone Number':
+        return SmsEventStatusEnum.DND_ACTIVE;
+      case 'Expired':
+        return SmsEventStatusEnum.EXPIRED;
+      case 'Message sent':
+        return SmsEventStatusEnum.SENT;
+      case 'Message failed':
+        return SmsEventStatusEnum.FAILED;
+      case 'Delivered':
+        return SmsEventStatusEnum.DELIVERED;
+      case 'Disconnected':
+        return SmsEventStatusEnum.DISCONNECTED;
+      case 'Rejected':
+        return SmsEventStatusEnum.REJECTED;
+      case 'Received':
+        return SmsEventStatusEnum.RECEIVED;
+    }
   }
 }
