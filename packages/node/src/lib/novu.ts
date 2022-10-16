@@ -4,7 +4,7 @@ import { EventEmitter } from 'events';
 import { Changes } from './changes/changes';
 import { INovuConfiguration } from './novu.interface';
 import { Events } from './events/events';
-import { NotificationGroups } from './notificationGroups/notificationGroups';
+import { NotificationGroups } from './notification-groups/notification-groups';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
