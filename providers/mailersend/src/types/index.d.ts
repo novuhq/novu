@@ -17,6 +17,13 @@
  * something();
  * ```
  */
+
+type UnfetchResponse<T = unknown, K = unknown> = {
+  ok: boolean;
+  status: number;
+  json: () => Promise<T | K>;
+};
+
 declare module 'mailersend' {
   export default class MailerSend {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,11 +33,10 @@ declare module 'mailersend' {
     request(endpoint?: string, options?: Record<string, unknown>): any;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    send(emailParams: EmailParams): any;
+    send<T = unknown, K = ErrorResponse>(
+      emailParams: EmailParams
+    ): Promise<UnfetchResponse<T, K>>;
   }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  export function send(emailParams: any): any;
 
   export class EmailParams {
     constructor(config?: Record<string, unknown>);
@@ -79,3 +85,8 @@ declare module 'mailersend' {
     name?: string;
   }
 }
+
+export type ErrorResponse = {
+  message: string;
+  errors: { [key: string]: string[] };
+};
