@@ -46,7 +46,7 @@ describe('Testing BrandingForm', () => {
       </QueryClientProvider>
     );
     cy.get('form').should('exist');
-    cy.get('[data-mantine-overlay]').should('exist');
+    cy.get('.mantine-LoadingOverlay-root').should('exist');
   });
   it('should render with organization', () => {
     cy.mount(
@@ -57,8 +57,8 @@ describe('Testing BrandingForm', () => {
       </QueryClientProvider>
     );
     cy.get('form').should('exist');
-    cy.get('[data-mantine-overlay]').should('not.exist');
-    cy.get('data-test-id="logo-image-wrapper"').should('exist');
+    cy.get('.mantine-LoadingOverlay-root').should('not.exist');
+    cy.get('[data-test-id="logo-image-wrapper"]').should('exist');
     cy.get('[data-test-id="font-family-selector"]').should('exist');
     cy.get('[data-test-id="color-picker"]').should('exist');
     cy.get('[data-test-id="upload-image-button"]').should('exist');
@@ -72,14 +72,14 @@ describe('Testing BrandingForm', () => {
       </QueryClientProvider>
     );
     cy.get('form').should('exist');
-    cy.get('[data-mantine-overlay]').should('exist');
-    cy.get('data-test-id="logo-image-wrapper"').should('exist');
+    cy.get('.mantine-LoadingOverlay-root').should('exist');
+    cy.get('[data-test-id="logo-image-wrapper"]').should('exist');
     cy.get('[data-test-id="font-family-selector"]').should('exist');
     cy.get('[data-test-id="color-picker"]').should('exist');
     cy.get('[data-test-id="upload-image-button"]').should('exist');
   });
   it('default values should be correct', () => {
-    cy.get('data-test-id="logo-image-wrapper"').should('not.exist');
+    cy.get('[data-test-id="logo-image-wrapper"]').should('not.exist');
     cy.get('[data-test-id="upload-image-button"]').should('exist');
     cy.get('[data-test-id="font-family-selector"]').should('have.value', 'Roboto');
     cy.get('[data-test-id="color-picker"]').should('have.value', '#f57373');
