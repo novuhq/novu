@@ -82,6 +82,6 @@ describe('Testing BrandingForm', () => {
     cy.get('[data-test-id="logo-image-wrapper"]').should('not.exist');
     cy.get('[data-test-id="upload-image-button"]').should('exist');
     cy.get('[data-test-id="font-family-selector"]').should('have.value', 'Roboto');
-    cy.get('[data-test-id="color-picker"]').should('have.value', '#f57373');
+    cy.get('[data-test-id="color-picker"]').should('have.value', '#f47373');
   });
 });
