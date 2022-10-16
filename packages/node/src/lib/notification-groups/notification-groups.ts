@@ -1,5 +1,5 @@
 import { WithHttp } from '../novu.interface';
-import { INotificationGroups } from './notificationGroups.interface';
+import { INotificationGroups } from './notification-groups.interface';
 
 export class NotificationGroups
   extends WithHttp
