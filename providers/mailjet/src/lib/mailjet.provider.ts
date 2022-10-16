@@ -34,7 +34,42 @@ export class MailjetEmailProvider implements IEmailProvider {
     const send = this.mailjetClient.post('send', {
       version: MAILJET_API_VERSION,
     });
-    const requestObject = {
+    const requestObject = this.createMailData(options);
+
+    const response = (await send.request(requestObject)) as MailjetResponse;
+
+    return {
+      id: response.response.header['x-mj-request-guid'],
+      date: response.response.header.date,
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    const send = this.mailjetClient.post('send', {
+      version: MAILJET_API_VERSION,
+    });
+    const requestObject = this.createMailData(options);
+    try {
+      await send.request(requestObject);
+
+      return {
+        success: true,
+        message: 'Integrated successfully!',
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+        code: CheckIntegrationResponseEnum.BAD_CREDENTIALS,
+      };
+    }
+  }
+
+  private createMailData(options: IEmailOptions) {
+    return {
       Messages: [
         {
           From: {
@@ -55,23 +90,6 @@ export class MailjetEmailProvider implements IEmailProvider {
           })),
         },
       ],
-    };
-
-    const response = (await send.request(requestObject)) as MailjetResponse;
-
-    return {
-      id: response.response.header['x-mj-request-guid'],
-      date: response.response.header.date,
-    };
-  }
-
-  async checkIntegration(
-    options: IEmailOptions
-  ): Promise<ICheckIntegrationResponse> {
-    return {
-      success: true,
-      message: 'Integrated successfully!',
-      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 
