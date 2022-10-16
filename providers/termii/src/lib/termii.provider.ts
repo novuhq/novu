@@ -80,7 +80,7 @@ export class TermiiSmsProvider implements ISmsProvider {
       return undefined;
     }
 
-    const status = this.getStatus(body.MessageStatus);
+    const status = this.getStatus(body.status);
 
     if (status === undefined) {
       return undefined;
