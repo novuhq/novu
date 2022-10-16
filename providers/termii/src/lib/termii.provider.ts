@@ -96,7 +96,6 @@ export class TermiiSmsProvider implements ISmsProvider {
     };
   }
 
-
   private getStatus(event: string): SmsEventStatusEnum | undefined {
     switch (event) {
       case 'DND Active on Phone Number':
