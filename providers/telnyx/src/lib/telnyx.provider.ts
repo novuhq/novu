@@ -3,6 +3,8 @@ import {
   ISendMessageSuccessResponse,
   ISmsOptions,
   ISmsProvider,
+  SmsEventStatusEnum,
+  ISMSEventBody,
 } from '@novu/stateless';
 
 import Telnyx from 'telnyx';
@@ -38,5 +40,61 @@ export class TelnyxSmsProvider implements ISmsProvider {
       id: telynxResponse.data.id,
       date: telynxResponse.data.received_at.toString(),
     };
+  }
+
+  getMessageId(body: any | any[]): string[] {
+    if (Array.isArray(body)) {
+      return body.map((item) => item.data.id);
+    }
+
+    return [body.data.id];
+  }
+
+  parseEventBody(
+    body: any | any[],
+    identifier: string
+  ): ISMSEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item.data.id === identifier);
+    }
+
+    if (!body) {
+      return undefined;
+    }
+
+    const status = this.getStatus(body.data.payload.to[0].status);
+
+    if (status === undefined) {
+      return undefined;
+    }
+
+    return {
+      status: status,
+      date: new Date().toISOString(),
+      externalId: body.data.id,
+      attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
+      response: body.response ? body.response : '',
+      row: body,
+    };
+  }
+
+  private getStatus(event: string): SmsEventStatusEnum | undefined {
+    switch (event) {
+      case 'queued':
+        return SmsEventStatusEnum.QUEUED;
+      case 'sending':
+        return SmsEventStatusEnum.SENDING;
+      case 'sent':
+        return SmsEventStatusEnum.SENT;
+      case 'sending_failed':
+      case 'delivery_failed':
+        return SmsEventStatusEnum.FAILED;
+      case 'delivered':
+        return SmsEventStatusEnum.DELIVERED;
+      case 'delivery_unconfirmed':
+        return SmsEventStatusEnum.DELIVERY_UNCONFIRMED;
+      case 'received':
+        return SmsEventStatusEnum.RECEIVED;
+    }
   }
 }
