@@ -28,6 +28,11 @@ const notificationSchema = new Schema(
       type: Schema.Types.String,
       index: true,
     },
+    channels: [
+      {
+        type: Schema.Types.String,
+      },
+    ],
   },
   schemaOptions
 );

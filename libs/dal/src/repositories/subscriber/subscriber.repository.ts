@@ -19,8 +19,8 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
     });
   }
 
-  async searchSubscriber(environmentId: string, search: string) {
-    return await this.findOne({
+  async searchSubscribers(environmentId: string, search: string, emails: string[] = []) {
+    return await this.find({
       _environmentId: environmentId,
       $or: [
         {
@@ -31,6 +31,11 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
         },
         {
           subscriberId: search,
+        },
+        {
+          email: {
+            $in: emails,
+          },
         },
       ],
     });

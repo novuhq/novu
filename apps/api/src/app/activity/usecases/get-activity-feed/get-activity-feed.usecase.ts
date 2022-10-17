@@ -13,17 +13,17 @@ export class GetActivityFeed {
   async execute(command: GetActivityFeedCommand): Promise<any> {
     const LIMIT = 10;
 
-    const subscriberIds = [];
-    if (command.emails) {
-      const ids = await this.subscribersRepository.find(
-        {
-          email: {
-            $in: command.emails,
-          },
-        },
-        '_id'
+    let subscriberIds: string[] = [];
+
+    if (command.search || command.emails) {
+      const foundSubscribers = await this.subscribersRepository.searchSubscribers(
+        command.environmentId,
+        command.search,
+        command.emails
       );
-      subscriberIds.push(...ids);
+
+      subscriberIds = foundSubscribers.map((subscriber) => subscriber._id);
+
       if (subscriberIds.length === 0) {
         return {
           page: 0,
@@ -32,22 +32,6 @@ export class GetActivityFeed {
           data: [],
         };
       }
-    }
-
-    if (command.search) {
-      const foundSubscriber = await this.subscribersRepository.searchSubscriber(command.environmentId, command.search);
-
-      const subscriberId = foundSubscriber?._id;
-
-      if (!subscriberId) {
-        return {
-          page: 0,
-          totalCount: 0,
-          pageSize: LIMIT,
-          data: [],
-        };
-      }
-      subscriberIds.push(subscriberId);
     }
 
     const { data: messages, totalCount } = await this.notificationRepository.getFeed(

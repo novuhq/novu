@@ -39,22 +39,9 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
       };
     }
 
-    let ids = [];
-
     if (query?.channels) {
-      ids = await Job.find(
-        {
-          type: {
-            $in: query.channels,
-          },
-        },
-        '_notificationId'
-      ).distinct('_notificationId');
-    }
-
-    if (ids.length > 0) {
-      requestQuery._id = {
-        $in: ids,
+      requestQuery.channels = {
+        $in: query.channels,
       };
     }
 

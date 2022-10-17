@@ -1,4 +1,10 @@
-import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  NotificationRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { Inject, Injectable } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -24,7 +30,8 @@ export class TriggerEvent {
     private jobRepository: JobRepository,
     private verifyPayload: VerifyPayload,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private addJobUsecase: AddJob
+    private addJobUsecase: AddJob,
+    private notificationRepository: NotificationRepository
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -95,13 +102,7 @@ export class TriggerEvent {
     });
 
     for (const job of jobs) {
-      const firstJob = await this.jobRepository.storeJobs(job);
-      await this.addJobUsecase.execute({
-        userId: firstJob._userId,
-        environmentId: firstJob._environmentId,
-        organizationId: firstJob._organizationId,
-        jobId: firstJob._id,
-      });
+      await this.storeAndAddJob(job);
     }
 
     if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
@@ -113,6 +114,40 @@ export class TriggerEvent {
       status: 'processed',
       transactionId: command.transactionId,
     };
+  }
+
+  private async storeAndAddJob(jobs: JobEntity[]) {
+    const storedJobs = await this.jobRepository.storeJobs(jobs);
+    const channels = storedJobs
+      .map((item) => item.type)
+      .reduce((list, channel) => {
+        if (list.includes(channel)) {
+          return list;
+        }
+        list.push(channel);
+
+        return list;
+      }, []);
+
+    const firstJob = storedJobs[0];
+
+    await this.notificationRepository.update(
+      {
+        _id: firstJob._notificationId,
+      },
+      {
+        $set: {
+          channels: channels,
+        },
+      }
+    );
+
+    await this.addJobUsecase.execute({
+      userId: firstJob._userId,
+      environmentId: firstJob._environmentId,
+      organizationId: firstJob._organizationId,
+      jobId: firstJob._id,
+    });
   }
 
   private async logTemplateNotActive(command: TriggerEventCommand, template: NotificationTemplateEntity) {
