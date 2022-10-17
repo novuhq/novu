@@ -88,12 +88,10 @@ test('should check provider integration when success', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
   const spy = jest
     .spyOn(MailerSend.prototype, 'request')
-    .mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        status: 200,
-      })
-    );
+    .mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+    }));
 
   const messageResponse = await provider.checkIntegration(mockNovuMessage);
 
@@ -111,16 +109,13 @@ test('should check provider integration when bad credentials', async () => {
 
   const spy = jest
     .spyOn(MailerSend.prototype, 'request')
-    .mockImplementation(() =>
-      Promise.resolve({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            message: serverMessage,
-          }),
-        status: 401,
-      })
-    );
+    .mockImplementation(async () => ({
+      ok: false,
+      json: async () => ({
+        message: serverMessage,
+      }),
+      status: 401,
+    }));
 
   const messageResponse = await provider.checkIntegration(mockNovuMessage);
 
@@ -138,16 +133,13 @@ test('should check provider integration when failed', async () => {
 
   const spy = jest
     .spyOn(MailerSend.prototype, 'request')
-    .mockImplementation(() =>
-      Promise.resolve({
-        ok: false,
-        json: () =>
-          Promise.resolve({
-            message: serverMessage,
-          }),
-        status: 500,
-      })
-    );
+    .mockImplementation(async () => ({
+      ok: false,
+      json: async () => ({
+        message: serverMessage,
+      }),
+      status: 500,
+    }));
 
   const messageResponse = await provider.checkIntegration(mockNovuMessage);
 

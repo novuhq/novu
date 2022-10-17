@@ -22,9 +22,7 @@ export class MailersendEmailProvider implements IEmailProvider {
     this.mailerSend = new MailerSend({ api_key: this.config.apiKey });
   }
 
-  private createRecipients(
-    recipients: IEmailOptions['to']
-  ): Recipient[] | Recipient {
+  private createRecipients(recipients: IEmailOptions['to']): Recipient[] {
     return Array.isArray(recipients)
       ? recipients.map((recipient) => new Recipient(recipient))
       : [new Recipient(recipients)];
