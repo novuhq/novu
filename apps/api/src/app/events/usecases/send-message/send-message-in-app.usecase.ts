@@ -27,7 +27,10 @@ import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -61,7 +64,7 @@ export class SendMessageInApp extends SendMessageType {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: 'Message content could not be generated',
+          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -177,7 +180,7 @@ export class SendMessageInApp extends SendMessageType {
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: InAppProviderIdEnum.Novu,
-        detail: 'In App message created',
+        detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
@@ -220,6 +223,19 @@ export class SendMessageInApp extends SendMessageType {
         unreadCount,
       },
     });
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        messageId: message._id,
+        providerId: InAppProviderIdEnum.Novu,
+        detail: DetailEnum.MESSAGE_SENT,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+      })
+    );
   }
 
   private async compileInAppTemplate(

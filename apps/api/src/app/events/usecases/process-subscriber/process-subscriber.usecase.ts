@@ -30,7 +30,10 @@ import {
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -201,7 +204,7 @@ export class ProcessSubscriber {
         notificationId: notificationId,
         notificationTemplateId: template._id,
         transactionId: transactionId,
-        detail: `Steps filtered by subscriber preferences`,
+        detail: DetailEnum.STEPS_FILTERED_BY_PREFERENCES,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
