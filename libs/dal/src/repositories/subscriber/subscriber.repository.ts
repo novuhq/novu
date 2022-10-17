@@ -20,9 +20,16 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
   }
 
   async searchSubscribers(environmentId: string, search: string, emails: string[] = []) {
-    return await this.find({
-      _environmentId: environmentId,
-      $or: [
+    const filters: any = [
+      {
+        email: {
+          $in: emails,
+        },
+      },
+    ];
+
+    if (search) {
+      filters.push(
         {
           email: {
             $regex: regExpEscape(search),
@@ -31,13 +38,13 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
         },
         {
           subscriberId: search,
-        },
-        {
-          email: {
-            $in: emails,
-          },
-        },
-      ],
+        }
+      );
+    }
+
+    return await this.find({
+      _environmentId: environmentId,
+      $or: filters,
     });
   }
 

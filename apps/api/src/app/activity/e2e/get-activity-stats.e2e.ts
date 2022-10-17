@@ -67,6 +67,6 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
     } = await session.testAgent.get('/v1/activity/stats');
 
     expect(data.weeklySent).to.equal(2);
-    expect(data.monthlySent).to.equal(4);
+    expect(data.monthlySent).to.equal(2);
   });
 });
