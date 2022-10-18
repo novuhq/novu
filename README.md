@@ -53,7 +53,7 @@ Building a notification system is hard, at first, it seems like just sending an 
 - 💅 Easily manage notifications over multiple channels
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
-- 📦 Easy to set up and integrate
+- 📦 Easy to set-up and integrate
 - 🛡 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
@@ -185,7 +185,7 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 ## 📋 Read Our Code Of Conduct 
 
-Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) throroughly to understand our standards (that you are required to adhere to) regarding how to engage in the community.
+Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand our standards (that you are required to adhere to) regarding how to engage in the community.
 
 ## 🔗 Links
 
