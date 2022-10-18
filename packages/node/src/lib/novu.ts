@@ -1,14 +1,18 @@
 import axios, { AxiosInstance } from 'axios';
 import { Subscribers } from './subscribers/subscribers';
 import { EventEmitter } from 'events';
+import { Changes } from './changes/changes';
 import { INovuConfiguration } from './novu.interface';
 import { Events } from './events/events';
+import { NotificationTemplates } from './notification-template/notification-template';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
   private readonly http: AxiosInstance;
   readonly subscribers: Subscribers;
   readonly events: Events;
+  readonly changes: Changes;
+  readonly notificationTemplates: NotificationTemplates;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -25,6 +29,8 @@ export class Novu extends EventEmitter {
     this.events = new Events(this.http);
     this.trigger = this.events.trigger;
     this.broadcast = this.events.broadcast;
+    this.changes = new Changes(this.http);
+    this.notificationTemplates = new NotificationTemplates(this.http);
   }
 
   public trigger: typeof Events.prototype.trigger;

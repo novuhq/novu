@@ -4,6 +4,9 @@ export interface MandrillInterface {
   messages: {
     send: (options: IMandrillSendOptions) => Promise<IMandrillSendResponse[]>;
   };
+  users: {
+    ping: () => Promise<string>;
+  };
 }
 
 export interface IMandrillSendOptions {

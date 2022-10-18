@@ -35,3 +35,17 @@ export class ChangeResponseDto {
   @ApiPropertyOptional()
   _parentId?: string;
 }
+
+export class ChangesResponseDto {
+  @ApiProperty()
+  totalCount: number;
+
+  @ApiProperty()
+  data: ChangeResponseDto[];
+
+  @ApiProperty()
+  pageSize: number;
+
+  @ApiProperty()
+  page: number;
+}

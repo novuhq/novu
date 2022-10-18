@@ -35,14 +35,24 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
     return BaseRepository.createObjectId();
   }
 
-  public async getList(organizationId: string, environmentId: string, enabled: boolean) {
+  public async getList(organizationId: string, environmentId: string, enabled: boolean, skip = 0, limit = 10) {
+    const totalItemsCount = await this.count({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      enabled,
+      _parentId: { $exists: false, $eq: null },
+    });
+
     const items = await Change.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
       enabled,
       _parentId: { $exists: false, $eq: null },
-    }).populate('user');
+    })
+      .skip(skip)
+      .limit(limit)
+      .populate('user');
 
-    return this.mapEntities(items);
+    return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 }
