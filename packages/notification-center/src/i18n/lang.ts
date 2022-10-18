@@ -61,6 +61,7 @@ import { TL } from './languages/tl';
 import { EU } from './languages/eu';
 import { AF } from './languages/af';
 import { BE } from './languages/be';
+import { CH } from './languages/ch';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -138,6 +139,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   eu: EU,
   af: AF,
   be: BE,
+  ch: CH,
 };
 
 /**
@@ -215,4 +217,5 @@ export type I18NLanguage =
   | 'tl'
   | 'af'
   | 'be'
-  | 'eu';
+  | 'eu'
+  | 'ch';
