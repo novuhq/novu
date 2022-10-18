@@ -16,13 +16,13 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     this.message = Message;
   }
 
-  async findBySubscriberChannel(
+  private async getFilterQueryForMessage(
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
-  ) {
+  ): Promise<FilterQuery<MessageEntity>> {
     const requestQuery: FilterQuery<MessageEntity> = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
@@ -56,11 +56,35 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       requestQuery.read = query.read;
     }
 
-    return await this.find(requestQuery, '', {
+    return requestQuery;
+  }
+
+  async findBySubscriberChannel(
+    environmentId: string,
+    subscriberId: string,
+    channel: ChannelTypeEnum,
+    query: { feedId?: string[]; seen?: boolean } = {},
+    options: { limit: number; skip?: number } = { limit: 10 }
+  ) {
+    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
+    const messages = await this.find(requestQuery, '', {
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
     });
+
+    return messages;
+  }
+
+  async getTotalCount(
+    environmentId: string,
+    subscriberId: string,
+    channel: ChannelTypeEnum,
+    query: { feedId?: string[]; seen?: boolean } = {}
+  ) {
+    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
+
+    return await this.count(requestQuery);
   }
 
   async getCount(
@@ -69,38 +93,11 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
   ) {
-    const requestQuery: FilterQuery<MessageEntity> = {
-      _environmentId: new Types.ObjectId(environmentId),
-      _subscriberId: new Types.ObjectId(subscriberId),
-      channel,
-    };
-
-    if (query.feedId === null) {
-      requestQuery._feedId = { $eq: null };
-    }
-
-    if (query.feedId) {
-      const feeds = await this.feedRepository.find(
-        {
-          _environmentId: environmentId,
-          identifier: {
-            $in: query.feedId,
-          },
-        },
-        '_id'
-      );
-      requestQuery._feedId = {
-        $in: feeds.map((feed) => feed._id),
-      };
-    }
-
-    if (query.seen != null) {
-      requestQuery.seen = query.seen;
-    }
-
-    if (query.read != null) {
-      requestQuery.read = query.read;
-    }
+    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
+      feedId: query.feedId,
+      seen: query.seen,
+      read: query.read,
+    });
 
     return await this.count(requestQuery);
   }

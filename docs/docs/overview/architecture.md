@@ -1,12 +1,13 @@
 # Architecture
 
-OCL was built all around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is key for easy maintenance and integration of new functionality.
+OCL was built all around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is the key for easy maintenance and integration of new functionality.
 
 Let's deep dive into the building blocks of Novu's OCL approach.
 
 ## The mental model
 
-![Application Diagram - Frame 1](https://user-images.githubusercontent.com/8872447/168135722-2643eac4-8fcd-4de6-909b-02118faa1dc8.jpeg)
+![Novu Architecture](https://user-images.githubusercontent.com/89788120/195802678-6d566d86-8175-490f-9ac9-dfd23b8959bd.png)
+
 
 ## Templates
 
@@ -14,7 +15,7 @@ Templates are the blueprints for all notifications in Novu. They provide the bas
 
 ## Environments
 
-This is the context in which all of your subscribers and templates exist. This will usually map to your own environments, so any new changes your are making will first be in the Development environment and once tested, you can use our merging changes tool to promote them to production.
+This is the context in which all of your subscribers and templates exist. This will usually map to your own environments, so any new changes you are making will first be in the Development environment and once tested, you can use our merging changes tool to promote them to production.
 
 The production environment is a read-only environment, meaning that you can only promote changes to it from the Development environment rather than modifying it directly.
 
@@ -41,7 +42,7 @@ Populating a subscriber with data can be done using our server side SDK. Read mo
 
 The trigger is responsible to let the engine know what happened and what notification template will be triggered in response to the event. Each trigger will pass the variables and data required to render the notification messages. If a value is missing the variable protection mode will be enabled and the message won't be sent.
 
-The trigger should only be responsible to let the system know that something happened, but not entirely where and when the message will be delivered.
+The trigger should only be responsible to let the system know that something has happened, but not entirely where and when the message will be delivered.
 
 ## Communication API
 

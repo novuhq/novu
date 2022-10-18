@@ -163,18 +163,16 @@ export function MembersInvitePage() {
       <PageHeader
         title="Team Members"
         actions={
-          <>
-            <Form onFinish={onSubmit} form={form}>
-              <Group align="center" spacing={10}>
-                <Form.Item name="email" style={{ marginBottom: 0 }}>
-                  <StyledInput required data-test-id="invite-email-field" placeholder="Invite user by email" />
-                </Form.Item>
-                <Button submit icon={<Invite />} loading={loadingSendInvite} data-test-id="submit-btn">
-                  Invite
-                </Button>
-              </Group>
-            </Form>
-          </>
+          <Form noValidate onFinish={onSubmit} form={form}>
+            <Group align="center" spacing={10}>
+              <Form.Item name="email" style={{ marginBottom: 0 }}>
+                <StyledInput required data-test-id="invite-email-field" placeholder="Invite user by email" />
+              </Form.Item>
+              <Button submit icon={<Invite />} loading={loadingSendInvite} data-test-id="submit-btn">
+                Invite
+              </Button>
+            </Group>
+          </Form>
         }
       />
 

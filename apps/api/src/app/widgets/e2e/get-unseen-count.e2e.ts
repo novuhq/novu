@@ -65,10 +65,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
       }
     );
 
-    const seenFeed = await getFeedCount({ seen: true });
-    expect(seenFeed.data.count).to.equal(1);
-
-    const unseenFeed = await getFeedCount({ seen: false });
+    const unseenFeed = await getUnseenFeedCount({ seen: false });
     expect(unseenFeed.data.count).to.equal(2);
   });
 
@@ -97,15 +94,15 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
       }
     );
 
-    const readFeed = await getFeedCount({ read: true });
+    const readFeed = await getUnseenFeedCount({ read: true });
     expect(readFeed.data.count).to.equal(1);
 
-    const unreadFeed = await getFeedCount({ read: false });
+    const unreadFeed = await getUnseenFeedCount({ read: false });
     expect(unreadFeed.data.count).to.equal(2);
   });
 
-  async function getFeedCount(query = {}) {
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/count`, {
+  async function getUnseenFeedCount(query = {}) {
+    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/unseen`, {
       params: {
         ...query,
       },

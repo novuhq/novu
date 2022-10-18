@@ -83,7 +83,18 @@ export function SideNav({}: Props) {
   }
 
   return (
-    <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
+    <Navbar
+      p={30}
+      sx={{
+        backgroundColor: 'transparent',
+        borderRight: 'none',
+        paddingRight: 0,
+        width: '300px',
+        '@media (max-width: 768px)': {
+          width: '100%',
+        },
+      }}
+    >
       <Navbar.Section grow>
         <Popover
           styles={{
@@ -139,7 +150,7 @@ export function SideNav({}: Props) {
           <OrganizationSelect />
         </Navbar.Section>
         <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-          <a target="_blank" href="https://discord.gg/novu" data-test-id="side-nav-bottom-link-support">
+          <a target="_blank" href="https://discord.novu.co" data-test-id="side-nav-bottom-link-support">
             Support
           </a>
           <p>
