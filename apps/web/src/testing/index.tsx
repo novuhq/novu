@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import { ThemeProvider } from '../design-system/ThemeProvider';
 
+// index code for testing purpose
 export function TestWrapper({ children }) {
   return (
     <Wrapper>
