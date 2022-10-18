@@ -1,18 +1,24 @@
-import { useIntercom } from 'react-use-intercom';
+import { useCallback, useEffect, useState } from 'react';
+import { IntercomContextValues, useIntercom } from 'react-use-intercom';
 
 import { INTERCOM_APP_ID } from '../../config';
 import { Button, Size } from '../../design-system';
 
-export function GotAQuestionButton({ mt, size }: { mt: number; size: Size }) {
-  if (!INTERCOM_APP_ID) {
-    return null;
-  }
+const useShowIntercom = () => {
+  const { show } = useIntercom();
+  const [isIntercomEnabled] = useState<boolean>(!!INTERCOM_APP_ID);
 
-  const { boot } = useIntercom();
+  return useCallback(() => isIntercomEnabled && show, [isIntercomEnabled, show]);
+};
+
+export function GotAQuestionButton({ mt, size }: { mt: number; size: Size }) {
+  const showIntercom = useShowIntercom();
 
   return (
-    <Button mt={mt} size={size} onClick={boot}>
-      Got a question?
-    </Button>
+    showIntercom && (
+      <Button mt={mt} size={size} onClick={showIntercom}>
+        Got a question?
+      </Button>
+    )
   );
 }
