@@ -45,7 +45,7 @@ The ultimate service for managing multi-channel notifications with a single API.
 
 ## ⭐️ Why Novu?
 
-Building a notification system is hard, at first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the world. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between a system and its users.
+Building a notification system is hard, at first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
@@ -113,7 +113,7 @@ await novu.trigger('<TRIGGER_NAME>',
 
 ## Embeddable Notification Center
 
-Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an IFrame embed if you are not using React.
+Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
@@ -125,7 +125,7 @@ Using the Novu API and admin panel you can easily add real-time notification cen
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a convenient interface.
+Novu provides a single API to manage providers across multiple channels with a simple to use interface.
 
 #### 💌 Email
 
