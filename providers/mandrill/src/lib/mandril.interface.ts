@@ -1,6 +1,4 @@
-import { IAttachmentOptions } from '@novu/stateless';
-
-export interface MandrillInterface {
+export interface IMandrilInterface {
   messages: {
     send: (options: IMandrillSendOptions) => Promise<IMandrillSendResponse[]>;
   };

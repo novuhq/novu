@@ -17,6 +17,32 @@ describe('Notifications Creator', function () {
       cy.getByTestId('edit-template-channel').click();
     });
 
+    it('should drag and drop channel in middle of workflow', function () {
+      waitLoadTemplatePage(() => {
+        cy.visit('/templates/create');
+      });
+      fillBasicNotificationDetails('Test drag and drop channel');
+      clickWorkflow();
+      dragAndDrop('inApp');
+      dragAndDrop('sms');
+      dragAndDrop('inApp', 'node-smsSelector');
+
+      cy.getByTestId('node-inAppSelector')
+        .last()
+        .parent()
+        .parent()
+        .then(($parent) => {
+          cy.getByTestId('node-inAppSelector')
+            .last()
+            .parent()
+            .then(($child) => {
+              cy.wrap({ index: [...Array.from($parent[0].children)].indexOf($child[0]) })
+                .its('index')
+                .should('eq', 1);
+            });
+        });
+    });
+
     it('should not be able to drop when not on last node', function () {
       waitLoadTemplatePage(() => {
         cy.visit('/templates/create');
@@ -36,7 +62,7 @@ describe('Notifications Creator', function () {
       });
       fillBasicNotificationDetails('Test SMS Notification Title');
       clickWorkflow();
-      cy.clickWorkflowNode(`node-inAppSelector`).parent().should('have.class', 'selected');
+      cy.clickWorkflowNode(`node-inAppSelector`)?.parent().should('have.class', 'selected');
       cy.getByTestId(`step-properties-side-menu`).should('be.visible');
       cy.clickWorkflowNode(`node-triggerSelector`);
       cy.getByTestId(`drag-side-menu`).should('be.visible');
@@ -674,12 +700,12 @@ function addAndEditChannel(channel: Channel) {
   editChannel(channel);
 }
 
-function dragAndDrop(channel: Channel) {
+function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {
   const dataTransfer = new DataTransfer();
 
   cy.wait(1000);
   cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer });
-  cy.getByTestId('addNodeButton').parent().trigger('drop', { dataTransfer });
+  cy.getByTestId(dropTestId).parent().trigger('drop', { dataTransfer });
 }
 
 function editChannel(channel: Channel, last = false) {

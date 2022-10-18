@@ -59,6 +59,8 @@ import { HY } from './languages/hy';
 import { KK } from './languages/kk';
 import { TL } from './languages/tl';
 import { EU } from './languages/eu';
+import { AF } from './languages/af';
+import { BE } from './languages/be';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -77,19 +79,19 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ro: RO,
   fi: FI,
   hi: HI,
+  it: IT,
+  ar: AR,
+  fa: FA,
   fr: FR,
   gu: GU,
   ru: RU,
   es: ES,
   gl: GL,
   id: ID,
-  it: IT,
   ka: KA,
   ig: IG,
   mr: MR,
   ms: MS,
-  ar: AR,
-  fa: FA,
   uk: UK,
   de: DE,
   bn: BN,
@@ -134,6 +136,8 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   kk: KK,
   tl: TL,
   eu: EU,
+  af: AF,
+  be: BE,
 };
 
 /**
@@ -196,7 +200,6 @@ export type I18NLanguage =
   | 'az'
   | 'no'
   | 'te'
-  | 'da'
   | 'vi'
   | 'zu'
   | 'nl'
@@ -209,4 +212,6 @@ export type I18NLanguage =
   | 'kk'
   | 'km'
   | 'tl'
+  | 'af'
+  | 'be'
   | 'eu';

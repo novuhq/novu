@@ -11,6 +11,7 @@ import { ContentTemplatesModule } from '../content-templates/content-templates.m
 import { WorkflowQueueService } from './services/workflow.queue.service';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { StorageHelperService } from './services/storage-helper-service/storage-helper.service';
+import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { StorageHelperService } from './services/storage-helper-service/storage-
     LogsModule,
     ContentTemplatesModule,
     IntegrationModule,
+    ExecutionDetailsModule,
   ],
   controllers: [EventsController],
   providers: [...USE_CASES, WorkflowQueueService, StorageHelperService],

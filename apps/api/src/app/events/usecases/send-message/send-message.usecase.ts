@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { StepTypeEnum } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
@@ -9,6 +9,8 @@ import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { SubscriberRepository } from '@novu/dal';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessage {
@@ -19,7 +21,8 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private createExecutionDetails: CreateExecutionDetails
   ) {}
 
   public async execute(command: SendMessageCommand) {
@@ -28,6 +31,17 @@ export class SendMessage {
     if (!shouldRun) {
       return;
     }
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: `Start sending message`,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+      })
+    );
 
     switch (command.step.template.type) {
       case StepTypeEnum.SMS:
@@ -48,7 +62,24 @@ export class SendMessage {
   private async filter(command: SendMessageCommand) {
     const data = await this.getFilterData(command);
 
-    return matchMessageWithFilters(command.step, data);
+    const shouldRun = matchMessageWithFilters(command.step, data);
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: `Filter step based on filters`,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          payload: data,
+          filters: command.step.filters,
+        }),
+      })
+    );
+
+    return shouldRun;
   }
 
   private async getFilterData(command: SendMessageCommand) {

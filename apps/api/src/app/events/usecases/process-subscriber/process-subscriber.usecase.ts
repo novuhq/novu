@@ -8,8 +8,16 @@ import {
   JobStatusEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
+  IntegrationRepository,
 } from '@novu/dal';
-import { LogCodeEnum, LogStatusEnum, IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
+import {
+  LogCodeEnum,
+  LogStatusEnum,
+  IPreferenceChannels,
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+} from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -21,6 +29,8 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -31,7 +41,9 @@ export class ProcessSubscriber {
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private filterSteps: DigestFilterSteps,
-    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    private integrationRepository: IntegrationRepository,
+    private createExecutionDetails: CreateExecutionDetails
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
@@ -48,7 +60,9 @@ export class ProcessSubscriber {
       command.organizationId,
       command.environmentId,
       subscriber._id,
-      template
+      template,
+      command.templateId,
+      notification._id
     );
 
     const steps: NotificationStepEntity[] = await this.filterSteps.execute(
@@ -78,8 +92,16 @@ export class ProcessSubscriber {
       })
     );
 
-    return steps.map((step): JobEntity => {
-      return {
+    const jobs: JobEntity[] = [];
+
+    for (const step of steps) {
+      const integration = await this.integrationRepository.findOne({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channel: step.template.type,
+        active: true,
+      });
+      jobs.push({
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,
@@ -94,8 +116,11 @@ export class ProcessSubscriber {
         _templateId: notification._templateId,
         digest: step.metadata,
         type: step.template.type,
-      };
-    });
+        providerId: integration?.providerId,
+      });
+    }
+
+    return jobs;
   }
 
   private async getSubscriber(command: ProcessSubscriberCommand): Promise<SubscriberEntity> {
@@ -155,7 +180,9 @@ export class ProcessSubscriber {
     organizationId: string,
     environmentId: string,
     subscriberId: string,
-    template: NotificationTemplateEntity
+    template: NotificationTemplateEntity,
+    transactionId: string,
+    notificationId: string
   ): Promise<NotificationStepEntity[]> {
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: organizationId,
@@ -165,6 +192,23 @@ export class ProcessSubscriber {
     });
 
     const preference = (await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand)).preference;
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        environmentId: environmentId,
+        organizationId: organizationId,
+        subscriberId: subscriberId,
+        notificationId: notificationId,
+        notificationTemplateId: template._id,
+        transactionId: transactionId,
+        detail: `Steps filtered by subscriber preferences`,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(preference),
+      })
+    );
 
     return template.steps.filter((step) => this.actionStep(step) || this.stepPreferred(preference, step));
   }

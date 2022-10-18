@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Popover as MantinePopover, PopoverProps } from '@mantine/core';
 import styled from 'styled-components';
 import { INovuTheme } from '../../../store/novu-theme.context';
+import { useNotifications } from '../../../hooks';
+import { useFeed } from '../../../hooks/use-feed.hook';
 
 type PositionType = [PopoverProps['position'], PopoverProps['placement']];
 interface INovuPopoverProps {
@@ -15,8 +17,21 @@ interface INovuPopoverProps {
 export function Popover({ children, bell, theme, offset, position = 'bottom' }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
 
+  const { activeTabStoreId } = useFeed();
+  const { markNotificationsAsSeen, onWidgetClose } = useNotifications({ storeId: activeTabStoreId });
+
   function handlerBellClick() {
+    if (isVisible) {
+      markNotificationsAsSeen(true);
+      onWidgetClose();
+    }
     setIsVisible(!isVisible);
+  }
+
+  function handlerOnClose() {
+    setIsVisible(false);
+    markNotificationsAsSeen(true);
+    onWidgetClose();
   }
 
   const [modPosition, modPlacement] = useMemo<PositionType>(() => {
@@ -30,7 +45,7 @@ export function Popover({ children, bell, theme, offset, position = 'bottom' }: 
   return (
     <MantinePopover
       opened={isVisible}
-      onClose={() => setIsVisible(false)}
+      onClose={handlerOnClose}
       target={<BellContainer onClick={handlerBellClick}> {bell({})}</BellContainer>}
       position={modPosition}
       placement={modPlacement}
