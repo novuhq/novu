@@ -22,7 +22,7 @@ The notification group is used to group multiple notification templates into a s
 
 ## Template steps
 
-The template steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release you will be able to configure custom flows that include actions like Delay, Digest and other conditional steps.
+The template steps are used to organize the different messages in a particular flow. You can add messages for multiple channels and in the upcoming workflow editor release, you will be able to configure custom flows that include actions like Delay, Digest, and other conditional steps.
 
 ## Messages
 
