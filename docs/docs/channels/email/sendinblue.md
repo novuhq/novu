@@ -4,7 +4,7 @@ You can use the [Sendinblue](https://www.sendinblue.com/) provider to send trans
 
 ## Getting Started
 
-To use the Sendinblue channel, you will need to create a Seninblue account and add your API key to the Seninblue integration on the Novu platform.
+To use the Sendinblue channel, you will need to create a Sendinblue account and add your API key to the Sendinblue integration on the Novu platform.
 
 ## Find the API Key
 
@@ -12,7 +12,7 @@ To use the Sendinblue channel, you will need to create a Seninblue account and a
 
 ## Authenticate your sender identity
 
-Before you can send emails on a large scale, you will need to authenticate your sender's identity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Seninblue require you to authenticate your sender identity before you can send emails.
+Before you can send emails on a large scale, you will need to authenticate your sender's identity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Sendinblue require you to authenticate your sender identity before you can send emails.
 
 Sendinblue allows you to authenticate your sender identity using one of the following methods:
 
