@@ -13,7 +13,7 @@ export enum DetailEnum {
   MESSAGE_SENT = 'Message sent',
   PROVIDER_ERROR = 'Unexpected provider error',
   START_SENDING = 'Start sending message',
-  FILTER_STEPS = 'Filter step based on filters',
+  FILTER_STEPS = 'Step was filtred based on steps filters',
   DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
   DIGEST_TRIGGERD_EVENTS = 'Digest triggerd events',
   STEPS_FILTERED_BY_PREFERENCES = 'Steps filtered by subscriber preferences',
