@@ -1,6 +1,8 @@
+import { useCallback, useState } from 'react';
 import { AppShell } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
+
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
@@ -9,6 +11,8 @@ import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../config';
 
 export function AppLayout() {
+  const { SupportChatProvider } = useSupportChatProvider();
+
   return (
     <ThemeProvider>
       <SupportChatProvider>
@@ -52,10 +56,21 @@ export function AppLayout() {
   );
 }
 
-function SupportChatProvider({ children }) {
-  if (INTERCOM_APP_ID) {
-    return <IntercomProvider appId={INTERCOM_APP_ID}>{children}</IntercomProvider>;
-  }
+const useSupportChatProvider = () => {
+  const isIntercomEnabled = useState<boolean>(!!INTERCOM_APP_ID);
 
-  return children;
-}
+  const SupportChatProvider = useCallback(
+    ({ children }) => {
+      if (isIntercomEnabled) {
+        return <IntercomProvider appId={INTERCOM_APP_ID}>{children}</IntercomProvider>;
+      }
+
+      return children;
+    },
+    [isIntercomEnabled]
+  );
+
+  return {
+    SupportChatProvider,
+  };
+};

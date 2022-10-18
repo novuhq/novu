@@ -7,10 +7,11 @@ import {
   Menu as MantineMenu,
   Container,
 } from '@mantine/core';
-import { useContext, useEffect } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
+
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
@@ -30,32 +31,41 @@ const menuItem = [
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
+const useBootIntercom = (currentUser, currentOrganization) => {
+  const { boot } = useIntercom();
+
+  const [isIntercomEnabled] = useState<boolean>(!!INTERCOM_APP_ID);
+
+  return useCallback(() => {
+    if (isIntercomEnabled) {
+      boot({
+        email: currentUser?.email,
+        name: currentUser?.firstName + ' ' + currentUser?.lastName,
+        createdAt: currentUser?.createdAt,
+        company: {
+          name: currentOrganization?.name,
+          companyId: currentOrganization?._id as string,
+        },
+      });
+    }
+  }, [isIntercomEnabled, boot, currentUser, currentOrganization]);
+};
+
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
+  const bootIntercom = useBootIntercom(currentUser, currentOrganization);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
   const { addItem } = useContext(SpotlightContext);
 
-  if (INTERCOM_APP_ID) {
-    const { boot } = useIntercom();
+  useEffect(() => {
+    if (bootIntercom && currentUser && currentOrganization) {
+      bootIntercom();
+    }
+  }, [currentUser, currentOrganization, bootIntercom]);
 
-    useEffect(() => {
-      if (currentUser && currentOrganization) {
-        boot({
-          email: currentUser?.email,
-          name: currentUser?.firstName + ' ' + currentUser?.lastName,
-          createdAt: currentUser?.createdAt,
-          company: {
-            name: currentOrganization?.name,
-            companyId: currentOrganization?._id as string,
-          },
-        });
-      }
-    }, [currentUser, currentOrganization]);
-  }
-
-  const themeTitle = () => {
+  const themeTitle = useCallback(() => {
     let title = 'Match System Appearance';
     if (themeStatus === 'dark') {
       title = `Dark Theme`;
@@ -64,9 +74,9 @@ export function HeaderNav({}: Props) {
     }
 
     return title;
-  };
+  }, [themeStatus]);
 
-  const Icon = () => {
+  const Icon = useCallback(() => {
     if (themeStatus === 'dark') {
       return <Moon {...headerIconsSettings} />;
     }
@@ -75,7 +85,7 @@ export function HeaderNav({}: Props) {
     }
 
     return <Ellipse {...headerIconsSettings} height={24} width={24} />;
-  };
+  }, [themeStatus]);
 
   useEffect(() => {
     addItem([
@@ -96,7 +106,7 @@ export function HeaderNav({}: Props) {
         },
       },
     ]);
-  }, [colorScheme]);
+  }, [colorScheme, Icon, addItem, logout, themeTitle, toggleColorScheme]);
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">

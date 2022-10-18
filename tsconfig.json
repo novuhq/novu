@@ -2,9 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-    }
+    "baseUrl": "."
   },
   "types": [
     "node",

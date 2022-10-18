@@ -1,11 +1,12 @@
+import React from 'react';
 import { Grid, InputWrapper, useMantineColorScheme } from '@mantine/core';
+import { useFormContext, Controller } from 'react-hook-form';
+import styled from 'styled-components';
+
 import { useEnvController } from '../../../store/use-env-controller';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Checkbox, colors, Switch } from '../../../design-system';
-import styled from 'styled-components';
 import { channels } from '../../../pages/templates/shared/channels';
-import React from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
 
 export function TemplatePreference() {
   return (
@@ -25,6 +26,8 @@ export function TemplatePreference() {
 export function ChannelPreference() {
   const { control } = useFormContext();
   const { colorScheme } = useMantineColorScheme();
+  const { readonly } = useEnvController();
+
   const dark = colorScheme === 'dark';
 
   return (
@@ -32,8 +35,6 @@ export function ChannelPreference() {
       name="preferenceSettings"
       control={control}
       render={({ field }) => {
-        const { readonly } = useEnvController();
-
         const preferences = field.value;
         const mock = { email: true, sms: true, in_app: true, chat: true, push: true };
         const data = Object.assign({}, mock, preferences);

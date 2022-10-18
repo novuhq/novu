@@ -18,6 +18,8 @@ module.exports = {
     'jsx-a11y/no-static-element-interactions': 'off',
     'react/require-default-props': 'off',
     'react/no-danger': 'off',
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
     'jsx-a11y/click-events-have-key-events': 'off',
     'no-restricted-imports': [
       'error',
@@ -41,8 +43,9 @@ module.exports = {
   },
   ignorePatterns: ['craco.config.js', 'cypress/*'],
   extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
-  plugins: ['cypress'],
+  plugins: ['cypress', 'react-hooks'],
   parserOptions: {
+    extraFileExtensions: ['.tsx'],
     project: './tsconfig.json',
     ecmaVersion: 2020,
     sourceType: 'module',
