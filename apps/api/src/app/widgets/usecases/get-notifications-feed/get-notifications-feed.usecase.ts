@@ -52,7 +52,7 @@ export class GetNotificationsFeed {
       ChannelTypeEnum.IN_APP,
       {
         feedId: command.feedId,
-        seen: command.seen,
+        seen: command.query.seen,
       }
     );
 

@@ -63,7 +63,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
