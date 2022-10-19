@@ -22,8 +22,9 @@ export class ShouldAddDigestJob {
       _templateId: data._templateId,
       _environmentId: data._environmentId,
     };
+
     const delayedDigest = await this.jobRepository.findOne(where);
 
-    return !!delayedDigest;
+    return !delayedDigest;
   }
 }
