@@ -1,5 +1,5 @@
 import { CredentialsKeyEnum, IConfigCredentials, secureCredentials } from '@novu/shared';
-import { Input, PasswordInput, Textarea } from '../../../design-system';
+import { Input, PasswordInput, Textarea, Switch } from '../../../design-system';
 
 export function IntegrationInput({
   credential,
@@ -35,6 +35,20 @@ export function IntegrationInput({
         label={credential.displayName}
         required={credential.required}
         placeholder={credential.displayName}
+        description={credential.description ?? ''}
+        data-test-id={credential.key}
+        error={errors[credential.key]?.message}
+        {...field}
+        {...register(credential.key, {
+          required: credential.required && `Please enter a ${credential.displayName.toLowerCase()}`,
+        })}
+      />
+    );
+  } else if (credential.type === 'boolean') {
+    return (
+      <Switch
+        label={credential.displayName}
+        required={credential.required}
         description={credential.description ?? ''}
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
