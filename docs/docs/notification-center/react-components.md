@@ -170,9 +170,11 @@ The `i18n` prop can accept 2 different types of values
       <summary>Supported languages</summary>
       <div>
         <ul>
+          <li><code>af</code> (Afrikaans)</li>
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
           <li><code>az</code> (Azerbaijani)</li>
+          <li><code>be</code> (Belarusian)</li>
           <li><code>bg</code> (Bulgarian)</li>
           <li><code>bn</code> (Bengali)</li>
           <li><code>ca</code> (Catalan)</li>
@@ -186,6 +188,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
+          <li><code>ga</code> (Irish)</li>
           <li><code>gl</code> (Galician)</li>
           <li><code>gu</code> (Gujarati)</li>
           <li><code>he</code> (Hebrew)</li>
@@ -262,7 +265,7 @@ The notifications array returned by the `useNotifications` hook contains an arra
 | --------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `_id`                       | `string`                  | A unique Novu message identifier                                                                      |
 | `channel`                   | `ChannelTypeEnum`         | Use to specify the actual channel of this message (`in_app` will be used here)                        |
-| `seen`                      | `boolean`                 | Whether the notification item was ready by the user, changed when the user clicks on the notification |
+| `seen`                      | `boolean`                 | Whether the notification item was read by the user, changed when the user clicks on the notification |
 | `lastSeenDate`              | `ISODate`                 | When the user has last seen the notification                                                          |
 | `content`                   | `string`                  | An HTML string of the generated notification content with parsed and replaced variables               |
 | `templateIdentifier`        | `string`                  | A unique Novu template identifier                                                                     |

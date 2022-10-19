@@ -153,8 +153,6 @@ export class TwilioSmsProvider implements ISmsProvider {
 }
 ```
 
-[GitHub Template](https://github.com/novuhq/provider-template)
-
 ## Add provider logos
 
 In order to present the provider in the Integration store we need logos in dark and light mode,

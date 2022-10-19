@@ -227,11 +227,16 @@ function Accept() {
   return (
     <div>
       <span>I accept the </span>
-      <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms">
+      <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms" target="_blank" rel="noopener noreferrer">
         Terms and Conditions
       </a>
       <span> and have read the </span>
-      <a style={{ textDecoration: 'underline' }} href="https://novu.co/privacy">
+      <a
+        style={{ textDecoration: 'underline' }}
+        href="https://novu.co/privacy"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Privacy Policy
       </a>
     </div>
