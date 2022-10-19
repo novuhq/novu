@@ -29,6 +29,10 @@ const codeTheme = require('./src/utils/prism');
             showLastUpdateAuthor: true,
             showLastUpdateTime: true,
           },
+          gtag: {
+            trackingID: 'G-226F0LR9KE',
+            anonymizeIP: true,
+          },
           theme: {
             customCss: require.resolve('./src/css/custom.scss'),
           },
@@ -89,7 +93,7 @@ const codeTheme = require('./src/utils/prism');
               position: 'right',
             },
             {
-              href: 'https://discord.gg/9wcGSf22PM',
+              href: 'https://discord.novu.co',
               label: 'Community',
               position: 'right',
             },
@@ -118,7 +122,7 @@ const codeTheme = require('./src/utils/prism');
                 },
                 {
                   label: 'Contact Us',
-                  href: 'https://discord.gg/9wcGSf22PM',
+                  href: 'https://discord.novu.co',
                 },
               ],
             },
@@ -126,7 +130,7 @@ const codeTheme = require('./src/utils/prism');
               items: [
                 {
                   label: 'Discord',
-                  href: 'https://discord.gg/9wcGSf22PM',
+                  href: 'https://discord.novu.co',
                 },
                 {
                   label: 'Twitter',

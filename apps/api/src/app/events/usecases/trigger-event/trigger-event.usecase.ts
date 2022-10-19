@@ -1,11 +1,11 @@
 import {
   JobEntity,
   JobRepository,
-  NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  NotificationRepository,
 } from '@novu/dal';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { merge } from 'lodash';
@@ -189,11 +189,7 @@ export class TriggerEvent {
         },
       })
     );
-
-    return {
-      acknowledged: true,
-      status: 'template_not_found',
-    };
+    throw new UnprocessableEntityException('TEMPLATE_NOT_FOUND');
   }
 
   private logEventTriggered(command: TriggerEventCommand) {

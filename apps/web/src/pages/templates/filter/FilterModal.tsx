@@ -117,8 +117,8 @@ export function FilterModal({
                 <Controller
                   control={control}
                   name={`steps.${stepIndex}.filters.0.children.${index}.field`}
-                  render={({ field }) => {
-                    return <Input {...field} placeholder="Label" />;
+                  render={({ field, fieldState }) => {
+                    return <Input {...field} error={fieldState.error?.message} placeholder="Label" />;
                   }}
                 />
               </Grid.Col>
@@ -150,8 +150,8 @@ export function FilterModal({
                 <Controller
                   control={control}
                   name={`steps.${stepIndex}.filters.0.children.${index}.value`}
-                  render={({ field }) => {
-                    return <Input {...field} placeholder="Value" />;
+                  render={({ field, fieldState }) => {
+                    return <Input {...field} error={fieldState.error?.message} placeholder="Value" />;
                   }}
                 />
               </Grid.Col>

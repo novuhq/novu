@@ -47,28 +47,31 @@ jest.mock('node-mailjet', () => {
   };
 });
 
-test('should trigger mailjet library correctly and return proper response', async () => {
-  const provider = new MailjetEmailProvider({
-    apiKey: 'testApiKey',
-    apiSecret: 'testSecret',
-    from: 'testFrom@test.com',
-  });
+const mockConfig = {
+  apiKey: 'testApiKey',
+  apiSecret: 'testSecret',
+  from: 'testFrom@test.com',
+};
+const mockMessageConfig = {
+  to: 'testTo@test2.com',
+  subject: 'test subject',
+  html: '<div> Mail Content </div>',
+};
 
-  const messageResponse = await provider.sendMessage({
-    to: 'testTo@test2.com',
-    subject: 'test subject',
-    html: '<div> Mail Content </div>',
-  });
+test('should trigger mailjet library correctly and return proper response', async () => {
+  const provider = new MailjetEmailProvider(mockConfig);
+
+  const messageResponse = await provider.sendMessage(mockMessageConfig);
 
   expect(requestFn).toBeCalledTimes(1);
   expect(requestFn).toBeCalledWith({
     Messages: [
       {
-        From: { Email: 'testFrom@test.com' },
-        HTMLPart: '<div> Mail Content </div>',
-        Subject: 'test subject',
+        From: { Email: mockConfig.from },
+        HTMLPart: mockMessageConfig.html,
+        Subject: mockMessageConfig.subject,
         TextPart: undefined,
-        To: [{ Email: 'testTo@test2.com' }],
+        To: [{ Email: mockMessageConfig.to }],
       },
     ],
   });
@@ -76,4 +79,12 @@ test('should trigger mailjet library correctly and return proper response', asyn
     id: 'a9e7-437c-84f8-e2c2d5958014',
     date: 'Sun, 24 Oct 2021 15:56:29 GMT',
   });
+});
+
+test('should check provider integration correctly', async () => {
+  const provider = new MailjetEmailProvider(mockConfig);
+  const messageResponse = await provider.checkIntegration(mockMessageConfig);
+
+  expect(requestFn).toHaveBeenCalled();
+  expect(messageResponse.success).toBe(true);
 });

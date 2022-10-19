@@ -14,9 +14,9 @@ It is suggested that you create a new API key for use with Novu. To successfully
 - **Mail Send** - Full Access
 - (Optional) Template Engine - Read Only
 
-## Authenticate your sender identity
+## Authenticate your [Sender Identity](https://docs.sendgrid.com/for-developers/sending-email/sender-identity)
 
-Before you can send emails, you will need to authenticate your sender identity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Sendgrid require you to authenticate your sender identity before you can send emails.
+Before you can send emails on a large scale, you will need to authenticate your Sender Identity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Sendgrid require you to authenticate your Sender Identity before you can send emails.
 
 SendGrid allows you to authenticate your sender identity using one of the following methods:
 
@@ -25,9 +25,9 @@ SendGrid allows you to authenticate your sender identity using one of the follow
 
 ## Create a SendGrid integration with Novu
 
-- Visit the [Integrations](https://web.novu.co/integrations) page on the Novu.
+- Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate SendGrid and click on the **Connect** button.
 - Enter your SendGrid API Key.
-- Fill the `From email address` using the authenticated email from the previous step.
+- Fill the `From email address` field using the authenticated email from the previous step.
 - Click on the **Save** button.
 - You should now be able to send notifications using SendGrid in Novu.

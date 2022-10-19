@@ -90,8 +90,14 @@ export function ActivitiesPage() {
           </div>
           <div style={{ minWidth: '250px' }}>
             <Controller
-              render={({ field }) => (
-                <Input {...field} label="Search" placeholder="Select Email or ID" value={field.value || ''} />
+              render={({ field, fieldState }) => (
+                <Input
+                  {...field}
+                  error={fieldState.error?.message}
+                  label="Search"
+                  placeholder="Select Email or ID"
+                  value={field.value || ''}
+                />
               )}
               control={control}
               name="search"

@@ -21,7 +21,9 @@ import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-
 import { CountChanges } from './usecases/count-changes/count-changes.usecase';
 import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ChangeResponseDto } from './dtos/change-response.dto';
+import { ChangesResponseDto, ChangeResponseDto } from './dtos/change-response.dto';
+import { ChangesRequestDto } from './dtos/change-request.dto';
+
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/changes')
@@ -38,19 +40,18 @@ export class ChangesController {
 
   @Get('/')
   @ApiOkResponse({
-    type: [ChangeResponseDto],
+    type: ChangesResponseDto,
   })
   @ApiOperation({
     summary: 'Get changes',
   })
   @ExternalApiAccessible()
-  async getChanges(
-    @UserSession() user: IJwtPayload,
-    @Query('promoted') promoted = 'false'
-  ): Promise<ChangeResponseDto[]> {
+  async getChanges(@UserSession() user: IJwtPayload, @Query() query: ChangesRequestDto): Promise<ChangesResponseDto> {
     return await this.getChangesUsecase.execute(
       GetChangesCommand.create({
-        promoted: promoted === 'true',
+        promoted: query.promoted === 'true',
+        page: query.page ? Number(query.page) : 0,
+        limit: query.limit ? Number(query.limit) : 10,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -84,7 +85,10 @@ export class ChangesController {
     summary: 'Apply changes',
   })
   @ExternalApiAccessible()
-  async bulkApplyDiff(@UserSession() user: IJwtPayload, @Body() changeIds: string[]): Promise<ChangeResponseDto[]> {
+  async bulkApplyDiff(
+    @UserSession() user: IJwtPayload,
+    @Body('changeIds') changeIds: string[]
+  ): Promise<ChangeResponseDto[]> {
     return this.bulkApplyChange.execute(
       BulkApplyChangeCommand.create({
         changeIds,

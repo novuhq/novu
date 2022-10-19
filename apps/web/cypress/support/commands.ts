@@ -19,10 +19,6 @@ Cypress.Commands.add('clickWorkflowNode', (selector: string, last?: boolean) => 
   return cy.getByTestId(selector).click({ force: true });
 });
 
-Cypress.Commands.add('seed', () => {
-  return cy.request('POST', `${Cypress.env('apiUrl')}/v1/testing/seed`, {});
-});
-
 Cypress.Commands.add(
   'initializeSession',
   (settings: { disableLocalStorage?: boolean } = { disableLocalStorage: false }) => {
@@ -74,6 +70,14 @@ Cypress.Commands.add('inviteUser', (email: string) => {
 
 Cypress.Commands.add('logout', (settings = {}) => {
   return window.localStorage.removeItem('auth_token');
+});
+
+Cypress.Commands.add('seedDatabase', () => {
+  return cy.task('seedDatabase');
+});
+
+Cypress.Commands.add('clearDatabase', () => {
+  return cy.task('clearDatabase');
 });
 
 export {};

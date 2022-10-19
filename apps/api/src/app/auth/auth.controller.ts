@@ -94,6 +94,20 @@ export class AuthController {
       url += '&newUser=true';
     }
 
+    /**
+     * partnerCode and next are required during external partners integration
+     * such as vercel integration etc
+     */
+    const partnerCode = JSON.parse(request.query.state).partnerCode;
+    if (partnerCode) {
+      url += `&code=${partnerCode}`;
+    }
+
+    const next = JSON.parse(request.query.state).next;
+    if (next) {
+      url += `&next=${next}`;
+    }
+
     return response.redirect(url);
   }
 

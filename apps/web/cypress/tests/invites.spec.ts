@@ -43,6 +43,19 @@ describe('Invites module', function () {
       cy.get('.mantine-Select-item').contains(capitalize(this.organization.name)).click();
     });
   });
+
+  it('should redirect to invitation page again if invitation open with an active user session', function () {
+    cy.initializeSession().as('session');
+
+    const invitationPath = `/auth/invitation/${this.token}`;
+    cy.visit(invitationPath);
+    cy.getByTestId('success-screen-reset').click();
+
+    // checkig if token is removed from local storage
+    cy.getLocalStorage('auth_token').should('be.null');
+    // checking if user is redirected to the given invitation page
+    cy.location('pathname').should('equal', invitationPath);
+  });
 });
 
 function doRegister(token: string) {

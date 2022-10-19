@@ -10,7 +10,7 @@ In this guide, we will explore the Novu mono-repo structure and high-level struc
 
 ## Setting up the monorepo
 
-Novu uses [PNPM](https://pnpm.js.org/) as its package manager, and [NX](https://nx.dev/) as its build CLI tool. PNPM help with reducing the installation time and generates symlinks to all the internal packages we use.
+Novu uses [PNPM](https://pnpm.js.org/) as its package manager, and [NX](https://nx.dev/) as its build CLI tool.PNPM reduces the installation time and generates symlinks for all the internal packages we use.
 
 To initialize the monorepo, run the following command from the root of the project:
 
@@ -21,8 +21,8 @@ npm run setup:project
 This will:
 
 - run `pnpm install`, that will download all the needed dependencies and create symlinks for packages.
-- will copy the `.env.example` file to the `.env` file for the API service
-- will execute a `npm run build` command to build all the dependency tree locally.
+- copy the `.env.example` file to the `.env` file for the API service.
+- execute a `npm run build` command to build all the dependency tree locally.
 
 For additional information on running novu locally visit the [run locally](https://docs.novu.co/community/run-locally) guide.
 
@@ -56,7 +56,7 @@ The `DAL` is our Data-Access-Layer, this is our connection to the DB service and
 
 ### @novu/testing
 
-This is a utility library that contains testing helpers, the testing helpers can generate a test session or other functionality for e2e and unit-tests we use between our services.
+This is a utility library that contains testing helpers, the testing helpers can generate test sessions and other functionality for e2e and unit-tests between our services
 
 ### @novu/shared
 
@@ -86,8 +86,47 @@ React component library that contains widget bell with the notification center. 
 
 These are the API wrappers created by the community to wrap communication providers in the following channels:
 
-- Email
-- SMS
-- Push
-- Web-Push
-- Chat (Slack, MS Teams, Whatsapp, etc...)
+Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+
+### 💌 Email
+
+- [Sendgrid](https://github.com/novuhq/novu/tree/main/providers/sendgrid)
+- [Netcore](https://github.com/novuhq/novu/tree/main/providers/netcore)
+- [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
+- [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
+- [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
+- [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
+- [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
+- [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
+- [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
+- [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
+
+### 📞 SMS
+
+- [Twilio](https://github.com/novuhq/novu/tree/main/providers/twilio)
+- [Plivo](https://github.com/novuhq/novu/tree/main/providers/plivo)
+- [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+- [Nexmo - Vonage](https://github.com/novuhq/novu/tree/main/providers/nexmo)
+- [Sms77](https://github.com/novuhq/novu/tree/main/providers/sms77)
+- [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
+- [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
+- [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
+
+### 📱 Push
+
+- [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
+- [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
+- [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+
+### 👇 Chat
+
+- [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
+- [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
+
+### 📱 In-App
+
+- [Novu](https://docs.novu.co/notification-center/getting-started)
+
+### Other (Coming Soon...)
+
+- PagerDuty
