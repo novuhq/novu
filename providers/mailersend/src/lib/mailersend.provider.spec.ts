@@ -1,5 +1,6 @@
 import { MailersendEmailProvider } from './mailersend.provider';
 import MailerSend, { Attachment, Recipient } from 'mailersend';
+import { CheckIntegrationResponseEnum } from '@novu/stateless';
 
 const mockConfig = {
   apiKey: 'SG.1234',
@@ -24,7 +25,9 @@ test('should trigger mailerSend with expected parameters', async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
     });
-  const response = await provider.sendMessage(mockNovuMessage);
+
+  await provider.sendMessage(mockNovuMessage);
+
   expect(spy).toHaveBeenCalled();
   expect(spy).toBeCalledWith({
     to: mockNovuMessage.to,
@@ -58,7 +61,8 @@ test('should trigger mailerSend correctly', async () => {
   const recipient1 = new Recipient('test@test1.com', undefined);
   const recipient2 = new Recipient('test@test2.com', undefined);
 
-  const response = await provider.sendMessage(mockNovuMessage);
+  await provider.sendMessage(mockNovuMessage);
+
   expect(spy).toHaveBeenCalled();
   expect(spy).toBeCalledWith('/email', {
     method: 'POST',
@@ -77,5 +81,72 @@ test('should trigger mailerSend correctly', async () => {
       personalization: undefined,
       tags: undefined,
     },
+  });
+});
+
+test('should check provider integration when success', async () => {
+  const provider = new MailersendEmailProvider(mockConfig);
+  const spy = jest
+    .spyOn(MailerSend.prototype, 'request')
+    .mockImplementation(async () => ({
+      ok: true,
+      status: 200,
+    }));
+
+  const messageResponse = await provider.checkIntegration(mockNovuMessage);
+
+  expect(spy).toHaveBeenCalled();
+  expect(messageResponse).toStrictEqual({
+    success: true,
+    message: 'Integrated successfully!',
+    code: CheckIntegrationResponseEnum.SUCCESS,
+  });
+});
+
+test('should check provider integration when bad credentials', async () => {
+  const provider = new MailersendEmailProvider(mockConfig);
+  const serverMessage = 'Bad credentials';
+
+  const spy = jest
+    .spyOn(MailerSend.prototype, 'request')
+    .mockImplementation(async () => ({
+      ok: false,
+      json: async () => ({
+        message: serverMessage,
+      }),
+      status: 401,
+    }));
+
+  const messageResponse = await provider.checkIntegration(mockNovuMessage);
+
+  expect(spy).toHaveBeenCalled();
+  expect(messageResponse).toStrictEqual({
+    success: false,
+    message: serverMessage,
+    code: CheckIntegrationResponseEnum.BAD_CREDENTIALS,
+  });
+});
+
+test('should check provider integration when failed', async () => {
+  const provider = new MailersendEmailProvider(mockConfig);
+  const serverMessage = 'Server is under maintanance';
+
+  const spy = jest
+    .spyOn(MailerSend.prototype, 'request')
+    .mockImplementation(async () => ({
+      ok: false,
+      json: async () => ({
+        message: serverMessage,
+      }),
+      status: 500,
+    }));
+
+  const messageResponse = await provider.checkIntegration(mockNovuMessage);
+
+  expect(spy).toHaveBeenCalled();
+  expect(messageResponse).toStrictEqual({
+    success: false,
+    message: serverMessage,
+    code: CheckIntegrationResponseEnum.FAILED,
   });
 });
