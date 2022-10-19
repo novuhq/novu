@@ -12,7 +12,7 @@ This becomes useful when a user needs to be notified on a large amount of trigge
 
 After adding a digest node in the workflow editor, each node that will be below the digest node will be only triggered once in the specified digest interval. You can decide to send messages before adding a digest node and they will be triggered in real-time.
 
-![Workflow Photo](/img/digest-flow.png)
+![Workflow Photo](../../static/img/digest-flow.png)
 
 ### Node configurations
 
