@@ -2,20 +2,20 @@ import { useCallback, useState } from 'react';
 import { AppShell } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
+import { IntercomProvider } from 'react-use-intercom';
 
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
 import { colors } from '../../design-system';
-import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../config';
 
 export function AppLayout() {
-  const { SupportChatProvider } = useSupportChatProvider();
+  const SupportChatProvider = useSupportChatProvider();
 
   return (
     <ThemeProvider>
-      <SupportChatProvider>
+      <IntercomProvider appId={INTERCOM_APP_ID}>
         <AppShell
           padding="lg"
           navbar={<SideNav />}
@@ -51,26 +51,22 @@ export function AppLayout() {
             <Outlet />
           </Sentry.ErrorBoundary>
         </AppShell>
-      </SupportChatProvider>
+      </IntercomProvider>
     </ThemeProvider>
   );
 }
 
 const useSupportChatProvider = () => {
-  const isIntercomEnabled = useState<boolean>(!!INTERCOM_APP_ID);
+  const [isIntercomEnabled] = useState<boolean>(!!INTERCOM_APP_ID);
 
-  const SupportChatProvider = useCallback(
+  return useCallback(
     ({ children }) => {
       if (isIntercomEnabled) {
         return <IntercomProvider appId={INTERCOM_APP_ID}>{children}</IntercomProvider>;
       }
 
-      return children;
+      return <>{children}</>;
     },
     [isIntercomEnabled]
   );
-
-  return {
-    SupportChatProvider,
-  };
 };

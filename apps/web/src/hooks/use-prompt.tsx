@@ -45,7 +45,7 @@ export const usePrompt = (when: boolean): [boolean, () => void, () => void] => {
 
       return true;
     },
-    [confirmedNavigation]
+    [confirmedNavigation, location.pathname]
   );
 
   const confirmNavigation = useCallback(() => {
@@ -57,7 +57,7 @@ export const usePrompt = (when: boolean): [boolean, () => void, () => void] => {
     if (confirmedNavigation && lastLocation) {
       navigate(lastLocation.location.pathname);
     }
-  }, [confirmedNavigation, lastLocation]);
+  }, [confirmedNavigation, lastLocation, navigate]);
 
   useBlocker(handleBlockedNavigation, when);
 

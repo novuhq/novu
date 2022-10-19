@@ -7,7 +7,7 @@ import {
   Menu as MantineMenu,
   Container,
 } from '@mantine/core';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
@@ -31,68 +31,66 @@ const menuItem = [
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
-const useBootIntercom = (currentUser, currentOrganization) => {
-  const { boot } = useIntercom();
+const mapIntercomData = (currentUser, currentOrganization) => ({
+  email: currentUser?.email,
+  name: `${currentUser?.firstName} ${currentUser?.lastName}`,
+  createdAt: currentUser?.createdAt,
+  company: {
+    name: currentOrganization?.name,
+    companyId: currentOrganization?._id as string,
+  },
+});
 
+const useBootIntercom = (currentUser, currentOrganization) => {
   const [isIntercomEnabled] = useState<boolean>(!!INTERCOM_APP_ID);
+  const { boot } = useIntercom();
+  const intercomData = mapIntercomData(currentUser, currentOrganization);
 
   return useCallback(() => {
     if (isIntercomEnabled) {
-      boot({
-        email: currentUser?.email,
-        name: currentUser?.firstName + ' ' + currentUser?.lastName,
-        createdAt: currentUser?.createdAt,
-        company: {
-          name: currentOrganization?.name,
-          companyId: currentOrganization?._id as string,
-        },
-      });
+      boot(intercomData);
     }
-  }, [isIntercomEnabled, boot, currentUser, currentOrganization]);
+  }, [isIntercomEnabled, boot, intercomData]);
 };
 
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
-  const bootIntercom = useBootIntercom(currentUser, currentOrganization);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
   const { addItem } = useContext(SpotlightContext);
 
-  useEffect(() => {
-    if (bootIntercom && currentUser && currentOrganization) {
-      bootIntercom();
-    }
-  }, [currentUser, currentOrganization, bootIntercom]);
+  useBootIntercom(currentUser, currentOrganization);
 
-  const themeTitle = useCallback(() => {
+  const getThemeTitle = (theme: string): string => {
     let title = 'Match System Appearance';
-    if (themeStatus === 'dark') {
+    if (theme === 'dark') {
       title = `Dark Theme`;
-    } else if (themeStatus === 'light') {
+    } else if (theme === 'light') {
       title = `Light Theme`;
     }
 
     return title;
-  }, [themeStatus]);
+  };
 
-  const Icon = useCallback(() => {
-    if (themeStatus === 'dark') {
+  const getIcon = (theme: string) => {
+    if (theme === 'dark') {
       return <Moon {...headerIconsSettings} />;
     }
-    if (themeStatus === 'light') {
+
+    if (theme === 'light') {
       return <Sun {...headerIconsSettings} />;
     }
 
     return <Ellipse {...headerIconsSettings} height={24} width={24} />;
-  }, [themeStatus]);
+  };
 
-  useEffect(() => {
+  useCallback(() => {
     addItem([
       {
         id: 'toggle-theme',
-        title: themeTitle(),
-        icon: Icon(),
+        title: getThemeTitle(themeStatus),
+        icon: getIcon(themeStatus),
         onTrigger: () => {
           toggleColorScheme();
         },
@@ -106,7 +104,7 @@ export function HeaderNav({}: Props) {
         },
       },
     ]);
-  }, [colorScheme, Icon, addItem, logout, themeTitle, toggleColorScheme]);
+  }, [themeStatus, addItem, logout, toggleColorScheme]);
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
@@ -163,7 +161,7 @@ export function HeaderNav({}: Props) {
         </Link>
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
-            <Tooltip label={themeTitle()}>{Icon()}</Tooltip>
+            <Tooltip label={getThemeTitle(themeStatus)}>{getIcon(themeStatus)}</Tooltip>
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown

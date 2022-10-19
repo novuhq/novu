@@ -39,7 +39,7 @@ export function useTemplateController(templateId: string) {
 
   useEffect(() => {
     setEditMode(!!templateId);
-  }, []);
+  }, [templateId, setEditMode]);
 
   const methods = useFormContext<IForm>();
 
@@ -120,11 +120,11 @@ export function useTemplateController(templateId: string) {
     } else {
       reset(JSON.parse(JSON.stringify(defaultFormValues)));
     }
-  }, [template]);
+  }, [template, isDirtyForm, setTrigger, reset]);
 
   useEffect(() => {
     setEditMode(!!templateId);
-  }, [templateId]);
+  }, [templateId, setEditMode]);
 
   const onSubmit = async (data: IForm) => {
     let stepsToSave = data.steps as StepEntity[];

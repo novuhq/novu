@@ -54,7 +54,7 @@ export function CreateOrganization({}: Props) {
         navigate('/');
       }
     }
-  }, []);
+  }, [isFromVercel, navigate, startVercelSetup, token]);
 
   async function createEnvironment(name: string) {
     const environmentResponse = await mutateAsync({ name });

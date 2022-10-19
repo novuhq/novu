@@ -104,7 +104,7 @@ export function ChannelButton({
     });
 
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, id]);
 
   useEffect(() => {
     if (showDotMenu && (dragging || !active)) {

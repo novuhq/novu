@@ -70,6 +70,17 @@ export const TemplatePageHeader = ({
     template
   );
 
+  const onClick = () => {
+    setActivePage(activePage === ActivePageEnum.WORKFLOW ? ActivePageEnum.SETTINGS : ActivePageEnum.WORKFLOW);
+  };
+
+  const activePageIsNotOneOfThis = [
+    ActivePageEnum.SETTINGS,
+    ActivePageEnum.USER_PREFERENCE,
+    ActivePageEnum.WORKFLOW,
+    ActivePageEnum.TRIGGER_SNIPPET,
+  ].includes(activePage);
+
   return (
     <Container fluid sx={{ padding: '20px', width: '100%' }}>
       <Group position="apart">
@@ -77,25 +88,8 @@ export const TemplatePageHeader = ({
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When
-            truthy={
-              activePage !== ActivePageEnum.SETTINGS &&
-              activePage !== ActivePageEnum.USER_PREFERENCE &&
-              activePage !== ActivePageEnum.WORKFLOW &&
-              activePage !== ActivePageEnum.TRIGGER_SNIPPET
-            }
-          >
-            <Center
-              mt={10}
-              data-test-id="go-back-button"
-              onClick={() => {
-                setActivePage(
-                  activePage === ActivePageEnum.WORKFLOW ? ActivePageEnum.SETTINGS : ActivePageEnum.WORKFLOW
-                );
-              }}
-              inline
-              style={{ cursor: 'pointer' }}
-            >
+          <When truthy={activePageIsNotOneOfThis}>
+            <Center mt={10} data-test-id="go-back-button" onClick={onClick} inline style={{ cursor: 'pointer' }}>
               <ArrowLeft color={colors.B60} />
               <Text ml={5} color={colors.B60}>
                 Go Back

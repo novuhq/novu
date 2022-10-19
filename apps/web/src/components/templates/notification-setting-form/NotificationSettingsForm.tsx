@@ -41,17 +41,17 @@ export const NotificationSettingsForm = ({
   });
 
   useEffect(() => {
+    function selectFirstGroupByDefault() {
+      setTimeout(() => {
+        setValue('notificationGroup', groups[0]._id);
+      }, 500);
+    }
+
     const group = getValues('notificationGroup');
     if (groups?.length && !editMode && !group) {
       selectFirstGroupByDefault();
     }
-  }, [groups, editMode]);
-
-  function selectFirstGroupByDefault() {
-    setTimeout(() => {
-      setValue('notificationGroup', groups[0]._id);
-    }, 500);
-  }
+  }, [groups, editMode, getValues, setValue]);
 
   async function addGroupItem(newGroup) {
     if (newGroup) {

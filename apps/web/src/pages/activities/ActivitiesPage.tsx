@@ -43,7 +43,7 @@ export function ActivitiesPage() {
     const subscription = watch((values) => handleSubmit(onFiltersChange)());
 
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, handleSubmit]);
 
   function onRowClick(event, selectedNotificationId) {
     event.preventDefault();

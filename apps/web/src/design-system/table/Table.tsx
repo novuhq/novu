@@ -84,7 +84,7 @@ export function Table({
     if (onPageChange) {
       onPageChange(pageIndex);
     }
-  }, [pageIndex]);
+  }, [pageIndex, onPageChange]);
 
   const handlePageChange = (pageNumber) => {
     gotoPage(pageNumber - 1);

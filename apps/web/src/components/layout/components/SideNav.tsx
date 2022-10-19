@@ -1,13 +1,15 @@
 import { Navbar, Popover, useMantineColorScheme } from '@mantine/core';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import styled from '@emotion/styled';
+
+import OrganizationSelect from './OrganizationSelect';
+
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
-import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
-import styled from '@emotion/styled';
-import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
 
 type Props = {};
@@ -17,6 +19,7 @@ export function SideNav({}: Props) {
   const { setEnvironment, isLoading, environment, readonly } = useEnvController();
   const { currentUser } = useContext(AuthContext);
   const location = useLocation();
+  const { pathname } = location;
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
@@ -24,22 +27,10 @@ export function SideNav({}: Props) {
 
   useEffect(() => {
     setOpened(readonly);
-    if (readonly && location.pathname === '/changes') {
+    if (readonly && pathname === '/changes') {
       navigate('/');
     }
-  }, [readonly]);
-
-  useEffect(() => {
-    addItem([
-      {
-        id: 'toggle-environment',
-        title: `Toggle to ${environment?.name === 'Production' ? 'Development' : 'Production'} environment`,
-        onTrigger: () => {
-          setEnvironment(environment?.name === 'Production' ? 'Development' : 'Production');
-        },
-      },
-    ]);
-  }, [environment]);
+  }, [readonly, pathname, navigate]);
 
   const menuItems = [
     {

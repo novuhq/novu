@@ -72,7 +72,7 @@ export function useAuthController() {
       const payload = jwtDecode<IJwtPayload>(token);
       setJwtPayload(payload);
     }
-  }, [token]);
+  }, [token, queryClient]);
 
   useEffect(() => {
     if (user && organization) {

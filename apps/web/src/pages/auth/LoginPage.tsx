@@ -24,7 +24,7 @@ export default function LoginPage() {
     if (queryToken) {
       setToken(queryToken);
     }
-  }, [queryToken]);
+  }, [queryToken, setToken]);
 
   useEffect(() => {
     if (token) {
@@ -43,7 +43,7 @@ export default function LoginPage() {
         navigate(source === 'cli' ? '/quickstart' : '/');
       }
     }
-  }, [token]);
+  }, [token, code, next, isFromVercel, startVercelSetup, source, navigate]);
 
   return (
     <AuthLayout>
