@@ -2,6 +2,7 @@ import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTempl
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
+import * as hat from 'hat';
 import { merge } from 'lodash';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -13,6 +14,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
 import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
+import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { AddJob } from '../add-job/add-job.usecase';
 
 @Injectable()
@@ -23,8 +25,9 @@ export class TriggerEvent {
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
     private verifyPayload: VerifyPayload,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private addJobUsecase: AddJob
+    private storageHelperServie: StorageHelperService,
+    private addJobUsecase: AddJob,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -50,6 +53,13 @@ export class TriggerEvent {
 
     if (!template.active || template.draft) {
       return this.logTemplateNotActive(command, template);
+    }
+
+    // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
+    if (command.payload && Array.isArray(command.payload.attachments)) {
+      this.modifyAttachments(command);
+      await this.storageHelperServie.uploadAttachments(command.payload.attachments);
+      command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
     }
 
     const defaultPayload = this.verifyPayload.execute(
@@ -237,5 +247,14 @@ export class TriggerEvent {
       acknowledged: true,
       status: 'subscriber_id_missing',
     };
+  }
+
+  private modifyAttachments(command: TriggerEventCommand) {
+    command.payload.attachments = command.payload.attachments.map((attachment) => ({
+      ...attachment,
+      name: attachment.name,
+      file: Buffer.from(attachment.file, 'base64'),
+      storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
+    }));
   }
 }

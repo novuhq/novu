@@ -16,6 +16,7 @@ import { RunJob } from '../usecases/run-job/run-job.usecase';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { RunJobCommand } from '../usecases/run-job/run-job.command';
+import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
 
 const axiosInstance = axios.create();
 
@@ -73,7 +74,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     runJob = new RunJob(
       jobRepository,
       session.testServer.getService(SendMessage),
-      session.testServer.getService(QueueNextJob)
+      session.testServer.getService(QueueNextJob),
+      session.testServer.getService(StorageHelperService)
     );
   });
 
