@@ -144,11 +144,13 @@ export function HeaderNav({}: Props) {
         p={30}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}
       >
-        <img
-          src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
-          alt="logo"
-          style={{ maxWidth: 150, maxHeight: 25 }}
-        />
+        <Link to="/">
+          <img
+            src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
+            alt="logo"
+            style={{ maxWidth: 150, maxHeight: 25 }}
+          />
+        </Link>
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeTitle()}>{Icon()}</Tooltip>
