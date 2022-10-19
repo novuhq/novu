@@ -180,12 +180,12 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working with the project, then join our 
+We are more than happy to help you. If you are getting any errors or facing problems while working with this project, then join our 
 [Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
 ## 📋 Read Our Code Of Conduct 
 
-Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) throroughly to understand our standards (that you are required to adhere to) regarding how to engage in the community.
+Before moving on to coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand our standards (that you are required to adhere to) regarding how to engage in the community.
 
 ## 🔗 Links
 
@@ -199,7 +199,7 @@ Novu is licensed under the MIT License - see the [LICENSE](https://github.com/no
 
 ## 💪 Thanks To All Contributors
 
-Thanks a lot for spending your time helping Novu grow. Thanks a lot! Keep rocking 🥂
+Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
 <a href="https://novu.co/contributors">
   <img src="https://contrib.rocks/image?repo=novuhq/novu" />
