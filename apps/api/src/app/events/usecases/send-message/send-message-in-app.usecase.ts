@@ -182,7 +182,7 @@ export class SendMessageInApp extends SendMessageType {
         providerId: InAppProviderIdEnum.Novu,
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
       })

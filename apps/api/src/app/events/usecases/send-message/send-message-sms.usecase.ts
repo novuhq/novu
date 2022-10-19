@@ -143,7 +143,7 @@ export class SendMessageSms extends SendMessageType {
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         messageId: message._id,
         isTest: false,
         isRetry: false,

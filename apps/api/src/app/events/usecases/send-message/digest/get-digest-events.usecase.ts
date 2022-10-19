@@ -34,7 +34,7 @@ export abstract class GetDigestEvents {
         ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
         detail: DetailEnum.DIGEST_TRIGGERD_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
         raw: JSON.stringify(events),

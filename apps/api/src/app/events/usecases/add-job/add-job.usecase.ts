@@ -50,7 +50,7 @@ export class AddJob {
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
       })

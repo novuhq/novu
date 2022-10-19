@@ -148,7 +148,7 @@ export class SendMessageChat extends SendMessageType {
         channel: StepTypeEnum.SMS,
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         messageId: message._id,
         isTest: false,
         isRetry: false,

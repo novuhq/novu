@@ -53,7 +53,7 @@ export class SendMessage {
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.START_SENDING,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
       })
@@ -85,7 +85,7 @@ export class SendMessage {
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.FILTER_STEPS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({
@@ -127,19 +127,23 @@ export class SendMessage {
 
     const preference = (await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand)).preference;
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: DetailEnum.STEPS_FILTERED_BY_PREFERENCES,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
-        isTest: false,
-        isRetry: false,
-        raw: JSON.stringify(preference),
-      })
-    );
+    const result = this.actionStep(job) || this.stepPreferred(preference, job);
 
-    return this.actionStep(job) || this.stepPreferred(preference, job);
+    if (!result) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEPS_FILTERED_BY_PREFERENCES,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(preference),
+        })
+      );
+    }
+
+    return result;
   }
 
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
