@@ -42,9 +42,9 @@ export class SendMessage {
 
   public async execute(command: SendMessageCommand) {
     const shouldRun = await this.filter(command);
-    const prefered = await this.filterPreferredChannels(command.job);
+    const removed = await this.filterPreferredChannels(command.job);
 
-    if (!shouldRun || !prefered) {
+    if (!shouldRun || removed) {
       return;
     }
 
@@ -129,7 +129,7 @@ export class SendMessage {
 
     const result = this.actionStep(job) || this.stepPreferred(preference, job);
 
-    if (!result) {
+    if (result) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
