@@ -73,11 +73,12 @@ export default function TemplateEditorPage() {
     openTestWorkflowModal();
   };
 
-  const onTestWorkflowClicked = async () => {
+  const onTestWorkflowClicked = () => {
     if (isDirty) {
       openSaveChangesModal();
+    } else {
+      openTestWorkflowModal();
     }
-    openTestWorkflowModal();
   };
 
   useEffect(() => {

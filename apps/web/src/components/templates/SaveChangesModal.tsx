@@ -11,20 +11,16 @@ export function SaveChangesModal({
   onConfirm: () => void;
 }) {
   return (
-    <>
-      <Modal opened={isVisible} title={<Title size={2}>Save template</Title>} onClose={onDismiss}>
-        <div>
-          <Text>Would you like to save your current changes?</Text>
-          <Group position="right">
-            <Button variant="outline" size="md" mt={30} onClick={onDismiss}>
-              Cancel
-            </Button>
-            <Button mt={30} size="md" submit onClick={onConfirm} data-autofocus>
-              Save
-            </Button>
-          </Group>
-        </div>
-      </Modal>
-    </>
+    <Modal opened={isVisible} title={<Title size={2}>Save template</Title>} onClose={onDismiss}>
+      <Text>Would you like to save your current changes?</Text>
+      <Group position="right">
+        <Button variant="outline" size="md" mt={30} onClick={onDismiss}>
+          Cancel
+        </Button>
+        <Button mt={30} size="md" submit onClick={onConfirm} data-autofocus>
+          Save
+        </Button>
+      </Group>
+    </Modal>
   );
 }
