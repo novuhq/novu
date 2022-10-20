@@ -77,7 +77,7 @@ export function TestWorkflowModal({
         formatOnBlur
         autosize
         styles={inputStyles}
-        label="to:"
+        label="To"
         value={toValue}
         onChange={setToValue}
         minRows={3}
@@ -86,7 +86,7 @@ export function TestWorkflowModal({
         formatOnBlur
         autosize
         styles={inputStyles}
-        label="payload:"
+        label="Payload"
         value={payloadValue}
         onChange={setPayloadValue}
         minRows={3}
@@ -95,7 +95,7 @@ export function TestWorkflowModal({
         formatOnBlur
         autosize
         styles={inputStyles}
-        label="overrides:"
+        label="Overrides (optional)"
         value={overridesValue}
         onChange={setOverridesValue}
         minRows={3}
