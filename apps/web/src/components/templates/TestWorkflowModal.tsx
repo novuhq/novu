@@ -1,13 +1,12 @@
 import { INotificationTrigger } from '@novu/shared';
-import { JsonInput, Modal, useMantineTheme } from '@mantine/core';
-import { Button, colors, shadows, Title } from '../../design-system';
+import { JsonInput } from '@mantine/core';
+import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
 import { useMutation } from 'react-query';
 import { testTrigger } from '../../api/templates';
 import { useContext, useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import * as Sentry from '@sentry/react';
-import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../store/authContext';
 
 export function TestWorkflowModal({
@@ -20,12 +19,9 @@ export function TestWorkflowModal({
   trigger: INotificationTrigger;
 }) {
   const { currentUser } = useContext(AuthContext);
-  const theme = useMantineTheme();
-  const navigate = useNavigate();
-  const dark = theme.colorScheme === 'dark';
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
 
-  const subscriberVariables = [{ name: 'subscriberId' }, ...(trigger.subscriberVariables || [])];
+  const subscriberVariables = [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
 
   const toTrigger = `{ 
     ${subscriberVariables
@@ -37,7 +33,7 @@ export function TestWorkflowModal({
       .join(',\n    ')}
 }`;
   const payloadTrigger = `{
-    ${trigger.variables
+    ${trigger?.variables
       .map((variable) => {
         return `"${variable.name}": "REPLACE_WITH_DATA"`;
       })
@@ -46,6 +42,7 @@ export function TestWorkflowModal({
   const overridesTrigger = `{
 
 }`;
+
   const [toValue, setToValue] = useState(toTrigger);
   const [payloadValue, setPayloadValue] = useState(payloadTrigger);
   const [overridesValue, setOverridesValue] = useState(overridesTrigger);
@@ -56,13 +53,13 @@ export function TestWorkflowModal({
     const overrides = JSON.parse(overridesValue);
     try {
       await triggerTestEvent({
-        name: trigger.identifier,
+        name: trigger?.identifier,
         to,
         payload,
         overrides,
       });
       successMessage('Template triggered successfully');
-      navigate('/templates');
+      onDismiss();
     } catch (e: any) {
       Sentry.captureException(e);
       errorMessage(e.message || 'Un-expected error occurred');
@@ -73,25 +70,8 @@ export function TestWorkflowModal({
     <Modal
       onClose={onDismiss}
       opened={isVisible}
-      overlayColor={dark ? colors.BGDark : colors.BGLight}
-      overlayOpacity={0.7}
-      styles={{
-        modal: {
-          backgroundColor: dark ? colors.B15 : colors.white,
-        },
-        body: {
-          paddingTop: '5px',
-        },
-        inner: {
-          paddingTop: '180px',
-        },
-      }}
-      sx={{ backdropFilter: 'blur(10px)' }}
       title={<Title>Test Trigger </Title>}
       data-test-id="test-trigger-modal"
-      shadow={dark ? shadows.dark : shadows.medium}
-      radius="md"
-      size="xl"
     >
       <JsonInput
         formatOnBlur

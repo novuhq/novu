@@ -16,6 +16,8 @@ import { UnsavedChangesModal } from '../../../components/templates/UnsavedChange
 import { When } from '../../../components/utils/When';
 import { UserPreference } from '../../user-preference/UserPreference';
 import { TestWorkflowModal } from '../../../components/templates/TestWorkflowModal';
+import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
+import { useDisclosure } from '@mantine/hooks';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -34,11 +36,11 @@ export default function TemplateEditorPage() {
   const navigate = useNavigate();
   const { readonly, environment } = useEnvController();
   const [activeStep, setActiveStep] = useState<number>(-1);
-  const [showTestWorkflow, setShowTestWorkflow] = useState<boolean>(false);
   const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
   const {
     editMode,
+    onTestWorkflowDismiss,
     template,
     isLoading,
     isUpdateLoading,
@@ -52,7 +54,31 @@ export default function TemplateEditorPage() {
     trigger,
     onTriggerModalDismiss,
   } = useTemplateController(templateId);
+
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
+
+  const [testWorkflowModalOpened, { close: closeTestWorkflowModal, open: openTestWorkflowModal }] = useDisclosure(
+    false,
+    {
+      onClose() {
+        onTestWorkflowDismiss();
+      },
+    }
+  );
+  const [saveChangesModalOpened, { close: closeSaveChangesModal, open: openSaveChangesModal }] = useDisclosure(false);
+
+  const onConfirmSaveChanges = async () => {
+    await handleSubmit(onSubmit)();
+    closeSaveChangesModal();
+    openTestWorkflowModal();
+  };
+
+  const onTestWorkflowClicked = async () => {
+    if (isDirty) {
+      openSaveChangesModal();
+    }
+    openTestWorkflowModal();
+  };
 
   useEffect(() => {
     if (environment && template) {
@@ -80,7 +106,7 @@ export default function TemplateEditorPage() {
               templateId={templateId}
               setActivePage={setActivePage}
               activePage={activePage}
-              setShowTestWorkflow={setShowTestWorkflow}
+              onTestWorkflowClicked={onTestWorkflowClicked}
             />
           </When>
 
@@ -101,7 +127,7 @@ export default function TemplateEditorPage() {
                 setActiveStep={setActiveStep}
                 templateId={templateId}
                 setActivePage={setActivePage}
-                setShowTestWorkflow={setShowTestWorkflow}
+                onTestWorkflowClicked={onTestWorkflowClicked}
               />
             </ReactFlowProvider>
           )}
@@ -119,17 +145,24 @@ export default function TemplateEditorPage() {
             <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
           ) : null}
           {trigger && (
-            <TemplateTriggerModal trigger={trigger} onDismiss={onTriggerModalDismiss} isVisible={isEmbedModalVisible} />
-          )}
-          {showTestWorkflow && trigger && (
-            <TestWorkflowModal
+            <TemplateTriggerModal
               trigger={trigger}
-              onDismiss={() => {
-                setShowTestWorkflow(false);
-              }}
-              isVisible={showTestWorkflow}
+              onDismiss={onTriggerModalDismiss}
+              isVisible={!testWorkflowModalOpened && isEmbedModalVisible}
             />
           )}
+          {trigger && !isDirty && (
+            <TestWorkflowModal
+              trigger={trigger}
+              onDismiss={closeTestWorkflowModal}
+              isVisible={testWorkflowModalOpened}
+            />
+          )}
+          <SaveChangesModal
+            onConfirm={onConfirmSaveChanges}
+            isVisible={saveChangesModalOpened}
+            onDismiss={closeSaveChangesModal}
+          />
         </form>
       </PageContainer>
       <UnsavedChangesModal

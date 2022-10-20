@@ -49,8 +49,8 @@ interface Props {
   loading: boolean;
   disableSubmit: boolean;
   setActivePage: (activePage: ActivePageEnum) => void;
-  setShowTestWorkflow: (showTestWorkflow: boolean) => void;
   activePage: ActivePageEnum;
+  onTestWorkflowClicked: () => void;
 }
 
 export const TemplatePageHeader = ({
@@ -59,9 +59,9 @@ export const TemplatePageHeader = ({
   disableSubmit,
   activePage,
   setActivePage,
-  setShowTestWorkflow,
+  onTestWorkflowClicked,
 }: Props) => {
-  const { editMode, template, trigger } = useTemplateController(templateId);
+  const { editMode, template } = useTemplateController(templateId);
   const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const { readonly } = useEnvController();
 
@@ -122,14 +122,7 @@ export const TemplatePageHeader = ({
             )}
 
             <Grid.Col span={editMode ? 4 : 6}>
-              <Button
-                variant="outline"
-                data-test-id="test-workflow-btn"
-                disabled={!trigger}
-                onClick={() => {
-                  setShowTestWorkflow(true);
-                }}
-              >
+              <Button variant="outline" data-test-id="test-workflow-btn" onClick={onTestWorkflowClicked}>
                 Test Workflow
               </Button>
             </Grid.Col>
