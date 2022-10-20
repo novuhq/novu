@@ -10,7 +10,7 @@ export class GetActivityFeed {
     private notificationRepository: NotificationRepository
   ) {}
 
-  async execute(command: GetActivityFeedCommand): Promise<any> {
+  async execute(command: GetActivityFeedCommand): Promise<ActivitiesResponseDto> {
     const LIMIT = 10;
 
     let subscriberIds: string[] = [];

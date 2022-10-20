@@ -1,7 +1,7 @@
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 
-export const getJobStatus = (job) => {
+export const getJobStatus = (job): ExecutionDetailsStatusEnum => {
   return job.executionDetails
     ?.map((detail) => detail.status)
     .reduce((prev, item) => {
@@ -16,7 +16,7 @@ export const getJobStatus = (job) => {
     }, ExecutionDetailsStatusEnum.PENDING);
 };
 
-export const useJobStatus = (job: any) => {
+export const useJobStatus = (job: any): ExecutionDetailsStatusEnum => {
   const [status, setStatus] = useState(ExecutionDetailsStatusEnum.PENDING);
 
   useEffect(() => {
