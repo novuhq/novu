@@ -122,7 +122,7 @@ export class SendMessage {
       organizationId: job._organizationId,
       subscriberId: job._subscriberId,
       environmentId: job._subscriberId,
-      template: template,
+      template,
     });
 
     const preference = (await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand)).preference;
