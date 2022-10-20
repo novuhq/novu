@@ -265,7 +265,7 @@ The notifications array returned by the `useNotifications` hook contains an arra
 | --------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `_id`                       | `string`                  | A unique Novu message identifier                                                                      |
 | `channel`                   | `ChannelTypeEnum`         | Use to specify the actual channel of this message (`in_app` will be used here)                        |
-| `seen`                      | `boolean`                 | Whether the notification item was ready by the user, changed when the user clicks on the notification |
+| `seen`                      | `boolean`                 | Whether the notification item was read by the user, changed when the user clicks on the notification |
 | `lastSeenDate`              | `ISODate`                 | When the user has last seen the notification                                                          |
 | `content`                   | `string`                  | An HTML string of the generated notification content with parsed and replaced variables               |
 | `templateIdentifier`        | `string`                  | A unique Novu template identifier                                                                     |
