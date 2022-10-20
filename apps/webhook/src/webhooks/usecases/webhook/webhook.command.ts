@@ -1,6 +1,7 @@
 import { IsDefined } from 'class-validator';
 import { EnvironmentCommand } from '@novu/application-generic';
-import { WebhookTypes } from './webhook.usecase';
+
+import { WebhookTypes } from '../../interfaces/webhook.interface';
 
 export class WebhookCommand extends EnvironmentCommand {
   @IsDefined()

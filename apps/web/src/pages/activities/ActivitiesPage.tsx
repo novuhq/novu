@@ -11,6 +11,7 @@ import { Select, Input } from '../../design-system';
 import { ActivityStatistics } from './components/ActivityStatistics';
 import { ActivityGraph } from './components/ActivityGraph';
 import { ActivityList } from './components/ActivityList';
+import { ExecutionDetailsModal } from '../../components/activity/ExecutionDetailsModal';
 
 interface IFiltersForm {
   channels?: ChannelTypeEnum[];
@@ -19,6 +20,7 @@ interface IFiltersForm {
 export function ActivitiesPage() {
   const { templates, loading: loadingTemplates } = useTemplates(0, 100);
   const [page, setPage] = useState<number>(0);
+  const [isModalOpen, toggleModal] = useState<boolean>(false);
   const [filters, setFilters] = useState<IFiltersForm>({ channels: [] });
   const { data, isLoading, isFetching } = useQuery<{ data: any[]; totalCount: number; pageSize: number }>(
     ['activitiesList', page, filters],
@@ -41,6 +43,14 @@ export function ActivitiesPage() {
 
     return () => subscription.unsubscribe();
   }, [watch]);
+
+  function onRowClick() {
+    toggleModal((state) => !state);
+  }
+
+  function onModalClose() {
+    toggleModal(false);
+  }
 
   return (
     <PageContainer>
@@ -108,6 +118,7 @@ export function ActivitiesPage() {
       <ActivityList
         loading={isLoading || isFetching}
         data={data?.data || []}
+        onRowClick={onRowClick}
         pagination={{
           pageSize: data?.pageSize,
           current: page,
@@ -115,6 +126,7 @@ export function ActivitiesPage() {
           onPageChange: handleTableChange,
         }}
       />
+      <ExecutionDetailsModal modalVisibility={isModalOpen} onClose={onModalClose} />
     </PageContainer>
   );
 }
