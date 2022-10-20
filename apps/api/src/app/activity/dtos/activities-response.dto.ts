@@ -34,13 +34,13 @@ class ActivityNotificationSubscriberResponseDto {
 }
 
 class ActivityNotificationTemplateResponseDto {
-  @ApiProperty()
-  _id: string;
+  @ApiPropertyOptional()
+  _id?: string;
   @ApiProperty()
   name: string;
 }
 
-class ActivityNotificationResponseDto {
+export class ActivityNotificationResponseDto {
   @ApiPropertyOptional()
   _id?: string;
 
@@ -59,22 +59,22 @@ class ActivityNotificationResponseDto {
   @ApiProperty()
   transactionId: string;
 
-  @ApiProperty()
-  createdAt: Date;
+  @ApiPropertyOptional()
+  createdAt?: Date;
 
   @ApiPropertyOptional({
     enum: StepTypeEnum,
   })
   channels?: StepTypeEnum[];
 
-  @ApiProperty()
-  subscriber: ActivityNotificationSubscriberResponseDto;
+  @ApiPropertyOptional()
+  subscriber?: ActivityNotificationSubscriberResponseDto;
 
-  @ApiProperty()
-  template: ActivityNotificationTemplateResponseDto;
+  @ApiPropertyOptional()
+  template?: ActivityNotificationTemplateResponseDto;
 
-  @ApiProperty()
-  jobs: any[];
+  @ApiPropertyOptional()
+  jobs?: ActivityNotificationJobResponseDto[];
 }
 
 export class ActivitiesResponseDto {
