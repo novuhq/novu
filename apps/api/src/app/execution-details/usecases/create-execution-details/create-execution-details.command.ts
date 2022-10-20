@@ -7,15 +7,15 @@ export enum DetailEnum {
   STEP_QUEUED = 'Step is queued for execution',
   MESSAGE_CONTENT_NOT_GENERATED = 'Message content could not be generated',
   MESSAGE_CREATED = 'Message created',
-  SUBSCRIBER_NO_ACTIVE_INEGRATION = 'Subscriber does not have an active integration',
+  SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
   SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber does not have any email/phone number',
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
   MESSAGE_SENT = 'Message sent',
   PROVIDER_ERROR = 'Unexpected provider error',
   START_SENDING = 'Start sending message',
-  FILTER_STEPS = 'Step was filtred based on steps filters',
+  FILTER_STEPS = 'Step was filtered based on steps filters',
   DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
-  DIGEST_TRIGGERD_EVENTS = 'Digest triggerd events',
+  DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEPS_FILTERED_BY_PREFERENCES = 'Steps filtered by subscriber preferences',
 }
 

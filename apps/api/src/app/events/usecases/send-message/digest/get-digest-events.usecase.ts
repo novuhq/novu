@@ -32,7 +32,7 @@ export abstract class GetDigestEvents {
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
-        detail: DetailEnum.DIGEST_TRIGGERD_EVENTS,
+        detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,

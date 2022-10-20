@@ -34,7 +34,7 @@ export class TriggerEvent {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private addJobUsecase: AddJob,
     private notificationRepository: NotificationRepository,
-    private storageHelperServie: StorageHelperService
+    private storageHelperService: StorageHelperService
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -65,7 +65,7 @@ export class TriggerEvent {
     // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
     if (command.payload && Array.isArray(command.payload.attachments)) {
       this.modifyAttachments(command);
-      await this.storageHelperServie.uploadAttachments(command.payload.attachments);
+      await this.storageHelperService.uploadAttachments(command.payload.attachments);
       command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
     }
 

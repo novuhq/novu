@@ -125,9 +125,9 @@ export class SendMessage {
       template,
     });
 
-    const preference = (await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand)).preference;
+    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
 
-    const result = this.actionStep(job) || this.stepPreferred(preference, job);
+    const result = this.isActionStep(job) || this.stepPreferred(preference, job);
 
     if (result) {
       await this.createExecutionDetails.execute(
@@ -156,9 +156,9 @@ export class SendMessage {
     return templatePreferred && channelPreferred;
   }
 
-  private actionStep(job: JobEntity) {
-    const channels = [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS, 'push', 'chat'];
+  private isActionStep(job: JobEntity) {
+    const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
-    return !channels.some((channel) => channel === job.type);
+    return !channels.find((channel) => channel === job.type);
   }
 }
