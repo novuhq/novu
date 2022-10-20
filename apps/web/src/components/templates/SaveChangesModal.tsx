@@ -11,7 +11,12 @@ export function SaveChangesModal({
   onConfirm: () => void;
 }) {
   return (
-    <Modal opened={isVisible} title={<Title size={2}>Save template</Title>} onClose={onDismiss}>
+    <Modal
+      data-test-id="save-changes-modal"
+      opened={isVisible}
+      title={<Title size={2}>Save template</Title>}
+      onClose={onDismiss}
+    >
       <Text>Would you like to save your current changes?</Text>
       <Group position="right">
         <Button variant="outline" size="md" mt={30} onClick={onDismiss}>

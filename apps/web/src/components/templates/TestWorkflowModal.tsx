@@ -74,6 +74,7 @@ export function TestWorkflowModal({
       data-test-id="test-trigger-modal"
     >
       <JsonInput
+        data-test-id="test-trigger-to-param"
         formatOnBlur
         autosize
         styles={inputStyles}
@@ -83,6 +84,7 @@ export function TestWorkflowModal({
         minRows={3}
       />
       <JsonInput
+        data-test-id="test-trigger-payload-param"
         formatOnBlur
         autosize
         styles={inputStyles}
@@ -92,6 +94,7 @@ export function TestWorkflowModal({
         minRows={3}
       />
       <JsonInput
+        data-test-id="test-trigger-overrides-param"
         formatOnBlur
         autosize
         styles={inputStyles}
