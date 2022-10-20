@@ -12,7 +12,7 @@ export const ActivityItem = ({ item }) => {
   const status = useNotificationStatus(item);
 
   return (
-    <ListItem>
+    <ListItem key={`activity-item-${item.id}`}>
       <Grid gutter={10}>
         <Grid.Col span={3}>
           <div
@@ -82,7 +82,7 @@ export const ActivityItem = ({ item }) => {
             }}
           >
             {item.jobs.slice(0, 3).map((job) => (
-              <ActivityStep span={item.jobs.length > 3 ? 3 : 4} job={job} />
+              <ActivityStep key={`activity-step-${job._id}`} span={item.jobs.length > 3 ? 3 : 4} job={job} />
             ))}
             <When truthy={item.jobs.length > 3}>
               <Grid.Col span={1}>
