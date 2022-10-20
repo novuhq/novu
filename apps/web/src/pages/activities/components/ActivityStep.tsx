@@ -4,21 +4,40 @@ import { ProviderImage } from './ProviderImage';
 import { useJobStatus } from '../hooks/useJobStatus';
 import { colors, shadows } from '../../../design-system';
 import styled from 'styled-components';
+import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
+import { When } from '../../../components/utils/When';
+import { ExecutionDetailsStatusEnum } from '@novu/shared';
 
 export const ActivityStep = ({ job }) => {
   const status = useJobStatus(job);
 
   return (
-    <Grid.Col span={3}>
+    <Grid.Col
+      span={4}
+      sx={{
+        padding: 0,
+      }}
+    >
       <StepItem>
         <Grid>
-          <Grid.Col span={3}>
-            <Header done={status === 'Success'} failed={status === 'Failed'}>
+          <Grid.Col span={1}>
+            <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+              <CheckCircle width="16" height="16" color={colors.success} />
+            </When>
+            <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+              <ErrorIcon width="16" height="16" color={colors.error} />
+            </When>
+          </Grid.Col>
+          <Grid.Col span={2}>
+            <Header
+              done={status === ExecutionDetailsStatusEnum.SUCCESS}
+              failed={status === ExecutionDetailsStatusEnum.FAILED}
+            >
               {capitalize(job.type)}
             </Header>
           </Grid.Col>
           <Grid.Col
-            span={9}
+            span={8}
             sx={{
               textAlign: 'right',
             }}

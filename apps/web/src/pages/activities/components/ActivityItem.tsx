@@ -5,6 +5,8 @@ import { When } from '../../../components/utils/When';
 import { format } from 'date-fns';
 import { useNotificationStatus } from '../hooks/useNotificationStatus';
 import { ActivityStep } from './ActivityStep';
+import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
+import { ExecutionDetailsStatusEnum } from '@novu/shared';
 
 export const ActivityItem = ({ item }) => {
   const status = useNotificationStatus(item);
@@ -18,20 +20,38 @@ export const ActivityItem = ({ item }) => {
               marginBottom: '16px',
             }}
           >
-            <h3
-              style={{
-                margin: '0px',
-                marginBottom: '8px',
-              }}
-            >
-              {item.template.name}
-            </h3>
-            <When truthy={status === 'Success'}>
-              <Text color={colors.success}>Done</Text>
-            </When>
-            <When truthy={status === 'Failed'}>
-              <Text color={colors.error}>Failed</Text>
-            </When>
+            <Grid align="center">
+              <Grid.Col span={2}>
+                <span
+                  style={{
+                    marginRight: '15px',
+                  }}
+                >
+                  <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+                    <CheckCircle width="26" height="26" color={colors.success} />
+                  </When>
+                  <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+                    <ErrorIcon width="26" height="26" color={colors.error} />
+                  </When>
+                </span>
+              </Grid.Col>
+              <Grid.Col span={10}>
+                <h3
+                  style={{
+                    margin: '0px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  {item.template.name}
+                </h3>
+                <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+                  <Text color={colors.success}>Done</Text>
+                </When>
+                <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+                  <Text color={colors.error}>Failed</Text>
+                </When>
+              </Grid.Col>
+            </Grid>
           </div>
           <div>
             <small>
@@ -42,11 +62,27 @@ export const ActivityItem = ({ item }) => {
                 <b>Subscriber id:</b> {item.subscriber.id}
               </small>
             </div>
+            <div>
+              <small>
+                <b>Number of steps:</b> {item.jobs.length}
+              </small>
+            </div>
           </div>
         </Grid.Col>
-        {item.jobs.slice(0, 3).map((job) => (
-          <ActivityStep job={job} />
-        ))}
+        <Grid.Col span={9}>
+          <Grid
+            justify="end"
+            align="center"
+            sx={{
+              margin: 0,
+              height: '100%',
+            }}
+          >
+            {item.jobs.slice(0, 3).map((job) => (
+              <ActivityStep job={job} />
+            ))}
+          </Grid>
+        </Grid.Col>
       </Grid>
     </ListItem>
   );
