@@ -50,14 +50,14 @@ const WorkflowEditorPage = ({
   setActiveStep,
   activePage,
   activeStep,
-  setShowTestWorkflow,
+  onTestWorkflowClicked,
 }: {
   setActivePage: (string) => void;
   setActiveStep: any;
   templateId: string;
   activePage: ActivePageEnum;
   activeStep: number;
-  setShowTestWorkflow: (showTestWorkflow: boolean) => void;
+  onTestWorkflowClicked: () => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [selectedChannel, setSelectedChannel] = useState<StepTypeEnum | null>(null);
@@ -116,7 +116,7 @@ const WorkflowEditorPage = ({
             templateId={templateId}
             setActivePage={setActivePage}
             activePage={activePage}
-            setShowTestWorkflow={setShowTestWorkflow}
+            onTestWorkflowClicked={onTestWorkflowClicked}
           />
           <FlowEditor
             activePage={activePage}
