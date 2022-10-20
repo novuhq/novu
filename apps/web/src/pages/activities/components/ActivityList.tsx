@@ -1,5 +1,5 @@
 import React from 'react';
-import { LoadingOverlay, Pagination, useMantineColorScheme } from '@mantine/core';
+import { LoadingOverlay, Pagination, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { colors } from '../../../design-system';
 import { ActivityItem } from './ActivityItem';
 
@@ -9,9 +9,10 @@ export interface IListProps {
   data?: Data[];
   loading?: boolean;
   pagination?: any;
+  onRowClick: () => void;
 }
 
-export function ActivityList({ data: userData, pagination = false, loading = false }: IListProps) {
+export function ActivityList({ data: userData, pagination = false, loading = false, onRowClick }: IListProps) {
   const { pageSize, total, onPageChange, current } = pagination;
   const { colorScheme } = useMantineColorScheme();
   const data = React.useMemo(() => (userData || [])?.map((row) => ({ ...row })) as Data[], [userData]);
@@ -27,7 +28,16 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
         }}
       />
       {data.map((item, index) => {
-        return <ActivityItem key={index} item={item} />;
+        return (
+          <UnstyledButton
+            onClick={onRowClick}
+            sx={{
+              width: '100%',
+            }}
+          >
+            <ActivityItem key={index} item={item} />
+          </UnstyledButton>
+        );
       })}
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
         <Pagination
