@@ -13,6 +13,6 @@
 '@novu/shared':
   - libs/shared/**/*
 '@novu/notification-center':
-  - libs/shared/**/*
+  - packages/notification-center/**/*
 'providers':
   - providers/**/*
