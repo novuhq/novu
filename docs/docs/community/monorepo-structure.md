@@ -66,7 +66,7 @@ The shared library contains reusable code and typescript interfaces between clie
 
 This is the connector between our client's web app and the widget project. It’s a small shim script that generates an iframe and attaches it to a client-specified div to host the notification widget.
 
-If you are familiar with the Google Analytics embed snippet or intercom-like embeds, it uses the same mechanics.
+If you are familiar with the Google Analytics embedded snippet or intercom-like embeddings, it uses the same mechanics.
 
 ## Packages (on npm)
 
