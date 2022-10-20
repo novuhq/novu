@@ -62,15 +62,11 @@ export const ActivityItem = ({ item }) => {
                 <b>Subscriber id:</b> {item.subscriber.id}
               </small>
             </div>
-            <div>
-              <small>
-                <b>Number of steps:</b> {item.jobs.length}
-              </small>
-            </div>
           </div>
         </Grid.Col>
         <Grid.Col span={9}>
           <Grid
+            columns={item.jobs.length > 3 ? 10 : 12}
             justify="end"
             align="center"
             sx={{
@@ -79,8 +75,15 @@ export const ActivityItem = ({ item }) => {
             }}
           >
             {item.jobs.slice(0, 3).map((job) => (
-              <ActivityStep job={job} />
+              <ActivityStep span={item.jobs.length > 3 ? 3 : 4} job={job} />
             ))}
+            <When truthy={item.jobs.length > 3}>
+              <Grid.Col span={1}>
+                <Text align="center" size="xl">
+                  +{item.jobs.length - 3}
+                </Text>
+              </Grid.Col>
+            </When>
           </Grid>
         </Grid.Col>
       </Grid>

@@ -8,12 +8,12 @@ import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
 
-export const ActivityStep = ({ job }) => {
+export const ActivityStep = ({ job, span = 4 }) => {
   const status = useJobStatus(job);
 
   return (
     <Grid.Col
-      span={4}
+      span={span}
       sx={{
         padding: 0,
       }}
