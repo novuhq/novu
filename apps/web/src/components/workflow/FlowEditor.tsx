@@ -1,13 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, {
   addEdge,
   Background,
   BackgroundVariant,
   Controls,
   Edge,
-  EdgeProps,
-  getBezierEdgeCenter,
-  getBezierPath,
   getOutgoers,
   Node,
   ReactFlowInstance,
@@ -29,6 +26,7 @@ import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/use-env-controller';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -73,11 +71,12 @@ export function FlowEditor({
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<IEdgeData>(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<IAddNodeEdge>(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
   const { template, trigger, methods } = useTemplateController(templateId);
+  const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
     if (reactFlowWrapper) {
@@ -145,8 +144,6 @@ export function FlowEditor({
     },
     [reactFlowInstance, nodes, edges]
   );
-
-  const edgeTypes = useMemo(() => ({ special: CustomEdge }), []);
 
   function initializeWorkflowTree() {
     let parentId = '1';
@@ -249,6 +246,43 @@ export function FlowEditor({
     };
   }
 
+  const handleDisplayAddNodeOnEdge = (edgeId: string) => {
+    const edgeElement = document.getElementById(edgeId);
+
+    if (!edgeElement) return;
+    const ADD_NODE_DISPLAY_TIMEOUT = 10000;
+
+    if (isEdgeAddNodeButtonVisible(edgeElement)) {
+      const nodeTimeout = displayEdgeTimeout.get(edgeId);
+
+      if (nodeTimeout) {
+        clearTimeout(nodeTimeout);
+        setDisplayEdgeTimeout(displayEdgeTimeout.set(edgeId, null));
+      }
+    } else {
+      toggleAddNodeButtonOpacity(edgeElement);
+    }
+
+    setDisplayEdgeTimeout(
+      displayEdgeTimeout.set(
+        edgeId,
+        setTimeout(() => {
+          toggleAddNodeButtonOpacity(edgeElement);
+        }, ADD_NODE_DISPLAY_TIMEOUT)
+      )
+    );
+
+    function toggleAddNodeButtonOpacity(target) {
+      target.classList.toggle('fade');
+    }
+
+    function isEdgeAddNodeButtonVisible(element: HTMLElement) {
+      return element?.classList.contains('fade');
+    }
+  };
+
+  const edgeTypes = useMemo(() => ({ special: AddNodeEdge }), []);
+
   return (
     <>
       <Wrapper dark={colorScheme === 'dark'}>
@@ -264,6 +298,12 @@ export function FlowEditor({
             onDragOver={onDragOver}
             onNodeClick={onNodeClick}
             edgeTypes={edgeTypes}
+            onNodeMouseMove={(event, node) => {
+              handleDisplayAddNodeOnEdge(`edge-button-${node.id}`);
+            }}
+            onEdgeMouseMove={(event: ReactMouseEvent, edge: Edge) => {
+              handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
+            }}
             {...reactFlowDefaultProps}
           >
             <MinimalTemplatesSideBar
@@ -315,6 +355,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     stroke: ${colors.B60};
     border-radius: 10px;
     stroke-dasharray: 5;
+    stroke-width: 2px;
   }
   .react-flow__node.selected {
     .react-flow__handle {
@@ -378,71 +419,3 @@ const reactFlowDefaultProps: ReactFlowProps = {
   maxZoom: 1.5,
   defaultZoom: 1,
 };
-
-const foreignObjectSize = 40;
-
-function CustomEdge({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style = {},
-  data,
-  markerEnd,
-}: EdgeProps) {
-  const [centerX, centerY] = getBezierEdgeCenter({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  });
-
-  const edgePath = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  });
-
-  const { parentId, addNewNode, childId, edgeStyles } = data;
-
-  return (
-    <>
-      <path style={style} id={id} className="react-flow__edge-path" d={edgePath} markerEnd={markerEnd} />
-      <foreignObject
-        width={foreignObjectSize}
-        height={foreignObjectSize}
-        x={centerX - foreignObjectSize / 2}
-        y={centerY - foreignObjectSize / 2}
-        className="edgebutton-foreignobject"
-        requiredExtensions="http://www.w3.org/1999/xhtml"
-        style={{ display: edgeStyles?.display ? edgeStyles?.display : 'block' }}
-      >
-        <div>
-          <AddNode
-            data={{
-              parentId: parentId,
-              addNewNode: addNewNode,
-              showDropZone: false,
-              childId: childId,
-            }}
-          />
-        </div>
-      </foreignObject>
-    </>
-  );
-}
-
-interface IEdgeData extends EdgeProps {
-  parentId: string;
-  childId?: string;
-  addNewNode: (parentNodeId: string, channelType: string, childId?: string) => void;
-  edgeStyles?: { display: string };
-}

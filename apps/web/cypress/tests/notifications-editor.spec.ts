@@ -17,32 +17,6 @@ describe('Notifications Creator', function () {
       cy.getByTestId('edit-template-channel').click();
     });
 
-    it('should drag and drop channel in middle of workflow', function () {
-      waitLoadTemplatePage(() => {
-        cy.visit('/templates/create');
-      });
-      fillBasicNotificationDetails('Test drag and drop channel');
-      clickWorkflow();
-      dragAndDrop('inApp');
-      dragAndDrop('sms');
-      dragAndDrop('inApp', 'node-smsSelector');
-
-      cy.getByTestId('node-inAppSelector')
-        .last()
-        .parent()
-        .parent()
-        .then(($parent) => {
-          cy.getByTestId('node-inAppSelector')
-            .last()
-            .parent()
-            .then(($child) => {
-              cy.wrap({ index: [...Array.from($parent[0].children)].indexOf($child[0]) })
-                .its('index')
-                .should('eq', 1);
-            });
-        });
-    });
-
     it('should not be able to drop when not on last node', function () {
       waitLoadTemplatePage(() => {
         cy.visit('/templates/create');

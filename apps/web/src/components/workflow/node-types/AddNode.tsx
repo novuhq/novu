@@ -10,16 +10,19 @@ interface NodeData {
   addNewNode: (parentId: string, type: string, childId?: string) => void;
   parentId: string;
   showDropZone: boolean;
-  childId?: string;
+  childId: string;
 }
 export default memo(({ data }: { data: NodeData }) => {
+  const { parentId, childId } = data;
   const theme = useMantineTheme();
   const addNewNode = (type) => {
     data.addNewNode(data.parentId, type, data.childId);
   };
 
+  const dataTestId = parentId && childId ? `addNodeButton_${parentId}_${childId}` : 'addNodeButton';
+
   return (
-    <Container data-test-id={`addNodeButton`} style={{ pointerEvents: 'none' }}>
+    <Container data-test-id={dataTestId} style={{ pointerEvents: 'none' }}>
       <Dropdown
         placement="center"
         control={
