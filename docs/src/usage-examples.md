@@ -2,11 +2,13 @@
 sidebar_position: 1
 ---
 
+```typescript
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 import FAQ from '@site/src/components/FAQ';
 import FAQItem from '@site/src/components/FAQItem';
+```
 
 # Introduction Example
 
