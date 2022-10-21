@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import { BaseRepository } from '../base-repository';
 import { Job } from '../job';
 import { NotificationEntity } from './notification.entity';
@@ -47,13 +47,7 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
 
     const totalCount = await Notification.countDocuments(requestQuery);
 
-    const response = await Notification.find(requestQuery)
-      .populate('subscriber', 'firstName _id lastName email')
-      .populate('template', 'name _id')
-      .populate({
-        path: 'jobs',
-        populate: { path: 'executionDetails' },
-      })
+    const response = await this.populateFeed(Notification.find(requestQuery))
       .skip(skip)
       .limit(limit)
       .sort('-createdAt');
@@ -62,6 +56,26 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
       totalCount,
       data: this.mapEntities(response),
     };
+  }
+
+  public async getFeedItem(notificationId: string, _environmentId: string, _organizationId: string) {
+    return await this.populateFeed(
+      Notification.findOne({
+        _id: notificationId,
+        _environmentId,
+        _organizationId,
+      })
+    );
+  }
+
+  private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>) {
+    return query
+      .populate('subscriber', 'firstName _id lastName email')
+      .populate('template', 'name _id')
+      .populate({
+        path: 'jobs',
+        populate: { path: 'executionDetails' },
+      });
   }
 
   async getActivityGraphStats(date: Date, environmentId: string) {

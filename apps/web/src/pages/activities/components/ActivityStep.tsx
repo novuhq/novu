@@ -4,9 +4,10 @@ import { ProviderImage } from './ProviderImage';
 import { useJobStatus } from '../hooks/useJobStatus';
 import { colors, shadows } from '../../../design-system';
 import styled from 'styled-components';
-import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
+import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { ClockCircleOutlined } from '@ant-design/icons';
 
 export const ActivityStep = ({ job, span = 4 }) => {
   const status = useJobStatus(job);
@@ -21,6 +22,11 @@ export const ActivityStep = ({ job, span = 4 }) => {
       <StepItem>
         <Grid>
           <Grid.Col span={1}>
+            <When
+              truthy={status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED}
+            >
+              <Timer width={16} height={16} />
+            </When>
             <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
               <CheckCircle width="16" height="16" color={colors.success} />
             </When>

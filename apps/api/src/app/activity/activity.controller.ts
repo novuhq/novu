@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
 import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
 import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
@@ -10,10 +10,12 @@ import { GetActivityGraphStats } from './usecases/get-acticity-graph-states/get-
 import { GetActivityGraphStatsCommand } from './usecases/get-acticity-graph-states/get-acticity-graph-states.command';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
-import { ActivitiesResponseDto } from './dtos/activities-response.dto';
+import { ActivitiesResponseDto, ActivityNotificationResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphqStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivitesRequestDto } from './dtos/activites-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { GetActivity } from './usecases/get-activity/get-activity.usecase';
+import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
 
 @Controller('/activity')
 @ApiTags('Activity')
@@ -21,7 +23,8 @@ export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
     private getActivityStatsUsecase: GetActivityStats,
-    private getActivityGraphStatsUsecase: GetActivityGraphStats
+    private getActivityGraphStatsUsecase: GetActivityGraphStats,
+    private getActivityUsecase: GetActivity
   ) {}
 
   @Get('')
@@ -63,6 +66,29 @@ export class ActivityController {
         templates: templatesQuery,
         emails: emailsQuery,
         search: query.search,
+      })
+    );
+  }
+
+  @Get('/:notificationId')
+  @ApiOkResponse({
+    type: ActivityNotificationResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get activity',
+  })
+  @UseGuards(JwtAuthGuard)
+  @ExternalApiAccessible()
+  getActivity(
+    @UserSession() user: IJwtPayload,
+    @Param('notificationId') notificationId: string
+  ): Promise<ActivityNotificationResponseDto> {
+    return this.getActivityUsecase.execute(
+      GetActivityCommand.create({
+        notificationId: notificationId,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
       })
     );
   }

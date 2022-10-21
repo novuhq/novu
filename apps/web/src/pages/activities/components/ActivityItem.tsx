@@ -5,7 +5,7 @@ import { When } from '../../../components/utils/When';
 import { format } from 'date-fns';
 import { useNotificationStatus } from '../hooks/useNotificationStatus';
 import { ActivityStep } from './ActivityStep';
-import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
+import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
 
 export const ActivityItem = ({ item }) => {
@@ -27,6 +27,13 @@ export const ActivityItem = ({ item }) => {
                     marginRight: '15px',
                   }}
                 >
+                  <When
+                    truthy={
+                      status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED
+                    }
+                  >
+                    <Timer width={26} height={26} />
+                  </When>
                   <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
                     <CheckCircle width="26" height="26" color={colors.success} />
                   </When>
