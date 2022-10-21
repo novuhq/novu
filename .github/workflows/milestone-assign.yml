@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  assign_milestone:
     name: Verify
     runs-on: ubuntu-20.04
     steps:
