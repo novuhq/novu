@@ -16,7 +16,10 @@ const start = async () => {
   const payload = require(process.env.GITHUB_EVENT_PATH);
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
   const { number } = payload?.issue || payload?.pull_request;
+  console.log(`Running for ${number}`);
   const currentMilestone = await getCurrentMilestone(owner, repo);
+
+  console.log(JSON.stringify(currentMilestone, null, 2));
 
   await octokit.rest.issues.update({
     owner,
