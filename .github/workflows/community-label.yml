@@ -26,6 +26,6 @@ jobs:
 
       - name: Check if user is a community contributor
         id: check
-        run: node .github/workflows/scripts/is-community-contributor.js
+        run: node .github/workflows/scripts/community-contribution-label.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
