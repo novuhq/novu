@@ -2,5 +2,6 @@ base-branch:
   - "(main)"
   - "releases\\/(v\\d+)"
 
+
 head-branch:
   - "feature\\/(v\\d+)\\/.+"
