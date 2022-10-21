@@ -19,7 +19,7 @@ import { GetActivityCommand } from './usecases/get-activity/get-activity.command
 
 @Controller('/notifications')
 @ApiTags('Notification')
-export class ActivityController {
+export class NotificationsController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
     private getActivityStatsUsecase: GetActivityStats,
@@ -71,29 +71,6 @@ export class ActivityController {
     );
   }
 
-  @Get('/:notificationId')
-  @ApiOkResponse({
-    type: ActivityNotificationResponseDto,
-  })
-  @ApiOperation({
-    summary: 'Get notification',
-  })
-  @UseGuards(JwtAuthGuard)
-  @ExternalApiAccessible()
-  getActivity(
-    @UserSession() user: IJwtPayload,
-    @Param('notificationId') notificationId: string
-  ): Promise<ActivityNotificationResponseDto> {
-    return this.getActivityUsecase.execute(
-      GetActivityCommand.create({
-        notificationId: notificationId,
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        userId: user._id,
-      })
-    );
-  }
-
   @ApiOkResponse({
     type: ActivityStatsResponseDto,
   })
@@ -134,6 +111,29 @@ export class ActivityController {
     return this.getActivityGraphStatsUsecase.execute(
       GetActivityGraphStatsCommand.create({
         days: days ? Number(days) : 32,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @Get('/:notificationId')
+  @ApiOkResponse({
+    type: ActivityNotificationResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get notification',
+  })
+  @UseGuards(JwtAuthGuard)
+  @ExternalApiAccessible()
+  getActivity(
+    @UserSession() user: IJwtPayload,
+    @Param('notificationId') notificationId: string
+  ): Promise<ActivityNotificationResponseDto> {
+    return this.getActivityUsecase.execute(
+      GetActivityCommand.create({
+        notificationId: notificationId,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
