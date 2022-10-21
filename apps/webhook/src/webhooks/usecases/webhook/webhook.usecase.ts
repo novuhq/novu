@@ -3,14 +3,13 @@ import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@no
 import { ChannelTypeEnum } from '@novu/shared';
 import { IEmailProvider, IEventBody, ISmsProvider } from '@novu/stateless';
 import { MailFactory, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
+
 import { WebhookCommand } from './webhook.command';
 
-export interface IWebhookResult {
-  id: string;
-  event: IEventBody;
-}
+import { CreateExecutionDetails } from '../execution-details/create-execution-details.usecase';
 
-export type WebhookTypes = 'sms' | 'email';
+import { IWebhookResult } from '../../dtos/webhooks-response.dto';
+import { WebhookTypes } from '../../interfaces/webhook.interface';
 
 @Injectable()
 export class Webhook {
@@ -18,7 +17,11 @@ export class Webhook {
   public readonly smsFactory = new SmsFactory();
   private provider: IEmailProvider | ISmsProvider;
 
-  constructor(private integrationRepository: IntegrationRepository, private messageRepository: MessageRepository) {}
+  constructor(
+    private createExecutionDetails: CreateExecutionDetails,
+    private integrationRepository: IntegrationRepository,
+    private messageRepository: MessageRepository
+  ) {}
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
     const providerId = command.providerId;
@@ -40,7 +43,7 @@ export class Webhook {
       throw new NotFoundException(`Provider with ${providerId} can not handle webhooks`);
     }
 
-    return this.parseEvents(command);
+    return await this.parseEvents(command);
   }
 
   private async parseEvents(command: WebhookCommand): Promise<IWebhookResult[]> {
@@ -81,10 +84,23 @@ export class Webhook {
       return undefined;
     }
 
-    return {
+    const parsedEvent = {
       id: messageIdentifier,
       event,
     };
+
+    /**
+     * TODO: Individually performing the creation of the execution details because here we can pass message that contains
+     * most of the __foreign keys__ we need. But we can't take advantage of a bulk write of all events. Besides the writing
+     * being hiding inside auxiliary methods of the use case.
+     */
+    await this.createExecutionDetails.execute({
+      message,
+      webhook: command,
+      webhookEvent: parsedEvent,
+    });
+
+    return parsedEvent;
   }
 
   private getHandler(integration, type: WebhookTypes): ISmsHandler | IMailHandler {

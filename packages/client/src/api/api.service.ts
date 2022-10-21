@@ -5,7 +5,12 @@ import {
   MessageActionStatusEnum,
   IParamObject,
 } from '@novu/shared';
-import { IStoreQuery, IUserPreferenceSettings } from '../index';
+import {
+  ITabCountQuery,
+  IStoreQuery,
+  IUserPreferenceSettings,
+  IUnseenCountQuery,
+} from '../index';
 
 export class ApiService {
   private httpClient: HttpClient;
@@ -44,11 +49,33 @@ export class ApiService {
     );
   }
 
-  async markMessageAsSeen(messageId: string): Promise<any> {
+  async markMessageAsSeen(messageId: string | string[]): Promise<any> {
     return await this.httpClient.post(
       `/widgets/messages/${messageId}/seen`,
       {}
     );
+  }
+
+  async markMessageAsRead(messageId: string | string[]): Promise<any> {
+    return await this.httpClient.post(
+      `/widgets/messages/${messageId}/read`,
+      {}
+    );
+  }
+
+  async markMessageAs(
+    messageId: string | string[],
+    mark: { seen?: boolean; read?: boolean }
+  ): Promise<any> {
+    const markPayload =
+      mark.seen === undefined && mark.read === undefined
+        ? { seen: true }
+        : mark;
+
+    return await this.httpClient.post(`/widgets/messages/markAs`, {
+      messageId,
+      mark: markPayload,
+    });
   }
 
   async getNotificationsList(
@@ -83,9 +110,16 @@ export class ApiService {
     });
   }
 
-  async getUnseenCount(query: IStoreQuery = {}) {
+  async getUnseenCount(query: IUnseenCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unseen',
+      query as unknown as IParamObject
+    );
+  }
+
+  async getTabCount(query: ITabCountQuery = {}) {
+    return await this.httpClient.get(
+      '/widgets/notifications/count',
       query as unknown as IParamObject
     );
   }

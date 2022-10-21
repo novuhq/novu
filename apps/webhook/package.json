@@ -27,6 +27,7 @@
     "@nestjs/platform-socket.io": "^7.6.17",
     "@nestjs/swagger": "^4.8.0",
     "@nestjs/terminus": "^7.2.0",
+    "@novu/application-generic": "^0.8.0",
     "@novu/dal": "^0.8.0",
     "@novu/shared": "^0.8.0",
     "@novu/testing": "^0.8.0",
@@ -45,8 +46,7 @@
     "rxjs": "^6.5.5",
     "socket.io": "^4.0.0",
     "socket.io-redis": "^5.4.0",
-    "axios": "^0.24.0",
-    "@novu/application-generic": "^0.8.0"
+    "axios": "^0.24.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^7.6.0",
