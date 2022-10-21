@@ -34,7 +34,7 @@ Now visit [http://localhost:4200](http://localhost:4200/) to start using Novu.
 
 ## Securing your setup
 
-While we provided you with some example secrets for getting started, you should NEVER deploy your Novu setup using the defaults provided.
+While we provided you with some secret examples for getting started, you should NEVER deploy your Novu setup using the defaults provided.
 
 ### Update Secrets
 

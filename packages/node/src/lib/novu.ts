@@ -4,6 +4,7 @@ import { EventEmitter } from 'events';
 import { Changes } from './changes/changes';
 import { INovuConfiguration } from './novu.interface';
 import { Events } from './events/events';
+import { NotificationGroups } from './notification-groups/notification-groups';
 import { NotificationTemplates } from './notification-template/notification-template';
 
 export class Novu extends EventEmitter {
@@ -12,6 +13,7 @@ export class Novu extends EventEmitter {
   readonly subscribers: Subscribers;
   readonly events: Events;
   readonly changes: Changes;
+  readonly notificationGroups: NotificationGroups;
   readonly notificationTemplates: NotificationTemplates;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
@@ -30,6 +32,7 @@ export class Novu extends EventEmitter {
     this.trigger = this.events.trigger;
     this.broadcast = this.events.broadcast;
     this.changes = new Changes(this.http);
+    this.notificationGroups = new NotificationGroups(this.http);
     this.notificationTemplates = new NotificationTemplates(this.http);
   }
 
