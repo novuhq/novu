@@ -8,6 +8,7 @@ const getCurrentMilestone = async (owner, repo) => {
     repo,
     state: 'open',
   });
+  console.log(JSON.stringify(data, null, 2));
 
   return data[0];
 };
