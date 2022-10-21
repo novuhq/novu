@@ -202,5 +202,5 @@ Novu is licensed under the MIT License - see the [LICENSE](https://github.com/no
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
 <a href="https://novu.co/contributors">
-  <img src="https://contrib.rocks/image?repo=novuhq/novu" />
+  <img src="https://contributors-img.web.app/image?repo=novuhq/novu" />
 </a>
