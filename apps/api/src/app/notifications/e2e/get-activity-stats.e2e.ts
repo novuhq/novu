@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { subDays } from 'date-fns';
 
-describe('Get activity stats - /activity/stats (GET)', async () => {
+describe('Get activity stats - /notifications/stats (GET)', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   const messageRepository = new MessageRepository();
@@ -64,7 +64,7 @@ describe('Get activity stats - /activity/stats (GET)', async () => {
 
     const {
       body: { data },
-    } = await session.testAgent.get('/v1/activity/stats');
+    } = await session.testAgent.get('/v1/notifications/stats');
 
     expect(data.weeklySent).to.equal(2);
     expect(data.monthlySent).to.equal(2);

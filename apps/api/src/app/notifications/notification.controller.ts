@@ -17,8 +17,8 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { GetActivity } from './usecases/get-activity/get-activity.usecase';
 import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
 
-@Controller('/activity')
-@ApiTags('Activity')
+@Controller('/notifications')
+@ApiTags('Notification')
 export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
@@ -32,11 +32,11 @@ export class ActivityController {
     type: ActivitiesResponseDto,
   })
   @ApiOperation({
-    summary: 'Get activity feed',
+    summary: 'Get notifications',
   })
   @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
-  getActivityFeed(
+  getNotifications(
     @UserSession() user: IJwtPayload,
     @Query() query: ActivitesRequestDto
   ): Promise<ActivitiesResponseDto> {
@@ -66,6 +66,7 @@ export class ActivityController {
         templates: templatesQuery,
         emails: emailsQuery,
         search: query.search,
+        transactionId: query.transactionId,
       })
     );
   }
@@ -75,7 +76,7 @@ export class ActivityController {
     type: ActivityNotificationResponseDto,
   })
   @ApiOperation({
-    summary: 'Get activity',
+    summary: 'Get notification',
   })
   @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
@@ -97,7 +98,7 @@ export class ActivityController {
     type: ActivityStatsResponseDto,
   })
   @ApiOperation({
-    summary: 'Get activity statistics',
+    summary: 'Get notification statistics',
   })
   @Get('/stats')
   @UseGuards(JwtAuthGuard)
@@ -119,7 +120,7 @@ export class ActivityController {
     type: [ActivityGraphqStatesResponse],
   })
   @ApiOperation({
-    summary: 'Get activity graph statistics',
+    summary: 'Get notification graph statistics',
   })
   @ApiQuery({
     name: 'days',

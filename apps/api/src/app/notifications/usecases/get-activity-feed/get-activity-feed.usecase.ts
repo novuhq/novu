@@ -36,7 +36,7 @@ export class GetActivityFeed {
 
     const { data: notfications, totalCount } = await this.notificationRepository.getFeed(
       command.environmentId,
-      { channels: command.channels, templates: command.templates, subscriberIds },
+      { channels: command.channels, templates: command.templates, subscriberIds, transactionId: command.transactionId },
       command.page * LIMIT,
       LIMIT
     );

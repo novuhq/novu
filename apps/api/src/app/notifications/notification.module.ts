@@ -9,4 +9,4 @@ import { AuthModule } from '../auth/auth.module';
   providers: [...USE_CASES],
   controllers: [ActivityController],
 })
-export class ActivityModule {}
+export class NotificationModule {}

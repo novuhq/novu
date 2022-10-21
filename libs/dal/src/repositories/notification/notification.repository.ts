@@ -19,13 +19,22 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
 
   async getFeed(
     environmentId: string,
-    query: { channels?: ChannelTypeEnum[]; templates?: string[]; subscriberIds?: string[] } = {},
+    query: {
+      channels?: ChannelTypeEnum[];
+      templates?: string[];
+      subscriberIds?: string[];
+      transactionId?: string;
+    } = {},
     skip = 0,
     limit = 10
   ) {
     const requestQuery: FilterQuery<NotificationEntity> = {
       _environmentId: environmentId,
     };
+
+    if (query.transactionId) {
+      requestQuery.transactionId = query.transactionId;
+    }
 
     if (query?.templates) {
       requestQuery._templateId = {
