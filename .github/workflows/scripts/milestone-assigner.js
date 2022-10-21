@@ -3,7 +3,7 @@ const { Octokit } = require('@octokit/action');
 const octokit = new Octokit();
 
 const getCurrentMilestone = async (owner, repo) => {
-  const data = await octokit.rest.issues.listMilestones({
+  const { data } = await octokit.rest.issues.listMilestones({
     owner,
     repo,
     state: 'open',
