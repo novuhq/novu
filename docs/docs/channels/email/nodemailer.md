@@ -1,4 +1,4 @@
-# Nodemailer (custom SMTP server)
+# Nodemailer (custom SMTP)
 
 You can use the [Nodemailer](https://nodemailer.com/about/) provider to send transactional emails through your custom SMTP server to your customers using the Novu Platform with a single API.
 

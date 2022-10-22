@@ -48,14 +48,6 @@ export const emailProviders: IProviderConfig[] = [
     logoFileName: { light: 'mandrill.svg', dark: 'mandrill.svg' },
   },
   {
-    id: EmailProviderIdEnum.Nodemailer,
-    displayName: 'Nodemailer',
-    channel: ChannelTypeEnum.EMAIL,
-    credentials: nodemailerConfig,
-    docReference: 'https://nodemailer.com/about/',
-    logoFileName: { light: 'nodemailer.svg', dark: 'nodemailer.svg' },
-  },
-  {
     id: EmailProviderIdEnum.Postmark,
     displayName: 'Postmark',
     channel: ChannelTypeEnum.EMAIL,
@@ -94,5 +86,13 @@ export const emailProviders: IProviderConfig[] = [
     credentials: netCoreConfig,
     docReference: 'https://netcorecloud.com/email/email-api/',
     logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
+  },
+  {
+    id: EmailProviderIdEnum.CustomSMTP,
+    displayName: 'Custom SMTP',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: nodemailerConfig,
+    docReference: 'https://nodemailer.com/about/',
+    logoFileName: { light: 'custom_smtp.svg', dark: 'custom_smtp.svg' },
   },
 ];
