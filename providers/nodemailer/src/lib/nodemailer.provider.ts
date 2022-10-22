@@ -6,7 +6,7 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
-import nodemailer, { Transporter } from 'nodemailer';
+import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 import DKIM from 'nodemailer/lib/dkim';
 
 export class NodemailerProvider implements IEmailProvider {
@@ -48,18 +48,8 @@ export class NodemailerProvider implements IEmailProvider {
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const info = await this.transports.sendMail({
-      from: options.from || this.config.from,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      text: options.text,
-      attachments: options.attachments?.map((attachment) => ({
-        filename: attachment?.name,
-        content: attachment.file,
-        contentType: attachment.mime,
-      })),
-    });
+    const mailData = this.createMailData(options);
+    const info = await this.transports.sendMail(mailData);
 
     return {
       id: info?.messageId,
@@ -70,10 +60,37 @@ export class NodemailerProvider implements IEmailProvider {
   async checkIntegration(
     options: IEmailOptions
   ): Promise<ICheckIntegrationResponse> {
+    try {
+      const mailData = this.createMailData(options);
+      await this.transports.sendMail(mailData);
+
+      return {
+        success: true,
+        message: 'Integrated successfully!',
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error?.message,
+        // nodemailer does not provide a way to distinguish errors
+        code: CheckIntegrationResponseEnum.FAILED,
+      };
+    }
+  }
+
+  private createMailData(options: IEmailOptions): SendMailOptions {
     return {
-      success: true,
-      message: 'Integrated successfully!',
-      code: CheckIntegrationResponseEnum.SUCCESS,
+      from: options.from || this.config.from,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+      attachments: options.attachments?.map((attachment) => ({
+        filename: attachment?.name,
+        content: attachment.file,
+        contentType: attachment.mime,
+      })),
     };
   }
 }

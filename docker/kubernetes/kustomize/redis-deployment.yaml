@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.1 (HEAD)
+  labels:
+    app.novu.co/name: redis
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.novu.co/name: redis
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.1 (HEAD)
+      labels:
+        app.novu.co/name: redis
+    spec:
+      containers:
+        - image: redis:alpine
+          name: redis
