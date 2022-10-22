@@ -29,22 +29,15 @@ export class SESEmailProvider implements IEmailProvider {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
-    let info;
 
-    try {
-      info = await transporter.sendMail({
-        html,
-        text,
-        to,
-        from,
-        subject,
-        attachments,
-      });
-    } catch (err) {
-      info = err;
-    }
-
-    return info;
+    return await transporter.sendMail({
+      html,
+      text,
+      to,
+      from,
+      subject,
+      attachments,
+    });
   }
 
   async sendMessage({
@@ -75,33 +68,27 @@ export class SESEmailProvider implements IEmailProvider {
   }
 
   async checkIntegration(): Promise<ICheckIntegrationResponse> {
-    let success: boolean;
-    let message: string;
-    let code: CheckIntegrationResponseEnum;
+    try {
+      await this.sendMail({
+        html: '',
+        text: 'This is a Test mail to test your Amazon SES integration',
+        to: this.config.from,
+        from: this.config.from,
+        subject: 'Test SES integration',
+        attachments: {},
+      });
 
-    const testResponse = await this.sendMail({
-      html: '',
-      text: 'This is a Test mail to test your Amazon SES integration',
-      to: this.config.from,
-      from: this.config.from,
-      subject: 'Test SES integration',
-      attachments: {},
-    });
-
-    if (testResponse.err === null) {
-      success = true;
-      message = 'Integration test was succesful';
-      code = CheckIntegrationResponseEnum.SUCCESS;
-    } else {
-      success = false;
-      message = testResponse;
-      code = CheckIntegrationResponseEnum.FAILED;
+      return {
+        success: true,
+        message: 'Integrated Successfully',
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error?.message,
+        code: CheckIntegrationResponseEnum.FAILED,
+      };
     }
-
-    return {
-      success,
-      message,
-      code,
-    };
   }
 }
