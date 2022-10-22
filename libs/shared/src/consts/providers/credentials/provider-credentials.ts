@@ -352,6 +352,46 @@ export const expoConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const pushwooshConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApplicationCode,
+    displayName: 'Application Code',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.NotificationTitle,
+    displayName: 'Notification Title',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Subscribe,
+    displayName: 'Auto Subscribe',
+    type: 'boolean',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.UserId,
+    displayName: 'User ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Tags,
+    displayName: 'Tags',
+    type: 'object',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.NotificationImageURL,
+    displayName: 'Notification Image URL',
+    type: 'string',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
