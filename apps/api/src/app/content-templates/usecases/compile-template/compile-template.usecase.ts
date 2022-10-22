@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
+import * as HandlebarsDateFormat from 'handlebars-dateformat';
 import * as fs from 'fs';
 import { CompileTemplateCommand } from './compile-template.command';
 
@@ -26,6 +27,8 @@ Handlebars.registerHelper('lowercase', function (value) {
 Handlebars.registerHelper('pluralize', function (number, single, plural) {
   return number === 1 ? single : plural;
 });
+
+Handlebars.registerHelper('dateFormat', HandlebarsDateFormat);
 
 const cache = new Map();
 
