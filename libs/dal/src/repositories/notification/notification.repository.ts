@@ -1,7 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import { BaseRepository } from '../base-repository';
-import { Job } from '../job';
 import { NotificationEntity } from './notification.entity';
 import { Notification } from './notification.schema';
 
@@ -68,12 +67,14 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
   }
 
   public async getFeedItem(notificationId: string, _environmentId: string, _organizationId: string) {
-    return await this.populateFeed(
-      Notification.findOne({
-        _id: notificationId,
-        _environmentId,
-        _organizationId,
-      })
+    return this.mapEntity(
+      await this.populateFeed(
+        Notification.findOne({
+          _id: notificationId,
+          _environmentId,
+          _organizationId,
+        })
+      )
     );
   }
 

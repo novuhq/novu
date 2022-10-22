@@ -14,7 +14,13 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
-import { JobEntity, SubscriberRepository, NotificationTemplateRepository } from '@novu/dal';
+import {
+  JobEntity,
+  SubscriberRepository,
+  NotificationTemplateRepository,
+  JobRepository,
+  JobStatusEnum,
+} from '@novu/dal';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -37,14 +43,17 @@ export class SendMessage {
     private subscriberRepository: SubscriberRepository,
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private jobRepository: JobRepository
   ) {}
 
   public async execute(command: SendMessageCommand) {
     const shouldRun = await this.filter(command);
-    const removed = await this.filterPreferredChannels(command.job);
+    const preferred = await this.filterPreferredChannels(command.job);
 
-    if (!shouldRun || removed) {
+    if (!shouldRun || !preferred) {
+      await this.jobRepository.updateStatus(command.jobId, JobStatusEnum.CANCELED);
+
       return;
     }
 

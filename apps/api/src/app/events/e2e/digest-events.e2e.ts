@@ -128,6 +128,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     const jobs = await jobRepository.find({
       _templateId: template._id,
+      status: {
+        $nin: [JobStatusEnum.CANCELED],
+      },
     });
 
     const digestJob = jobs.find((job) => job.step.template.type === StepTypeEnum.DIGEST);
