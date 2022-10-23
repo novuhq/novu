@@ -3,9 +3,6 @@ name: Assign milestone to PR
 on:
   pull_request_target:
     types: [opened]
-  issues:
-    types: [opened]
-
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
