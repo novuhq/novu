@@ -26,6 +26,9 @@ ports:
   - port: 3000
     onOpen: notify
     visibility: public
+  - port: 3002
+    onOpen: notify
+    visibility: public
 github:
   prebuilds:
     # enable for the master/default branch (defaults to true)
