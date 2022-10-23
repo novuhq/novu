@@ -5,8 +5,10 @@ export function SaveChangesModal({
   isVisible,
   onDismiss,
   onConfirm,
+  loading,
 }: {
   isVisible: boolean;
+  loading: boolean;
   onDismiss: () => void;
   onConfirm: () => void;
 }) {
@@ -22,7 +24,7 @@ export function SaveChangesModal({
         <Button variant="outline" size="md" mt={30} onClick={onDismiss}>
           Cancel
         </Button>
-        <Button mt={30} size="md" submit onClick={onConfirm} data-autofocus>
+        <Button mt={30} size="md" submit loading={loading} onClick={onConfirm} data-autofocus>
           Save
         </Button>
       </Group>

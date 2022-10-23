@@ -18,6 +18,7 @@ import { UserPreference } from '../../user-preference/UserPreference';
 import { TestWorkflowModal } from '../../../components/templates/TestWorkflowModal';
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
 import { useDisclosure } from '@mantine/hooks';
+import { errorMessage } from '../../../utils/notifications';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -70,7 +71,12 @@ export default function TemplateEditorPage() {
   const onConfirmSaveChanges = async () => {
     await handleSubmit(onSubmit)();
     closeSaveChangesModal();
-    openTestWorkflowModal();
+    if (isDirty) {
+      closeTestWorkflowModal();
+      errorMessage('There is something missing! Fix errors before saving changes');
+    } else {
+      openTestWorkflowModal();
+    }
   };
 
   const onTestWorkflowClicked = () => {
@@ -163,6 +169,7 @@ export default function TemplateEditorPage() {
             onConfirm={onConfirmSaveChanges}
             isVisible={saveChangesModalOpened}
             onDismiss={closeSaveChangesModal}
+            loading={isLoading || isUpdateLoading}
           />
         </form>
       </PageContainer>
