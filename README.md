@@ -69,7 +69,7 @@ Building a notification system is hard, at first, it seems like just sending an 
    - [Chat](https://github.com/novuhq/novu#-chat)
    - [In-App](https://github.com/novuhq/novu#-in-app)
    - [Others](https://github.com/novuhq/novu#other-coming-soon)
-- [Need Help?](https://github.com/novuhq/novu#--need-help)
+- [Need Help?](https://github.com/novuhq/novu#-need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
 
