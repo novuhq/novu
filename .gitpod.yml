@@ -19,10 +19,13 @@ tasks:
 ports:
   - port: 4200
     onOpen: open-preview
+    visibility: public
   - port: 4500
     onOpen: notify
+    visibility: public
   - port: 3000
     onOpen: notify
+    visibility: public
 github:
   prebuilds:
     # enable for the master/default branch (defaults to true)
