@@ -12,7 +12,7 @@ Developing a notification layer is something we often do when designing a new ap
 
 ## Unified API
 
-Today, users tend to receive communication across multiple providers. [Sendgrid](https://sendgrid.com/) for Email, [Twilio](https://www.twilio.com/) for SMS, Mailchimp, Push, Web-Push, Chat messaging (Slack, etc...). The main reason behind this is that users expect to customize the communication channels to fit their needs and goals. This forces developers to manage all of those APIs across the codebase.
+Today, users tend to receive communication across multiple providers. [Sendgrid](https://sendgrid.com/) for Email, [Twilio](https://www.twilio.com/) for SMS, Mailchimp, Push, Web-Push, and Chat messaging (Slack, etc...). The main reason behind this is that users expect to customize the communication channels to fit their needs and goals. This forces developers to manage all of those APIs across the codebase.
 
 As developers, we tend to create abstractions, but following the growing number of integrations, channels of communication that are sent become a burden on the team and are usually implemented only on an as just-make-it-work-mode.
 
