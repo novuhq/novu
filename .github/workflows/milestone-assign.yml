@@ -12,6 +12,8 @@ jobs:
   assign_milestone:
     if: github.event.review.state == 'approved'
     name: Add milestone
+    permissions:
+      issues: write
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
