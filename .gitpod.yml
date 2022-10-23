@@ -16,6 +16,8 @@ tasks:
     command: cd apps/ws && pnpm start
   - name: WEB
     command: cd apps/web && pnpm start
+  - name: WIDGET
+    command: cd apps/widget && pnpm start:dev
 ports:
   - port: 4200
     onOpen: open-preview
