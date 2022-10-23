@@ -1,11 +1,8 @@
 name: Assign milestone to PR
 
 on:
-  pull_request_target:
-    types: [opened]
-  issues:
-    types: [opened]
-
+  pull_request_review:
+    types: [submitted]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,7 +10,8 @@ concurrency:
 
 jobs:
   assign_milestone:
-    name: Verify
+    if: github.event.review.state == 'approved'
+    name: Add milestone
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
