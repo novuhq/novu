@@ -92,16 +92,19 @@ export function FlowEditor({
     initializeWorkflowTree();
   }, [steps, dragging, errors]);
 
-  const addNewNode = useCallback((parentNodeId: string, channelType: string, childId?: string) => {
-    const channel = getChannel(channelType);
+  const addNewNode = useCallback(
+    (parentNodeId: string, channelType: string, childId?: string) => {
+      const channel = getChannel(channelType);
 
-    if (!channel) return;
+      if (!channel) return;
 
-    const newId = uuid4();
-    const nodeIndex = childId ? nodes.findIndex((node) => node.id === parentNodeId) : undefined;
+      const newId = uuid4();
+      const nodeIndex = childId ? nodes.findIndex((node) => node.id === parentNodeId) : undefined;
 
-    addStep(channel.channelType, newId, nodeIndex);
-  }, []);
+      addStep(channel.channelType, newId, nodeIndex);
+    },
+    [nodes]
+  );
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();

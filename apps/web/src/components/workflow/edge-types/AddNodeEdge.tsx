@@ -46,7 +46,7 @@ export function AddNodeEdge({
         x={centerX - foreignObjectSize / 2}
         y={centerY - foreignObjectSize / 2}
         requiredExtensions="http://www.w3.org/1999/xhtml"
-        id={`edge-button-${id.split('-')[1]}`}
+        id={`edge-button-${parentId}`}
         className={id}
       >
         <div>
