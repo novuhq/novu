@@ -1,28 +1,58 @@
-// import { Select } from '../../../design-system';
-// import { TestWrapper } from '../../../testing';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import OrganizationSelect from './OrganizationSelect';
+import { TestWrapper } from '../../../testing';
+import { Select } from '../../../design-system';
 
-// it('should display the organization select when passed as children', () => {
-//   cy.mount(
-//     <TestWrapper>
-//       <>
-//       <SelectWrapper>
-//         <Select/>
-//       </SelectWrapper>
-//     </>
-//     </TestWrapper>
-//   );
+describe('Organization Select Component Test', () => {
+  // Get the locator
+  const organizationSelectComponentSelector = '[data-test-id="organization-switch"]';
+  const queryClient = new QueryClient();
 
-//   cy.get('button').should('have.text', 'Test Button');
-// });
+  // TEST 1
+  it('should Render the Organization Select Component', () => {
+    cy.mount(
+      <TestWrapper>
+        <QueryClientProvider client={queryClient}>
+          <OrganizationSelect />
+        </QueryClientProvider>
+      </TestWrapper>
+    );
+  });
 
-// it('should display loading state of a button', function () {
-//   cy.mount(
-//     <TestWrapper>
-//       <Button loading={true}>Test Button</Button>
-//     </TestWrapper>
-//   );
+  // TEST 2
+  it('should get the organization-switch data test id', () => {
+    cy.mount(
+      <TestWrapper>
+        <QueryClientProvider client={queryClient}>
+          <OrganizationSelect />
+        </QueryClientProvider>
+      </TestWrapper>
+    );
+  });
 
+  // TEST 3
+  it('should show "Nothing found" if no organization is present inside organization select"', () => {
+    cy.mount(
+      <TestWrapper>
+        <QueryClientProvider client={queryClient}>
+          <OrganizationSelect />
+        </QueryClientProvider>
+      </TestWrapper>
+    );
+    cy.get(organizationSelectComponentSelector).click();
+    cy.contains('Nothing Found', { matchCase: false });
+  });
 
-//   cy.get('button').should('have.attr', 'disabled');
-//   cy.get('button').should('have.class', 'mantine-Button-loading');
-// });
+  // TEST 4
+  it('should show Add "Name of the organization" when inserting a new organization', () => {
+    cy.mount(
+      <TestWrapper>
+        <QueryClientProvider client={queryClient}>
+          <OrganizationSelect />
+        </QueryClientProvider>
+      </TestWrapper>
+    );
+    cy.get(organizationSelectComponentSelector).type('Lorem ipsum');
+    cy.contains('+ Add "Lorem ipsum"', { matchCase: false });
+  });
+});
