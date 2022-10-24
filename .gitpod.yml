@@ -15,9 +15,19 @@ tasks:
   - name: WS
     command: cd apps/ws && pnpm start
   - name: WEB
-    command: cd apps/web && pnpm start
+    command: |
+      cd apps/web
+      API_URL=`gp url 3000`
+      sed -i "/REACT_APP_API_URL=/c\REACT_APP_API_URL=$API_URL" .env
+      pnpm envsetup && pnpm start
   - name: WIDGET
-    command: cd apps/widget && pnpm start:dev
+    command: |
+      cd apps/widget
+      API_URL=`gp url 3000`
+      WS_URL=`gp url 3002`
+      sed -i "/REACT_APP_API_URL=/c\REACT_APP_API_URL=$API_URL" .env
+      sed -i "/REACT_APP_WS_URL=/c\REACT_APP_WS_URL=$WS_URL" .env
+      pnpm envsetup && pnpm start
 ports:
   - port: 4200
     onOpen: open-preview
