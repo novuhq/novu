@@ -233,6 +233,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>vi</code> (Vietnamese)</li>
           <li><code>zu</code> (Zulu)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>sq</code> (Albanian)</li>
         </ul>
       </div>
   </details>
@@ -261,22 +262,22 @@ When building your custom UI implementation it might be useful to know, how the 
 
 The notifications array returned by the `useNotifications` hook contains an array of `IMessage` objects with the following properties:
 
-| Property                    | Type                      | Description                                                                                           |
-| --------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `_id`                       | `string`                  | A unique Novu message identifier                                                                      |
-| `channel`                   | `ChannelTypeEnum`         | Use to specify the actual channel of this message (`in_app` will be used here)                        |
-| `seen`                      | `boolean`                 | Whether the notification item was ready by the user, changed when the user clicks on the notification |
-| `lastSeenDate`              | `ISODate`                 | When the user has last seen the notification                                                          |
-| `content`                   | `string`                  | An HTML string of the generated notification content with parsed and replaced variables               |
-| `templateIdentifier`        | `string`                  | A unique Novu template identifier                                                                     |
-| `payload`                   | `Record<string, unknown>` | The `payload` object that was passed the notification template was triggered.                         |
-| `createdAt`                 | `ISODate`                 | The creation date of the message                                                                      |
-| `cta.type`                  | `ChannelCTATypeEnum`      | The type of the CTA specified in the admin panel                                                      |
-| `cta.data.url`              | `string`                  | The redirect URL set in the admin panel, can be used to navigate on notification click                |
-| `cta.action.status`         | `boolean`                 | Indication whether the action occurred                                                                |
-| `cta.action.buttons`        | `IMessageButton[]`        | Array of action buttons                                                                               |
-| `cta.action.result.payload` | `Record<string, unknown>` | Payload object that send on updateAction method in useNotifications hook                              |
-| `cta.action.result.type`    | `ButtonTypeEnum`          | Type of the button                                                                                    |
+| Property                    | Type                      | Description                                                                                          |
+| --------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `_id`                       | `string`                  | A unique Novu message identifier                                                                     |
+| `channel`                   | `ChannelTypeEnum`         | Use to specify the actual channel of this message (`in_app` will be used here)                       |
+| `seen`                      | `boolean`                 | Whether the notification item was read by the user, changed when the user clicks on the notification |
+| `lastSeenDate`              | `ISODate`                 | When the user has last seen the notification                                                         |
+| `content`                   | `string`                  | An HTML string of the generated notification content with parsed and replaced variables              |
+| `templateIdentifier`        | `string`                  | A unique Novu template identifier                                                                    |
+| `payload`                   | `Record<string, unknown>` | The `payload` object that was passed the notification template was triggered.                        |
+| `createdAt`                 | `ISODate`                 | The creation date of the message                                                                     |
+| `cta.type`                  | `ChannelCTATypeEnum`      | The type of the CTA specified in the admin panel                                                     |
+| `cta.data.url`              | `string`                  | The redirect URL set in the admin panel, can be used to navigate on notification click               |
+| `cta.action.status`         | `boolean`                 | Indication whether the action occurred                                                               |
+| `cta.action.buttons`        | `IMessageButton[]`        | Array of action buttons                                                                              |
+| `cta.action.result.payload` | `Record<string, unknown>` | Payload object that send on updateAction method in useNotifications hook                             |
+| `cta.action.result.type`    | `ButtonTypeEnum`          | Type of the button                                                                                   |
 
 ### IMessageButton
 

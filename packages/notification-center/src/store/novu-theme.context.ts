@@ -41,6 +41,7 @@ export interface IThemeLayout {
 export interface IThemeHeader {
   badgeColor?: string;
   badgeTextColor?: string;
+  tabBorderColor?: string;
   fontColor?: string;
   markAllAsReadButtonColor?: string;
 }

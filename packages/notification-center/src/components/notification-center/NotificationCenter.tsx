@@ -14,6 +14,7 @@ export interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
+  emptyState?: () => JSX.Element;
   listItem?: ListItem;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   colorScheme: ColorScheme;
@@ -39,6 +40,7 @@ export function NotificationCenter(props: INotificationCenterProps) {
           isLoading: !applicationIdentifier,
           header: props.header,
           footer: props.footer,
+          emptyState: props.emptyState,
           listItem: props.listItem,
           actionsResultBlock: props.actionsResultBlock,
           tabs: props.tabs,

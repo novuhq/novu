@@ -22,7 +22,7 @@ import { Novu, ChatProviderIdEnum } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-await novu.subscribers.setCredentials('SUBSCRIBER_ID', ChatProviderIdEnum.Discord, {
+await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Discord, {
   webhookUrl: 'https://discord.com/api/webhooks/...',
 });
 ```
