@@ -24,6 +24,18 @@ function buildChartDataContainer(data: IActivityGraphStats[], isDark: boolean): 
       {
         backgroundColor: isDark ? colors.B20 : colors.BGLight,
         hoverBackgroundColor: createGradientColor(),
+        data: buildChartData2(data),
+        borderRadius: 7,
+      },
+      {
+        backgroundColor: isDark ? colors.B30 : colors.B85,
+        hoverBackgroundColor: createGradientColor(),
+        data: buildChartData(data),
+        borderRadius: 7,
+      },
+      {
+        backgroundColor: isDark ? colors.B40 : colors.B80,
+        hoverBackgroundColor: createGradientColor(),
         data: buildChartData(data),
         borderRadius: 7,
       },
@@ -55,6 +67,12 @@ function buildChartDateLabels(data: IActivityGraphStats[]): string[][] {
 function buildChartData(data: IActivityGraphStats[]) {
   return data.map((item) => {
     return item.count;
+  });
+}
+
+function buildChartData2(data: IActivityGraphStats[]) {
+  return data.map((item) => {
+    return item.count * 2;
   });
 }
 

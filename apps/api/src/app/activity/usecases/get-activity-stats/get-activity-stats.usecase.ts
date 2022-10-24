@@ -12,6 +12,9 @@ export class GetActivityStats {
     const yearly = await this.messageRepository.count({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      channel: {
+        $in: command.channels,
+      },
       createdAt: {
         $gte: subYears(new Date(), 1),
       },

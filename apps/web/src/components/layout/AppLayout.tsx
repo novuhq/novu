@@ -17,7 +17,7 @@ export function AppLayout() {
           navbar={<SideNav />}
           header={<HeaderNav />}
           styles={(theme) => ({
-            root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
+            root: { minHeight: '100vh' },
             body: {
               height: 'calc(100vh - 65px)',
               '@media (max-width: 768px)': {

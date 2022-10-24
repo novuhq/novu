@@ -32,6 +32,7 @@ function getScalesConfiguration(daysCount: number) {
       grid: {
         display: false,
       },
+      stacked: true,
       ticks: {
         callback(value, index) {
           if (daysCount < 8) {
@@ -44,6 +45,7 @@ function getScalesConfiguration(daysCount: number) {
     },
     y: {
       display: false,
+      stacked: true,
     },
   };
 }

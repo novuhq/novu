@@ -5,16 +5,21 @@ import { getActivityStats } from '../../../api/activity';
 import { formatNumber } from '../../../utils';
 import { colors } from '../../../design-system';
 
-export function ActivityStatistics() {
+export function ActivityStatistics({ filters }: { filters?: any }) {
   const { data: activityStats } = useQuery<{
-    yearlySent: number;
-    monthlySent: number;
-    weeklySent: number;
-  }>('activityStats', getActivityStats);
+    data: {
+      yearlySent: number;
+      monthlySent: number;
+      weeklySent: number;
+    };
+  }>(['activityStats', filters], () => getActivityStats(filters));
   const isDark = useMantineTheme().colorScheme === 'dark';
-  const weekCount = typeof activityStats?.weeklySent == 'number' ? formatNumber(activityStats.weeklySent, 0) : null;
-  const monthCount = typeof activityStats?.monthlySent == 'number' ? formatNumber(activityStats.monthlySent, 0) : null;
-  const yearCount = typeof activityStats?.yearlySent == 'number' ? formatNumber(activityStats.yearlySent, 0) : null;
+  const weekCount =
+    typeof activityStats?.data?.weeklySent == 'number' ? formatNumber(activityStats.data.weeklySent, 0) : null;
+  const monthCount =
+    typeof activityStats?.data?.monthlySent == 'number' ? formatNumber(activityStats.data.monthlySent, 0) : null;
+  const yearCount =
+    typeof activityStats?.data?.yearlySent == 'number' ? formatNumber(activityStats.data.yearlySent, 0) : null;
 
   return (
     <>

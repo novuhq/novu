@@ -10,8 +10,12 @@ export function getActivityList(page = 0, filters) {
   });
 }
 
-export function getActivityStats() {
-  return api.get(`/v1/activity/stats`);
+export function getActivityStats(filters) {
+  return api.getFullResponse(`/v1/activity/stats`, {
+    channels: filters?.channels,
+    templates: filters?.templates,
+    search: filters?.search,
+  });
 }
 
 export function getActivityGraphStats() {

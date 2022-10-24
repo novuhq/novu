@@ -76,12 +76,35 @@ export class ActivityController {
   @Get('/stats')
   @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
-  getActivityStats(@UserSession() user: IJwtPayload): Promise<ActivityStatsResponseDto> {
+  getActivityStats(
+    @UserSession() user: IJwtPayload,
+    @Query() query: ActivitesRequestDto
+  ): Promise<ActivityStatsResponseDto> {
+    let channelsQuery: ChannelTypeEnum[];
+
+    if (query.channels) {
+      channelsQuery = Array.isArray(query.channels) ? query.channels : [query.channels];
+    }
+
+    let templatesQuery: string[];
+    if (query.templates) {
+      templatesQuery = Array.isArray(query.templates) ? query.templates : [query.templates];
+    }
+
+    let emailsQuery: string[];
+    if (query.emails) {
+      emailsQuery = Array.isArray(query.emails) ? query.emails : [query.emails];
+    }
+
     return this.getActivityStatsUsecase.execute(
       GetActivityStatsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
+        channels: channelsQuery,
+        templates: templatesQuery,
+        emails: emailsQuery,
+        search: query.search,
       })
     );
   }

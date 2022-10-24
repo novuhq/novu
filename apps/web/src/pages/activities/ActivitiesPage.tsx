@@ -172,7 +172,7 @@ export function ActivitiesPage() {
     <PageContainer>
       <PageMeta title="Activity Feed" />
       <PageHeader title="Activity Feed" />
-      <ActivityStatistics />
+      <ActivityStatistics filters={filters} />
       <ActivityGraph />
       <form>
         <div style={{ width: '80%', display: 'flex', flexDirection: 'row', gap: '15px', padding: '30px' }}>
