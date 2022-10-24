@@ -164,7 +164,7 @@ export class SendMessage {
       (channelKey) => channelKey === job.type && preference.channels[job.type]
     );
 
-    return templatePreferred && channelPreferred;
+    return templatePreferred && !channelPreferred;
   }
 
   private isActionStep(job: JobEntity) {
