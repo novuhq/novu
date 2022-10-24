@@ -302,10 +302,14 @@ export function FlowEditor({
             onNodeClick={onNodeClick}
             edgeTypes={edgeTypes}
             onNodeMouseMove={(event, node) => {
-              handleDisplayAddNodeOnEdge(`edge-button-${node.id}`);
+              if (!readonly) {
+                handleDisplayAddNodeOnEdge(`edge-button-${node.id}`);
+              }
             }}
             onEdgeMouseMove={(event: ReactMouseEvent, edge: Edge) => {
-              handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
+              if (!readonly) {
+                handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
+              }
             }}
             {...reactFlowDefaultProps}
           >
