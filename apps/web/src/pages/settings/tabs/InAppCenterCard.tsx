@@ -39,7 +39,7 @@ export const InAppCenterCard = () => {
                 borderRadius: '7px',
               },
             })}
-            language="jsx"
+            language="javascript"
             data-test-id="embed-code-snippet"
           >
             {embedCode}
