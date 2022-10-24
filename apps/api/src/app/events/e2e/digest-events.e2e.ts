@@ -584,7 +584,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const pendingJobs = await jobRepository.find({
       _templateId: template._id,
       status: {
-        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED],
+        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED, JobStatusEnum.CANCELED],
       },
     });
 
