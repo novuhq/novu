@@ -32,7 +32,7 @@ export class Digest extends SendMessageType {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: DetailEnum.DIGESTED_EVENTS_PROVIDED + ' ' + nextJobs.length,
+        detail: DetailEnum.DIGESTED_EVENTS_PROVIDED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
