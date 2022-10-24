@@ -233,6 +233,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>vi</code> (Vietnamese)</li>
           <li><code>zu</code> (Zulu)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>sq</code> (Albanian)</li>
         </ul>
       </div>
   </details>
