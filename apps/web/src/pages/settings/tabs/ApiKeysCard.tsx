@@ -22,7 +22,7 @@ export const ApiKeysCard = () => {
   return (
     <>
       <ParamContainer>
-        <InputWrapper label="API Key" description="Use this API key to interact with the novu API" styles={inputStyles}>
+        <InputWrapper label="API Key" description="Use this API key to interact with the Novu API" styles={inputStyles}>
           <Input
             readOnly
             type={'password'}

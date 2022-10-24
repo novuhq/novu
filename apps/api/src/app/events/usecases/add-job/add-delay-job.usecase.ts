@@ -20,7 +20,7 @@ export class AddDelayJob {
 
     await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
 
-    return this.calculateDelayAmount(data);
+    return await this.calculateDelayAmount(data);
   }
 
   private checkValidDelayOverride(data: JobEntity): boolean {
@@ -35,17 +35,24 @@ export class AddDelayJob {
     );
   }
 
-  private calculateDelayAmount(data: JobEntity): number {
+  private async calculateDelayAmount(data: JobEntity): Promise<number> {
     if (data.step.metadata.type === DelayTypeEnum.SCHEDULED) {
       const delayPath = data.step.metadata.delayPath;
       const delayDate = data.payload[delayPath];
+
       const delay = differenceInMilliseconds(new Date(delayDate), new Date());
 
       if (delay < 0) {
         throw new ApiException(`Delay date at path ${delayPath} must be a future date`);
       }
 
-      return delay;
+      const noiIdenticalDelay = await this.noExistingDelayedJobForDate(data, delayPath, delayDate);
+
+      if (noiIdenticalDelay) {
+        return delay;
+      }
+
+      return delay + 1000;
     }
 
     if (this.checkValidDelayOverride(data)) {
@@ -53,5 +60,27 @@ export class AddDelayJob {
     }
 
     return AddJob.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+  }
+
+  /**
+   * To handle case of Scheduled Delay (triggered multiple times with the exact same future date) followed by a Digest.
+   * To avoid duplicate pending digests which would result in duplicate messages sent.
+   */
+  private async noExistingDelayedJobForDate(
+    data: JobEntity,
+    currDelayPath: string,
+    currDelayDate: string
+  ): Promise<boolean> {
+    return !(await this.jobRepository.findOne({
+      status: JobStatusEnum.DELAYED,
+      type: StepTypeEnum.DELAY,
+      _subscriberId: data._subscriberId,
+      _templateId: data._templateId,
+      _environmentId: data._environmentId,
+      transactionId: { $ne: data.transactionId },
+      'step.metadata.type': DelayTypeEnum.SCHEDULED,
+      'step.metadata.delayPath': currDelayPath,
+      [`payload.${currDelayPath}`]: currDelayDate,
+    }));
   }
 }

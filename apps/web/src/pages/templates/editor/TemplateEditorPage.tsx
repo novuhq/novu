@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
-import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
+import { IForm, useTemplateController } from '../../../components/templates/use-template-controller.hook';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { useEnvController } from '../../../store/use-env-controller';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
@@ -15,6 +15,9 @@ import { usePrompt } from '../../../hooks/use-prompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
 import { When } from '../../../components/utils/When';
 import { UserPreference } from '../../user-preference/UserPreference';
+import { TestWorkflowModal } from '../../../components/templates/TestWorkflowModal';
+import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
+import { useDisclosure } from '@mantine/hooks';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -37,6 +40,7 @@ export default function TemplateEditorPage() {
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
   const {
     editMode,
+    onTestWorkflowDismiss,
     template,
     isLoading,
     isUpdateLoading,
@@ -50,7 +54,32 @@ export default function TemplateEditorPage() {
     trigger,
     onTriggerModalDismiss,
   } = useTemplateController(templateId);
+
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
+
+  const [testWorkflowModalOpened, { close: closeTestWorkflowModal, open: openTestWorkflowModal }] = useDisclosure(
+    false,
+    {
+      onClose() {
+        onTestWorkflowDismiss();
+      },
+    }
+  );
+  const [saveChangesModalOpened, { close: closeSaveChangesModal, open: openSaveChangesModal }] = useDisclosure(false);
+
+  const onConfirmSaveChanges = async (data: IForm) => {
+    await onSubmit(data);
+    closeSaveChangesModal();
+    openTestWorkflowModal();
+  };
+
+  const onTestWorkflowClicked = () => {
+    if (isDirty) {
+      openSaveChangesModal();
+    } else {
+      openTestWorkflowModal();
+    }
+  };
 
   useEffect(() => {
     if (environment && template) {
@@ -78,6 +107,7 @@ export default function TemplateEditorPage() {
               templateId={templateId}
               setActivePage={setActivePage}
               activePage={activePage}
+              onTestWorkflowClicked={onTestWorkflowClicked}
             />
           </When>
 
@@ -98,6 +128,7 @@ export default function TemplateEditorPage() {
                 setActiveStep={setActiveStep}
                 templateId={templateId}
                 setActivePage={setActivePage}
+                onTestWorkflowClicked={onTestWorkflowClicked}
               />
             </ReactFlowProvider>
           )}
@@ -115,10 +146,27 @@ export default function TemplateEditorPage() {
             <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
           ) : null}
           {trigger && (
-            <TemplateTriggerModal trigger={trigger} onDismiss={onTriggerModalDismiss} isVisible={isEmbedModalVisible} />
+            <TemplateTriggerModal
+              trigger={trigger}
+              onDismiss={onTriggerModalDismiss}
+              isVisible={!testWorkflowModalOpened && isEmbedModalVisible}
+            />
+          )}
+          {trigger && !isDirty && (
+            <TestWorkflowModal
+              trigger={trigger}
+              onDismiss={closeTestWorkflowModal}
+              isVisible={testWorkflowModalOpened}
+            />
           )}
         </form>
       </PageContainer>
+      <SaveChangesModal
+        onConfirm={onConfirmSaveChanges}
+        isVisible={saveChangesModalOpened}
+        onDismiss={closeSaveChangesModal}
+        loading={isLoading || isUpdateLoading}
+      />
       <UnsavedChangesModal
         isOpen={showModal}
         cancelNavigation={cancelNavigation}

@@ -50,7 +50,7 @@ export class UserService {
 
   async triggerEvent() {
     await this.novu.trigger('password-reset', {
-      $email: 'reciever@mail.com',
+      $email: 'receiver@mail.com',
       $user_id: 'id'
     });
   }

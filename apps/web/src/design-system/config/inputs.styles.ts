@@ -5,7 +5,7 @@ export const inputStyles = (theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
 
   const primaryColor = dark ? theme.white : theme.colors.gray[8];
-  const invalidColor = theme.colors?.gradient?.[5];
+  const invalidColor = colors.vertical;
   const secondaryColor = dark ? theme.colors.dark[3] : theme.colors.gray[6];
 
   return {
@@ -14,7 +14,6 @@ export const inputStyles = (theme: MantineTheme) => {
     },
     input: {
       minHeight: '50px',
-      lineHeight: '50px',
       borderColor: dark ? theme.colors.dark[5] : theme.colors.gray[5],
       backgroundColor: 'transparent',
       color: primaryColor,

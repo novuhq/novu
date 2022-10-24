@@ -170,9 +170,11 @@ The `i18n` prop can accept 2 different types of values
       <summary>Supported languages</summary>
       <div>
         <ul>
+          <li><code>af</code> (Afrikaans)</li>
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
           <li><code>az</code> (Azerbaijani)</li>
+          <li><code>be</code> (Belarusian)</li>
           <li><code>bg</code> (Bulgarian)</li>
           <li><code>bn</code> (Bengali)</li>
           <li><code>ca</code> (Catalan)</li>
@@ -182,14 +184,18 @@ The `i18n` prop can accept 2 different types of values
           <li><code>el</code> (Greek)</li>
           <li><code>en</code> (English)</li>
           <li><code>es</code> (Spanish)</li>
+          <li><code>eu</code> (Basque)</li>
           <li><code>fa</code> (Farsi)</li>
           <li><code>fi</code> (Finnish)</li>
           <li><code>fr</code> (French)</li>
+          <li><code>ga</code> (Irish)</li>
+          <li><code>gl</code> (Galician)</li>
           <li><code>gu</code> (Gujarati)</li>
           <li><code>he</code> (Hebrew)</li>
           <li><code>hi</code> (Hindi)</li>
           <li><code>hr</code> (Croatian)</li>
           <li><code>hu</code> (Hungarian)</li>
+          <li><code>hy</code> (Armenian)</li>
           <li><code>id</code> (Indonesian)</li>
           <li><code>ig</code> (Igbo)</li>
           <li><code>it</code> (Italian)</li>
@@ -202,6 +208,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>lo</code> (Lao)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>mr</code> (Marathi)</li>
+          <li><code>ms</code> (Malay)</li>
           <li><code>ne</code> (Nepali)</li>
           <li><code>nl</code> (Dutch)</li>
           <li><code>no</code> (Norwegian)</li>
@@ -218,12 +225,15 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ta</code> (Tamil)</li>
           <li><code>te</code> (Telugu)</li>
           <li><code>th</code> (Thai)</li>
+          <li><code>tl</code> (Tagalog)</li>
           <li><code>tr</code> (Turkish)</li>
           <li><code>uk</code> (Ukrainian)</li>
           <li><code>ur</code> (Urdu)</li>
           <li><code>uz</code> (Uzbek)</li>
           <li><code>vi</code> (Vietnamese)</li>
+          <li><code>zu</code> (Zulu)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>sq</code> (Albanian)</li>
         </ul>
       </div>
   </details>
@@ -256,7 +266,7 @@ The notifications array returned by the `useNotifications` hook contains an arra
 | --------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `_id`                       | `string`                  | A unique Novu message identifier                                                                      |
 | `channel`                   | `ChannelTypeEnum`         | Use to specify the actual channel of this message (`in_app` will be used here)                        |
-| `seen`                      | `boolean`                 | Whether the notification item was ready by the user, changed when the user clicks on the notification |
+| `seen`                      | `boolean`                 | Whether the notification item was read by the user, changed when the user clicks on the notification |
 | `lastSeenDate`              | `ISODate`                 | When the user has last seen the notification                                                          |
 | `content`                   | `string`                  | An HTML string of the generated notification content with parsed and replaced variables               |
 | `templateIdentifier`        | `string`                  | A unique Novu template identifier                                                                     |

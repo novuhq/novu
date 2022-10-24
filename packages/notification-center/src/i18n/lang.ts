@@ -6,9 +6,11 @@ import { ID } from './languages/id';
 import { IT } from './languages/it';
 import { KA } from './languages/ka';
 import { MR } from './languages/mr';
+import { MS } from './languages/ms';
 import { RU } from './languages/ru';
 import { UK } from './languages/uk';
 import { ES } from './languages/es';
+import { GL } from './languages/gl';
 import { FA } from './languages/fa';
 import { AR } from './languages/ar';
 import { GU } from './languages/gu';
@@ -46,12 +48,20 @@ import { TE } from './languages/te';
 import { LO } from './languages/lo';
 import { RO } from './languages/ro';
 import { VI } from './languages/vi';
+import { ZU } from './languages/zu';
 import { NL } from './languages/nl';
 import { UZ } from './languages/uz';
 import { TH } from './languages/th';
 import { HE } from './languages/he';
 import { KM } from './languages/km';
+import { GA } from './languages/ga';
+import { HY } from './languages/hy';
 import { KK } from './languages/kk';
+import { TL } from './languages/tl';
+import { EU } from './languages/eu';
+import { AF } from './languages/af';
+import { BE } from './languages/be';
+import { SQ } from './languages/sq';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -74,11 +84,13 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   gu: GU,
   ru: RU,
   es: ES,
+  gl: GL,
   id: ID,
   it: IT,
   ka: KA,
   ig: IG,
   mr: MR,
+  ms: MS,
   ar: AR,
   fa: FA,
   uk: UK,
@@ -114,12 +126,20 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   te: TE,
   lo: LO,
   vi: VI,
+  zu: ZU,
   nl: NL,
   uz: UZ,
   th: TH,
   he: HE,
   km: KM,
+  ga: GA,
+  hy: HY,
   kk: KK,
+  tl: TL,
+  eu: EU,
+  af: AF,
+  be: BE,
+  sq: SQ,
 };
 
 /**
@@ -143,9 +163,11 @@ export type I18NLanguage =
   | 'ka'
   | 'gu'
   | 'mr'
+  | 'ms'
   | 'ru'
   | 'uk'
   | 'es'
+  | 'gl'
   | 'ar'
   | 'fa'
   | 'fr'
@@ -182,10 +204,18 @@ export type I18NLanguage =
   | 'te'
   | 'da'
   | 'vi'
+  | 'zu'
   | 'nl'
   | 'uz'
   | 'lo'
   | 'th'
   | 'he'
+  | 'ga'
+  | 'hy'
   | 'kk'
-  | 'km';
+  | 'km'
+  | 'tl'
+  | 'af'
+  | 'be'
+  | 'sq'
+  | 'eu';
