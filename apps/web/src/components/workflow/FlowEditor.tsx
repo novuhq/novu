@@ -99,11 +99,11 @@ export function FlowEditor({
       if (!channel) return;
 
       const newId = uuid4();
-      const nodeIndex = childId ? nodes.findIndex((node) => node.id === parentNodeId) : undefined;
+      const nodeIndex = childId ? steps.findIndex((step) => step._id === parentNodeId) + 1 : undefined;
 
       addStep(channel.channelType, newId, nodeIndex);
     },
-    [nodes]
+    [steps]
   );
 
   const onNodeClick = useCallback((event, node) => {
