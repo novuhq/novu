@@ -1,4 +1,4 @@
-describe('Activity Feed Screen', function () {
+describe.skip('Activity Feed Screen', function () {
   beforeEach(function () {
     cy.initializeSession()
       .as('session')
