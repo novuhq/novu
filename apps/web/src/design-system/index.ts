@@ -1,4 +1,5 @@
 export { Button } from './button/Button';
+export type { Size } from './button/Button';
 export { Checkbox } from './checkbox/Checkbox';
 export { colors, shadows } from './config';
 export { Input } from './input/Input';
@@ -22,3 +23,4 @@ export { ChannelButton } from './template-button/ChannelButton';
 export { PasswordInput } from './password-input/PasswordInput';
 export { SegmentedControl } from './segmented-control/SegmentedControl';
 export { NotificationBadge } from './notification-badge/NotificationBadge';
+export { Modal } from './modal/Modal';

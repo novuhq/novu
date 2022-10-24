@@ -342,6 +342,16 @@ export const fcmConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const expoConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Access Token',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
@@ -377,4 +387,14 @@ export const gupshupConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
+];
+
+export const firetextConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
 ];

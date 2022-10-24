@@ -48,6 +48,7 @@ export interface INotificationCenterContext {
   isLoading: boolean;
   header: () => JSX.Element;
   footer: () => JSX.Element;
+  emptyState: () => JSX.Element;
   listItem: ListItem;
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];

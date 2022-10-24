@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { useContext, useEffect } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
@@ -17,6 +17,7 @@ import { LoginForm } from '../../components/auth/LoginForm';
 export default function InvitationPage() {
   const navigate = useNavigate();
   const { token, logout, currentUser } = useContext(AuthContext);
+  const location = useLocation();
   const isLoggedIn = !!token;
   const { token: tokenParam } = useParams<{ token: string }>();
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
@@ -36,6 +37,11 @@ export default function InvitationPage() {
       const result = await submitToken(tokenParam as string, true);
       if (result) navigate('/templates');
     }
+  };
+
+  const logoutWhenActiveSession = () => {
+    logout();
+    navigate(location.pathname);
   };
 
   useEffect(() => {
@@ -66,7 +72,7 @@ export default function InvitationPage() {
             </Center>
           }
         >
-          <Button data-test-id="success-screen-reset" onClick={logout} inherit>
+          <Button data-test-id="success-screen-reset" onClick={logoutWhenActiveSession} inherit>
             Log out
           </Button>
           <Center mt={20}>

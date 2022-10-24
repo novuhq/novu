@@ -6,15 +6,18 @@ import { Controller, useForm } from 'react-hook-form';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
 import { format, formatDistanceToNow, isAfter, subDays } from 'date-fns';
+
+import { ActivityStatistics } from './components/ActivityStatistics';
+import { ActivityGraph } from './components/ActivityGraph';
+
 import { useTemplates } from '../../api/hooks/use-templates';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
+import { ExecutionDetailsModal } from '../../components/activity/ExecutionDetailsModal';
 import { Data, Table } from '../../design-system/table/Table';
 import { Select, Tag, Text, Tooltip, Input, colors } from '../../design-system';
-import { ActivityStatistics } from './components/ActivityStatistics';
-import { ActivityGraph } from './components/ActivityGraph';
 
 interface IFiltersForm {
   channels?: ChannelTypeEnum[];
@@ -23,6 +26,7 @@ interface IFiltersForm {
 export function ActivitiesPage() {
   const { templates, loading: loadingTemplates } = useTemplates(0, 100);
   const [page, setPage] = useState<number>(0);
+  const [isModalOpen, toggleModal] = useState<boolean>(false);
   const [filters, setFilters] = useState<IFiltersForm>({ channels: [] });
   const { data, isLoading, isFetching } = useQuery<{ data: any[]; totalCount: number; pageSize: number }>(
     ['activitiesList', page, filters],
@@ -52,6 +56,14 @@ export function ActivitiesPage() {
           subscriber.lastName ? capitalize(subscriber.lastName) : ''
         }`
       : 'Deleted Subscriber';
+  }
+
+  function onRowClick() {
+    toggleModal((state) => !state);
+  }
+
+  function onModalClose() {
+    toggleModal(false);
   }
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -216,8 +228,14 @@ export function ActivitiesPage() {
           </div>
           <div style={{ minWidth: '250px' }}>
             <Controller
-              render={({ field }) => (
-                <Input {...field} label="Search" placeholder="Select Email or ID" value={field.value || ''} />
+              render={({ field, fieldState }) => (
+                <Input
+                  {...field}
+                  error={fieldState.error?.message}
+                  label="Search"
+                  placeholder="Select Email or ID"
+                  value={field.value || ''}
+                />
               )}
               control={control}
               name="search"
@@ -230,6 +248,7 @@ export function ActivitiesPage() {
         loading={isLoading || isFetching}
         data={data?.data || []}
         columns={columns}
+        onRowClick={onRowClick}
         pagination={{
           pageSize: data?.pageSize,
           current: page,
@@ -237,6 +256,7 @@ export function ActivitiesPage() {
           onPageChange: handleTableChange,
         }}
       />
+      <ExecutionDetailsModal modalVisibility={isModalOpen} onClose={onModalClose} />
     </PageContainer>
   );
 }

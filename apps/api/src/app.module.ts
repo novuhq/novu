@@ -26,6 +26,7 @@ import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
 import { FeedsModule } from './app/feeds/feeds.module';
 import { MessagesModule } from './app/messages/messages.module';
+import { PartnerIntegratiosnModule } from './app/partner-integrations/partner-integrations.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   OrganizationModule,
@@ -49,6 +50,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   SubscribersModule,
   FeedsModule,
   MessagesModule,
+  PartnerIntegratiosnModule,
 ];
 
 const providers = [];

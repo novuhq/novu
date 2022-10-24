@@ -13,6 +13,7 @@ import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
+import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
 import { RunJob } from '../usecases/run-job/run-job.usecase';
 import { RunJobCommand } from '../usecases/run-job/run-job.command';
 
@@ -71,7 +72,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     runJob = new RunJob(
       jobRepository,
       session.testServer.getService(SendMessage),
-      session.testServer.getService(QueueNextJob)
+      session.testServer.getService(QueueNextJob),
+      session.testServer.getService(StorageHelperService)
     );
   });
 

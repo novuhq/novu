@@ -47,7 +47,7 @@ export default createStyles(
             content: '""',
             display: 'block',
             height: '2px',
-            background: novuTheme.header?.badgeColor,
+            background: novuTheme?.popover?.tabBorderColor || novuTheme.header?.badgeColor,
             borderRadius: '10px',
           },
         },

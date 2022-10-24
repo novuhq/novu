@@ -2,7 +2,7 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { isObject, isArray } from 'lodash';
-import { classToPlain } from 'class-transformer';
+import { instanceToPlain } from 'class-transformer';
 
 // eslint-disable-next-line
 export interface Response<T> {
@@ -32,6 +32,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
   }
 
   private transformToPlain(plainOrClass) {
-    return plainOrClass && plainOrClass.constructor !== Object ? classToPlain(plainOrClass) : plainOrClass;
+    return plainOrClass && plainOrClass.constructor !== Object ? instanceToPlain(plainOrClass) : plainOrClass;
   }
 }

@@ -24,7 +24,7 @@ import { UpdatePreference } from './usecases/update-preference/update-preference
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
 import { UpdateSubscriberPreferenceRequestDto } from '../widgets/dtos/update-subscriber-preference-request.dto';
-import { MessageResponseDto } from '../widgets/dtos/message-response.dto';
+import { MessageResponseDto, MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { UnseenCountResponse } from '../widgets/dtos/unseen-count-response.dto';
 import { MessageEntity } from '@novu/dal';
 import { MarkEnum, MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
@@ -269,7 +269,7 @@ export class SubscribersController {
     summary: 'Get a notification feed for a particular subscriber',
   })
   @ApiOkResponse({
-    type: [MessageResponseDto],
+    type: MessagesResponseDto,
   })
   @ApiQuery({
     name: 'seen',

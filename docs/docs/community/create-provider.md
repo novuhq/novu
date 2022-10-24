@@ -123,7 +123,7 @@ export class SendgridEmailProvider implements IEmailProvider {
 
 ### SMS Provider
 
-This is a code example of a basic email provider, with minimal fields required by our `ISmsProvider` interface.
+This is a code example of a basic sms provider, with minimal fields required by our `ISmsProvider` interface.
 
 ```typescript
 import { ChannelTypeEnum, ISmsOptions, ISmsProvider } from '@novu/stateless';
@@ -152,8 +152,6 @@ export class TwilioSmsProvider implements ISmsProvider {
   }
 }
 ```
-
-[GitHub Template](https://github.com/novuhq/provider-template)
 
 ## Add provider logos
 

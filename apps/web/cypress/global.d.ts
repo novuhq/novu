@@ -14,8 +14,6 @@ declare namespace Cypress {
      */
     window(options?: Partial<Loggable & Timeoutable>): Chainable<CustomWindow>;
 
-    seed(): Chainable<any>;
-
     clear(): Chainable<any>;
 
     logout(): Chainable<any>;
@@ -23,6 +21,9 @@ declare namespace Cypress {
      * Logs-in user by using UI
      */
     login(username: string, password: string): void;
+
+    clearDatabase(): Chainable<any>;
+    seedDatabase(): Chainable<any>;
 
     /**
      * Logs-in user by using API request

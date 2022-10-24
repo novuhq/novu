@@ -35,7 +35,7 @@ export interface IPushOptions {
     tag?: string;
     body?: string;
     icon?: string;
-    badge?: string;
+    badge?: number;
     color?: string;
     sound?: string;
     title?: string;
@@ -44,6 +44,13 @@ export interface IPushOptions {
     clickAction?: string;
     titleLocKey?: string;
     titleLocArgs?: string;
+    ttl?: number;
+    expiration?: number;
+    priority?: 'default' | 'normal' | 'high';
+    subtitle?: string;
+    channelId?: string;
+    categoryId?: string;
+    mutableContent?: boolean;
   };
 }
 
@@ -60,16 +67,32 @@ export interface ISendMessageSuccessResponse {
 
 export enum EmailEventStatusEnum {
   OPENED = 'opened',
+  REJECTED = 'rejected',
+  SENT = 'sent',
+  DEFERRED = 'deferred',
   DELIVERED = 'delivered',
   BOUNCED = 'bounced',
   DROPPED = 'dropped',
   CLICKED = 'clicked',
+  BLOCKED = 'blocked',
+  SPAM = 'spam',
+  UNSUBSCRIBED = 'unsubscribed',
+  SPAM_COMPLAINED = 'spam complained',
+  SUBSCRIPTION_CHANGED = 'subscription changed',
 }
 
 export enum SmsEventStatusEnum {
   CREATED = 'created',
   DELIVERED = 'delivered',
   RECEIVED = 'received',
+  ACCEPTED = 'accepted',
+  QUEUED = 'queued',
+  SENDING = 'sending',
+  SENT = 'sent',
+  FAILED = 'failed',
+  UNDELIVERED = 'undelivered',
+  RECEIVING = 'receiving',
+  DELIVERY_UNCONFIRMED = 'delivery unconfirmed',
 }
 
 export interface IEventBody {

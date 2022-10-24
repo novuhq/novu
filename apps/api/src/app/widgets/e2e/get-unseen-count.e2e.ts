@@ -65,9 +65,6 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
       }
     );
 
-    const seenFeed = await getFeedCount({ seen: true });
-    expect(seenFeed.data.count).to.equal(1);
-
     const unseenFeed = await getFeedCount({ seen: false });
     expect(unseenFeed.data.count).to.equal(2);
   });
