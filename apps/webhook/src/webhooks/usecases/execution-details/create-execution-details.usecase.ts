@@ -45,7 +45,7 @@ export class CreateExecutionDetails {
       status: this.mapStatus(status, channel),
       detail: `${response} - (${status})` || status,
       source: ExecutionDetailsSourceEnum.WEBHOOK,
-      raw: row,
+      raw: JSON.stringify(row),
       isRetry: false,
       isTest: false,
     };
