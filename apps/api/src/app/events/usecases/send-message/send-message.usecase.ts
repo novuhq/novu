@@ -89,20 +89,22 @@ export class SendMessage {
 
     const shouldRun = matchMessageWithFilters(command.step, data);
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: DetailEnum.FILTER_STEPS,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-        raw: JSON.stringify({
-          payload: data,
-          filters: command.step.filters,
-        }),
-      })
-    );
+    if (!shouldRun) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.FILTER_STEPS,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            payload: data,
+            filters: command.step.filters,
+          }),
+        })
+      );
+    }
 
     return shouldRun;
   }
