@@ -132,7 +132,7 @@ export class SendMessage {
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
       subscriberId: job._subscriberId,
-      environmentId: job._subscriberId,
+      environmentId: job._environmentId,
       template,
     });
 
@@ -164,7 +164,7 @@ export class SendMessage {
       (channelKey) => channelKey === job.type && preference.channels[job.type]
     );
 
-    return templatePreferred && !channelPreferred;
+    return templatePreferred && channelPreferred;
   }
 
   private isActionStep(job: JobEntity) {
