@@ -6,158 +6,6 @@ import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { colors, shadows } from '../../design-system';
 import { Chat, CheckCircle, InApp, Mail, Sms, Timer } from '../../design-system/icons';
 
-// TODO: Delete once components done
-const doStep = (number, status, detail) => ({
-  _id: number,
-  logo: 'logo',
-  name: `step-${number}`,
-  detail,
-  createdAt: new Date().toISOString(),
-  status,
-});
-const stops = [
-  doStep(1, 'Failed', 'Failure short description'),
-  doStep(2, 'Pending', 'This step is scheduled to be triggered in 54 minutes (action: delay)'),
-  doStep(3, 'Success', 'Success! The notification has been delivered'),
-  doStep(4, 'Pending', 'This step is scheduled to be triggered in 54 minutes (action: delay)'),
-];
-
-const stops2 = [
-  {
-    _id: '63513bd4c17b80d9605fa955',
-    _jobId: '63513bd4c17b80d9605fa94c',
-    _environmentId: '6345abcbed568615629dc2c4',
-    _organizationId: '6345abcbed568615629dc2b2',
-    _notificationId: '63513bd4c17b80d9605fa946',
-    _notificationTemplateId: '63467c6302e611fbc7a5d751',
-    _subscriberId: '6345b543165d1014fd936f1c',
-    providerId: 'sendgrid',
-    transactionId: 'cd4d3cbe-20f7-47ed-ad3b-9d14a38afae6',
-    channel: 'email',
-    detail: 'Step is queued for execution',
-    source: 'Internal',
-    status: 'Pending',
-    isTest: false,
-    isRetry: false,
-    createdAt: '2022-10-20T12:15:16.869Z',
-    updatedAt: '2022-10-20T12:15:16.869Z',
-    __v: 0,
-    id: '63513bd4c17b80d9605fa955',
-  },
-  {
-    _id: '63513bd4c17b80d9605fa959',
-    _jobId: '63513bd4c17b80d9605fa94c',
-    _environmentId: '6345abcbed568615629dc2c4',
-    _organizationId: '6345abcbed568615629dc2b2',
-    _notificationId: '63513bd4c17b80d9605fa946',
-    _notificationTemplateId: '63467c6302e611fbc7a5d751',
-    _subscriberId: '6345b543165d1014fd936f1c',
-    providerId: 'sendgrid',
-    transactionId: 'cd4d3cbe-20f7-47ed-ad3b-9d14a38afae6',
-    channel: 'email',
-    detail: 'Step was filtered based on steps filters',
-    source: 'Internal',
-    status: 'Pending',
-    isTest: false,
-    isRetry: false,
-    raw: `{\'payload\':{\'payload\':{}},\'filters\':[{\'children\':[],\'_id\:\'63467dc102e611fbc7a5d7f7\'}]}`,
-    createdAt: '2022-10-20T12:15:16.928Z',
-    updatedAt: '2022-10-20T12:15:16.928Z',
-    __v: 0,
-    id: '63513bd4c17b80d9605fa959',
-  },
-  {
-    _id: '63513bd4c17b80d9605fa960',
-    _jobId: '63513bd4c17b80d9605fa94c',
-    _environmentId: '6345abcbed568615629dc2c4',
-    _organizationId: '6345abcbed568615629dc2b2',
-    _notificationId: '63513bd4c17b80d9605fa946',
-    _notificationTemplateId: '63467c6302e611fbc7a5d751',
-    _subscriberId: '6345b543165d1014fd936f1c',
-    providerId: 'sendgrid',
-    transactionId: 'cd4d3cbe-20f7-47ed-ad3b-9d14a38afae6',
-    channel: 'email',
-    detail: 'Start sending message',
-    source: 'Internal',
-    status: 'Pending',
-    isTest: false,
-    isRetry: false,
-    createdAt: '2022-10-20T12:15:16.948Z',
-    updatedAt: '2022-10-20T12:15:16.948Z',
-    __v: 0,
-    id: '63513bd4c17b80d9605fa960',
-  },
-  {
-    _id: '63513bd5c17b80d9605fa968',
-    _jobId: '63513bd4c17b80d9605fa94c',
-    _environmentId: '6345abcbed568615629dc2c4',
-    _organizationId: '6345abcbed568615629dc2b2',
-    _notificationId: '63513bd4c17b80d9605fa946',
-    _notificationTemplateId: '63467c6302e611fbc7a5d751',
-    _subscriberId: '6345b543165d1014fd936f1c',
-    _messageId: '63513bd4c17b80d9605fa966',
-    providerId: 'sendgrid',
-    transactionId: 'cd4d3cbe-20f7-47ed-ad3b-9d14a38afae6',
-    channel: 'email',
-    detail: 'Message created',
-    source: 'Internal',
-    status: 'Pending',
-    isTest: false,
-    isRetry: false,
-    raw: '{}',
-    createdAt: '2022-10-20T12:15:17.048Z',
-    updatedAt: '2022-10-20T12:15:17.048Z',
-    __v: 0,
-    id: '63513bd5c17b80d9605fa968',
-  },
-  {
-    _id: '63513bd5c17b80d9605fa96a',
-    _jobId: '63513bd4c17b80d9605fa94c',
-    _environmentId: '6345abcbed568615629dc2c4',
-    _organizationId: '6345abcbed568615629dc2b2',
-    _notificationId: '63513bd4c17b80d9605fa946',
-    _notificationTemplateId: '63467c6302e611fbc7a5d751',
-    _subscriberId: '6345b543165d1014fd936f1c',
-    _messageId: '63513bd4c17b80d9605fa966',
-    providerId: 'sendgrid',
-    transactionId: 'cd4d3cbe-20f7-47ed-ad3b-9d14a38afae6',
-    channel: 'email',
-    detail: 'Subscriber does not have any email/phone number',
-    source: 'Internal',
-    status: 'Failed',
-    isTest: false,
-    isRetry: false,
-    createdAt: '2022-10-20T12:15:17.073Z',
-    updatedAt: '2022-10-20T12:15:17.073Z',
-    __v: 0,
-    id: '63513bd5c17b80d9605fa96a',
-  },
-  {
-    _id: '63513bd5c17b80d9605fa96d',
-    _jobId: '63513bd4c17b80d9605fa94c',
-    _environmentId: '6345abcbed568615629dc2c4',
-    _organizationId: '6345abcbed568615629dc2b2',
-    _notificationId: '63513bd4c17b80d9605fa946',
-    _notificationTemplateId: '63467c6302e611fbc7a5d751',
-    _subscriberId: '6345b543165d1014fd936f1c',
-    _messageId: '63513bd4c17b80d9605fa966',
-    providerId: 'sendgrid',
-    transactionId: 'cd4d3cbe-20f7-47ed-ad3b-9d14a38afae6',
-    channel: 'email',
-    detail: 'Subscriber does not have an email address',
-    source: 'Internal',
-    status: 'Failed',
-    isTest: false,
-    isRetry: false,
-    createdAt: '2022-10-20T12:15:17.079Z',
-    updatedAt: '2022-10-20T12:15:17.079Z',
-    __v: 0,
-    id: '63513bd5c17b80d9605fa96d',
-  },
-];
-
-// TODO: Deletion up to here up ^^^^^^^^^^^^
-
 const ExecutionDetailsStepItem = styled.div`
   padding: 20px;
   padding-left: 15px;
@@ -191,18 +39,23 @@ const StepTimeWrapper = styled(StepTimeFlowWrapper)`
   flex-flow: column;
 `;
 
+interface ISeparator {
+  show: boolean;
+}
+
 /**
  * TODO: It should be an icon for an arrow but I haven't found it
  * so doing it CSS wise
  */
-const Separator = styled.div`
+const Separator = styled.div<ISeparator>`
   border: 1px dashed ${colors.white};
   border-radius: 10px;
   height: 1px;
   opacity: 0.8;
   position: relative;
   top: 13px;
-  width: 25px;
+  visibility: ${(props) => (props.show ? 'visible' : 'hidden')};
+  width: 30px;
 `;
 
 const StepName = styled.div`
@@ -212,6 +65,7 @@ const StepName = styled.div`
   line-height: 17px;
   padding-bottom: 5px;
   padding-top: 0;
+  text-transform: capitalize;
 `;
 
 const StepDetails = styled.div`
@@ -245,7 +99,7 @@ const TimeWrapper = styled.div`
   display: flex;
   justify-content: center;
   padding: 5px;
-  width: 110px;
+  width: 70px;
 `;
 
 const TimeWrapperDetail = styled.div`
@@ -324,9 +178,29 @@ const StepLogo = ({ channel, status }) => {
   return <Logo height="32" width="32" color={color} />;
 };
 
+const generateDetailByStepAndStatus = (status, step) => {
+  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
+    return 'Success! The notification has been delivered.';
+  }
+
+  if (step.type === 'digest') {
+    const { digest } = step;
+
+    return `${digest.amount} ${digest.unit}`;
+  }
+
+  if (step.type === 'delay') {
+    const { digest } = step;
+
+    return `${digest.amount} ${digest.unit}`;
+  }
+
+  return step.executionDetails.at(-1).detail;
+};
+
 /**
- * TODO: Steps are not coming with a name. That's the reason
- * I am feeding them with the notificationId as fallback.
+ * Step name is the type of job provided (either channel or digest/delay).
+ * TODO: Jobs have no details. Which detail should we fill?
  */
 const StepOutcome = ({ name, detail, status }) => {
   const Details = getDetailsStyledComponentByStepStatus(status);
@@ -339,9 +213,8 @@ const StepOutcome = ({ name, detail, status }) => {
   );
 };
 
-const StepTime = ({ value }) => {
-  // Steps happen rightly after each other. We need milliseconds to help users debug properly.
-  const formattedTime = format(parseISO(value), 'HH:mm:ss.SSS');
+const StepTimeAndDetail = ({ createdAt, detail }) => {
+  const formattedTime = format(parseISO(createdAt), 'HH:mm');
 
   return (
     <StepTimeWrapper>
@@ -351,25 +224,24 @@ const StepTime = ({ value }) => {
           <CheckCircle height="12" width="12" color={colors.white} />
         </IconTime>
       </TimeWrapper>
-      <TimeWrapperDetail>This happened</TimeWrapperDetail>
+      <TimeWrapperDetail>{detail}</TimeWrapperDetail>
     </StepTimeWrapper>
   );
 };
 
-/**
- * TODO: We need to manipulate the given data to bring the last 3 timestamps of the steps
- * so we can do the proposal properly. So far I feed the data for all rows.
- */
-const StepTimeFlow = ({ value }) => {
-  const length = 3;
-  const times: number[] = Array.from({ length }, (_, i) => i + 1);
+const StepTimeFlow = ({ executionDetails }) => {
+  if (executionDetails?.length <= 0) {
+    return null;
+  }
+
+  const numberOfExecutionDetails = 3;
 
   return (
     <StepTimeFlowWrapper>
-      {times.map((index: number) => (
+      {executionDetails.slice(-numberOfExecutionDetails).map((executionDetail, index) => (
         <>
-          <StepTime value={value} />
-          {index < length && <Separator />}
+          <StepTimeAndDetail createdAt={executionDetail.createdAt} detail={executionDetail.detail} />
+          <Separator show={index < numberOfExecutionDetails - 1} />
         </>
       ))}
     </StepTimeFlowWrapper>
@@ -377,19 +249,23 @@ const StepTimeFlow = ({ value }) => {
 };
 
 const ExecutionDetailsStepWrapper = ({ step }) => {
-  const Component = getStyledComponentByStepStatus(step.status);
+  // TODO: Status of job would be the status of the last execution details
+  const { status } = step?.executionDetails.at(-1) || {};
+  const Component = getStyledComponentByStepStatus(status);
+
+  const generatedDetail = generateDetailByStepAndStatus(status, step);
 
   return (
     <Component key={`execution-details-wrapper-component-${step._id}`}>
       <Grid gutter={10}>
         <Grid.Col span={1}>
-          <StepLogo channel={step.channel} status={step.status} />
+          <StepLogo channel={step.channel} status={status} />
         </Grid.Col>
         <Grid.Col span={5}>
-          <StepOutcome name={step.name || step._jobId} detail={step.detail} status={step.status} />
+          <StepOutcome name={step.type} detail={generatedDetail} status={status} />
         </Grid.Col>
         <Grid.Col span={6}>
-          <StepTimeFlow value={step.createdAt} />
+          <StepTimeFlow executionDetails={step.executionDetails} />
         </Grid.Col>
       </Grid>
     </Component>
@@ -397,14 +273,14 @@ const ExecutionDetailsStepWrapper = ({ step }) => {
 };
 
 export const ExecutionDetailsSteps = ({ steps = [] }) => {
-  if (stops.length === 0) {
+  if (steps.length === 0) {
     return null;
   }
 
   return (
     <>
-      {stops.map((step) => (
-        <ExecutionDetailsStepWrapper key={`execution-details-wrapper-${step._id}`} step={step} />
+      {steps.map((step: any) => (
+        <ExecutionDetailsStepWrapper key={`execution-details-wrapper-${step.id}`} step={step} />
       ))}
     </>
   );

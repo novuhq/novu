@@ -65,13 +65,15 @@ export function ExecutionDetailsModal({
   origin: string;
 }) {
   const theme = useMantineTheme();
-  const { data, isLoading, isFetching } = useQuery(['activity', 'notificationId'], function () {
-    if (notificationId) {
-      return getActivityForNotification(notificationId);
-    }
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+  } = useQuery(['activity', notificationId], () => getActivityForNotification(notificationId), {
+    enabled: !!notificationId,
   });
 
-  // console.log('notificationId', notificationId, 'data', data);
+  const { jobs } = response?.data || {};
 
   return (
     <Modal
@@ -105,7 +107,7 @@ export function ExecutionDetailsModal({
         }}
         data-test-id="execution-details-modal-loading-overlay"
       />
-      <ExecutionDetailsSteps steps={[]} />
+      <ExecutionDetailsSteps steps={jobs} />
       <ExecutionDetailsFooter onClose={onClose} origin={origin} />
     </Modal>
   );
