@@ -11,7 +11,7 @@ export function getActivityList(page = 0, filters) {
   });
 }
 
-export function getActivityForNotification(notificationId: string) {
+export function getNotification(notificationId: string) {
   return api.getFullResponse(`/v1/notifications/${notificationId}`);
 }
 
