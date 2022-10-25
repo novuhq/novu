@@ -1,16 +1,44 @@
-import { Grid, Text } from '@mantine/core';
+import { Grid, Text, useMantineTheme } from '@mantine/core';
 import * as capitalize from 'lodash.capitalize';
-import { ProviderImage } from './ProviderImage';
 import { useJobStatus } from '../hooks/useJobStatus';
 import { colors, shadows } from '../../../design-system';
 import styled from 'styled-components';
-import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
+import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import { ClockCircleOutlined } from '@ant-design/icons';
+import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import { Digest } from '../../../design-system/icons/general/Digest';
+import { Mail, Mobile, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
+
+const TypeIcon = ({ type }: { type: StepTypeEnum }) => {
+  const theme = useMantineTheme();
+
+  switch (type) {
+    case StepTypeEnum.EMAIL:
+      return <Mail width={22} height={22} />;
+    case StepTypeEnum.SMS:
+      return <Sms width={22} height={22} />;
+    case StepTypeEnum.CHAT:
+      return <Chat width={22} height={22} />;
+    case StepTypeEnum.PUSH:
+      return <Mobile width={22} height={22} />;
+    case StepTypeEnum.IN_APP:
+      return <InApp width={22} height={22} />;
+    case StepTypeEnum.DIGEST:
+      return (
+        <div style={{ zoom: 0.65, width: 28, marginLeft: 4 }}>
+          <Digest color={theme.colorScheme === 'dark' ? colors.B80 : colors.B40} />
+        </div>
+      );
+    case StepTypeEnum.DELAY:
+      return <Timer width={22} height={22} />;
+    default:
+      return null;
+  }
+};
 
 export const ActivityStep = ({ job, span = 4 }) => {
   const status = useJobStatus(job);
+  const theme = useMantineTheme();
 
   return (
     <Grid.Col
@@ -19,7 +47,7 @@ export const ActivityStep = ({ job, span = 4 }) => {
         padding: 0,
       }}
     >
-      <StepItem>
+      <StepItem dark={theme.colorScheme === 'dark'}>
         <Grid>
           <Grid.Col span={1}>
             <When
@@ -34,8 +62,9 @@ export const ActivityStep = ({ job, span = 4 }) => {
               <ErrorIcon width="16" height="16" color={colors.error} />
             </When>
           </Grid.Col>
-          <Grid.Col span={2}>
+          <Grid.Col span={8}>
             <Header
+              dark={theme.colorScheme === 'dark'}
               done={status === ExecutionDetailsStatusEnum.SUCCESS}
               failed={status === ExecutionDetailsStatusEnum.FAILED}
             >
@@ -43,17 +72,17 @@ export const ActivityStep = ({ job, span = 4 }) => {
             </Header>
           </Grid.Col>
           <Grid.Col
-            span={8}
+            span={2}
             sx={{
               textAlign: 'right',
             }}
           >
-            <ProviderImage providerId={job.providerId} />
+            <TypeIcon type={job.type} />
           </Grid.Col>
         </Grid>
         <Text
           sx={{
-            color: colors.B80,
+            color: theme.colorScheme === 'dark' ? colors.B80 : colors.B40,
             fontSize: '12px',
           }}
         >
@@ -64,17 +93,17 @@ export const ActivityStep = ({ job, span = 4 }) => {
   );
 };
 
-const StepItem = styled.div`
-  background: ${colors.B20};
+const StepItem = styled.div<{ dark: boolean }>`
+  background: ${({ dark }) => (dark ? colors.B20 : colors.B98)};
   padding: 15px;
-  box-shadow: ${shadows.dark};
+  box-shadow: ${({ dark }) => (dark ? shadows.dark : 'none')};
   border-radius: 7px;
   height: 100%;
   width: 100%;
 `;
 
-const Header = styled.h4<{ done: boolean; failed }>`
-  color: ${({ done, failed }) => {
+const Header = styled.h4<{ done: boolean; failed; dark: boolean }>`
+  color: ${({ done, failed, dark }) => {
     if (failed) {
       return colors.error;
     }
@@ -83,7 +112,7 @@ const Header = styled.h4<{ done: boolean; failed }>`
       return colors.success;
     }
 
-    return colors.white;
+    return dark ? colors.white : colors.B40;
   }};
   margin-top: 0px;
 `;
