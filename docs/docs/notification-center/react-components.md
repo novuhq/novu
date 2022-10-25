@@ -177,6 +177,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>be</code> (Belarusian)</li>
           <li><code>bg</code> (Bulgarian)</li>
           <li><code>bn</code> (Bengali)</li>
+          <li><code>bh</code> (Bhojpuri)</li>
           <li><code>ca</code> (Catalan)</li>
           <li><code>cs</code> (Czech)</li>
           <li><code>da</code> (Danish)</li>
