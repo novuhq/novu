@@ -5,7 +5,7 @@ import styled from 'styled-components';
 
 import { ExecutionDetailsSteps } from './ExecutionDetailsSteps';
 
-import { getActivityForNotification } from '../../api/activity';
+import { getNotification } from '../../api/activity';
 import { colors, shadows, Title, Text } from '../../design-system';
 import { ArrowLeft } from '../../design-system/icons';
 import { GotAQuestionButton } from '../utils/GotAQuestionButton';
@@ -69,7 +69,7 @@ export function ExecutionDetailsModal({
     data: response,
     isLoading,
     isFetching,
-  } = useQuery(['activity', notificationId], () => getActivityForNotification(notificationId), {
+  } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
     enabled: !!notificationId,
   });
 
