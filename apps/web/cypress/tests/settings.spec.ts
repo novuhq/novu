@@ -17,7 +17,7 @@ describe('Settings Screen', function () {
   });
 
   it('should display the api key of the app', function () {
-    cy.get('.mantine-Tabs-tabsList').contains('Api Keys').click();
+    cy.get('.mantine-Tabs-tabsList').contains('API Keys').click();
     cy.getByTestId('api-key-container').should('have.value', this.session.environment.apiKeys[0].key);
   });
 
