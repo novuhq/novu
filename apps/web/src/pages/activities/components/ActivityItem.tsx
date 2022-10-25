@@ -1,4 +1,4 @@
-import { Grid, Text } from '@mantine/core';
+import { Grid, Text, useMantineTheme } from '@mantine/core';
 import { colors } from '../../../design-system';
 import styled from 'styled-components';
 import { When } from '../../../components/utils/When';
@@ -10,9 +10,10 @@ import { ExecutionDetailsStatusEnum } from '@novu/shared';
 
 export const ActivityItem = ({ item }) => {
   const status = useNotificationStatus(item);
+  const theme = useMantineTheme();
 
   return (
-    <ListItem key={`activity-item-${item.id}`}>
+    <ListItem key={`activity-item-${item.id}`} dark={theme.colorScheme === 'dark'}>
       <Grid gutter={10}>
         <Grid.Col span={3}>
           <div
@@ -98,13 +99,13 @@ export const ActivityItem = ({ item }) => {
   );
 };
 
-const ListItem = styled.div`
+const ListItem = styled.div<{ dark: boolean }>`
   padding: 20px;
   padding-left: 15px;
   margin-left: 30px;
   margin-right: 30px;
-  border: 1px solid ${colors.B30};
+  border: 1px solid ${({ dark }) => (dark ? colors.B30 : colors.B80)};
   margin-bottom: 15px;
   border-radius: 7px;
-  color: ${colors.B80};
+  color: ${({ dark }) => (dark ? colors.B80 : colors.B40)};
 `;
