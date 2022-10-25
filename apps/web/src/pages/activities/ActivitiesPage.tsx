@@ -20,7 +20,8 @@ interface IFiltersForm {
 export function ActivitiesPage() {
   const { templates, loading: loadingTemplates } = useTemplates(0, 100);
   const [page, setPage] = useState<number>(0);
-  const [isModalOpen, toggleModal] = useState<boolean>(false);
+  const [isModalOpen, setToggleModal] = useState<boolean>(false);
+  const [notificationId, setNotificationId] = useState<string>('');
   const [filters, setFilters] = useState<IFiltersForm>({ channels: [] });
   const { data, isLoading, isFetching } = useQuery<{ data: any[]; totalCount: number; pageSize: number }>(
     ['activitiesList', page, filters],
@@ -44,12 +45,15 @@ export function ActivitiesPage() {
     return () => subscription.unsubscribe();
   }, [watch]);
 
-  function onRowClick() {
-    toggleModal((state) => !state);
+  function onRowClick(event, selectedNotificationId) {
+    event.preventDefault();
+    setNotificationId(selectedNotificationId);
+    setToggleModal((state) => !state);
   }
 
   function onModalClose() {
-    toggleModal(false);
+    setNotificationId('');
+    setToggleModal(false);
   }
 
   return (
@@ -126,7 +130,12 @@ export function ActivitiesPage() {
           onPageChange: handleTableChange,
         }}
       />
-      <ExecutionDetailsModal modalVisibility={isModalOpen} onClose={onModalClose} />
+      <ExecutionDetailsModal
+        notificationId={notificationId}
+        modalVisibility={isModalOpen}
+        onClose={onModalClose}
+        origin={location.pathname}
+      />
     </PageContainer>
   );
 }

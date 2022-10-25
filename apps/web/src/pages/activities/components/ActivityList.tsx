@@ -9,7 +9,7 @@ export interface IListProps {
   data?: Data[];
   loading?: boolean;
   pagination?: any;
-  onRowClick: () => void;
+  onRowClick: (Event, string) => void;
 }
 
 export function ActivityList({ data: userData, pagination = false, loading = false, onRowClick }: IListProps) {
@@ -30,12 +30,12 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
       {data.map((item, index) => {
         return (
           <UnstyledButton
-            onClick={onRowClick}
+            onClick={(event) => onRowClick(event, item.id)}
             sx={{
               width: '100%',
             }}
           >
-            <ActivityItem key={index} item={item} />
+            <ActivityItem key={`activity-item-${item.id}`} item={item} />
           </UnstyledButton>
         );
       })}
