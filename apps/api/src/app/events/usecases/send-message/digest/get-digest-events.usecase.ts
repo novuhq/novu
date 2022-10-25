@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JobRepository, JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
-import { CreateExecutionDetailsCommand } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { CreateExecutionDetails } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 
 @Injectable()
@@ -29,9 +32,9 @@ export abstract class GetDigestEvents {
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
-        detail: `Digest trigger events`,
+        detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
         raw: JSON.stringify(events),

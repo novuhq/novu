@@ -149,7 +149,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
       _subscriberId: subscriberId,
       providerId,
       transactionId,
-      detail: webhookBody.response,
+      detail: '400 try again later - (delivered)',
       source: ExecutionDetailsSourceEnum.WEBHOOK,
       status: ExecutionDetailsStatusEnum.SUCCESS,
       isTest: false,

@@ -32,7 +32,10 @@ import {
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageType {
@@ -96,7 +99,7 @@ export class SendMessageEmail extends SendMessageType {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: 'Message subject and content could not be generated',
+          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -145,9 +148,9 @@ export class SendMessageEmail extends SendMessageType {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: 'Message created',
+        detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         messageId: message._id,
         isTest: false,
         isRetry: false,
@@ -221,7 +224,7 @@ export class SendMessageEmail extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: mailErrorMessage,
+          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -246,7 +249,7 @@ export class SendMessageEmail extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: integrationError,
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -282,7 +285,7 @@ export class SendMessageEmail extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Message sent',
+          detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
@@ -309,7 +312,7 @@ export class SendMessageEmail extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Error while sending email with provider',
+          detail: DetailEnum.PROVIDER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,

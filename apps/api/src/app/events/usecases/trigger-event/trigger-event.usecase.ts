@@ -1,4 +1,10 @@
-import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  NotificationRepository,
+} from '@novu/dal';
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -25,9 +31,10 @@ export class TriggerEvent {
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
     private verifyPayload: VerifyPayload,
-    private storageHelperServie: StorageHelperService,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private addJobUsecase: AddJob,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private notificationRepository: NotificationRepository,
+    private storageHelperService: StorageHelperService
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -58,7 +65,7 @@ export class TriggerEvent {
     // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
     if (command.payload && Array.isArray(command.payload.attachments)) {
       this.modifyAttachments(command);
-      await this.storageHelperServie.uploadAttachments(command.payload.attachments);
+      await this.storageHelperService.uploadAttachments(command.payload.attachments);
       command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
     }
 
@@ -105,13 +112,7 @@ export class TriggerEvent {
     });
 
     for (const job of jobs) {
-      const firstJob = await this.jobRepository.storeJobs(job);
-      await this.addJobUsecase.execute({
-        userId: firstJob._userId,
-        environmentId: firstJob._environmentId,
-        organizationId: firstJob._organizationId,
-        jobId: firstJob._id,
-      });
+      await this.storeAndAddJob(job);
     }
 
     if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
@@ -123,6 +124,40 @@ export class TriggerEvent {
       status: 'processed',
       transactionId: command.transactionId,
     };
+  }
+
+  private async storeAndAddJob(jobs: JobEntity[]) {
+    const storedJobs = await this.jobRepository.storeJobs(jobs);
+    const channels = storedJobs
+      .map((item) => item.type)
+      .reduce((list, channel) => {
+        if (list.includes(channel)) {
+          return list;
+        }
+        list.push(channel);
+
+        return list;
+      }, []);
+
+    const firstJob = storedJobs[0];
+
+    await this.notificationRepository.update(
+      {
+        _id: firstJob._notificationId,
+      },
+      {
+        $set: {
+          channels: channels,
+        },
+      }
+    );
+
+    await this.addJobUsecase.execute({
+      userId: firstJob._userId,
+      environmentId: firstJob._environmentId,
+      organizationId: firstJob._organizationId,
+      jobId: firstJob._id,
+    });
   }
 
   private async logTemplateNotActive(command: TriggerEventCommand, template: NotificationTemplateEntity) {

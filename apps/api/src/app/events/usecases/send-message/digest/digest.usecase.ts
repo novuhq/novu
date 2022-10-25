@@ -7,7 +7,10 @@ import { StepTypeEnum, DigestTypeEnum, ExecutionDetailsSourceEnum, ExecutionDeta
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 import { CreateExecutionDetails } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { CreateExecutionDetailsCommand } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class Digest extends SendMessageType {
@@ -29,7 +32,7 @@ export class Digest extends SendMessageType {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: 'Steps to get digest events found ' + nextJobs.length,
+        detail: DetailEnum.DIGESTED_EVENTS_PROVIDED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,

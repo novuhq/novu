@@ -31,7 +31,10 @@ import {
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageSms extends SendMessageType {
@@ -86,7 +89,7 @@ export class SendMessageSms extends SendMessageType {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: 'Message content could not be generated',
+          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -138,9 +141,9 @@ export class SendMessageSms extends SendMessageType {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: 'Message created',
+        detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         messageId: message._id,
         isTest: false,
         isRetry: false,
@@ -169,7 +172,7 @@ export class SendMessageSms extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Subscriber does not have active phone',
+          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -207,7 +210,7 @@ export class SendMessageSms extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Subscriber does not have an active sms integration',
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -229,7 +232,7 @@ export class SendMessageSms extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Integration does not have from phone configured',
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -272,7 +275,7 @@ export class SendMessageSms extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Message sent',
+          detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
@@ -299,7 +302,7 @@ export class SendMessageSms extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Unexpected provider error',
+          detail: DetailEnum.PROVIDER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,

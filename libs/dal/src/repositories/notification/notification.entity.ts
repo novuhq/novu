@@ -1,3 +1,4 @@
+import { StepTypeEnum } from '@novu/shared';
 import { NotificationTemplateEntity } from '../notification-template';
 
 export class NotificationEntity {
@@ -14,4 +15,6 @@ export class NotificationEntity {
   transactionId: string;
 
   template?: NotificationTemplateEntity;
+
+  channels?: StepTypeEnum[];
 }

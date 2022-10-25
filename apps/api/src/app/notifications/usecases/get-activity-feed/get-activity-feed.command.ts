@@ -25,4 +25,8 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsString()
+  transactionId?: string;
 }

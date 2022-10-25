@@ -14,7 +14,7 @@ import { ExecutionDetailsModule } from './app/execution-details/execution-detail
 import { NotificationTemplateModule } from './app/notification-template/notification-template.module';
 import { EventsModule } from './app/events/events.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
-import { ActivityModule } from './app/activity/activity.module';
+import { NotificationModule } from './app/notifications/notification.module';
 import { ChannelsModule } from './app/channels/channels.module';
 import { StorageModule } from './app/storage/storage.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
@@ -39,7 +39,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   NotificationTemplateModule,
   EventsModule,
   WidgetsModule,
-  ActivityModule,
+  NotificationModule,
   ChannelsModule,
   StorageModule,
   NotificationGroupsModule,
