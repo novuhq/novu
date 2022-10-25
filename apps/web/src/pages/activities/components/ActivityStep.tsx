@@ -45,6 +45,7 @@ export const ActivityStep = ({ job, span = 4 }) => {
       span={span}
       sx={{
         padding: 0,
+        paddingLeft: '10px',
       }}
     >
       <StepItem dark={theme.colorScheme === 'dark'}>
