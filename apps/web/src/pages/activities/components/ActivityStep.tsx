@@ -1,13 +1,13 @@
 import { Grid, Text, useMantineTheme } from '@mantine/core';
+import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import * as capitalize from 'lodash.capitalize';
+import styled from 'styled-components';
+
 import { useJobStatus } from '../hooks/useJobStatus';
 import { colors, shadows } from '../../../design-system';
-import styled from 'styled-components';
 import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
-import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
-import { Digest } from '../../../design-system/icons/general/Digest';
-import { Mail, Mobile, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
+import { Digest, Mail, Mobile, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
 
 const TypeIcon = ({ type }: { type: StepTypeEnum }) => {
   const theme = useMantineTheme();

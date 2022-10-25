@@ -3,7 +3,7 @@ import React from 'react';
 export interface IIconProps {
   width?: string;
   height?: string;
-  color: string;
+  color?: string;
 }
 /* eslint-disable */
 export function Digest({ width = '24', height = '26', color }: IIconProps) {
