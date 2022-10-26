@@ -9,7 +9,7 @@ export enum DetailEnum {
   MESSAGE_CONTENT_NOT_GENERATED = 'Message content could not be generated',
   MESSAGE_CREATED = 'Message created',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
-  SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber does not have any email/phone number',
+  SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber does not have any recipient details',
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
   MESSAGE_SENT = 'Message sent',
   PROVIDER_ERROR = 'Unexpected provider error',
