@@ -27,6 +27,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
+  REDIS_PASSWORD: str(),
   JWT_SECRET: str(),
   SENDGRID_API_KEY: str({
     default: '',
