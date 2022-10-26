@@ -81,6 +81,20 @@ export class SendMessageEmail extends SendMessageType {
       )
     )[0];
 
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
     const overrides = command.overrides[integration?.providerId] || {};
     let subject = '';
     let content: string | IEmailBlock[] = '';
