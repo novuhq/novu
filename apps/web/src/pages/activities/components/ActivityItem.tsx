@@ -49,14 +49,19 @@ export const ActivityItem = ({ item }) => {
                     margin: '0px',
                     marginBottom: '8px',
                   }}
+                  data-test-id="row-template-name"
                 >
                   {item.template.name}
                 </h3>
                 <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
-                  <Text color={colors.success}>Done</Text>
+                  <Text data-test-id="status-badge-item" color={colors.success}>
+                    Done
+                  </Text>
                 </When>
                 <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
-                  <Text color={colors.error}>Failed</Text>
+                  <Text data-test-id="status-badge-item" color={colors.error}>
+                    Failed
+                  </Text>
                 </When>
               </Grid.Col>
             </Grid>
@@ -65,7 +70,7 @@ export const ActivityItem = ({ item }) => {
             <small>
               <b>Date:</b> {format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm')}
             </small>
-            <div>
+            <div data-test-id="subscriber-id">
               <small>
                 <b>Subscriber id:</b> {item.subscriber.id}
               </small>

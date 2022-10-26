@@ -27,18 +27,20 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
           color: colors.error,
         }}
       />
-      {data.map((item, index) => {
-        return (
-          <UnstyledButton
-            onClick={(event) => onRowClick(event, item.id)}
-            sx={{
-              width: '100%',
-            }}
-          >
-            <ActivityItem key={`activity-item-${item.id}`} item={item} />
-          </UnstyledButton>
-        );
-      })}
+      <div data-test-id="activities-table">
+        {data.map((item, index) => {
+          return (
+            <UnstyledButton
+              onClick={(event) => onRowClick(event, item.id)}
+              sx={{
+                width: '100%',
+              }}
+            >
+              <ActivityItem key={`activity-item-${item.id}`} item={item} />
+            </UnstyledButton>
+          );
+        })}
+      </div>
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
         <Pagination
           styles={{

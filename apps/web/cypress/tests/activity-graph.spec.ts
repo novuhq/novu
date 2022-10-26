@@ -1,4 +1,4 @@
-describe.skip('Activity page', function () {
+describe('Activity page', function () {
   beforeEach(function () {
     // @ts-ignore
     cy.initializeSession()
@@ -21,6 +21,6 @@ describe.skip('Activity page', function () {
     cy.location('pathname').should('equal', '/activities');
 
     // @ts-ignore
-    cy.getByTestId('activity-stats-weekly-sent').contains('50');
+    cy.getByTestId('activity-stats-weekly-sent').contains('25');
   });
 });

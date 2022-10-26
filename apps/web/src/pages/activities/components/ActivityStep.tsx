@@ -48,7 +48,7 @@ export const ActivityStep = ({ job, span = 4 }) => {
         paddingLeft: '10px',
       }}
     >
-      <StepItem dark={theme.colorScheme === 'dark'}>
+      <StepItem dark={theme.colorScheme === 'dark'} data-test-id={`${job.type}-step`}>
         <Grid>
           <Grid.Col span={1}>
             <When
