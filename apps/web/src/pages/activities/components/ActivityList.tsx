@@ -28,17 +28,8 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
         }}
       />
       <div data-test-id="activities-table">
-        {data.map((item, index) => {
-          return (
-            <UnstyledButton
-              onClick={(event) => onRowClick(event, item.id)}
-              sx={{
-                width: '100%',
-              }}
-            >
-              <ActivityItem key={`activity-item-${item.id}`} item={item} />
-            </UnstyledButton>
-          );
+        {data.map((item) => {
+          return <ActivityItem onClick={onRowClick} key={`activity-item-${item.id}`} item={item} />;
         })}
       </div>
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (

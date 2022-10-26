@@ -36,7 +36,7 @@ const TypeIcon = ({ type }: { type: StepTypeEnum }) => {
   }
 };
 
-export const ActivityStep = ({ job, span = 4 }) => {
+export const ActivityStep = ({ job, span = 4, isOld }) => {
   const status = useJobStatus(job);
   const theme = useMantineTheme();
 
@@ -46,34 +46,44 @@ export const ActivityStep = ({ job, span = 4 }) => {
       sx={{
         padding: 0,
         paddingLeft: '10px',
+        height: '100%',
       }}
     >
       <StepItem dark={theme.colorScheme === 'dark'} data-test-id={`${job.type}-step`}>
         <Grid>
-          <Grid.Col span={1}>
-            <When
-              truthy={status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED}
-            >
-              <Timer width={16} height={16} />
+          <When truthy={!isOld}>
+            <Grid.Col span={1}>
+              <When
+                truthy={status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED}
+              >
+                <Timer width={16} height={16} />
+              </When>
+              <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+                <CheckCircle width="16" height="16" color={colors.success} />
+              </When>
+              <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+                <ErrorIcon width="16" height="16" color={colors.error} />
+              </When>
+            </Grid.Col>
+          </When>
+          <Grid.Col span={!isOld ? 9 : 10}>
+            <When truthy={!isOld}>
+              <Header
+                dark={theme.colorScheme === 'dark'}
+                done={status === ExecutionDetailsStatusEnum.SUCCESS}
+                failed={status === ExecutionDetailsStatusEnum.FAILED}
+              >
+                {capitalize(job.type?.replace('_', ' '))}
+              </Header>
             </When>
-            <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
-              <CheckCircle width="16" height="16" color={colors.success} />
+            <When truthy={isOld}>
+              <Header dark={theme.colorScheme === 'dark'} done={false} failed={false}>
+                {capitalize(job.type?.replace('_', ' '))}
+              </Header>
             </When>
-            <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
-              <ErrorIcon width="16" height="16" color={colors.error} />
-            </When>
-          </Grid.Col>
-          <Grid.Col span={8}>
-            <Header
-              dark={theme.colorScheme === 'dark'}
-              done={status === ExecutionDetailsStatusEnum.SUCCESS}
-              failed={status === ExecutionDetailsStatusEnum.FAILED}
-            >
-              {capitalize(job.type)}
-            </Header>
           </Grid.Col>
           <Grid.Col
-            span={2}
+            span={1}
             sx={{
               textAlign: 'right',
             }}
