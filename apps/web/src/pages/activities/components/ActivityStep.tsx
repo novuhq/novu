@@ -56,17 +56,23 @@ export const ActivityStep = ({ job, span = 4, isOld }) => {
           }}
         >
           <When truthy={!isOld}>
-            <When
-              truthy={status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED}
+            <span
+              style={{
+                marginRight: '8px',
+              }}
             >
-              <Timer width={16} height={16} />
-            </When>
-            <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
-              <CheckCircle width="16" height="16" color={colors.success} />
-            </When>
-            <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
-              <ErrorIcon width="16" height="16" color={colors.error} />
-            </When>
+              <When
+                truthy={status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED}
+              >
+                <Timer width={16} height={16} />
+              </When>
+              <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+                <CheckCircle width="16" height="16" color={colors.success} />
+              </When>
+              <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+                <ErrorIcon width="16" height="16" color={colors.error} />
+              </When>
+            </span>
           </When>
           <When truthy={!isOld}>
             <Header
@@ -82,7 +88,15 @@ export const ActivityStep = ({ job, span = 4, isOld }) => {
               {capitalize(job.type?.replace('_', ' '))}
             </Header>
           </When>
-          <TypeIcon type={job.type} />
+          <span
+            style={{
+              position: 'absolute',
+              top: '15px',
+              right: '15px',
+            }}
+          >
+            <TypeIcon type={job.type} />
+          </span>
         </Grid>
         <Text
           sx={{
@@ -125,6 +139,4 @@ const Header = styled.h4<{ done: boolean; failed; dark: boolean }>`
   }};
   margin-top: 0px;
   margin-bottom: 16px;
-  margin-left: 8px;
-  width: 79.36%;
 `;
