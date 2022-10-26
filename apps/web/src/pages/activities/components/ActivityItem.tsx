@@ -9,6 +9,9 @@ import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
 import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 
+const JOB_LENGTH_UPPER_THRESHOLD = 3;
+const checkJobsLength = (item) => item.jobs.length > JOB_LENGTH_UPPER_THRESHOLD;
+
 export const ActivityItem = ({ item, onClick }) => {
   const status = useNotificationStatus(item);
   const theme = useMantineTheme();
@@ -101,7 +104,7 @@ export const ActivityItem = ({ item, onClick }) => {
           </Grid.Col>
           <Grid.Col span={9}>
             <Grid
-              columns={item.jobs.length > 3 ? 10 : 12}
+              columns={checkJobsLength(item) ? 10 : 12}
               justify="end"
               align="center"
               sx={{
@@ -116,11 +119,11 @@ export const ActivityItem = ({ item, onClick }) => {
                   <ActivityStep
                     isOld={isOld}
                     key={`activity-step-${job._id}`}
-                    span={item.jobs.length > 3 ? 3 : 4}
+                    span={checkJobsLength(item) ? 3 : 4}
                     job={job}
                   />
                 ))}
-              <When truthy={item.jobs.length > 3}>
+              <When truthy={checkJobsLength(item)}>
                 <Grid.Col span={1}>
                   <Text align="center" size="xl">
                     +{item.jobs.length - 3}
