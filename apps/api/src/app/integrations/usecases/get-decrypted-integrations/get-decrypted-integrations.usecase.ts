@@ -29,6 +29,10 @@ export class GetDecryptedIntegrations {
       : await this.integrationRepository.find(query);
 
     return integrations.map((integration: IntegrationEntity) => {
+      if (!integration) {
+        return null;
+      }
+
       integration.credentials = decryptCredentials(integration.credentials);
 
       return integration;
