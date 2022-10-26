@@ -65,6 +65,7 @@ export const ActivityItem = ({ item, onClick }) => {
                       margin: '0px',
                       marginBottom: '8px',
                     }}
+                    data-test-id="row-template-name"
                   >
                     {item?.template?.name}
                   </h3>
