@@ -65,12 +65,9 @@ export function ExecutionDetailsModal({
   origin: string;
 }) {
   const theme = useMantineTheme();
-  const {
-    data: response,
-    isLoading,
-    isFetching,
-  } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
+  const { data: response, isLoading } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
     enabled: !!notificationId,
+    refetchInterval: 3000,
   });
 
   const { jobs } = response?.data || {};
@@ -100,7 +97,7 @@ export function ExecutionDetailsModal({
       onClose={onClose}
     >
       <LoadingOverlay
-        visible={isLoading || isFetching}
+        visible={isLoading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
         loaderProps={{
           color: colors.error,

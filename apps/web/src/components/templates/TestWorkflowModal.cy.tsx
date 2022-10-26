@@ -13,6 +13,8 @@ describe('TestWorkflowModal Component', function () {
           <TestWorkflowModal
             isVisible={true}
             onDismiss={() => {}}
+            setTransactionId={() => {}}
+            openExecutionModal={() => {}}
             trigger={{ variables: [], type: TriggerTypeEnum.EVENT, identifier: '1234', subscriberVariables: [] }}
           />
         </TestWrapper>
@@ -31,6 +33,8 @@ describe('TestWorkflowModal Component', function () {
           <TestWorkflowModal
             isVisible={true}
             onDismiss={() => {}}
+            openExecutionModal={() => {}}
+            setTransactionId={() => {}}
             trigger={{
               variables: [{ name: 'firstVariable' }, { name: 'secondVariable' }],
               type: TriggerTypeEnum.EVENT,
