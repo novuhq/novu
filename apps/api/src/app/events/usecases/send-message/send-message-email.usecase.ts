@@ -81,7 +81,7 @@ export class SendMessageEmail extends SendMessageType {
       )
     )[0];
 
-    const overrides = command.overrides[integration.providerId] || {};
+    const overrides = command.overrides[integration?.providerId] || {};
     let subject = '';
     let content: string | IEmailBlock[] = '';
 
@@ -138,7 +138,7 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
-      providerId: integration.providerId,
+      providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
