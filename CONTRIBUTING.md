@@ -43,6 +43,11 @@ To learn a detailed guide on running the project locally, visit [https://docs.no
 If a feature is missing, you can directly _request_ a new one [here](https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+). You also can do the same by choosing "🚀 Feature" when raising a [New Issue](https://github.com/novuhq/novu/issues/new/choose) on our GitHub Repository.
 If you would like to _implement_ it, an issue with your proposal must be submitted first, to be sure that we can use it. Please consider the guidelines given below.
 
+## Report a Bug?
+
+If you come across any bug, you can directly _report_ a new issue [here](https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+). You also can do the same by choosing "🐛 Bug Report" when raising a [New Issue](https://github.com/novuhq/novu/issues/new/choose) on our GitHub Repository.
+If you would like to _resolve_ it, an issue with your proposal must be submitted first, to be sure that we can use it. Please consider the guidelines given below.
+
 ## Coding guidelines
 
 To ensure consistency throughout the source code, please keep these rules in mind as you are working:
