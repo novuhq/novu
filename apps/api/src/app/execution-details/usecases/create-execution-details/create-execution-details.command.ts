@@ -4,6 +4,7 @@ import { EnvironmentWithSubscriber } from '../../../shared/commands/project.comm
 import { JobEntity } from '@novu/dal';
 
 export enum DetailEnum {
+  STEP_CREATED = 'Step is created for execution',
   STEP_QUEUED = 'Step is queued for execution',
   MESSAGE_CONTENT_NOT_GENERATED = 'Message content could not be generated',
   MESSAGE_CREATED = 'Message created',
@@ -18,6 +19,7 @@ export enum DetailEnum {
   DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEPS_FILTERED_BY_PREFERENCES = 'Steps filtered by subscriber preferences',
+  DIGEST_MERGED = 'Digest was merged with other digest',
 }
 
 export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
