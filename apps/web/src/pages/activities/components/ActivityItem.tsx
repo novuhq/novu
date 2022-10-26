@@ -37,12 +37,13 @@ export const ActivityItem = ({ item, onClick }) => {
             >
               <Grid align="center">
                 <When truthy={!isOld}>
-                  <Grid.Col span={2}>
-                    <span
-                      style={{
-                        marginRight: '15px',
-                      }}
-                    >
+                  <Grid.Col
+                    span={1}
+                    sx={{
+                      paddingRight: '30px',
+                    }}
+                  >
+                    <span>
                       <When
                         truthy={
                           status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED
@@ -63,7 +64,7 @@ export const ActivityItem = ({ item, onClick }) => {
                   <h3
                     style={{
                       margin: '0px',
-                      marginBottom: '8px',
+                      marginBottom: '5px',
                     }}
                     data-test-id="row-template-name"
                   >
