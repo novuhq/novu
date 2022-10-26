@@ -67,7 +67,7 @@ export function ExecutionDetailsModal({
   const theme = useMantineTheme();
   const { data: response, isLoading } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
     enabled: !!notificationId,
-    refetchInterval: 1000,
+    refetchInterval: 3000,
   });
 
   const { jobs } = response?.data || {};
