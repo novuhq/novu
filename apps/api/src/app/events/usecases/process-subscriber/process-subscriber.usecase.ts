@@ -7,9 +7,9 @@ import {
   JobEntity,
   JobStatusEnum,
   NotificationStepEntity,
-  NotificationTemplateEntity,
+  IntegrationRepository,
 } from '@novu/dal';
-import { LogCodeEnum, LogStatusEnum, IPreferenceChannels, ChannelTypeEnum } from '@novu/shared';
+import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
@@ -17,10 +17,6 @@ import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { ISubscribersDefine } from '@novu/node';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
-import {
-  GetSubscriberTemplatePreference,
-  GetSubscriberTemplatePreferenceCommand,
-} from '../../../subscribers/usecases/get-subscriber-template-preference';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -31,7 +27,7 @@ export class ProcessSubscriber {
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private filterSteps: DigestFilterSteps,
-    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference
+    private integrationRepository: IntegrationRepository
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
@@ -44,18 +40,11 @@ export class ProcessSubscriber {
 
     const notification = await this.createNotification(command, template._id, subscriber);
 
-    const preferredSubscriberSteps = await this.filterPreferredChannels(
-      command.organizationId,
-      command.environmentId,
-      subscriber._id,
-      template
-    );
-
     const steps: NotificationStepEntity[] = await this.filterSteps.execute(
       DigestFilterStepsCommand.create({
         subscriberId: subscriber._id,
         payload: command.payload,
-        steps: preferredSubscriberSteps,
+        steps: template.steps,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
@@ -78,8 +67,16 @@ export class ProcessSubscriber {
       })
     );
 
-    return steps.map((step): JobEntity => {
-      return {
+    const jobs: JobEntity[] = [];
+
+    for (const step of steps) {
+      const integration = await this.integrationRepository.findOne({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channel: step.template.type,
+        active: true,
+      });
+      jobs.push({
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,
@@ -94,8 +91,11 @@ export class ProcessSubscriber {
         _templateId: notification._templateId,
         digest: step.metadata,
         type: step.template.type,
-      };
-    });
+        providerId: integration?.providerId,
+      });
+    }
+
+    return jobs;
   }
 
   private async getSubscriber(command: ProcessSubscriberCommand): Promise<SubscriberEntity> {
@@ -149,39 +149,5 @@ export class ProcessSubscriber {
       _templateId: templateId,
       transactionId: command.transactionId,
     });
-  }
-
-  private async filterPreferredChannels(
-    organizationId: string,
-    environmentId: string,
-    subscriberId: string,
-    template: NotificationTemplateEntity
-  ): Promise<NotificationStepEntity[]> {
-    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
-      organizationId: organizationId,
-      subscriberId: subscriberId,
-      environmentId: environmentId,
-      template,
-    });
-
-    const preference = (await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand)).preference;
-
-    return template.steps.filter((step) => this.actionStep(step) || this.stepPreferred(preference, step));
-  }
-
-  private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, step: NotificationStepEntity) {
-    const templatePreferred = preference.enabled;
-
-    const channelPreferred = Object.keys(preference.channels).some(
-      (channelKey) => channelKey === step.template.type && preference.channels[step.template.type]
-    );
-
-    return templatePreferred && channelPreferred;
-  }
-
-  private actionStep(step) {
-    const channels = [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS, 'push', 'chat'];
-
-    return !channels.some((channel) => channel === step.template.type);
   }
 }

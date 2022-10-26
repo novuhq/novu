@@ -81,19 +81,19 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ro: RO,
   fi: FI,
   hi: HI,
+  it: IT,
+  ar: AR,
+  fa: FA,
   fr: FR,
   gu: GU,
   ru: RU,
   es: ES,
   gl: GL,
   id: ID,
-  it: IT,
   ka: KA,
   ig: IG,
   mr: MR,
   ms: MS,
-  ar: AR,
-  fa: FA,
   uk: UK,
   de: DE,
   bn: BN,
@@ -204,7 +204,6 @@ export type I18NLanguage =
   | 'az'
   | 'no'
   | 'te'
-  | 'da'
   | 'vi'
   | 'zu'
   | 'nl'

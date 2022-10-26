@@ -1,6 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
+import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { QueueNextJobCommand } from '../queue-next-job/queue-next-job.command';
 import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
@@ -13,7 +14,8 @@ export class RunJob {
   constructor(
     private jobRepository: JobRepository,
     private sendMessage: SendMessage,
-    private queueNextJob: QueueNextJob
+    private queueNextJob: QueueNextJob,
+    private storageHelperService: StorageHelperService
   ) {}
 
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
@@ -24,6 +26,8 @@ export class RunJob {
     }
 
     await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
+
+    await this.storageHelperService.getAttachments(job.payload?.attachments);
 
     await this.sendMessage.execute(
       SendMessageCommand.create({
@@ -39,8 +43,11 @@ export class RunJob {
         subscriberId: job._subscriberId,
         jobId: job._id,
         events: job.digest.events,
+        job,
       })
     );
+
+    await this.storageHelperService.deleteAttachments(job.payload?.attachments);
 
     await this.queueNextJob.execute(
       QueueNextJobCommand.create({

@@ -1,7 +1,14 @@
-import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  NotificationRepository,
+} from '@novu/dal';
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
+import * as hat from 'hat';
 import { merge } from 'lodash';
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -13,6 +20,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
 import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
+import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { AddJob } from '../add-job/add-job.usecase';
 
 @Injectable()
@@ -24,7 +32,9 @@ export class TriggerEvent {
     private jobRepository: JobRepository,
     private verifyPayload: VerifyPayload,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private addJobUsecase: AddJob
+    private addJobUsecase: AddJob,
+    private notificationRepository: NotificationRepository,
+    private storageHelperService: StorageHelperService
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -50,6 +60,13 @@ export class TriggerEvent {
 
     if (!template.active || template.draft) {
       return this.logTemplateNotActive(command, template);
+    }
+
+    // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
+    if (command.payload && Array.isArray(command.payload.attachments)) {
+      this.modifyAttachments(command);
+      await this.storageHelperService.uploadAttachments(command.payload.attachments);
+      command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
     }
 
     const defaultPayload = this.verifyPayload.execute(
@@ -95,13 +112,7 @@ export class TriggerEvent {
     });
 
     for (const job of jobs) {
-      const firstJob = await this.jobRepository.storeJobs(job);
-      await this.addJobUsecase.execute({
-        userId: firstJob._userId,
-        environmentId: firstJob._environmentId,
-        organizationId: firstJob._organizationId,
-        jobId: firstJob._id,
-      });
+      await this.storeAndAddJob(job);
     }
 
     if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
@@ -113,6 +124,40 @@ export class TriggerEvent {
       status: 'processed',
       transactionId: command.transactionId,
     };
+  }
+
+  private async storeAndAddJob(jobs: JobEntity[]) {
+    const storedJobs = await this.jobRepository.storeJobs(jobs);
+    const channels = storedJobs
+      .map((item) => item.type)
+      .reduce((list, channel) => {
+        if (list.includes(channel)) {
+          return list;
+        }
+        list.push(channel);
+
+        return list;
+      }, []);
+
+    const firstJob = storedJobs[0];
+
+    await this.notificationRepository.update(
+      {
+        _id: firstJob._notificationId,
+      },
+      {
+        $set: {
+          channels: channels,
+        },
+      }
+    );
+
+    await this.addJobUsecase.execute({
+      userId: firstJob._userId,
+      environmentId: firstJob._environmentId,
+      organizationId: firstJob._organizationId,
+      jobId: firstJob._id,
+    });
   }
 
   private async logTemplateNotActive(command: TriggerEventCommand, template: NotificationTemplateEntity) {
@@ -237,5 +282,14 @@ export class TriggerEvent {
       acknowledged: true,
       status: 'subscriber_id_missing',
     };
+  }
+
+  private modifyAttachments(command: TriggerEventCommand) {
+    command.payload.attachments = command.payload.attachments.map((attachment) => ({
+      ...attachment,
+      name: attachment.name,
+      file: Buffer.from(attachment.file, 'base64'),
+      storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
+    }));
   }
 }

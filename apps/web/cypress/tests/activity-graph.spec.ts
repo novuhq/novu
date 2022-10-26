@@ -1,4 +1,4 @@
-describe('Activity page', function () {
+describe.skip('Activity page', function () {
   beforeEach(function () {
     // @ts-ignore
     cy.initializeSession()
