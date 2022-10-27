@@ -64,6 +64,7 @@ import { BE } from './languages/be';
 import { SQ } from './languages/sq';
 import { LT } from './languages/lt';
 import { LV } from './languages/lv';
+import { BH } from './languages/bh';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -144,6 +145,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   sq: SQ,
   lt: LT,
   lv: LV,
+  bh: BH,
 };
 
 /**
@@ -224,4 +226,5 @@ export type I18NLanguage =
   | 'sq'
   | 'lt'
   | 'lv'
-  | 'eu';
+  | 'eu'
+  | 'bh';
