@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JobStatusEnum, JobRepository, NotificationStepEntity } from '@novu/dal';
+import { JobStatusEnum, JobRepository, NotificationStepEntity, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { sub } from 'date-fns';
@@ -7,7 +7,7 @@ import { DigestFilterSteps } from './digest-filter-steps.usecase';
 
 @Injectable()
 export class DigestFilterStepsBackoff {
-  constructor(private jobRepository: JobRepository) {}
+  constructor(private jobRepository: JobRepository, private notificationRepository: NotificationRepository) {}
 
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
     const steps = [DigestFilterSteps.createTriggerStep(command)];
@@ -71,8 +71,23 @@ export class DigestFilterStepsBackoff {
       query['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
     }
 
-    const digests = await this.jobRepository.find(query);
+    const digest = await this.jobRepository.findOne(query);
 
-    return digests.length > 0;
+    const haveDigests = digest !== null;
+
+    if (haveDigests) {
+      await this.notificationRepository.update(
+        {
+          _id: command.notificationId,
+        },
+        {
+          $set: {
+            _digestedNotificationId: digest._notificationId,
+          },
+        }
+      );
+    }
+
+    return haveDigests;
   }
 }

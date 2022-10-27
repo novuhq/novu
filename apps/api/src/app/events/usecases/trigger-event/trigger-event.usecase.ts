@@ -143,7 +143,7 @@ export class TriggerEvent {
     const channels = storedJobs
       .map((item) => item.type)
       .reduce((list, channel) => {
-        if (list.includes(channel)) {
+        if (list.includes(channel) || channel === StepTypeEnum.TRIGGER) {
           return list;
         }
         list.push(channel);
