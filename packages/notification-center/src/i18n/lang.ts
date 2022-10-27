@@ -66,7 +66,6 @@ import { VI } from './languages/vi';
 import { ZH } from './languages/zh';
 import { ZU } from './languages/zu';
 
-
 export interface ITranslationContent {
   readonly notifications: string;
   readonly markAllAsRead: string;
