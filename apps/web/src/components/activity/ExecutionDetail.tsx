@@ -9,20 +9,13 @@ import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';
 import { Button, colors, Text } from '../../design-system';
 import { CheckCircle, Digest, ErrorIcon, Mail, Timer } from '../../design-system/icons';
 
-const DetailText = styled(Text)<{ theme: string }>`
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 17px;
-`;
-
 const ExecutionDetailStatusWrapper = styled(Container)`
   padding: 2px;
   width: 15px;
 `;
 
 const FormattedTime = styled(Text)`
-  color: colors.B60;
+  color: ${colors.B60};
   font-size: 12px;
   font-height: 16px;
   padding: 3px 0;
@@ -60,7 +53,7 @@ export const ExecutionDetail = ({ executionDetail, onShowExecutionDetail, onHide
         </ExecutionDetailStatusWrapper>
       </Grid.Col>
       <Grid.Col span={secondColumnSpan}>
-        <DetailText theme={theme}>{detail}</DetailText>
+        <Text>{detail}</Text>
         <ExecutionDetailTime createdAt={createdAt} />
       </Grid.Col>
       <Grid.Col span={3}>
