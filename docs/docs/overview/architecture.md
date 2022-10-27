@@ -6,7 +6,8 @@ Let's deep dive into the building blocks of Novu's OCL approach.
 
 ## The mental model
 
-![Application Diagram - Frame 1](https://user-images.githubusercontent.com/8872447/168135722-2643eac4-8fcd-4de6-909b-02118faa1dc8.jpeg)
+![Novu Architecture](https://user-images.githubusercontent.com/89788120/195802678-6d566d86-8175-490f-9ac9-dfd23b8959bd.png)
+
 
 ## Templates
 
