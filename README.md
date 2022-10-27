@@ -69,7 +69,7 @@ Building a notification system is complicated. At first, it seems like just send
   - [Chat](https://github.com/novuhq/novu#-chat)
   - [In-App](https://github.com/novuhq/novu#-in-app)
   - [Others](https://github.com/novuhq/novu#other-coming-soon)
-- [Need Help?](https://github.com/novuhq/novu#-need-help)
+- [Need Help?](https://github.com/novuhq/novu#--need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
 
@@ -157,7 +157,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
-- [ ] [Pushwoosh](https://github.com/novuhq/novu/tree/main/providers/pushwoosh)
+- [ ] Pushwoosh
 
 #### 👇 Chat
 
@@ -177,7 +177,8 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
+We are more than happy to help you. If you are getting any errors or facing problems while working with the project, then join our
+[Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project.
 
 ## 📋 Read Our Code Of Conduct
 
