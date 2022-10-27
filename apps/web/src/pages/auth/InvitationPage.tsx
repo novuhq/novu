@@ -23,6 +23,8 @@ export default function InvitationPage() {
       enabled: !!tokenParam,
     }
   );
+  const inviterFirstName = data?.inviter?.firstName || '';
+  const organizationName = data?.organization.name || '';
 
   const logoutWhenActiveSession = () => {
     logout();
@@ -61,23 +63,25 @@ export default function InvitationPage() {
         <AuthContainer
           title="Get Started"
           customDescription={
-            <Center inline mb={60} mt={20}>
-              <Text size="lg" mr={4} color={colors.B60}>
-                You've been invited by
-              </Text>
-              <Text size="lg" weight="bold" mr={4}>
-                {data?.inviter?.firstName || ''}
-              </Text>
-              <Text size="lg" mr={4} color={colors.B60}>
-                to join
-              </Text>
-              <Text size="lg" weight="bold">
-                {data?.organization.name || ''}
-              </Text>
-              <Text size="lg" color={colors.B60}>
-                .
-              </Text>
-            </Center>
+            inviterFirstName && organizationName ? (
+              <Center inline mb={60} mt={20}>
+                <Text size="lg" mr={4} color={colors.B60}>
+                  You've been invited by
+                </Text>
+                <Text size="lg" weight="bold" mr={4}>
+                  {inviterFirstName[0].toUpperCase() + inviterFirstName.slice(1)}
+                </Text>
+                <Text size="lg" mr={4} color={colors.B60}>
+                  to join
+                </Text>
+                <Text size="lg" weight="bold">
+                  {organizationName}
+                </Text>
+                <Text size="lg" color={colors.B60}>
+                  .
+                </Text>
+              </Center>
+            ) : undefined
           }
         >
           <LoadingOverlay
