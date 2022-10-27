@@ -24,6 +24,7 @@ export class JobEntity {
   _subscriberId: string;
   _environmentId: string;
   _organizationId: string;
+  providerId?: string;
   _userId: string;
   delay?: number;
   _parentId?: string;

@@ -6,8 +6,9 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
 import { ApiTags, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
-import { ActivitiesResponseDto } from '../activity/dtos/activities-response.dto';
+import { ActivitiesResponseDto } from '../notifications/dtos/activities-response.dto';
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
+import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 
 @Controller('/messages')
 @ApiTags('Messages')
@@ -49,7 +50,7 @@ export class MessagesController {
     @Query('limit') limit = 10,
     @Query('subscriberId') subscriberId,
     @Query('channel') channel: ChannelTypeEnum
-  ): Promise<ActivitiesResponseDto> {
+  ): Promise<MessagesResponseDto> {
     return await this.getMessagesUsecase.execute(
       GetMessagesCommand.create({
         organizationId: user.organizationId,

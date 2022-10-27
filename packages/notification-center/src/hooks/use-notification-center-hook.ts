@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { NotificationCenterContext } from '../store';
+import { NotificationCenterContext } from '../store/notification-center.context';
 
 export function useNotificationCenter() {
   const {
@@ -10,10 +10,12 @@ export function useNotificationCenter() {
     isLoading,
     header,
     footer,
+    emptyState,
     listItem,
     actionsResultBlock,
     tabs,
     showUserPreferences,
+    onTabClick,
   } = useContext(NotificationCenterContext);
 
   return {
@@ -24,9 +26,11 @@ export function useNotificationCenter() {
     isLoading,
     header,
     footer,
+    emptyState,
     listItem,
     actionsResultBlock,
     tabs,
     showUserPreferences,
+    onTabClick,
   };
 }

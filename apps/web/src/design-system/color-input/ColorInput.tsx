@@ -21,6 +21,7 @@ interface IColorInputProps extends SpacingProps {
   placeholder?: string;
   value?: string;
   description?: string;
+  disallowInput?: boolean;
   onChange?: (color: string) => void;
 }
 

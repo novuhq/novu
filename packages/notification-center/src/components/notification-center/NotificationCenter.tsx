@@ -3,8 +3,10 @@ import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { AppContent } from './components';
 import { useNovuContext } from '../../hooks';
-import { INovuThemeProvider, NovuThemeProvider, NotificationCenterContext } from '../../store';
-import { ColorScheme, ITab, ListItem } from '../../index';
+import { NotificationCenterContext } from '../../store/notification-center.context';
+import { ITab, ListItem } from '../../shared/interfaces';
+import { ColorScheme } from '../../shared/config/colors';
+import { INovuThemeProvider, NovuThemeProvider } from '../../store/novu-theme-provider.context';
 
 export interface INotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -12,6 +14,7 @@ export interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
+  emptyState?: () => JSX.Element;
   listItem?: ListItem;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   colorScheme: ColorScheme;
@@ -37,6 +40,7 @@ export function NotificationCenter(props: INotificationCenterProps) {
           isLoading: !applicationIdentifier,
           header: props.header,
           footer: props.footer,
+          emptyState: props.emptyState,
           listItem: props.listItem,
           actionsResultBlock: props.actionsResultBlock,
           tabs: props.tabs,

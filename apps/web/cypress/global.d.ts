@@ -15,6 +15,8 @@ declare namespace Cypress {
     window(options?: Partial<Loggable & Timeoutable>): Chainable<CustomWindow>;
 
     clear(): Chainable<any>;
+
+    logout(): Chainable<any>;
     /**
      * Logs-in user by using UI
      */
@@ -31,6 +33,11 @@ declare namespace Cypress {
       disableLocalStorage?: boolean;
       partialTemplate?: Partial<ICreateNotificationTemplateDto>;
     }): Chainable<Response>;
+
+    /**
+     * Invites a user by given email
+     */
+    inviteUser(email: string): Chainable<Response>;
 
     mount: typeof IMountType;
   }

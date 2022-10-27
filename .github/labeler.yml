@@ -1,0 +1,18 @@
+'@novu/api':
+  - apps/api/**/*
+'@novu/web':
+  - apps/web/**/*
+'@novu/ws':
+  - apps/ws/**/*
+'documentation':
+  - docs/**/*
+'@novu/webhook':
+  - apps/webhook/**/*
+'@novu/dal':
+  - libs/dal/**/*
+'@novu/shared':
+  - libs/shared/**/*
+'@novu/notification-center':
+  - packages/notification-center/**/*
+'providers':
+  - providers/**/*

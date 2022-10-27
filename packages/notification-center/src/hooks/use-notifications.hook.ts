@@ -1,7 +1,8 @@
 import { useContext } from 'react';
-import { INotificationsContext } from '../index';
 import { NotificationsContext } from '../store/notifications.context';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { INotificationsContext } from '../shared/interfaces';
+import { IMessage } from '@novu/shared';
 
 interface IUseNotificationsProps {
   storeId?: string;
@@ -13,9 +14,13 @@ export function useNotifications(props?: IUseNotificationsProps) {
     fetchNextPage: mapFetchNextPage,
     hasNextPage: mapHasNextPage,
     fetching,
-    markAsSeen,
+    markAsRead: mapMarkAsRead,
     updateAction: mapUpdateAction,
     refetch: mapRefetch,
+    markNotificationsAsSeen: mapMarkNotificationsAsSeen,
+    onWidgetClose,
+    onTabChange: mapOnTabChange,
+    markAllAsRead: mapMarkAllAsRead,
   } = useContext<INotificationsContext>(NotificationsContext);
 
   const storeId = props?.storeId ? props?.storeId : 'default_store';
@@ -27,6 +32,10 @@ export function useNotifications(props?: IUseNotificationsProps) {
   }
 
   const hasNextPage = mapHasNextPage?.has(storeId) ? mapHasNextPage.get(storeId) : true;
+
+  async function markAsRead(messageId: string) {
+    await mapMarkAsRead(messageId, storeId);
+  }
 
   async function updateAction(
     messageId: string,
@@ -41,13 +50,29 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapRefetch(storeId);
   }
 
+  async function markNotificationsAsSeen(readExist?: boolean, messagesToMark?: IMessage | IMessage[]) {
+    await mapMarkNotificationsAsSeen(readExist, messagesToMark, storeId);
+  }
+
+  async function onTabChange() {
+    await mapOnTabChange(storeId);
+  }
+
+  async function markAllAsRead() {
+    await mapMarkAllAsRead(storeId);
+  }
+
   return {
     notifications,
     fetchNextPage,
     hasNextPage,
     fetching,
-    markAsSeen,
+    markAsRead,
     updateAction,
     refetch,
+    markNotificationsAsSeen,
+    onWidgetClose,
+    onTabChange,
+    markAllAsRead,
   };
 }

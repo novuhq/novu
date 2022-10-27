@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScreensEnum } from './screens-provider.context';
+import { ScreensEnum } from '../shared/enums/screens.enum';
 
 export interface IScreenContext {
   screen: ScreensEnum;
