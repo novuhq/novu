@@ -8,4 +8,4 @@ export const TE: ITranslationEntry = {
     settings: 'సెట్టింగ్‌లు',
   },
   lang: 'te',
-}; 
+};

@@ -56,7 +56,7 @@ function DescriptionText() {
     <div>
       Copy this snippet to your code before the closing body tag.
       <br />
-      Change the #notification-bell selector with the appropriate bell css selector in your app layout.
+      Change the #notification-bell selector with the appropriate bell CSS selector in your app layout.
     </div>
   );
 }

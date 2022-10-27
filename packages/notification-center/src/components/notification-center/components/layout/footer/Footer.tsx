@@ -2,7 +2,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useNovuTheme, useTranslations } from '../../../../../hooks';
-import { INovuTheme } from '../../../../../store';
+import { INovuTheme } from '../../../../../store/novu-theme.context';
 
 export function Footer() {
   const { theme } = useNovuTheme();

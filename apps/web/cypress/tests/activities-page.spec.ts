@@ -1,3 +1,5 @@
+import { ExecutionDetailsStatusEnum } from '@novu/shared';
+
 describe('Activity Feed Screen', function () {
   beforeEach(function () {
     cy.initializeSession()
@@ -16,66 +18,45 @@ describe('Activity Feed Screen', function () {
   });
 
   it('should display notification for activity', function () {
-    cy.intercept('*/activity*', (r) => {
-      r.continue((res) => {
-        if (!res.body?.data) return;
-
-        res.body.data[0].subscriber.firstName = 'lowercase';
-
-        res.send({ body: res.body });
-      });
-    });
-
     cy.visit('/activities');
     cy.getByTestId('activities-table')
-      .find('tbody tr')
+      .find('button')
       .first()
       .getByTestId('row-template-name')
       .contains(this.session.templates[0].name);
 
-    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-in-app-channel').should('exist');
-    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('row-email-channel').should('exist');
-    cy.getByTestId('activities-table').find('tbody tr').first().getByTestId('subscriber-name').contains('Lowercase');
+    cy.getByTestId('activities-table').find('button').first().getByTestId('in_app-step').should('exist');
+    cy.getByTestId('activities-table').find('button').first().getByTestId('email-step').should('exist');
+    cy.getByTestId('activities-table').find('button').first().getByTestId('subscriber-id').should('exist');
   });
 
   it('should show errors and warning', function () {
-    cy.intercept(/.*activity\?page.*/, (r) => {
+    cy.intercept(/.*notifications\?page.*/, (r) => {
       r.continue((res) => {
         if (!res.body?.data) return;
 
-        res.body.data[0].status = 'error';
-        res.body.data[0].errorText = 'Test Error Text';
-        res.body.data[2].status = 'warning';
+        res.body.data[0].jobs[0].executionDetails[0].status = ExecutionDetailsStatusEnum.FAILED;
+        console.log(res.body.data[0].jobs[0].executionDetails[0].status);
 
         res.send({ body: res.body });
       });
     });
     cy.visit('/activities');
 
-    cy.get('tbody tr')
-      .getByTestId('status-badge')
+    cy.getByTestId('activities-table')
+      .find('button')
+      .first()
+      .getByTestId('status-badge-item')
       .eq(0)
-      .should('have.css', 'background-color')
-      .and('eq', 'rgb(229, 69, 69)');
-
-    cy.get('tbody tr')
-      .getByTestId('status-badge')
-      .eq(1)
-      .should('have.css', 'background-color')
-      .and('eq', 'rgb(77, 153, 128)');
-
-    cy.get('tbody tr')
-      .getByTestId('status-badge')
-      .eq(2)
-      .should('have.css', 'background-color')
+      .should('have.css', 'color')
       .and('eq', 'rgb(229, 69, 69)');
   });
 
   it('should filter by email channel', function () {
     cy.visit('/activities');
-    cy.getByTestId('row-email-channel').should('not.have.length', 10);
+    cy.getByTestId('email-step').should('have.length', 10);
     cy.getByTestId('activities-filter').click();
-    cy.get('.mantine-MultiSelect-item').contains('Email').click();
-    cy.getByTestId('row-email-channel').should('have.length', 10);
+    cy.get('.mantine-MultiSelect-item').contains('SMS').click();
+    cy.getByTestId('email-step').should('have.length', 0);
   });
 });

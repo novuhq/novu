@@ -50,12 +50,14 @@ const WorkflowEditorPage = ({
   setActiveStep,
   activePage,
   activeStep,
+  onTestWorkflowClicked,
 }: {
   setActivePage: (string) => void;
   setActiveStep: any;
   templateId: string;
   activePage: ActivePageEnum;
   activeStep: number;
+  onTestWorkflowClicked: () => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [selectedChannel, setSelectedChannel] = useState<StepTypeEnum | null>(null);
@@ -114,6 +116,7 @@ const WorkflowEditorPage = ({
             templateId={templateId}
             setActivePage={setActivePage}
             activePage={activePage}
+            onTestWorkflowClicked={onTestWorkflowClicked}
           />
           <FlowEditor
             activePage={activePage}
@@ -192,7 +195,7 @@ const WorkflowEditorPage = ({
                       labelPosition="center"
                     />
                     {steps.map((i, index) => {
-                      return index !== activeStep ? null : <Filters step={i} />;
+                      return index !== activeStep ? null : <Filters key={index} step={i} />;
                     })}
                     <FilterButton
                       fullWidth

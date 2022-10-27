@@ -1,6 +1,6 @@
 # EmailJS
 
-[EmailJS](https://www.emailjs.com/) helps to send emails using client-side technologies only. No server is required – just connect EmailJS to one of the supported email services, create an email template, and use our Javascript library to trigger an email. You can use EmailJS to send the content of a form filled by your users directly to your email address, using a simple connection provided by EmailJS.
+[EmailJS](https://www.emailjs.com/) helps to send emails using client-side technologies only. No server is required – just connect EmailJS to one of the supported email services, create an email template, and use our JavaScript library to trigger an email. You can use EmailJS to send the content of a form filled by your users directly to your email address, using a simple connection provided by EmailJS.
 
 ## Getting Started
 
