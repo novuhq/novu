@@ -15,7 +15,7 @@ Novu consists of multiple services written in Node.js and Typescript. The follow
 
 In Novu, [handlebar variables](https://handlebarsjs.com/guide/) (variables enclosed within double curly brackets) are used to customize messages. Using this, one can take advantage of the following tools:
 
-- **Custom Variables:** You can create [custom variables](https://docs.novu.co/platform/templates#variable-usage) by defining it in the payload and access the value of the same using the following syntax:
+- **Custom Variables:** You can create [custom variables](https://docs.novu.co/platform/templates#variable-usage) by defining it in the payload and accessing its value using the following syntax:
   ```
   {{variable_name}}
   ```
