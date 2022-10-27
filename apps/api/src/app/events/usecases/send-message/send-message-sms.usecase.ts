@@ -115,7 +115,22 @@ export class SendMessageSms extends SendMessageType {
       )
     )[0];
 
-    const overrides = command.overrides[integration.providerId] || {};
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
+
+    const overrides = command.overrides[integration?.providerId] || {};
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -131,7 +146,7 @@ export class SendMessageSms extends SendMessageType {
       transactionId: command.transactionId,
       phone,
       content,
-      providerId: integration.providerId,
+      providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
