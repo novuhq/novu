@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 export enum CredentialsKeyEnum {
+  Subscribe = 'subscribe',
   ApiKey = 'apiKey',
   User = 'user',
+  UserId = 'userid',
+  Tags = 'tags',
+  NotificationImageURL = 'notificationimageurl',
   SecretKey = 'secretKey',
   Domain = 'domain',
   Password = 'password',
@@ -16,6 +20,8 @@ export enum CredentialsKeyEnum {
   From = 'from',
   SenderName = 'senderName',
   ApplicationId = 'applicationId',
+  ApplicationCode = 'applicationCode',
+  NotificationTitle = 'notificationTitle',
   ClientId = 'clientId',
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
@@ -55,6 +61,7 @@ export enum PushProviderIdEnum {
   FCM = 'fcm',
   APNS = 'apns',
   EXPO = 'expo',
+  Pushwoosh = 'pushwoosh',
 }
 
 export enum InAppProviderIdEnum {
