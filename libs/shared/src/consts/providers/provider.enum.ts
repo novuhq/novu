@@ -63,7 +63,7 @@ export enum PushProviderIdEnum {
   FCM = 'fcm',
   APNS = 'apns',
   EXPO = 'expo',
-  PUSHWOOSH = 'pushwoosh',
+  Pushwoosh = 'pushwoosh',
 }
 
 export enum InAppProviderIdEnum {
