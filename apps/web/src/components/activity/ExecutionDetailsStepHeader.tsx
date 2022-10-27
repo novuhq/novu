@@ -3,22 +3,10 @@ import { ChannelTypeEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu
 import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
 
+import { getLogoByType } from './helpers';
+
 import { colors, Text } from '../../design-system';
-import {
-  Chat,
-  CheckCircle,
-  Clicked,
-  Digest,
-  ErrorIcon,
-  InApp,
-  Mail,
-  Read,
-  Received,
-  Seen,
-  Sent,
-  Sms,
-  Timer,
-} from '../../design-system/icons';
+import { CheckCircle, Clicked, ErrorIcon, Read, Received, Seen, Sent } from '../../design-system/icons';
 
 const StepName = styled(Text)<{ theme: string }>`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
@@ -73,33 +61,11 @@ const StepActionOutcomeName = styled(Text)`
 `;
 
 const getLogoStyledComponentByStepStatus = (status, type) => {
-  if (type === StepTypeEnum.DIGEST) {
-    return Digest;
-  }
-
-  if (type === StepTypeEnum.DELAY) {
-    return Timer;
-  }
-
   if (status === ExecutionDetailsStatusEnum.SUCCESS) {
     return CheckCircle;
   }
 
-  if (type === ChannelTypeEnum.EMAIL) {
-    return Mail;
-  }
-  if (type === ChannelTypeEnum.SMS) {
-    return Sms;
-  }
-  if (type === ChannelTypeEnum.IN_APP) {
-    return InApp;
-  }
-  if (type === ChannelTypeEnum.CHAT) {
-    return Chat;
-  }
-
-  // TODO: Catch all logo
-  return Mail;
+  return getLogoByType(type);
 };
 
 const getColorByStatus = (status) => {
@@ -116,7 +82,7 @@ const StepLogo = ({ status, type }) => {
 
   return (
     <LogoWrapper>
-      <Logo height="32px" width="32px" color={color} />
+      {Logo && <Logo height="32px" width="32px" color={color} />}
       {status === ExecutionDetailsStatusEnum.FAILED && (
         <ErrorIcon
           height="15px"

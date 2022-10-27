@@ -1,9 +1,10 @@
-import { Container, Grid, useMantineColorScheme } from '@mantine/core';
+import { Container, Grid, useMantineTheme } from '@mantine/core';
 import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
 
 import { ExecutionDetailShowRaw } from './ExecutionDetailShowRaw';
+import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';
 
 import { Button, colors, Text } from '../../design-system';
 import { CheckCircle, Digest, ErrorIcon, Mail, Timer } from '../../design-system/icons';
@@ -27,40 +28,10 @@ const FormattedTime = styled(Text)`
   padding: 3px 0;
 `;
 
-const getColorByStatus = (theme, status) => {
-  if (status === ExecutionDetailsStatusEnum.FAILED) {
-    return colors.error;
-  }
+const ExecutionDetailTime = ({ createdAt }) => {
+  const formattedTime = format(parseISO(createdAt), 'HH:mm:ss');
 
-  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
-    return colors.success;
-  }
-
-  return theme.colorScheme === 'dark' ? colors.B60 : colors.B40;
-};
-
-const getLogoByStatus = (status) => {
-  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
-    return CheckCircle;
-  }
-
-  if (status === ExecutionDetailsStatusEnum.FAILED) {
-    return ErrorIcon;
-  }
-
-  return Timer;
-};
-
-const getLogoByType = (type) => {
-  if (type == StepTypeEnum.DELAY) {
-    return Timer;
-  }
-
-  if (type == StepTypeEnum.DIGEST) {
-    return Digest;
-  }
-
-  return null;
+  return <FormattedTime>{formattedTime}</FormattedTime>;
 };
 
 const getExecutionDetailStatus = (status, type) => {
@@ -73,14 +44,8 @@ const getExecutionDetailStatus = (status, type) => {
   return getLogoByStatus(status);
 };
 
-const ExecutionDetailTime = ({ createdAt }) => {
-  const formattedTime = format(parseISO(createdAt), 'HH:mm:ss');
-
-  return <FormattedTime>{formattedTime}</FormattedTime>;
-};
-
 export const ExecutionDetail = ({ executionDetail, onShowExecutionDetail, onHideExecutionDetail }) => {
-  const theme = useMantineColorScheme();
+  const theme = useMantineTheme();
   const { createdAt, detail, raw, status, type } = executionDetail;
   const color = getColorByStatus(theme, status);
   const ExecutionDetailStatus = getExecutionDetailStatus(status, type);
