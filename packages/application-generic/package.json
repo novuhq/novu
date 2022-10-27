@@ -51,6 +51,7 @@
     "@novu/nodemailer": "^0.8.0",
     "@novu/plivo": "^0.8.0",
     "@novu/postmark": "^0.8.0",
+    "@novu/pushwoosh": "^0.8.0",
     "@novu/sendgrid": "^0.8.0",
     "@novu/sendinblue": "^0.8.0",
     "@novu/ses": "^0.8.0",

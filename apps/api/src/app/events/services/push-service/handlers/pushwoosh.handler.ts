@@ -32,7 +32,7 @@ export class PushwooshHandler extends BasePushHandler {
       applicationCode: credentials.applicationCode,
       defaultNotificationTitle: credentials.defaultNotificationTitle,
       autoSubscribe: credentials.autoSubscribe,
-      userId: credentials.userID,
+      userId: credentials.userId,
       tags: credentials.tags,
       defaultNotificationImageURL: credentials.defaultNotificationImageURL,
       triggeredFunction: credentials.triggeredFunction,
