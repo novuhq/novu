@@ -37,7 +37,12 @@ const getExecutionDetailStatus = (status, type) => {
   return getLogoByStatus(status);
 };
 
-export const ExecutionDetail = ({ executionDetail, onShowExecutionDetail, onHideExecutionDetail }) => {
+export const ExecutionDetail = ({
+  executionDetail,
+  onShowExecutionDetail,
+  onHideExecutionDetail,
+  showTriggerSnippet,
+}) => {
   const theme = useMantineTheme();
   const { createdAt, detail, raw, status, type } = executionDetail;
   const color = getColorByStatus(theme, status);
@@ -60,6 +65,7 @@ export const ExecutionDetail = ({ executionDetail, onShowExecutionDetail, onHide
         {raw && (
           <ExecutionDetailShowRaw
             raw={raw}
+            showTriggerSnippet={showTriggerSnippet}
             onShowExecutionDetail={onShowExecutionDetail}
             onHideExecutionDetail={onHideExecutionDetail}
           />

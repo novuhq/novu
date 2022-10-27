@@ -95,9 +95,20 @@ const StepLogo = ({ status, type }) => {
   );
 };
 
+const getSuccessMessageByStepType = (type: StepTypeEnum) => {
+  const defaultMessage = 'Success! The notification has been delivered.';
+
+  const messages = {
+    [StepTypeEnum.DIGEST]: 'Finished digesting events!',
+    [StepTypeEnum.DELAY]: 'Notification triggered after the delay.',
+  };
+
+  return messages[type] ?? defaultMessage;
+};
+
 const generateDetailByStepAndStatus = (status, step) => {
   if (status === ExecutionDetailsStatusEnum.SUCCESS) {
-    return 'Success! The notification has been delivered.';
+    return getSuccessMessageByStepType(step.type);
   }
 
   if (step.type === StepTypeEnum.DIGEST) {

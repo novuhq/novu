@@ -33,15 +33,13 @@ export const ExecutionDetailsStepContent = ({ step }) => {
   const { executionDetails } = step || {};
 
   const onShowExecutionDetail = (event, raw) => {
-    event.preventDefault();
-    setShowTriggerSnippet((state) => !state);
+    setShowTriggerSnippet(true);
     setExecutionDetailsRawSnippet(raw);
   };
 
   const onHideExecutionDetail = (event) => {
-    event.preventDefault();
     setExecutionDetailsRawSnippet('');
-    setShowTriggerSnippet((state) => !state);
+    setShowTriggerSnippet(false);
   };
 
   return (
@@ -54,6 +52,7 @@ export const ExecutionDetailsStepContent = ({ step }) => {
               <ExecutionDetail
                 key={`execution-detail-${executionDetail.id}`}
                 executionDetail={executionDetail}
+                showTriggerSnippet={showTriggerSnippet}
                 onShowExecutionDetail={onShowExecutionDetail}
                 onHideExecutionDetail={onHideExecutionDetail}
               />
@@ -62,8 +61,10 @@ export const ExecutionDetailsStepContent = ({ step }) => {
         </Grid.Col>
         <Grid.Col span={6}>
           <GridColContainer theme={theme}>
-            {showTriggerSnippet && <ExecutionDetailTrigger step={step} />}
-            {executionDetailsRawSnippet && <ExecutionDetailRawSnippet raw={executionDetailsRawSnippet} />}
+            {!showTriggerSnippet && <ExecutionDetailTrigger step={step} />}
+            {showTriggerSnippet && executionDetailsRawSnippet && (
+              <ExecutionDetailRawSnippet raw={executionDetailsRawSnippet} onClose={onHideExecutionDetail} />
+            )}
           </GridColContainer>
         </Grid.Col>
       </Grid>

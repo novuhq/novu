@@ -1,9 +1,18 @@
 import { useState } from 'react';
-import { useMantineColorScheme } from '@mantine/core';
+import { Container, Group, useMantineColorScheme } from '@mantine/core';
 import { Prism } from '@mantine/prism';
 import styled from 'styled-components';
 
 import { Button, colors, Text } from '../../design-system';
+import { Close } from '../../design-system/icons/actions/Close';
+
+const ExecutionDetailShowRawWrapper = styled(Container)`
+  display: flex;
+  flex-flow: column;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+`;
 
 const DetailTitle = styled(Text)`
   font-size: 14px;
@@ -26,15 +35,27 @@ const ActionButton = styled(Button)<{ theme: string }>`
   width: 95px;
 `;
 
-export const ExecutionDetailShowRaw = ({ raw, onShowExecutionDetail, onHideExecutionDetail }) => {
-  const theme = useMantineColorScheme();
-  const [showSnippet, setShowSnippet] = useState<boolean>(false);
+const CloseButton = styled(Button)<{ theme: string }>`
+  background-color: transparent;
+  background-image: none;
+  border-radius: 30px;
+  box-shadow: none;
+  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
+  display: flex;
+  height: 15px;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  top: -10px;
+`;
 
-  const action = showSnippet ? onHideExecutionDetail : onShowExecutionDetail;
-  const label = showSnippet ? 'Close detail' : 'Show detail';
+export const ExecutionDetailShowRaw = ({ raw, onShowExecutionDetail, onHideExecutionDetail, showTriggerSnippet }) => {
+  const theme = useMantineColorScheme();
+
+  const action = showTriggerSnippet ? onHideExecutionDetail : onShowExecutionDetail;
+  const label = showTriggerSnippet ? 'Close detail' : 'Show detail';
 
   const onClick = (event) => {
-    setShowSnippet((state) => !state);
     action(event, raw);
   };
 
@@ -45,7 +66,7 @@ export const ExecutionDetailShowRaw = ({ raw, onShowExecutionDetail, onHideExecu
   );
 };
 
-export const ExecutionDetailRawSnippet = ({ raw }) => {
+export const ExecutionDetailRawSnippet = ({ raw, onClose }) => {
   const theme = useMantineColorScheme();
 
   const prismStyles = {
@@ -59,8 +80,13 @@ export const ExecutionDetailRawSnippet = ({ raw }) => {
   };
 
   return (
-    <>
-      <DetailTitle>Detail</DetailTitle>
+    <ExecutionDetailShowRawWrapper>
+      <Group position="apart">
+        <DetailTitle>Detail</DetailTitle>
+        <CloseButton onClick={onClose}>
+          <Close />
+        </CloseButton>
+      </Group>
       <Prism
         colorScheme={theme.colorScheme}
         mt={5}
@@ -70,6 +96,6 @@ export const ExecutionDetailRawSnippet = ({ raw }) => {
       >
         {raw}
       </Prism>
-    </>
+    </ExecutionDetailShowRawWrapper>
   );
 };
