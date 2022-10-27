@@ -80,16 +80,14 @@ export default function InvitationPage() {
             </Center>
           }
         >
-          <div style={{ position: 'relative', minHeight: 'inherit' }}>
-            <LoadingOverlay
-              visible={isLoading}
-              overlayColor={colors.B30}
-              loaderProps={{
-                color: colors.error,
-              }}
-            />
-            {!isLoading && <SignUpForm email={data?.email} token={tokenParam} />}
-          </div>
+          <LoadingOverlay
+            visible={isLoading}
+            overlayColor={colors.B30}
+            loaderProps={{
+              color: colors.error,
+            }}
+          />
+          {!isLoading && <SignUpForm email={data?.email} token={tokenParam} />}
         </AuthContainer>
       )}
     </AuthLayout>
