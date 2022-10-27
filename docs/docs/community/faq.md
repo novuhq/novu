@@ -27,7 +27,7 @@ In Novu, [handlebar variables](https://handlebarsjs.com/guide/) (variables enclo
   {{/each}}
   ```
 
-- **Conditional Block**
+- **Conditional Block:**
 You can render a block conditionally using the [if](https://docs.novu.co/platform/templates#conditional) keyword. The block is defined similar to the iteration block:
   ```
   {{#if condition}}
