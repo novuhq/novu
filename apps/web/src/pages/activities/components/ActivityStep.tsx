@@ -36,7 +36,7 @@ const TypeIcon = ({ type }: { type: StepTypeEnum }) => {
   }
 };
 
-export const ActivityStep = ({ job, span = 4 }) => {
+export const ActivityStep = ({ job, span = 4, isOld }) => {
   const status = useJobStatus(job);
   const theme = useMantineTheme();
 
@@ -46,45 +46,66 @@ export const ActivityStep = ({ job, span = 4 }) => {
       sx={{
         padding: 0,
         paddingLeft: '10px',
+        height: '100%',
       }}
     >
       <StepItem dark={theme.colorScheme === 'dark'} data-test-id={`${job.type}-step`}>
-        <Grid>
-          <Grid.Col span={1}>
-            <When
-              truthy={status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED}
+        <Grid
+          sx={{
+            margin: 0,
+          }}
+        >
+          <When truthy={!isOld}>
+            <span
+              style={{
+                marginRight: '8px',
+              }}
             >
-              <Timer width={16} height={16} />
-            </When>
-            <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
-              <CheckCircle width="16" height="16" color={colors.success} />
-            </When>
-            <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
-              <ErrorIcon width="16" height="16" color={colors.error} />
-            </When>
-          </Grid.Col>
-          <Grid.Col span={8}>
+              <When
+                truthy={status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED}
+              >
+                <Timer width={16} height={16} />
+              </When>
+              <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+                <CheckCircle width="16" height="16" color={colors.success} />
+              </When>
+              <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+                <ErrorIcon width="16" height="16" color={colors.error} />
+              </When>
+            </span>
+          </When>
+          <When truthy={!isOld}>
             <Header
               dark={theme.colorScheme === 'dark'}
               done={status === ExecutionDetailsStatusEnum.SUCCESS}
               failed={status === ExecutionDetailsStatusEnum.FAILED}
             >
-              {capitalize(job.type)}
+              {capitalize(job.type?.replace('_', ' '))}
             </Header>
-          </Grid.Col>
-          <Grid.Col
-            span={2}
-            sx={{
-              textAlign: 'right',
+          </When>
+          <When truthy={isOld}>
+            <Header dark={theme.colorScheme === 'dark'} done={false} failed={false}>
+              {capitalize(job.type?.replace('_', ' '))}
+            </Header>
+          </When>
+          <span
+            style={{
+              position: 'absolute',
+              top: '15px',
+              right: '15px',
             }}
           >
             <TypeIcon type={job.type} />
-          </Grid.Col>
+          </span>
         </Grid>
         <Text
           sx={{
             color: theme.colorScheme === 'dark' ? colors.B80 : colors.B40,
             fontSize: '12px',
+            position: 'absolute',
+            left: '15px',
+            bottom: '15px',
+            right: '15px',
           }}
         >
           {job.executionDetails?.at(-1)?.detail}
@@ -101,6 +122,7 @@ const StepItem = styled.div<{ dark: boolean }>`
   border-radius: 7px;
   height: 100%;
   width: 100%;
+  position: relative;
 `;
 
 const Header = styled.h4<{ done: boolean; failed; dark: boolean }>`
@@ -116,4 +138,5 @@ const Header = styled.h4<{ done: boolean; failed; dark: boolean }>`
     return dark ? colors.white : colors.B40;
   }};
   margin-top: 0px;
+  margin-bottom: 16px;
 `;

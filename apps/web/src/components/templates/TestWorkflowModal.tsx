@@ -13,9 +13,13 @@ export function TestWorkflowModal({
   isVisible,
   onDismiss,
   trigger,
+  setTransactionId,
+  openExecutionModal,
 }: {
   isVisible: boolean;
   onDismiss: () => void;
+  openExecutionModal: () => void;
+  setTransactionId: (id: string) => void;
   trigger: INotificationTrigger;
 }) {
   const { currentUser } = useContext(AuthContext);
@@ -52,14 +56,19 @@ export function TestWorkflowModal({
     const payload = JSON.parse(payloadValue);
     const overrides = JSON.parse(overridesValue);
     try {
-      await triggerTestEvent({
+      const response = await triggerTestEvent({
         name: trigger?.identifier,
         to,
         payload,
         overrides,
       });
+
+      const { transactionId = '' } = response;
+
+      setTransactionId(transactionId);
       successMessage('Template triggered successfully');
       onDismiss();
+      openExecutionModal();
     } catch (e: any) {
       Sentry.captureException(e);
       errorMessage(e.message || 'Un-expected error occurred');

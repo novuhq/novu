@@ -6,7 +6,13 @@ import {
   NotificationRepository,
 } from '@novu/dal';
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { StepTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import {
+  StepTypeEnum,
+  LogCodeEnum,
+  LogStatusEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
@@ -22,6 +28,11 @@ import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
 import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
 import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { AddJob } from '../add-job/add-job.usecase';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class TriggerEvent {
@@ -34,7 +45,8 @@ export class TriggerEvent {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private addJobUsecase: AddJob,
     private notificationRepository: NotificationRepository,
-    private storageHelperService: StorageHelperService
+    private storageHelperService: StorageHelperService,
+    protected createExecutionDetails: CreateExecutionDetails
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -138,6 +150,19 @@ export class TriggerEvent {
 
         return list;
       }, []);
+
+    for (const job of storedJobs) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_CREATED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+    }
 
     const firstJob = storedJobs[0];
 

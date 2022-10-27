@@ -100,6 +100,19 @@ export class SendMessageChat extends SendMessageType {
       Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
     );
 
+    if (chatChannels.length === 0) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+    }
+
     for (const channel of chatChannels) {
       await this.sendChannelMessage(command, channel, notification, chatChannel, content);
     }
@@ -142,10 +155,24 @@ export class SendMessageChat extends SendMessageType {
       )
     )[0];
 
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
+
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        channel: StepTypeEnum.SMS,
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -177,7 +204,6 @@ export class SendMessageChat extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          channel: StepTypeEnum.CHAT,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,

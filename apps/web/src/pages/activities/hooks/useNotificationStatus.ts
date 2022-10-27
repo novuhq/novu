@@ -11,15 +11,15 @@ export const useNotificationStatus = (notification: any): ExecutionDetailsStatus
         return getJobStatus(job);
       })
       .reduce((prev: ExecutionDetailsStatusEnum, item: ExecutionDetailsStatusEnum) => {
-        if (prev === ExecutionDetailsStatusEnum.SUCCESS) {
+        if (prev === ExecutionDetailsStatusEnum.FAILED) {
           return prev;
         }
-        if (prev === ExecutionDetailsStatusEnum.FAILED) {
+        if (prev === ExecutionDetailsStatusEnum.PENDING) {
           return prev;
         }
 
         return item;
-      }, ExecutionDetailsStatusEnum.PENDING);
+      }, undefined);
     setStatus(result);
   }, [notification]);
 

@@ -120,6 +120,21 @@ export class SendMessagePush extends SendMessageType {
       )
     )[0];
 
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
+
     const overrides = command.overrides[integration.providerId] || {};
     const pushChannels = subscriber.channels.filter((chan) =>
       Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
@@ -129,6 +144,19 @@ export class SendMessagePush extends SendMessageType {
     delete messagePayload.attachments;
 
     if (integration) {
+      if (pushChannels.length === 0) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+          })
+        );
+      }
+
       for (const channel of pushChannels) {
         if (!channel.credentials.deviceTokens) continue;
         await this.sendMessage(
