@@ -49,6 +49,7 @@ export class ProcessSubscriber {
         organizationId: command.organizationId,
         userId: command.userId,
         templateId: template._id,
+        notificationId: notification._id,
       })
     );
 

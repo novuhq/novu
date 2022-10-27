@@ -112,17 +112,14 @@ export const ActivityItem = ({ item, onClick }) => {
                 height: '100%',
               }}
             >
-              {item.jobs
-                .filter((job) => job.type !== StepTypeEnum.TRIGGER)
-                .slice(0, 3)
-                .map((job) => (
-                  <ActivityStep
-                    isOld={isOld}
-                    key={`activity-step-${job._id}`}
-                    span={checkJobsLength(item) ? 3 : 4}
-                    job={job}
-                  />
-                ))}
+              {item.jobs.slice(0, 3).map((job) => (
+                <ActivityStep
+                  isOld={isOld}
+                  key={`activity-step-${job._id}`}
+                  span={checkJobsLength(item) ? 3 : 4}
+                  job={job}
+                />
+              ))}
               <When truthy={checkJobsLength(item)}>
                 <Grid.Col span={1}>
                   <Text align="center" size="xl">

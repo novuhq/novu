@@ -17,4 +17,6 @@ export class NotificationEntity {
   template?: NotificationTemplateEntity;
 
   channels?: StepTypeEnum[];
+
+  _digestedNotificationId?: string;
 }

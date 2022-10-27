@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import { BaseRepository } from '../base-repository';
 import { NotificationEntity } from './notification.entity';
@@ -84,6 +84,11 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
       .populate('template', 'name _id')
       .populate({
         path: 'jobs',
+        match: {
+          type: {
+            $nin: [StepTypeEnum.TRIGGER],
+          },
+        },
         populate: { path: 'executionDetails' },
       });
   }

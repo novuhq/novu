@@ -99,6 +99,22 @@ export class SendMessageEmail extends SendMessageType {
     let subject = '';
     let content: string | IEmailBlock[] = '';
 
+    const payload = {
+      subject: emailChannel.template.subject,
+      branding: {
+        logo: organization.branding?.logo,
+        color: organization.branding?.color || '#f47373',
+      },
+      blocks: [],
+      step: {
+        digest: !!command.events.length,
+        events: command.events,
+        total_count: command.events.length,
+      },
+      subscriber,
+      ...command.payload,
+    };
+
     try {
       subject = await this.renderContent(
         emailChannel.template.subject,
@@ -118,21 +134,7 @@ export class SendMessageEmail extends SendMessageType {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({
-            subject: emailChannel.template.subject,
-            branding: {
-              logo: organization.branding?.logo,
-              color: organization.branding?.color || '#f47373',
-            },
-            blocks: [],
-            step: {
-              digest: !!command.events.length,
-              events: command.events,
-              total_count: command.events.length,
-            },
-            subscriber,
-            ...command.payload,
-          }),
+          raw: JSON.stringify(payload),
         })
       );
     }
@@ -168,7 +170,7 @@ export class SendMessageEmail extends SendMessageType {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(messagePayload),
+        raw: JSON.stringify(payload),
       })
     );
 
