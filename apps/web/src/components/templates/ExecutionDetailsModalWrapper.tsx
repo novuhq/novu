@@ -30,12 +30,7 @@ export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose }:
         }}
       />
       {notification?.data?.length && (
-        <ExecutionDetailsModal
-          notificationId={notification?.data[0]._id}
-          modalVisibility={isOpen}
-          onClose={onClose}
-          origin={location.pathname}
-        />
+        <ExecutionDetailsModal notificationId={notification?.data[0]._id} modalVisibility={isOpen} onClose={onClose} />
       )}
     </>
   );
