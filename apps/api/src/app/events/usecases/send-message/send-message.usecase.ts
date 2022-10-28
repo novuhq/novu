@@ -102,7 +102,7 @@ export class SendMessage {
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
@@ -147,13 +147,13 @@ export class SendMessage {
 
     const result = this.isActionStep(job) || this.stepPreferred(preference, job);
 
-    if (result) {
+    if (!result) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEPS_FILTERED_BY_PREFERENCES,
+          detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(preference),

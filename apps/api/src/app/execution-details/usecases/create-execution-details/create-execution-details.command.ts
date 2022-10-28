@@ -18,7 +18,7 @@ export enum DetailEnum {
   FILTER_STEPS = 'Step was filtered based on steps filters',
   DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
-  STEPS_FILTERED_BY_PREFERENCES = 'Steps filtered by subscriber preferences',
+  STEP_FILTERED_BY_PREFERENCES = 'Step filtered by subscriber preferences',
   DIGEST_MERGED = 'Digest was merged with other digest',
   DELAY_FINISHED = 'Delay is finished',
 }
