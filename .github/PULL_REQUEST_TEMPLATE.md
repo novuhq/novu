@@ -5,7 +5,7 @@ Happy contributing!
 -->
 
 ### What kind of change does this PR introduce? 
-<!-- Mark All The Applicable Boxes and add some inform -->
+<!-- Mark All The Applicable Boxes and add some information -->
 
 - [ ] Bug
 - [ ] Feature
