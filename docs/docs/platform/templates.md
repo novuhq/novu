@@ -92,7 +92,7 @@ To render a specific block conditionally you can use `#if`:
 
 ### Dateformat
 
-To render a date in a specific format you can use the `dateFormat` helper:
+To render a date in a specific format you can use the `dateFormat` helper, which formats the date using `format` function from [date-fns](https://date-fns.org).
 
 ```typescript
 novu.trigger('template-name', {
@@ -104,7 +104,7 @@ novu.trigger('template-name', {
 
 ```handlebars
 <div class='entry'>
-  <h1>Mail is sent on {{dateFormat date 'DD/MM/YYYY'}}</h1>
+  <h1>Mail is sent on {{dateFormat date 'MM/dd/yyyy'}}</h1>
 </div>
 ```
 
