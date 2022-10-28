@@ -13,24 +13,13 @@ Happy contributing!
 - [ ] Other(s)
 
 
-<!-- If your PR fixes an open issue, use `Closes #999` to link your PR with the issue. #999 stands for the issue number you are fixing -->
-
-### Fixes Issue
-
-<!-- Remove this section if not applicable -->
-
-<!-- Example: Closes #31 -->
-
 ### Why was this change needed?
 
 <!-- Explain all the changes in the PR and tell what is the use of this change. -->
 
+<!-- and If your PR fixes an open issue, use `Closes #999` to link your PR with the issue. #999 stands for the issue number you are fixing, Example: Closes #31 -->
 
-### Screenshots
-
-<!-- Add all the screenshots which support your changes -->
-<!-- Please add a screenshot of UI changes if applicable. --> 
-
-### Other information
+### Other information (Screenshots)
 
 <!-- Add notes or any other information here -->
+<!-- Also add all the screenshots which support your changes -->
