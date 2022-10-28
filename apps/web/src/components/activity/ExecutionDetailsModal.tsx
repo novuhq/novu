@@ -34,7 +34,7 @@ export function ExecutionDetailsModal({
       styles={{
         modal: {
           backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
-          width: '60%',
+          width: '90%',
         },
         body: {
           paddingTop: '5px',

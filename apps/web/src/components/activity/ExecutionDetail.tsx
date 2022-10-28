@@ -1,13 +1,12 @@
 import { Container, Grid, useMantineTheme } from '@mantine/core';
-import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
 
 import { ExecutionDetailShowRaw } from './ExecutionDetailShowRaw';
 import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';
 
-import { Button, colors, Text } from '../../design-system';
-import { CheckCircle, Digest, ErrorIcon, Mail, Timer } from '../../design-system/icons';
+import { colors, Text } from '../../design-system';
+import { When } from '../utils/When';
 
 const ExecutionDetailStatusWrapper = styled(Container)`
   padding: 2px;
@@ -62,14 +61,13 @@ export const ExecutionDetail = ({
         <ExecutionDetailTime createdAt={createdAt} />
       </Grid.Col>
       <Grid.Col span={3}>
-        {raw && (
+        <When truthy={raw}>
           <ExecutionDetailShowRaw
-            raw={raw}
             showTriggerSnippet={showTriggerSnippet}
             onShowExecutionDetail={onShowExecutionDetail}
             onHideExecutionDetail={onHideExecutionDetail}
           />
-        )}
+        </When>
       </Grid.Col>
     </Grid>
   );
