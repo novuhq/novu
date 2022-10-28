@@ -220,6 +220,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>pt</code> (Portuguese)</li>
           <li><code>ro</code> (Romanian)</li>
           <li><code>ru</code> (Russian)</li>
+          <li><code>sa</code> (Samoan)</li>
           <li><code>sa</code> (Sanskrit)</li>
           <li><code>sd</code> (Sindhi)</li>
           <li><code>si</code> (Sinhala)</li>
