@@ -20,6 +20,7 @@ export enum DetailEnum {
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEPS_FILTERED_BY_PREFERENCES = 'Steps filtered by subscriber preferences',
   DIGEST_MERGED = 'Digest was merged with other digest',
+  DELAY_FINISHED = 'Delay is finished',
 }
 
 export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
