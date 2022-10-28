@@ -1,6 +1,6 @@
 # Integrations Store
 
-Novu integrations page is used to configure the final delivery providers for each channel. Novu is an open-source project, which allows you to submit a new provider entry whenever you are missing a particular provider. You can read more about it here.
+Novu's integrations page is used to configure the final delivery providers for each channel. Novu is an open-source project that allows you to submit a new provider entry whenever you miss a particular provider. You can read more about it here.
 
 ## Provider Channels
 
