@@ -1,6 +1,6 @@
 const { Octokit } = require('@octokit/action');
 
-const octokit = new Octokit();
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
 const getCurrentMilestone = async (owner, repo) => {
   const { data } = await octokit.rest.issues.listMilestones({
