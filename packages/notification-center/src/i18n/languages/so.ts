@@ -7,5 +7,5 @@ export const AM: ITranslationEntry = {
     poweredBy: 'fa'amalosia e',
     settings: 'faatulagaga',
   },
-  lang: 'so',
+  lang: 'sm',
 };
