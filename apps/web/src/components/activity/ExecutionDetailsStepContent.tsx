@@ -7,6 +7,7 @@ import { ExecutionDetailRawSnippet } from './ExecutionDetailShowRaw';
 import { ExecutionDetailTrigger } from './ExecutionDetailTrigger';
 
 import { colors, Text } from '../../design-system';
+import { When } from '../utils/When';
 
 const ExecutionDetailsStepContentWrapper = styled.div`
   margin: 0;
@@ -28,18 +29,18 @@ const GridColContainer = styled(Container)<{ theme: string }>`
 
 export const ExecutionDetailsStepContent = ({ step }) => {
   const theme = useMantineColorScheme();
-  const [showTriggerSnippet, setShowTriggerSnippet] = useState<boolean>(true);
+  const [detailId, setDetailId] = useState<string>('');
   const [executionDetailsRawSnippet, setExecutionDetailsRawSnippet] = useState<string>('');
   const { executionDetails } = step || {};
 
-  const onShowExecutionDetail = (event, raw) => {
-    setShowTriggerSnippet(true);
+  const onShowExecutionDetail = (id, raw) => () => {
+    setDetailId(id);
     setExecutionDetailsRawSnippet(raw);
   };
 
-  const onHideExecutionDetail = (event) => {
+  const onHideExecutionDetail = () => {
     setExecutionDetailsRawSnippet('');
-    setShowTriggerSnippet(false);
+    setDetailId('');
   };
 
   return (
@@ -52,8 +53,8 @@ export const ExecutionDetailsStepContent = ({ step }) => {
               <ExecutionDetail
                 key={`execution-detail-${executionDetail.id}`}
                 executionDetail={executionDetail}
-                showTriggerSnippet={showTriggerSnippet}
-                onShowExecutionDetail={onShowExecutionDetail}
+                showTriggerSnippet={detailId !== executionDetail.id}
+                onShowExecutionDetail={onShowExecutionDetail(executionDetail.id, executionDetail.raw)}
                 onHideExecutionDetail={onHideExecutionDetail}
               />
             ))}
@@ -61,10 +62,12 @@ export const ExecutionDetailsStepContent = ({ step }) => {
         </Grid.Col>
         <Grid.Col span={6}>
           <GridColContainer theme={theme}>
-            {!showTriggerSnippet && <ExecutionDetailTrigger step={step} />}
-            {showTriggerSnippet && executionDetailsRawSnippet && (
+            <When truthy={detailId.length === 0}>
+              <ExecutionDetailTrigger step={step} />
+            </When>
+            <When truthy={detailId.length > 0 && executionDetailsRawSnippet}>
               <ExecutionDetailRawSnippet raw={executionDetailsRawSnippet} onClose={onHideExecutionDetail} />
-            )}
+            </When>
           </GridColContainer>
         </Grid.Col>
       </Grid>

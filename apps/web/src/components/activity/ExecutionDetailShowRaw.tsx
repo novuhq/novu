@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Container, Group, useMantineColorScheme } from '@mantine/core';
 import { Prism } from '@mantine/prism';
 import styled from 'styled-components';
@@ -49,14 +48,14 @@ const CloseButton = styled(Button)<{ theme: string }>`
   top: -10px;
 `;
 
-export const ExecutionDetailShowRaw = ({ raw, onShowExecutionDetail, onHideExecutionDetail, showTriggerSnippet }) => {
+export const ExecutionDetailShowRaw = ({ onShowExecutionDetail, onHideExecutionDetail, showTriggerSnippet }) => {
   const theme = useMantineColorScheme();
 
-  const action = showTriggerSnippet ? onHideExecutionDetail : onShowExecutionDetail;
-  const label = showTriggerSnippet ? 'Close detail' : 'Show detail';
+  const action = showTriggerSnippet ? onShowExecutionDetail : onHideExecutionDetail;
+  const label = showTriggerSnippet ? 'Show detail' : 'Close detail';
 
-  const onClick = (event) => {
-    action(event, raw);
+  const onClick = () => {
+    action();
   };
 
   return (
@@ -94,7 +93,7 @@ export const ExecutionDetailRawSnippet = ({ raw, onClose }) => {
         data-test-id="execution-detail-raw-snippet"
         language="json"
       >
-        {raw}
+        {JSON.stringify(JSON.parse(raw), null, 2)}
       </Prism>
     </ExecutionDetailShowRawWrapper>
   );
