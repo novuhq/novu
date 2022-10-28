@@ -1,4 +1,5 @@
 import { AF } from './languages/af';
+import { AM } from './languages/am';
 import { AR } from './languages/ar';
 import { AS } from './languages/as';
 import { AZ } from './languages/az';
@@ -80,6 +81,7 @@ export interface ITranslationEntry {
 
 export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   af: AF,
+  am: AM,
   ar: AR,
   as: AS,
   az: AZ,
@@ -161,6 +163,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  */
 export type I18NLanguage =
   | 'af'
+  | 'am'
   | 'ar'
   | 'as'
   | 'az'
