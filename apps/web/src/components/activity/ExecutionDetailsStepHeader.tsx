@@ -145,7 +145,7 @@ const StepOutcome = ({ createdAt, name, detail, status }) => {
 
   return (
     <>
-      <StepName theme={theme}>{name}</StepName>
+      <StepName theme={theme}>{name?.replace('_', ' ')}</StepName>
       <Details theme={theme}>{detail}</Details>
       <StepDate theme={theme}>{date}</StepDate>
     </>
