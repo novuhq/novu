@@ -49,11 +49,11 @@ You can specify custom variables using the [{{handlebars}}](https://handlebarsjs
 
 #### SMS
 
-Similar to the the email, with SMS, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
+Similar to the email, with SMS, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
 
 #### In-app
 
-In the notification center preview you can type the content of the notification, you can select content and use `CMD` + `B` to make the selected text bold.
+In the notification center preview, you can type the content of the notification, you can select content and use `CMD` + `B` to make the selected text bold.
 
 #### Chat
 
@@ -80,7 +80,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 });
 ```
 
-The trigger function contains a parameters object as the second parameter. Let's explore it's different options:
+The trigger function contains a parameters object as the second parameter. Let's explore its different options:
 
 ### `to` key
 
@@ -106,7 +106,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 
 The `subscriberId` is a custom identifier used when identifying your users within the Novu platform. We suggest using your internal DB identifier for this field.
 
-Novu will create an upsert command, and either create a subscriber with specified payload, or update the existing subscriber with the passed information.
+Novu will create an upsert command, and either create a subscriber with a specified payload, or update the existing subscriber with the passed information.
 
 **Note:** The API will perform a PATCH command, updating only the fields passed to it. So in order to reset a specific field you must explicitly pass `null` as the fields param.
 
@@ -123,4 +123,4 @@ In this approach, you will only pass the subscriberId as part of the trigger, ho
 
 ### `payload` object
 
-The `payload` object can pass any serializible JSON object to be used in the notification templates.
+The `payload` object can pass any serializable  JSON object to be used in the notification templates.
