@@ -228,7 +228,6 @@ importers:
       dotenv: ^8.2.0
       envalid: ^6.0.1
       handlebars: ^4.7.7
-      handlebars-dateformat: ^1.1.3
       hat: ^0.0.3
       jsonwebtoken: ^8.5.1
       lodash: ^4.17.15
@@ -321,7 +320,6 @@ importers:
       dotenv: 8.6.0
       envalid: 6.0.2
       handlebars: 4.7.7
-      handlebars-dateformat: 1.1.3
       hat: 0.0.3
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -34316,12 +34314,6 @@ packages:
 
   /handle-thing/2.0.1:
     resolution: {integrity: sha512-9Qn4yBxelxoh2Ow62nP+Ka/kMnOXRi8BXnRaUwezLNhqelnN49xKz4F/dPP8OYLxLxq6JDtZb2i9XznUQbNPTg==}
-
-  /handlebars-dateformat/1.1.3:
-    resolution: {integrity: sha512-D7SjYx66+t2J0IMgq7QbjE2G9hTudICQx8Eg16FHAEm5qu5FRS8T+p1IpmA7WVuz7l6RruJHwWHJpizklzfrcA==}
-    dependencies:
-      moment: 2.29.4
-    dev: false
 
   /handlebars/4.7.7:
     resolution: {integrity: sha512-aAcXm5OAfE/8IXkcZvCepKU3VzW1/39Fb5ZuqMtgI/hT8X2YgoMvBY5dLhq/cpOvw7Lk1nK/UF71aLG/ZnVYRA==}
