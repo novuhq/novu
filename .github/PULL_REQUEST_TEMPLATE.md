@@ -24,12 +24,12 @@ Happy contributing!
 ### Why was this change needed?
 
 <!-- Explain all the changes in the PR and tell what is the use of this change. -->
-<!-- Please add a screenshot of UI changes if applicable. -->
 
 
 ### Screenshots
 
 <!-- Add all the screenshots which support your changes -->
+<!-- Please add a screenshot of UI changes if applicable. --> 
 
 ### Other information
 
