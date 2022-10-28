@@ -41,7 +41,9 @@ const SuccessStepDetails = styled(StepDetails)`
 `;
 
 const LogoWrapper = styled(Container)`
+  max-width: 50px;
   padding: 10px 10px 0 0;
+  position: relative;
 `;
 
 const StepActionOutcomeWrapper = styled(Container)`
