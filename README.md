@@ -14,10 +14,12 @@
 </br>
 
 <div align="center">
+  <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
     <img src="https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png" width="280" alt="Logo"/>
   </picture>
+  </a>
 </div>
 
 <h1 align="center">Notification management simplified.</h1>
@@ -69,6 +71,7 @@ Building a notification system is complicated. At first, it seems like just send
    - [Chat](https://github.com/novuhq/novu#-chat)
    - [In-App](https://github.com/novuhq/novu#-in-app)
    - [Others](https://github.com/novuhq/novu#other-coming-soon)
+- [Jarvis](https://github.com/novuhq/novu#-meet-jarvis)
 - [Need Help?](https://github.com/novuhq/novu#-need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
@@ -178,6 +181,31 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [ ] PagerDuty
 
+## 🤵 Meet Jarvis
+
+Meet Jarvis, a shell client sporting a dashing text gradient for all your Novu needs. Jarvis makes the following functions as simple as a few `yes` or `no` questions:
+
+- Reinstall Novu
+- Run Novu
+  - Full Project
+  - Web and API
+  - API only
+  - Docs
+- Test Novu
+  - Web tests
+  - API tests
+
+To run Jarvis at the root of Novu, you can use one of the following commands
+
+```
+npm run start
+```
+
+```
+npm run jarvis
+```
+
+Want to look through Jarvis' source code? Check out: [Jarvis.js](https://github.com/novuhq/novu/blob/main/scripts/jarvis.js)
 
 ## 💻 Need Help?
 
