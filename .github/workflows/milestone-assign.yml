@@ -10,9 +10,11 @@ concurrency:
 
 jobs:
   assign_milestone:
-    if: github.event.review.state == 'approved'
+    if: false
     name: Add milestone
-    permissions: write-all
+    permissions:
+      issues: write
+      pull-requests: write
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
