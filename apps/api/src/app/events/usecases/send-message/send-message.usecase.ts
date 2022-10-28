@@ -22,6 +22,7 @@ import {
   JobStatusEnum,
 } from '@novu/dal';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { SendMessageDelay } from './send-message-delay.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
@@ -44,7 +45,8 @@ export class SendMessage {
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private jobRepository: JobRepository
+    private jobRepository: JobRepository,
+    private sendMessageDelay: SendMessageDelay
   ) {}
 
   public async execute(command: SendMessageCommand) {
@@ -57,17 +59,19 @@ export class SendMessage {
       return;
     }
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail:
-          command.step.template.type === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-      })
-    );
+    if (command.step.template.type !== StepTypeEnum.DELAY) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail:
+            command.step.template.type === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+    }
 
     switch (command.step.template.type) {
       case StepTypeEnum.SMS:
@@ -82,6 +86,8 @@ export class SendMessage {
         return await this.sendMessagePush.execute(command);
       case StepTypeEnum.DIGEST:
         return await this.digest.execute(command);
+      case StepTypeEnum.DELAY:
+        return await this.sendMessageDelay.execute(command);
     }
   }
 
@@ -96,7 +102,7 @@ export class SendMessage {
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
@@ -141,13 +147,13 @@ export class SendMessage {
 
     const result = this.isActionStep(job) || this.stepPreferred(preference, job);
 
-    if (result) {
+    if (!result) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEPS_FILTERED_BY_PREFERENCES,
+          detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(preference),
