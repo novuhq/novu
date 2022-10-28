@@ -31,12 +31,14 @@ export const InAppCenterCard = () => {
         <PrismContainer>
           <Prism
             styles={(theme) => ({
+              scrollArea: {
+                border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+                borderRadius: '7px',
+              },
               code: {
                 fontWeight: 400,
                 color: `${colors.B60} !important`,
                 backgroundColor: 'transparent !important',
-                border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
-                borderRadius: '7px',
               },
             })}
             language="jsx"
@@ -62,7 +64,7 @@ function DescriptionText() {
 }
 
 export const PrismContainer = styled.div`
-  padding: 25px 0 32px 0;
+  margin: 25px 0 32px 0;
   @media screen and (max-width: 1400px) {
     width: 600px;
   }
