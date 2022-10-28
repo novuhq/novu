@@ -64,11 +64,8 @@ import { BE } from './languages/be';
 import { SQ } from './languages/sq';
 import { LT } from './languages/lt';
 import { LV } from './languages/lv';
- i18n-support-bosnian
 import { BS } from './languages/bs';
 import { BH } from './languages/bh';
-
-
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -153,8 +150,6 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   bh: BH,
 };
 
-  
-
 /**
  * Should use the short notations of the W3C internationalization document
  * https://www.science.co.il/language/Codes.php
@@ -236,7 +231,3 @@ export type I18NLanguage =
   | 'bs'
   | 'eu'
   | 'bh';
-  
-
-
-  
