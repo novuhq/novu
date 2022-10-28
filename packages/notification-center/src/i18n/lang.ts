@@ -50,7 +50,7 @@ import { PL } from './languages/pl';
 import { PT } from './languages/pt';
 import { RO } from './languages/ro';
 import { RU } from './languages/ru';
-import { SA } from './languages/ru';
+import { SO } from './languages/ru';
 import { SA } from './languages/sa';
 import { SD } from './languages/sd';
 import { SI } from './languages/si';
