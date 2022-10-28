@@ -57,6 +57,7 @@ If you want to test certain parts of Novu or run it in production mode though, s
         <li><code>DISABLE_USER_REGISTRATION</code> (default: false)<br />If users should not be able to create new accounts. Possible values are: true, false</li>
         <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
         <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
+        <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
         <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
         <li><code>SENDGRID_API_KEY</code><br />The api key of the Sendgrid account used to send various emails</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
@@ -75,6 +76,7 @@ If you want to test certain parts of Novu or run it in production mode though, s
         <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
         <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
         <li><code>REDIS_DB_INDEX</code><br />The database index of your redis instance</li>
+        <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
         <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
         <li><code>PORT</code><br />The port on which the WebSocket service should listen on</li>
