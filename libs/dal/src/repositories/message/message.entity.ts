@@ -17,6 +17,8 @@ export class MessageEntity {
 
   _notificationId: string;
 
+  _jobId?: string;
+
   _subscriberId: string;
 
   subscriber?: SubscriberEntity;
@@ -37,6 +39,8 @@ export class MessageEntity {
 
   seen: boolean;
 
+  read: boolean;
+
   email?: string;
 
   phone?: string;
@@ -50,6 +54,8 @@ export class MessageEntity {
   title?: string;
 
   lastSeenDate: string;
+
+  lastReadDate: string;
 
   cta: IMessageCTA;
 
