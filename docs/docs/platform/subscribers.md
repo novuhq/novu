@@ -29,7 +29,7 @@ await novu.subscribers.identify(user.id, {
 });
 ```
 
-Novu will create a subscriber if one does not exist, and will update existing subscribers based on the identified payload. You can call this function during registration or signup to make sure the subscriber data is up to date.
+Novu will create a subscriber if one does not exist, and will update existing subscribers based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up to date.
 
 ### Subscriber identifier
 
