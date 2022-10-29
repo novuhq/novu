@@ -86,7 +86,7 @@ If you want to test certain parts of Novu or run it in production mode though, s
 
 ## Running tests
 
-After making some changes, you can run the tests for the different package using the appropriate CLI commands.
+After making some changes, you can run the tests for the different packages using the appropriate CLI commands.
 
 ### API
 
