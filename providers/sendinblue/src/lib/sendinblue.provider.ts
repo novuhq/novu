@@ -39,7 +39,7 @@ export class SendinblueEmailProvider implements IEmailProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const email = new SendSmtpEmail();
     email.sender = {
-      email: options.from || options.from,
+      email: options.from || this.config.from,
       name: this.config.senderName,
     };
     email.to = getFormattedTo(options.to);
