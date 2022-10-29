@@ -7,20 +7,20 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <ThemeProvider>
-      <div style={{ minHeight: 950 }}>
-        <div className={classes.wrapper}>
+      <div className={classes.wrapper}>
+        <div className={classes.bg}>
           <img
             src="/static/images/logo-formerly-dark-bg.png"
             alt="logo"
-            style={{ maxWidth: 150, marginTop: 5, marginLeft: 5 }}
+            style={{ alignSelf: 'flex-start', maxWidth: 150, marginTop: 5, marginLeft: 5 }}
           />
           <Box
             sx={{
               position: 'absolute',
+              right: '50%',
               display: 'flex',
               flexDirection: 'column',
-              left: 120,
-              top: 'calc(50% - 165px)',
+              transform: 'translate(35%, 7%)',
               '@media (max-width: 1200px)': {
                 display: 'none',
               },
@@ -47,14 +47,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
 const useStyles = createStyles((theme) => ({
   wrapper: {
-    height: '100%',
-    minHeight: 950,
-    position: 'absolute',
-    width: '100%',
-    zIndex: -1,
-    left: '0px',
-    top: '0px',
-    backgroundSize: 'contain',
+    display: 'grid',
+    gridAutoFlow: 'column',
+    gridAutoColumns: '1fr',
+    columnGap: 25,
+    minHeight: '100vh',
+  },
+  bg: {
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative',
+    minWidth: 600,
+    backgroundSize: '70% 100%',
     backgroundRepeat: 'no-repeat',
     backgroundImage: `url('/static/images/signin_bg.png')`,
     '@media (max-width: 1100px)': {
