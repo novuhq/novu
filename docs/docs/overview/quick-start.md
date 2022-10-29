@@ -31,7 +31,7 @@ After configuring the designated channel provider, you can create your notificat
 
 ### Notification Details
 
-This section will contain the metadata for your notification, things such as the name, description, and group.
+This section contains the metadata for your notification, things such as the name, description, and group.
 
 The **name** of the notifications will be converted to a slug and will be used as the trigger identifier which is used when sending the trigger from the back end.
 
@@ -80,7 +80,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 });
 ```
 
-The trigger function contains a parameters object as the second parameter. Let's explore it's different options:
+The trigger function contains a parameters object as the second parameter. Let's explore its different options:
 
 ### `to` key
 
