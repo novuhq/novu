@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Run Novu locally
 
-## ⚡ Immediate working space with GitPod
+## ⚡ Immediate working space with Gitpod
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
 
@@ -26,7 +26,7 @@ After installing the required services on your machine you can clone and setup y
 - Run initial setup command `npm run setup:project` to install and build all dependencies
 - Run the project locally using: `npm run start`
 
-The `npm run start` will start all of the services in parallel including the API's and web clients.
+The `npm run start` will start all of the services in parallel including the APIs and web clients.
 If you only want to run parts of the platform, you can use the following run commands from the root project:
 
 - **start:dev** - Synonym to `npm run start`
@@ -86,7 +86,7 @@ If you want to test certain parts of Novu or run it in production mode though, s
 
 ## Running tests
 
-After making some changes, you can run the tests for the different package using the appropriate CLI commands.
+After making some changes, you can run the tests for the different packages using the appropriate CLI commands.
 
 ### API
 
@@ -96,12 +96,12 @@ To run the API tests you can simply run the following command:
 npm run start:e2e:api
 ```
 
-The test will run a new instance of Novu against the test db and run the tests against it. The test db will be removed after tests has finished running.
+The test will run a new instance of Novu against the test db and run the tests against it. The test db will be removed after all tests have finished running.
 
 ### Web
 
 To run the front end tests for the web project using cypress you will need to install localstack in order for all the tests to pass.
-The cypress test perform and E2E test, meaning that you will have to run the API service in the appropriate test environment.
+The cypress test performs E2E test, meaning that you will have to run the API service in the appropriate test environment.
 To run the services in test env you can use:
 
 ```shell
@@ -115,13 +115,13 @@ Run the cypress test suite using:
 cd apps/web && npm run cypress:run
 ```
 
-To open the cypress management windows to debug tests run:
+To open the cypress management window to debug tests run:
 
 ```shell
 cd apps/web && npm run cypress:open
 ```
 
-### Different ports used by the services the projects spins up
+### Different ports used by the services the project spins up
 
 - **3000** - API
 - **3002** - WebSocket service
