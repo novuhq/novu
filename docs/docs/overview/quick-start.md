@@ -49,7 +49,7 @@ You can specify custom variables using the [{{handlebars}}](https://handlebarsjs
 
 #### SMS
 
-Similar to the the email, with SMS, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
+Similar to the email, with SMS, custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax can be described to create the final message.
 
 #### In-app
 
@@ -80,7 +80,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 });
 ```
 
-The trigger function contains a parameters object as the second parameter. Let's explore it's different options:
+The trigger function contains a parameters object as the second parameter. Let's explore its different options:
 
 ### `to` key
 
