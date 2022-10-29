@@ -6,7 +6,7 @@ sidebar_position: 2
 
 In this guide, we will explore the Novu mono-repo structure and high-level structure of the different libraries and services we use.
 
-![Monorepo outline of packages and services](/img/monorepo-structure.jpeg)
+![Monorepo outline of packages and services](https://docs.novu.co/assets/images/monorepo-structure-eea6a227a77765ad9baefc5b18360001.jpeg)
 
 ## Setting up the monorepo
 
