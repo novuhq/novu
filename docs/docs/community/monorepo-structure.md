@@ -20,15 +20,15 @@ npm run setup:project
 
 This will:
 
-- run `pnpm install`, that will download all the needed dependencies and create symlinks for packages.
+- run `pnpm install`, which will download all the needed dependencies and create symlinks for packages.
 - copy the `.env.example` file to the `.env` file for the API service.
-- execute `npm run build` command to build all the dependency tree locally.
+- execute the `npm run build` command to build all the dependency trees locally.
 
 For additional information on running Novu locally, visit the [run locally](https://docs.novu.co/community/run-locally) guide.
 
 ## Apps
 
-The apps folder contains high-level applications and APIs. The apps outputs usually contain deployable units that a user can interact with either as an API or as a web/cli application.
+The apps folder contains high-level applications and APIs. The app's outputs usually contain deployable units that a user can interact with either as an API or as a web/cli application.
 
 ### API
 
@@ -42,7 +42,7 @@ This is the WebSocket NestJs server which connects to the widget and provides re
 
 This is the Novu admin panel which is used to visually communicate with the API. You can configure templates, manage content, enable or disable notifications, visually track the notification activity feed, etc...
 
-The `WEB` project is a create-react-app built, well, with React. 😄
+The `WEB` project is a create-react app built, well, with React. 😄
 
 ### Widget
 
@@ -60,7 +60,7 @@ This is a utility library that contains testing helpers. The testing helpers can
 
 ### @novu/shared
 
-The shared library contains reusable code and typescript interfaces between client and server packages. Code in the shared library should not contain any sensitive content because it can be accessed and downloaded by a web or other clients.
+The shared library contains reusable code and typescript interfaces between client and server packages. Code in the shared library should not contain any sensitive content because it can be accessed and downloaded by the web or other clients.
 
 ### @novu/embed
 
@@ -72,21 +72,21 @@ If you are familiar with the Google Analytics embedded snippet or intercom-like 
 
 ### @novu/node
 
-A Standalone Node.js wrapper around the Novu API. Exists to provide type-safe an easier access to the different API endpoints Novu exposes (Triggers, subscriber, etc…).
+A Standalone Node.js wrapper around the Novu API. Exists to provide type-safe and easier access to the different API endpoints Novu exposes (Triggers, subscribers, etc…).
 
 ### @novu/nest
 
-A Nest.js wrapper around the `@novu/node` package created by the community to easily interact with the core library from a nest project. Also released on NPM as a package.
+A Nest.js wrapper around the `@novu/node` package was created by the community to easily interact with the core library from a nest project. Also released on NPM as a package.
 
 ### @novu/notification-center
 
-React component library that contains widget bell with the notification center. Can get override of components like ‘bell icon’, ‘notification center’.
+React component library that contains widget bell with the notification center. Can get override of components like ‘bell icon’, and ‘notification center’.
 
 ## Providers
 
 These are the API wrappers created by the community to wrap communication providers in the following channels:
 
-Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
 
 ### 💌 Email
 
