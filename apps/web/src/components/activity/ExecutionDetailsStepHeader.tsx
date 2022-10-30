@@ -1,5 +1,5 @@
 import { Container, Grid, Group, useMantineColorScheme } from '@mantine/core';
-import { ChannelTypeEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsStatusEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
 import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
 
@@ -118,7 +118,10 @@ const generateDetailByStepAndStatus = (status, step) => {
   }
 
   if (step.type === StepTypeEnum.DELAY) {
-    const { digest } = step;
+    const { digest, step: stepMetadata, payload } = step;
+    if (stepMetadata.metadata.type === DelayTypeEnum.SCHEDULED) {
+      return `Delay to ${payload[stepMetadata.metadata.delayPath]}`;
+    }
 
     return `${digest.amount} ${digest.unit}`;
   }
