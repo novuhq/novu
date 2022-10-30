@@ -1,0 +1,27 @@
+import { expect } from 'chai';
+import { UserSession } from '@novu/testing';
+
+describe('Get Notification Group - /notification-groups/:id (GET)', async () => {
+  let session: UserSession;
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+  });
+
+  it('should get the notification group by id', async function () {
+    const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send({
+      name: 'Test name 1',
+    });
+
+    const id = postNotificationGroup1.body.data.id;
+
+    const { body } = await session.testAgent.get(`/v1/notification-groups/${id}`);
+
+    const group = body.data;
+
+    expect(group.name).to.equal(`Test name 1`);
+    expect(group._id).to.equal(postNotificationGroup1.body.data.id);
+    expect(group._environmentId).to.equal(session.environment._id);
+  });
+});
