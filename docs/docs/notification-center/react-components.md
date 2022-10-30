@@ -171,6 +171,7 @@ The `i18n` prop can accept 2 different types of values
       <div>
         <ul>
           <li><code>af</code> (Afrikaans)</li>
+          <li><code>am</code> (Amharic)</li>
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
           <li><code>az</code> (Azerbaijani)</li>
@@ -224,6 +225,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>sa</code> (Sanskrit)</li>
           <li><code>sd</code> (Sindhi)</li>
           <li><code>si</code> (Sinhala)</li>
+          <li><code>sm</code> (Samoan)</li>
           <li><code>sv</code> (Swedish)</li>
           <li><code>ta</code> (Tamil)</li>
           <li><code>te</code> (Telugu)</li>

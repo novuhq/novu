@@ -57,6 +57,7 @@ If you want to test certain parts of Novu or run it in production mode though, s
         <li><code>DISABLE_USER_REGISTRATION</code> (default: false)<br />If users should not be able to create new accounts. Possible values are: true, false</li>
         <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
         <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
+        <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
         <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
         <li><code>SENDGRID_API_KEY</code><br />The api key of the Sendgrid account used to send various emails</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
@@ -75,6 +76,7 @@ If you want to test certain parts of Novu or run it in production mode though, s
         <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
         <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
         <li><code>REDIS_DB_INDEX</code><br />The database index of your redis instance</li>
+        <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
         <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
         <li><code>PORT</code><br />The port on which the WebSocket service should listen on</li>
@@ -84,7 +86,7 @@ If you want to test certain parts of Novu or run it in production mode though, s
 
 ## Running tests
 
-After making some changes, you can run the tests for the different package using the appropriate CLI commands.
+After making some changes, you can run the tests for the different packages using the appropriate CLI commands.
 
 ### API
 
@@ -99,7 +101,7 @@ The test will run a new instance of Novu against the test db and run the tests a
 ### Web
 
 To run the front end tests for the web project using cypress you will need to install localstack in order for all the tests to pass.
-The cypress test perform and E2E test, meaning that you will have to run the API service in the appropriate test environment.
+The cypress test performs E2E test, meaning that you will have to run the API service in the appropriate test environment.
 To run the services in test env you can use:
 
 ```shell
