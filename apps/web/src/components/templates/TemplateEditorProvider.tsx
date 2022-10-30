@@ -5,6 +5,7 @@ const actionEditMode = 'editMode';
 const actionIsDirty = 'isDirty';
 const actionIsEmbedModalVisible = 'isEmbedModalVisible';
 const actionTrigger = 'trigger';
+const actionCreatedTemplateId = 'createdTemplateId';
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -28,6 +29,11 @@ const reducer = (state, action) => {
         ...state,
         trigger: action.payload,
       };
+    case actionCreatedTemplateId:
+      return {
+        ...state,
+        createdTemplateId: action.payload,
+      };
     default:
       throw new Error('Unspecified reducer action');
   }
@@ -42,6 +48,8 @@ const TemplateEditorContext = createContext({
   setIsEmbedModalVisible: (isEmbedModalVisible: boolean) => {},
   trigger: undefined,
   setTrigger: (trigger: INotificationTrigger) => {},
+  createdTemplateId: '',
+  setCreatedTemplateId: (createdTemplateId: string) => {},
 } as {
   editMode: boolean;
   setEditMode: (editMode: boolean) => void;
@@ -51,6 +59,8 @@ const TemplateEditorContext = createContext({
   setIsEmbedModalVisible: (isEmbedModalVisible: boolean) => void;
   trigger: INotificationTrigger | undefined;
   setTrigger: (trigger: INotificationTrigger) => void;
+  createdTemplateId: string;
+  setCreatedTemplateId: (createdTemplateId: string) => void;
   [key: string]: any;
 });
 
@@ -92,6 +102,13 @@ const TemplateEditorProvider = ({ children }) => {
     });
   };
 
+  const setCreatedTemplateId = (createdTemplateId: string) => {
+    dispatch({
+      type: actionCreatedTemplateId,
+      payload: createdTemplateId,
+    });
+  };
+
   return (
     <Provider
       value={{
@@ -99,10 +116,12 @@ const TemplateEditorProvider = ({ children }) => {
         setIsDirty,
         setEditMode,
         setIsEmbedModalVisible,
+        setCreatedTemplateId,
         editMode: state.editMode,
         isDirty: state.isDirty,
         isEmbedModalVisible: state.isEmbedModalVisible,
         trigger: state.trigger,
+        createdTemplateId: state.createdTemplateId,
       }}
     >
       {children}

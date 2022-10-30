@@ -10,7 +10,7 @@ To create your free managed, or docker based Novu environment use our CLI tool:
 npx novu init
 ```
 
-After creating your cloud or self-hosted account the next steps to sending your first notification are outlined in this guide.
+After creating your cloud or self-hosted account, the next steps to sending your first notification are outlined in this guide.
 
 - Connect your providers
 - Create a notification template
@@ -84,7 +84,7 @@ The trigger function contains a parameters object as the second parameter. Let's
 
 ### `to` key
 
-The `to` parameter contains the information about the subscriber of the notification, you can work with Novu in 2 modes:
+The `to` parameter contains the information about the subscriber of the notification. You can work with Novu in 2 modes:
 
 #### Pass the subscriber information in trigger (Quickest)
 

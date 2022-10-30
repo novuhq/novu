@@ -7,7 +7,7 @@ import { ITab } from '../../../index';
 
 export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();
-  const { onNotificationClick, onUrlChange } = useNotificationCenter();
+  const { onNotificationClick, onUrlChange, emptyState } = useNotificationCenter();
 
   const storeId = tab?.storeId || 'default_store';
   const {
@@ -60,17 +60,23 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
   return (
     <>
       {!isLoading && data?.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            minHeight: 350,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <img src={image as any} alt="logo" style={{ maxWidth: 200 }} />
-        </div>
+        <>
+          {emptyState ? (
+            emptyState
+          ) : (
+            <div
+              style={{
+                textAlign: 'center',
+                minHeight: 350,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <img src={image as any} alt="logo" style={{ maxWidth: 200 }} />
+            </div>
+          )}
+        </>
       ) : (
         <NotificationsList
           onNotificationClicked={onNotificationClicked}

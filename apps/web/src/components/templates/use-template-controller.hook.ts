@@ -33,6 +33,8 @@ export function useTemplateController(templateId: string) {
     setIsEmbedModalVisible,
     trigger,
     setTrigger,
+    createdTemplateId,
+    setCreatedTemplateId,
   } = useTemplateEditor();
 
   useEffect(() => {
@@ -151,11 +153,11 @@ export function useTemplateController(templateId: string) {
 
     try {
       if (editMode) {
-        await updateNotification({
+        const response = await updateNotification({
           id: templateId,
           data: payloadToUpdate,
         });
-
+        setTrigger(response.triggers[0]);
         refetch();
         reset(payloadToUpdate);
         setIsDirty(false);
@@ -167,6 +169,7 @@ export function useTemplateController(templateId: string) {
 
         setTrigger(response.triggers[0]);
         setIsEmbedModalVisible(true);
+        setCreatedTemplateId(response._id || '');
         reset(payloadToCreate);
         setIsDirty(false);
         await client.refetchQueries(QueryKeys.changesCount);
@@ -184,6 +187,13 @@ export function useTemplateController(templateId: string) {
 
   const onTriggerModalDismiss = () => {
     navigate('/templates');
+  };
+
+  const onTestWorkflowDismiss = () => {
+    setIsEmbedModalVisible(false);
+    if (!editMode) {
+      navigate(`/templates/edit/${createdTemplateId}`);
+    }
   };
 
   const addStep = (channelType: StepTypeEnum, id: string) => {
@@ -228,6 +238,7 @@ export function useTemplateController(templateId: string) {
     errors,
     setIsDirty,
     isDirty: isDirtyForm || isDirty,
+    onTestWorkflowDismiss,
   };
 }
 
