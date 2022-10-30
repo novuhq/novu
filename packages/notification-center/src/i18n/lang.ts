@@ -53,6 +53,7 @@ import { RU } from './languages/ru';
 import { SA } from './languages/sa';
 import { SD } from './languages/sd';
 import { SI } from './languages/si';
+import { SM } from './languages/sm';
 import { SQ } from './languages/sq';
 import { SV } from './languages/sv';
 import { TA } from './languages/ta';
@@ -135,6 +136,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   sa: SA,
   sd: SD,
   si: SI,
+  sm: SM,
   sq: SQ,
   sv: SV,
   ta: TA,
@@ -217,6 +219,7 @@ export type I18NLanguage =
   | 'sa'
   | 'sd'
   | 'si'
+  | 'sm'
   | 'sq'
   | 'sv'
   | 'ta'
