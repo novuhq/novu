@@ -53,7 +53,7 @@ Similar to the email, with SMS, custom variables using [{{handlebars}}](https://
 
 #### In-app
 
-In the notification center preview you can type the content of the notification, you can select content, and use `CMD` + `B` to make the selected text bold.
+In the notification center preview, you can type the content of the notification, you can select content and use `CMD` + `B` to make the selected text bold.
 
 #### Chat
 
@@ -106,7 +106,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 
 The `subscriberId` is a custom identifier used when identifying your users within the Novu platform. We suggest using your internal DB identifier for this field.
 
-Novu will create an upsert command, and either create a subscriber with specified payload or update the existing subscriber with the passed information.
+Novu will create an upsert command, and either create a subscriber with the specified payload, or update the existing subscriber with the passed information.
 
 **Note:** The API will perform a PATCH command, updating only the fields passed to it. So to reset a specific field you must explicitly pass `null` as the fields param.
 
