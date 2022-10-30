@@ -112,7 +112,7 @@ export class NotificationGroupsController {
     type: [NotificationGroupResponseDto],
   })
   @ApiOperation({
-    summary: 'Get notification groups',
+    summary: 'Get notification group',
   })
   getNotificationGroup(
     @UserSession() user: IJwtPayload,
@@ -134,7 +134,7 @@ export class NotificationGroupsController {
     type: DeleteNotificationGroupResponseDto,
   })
   @ApiOperation({
-    summary: 'Delete notification groups',
+    summary: 'Delete notification group',
   })
   deleteNotificationGroups(
     @UserSession() user: IJwtPayload,
