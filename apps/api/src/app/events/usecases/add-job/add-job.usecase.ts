@@ -53,6 +53,19 @@ export class AddJob {
     );
 
     await this.workflowQueueService.addToQueue(job._id, job, delay);
+    if (delay) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_DELAYED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ delay }),
+        })
+      );
+    }
   }
 
   public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {

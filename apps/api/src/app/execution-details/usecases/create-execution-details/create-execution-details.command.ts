@@ -4,12 +4,13 @@ import { EnvironmentWithSubscriber } from '../../../shared/commands/project.comm
 import { JobEntity } from '@novu/dal';
 
 export enum DetailEnum {
-  STEP_CREATED = 'Step is created for execution',
-  STEP_QUEUED = 'Step is queued for execution',
+  STEP_CREATED = 'Step created',
+  STEP_QUEUED = 'Step queued',
+  STEP_DELAYED = 'Step delayed',
   MESSAGE_CONTENT_NOT_GENERATED = 'Message content could not be generated',
   MESSAGE_CREATED = 'Message created',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
-  SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber does not have any recipient details',
+  SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber missing recipient details',
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
   MESSAGE_SENT = 'Message sent',
   PROVIDER_ERROR = 'Unexpected provider error',
