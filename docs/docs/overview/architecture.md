@@ -1,6 +1,6 @@
 # Architecture
 
-OCL was built all around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is the key for easy maintenance and integration of new functionality.
+OCL was built around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is the key for easy maintenance and integration of new functionality.
 
 Let's deep dive into the building blocks of Novu's OCL approach.
 
@@ -21,7 +21,7 @@ The production environment is a read-only environment, meaning that you can only
 
 ## Providers
 
-Providers are the delivery endpoints for your notifications. They are responsible for delivering the notifications to the end users on the specified channel. Providers usually refer to a specific channel, such as email, SMS, Chat, etc... Each provider is stateless and adheres to a specific interface, Novu will manage state and mediate all provider-specific configurations.
+Providers are the delivery endpoints for your notifications. They are responsible for delivering the notifications to the end users on the specified channel. Providers usually refer to a specific channel, such as email, SMS, Chat, etc... Each provider is stateless and adheres to a specific interface and Novu manages state and mediates all provider-specific configurations.
 
 ### Provider Types
 
@@ -40,9 +40,9 @@ Populating a subscriber with data can be done using our server side SDK. Read mo
 
 ## Trigger
 
-The trigger is responsible to let the engine know what happened and what notification template will be triggered in response to the event. Each trigger will pass the variables and data required to render the notification messages. If a value is missing the variable protection mode will be enabled and the message won't be sent.
+The trigger is responsible to let the engine know what happened and what notification template needs to be triggered in response to the event. Each trigger passes the variables and data required to render the notification messages. If a value is missing the variables, Novu enables protection mode and the message won't be sent.
 
-The trigger should only be responsible to let the system know that something has happened, but not entirely where and when the message will be delivered.
+The trigger should only be responsible to let the system know that something has happened, but not where and when the message will be delivered.
 
 ## Communication API
 
