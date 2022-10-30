@@ -86,7 +86,7 @@ If you want to test certain parts of Novu or run it in production mode though, s
 
 ## Running tests
 
-After making some changes, you can run the tests for the different package using the appropriate CLI commands.
+After making some changes, you can run the tests for the different packages using the appropriate CLI commands.
 
 ### API
 
@@ -101,7 +101,7 @@ The test will run a new instance of Novu against the test db and run the tests a
 ### Web
 
 To run the front end tests for the web project using cypress you will need to install localstack in order for all the tests to pass.
-The cypress test perform and E2E test, meaning that you will have to run the API service in the appropriate test environment.
+The cypress test performs E2E test, meaning that you will have to run the API service in the appropriate test environment.
 To run the services in test env you can use:
 
 ```shell
