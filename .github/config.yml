@@ -1,16 +1,8 @@
 # Comment to be posted on PRs from first-time contributors in Novu repository
 newPRWelcomeComment: |
-  Thank you for opening this pull request! 🙌
-  These tips will help get your PR across the finish line:
-  - Please make sure that your PR has a descriptive title and description.
-  - If this is your first time contributing to Novu, please take a look at our [Contributing Guidelines](/CONTRIBUTING.md).
-
-# Comment to be posted to on pull requests merged by a first time user
-firstPRMergeComment: >
-  Congrats on merging your first pull request! 🎉
-  We here at Novu are proud of you! 😊
+  Thank you for opening this pull request and contributing to Novu! :tada:
+  Your PR will be reviewed by a Novu team member as soon as possible. :rocket:
 
 # Comment to be posted on first-time issues
 newIssueWelcomeComment: >
   Thank you for opening your first issue here! 🛠
-  Be sure to follow the issue template!   
