@@ -12,7 +12,7 @@ import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
 import { ActivitiesResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphqStatesResponse } from './dtos/activity-graph-states-response.dto';
-import { ActivitesRequestDto } from './dtos/activites-request.dto';
+import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/activity')
@@ -36,7 +36,7 @@ export class ActivityController {
   @ExternalApiAccessible()
   getActivityFeed(
     @UserSession() user: IJwtPayload,
-    @Query() query: ActivitesRequestDto
+    @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
     let channelsQuery: ChannelTypeEnum[];
 

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelTypeEnum } from '@novu/shared';
 
-export class ActivitesRequestDto {
+export class ActivitiesRequestDto {
   @ApiProperty({
     enum: ChannelTypeEnum,
     isArray: true,
