@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
-import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
+import { IForm, useTemplateController } from '../../../components/templates/use-template-controller.hook';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { useEnvController } from '../../../store/use-env-controller';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
@@ -67,8 +67,8 @@ export default function TemplateEditorPage() {
   );
   const [saveChangesModalOpened, { close: closeSaveChangesModal, open: openSaveChangesModal }] = useDisclosure(false);
 
-  const onConfirmSaveChanges = async () => {
-    await handleSubmit(onSubmit)();
+  const onConfirmSaveChanges = async (data: IForm) => {
+    await onSubmit(data);
     closeSaveChangesModal();
     openTestWorkflowModal();
   };
@@ -159,13 +159,14 @@ export default function TemplateEditorPage() {
               isVisible={testWorkflowModalOpened}
             />
           )}
-          <SaveChangesModal
-            onConfirm={onConfirmSaveChanges}
-            isVisible={saveChangesModalOpened}
-            onDismiss={closeSaveChangesModal}
-          />
         </form>
       </PageContainer>
+      <SaveChangesModal
+        onConfirm={onConfirmSaveChanges}
+        isVisible={saveChangesModalOpened}
+        onDismiss={closeSaveChangesModal}
+        loading={isLoading || isUpdateLoading}
+      />
       <UnsavedChangesModal
         isOpen={showModal}
         cancelNavigation={cancelNavigation}

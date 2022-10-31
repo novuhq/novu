@@ -48,7 +48,7 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       {isLoading ? (
-        <VercelSetupLoader />
+        <VercelSetupLoader title="Loading..." />
       ) : (
         <AuthContainer
           title="Sign In"
