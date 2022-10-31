@@ -26,7 +26,7 @@ const StepDetails = styled(Text)<{ theme: string }>`
 `;
 
 const StepDate = styled(Text)<{ theme: string }>`
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B60)};
+  color: ${colors.B60};
   font-size: 12px;
   line-height: 16px;
   padding: 3px 0 0;
