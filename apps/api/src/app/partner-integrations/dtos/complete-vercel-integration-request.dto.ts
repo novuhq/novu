@@ -1,9 +1,8 @@
 import { IsDefined, IsString } from 'class-validator';
 
-export class SetVercelConfigurationRequestDto {
+export class CompleteVercelIntegrationRequestDto {
   @IsDefined()
-  @IsString()
-  vercelIntegrationCode: string;
+  data: Record<string, string[]>;
 
   @IsDefined()
   @IsString()
