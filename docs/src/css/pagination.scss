@@ -29,25 +29,27 @@
       content: '';
       background-repeat: no-repeat;
     }
-  
+
     &.pagination-nav__link--next {
       .pagination-nav__label {
         justify-content: flex-end;
+
         &::after {
           transform: rotateZ(180deg);
           margin-left: 8px;
         }
       }
-    } 
-  
+    }
+
     &.pagination-nav__link--prev {
       .pagination-nav__label {
         justify-content: flex-start;
+
         &::before {
           margin-right: 8px;
         }
       }
-    } 
+    }
   }
 }
 
@@ -73,12 +75,14 @@ html[data-theme='dark'] {
 html[data-theme='light'] {
   .pagination-nav {
     border-top: 1px dashed $color-gray-9;
+
     &__link {
       &:hover {
         .pagination-nav__label {
           text-decoration-color: $color-secondary-blue;
         }
       }
+
       &.pagination-nav__link--next .pagination-nav__label::after,
       &.pagination-nav__link--prev .pagination-nav__label::before {
         background-image: url('/img/arrow-blue.svg');
