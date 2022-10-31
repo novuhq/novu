@@ -31,7 +31,7 @@ export function SettingsPage() {
       content: <InAppCenterCard />,
     },
     {
-      label: 'Api Keys',
+      label: 'API Keys',
       content: <ApiKeysCard />,
     },
   ];

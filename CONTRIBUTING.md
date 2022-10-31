@@ -1,6 +1,6 @@
 # Contributing to Novu
 
-Thank you for showing an interest in contributing to Novu! All kinds of contribution are valuable to us. In this guide we will cover how you can quickly onboard and make your first contribution.
+Thank you for showing an interest in contributing to Novu! All kinds of contributions are valuable to us. In this guide, we will cover how you can quickly onboard and make your first contribution.
 
 ## Submitting an issue
 
@@ -52,7 +52,7 @@ To ensure consistency throughout the source code, please keep these rules in min
 
 ## Need help? Questions and suggestions
 
-Questions, suggestions and thoughts are most welcome. Feel free to open a [Github Discussion](https://github.com/novuhq/novu/discussions/new). We can also be reached in our [Discord Server](https://discord.novu.co).
+Questions, suggestions, and thoughts are most welcome. Feel free to open a [Github Discussion](https://github.com/novuhq/novu/discussions/new). We can also be reached in our [Discord Server](https://discord.novu.co).
 
 ## Ways to contribute
 

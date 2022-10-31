@@ -132,4 +132,32 @@ describe('Compile Template', function () {
 
     expect(result).to.equal('<div>Hello World and hello world and HELLO WORLD</div>');
   });
+
+  describe('Date Formation', function () {
+    it('should allow user to format the date', async function () {
+      const result = await useCase.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          data: {
+            date: '2020-01-01',
+          },
+          customTemplate: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
+        })
+      );
+      expect(result).to.equal('<div>Wednesday, January 1st 2020</div>');
+    });
+
+    it('should not fail and return same date for invalid date', async function () {
+      const result = await useCase.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          data: {
+            date: 'ABCD',
+          },
+          customTemplate: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
+        })
+      );
+      expect(result).to.equal('<div>ABCD</div>');
+    });
+  });
 });
