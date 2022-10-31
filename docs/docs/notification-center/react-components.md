@@ -225,6 +225,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>sa</code> (Sanskrit)</li>
           <li><code>sd</code> (Sindhi)</li>
           <li><code>si</code> (Sinhala)</li>
+          <li><code>sm</code> (Samoan)</li>
           <li><code>sv</code> (Swedish)</li>
           <li><code>ta</code> (Tamil)</li>
           <li><code>te</code> (Telugu)</li>
