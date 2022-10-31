@@ -6,7 +6,7 @@ import {
 } from '@novu/stateless';
 
 import { Pushwoosh } from 'web-push-notifications';
-
+type triggeredFunctionType = () => void;
 export class PushwooshPushProvider implements IPushProvider {
   id = 'pushwoosh';
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
@@ -17,7 +17,7 @@ export class PushwooshPushProvider implements IPushProvider {
       applicationCode: string;
       defaultNotificationTitle: string;
       autoSubscribe: boolean;
-      triggeredFunction: any;
+      triggeredFunction: triggeredFunctionType;
       userId?: string;
       tags?: object;
       defaultNotificationImageURL?: string;
@@ -26,14 +26,10 @@ export class PushwooshPushProvider implements IPushProvider {
     this.pushwooshInstance.push([
       'init',
       {
-        logLevel: 'info',
         applicationCode: this.config.applicationCode,
         defaultNotificationTitle: this.config.defaultNotificationTitle,
         defaultNotificationImage: this.config.defaultNotificationImageURL,
         autoSubscribe: this.config.autoSubscribe,
-        subscribeWidget: {
-          enable: true,
-        },
         userId: this.config.userId,
         tags: this.config.tags,
       },

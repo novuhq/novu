@@ -44,8 +44,10 @@ interface IPushwooshConfig {
   applicationCode?: string;
   defaultNotificationTitle?: string;
   autoSubscribe?: boolean;
-  triggeredFunction?: any;
+  triggeredFunction?: triggeredFunctionType;
   userId?: string;
   tags?: object;
   defaultNotificationImageURL?: string;
 }
+
+type triggeredFunctionType = () => void;
