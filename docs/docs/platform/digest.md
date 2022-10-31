@@ -6,11 +6,11 @@ sidebar_position: 5
 
 The digest engine collects multiple trigger events, aggregates them into a single message and delivers it to the subscriber.
 
-This becomes useful when a user needs to be notified on a large amount of triggers and you want to avoid sending too many notifications. Novu will automatically batch the incoming trigger events based on the `subscriberId` and an **optional** `digestKey` that can be added to control the digestion of the events.
+This becomes useful when a user needs to be notified on a large amount of triggers, and you want to avoid sending too many notifications. Novu will automatically batch the incoming trigger events based on the `subscriberId` and an **optional** `digestKey` that can be added to control the digestion of the events.
 
 ## Digest Node
 
-After adding a digest node in the workflow editor, each node that will be below the digest node will be only triggered once in the specified digest interval. You can decide to send messages before adding a digest node and they will be triggered in real-time.
+After adding a digest node in the workflow editor, each node that will be below the digest node will be only triggered once in the specified digest interval. You can decide to send messages before adding a digest node, and they will be triggered in real-time.
 
 ![Workflow Photo](/img/digest-flow.png)
 
@@ -45,7 +45,7 @@ In regular strategy, a digest will always be created for the specified window ti
 
 ### Back-off Strategy
 
-In the back-off strategy, before creating a digest, Novu will check if a message was sent to the user in the back-off period. If a message was sent, a digest will be created. Otherwise a message will be sent directly to the user and the digest creation will be skipped.
+In the back-off strategy, before creating a digest, Novu will check if a message was sent to the user in the back-off period. If a message was sent, a digest will be created. Otherwise, a message will be sent directly to the user and the digest creation will be skipped.
 
 ## Writing digest templates
 

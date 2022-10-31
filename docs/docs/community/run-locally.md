@@ -20,13 +20,13 @@ Need help installing the requirements? Read more [here](https://novuhq.notion.si
 
 ## Setup the project
 
-After installing the required services on your machine, you can clone and setup your forked version of the project:
+After installing the required services on your machine, you can clone and set up your forked version of the project:
 
 - Fork [Novu's repository](https://github.com/novuhq/novu). Clone or download your fork to your local machine.
 - Run the initial setup command `npm run setup:project` to install and build all dependencies.
 - Run the project locally using `npm run start`.
 
-The `npm run start` will start all of the services in parallel including the APIs and web clients.
+The `npm run start` will start all the services in parallel including the APIs and web clients.
 If you only want to run parts of the platform, you can use the following run commands from the root project:
 
 - **start:dev** - Synonym to `npm run start`

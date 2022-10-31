@@ -1,6 +1,6 @@
 # React Component
 
-Novu provides the `@novu/notification-center` a react library that helps to add a fully functioning notification center to your web application in minutes. Let's do a quick recap on how we can easily use it in your application:
+Novu provides the `@novu/notification-center` a React library that helps to add a fully functioning notification center to your web application in minutes. Let's do a quick recap on how we can easily use it in your application:
 
 ```bash
 npm install @novu/notification-center
@@ -98,7 +98,7 @@ Use `position` prop to position the popover relative to the Bell icon
 
 ## Custom UI
 
-If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our react library.
+If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our React library.
 Let's see an example on how you can do that:
 
 ```tsx
