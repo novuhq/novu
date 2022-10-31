@@ -10,13 +10,11 @@ import { colors, shadows, Title } from '../../design-system';
 export function ExecutionDetailsModal({
   notificationId,
   modalVisibility,
-  origin,
   onClose,
 }: {
   notificationId: string;
   modalVisibility: boolean;
   onClose: () => void;
-  origin: string;
 }) {
   const theme = useMantineTheme();
   const { data: response, isLoading } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
@@ -59,7 +57,7 @@ export function ExecutionDetailsModal({
         data-test-id="execution-details-modal-loading-overlay"
       />
       <ExecutionDetailsAccordion steps={jobs} />
-      <ExecutionDetailsFooter onClose={onClose} origin={origin} />
+      <ExecutionDetailsFooter />
     </Modal>
   );
 }
