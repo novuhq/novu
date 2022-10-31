@@ -1,20 +1,23 @@
-import { LoadingOverlay, Modal, useMantineTheme } from '@mantine/core';
+import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { useQuery } from 'react-query';
 
 import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
 import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
 
 import { getNotification } from '../../api/activity';
-import { colors, shadows, Title } from '../../design-system';
+import { colors, shadows, Text, Title } from '../../design-system';
+import { When } from '../utils/When';
 
 export function ExecutionDetailsModal({
   notificationId,
   modalVisibility,
   onClose,
+  onViewDigestExecution,
 }: {
   notificationId: string;
   modalVisibility: boolean;
   onClose: () => void;
+  onViewDigestExecution: (digestNotificationId: string) => void;
 }) {
   const theme = useMantineTheme();
   const { data: response, isLoading } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
@@ -22,7 +25,7 @@ export function ExecutionDetailsModal({
     refetchInterval: 3000,
   });
 
-  const { jobs } = response?.data || {};
+  const { jobs, _digestedNotificationId: digestedNotificationId } = response?.data || {};
 
   return (
     <Modal
@@ -57,6 +60,18 @@ export function ExecutionDetailsModal({
         data-test-id="execution-details-modal-loading-overlay"
       />
       <ExecutionDetailsAccordion steps={jobs} />
+      <When truthy={digestedNotificationId}>
+        <Center mt={20}>
+          <Text mr={10} size="md" color={colors.B60}>
+            Remaining execution has been merged to an active Digest.
+          </Text>
+        </Center>
+        <Center mt={10}>
+          <UnstyledButton onClick={() => onViewDigestExecution(digestedNotificationId)}>
+            <Text gradient>View Digest Execution</Text>
+          </UnstyledButton>
+        </Center>
+      </When>
       <ExecutionDetailsFooter />
     </Modal>
   );

@@ -6,19 +6,39 @@ import { format } from 'date-fns';
 import { useNotificationStatus } from '../hooks/useNotificationStatus';
 import { ActivityStep } from './ActivityStep';
 import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
-import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import { DigestedStep } from './DigestedStep';
 
 const JOB_LENGTH_UPPER_THRESHOLD = 3;
-const checkJobsLength = (item) => item.jobs.length > JOB_LENGTH_UPPER_THRESHOLD;
+const checkJobsLength = (item) => {
+  let length = item.jobs.length;
+  if (item._digestedNotificationId) {
+    length = length + 1;
+  }
+
+  return length > JOB_LENGTH_UPPER_THRESHOLD;
+};
+const getJobsLength = (item) => {
+  let length = item.jobs.length;
+  if (item._digestedNotificationId) {
+    length = length + 1;
+  }
+
+  return length;
+};
 
 export const ActivityItem = ({ item, onClick }) => {
   const status = useNotificationStatus(item);
   const theme = useMantineTheme();
-  const [isOld, setIsOld] = useState(false);
+  const [isOld, setIsOld] = useState<boolean>(false);
+  const [digestedNode, setDigestedNode] = useState<string>('');
 
   useEffect(() => {
     const details = item.jobs.reduce((items: any[], job) => [...items, ...job.executionDetails], []);
+    if (item._digestedNotificationId !== null) {
+      setDigestedNode(item._digestedNotificationId);
+    }
     setIsOld(details.length === 0);
   }, [item]);
 
@@ -120,10 +140,13 @@ export const ActivityItem = ({ item, onClick }) => {
                   job={job}
                 />
               ))}
+              <When truthy={!checkJobsLength(item) && digestedNode}>
+                <DigestedStep digestedId={digestedNode} onClick={onClick} />
+              </When>
               <When truthy={checkJobsLength(item)}>
                 <Grid.Col span={1}>
                   <Text align="center" size="xl">
-                    +{item.jobs.length - 3}
+                    +{getJobsLength(item) - 3}
                   </Text>
                 </Grid.Col>
               </When>

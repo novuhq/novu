@@ -8,9 +8,10 @@ interface Props {
   transactionId: string;
   isOpen: boolean;
   onClose: () => void;
+  setTransactionId: (transactionId: string) => void;
 }
 
-export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose }: Props) => {
+export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose, setTransactionId }: Props) => {
   const theme = useMantineTheme();
   const {
     data: notification,
@@ -30,7 +31,12 @@ export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose }:
         }}
       />
       {notification?.data?.length && (
-        <ExecutionDetailsModal notificationId={notification?.data[0]._id} modalVisibility={isOpen} onClose={onClose} />
+        <ExecutionDetailsModal
+          onViewDigestExecution={setTransactionId}
+          notificationId={notification?.data[0]._id}
+          modalVisibility={isOpen}
+          onClose={onClose}
+        />
       )}
     </>
   );
