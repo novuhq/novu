@@ -28,14 +28,10 @@ export class PushwooshPushProvider implements IPushProvider {
     this.pushwooshInstance.push([
       'init',
       {
-        logLevel: 'info',
         applicationCode: this.config.applicationCode,
         defaultNotificationTitle: this.config.defaultNotificationTitle,
         defaultNotificationImage: this.config.defaultNotificationImageURL,
         autoSubscribe: this.config.autoSubscribe,
-        subscribeWidget: {
-          enable: true,
-        },
         userId: this.config.userId,
         tags: this.config.tags,
       },
