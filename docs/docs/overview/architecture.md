@@ -55,4 +55,4 @@ This is the unit that is responsible for reading the configurations of the templ
 
 ## Template and Integration Stores
 
-It is esponsible for storing the configurations of all the providers and templates during the runtime of the API.
+It is responsible for storing the configurations of all the providers and templates during the runtime of the API.
