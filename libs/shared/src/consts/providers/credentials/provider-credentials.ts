@@ -163,7 +163,7 @@ export const nodemailerConfig: IConfigCredentials[] = [
     type: 'string',
     required: false,
   },
-  mailConfigBase[0],
+  ...mailConfigBase,
 ];
 
 export const postmarkConfig: IConfigCredentials[] = [
