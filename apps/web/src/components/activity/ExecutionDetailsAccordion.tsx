@@ -35,7 +35,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const ExecutionDetailsAccordion = ({ steps }) => {
+export const ExecutionDetailsAccordion = ({ steps, subscriber }) => {
   const { classes } = useStyles();
 
   if (!steps || steps.length <= 0) {
@@ -46,7 +46,11 @@ export const ExecutionDetailsAccordion = ({ steps }) => {
     <Accordion key="execution-details-accordion" iconPosition="right" classNames={classes}>
       {steps.map((step) => (
         <Accordion.Item label={<ExecutionDetailsStepHeader key={`execution-details-step-${step.id}`} step={step} />}>
-          <ExecutionDetailsStepContent key={`execution-details-step-content-${step.id}`} step={step} />
+          <ExecutionDetailsStepContent
+            key={`execution-details-step-content-${step.id}`}
+            step={step}
+            subscriber={subscriber}
+          />
         </Accordion.Item>
       ))}
     </Accordion>
