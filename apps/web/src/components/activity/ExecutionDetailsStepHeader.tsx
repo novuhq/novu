@@ -1,12 +1,13 @@
-import { Container, Grid, Group, useMantineColorScheme } from '@mantine/core';
+import { Container, Grid, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, ExecutionDetailsStatusEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
 import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
 
+import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
 import { getLogoByType } from './helpers';
 
 import { colors, Text } from '../../design-system';
-import { CheckCircle, Clicked, ErrorIcon, Read, Received, Seen, Sent } from '../../design-system/icons';
+import { CheckCircle, ErrorIcon } from '../../design-system/icons';
 
 const StepName = styled(Text)<{ theme: string }>`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
@@ -44,22 +45,6 @@ const LogoWrapper = styled(Container)`
   max-width: 50px;
   padding: 10px 10px 0 0;
   position: relative;
-`;
-
-const StepActionOutcomeWrapper = styled(Container)`
-  align-items: center;
-  display: flex;
-  flex-flow: column;
-  justify-content: center;
-  margin: 0;
-  padding: 15px 0 0;
-`;
-
-const StepActionOutcomeName = styled(Text)`
-  color: ${colors.B60};
-  font-size: 12px;
-  line-height: 16px;
-  padding-top: 5px;
 `;
 
 const getLogoStyledComponentByStepStatus = (status, type) => {
@@ -157,30 +142,6 @@ const StepOutcome = ({ createdAt, name, detail, status }) => {
   );
 };
 
-const StepActionOutcome = ({ icon, text }) => {
-  const Icon = icon;
-
-  return (
-    <StepActionOutcomeWrapper>
-      <Icon height="15px" width="15px" />
-      <StepActionOutcomeName>{text}</StepActionOutcomeName>
-    </StepActionOutcomeWrapper>
-  );
-};
-
-// TODO: Render based on API response. So far we do placeholders.
-const StepActionOutcomes = () => {
-  return (
-    <Group position="right" spacing="xs">
-      <StepActionOutcome icon={Sent} text="Sent" />
-      <StepActionOutcome icon={Received} text="Received" />
-      <StepActionOutcome icon={Read} text="Read" />
-      <StepActionOutcome icon={Seen} text="Seen" />
-      <StepActionOutcome icon={Clicked} text="Clicked" />
-    </Group>
-  );
-};
-
 export const ExecutionDetailsStepHeader = ({ step }) => {
   const { status } = step?.executionDetails.at(-1) || {};
   const generatedDetail = generateDetailByStepAndStatus(status, step);
@@ -194,7 +155,7 @@ export const ExecutionDetailsStepHeader = ({ step }) => {
         <StepOutcome createdAt={step?.createdAt} name={step?.type} detail={generatedDetail} status={status} />
       </Grid.Col>
       <Grid.Col span={4}>
-        <StepActionOutcomes />
+        <ExecutionDetailsWebhookFeedback show={false} />
       </Grid.Col>
     </Grid>
   );
