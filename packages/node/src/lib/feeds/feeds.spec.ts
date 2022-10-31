@@ -7,7 +7,7 @@ const mockConfig = {
 
 jest.mock('axios');
 
-describe('test use of novus node package - Feeds class', () => {
+describe('Use of Novu node package - Feeds class', () => {
   const mockedAxios = axios as jest.Mocked<typeof axios>;
   let novu: Novu;
 
