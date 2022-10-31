@@ -10,7 +10,7 @@ export default function CreateOrganizationPage() {
   return (
     <AuthLayout>
       {isLoading ? (
-        <VercelSetupLoader />
+        <VercelSetupLoader title="Loading..." />
       ) : (
         <AuthContainer title="Create organization" description="Create your organization!">
           <CreateOrganization />
