@@ -812,7 +812,7 @@
         'mutationObserver: ' + mutations[0].target + ' ' + mutations[0].type
       )
 
-      // Deal with WebKit / Blink asyncing image loading when tags are injected into the page
+      // Deal with WebKit / Blink async image loading when tags are injected into the page
       mutations.forEach(addImageLoadListeners)
     }
 
