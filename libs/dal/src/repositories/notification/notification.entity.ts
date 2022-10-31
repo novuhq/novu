@@ -19,4 +19,8 @@ export class NotificationEntity {
   channels?: StepTypeEnum[];
 
   _digestedNotificationId?: string;
+
+  to?: string;
+
+  payload?: string;
 }

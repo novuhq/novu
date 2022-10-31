@@ -11,34 +11,25 @@ const TriggerTitle = styled(Text)`
   padding-bottom: 20px;
 `;
 
-const buildTrigger = (identifier, subscriber, payload): INotificationTrigger => {
-  const subscriberVariables = [{ name: 'subscriberId', value: subscriber._id }];
-
-  if (subscriber.email) {
-    subscriberVariables.push({
-      name: 'email',
-      value: subscriber.email,
-    });
-  }
-
-  if (subscriber.phone) {
-    subscriberVariables.push({
-      name: 'phone',
-      value: subscriber.phone,
-    });
-  }
+const buildTrigger = (identifier, subscriberVariables, payload): INotificationTrigger => {
+  subscriberVariables = JSON.parse(subscriberVariables || '{}');
 
   return {
     type: TriggerTypeEnum.EVENT,
     identifier,
     variables: payload ? Object.entries(payload).map(([name, value]) => ({ name, value })) : [],
-    subscriberVariables,
+    subscriberVariables: Object.keys(subscriberVariables).map((key) => {
+      return {
+        name: key,
+        value: subscriberVariables[key],
+      };
+    }),
   };
 };
 
-export const ExecutionDetailTrigger = ({ step, subscriber }) => {
+export const ExecutionDetailTrigger = ({ step, subscriberVariables }) => {
   const { identifier, payload } = step || {};
-  const trigger = buildTrigger(identifier, subscriber, payload);
+  const trigger = buildTrigger(identifier, subscriberVariables, payload);
 
   return (
     <>

@@ -27,7 +27,7 @@ const GridColContainer = styled(Container)<{ theme: string }>`
   padding: 20px;
 `;
 
-export const ExecutionDetailsStepContent = ({ step, subscriber }) => {
+export const ExecutionDetailsStepContent = ({ step, subscriberVariables }) => {
   const theme = useMantineColorScheme();
   const [detailId, setDetailId] = useState<string>('');
   const [executionDetailsRawSnippet, setExecutionDetailsRawSnippet] = useState<string>('');
@@ -63,7 +63,7 @@ export const ExecutionDetailsStepContent = ({ step, subscriber }) => {
         <Grid.Col span={6}>
           <GridColContainer theme={theme}>
             <When truthy={detailId.length === 0}>
-              <ExecutionDetailTrigger step={step} subscriber={subscriber} />
+              <ExecutionDetailTrigger step={step} subscriberVariables={subscriberVariables} />
             </When>
             <When truthy={detailId.length > 0 && executionDetailsRawSnippet}>
               <ExecutionDetailRawSnippet raw={executionDetailsRawSnippet} onClose={onHideExecutionDetail} />

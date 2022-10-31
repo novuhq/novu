@@ -35,7 +35,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const ExecutionDetailsAccordion = ({ steps, subscriber }) => {
+export const ExecutionDetailsAccordion = ({ steps, subscriberVariables }) => {
   const { classes } = useStyles();
 
   if (!steps || steps.length <= 0) {
@@ -49,7 +49,7 @@ export const ExecutionDetailsAccordion = ({ steps, subscriber }) => {
           <ExecutionDetailsStepContent
             key={`execution-details-step-content-${step.id}`}
             step={step}
-            subscriber={subscriber}
+            subscriberVariables={subscriberVariables}
           />
         </Accordion.Item>
       ))}
