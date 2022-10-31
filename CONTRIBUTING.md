@@ -4,11 +4,11 @@ Thank you for showing an interest in contributing to Novu! All kinds of contribu
 
 ## Submitting an issue
 
-Before submitting a new issue, please search the issues and discussion tabs. Maybe an issue or discussion already exists and might inform you of workarounds, otherwise, you can give new information.
+Before submitting a new issue, please search the [issues](https://github.com/novuhq/novu/issues) and [discussion](https://github.com/novuhq/novu/discussions) tabs. Maybe an issue or discussion already exists and might inform you of workarounds. Otherwise, you can give new information.
 
 While we want to fix all the issues, before fixing a bug we need to be able to reproduce and confirm it. Please provide us with a minimal reproduction scenario using a repository or [Gist](https://gist.github.com/). Having a live, reproducible scenario gives us the information without asking questions back & forth with additional questions like:
 
-- 3rd-party libraries and their versions, mainly providers, but not exclusively
+- 3rd-party libraries being used and their versions (mainly providers, but not exclusively)
 - a use-case that fails
 
 Without said minimal reproduction, we won't be able to investigate all issues, and the issue might not be resolved.
