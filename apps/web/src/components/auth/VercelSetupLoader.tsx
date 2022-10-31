@@ -1,7 +1,10 @@
 import { Loader, Paper } from '@mantine/core';
 import { colors, Text } from '../../design-system';
 
-const VercelSetupLoader = () => {
+type Props = {
+  title: string;
+};
+const VercelSetupLoader = ({ title }: Props) => {
   return (
     <Paper
       sx={{
@@ -18,7 +21,7 @@ const VercelSetupLoader = () => {
       }}
     >
       <Loader color={colors.error} size={32} />
-      <Text>Setting up Vercel Integration...</Text>
+      <Text>{title}.</Text>
     </Paper>
   );
 };

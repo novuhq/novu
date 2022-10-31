@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Run Novu locally
 
-## ⚡ Immediate working space with GitPod
+## ⚡ Immediate working space with Gitpod
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
 
@@ -16,33 +16,33 @@ sidebar_position: 1
 - **(Optional)** pnpm - Needed if you want to install new packages
 - **(Optional)** localstack (required only in S3 related modules)
 
-Need help installing the requirements? Read more [here](https://novuhq.notion.site/Dev-Machine-Setup-98d274c80fa249b0b0be75b9a7a72acb#a0e6bf0db22f46d8a2677692f986e366)
+Need help installing the requirements? Read more [here](https://novuhq.notion.site/Dev-Machine-Setup-98d274c80fa249b0b0be75b9a7a72acb#a0e6bf0db22f46d8a2677692f986e366).
 
 ## Setup the project
 
-After installing the required services on your machine you can clone and setup your forked version of the project.
+After installing the required services on your machine, you can clone and setup your forked version of the project:
 
 - Fork [Novu's repository](https://github.com/novuhq/novu). Clone or download your fork to your local machine.
-- Run initial setup command `npm run setup:project` to install and build all dependencies
-- Run the project locally using: `npm run start`
+- Run the initial setup command `npm run setup:project` to install and build all dependencies.
+- Run the project locally using `npm run start`.
 
-The `npm run start` will start all of the services in parallel including the API's and web clients.
+The `npm run start` will start all of the services in parallel including the APIs and web clients.
 If you only want to run parts of the platform, you can use the following run commands from the root project:
 
 - **start:dev** - Synonym to `npm run start`
 - **start:web** - Only starts the web management platform
 - **start:ws** - Only starts the WebSocket service for notification center updates
 - **start:widget** - Starts the widget wrapper project that hosts the notification center inside an iframe
-- **start:api** - Run the API in watch mode
-- **start:dal** - Run the Data Access Layer package in watch mode
+- **start:api** - Runs the API in watch mode
+- **start:dal** - Runs the Data Access Layer package in watch mode
 - **start:shared** - Starts the watch mode for the shared client and API library
 - **start:node** - Runs the `@novu/node` package in watch mode
-- **start:notification-center** - Runs and build the React package for the Novu notification center
+- **start:notification-center** - Runs and builds the React package for the Novu notification center
 
-## Setting up environment variables
+## Set up your environment variables
 
-The command `npm run setup:project` will create default environment variables that are required for Novu to be run in a development environment.
-If you want to test certain parts of Novu or run it in production mode though, some of them will have to be changed. All available environment variables are listed below.
+The command `npm run setup:project` creates default environment variables that are required to run Novu in a development environment.
+However, if you want to test certain parts of Novu or run it in production mode, you need to change some of them. These are all the available environment variables: 
 
 <details>
     <summary>API Backend</summary>
@@ -86,42 +86,44 @@ If you want to test certain parts of Novu or run it in production mode though, s
 
 ## Running tests
 
-After making some changes, you can run the tests for the different package using the appropriate CLI commands.
+After making changes, you can run the tests for the respective package using the appropriate CLI commands:
 
 ### API
 
-To run the API tests you can simply run the following command:
+To run the API tests, run the following command:
 
 ```shell
 npm run start:e2e:api
 ```
 
-The test will run a new instance of Novu against the test db and run the tests against it. The test db will be removed after tests has finished running.
+The tests create a new instance of Novu and a test db and run the tests against it. The test db is removed after all tests have finished running.
 
 ### Web
 
-To run the front end tests for the web project using cypress you will need to install localstack in order for all the tests to pass.
-The cypress test perform and E2E test, meaning that you will have to run the API service in the appropriate test environment.
-To run the services in test env you can use:
+To run the front end tests for the web project using cypress you need to install localstack.
+The cypress tests perform E2E tests. To be able to perform E2E tests, you need to run the API service in the appropriate test environment.
+
+Run the services in test env with the following commands:
+
 
 ```shell
 npm run start:e2e:api
 npm run start:ws:test
 ```
 
-Run the cypress test suite using:
+Run the cypress test suite with the following command:
 
 ```shell
 cd apps/web && npm run cypress:run
 ```
 
-To open the cypress management windows to debug tests run:
+To open the cypress management window to debug tests, run the following commands:
 
 ```shell
 cd apps/web && npm run cypress:open
 ```
 
-### Different ports used by the services the projects spins up
+### Different ports used by the services the project spins up
 
 - **3000** - API
 - **3002** - WebSocket service
@@ -130,4 +132,4 @@ cd apps/web && npm run cypress:open
 
 ### Testing providers
 
-To run tests against the providers folder you can use the "npm run test:providers" command.
+To run tests against the providers folder, you can use the `npm run test:providers` command.
