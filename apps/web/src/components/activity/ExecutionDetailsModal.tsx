@@ -17,7 +17,7 @@ export function ExecutionDetailsModal({
   notificationId: string;
   modalVisibility: boolean;
   onClose: () => void;
-  onViewDigestExecution: (digestNotificationId: string) => void;
+  onViewDigestExecution?: (digestNotificationId: string) => void;
 }) {
   const theme = useMantineTheme();
   const { data: response, isLoading } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
@@ -66,11 +66,17 @@ export function ExecutionDetailsModal({
             Remaining execution has been merged to an active Digest.
           </Text>
         </Center>
-        <Center mt={10}>
-          <UnstyledButton onClick={() => onViewDigestExecution(digestedNotificationId)}>
-            <Text gradient>View Digest Execution</Text>
-          </UnstyledButton>
-        </Center>
+        <When truthy={onViewDigestExecution}>
+          <Center mt={10}>
+            <UnstyledButton
+              onClick={() => {
+                onViewDigestExecution && onViewDigestExecution(digestedNotificationId);
+              }}
+            >
+              <Text gradient>View Digest Execution</Text>
+            </UnstyledButton>
+          </Center>
+        </When>
       </When>
       <ExecutionDetailsFooter />
     </Modal>

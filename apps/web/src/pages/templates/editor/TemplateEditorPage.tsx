@@ -176,7 +176,6 @@ export default function TemplateEditorPage() {
         transactionId={transactionId}
         isOpen={executionModalOpened}
         onClose={closeExecutionModal}
-        setTransactionId={setTransactionId}
       />
       <UnsavedChangesModal
         isOpen={showModal}
