@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { WithHttp } from '../novu.interface';
 import {
   IEnvironmentCreatePayload,
