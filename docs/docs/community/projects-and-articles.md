@@ -13,3 +13,7 @@ Here we will showcase some of the projects and articles our community have done 
 ## Articles
 
 - [How Novu Made Email Notifications Easy For Businesses?](https://aviyel.com/post/3866/how-novu-made-email-notifications-easy-for-businesses)
+
+ <li><a href="https://aviyel.com/post/3859/why-do-notifications-matter-and-should-be-used-more-in-user-flow">
+  Why do Notifications matter and shuld be used more in user flow?</a></li>
+
