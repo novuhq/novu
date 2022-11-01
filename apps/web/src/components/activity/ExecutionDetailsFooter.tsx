@@ -7,6 +7,7 @@ import { colors, Container, Text } from '../../design-system';
 const ActionsWrapper = styled(Container)`
   margin: 0;
   padding: 0;
+  box-shadow: none;
 `;
 
 export const ExecutionDetailsFooter = () => {
