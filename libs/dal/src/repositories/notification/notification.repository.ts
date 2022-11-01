@@ -80,7 +80,7 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>) {
     return query
-      .populate('subscriber', 'firstName _id lastName email')
+      .populate('subscriber', 'firstName _id lastName email phone')
       .populate('template', 'name _id')
       .populate({
         path: 'jobs',

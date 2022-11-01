@@ -22,7 +22,7 @@ export function ExecutionDetailsModal({
     refetchInterval: 3000,
   });
 
-  const { jobs } = response?.data || {};
+  const { jobs, to: subscriberVariables } = response?.data || {};
 
   return (
     <Modal
@@ -56,7 +56,7 @@ export function ExecutionDetailsModal({
         }}
         data-test-id="execution-details-modal-loading-overlay"
       />
-      <ExecutionDetailsAccordion steps={jobs} />
+      <ExecutionDetailsAccordion steps={jobs} subscriberVariables={subscriberVariables} />
       <ExecutionDetailsFooter />
     </Modal>
   );
