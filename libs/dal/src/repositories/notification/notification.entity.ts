@@ -20,7 +20,9 @@ export class NotificationEntity {
 
   _digestedNotificationId?: string;
 
-  to?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  to?: any;
 
-  payload?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any;
 }

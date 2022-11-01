@@ -12,8 +12,6 @@ const TriggerTitle = styled(Text)`
 `;
 
 const buildTrigger = (identifier, subscriberVariables, payload): INotificationTrigger => {
-  subscriberVariables = JSON.parse(subscriberVariables || '{}');
-
   return {
     type: TriggerTypeEnum.EVENT,
     identifier,

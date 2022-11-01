@@ -37,10 +37,10 @@ const notificationSchema = new Schema(
       type: Schema.Types.String,
     },
     to: {
-      type: Schema.Types.String,
+      type: Schema.Types.Mixed,
     },
     payload: {
-      type: Schema.Types.String,
+      type: Schema.Types.Mixed,
     },
   },
   schemaOptions
