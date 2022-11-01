@@ -89,7 +89,17 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        populate: { path: 'executionDetails' },
+        select: 'createdAt digest payload providerId step status type updatedAt',
+        populate: [
+          {
+            path: 'executionDetails',
+            select: 'createdAt detail isRetry isTest providerId raw source status updatedAt',
+          },
+          {
+            path: 'step',
+            select: '_parentId _templateId active filters template',
+          },
+        ],
       });
   }
 
