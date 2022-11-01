@@ -1,3 +1,3 @@
 import { APNSPushProvider } from './apns.provider';
 
-test('should trigger apns library correctly', async () => {});
+test('should trigger apns test library correctly', async () => {});
