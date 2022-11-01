@@ -22,3 +22,4 @@ export { ChannelButton } from './template-button/ChannelButton';
 export { PasswordInput } from './password-input/PasswordInput';
 export { SegmentedControl } from './segmented-control/SegmentedControl';
 export { NotificationBadge } from './notification-badge/NotificationBadge';
+export { Modal } from './modal/Modal';

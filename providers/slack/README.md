@@ -11,5 +11,5 @@ const provider = new SlackProvider({
   applicationId: process.env.APPLICATION_ID,
   clientID: process.env.CLIENT_ID,
   secretKey: process.env.SECRET_KEY,
-});```
+});
 ````

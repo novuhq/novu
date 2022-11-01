@@ -87,7 +87,7 @@ export function LoginForm({}: Props) {
             leftIcon={<Github />}
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
-            Sign In with Github
+            Sign In with GitHub
           </GithubButton>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>

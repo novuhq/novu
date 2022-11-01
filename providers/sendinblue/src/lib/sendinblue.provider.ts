@@ -1,10 +1,12 @@
 import {
   ChannelTypeEnum,
+  CheckIntegrationResponseEnum,
+  EmailEventStatusEnum,
+  ICheckIntegrationResponse,
+  IEmailEventBody,
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-  ICheckIntegrationResponse,
-  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import {
   SendSmtpEmail,
@@ -52,6 +54,64 @@ export class SendinblueEmailProvider implements IEmailProvider {
       id: body?.messageId,
       date: response?.headers?.date,
     };
+  }
+
+  getMessageId(body: any | any[]): string[] {
+    if (Array.isArray(body)) {
+      return body.map((item) => item['message-id']);
+    }
+
+    return [body['message-id']];
+  }
+
+  parseEventBody(
+    body: any | any[],
+    identifier: string
+  ): IEmailEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item['message-id'] === identifier);
+    }
+
+    if (!body) {
+      return undefined;
+    }
+
+    const status = this.getStatus(body.event);
+
+    if (status === undefined) {
+      return undefined;
+    }
+
+    return {
+      status: status,
+      date: new Date(body.date).toISOString(),
+      externalId: body.id,
+      row: body,
+    };
+  }
+
+  private getStatus(event: string): EmailEventStatusEnum | undefined {
+    switch (event) {
+      case 'opened':
+      case 'uniqueOpened':
+      case 'proxy_open':
+        return EmailEventStatusEnum.OPENED;
+      case 'request':
+      case 'delivered':
+      case 'complaint':
+        return EmailEventStatusEnum.DELIVERED;
+      case 'hardBounce':
+      case 'softBounce':
+      case 'blocked':
+      case 'unsubscribed':
+        return EmailEventStatusEnum.BOUNCED;
+      case 'click':
+        return EmailEventStatusEnum.CLICKED;
+      case 'invalid_email':
+      case 'error':
+        return EmailEventStatusEnum.DROPPED;
+      // case 'deferred':
+    }
   }
 
   async checkIntegration(
