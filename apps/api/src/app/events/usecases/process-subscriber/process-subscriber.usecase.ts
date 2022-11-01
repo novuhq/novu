@@ -149,8 +149,8 @@ export class ProcessSubscriber {
       _subscriberId: subscriber._id,
       _templateId: templateId,
       transactionId: command.transactionId,
-      to: JSON.stringify(command.to),
-      payload: JSON.stringify(command.payload),
+      to: command.to,
+      payload: command.payload,
     });
   }
 }
