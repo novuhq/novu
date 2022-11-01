@@ -16,6 +16,9 @@ const useStyles = createStyles((theme) => ({
     paddingLeft: '25px',
     paddingRight: '25px',
     paddingTop: '15px',
+    '&:hover': {
+      borderRadius: '7px',
+    },
   },
   item: {
     border: `1px solid ${theme.colorScheme === 'dark' ? colors.B30 : colors.B85}`,
