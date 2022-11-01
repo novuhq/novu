@@ -16,12 +16,14 @@ const buildTrigger = (identifier, subscriberVariables, payload): INotificationTr
     type: TriggerTypeEnum.EVENT,
     identifier,
     variables: payload ? Object.entries(payload).map(([name, value]) => ({ name, value })) : [],
-    subscriberVariables: Object.keys(subscriberVariables).map((key) => {
-      return {
-        name: key,
-        value: subscriberVariables[key],
-      };
-    }),
+    subscriberVariables: subscriberVariables
+      ? Object.keys(subscriberVariables).map((key) => {
+          return {
+            name: key,
+            value: subscriberVariables[key],
+          };
+        })
+      : [],
   };
 };
 
