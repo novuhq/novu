@@ -91,6 +91,7 @@ export function TestWorkflowModal({
         value={toValue}
         onChange={setToValue}
         minRows={3}
+        validationError="Invalid Json"
       />
       <JsonInput
         data-test-id="test-trigger-payload-param"
@@ -101,6 +102,7 @@ export function TestWorkflowModal({
         value={payloadValue}
         onChange={setPayloadValue}
         minRows={3}
+        validationError="Invalid Json"
       />
       <JsonInput
         data-test-id="test-trigger-overrides-param"
@@ -111,6 +113,7 @@ export function TestWorkflowModal({
         value={overridesValue}
         onChange={setOverridesValue}
         minRows={3}
+        validationError="Invalid Json"
       />
 
       <div style={{ alignItems: 'end' }}>
