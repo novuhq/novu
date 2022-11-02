@@ -41,6 +41,7 @@ export function AddNodeEdge({
       <path style={style} className="react-flow__edge-path" d={edgePath} markerEnd={markerEnd} />
 
       <NodeWrapper
+        size={foreignObjectSize}
         width={foreignObjectSize}
         height={foreignObjectSize}
         x={centerX - foreignObjectSize / 2}
@@ -64,10 +65,10 @@ export function AddNodeEdge({
   );
 }
 
-const NodeWrapper = styled.foreignObject`
+const NodeWrapper = styled.foreignObject<{ size: number }>`
   opacity: 0;
-  height: 30px;
-  width: 30px;
+  height: ${({ size }) => `${size}px`};
+  width: ${({ size }) => `${size}px`};
   -webkit-transition: opacity 0.3s ease-in-out;
   -moz-transition: opacity 0.3s ease-in-out;
   -ms-transition: opacity 0.3s ease-in-out;

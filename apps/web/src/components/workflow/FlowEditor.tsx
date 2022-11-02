@@ -125,7 +125,6 @@ export function FlowEditor({
 
       const type = event.dataTransfer.getData('application/reactflow');
       const parentId = nodes[nodes.length - 2].id;
-      const dropId = event.target.dataset.id;
 
       if (typeof type === 'undefined' || !type || typeof parentId === 'undefined') {
         return;
@@ -133,7 +132,7 @@ export function FlowEditor({
 
       const parentNode = reactFlowInstance?.getNode(parentId);
 
-      if (typeof parentNode === 'undefined' || dropId !== '2') {
+      if (typeof parentNode === 'undefined') {
         return;
       }
 
