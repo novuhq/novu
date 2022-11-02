@@ -130,7 +130,12 @@ export function ActivitiesPage() {
           onPageChange: handleTableChange,
         }}
       />
-      <ExecutionDetailsModal notificationId={notificationId} modalVisibility={isModalOpen} onClose={onModalClose} />
+      <ExecutionDetailsModal
+        onViewDigestExecution={setNotificationId}
+        notificationId={notificationId}
+        modalVisibility={isModalOpen}
+        onClose={onModalClose}
+      />
     </PageContainer>
   );
 }
