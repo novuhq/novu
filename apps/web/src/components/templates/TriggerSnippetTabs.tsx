@@ -4,7 +4,11 @@ import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
-  const subscriberVariables = [{ name: 'subscriberId' }, ...(trigger.subscriberVariables || [])];
+  const { subscriberVariables: triggerSubscriberVariables = [] } = trigger || {};
+  const isPassingSubscriberId = triggerSubscriberVariables?.find((el) => el.name === 'subscriberId');
+  const subscriberVariables = isPassingSubscriberId
+    ? [...triggerSubscriberVariables]
+    : [{ name: 'subscriberId' }, ...triggerSubscriberVariables];
 
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
@@ -14,14 +18,14 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
   to: { 
     ${subscriberVariables
       ?.map((variable) => {
-        return `${variable.name}: '<REPLACE_WITH_DATA>'`;
+        return `${variable.name}: '${variable.value || '<REPLACE_WITH_DATA>'}'`;
       })
       .join(',\n    ')}
   },
   payload: {
     ${trigger.variables
-      .map((variable) => {
-        return `${variable.name}: '<REPLACE_WITH_DATA>'`;
+      ?.map((variable) => {
+        return `${variable.name}: '${variable.value || '<REPLACE_WITH_DATA>'}'`;
       })
       .join(',\n    ')} 
   }
@@ -36,14 +40,14 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
         "to" : {
             ${subscriberVariables
               ?.map((variable) => {
-                return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
+                return `"${variable.name}": "${variable.value || '<REPLACE_WITH_DATA>'}"`;
               })
               .join(',\n            ')} 
         },
         "payload": {
             ${trigger.variables
-              .map((variable) => {
-                return `"${variable.name}": "<REPLACE_WITH_DATA>"`;
+              ?.map((variable) => {
+                return `"${variable.name}": "${variable.value || '<REPLACE_WITH_DATA>'}"`;
               })
               .join(',\n            ')}
         }

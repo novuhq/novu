@@ -6,7 +6,10 @@ import { AddDelayJob } from './add-delay-job.usecase';
 import { AddDigestJob } from './add-digest-job.usecase';
 import { AddJobCommand } from './add-job.command';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class AddJob {
@@ -41,15 +44,28 @@ export class AddJob {
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-        detail: `Step is queued for execution`,
+        detail: DetailEnum.STEP_QUEUED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
       })
     );
 
     await this.workflowQueueService.addToQueue(job._id, job, delay);
+    if (delay) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_DELAYED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({ delay }),
+        })
+      );
+    }
   }
 
   public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {

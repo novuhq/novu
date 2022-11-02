@@ -128,6 +128,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     const jobs = await jobRepository.find({
       _templateId: template._id,
+      status: {
+        $nin: [JobStatusEnum.CANCELED],
+      },
     });
 
     const digestJob = jobs.find((job) => job.step.template.type === StepTypeEnum.DIGEST);
@@ -186,16 +189,20 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
+    await awaitRunningJobs(1);
+
     await triggerEvent({
       customVar: 'digest',
     });
 
+    await awaitRunningJobs(1);
+
     const delayedJob = await jobRepository.findOne({
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
+      status: JobStatusEnum.DELAYED,
     });
 
-    await awaitRunningJobs(2);
     await runJob.execute(
       RunJobCommand.create({
         jobId: delayedJob._id,
@@ -304,6 +311,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       id,
     });
 
+    await awaitRunningJobs(1);
+
     await triggerEvent({
       customVar: 'Testing of User Name',
       id,
@@ -313,7 +322,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'digest',
       id: 'second-batch',
     });
-
     await awaitRunningJobs(2);
 
     const delayedJobs = await jobRepository.find({
@@ -581,7 +589,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const pendingJobs = await jobRepository.find({
       _templateId: template._id,
       status: {
-        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED],
+        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED, JobStatusEnum.CANCELED],
       },
     });
 
@@ -935,16 +943,18 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
+    await awaitRunningJobs(1);
+
     await triggerEvent({
       customVar: 'digest',
     });
+
+    await awaitRunningJobs(1);
 
     const delayedJob = await jobRepository.findOne({
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
-
-    await awaitRunningJobs(2);
 
     await runJob.execute(
       RunJobCommand.create({
@@ -990,16 +1000,20 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
+    await awaitRunningJobs(1);
+
     await triggerEvent({
       customVar: 'digest',
     });
 
+    await awaitRunningJobs(1);
+
     const delayedJob = await jobRepository.findOne({
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
+      status: JobStatusEnum.DELAYED,
     });
 
-    await awaitRunningJobs(2);
     await runJob.execute(
       RunJobCommand.create({
         jobId: delayedJob._id,

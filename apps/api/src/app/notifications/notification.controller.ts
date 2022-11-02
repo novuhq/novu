@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
 import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
 import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
@@ -10,18 +10,21 @@ import { GetActivityGraphStats } from './usecases/get-acticity-graph-states/get-
 import { GetActivityGraphStatsCommand } from './usecases/get-acticity-graph-states/get-acticity-graph-states.command';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
-import { ActivitiesResponseDto } from './dtos/activities-response.dto';
+import { ActivitiesResponseDto, ActivityNotificationResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphqStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivitesRequestDto } from './dtos/activites-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { GetActivity } from './usecases/get-activity/get-activity.usecase';
+import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
 
-@Controller('/activity')
-@ApiTags('Activity')
-export class ActivityController {
+@Controller('/notifications')
+@ApiTags('Notification')
+export class NotificationsController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
     private getActivityStatsUsecase: GetActivityStats,
-    private getActivityGraphStatsUsecase: GetActivityGraphStats
+    private getActivityGraphStatsUsecase: GetActivityGraphStats,
+    private getActivityUsecase: GetActivity
   ) {}
 
   @Get('')
@@ -29,11 +32,11 @@ export class ActivityController {
     type: ActivitiesResponseDto,
   })
   @ApiOperation({
-    summary: 'Get activity feed',
+    summary: 'Get notifications',
   })
   @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
-  getActivityFeed(
+  getNotifications(
     @UserSession() user: IJwtPayload,
     @Query() query: ActivitesRequestDto
   ): Promise<ActivitiesResponseDto> {
@@ -63,6 +66,7 @@ export class ActivityController {
         templates: templatesQuery,
         emails: emailsQuery,
         search: query.search,
+        transactionId: query.transactionId,
       })
     );
   }
@@ -71,7 +75,7 @@ export class ActivityController {
     type: ActivityStatsResponseDto,
   })
   @ApiOperation({
-    summary: 'Get activity statistics',
+    summary: 'Get notification statistics',
   })
   @Get('/stats')
   @UseGuards(JwtAuthGuard)
@@ -93,7 +97,7 @@ export class ActivityController {
     type: [ActivityGraphqStatesResponse],
   })
   @ApiOperation({
-    summary: 'Get activity graph statistics',
+    summary: 'Get notification graph statistics',
   })
   @ApiQuery({
     name: 'days',
@@ -107,6 +111,29 @@ export class ActivityController {
     return this.getActivityGraphStatsUsecase.execute(
       GetActivityGraphStatsCommand.create({
         days: days ? Number(days) : 32,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @Get('/:notificationId')
+  @ApiOkResponse({
+    type: ActivityNotificationResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get notification',
+  })
+  @UseGuards(JwtAuthGuard)
+  @ExternalApiAccessible()
+  getActivity(
+    @UserSession() user: IJwtPayload,
+    @Param('notificationId') notificationId: string
+  ): Promise<ActivityNotificationResponseDto> {
+    return this.getActivityUsecase.execute(
+      GetActivityCommand.create({
+        notificationId: notificationId,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,

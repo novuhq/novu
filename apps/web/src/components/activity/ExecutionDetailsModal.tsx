@@ -1,10 +1,28 @@
-import { Group, Modal, useMantineTheme } from '@mantine/core';
-import { colors, shadows, Title, Text } from '../../design-system';
+import { LoadingOverlay, Modal, useMantineTheme } from '@mantine/core';
+import { useQuery } from 'react-query';
 
-import { GotAQuestionButton } from '../utils/GotAQuestionButton';
+import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
+import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
 
-export function ExecutionDetailsModal({ modalVisibility, onClose }: { modalVisibility: boolean; onClose: () => void }) {
+import { getNotification } from '../../api/activity';
+import { colors, shadows, Title } from '../../design-system';
+
+export function ExecutionDetailsModal({
+  notificationId,
+  modalVisibility,
+  onClose,
+}: {
+  notificationId: string;
+  modalVisibility: boolean;
+  onClose: () => void;
+}) {
   const theme = useMantineTheme();
+  const { data: response, isLoading } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
+    enabled: !!notificationId,
+    refetchInterval: 3000,
+  });
+
+  const { jobs, to: subscriberVariables } = response?.data || {};
 
   return (
     <Modal
@@ -14,6 +32,7 @@ export function ExecutionDetailsModal({ modalVisibility, onClose }: { modalVisib
       styles={{
         modal: {
           backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
+          width: '90%',
         },
         body: {
           paddingTop: '5px',
@@ -29,12 +48,16 @@ export function ExecutionDetailsModal({ modalVisibility, onClose }: { modalVisib
       size="lg"
       onClose={onClose}
     >
-      <div>
-        <Text>TODO</Text>
-        <Group position="right">
-          <GotAQuestionButton mt={30} size="md" />
-        </Group>
-      </div>
+      <LoadingOverlay
+        visible={isLoading}
+        overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
+        loaderProps={{
+          color: colors.error,
+        }}
+        data-test-id="execution-details-modal-loading-overlay"
+      />
+      <ExecutionDetailsAccordion steps={jobs} subscriberVariables={subscriberVariables} />
+      <ExecutionDetailsFooter />
     </Modal>
   );
 }

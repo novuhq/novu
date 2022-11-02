@@ -1,4 +1,9 @@
-import { ChannelCTATypeEnum, StepTypeEnum, IEmailBlock } from '../../entities/message-template';
+import {
+  ChannelCTATypeEnum,
+  MessageTemplateContentType,
+  StepTypeEnum,
+  IEmailBlock,
+} from '../../entities/message-template';
 import { IMessageCTA } from '../../entities/messages';
 
 export class ChannelCTADto {
@@ -14,7 +19,7 @@ export class MessageTemplateDto {
 
   content: string | IEmailBlock[];
 
-  contentType?: 'editor' | 'customHtml';
+  contentType?: MessageTemplateContentType;
 
   cta?: IMessageCTA;
 }

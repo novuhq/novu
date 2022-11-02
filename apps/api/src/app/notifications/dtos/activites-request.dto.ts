@@ -29,4 +29,10 @@ export class ActivitesRequestDto {
     required: false,
   })
   page?: number = 0;
+
+  @ApiPropertyOptional({
+    type: String,
+    required: false,
+  })
+  transactionId: string;
 }

@@ -4,6 +4,7 @@ import { MessageEntity } from '@novu/dal';
 
 import { WebhookTypes } from '../../interfaces/webhook.interface';
 import { IWebhookResult } from '../../dtos/webhooks-response.dto';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export class CreateExecutionDetailsCommand {
   @IsDefined()
@@ -14,6 +15,9 @@ export class CreateExecutionDetailsCommand {
 
   @IsDefined()
   webhookEvent: IWebhookResult;
+
+  @IsDefined()
+  channel: ChannelTypeEnum;
 }
 
 export class WebhookCommand extends EnvironmentCommand {

@@ -206,6 +206,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ko</code> (Korean)</li>
           <li><code>ku</code> (Kurdish)</li>
           <li><code>lo</code> (Lao)</li>
+          <li><code>lt</code> (Lithuanian)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>mr</code> (Marathi)</li>
           <li><code>ms</code> (Malay)</li>
@@ -233,6 +234,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>vi</code> (Vietnamese)</li>
           <li><code>zu</code> (Zulu)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>sq</code> (Albanian)</li>
         </ul>
       </div>
   </details>

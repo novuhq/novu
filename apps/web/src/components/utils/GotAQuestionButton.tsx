@@ -14,10 +14,12 @@ const useShowIntercom = () => {
 export function GotAQuestionButton({ mt, size }: { mt: number; size: Size }) {
   const showIntercom = useShowIntercom();
 
+  const text = 'Got a question?';
+
   return (
     showIntercom && (
       <Button mt={mt} size={size} onClick={showIntercom}>
-        Got a question?
+        {text}
       </Button>
     )
   );

@@ -32,7 +32,10 @@ import {
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageType {
@@ -78,9 +81,39 @@ export class SendMessageEmail extends SendMessageType {
       )
     )[0];
 
-    const overrides = command.overrides[integration.providerId] || {};
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
+    const overrides = command.overrides[integration?.providerId] || {};
     let subject = '';
     let content: string | IEmailBlock[] = '';
+
+    const payload = {
+      subject: emailChannel.template.subject,
+      branding: {
+        logo: organization.branding?.logo,
+        color: organization.branding?.color || '#f47373',
+      },
+      blocks: [],
+      step: {
+        digest: !!command.events.length,
+        events: command.events,
+        total_count: command.events.length,
+      },
+      subscriber,
+      ...command.payload,
+    };
 
     try {
       subject = await this.renderContent(
@@ -96,26 +129,12 @@ export class SendMessageEmail extends SendMessageType {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: 'Message subject and content could not be generated',
+          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({
-            subject: emailChannel.template.subject,
-            branding: {
-              logo: organization.branding?.logo,
-              color: organization.branding?.color || '#f47373',
-            },
-            blocks: [],
-            step: {
-              digest: !!command.events.length,
-              events: command.events,
-              total_count: command.events.length,
-            },
-            subscriber,
-            ...command.payload,
-          }),
+          raw: JSON.stringify(payload),
         })
       );
     }
@@ -135,7 +154,7 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
-      providerId: integration.providerId,
+      providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
@@ -145,13 +164,13 @@ export class SendMessageEmail extends SendMessageType {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: 'Message created',
+        detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.SUCCESS,
+        status: ExecutionDetailsStatusEnum.PENDING,
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(messagePayload),
+        raw: JSON.stringify(payload),
       })
     );
 
@@ -221,7 +240,7 @@ export class SendMessageEmail extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: mailErrorMessage,
+          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -246,7 +265,7 @@ export class SendMessageEmail extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: integrationError,
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -282,7 +301,7 @@ export class SendMessageEmail extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Message sent',
+          detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
@@ -309,7 +328,7 @@ export class SendMessageEmail extends SendMessageType {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: 'Error while sending email with provider',
+          detail: DetailEnum.PROVIDER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,

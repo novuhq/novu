@@ -28,10 +28,12 @@ export class GetDecryptedIntegrations {
       ? [await this.integrationRepository.findOne(query)]
       : await this.integrationRepository.find(query);
 
-    return integrations.map((integration: IntegrationEntity) => {
-      integration.credentials = decryptCredentials(integration.credentials);
+    return integrations
+      .filter((integration) => integration)
+      .map((integration: IntegrationEntity) => {
+        integration.credentials = decryptCredentials(integration.credentials);
 
-      return integration;
-    });
+        return integration;
+      });
   }
 }

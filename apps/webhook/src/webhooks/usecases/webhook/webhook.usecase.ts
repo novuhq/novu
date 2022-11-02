@@ -25,12 +25,13 @@ export class Webhook {
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
     const providerId = command.providerId;
+    const channel: ChannelTypeEnum = command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS;
 
     const integration: IntegrationEntity = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       providerId,
-      channel: command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS,
+      channel,
     });
 
     if (!integration) {
@@ -43,17 +44,17 @@ export class Webhook {
       throw new NotFoundException(`Provider with ${providerId} can not handle webhooks`);
     }
 
-    return await this.parseEvents(command);
+    return await this.parseEvents(command, channel);
   }
 
-  private async parseEvents(command: WebhookCommand): Promise<IWebhookResult[]> {
+  private async parseEvents(command: WebhookCommand, channel: ChannelTypeEnum): Promise<IWebhookResult[]> {
     const body = command.body;
     const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
     const events: IWebhookResult[] = [];
 
     for (const messageIdentifier of messageIdentifiers) {
-      const event = await this.parseEvent(messageIdentifier, command);
+      const event = await this.parseEvent(messageIdentifier, command, channel);
 
       if (event === undefined) {
         continue;
@@ -65,7 +66,11 @@ export class Webhook {
     return events;
   }
 
-  private async parseEvent(messageIdentifier, command: WebhookCommand): Promise<IWebhookResult | undefined> {
+  private async parseEvent(
+    messageIdentifier,
+    command: WebhookCommand,
+    channel: ChannelTypeEnum
+  ): Promise<IWebhookResult | undefined> {
     const message = await this.messageRepository.findOne({
       identifier: messageIdentifier,
       _environmentId: command.environmentId,
@@ -98,6 +103,7 @@ export class Webhook {
       message,
       webhook: command,
       webhookEvent: parsedEvent,
+      channel,
     });
 
     return parsedEvent;
