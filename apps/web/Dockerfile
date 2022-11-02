@@ -1,6 +1,9 @@
+# syntax=docker/dockerfile:1.4
 FROM nikolaik/python-nodejs:python3.10-nodejs16-slim
 
 WORKDIR /usr/src/app
+
+RUN chown -R 1000:root .
 
 RUN npm install -g pnpm@7.5.0 --loglevel notice
 
@@ -24,7 +27,9 @@ COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
-RUN pnpm install
+RUN -mount=type=cache,id=pnpm-store-web,target=/root/.pnpm-store \
+     pnpm install
+
 RUN pnpm add @babel/core -w
 
 COPY .eslintrc.js .

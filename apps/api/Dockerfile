@@ -52,12 +52,14 @@ ENV CI=true
 
 WORKDIR /usr/src/app
 
+RUN chown -R 1000:root .
+
 COPY ./meta .
 
 # Get the build artifacts that only include dist folders
 COPY --from=assets /usr/src/app .
 
-RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
+RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  pnpm install --filter "{${PACKAGE_PATH}}..."\
      --frozen-lockfile\
      --unsafe-perm\

@@ -2,6 +2,8 @@ FROM node:16-buster-slim
 
 WORKDIR /usr/src/app
 
+RUN chown -R 1000:root .
+
 RUN npm install -g pnpm@7.5.0 --loglevel notice
 RUN npm i pm2 -g
 

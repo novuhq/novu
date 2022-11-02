@@ -2,6 +2,8 @@ FROM nikolaik/python-nodejs:python3.10-nodejs16-slim
 
 WORKDIR /usr/src/app
 
+RUN chown -R 1000:root .
+
 RUN npm install -g pnpm@7.5.0 --loglevel notice --force
 
 COPY .npmrc .

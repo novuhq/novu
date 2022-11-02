@@ -52,6 +52,8 @@ ENV CI=true
 
 WORKDIR /usr/src/app
 
+RUN chown -R 1000:root .
+
 COPY ./meta .
 
 # Get the build artifacts that only include dist folders
