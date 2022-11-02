@@ -25,7 +25,14 @@ export function ExecutionDetailsModal({
     refetchInterval: 3000,
   });
 
-  const { jobs, _digestedNotificationId: digestedNotificationId, to: subscriberVariables } = response?.data || {};
+  const {
+    jobs,
+    _digestedNotificationId: digestedNotificationId,
+    to: subscriberVariables,
+    template,
+  } = response?.data || {};
+  const { triggers } = template || {};
+  const identifier = triggers ? triggers[0]?.identifier : undefined;
 
   return (
     <Modal
@@ -65,7 +72,7 @@ export function ExecutionDetailsModal({
         data-test-id="execution-details-modal-loading-overlay"
       />
 
-      <ExecutionDetailsAccordion steps={jobs} subscriberVariables={subscriberVariables} />
+      <ExecutionDetailsAccordion identifier={identifier} steps={jobs} subscriberVariables={subscriberVariables} />
       <When truthy={digestedNotificationId}>
         <Center mt={20}>
           <Text mr={10} size="md" color={colors.B60}>

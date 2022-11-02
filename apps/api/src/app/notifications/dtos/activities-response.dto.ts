@@ -126,12 +126,37 @@ class ActivityNotificationSubscriberResponseDto {
   phone?: string;
 }
 
+class NotificationTriggerVariable {
+  name: string;
+}
+
+class NotificationTrigger {
+  @ApiProperty()
+  type: 'event';
+
+  @ApiProperty()
+  identifier: string;
+
+  @ApiProperty({
+    type: [NotificationTriggerVariable],
+  })
+  variables: NotificationTriggerVariable[];
+
+  @ApiProperty({
+    type: [NotificationTriggerVariable],
+  })
+  subscriberVariables?: NotificationTriggerVariable[];
+}
+
 class ActivityNotificationTemplateResponseDto {
   @ApiPropertyOptional()
   _id?: string;
 
   @ApiProperty()
   name: string;
+
+  @ApiProperty()
+  triggers: NotificationTrigger[];
 }
 
 export class ActivityNotificationResponseDto {
