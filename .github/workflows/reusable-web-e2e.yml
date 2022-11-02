@@ -134,6 +134,7 @@ jobs:
           browser: chrome
           component: true
           record: true
+          parallel: true
           install: false
           config-file: cypress.config.ts
 
