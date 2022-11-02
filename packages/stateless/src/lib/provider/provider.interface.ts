@@ -77,8 +77,6 @@ export enum EmailEventStatusEnum {
   BLOCKED = 'blocked',
   SPAM = 'spam',
   UNSUBSCRIBED = 'unsubscribed',
-  SPAM_COMPLAINED = 'spam complained',
-  SUBSCRIPTION_CHANGED = 'subscription changed',
 }
 
 export enum SmsEventStatusEnum {
@@ -92,7 +90,6 @@ export enum SmsEventStatusEnum {
   FAILED = 'failed',
   UNDELIVERED = 'undelivered',
   RECEIVING = 'receiving',
-  DELIVERY_UNCONFIRMED = 'delivery unconfirmed',
 }
 
 export interface IEventBody {

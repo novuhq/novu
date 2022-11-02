@@ -23,7 +23,7 @@ export enum MandrillStatusEnum {
   UNSUBSCRIBED = 'unsub',
   REJECTED = 'reject',
 }
-  
+
 export class MandrillProvider implements IEmailProvider {
   id = 'mandrill';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -149,7 +149,7 @@ export class MandrillProvider implements IEmailProvider {
       case MandrillStatusEnum.SOFT_BOUNCED:
         return EmailEventStatusEnum.BOUNCED;
       case MandrillStatusEnum.UNSUBSCRIBED:
-        return EmailEventStatusEnum.SUBSCRIPTION_CHANGED;
+        return EmailEventStatusEnum.UNSUBSCRIBED;
       case MandrillStatusEnum.DEFERRED:
         return EmailEventStatusEnum.DEFERRED;
     }
