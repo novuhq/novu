@@ -133,7 +133,7 @@ Using the Novu API and admin panel, you can easily add a real-time notification 
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
 
 #### 💌 Email
 
