@@ -8,6 +8,7 @@
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "precommit": "lint-staged",
+    "docker:build": "docker build -f ./Dockerfile -t novu-web ./../..",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
     "start:static:build": "pnpm envsetup:docker && http-server build -p 4200 --proxy http://localhost:4200?",

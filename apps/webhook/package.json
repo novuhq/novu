@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "build:docker": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | docker build --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | docker build --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nodemon",
     "start:dev": "nodemon",
