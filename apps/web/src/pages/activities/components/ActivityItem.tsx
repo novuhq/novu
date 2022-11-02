@@ -11,14 +11,11 @@ import { useEffect, useState } from 'react';
 import { DigestedStep } from './DigestedStep';
 
 const JOB_LENGTH_UPPER_THRESHOLD = 3;
-const checkJobsLength = (item) => {
-  let length = item.jobs.length;
-  if (item._digestedNotificationId) {
-    length = length + 1;
-  }
 
-  return length > JOB_LENGTH_UPPER_THRESHOLD;
+const checkJobsLength = (item) => {
+  return getJobsLength(item) > JOB_LENGTH_UPPER_THRESHOLD;
 };
+
 const getJobsLength = (item) => {
   let length = item.jobs.length;
   if (item._digestedNotificationId) {
