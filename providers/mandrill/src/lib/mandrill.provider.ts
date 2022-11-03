@@ -22,6 +22,7 @@ export enum MandrillStatusEnum {
   SPAM = 'spam',
   UNSUBSCRIBED = 'unsub',
   REJECTED = 'reject',
+  DELIVERED = 'delivered',
 }
 
 export class MandrillProvider implements IEmailProvider {
@@ -152,6 +153,8 @@ export class MandrillProvider implements IEmailProvider {
         return EmailEventStatusEnum.UNSUBSCRIBED;
       case MandrillStatusEnum.DEFERRED:
         return EmailEventStatusEnum.DEFERRED;
+      case MandrillStatusEnum.DELIVERED:
+        return EmailEventStatusEnum.DELIVERED;
     }
   }
 }
