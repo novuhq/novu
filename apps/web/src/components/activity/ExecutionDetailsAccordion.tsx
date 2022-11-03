@@ -1,11 +1,8 @@
 import { Accordion, createStyles } from '@mantine/core';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import styled from 'styled-components';
-
 import { ExecutionDetailsStepContent } from './ExecutionDetailsStepContent';
 import { ExecutionDetailsStepHeader } from './ExecutionDetailsStepHeader';
 
-import { colors, shadows } from '../../design-system';
+import { colors } from '../../design-system';
 
 const useStyles = createStyles((theme) => ({
   chevron: {
@@ -16,6 +13,9 @@ const useStyles = createStyles((theme) => ({
     paddingLeft: '25px',
     paddingRight: '25px',
     paddingTop: '15px',
+    '&:hover': {
+      borderRadius: '7px',
+    },
   },
   item: {
     border: `1px solid ${theme.colorScheme === 'dark' ? colors.B30 : colors.B85}`,
@@ -45,7 +45,7 @@ export const ExecutionDetailsAccordion = ({ steps, subscriberVariables }) => {
   return (
     <Accordion key="execution-details-accordion" iconPosition="right" classNames={classes}>
       {steps.map((step) => (
-        <Accordion.Item label={<ExecutionDetailsStepHeader key={`execution-details-step-${step.id}`} step={step} />}>
+        <Accordion.Item key={`execution-details-step-${step.id}`} label={<ExecutionDetailsStepHeader step={step} />}>
           <ExecutionDetailsStepContent
             key={`execution-details-step-content-${step.id}`}
             step={step}
