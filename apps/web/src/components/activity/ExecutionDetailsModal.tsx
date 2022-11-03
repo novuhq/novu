@@ -39,9 +39,7 @@ export function ExecutionDetailsModal({
         },
         body: {
           paddingTop: '5px',
-        },
-        inner: {
-          paddingTop: '180px',
+          paddingInline: '8px',
         },
       }}
       title={
@@ -55,6 +53,8 @@ export function ExecutionDetailsModal({
       radius="md"
       size="lg"
       onClose={onClose}
+      centered
+      overflow="inside"
     >
       <LoadingOverlay
         visible={isLoading}
