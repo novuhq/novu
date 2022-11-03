@@ -274,9 +274,9 @@ describe('Notifications Creator', function () {
       cy.wait('@notification-templates');
       cy.get('tbody').contains('Test Notification Title').click();
 
-      clickWorkflow();
+      click('workflowButton');
 
-      cy.clickWorkflowNode(`node-digestSelector`);
+      click(`node-digestSelector`);
 
       cy.getByTestId('time-amount').should('have.value', '20');
       cy.getByTestId('batch-key').should('have.value', 'id');
@@ -807,4 +807,12 @@ function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
 function clickWorkflow() {
   cy.getByTestId('workflowButton').click();
   cy.wait(1000);
+}
+
+function click(testId: string) {
+  cy.getByTestId(testId)
+    .should('be.visible')
+    .then((e) => {
+      Cypress.$(e).trigger('click');
+    });
 }
