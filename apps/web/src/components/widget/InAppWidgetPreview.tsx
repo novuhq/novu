@@ -103,10 +103,7 @@ export function InAppWidgetPreview({
           >
             <Group position="apart">
               <div style={{ width: '100%' }}>
-                <Text weight="bold">{children}</Text>
-                <Text mt={5} color={colors.B60}>
-                  {minutesAgo(5)}
-                </Text>
+                {children}
                 <ActionBlockContainer
                   value={value}
                   onChange={onChange}

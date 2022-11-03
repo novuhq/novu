@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from './channel.enum';
+import { AvatarTypeEnum, ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from './channel.enum';
 
 export type MessageTemplateContentType = 'editor' | 'customHtml';
 
@@ -33,6 +33,10 @@ export interface IMessageTemplate {
   };
   _feedId?: string;
   active?: boolean;
+  avatarDetails?: {
+    type: AvatarTypeEnum;
+    data: string | null;
+  };
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

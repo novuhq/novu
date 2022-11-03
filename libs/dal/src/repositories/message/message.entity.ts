@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IMessageCTA } from '@novu/shared';
+import { ChannelTypeEnum, IMessageCTA, IAvatarDetails } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 import { IEmailBlock } from '../message-template';
 import { SubscriberEntity } from '../subscriber';
@@ -75,4 +75,6 @@ export class MessageEntity {
   overrides: Record<string, unknown>;
 
   identifier?: string;
+
+  avatarDetails?: IAvatarDetails;
 }

@@ -35,4 +35,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   job: JobEntity;
+
+  @IsOptional()
+  actorId?: string;
 }

@@ -17,6 +17,8 @@ import {
   ExecutionDetailsStatusEnum,
   InAppProviderIdEnum,
   StepTypeEnum,
+  AvatarTypeEnum,
+  IAvatarDetails,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -57,6 +59,11 @@ export class SendMessageInApp extends SendMessageType {
     });
     const inAppChannel: NotificationStepEntity = command.step;
     let content = '';
+    const avatarDetails = command.step.template.avatarDetails;
+
+    if (avatarDetails && avatarDetails.type !== AvatarTypeEnum.NONE) {
+      avatarDetails.data = await this.processAvatar(avatarDetails, command.environmentId, command.actorId);
+    }
 
     try {
       content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
@@ -140,6 +147,10 @@ export class SendMessageInApp extends SendMessageType {
         payload: messagePayload,
         templateIdentifier: command.identifier,
         _jobId: command.jobId,
+        ...(avatarDetails &&
+          avatarDetails.type !== AvatarTypeEnum.NONE && {
+            avatarDetails,
+          }),
       });
     }
 
@@ -259,5 +270,25 @@ export class SendMessageInApp extends SendMessageType {
         },
       })
     );
+  }
+
+  private async processAvatar(
+    avatarDetails: IAvatarDetails,
+    environmentId: string,
+    actorId?: string
+  ): Promise<string | null> {
+    if (avatarDetails.type === AvatarTypeEnum.USER) {
+      const actorSubscriber: SubscriberEntity = await this.subscriberRepository.findOne(
+        {
+          _environmentId: environmentId,
+          _id: actorId,
+        },
+        'avatar'
+      );
+
+      return actorSubscriber?.avatar || null;
+    }
+
+    return avatarDetails.data;
   }
 }

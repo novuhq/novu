@@ -1,6 +1,6 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientsType } from '@novu/node';
+import { TriggerRecipientsType, TriggerRecipientsTypeSingle } from '@novu/node';
 
 export class SubscriberPayloadDto {
   @ApiProperty()
@@ -78,4 +78,7 @@ export class TriggerEventRequestDto {
   @IsString()
   @IsOptional()
   transactionId?: string;
+
+  @IsOptional()
+  actor?: TriggerRecipientsTypeSingle;
 }

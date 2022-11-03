@@ -1,13 +1,66 @@
 import React from 'react';
+import { Avatar as MAvatar } from '@mantine/core';
 import styled, { css } from 'styled-components';
 import { formatDistanceToNow } from 'date-fns';
-import { IMessage, ButtonTypeEnum, IMessageAction, MessageActionStatusEnum } from '@novu/shared';
-import { DotsHorizontal, GradientDot } from '../../../../shared/icons';
 import { useNovuTheme, useNotificationCenter, useDefaultBellColors, useTranslations } from '../../../../hooks';
 import { ActionContainer } from './ActionContainer';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { When } from '../../../../shared/utils/When';
 import { ColorScheme } from '../../../../shared/config/colors';
+import {
+  IMessage,
+  ButtonTypeEnum,
+  IMessageAction,
+  MessageActionStatusEnum,
+  AvatarTypeEnum,
+  SystemAvatarIconEnum,
+  IAvatarDetails,
+} from '@novu/shared';
+import {
+  DotsHorizontal,
+  ErrorIcon,
+  Info,
+  Success,
+  Warning,
+  Avatar,
+  Up,
+  Question,
+  GradientDot,
+} from '../../../../shared/icons';
+import { colors } from '../../../../shared/config/colors';
+
+const avatarSystemIcons = [
+  {
+    icon: <Warning />,
+    type: SystemAvatarIconEnum.WARNING,
+    bgColor: '#FFF000',
+  },
+  {
+    icon: <Info />,
+    type: SystemAvatarIconEnum.INFO,
+    bgColor: '#0000FF',
+  },
+  {
+    icon: <Success />,
+    type: SystemAvatarIconEnum.SUCCESS,
+    bgColor: colors.success,
+  },
+  {
+    icon: <ErrorIcon />,
+    type: SystemAvatarIconEnum.ERROR,
+    bgColor: colors.error,
+  },
+  {
+    icon: <Up />,
+    type: SystemAvatarIconEnum.ERROR,
+    bgColor: colors.B70,
+  },
+  {
+    icon: <Question />,
+    type: SystemAvatarIconEnum.ERROR,
+    bgColor: colors.B70,
+  },
+];
 
 export function NotificationListItem({
   notification,
@@ -40,15 +93,31 @@ export function NotificationListItem({
       onClick={() => handleNotificationClick()}
     >
       <NotificationItemContainer>
-        <TextContent
-          data-test-id="notification-content"
-          dangerouslySetInnerHTML={{
-            __html: notification.content as string,
-          }}
+        <NotificationContentContainer>
+          {notification.avatarDetails && notification.avatarDetails.type !== AvatarTypeEnum.NONE && (
+            <AvatarContainer>
+              <RenderAvatar avatarDetails={notification.avatarDetails} />
+            </AvatarContainer>
+          )}
+          <NotificationTextContainer>
+            <TextContent
+              data-test-id="notification-content"
+              dangerouslySetInnerHTML={{
+                __html: notification.content as string,
+              }}
+            />
+            <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
+              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: dateFnsLocale() })}
+            </TimeMark>
+          </NotificationTextContainer>
+        </NotificationContentContainer>
+        <ActionWrapper
+          templateIdentifier={notification.templateIdentifier}
+          actionStatus={notification?.cta?.action?.status}
+          ctaAction={notification?.cta?.action}
+          handleActionButtonClick={handleActionButtonClick}
         />
-        <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
-          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: dateFnsLocale() })}
-        </TimeMark>
+
         <ActionWrapper
           templateIdentifier={notification.templateIdentifier}
           actionStatus={notification?.cta?.action?.status}
@@ -111,6 +180,28 @@ function GradientDotWrapper({ colorScheme }: { colorScheme: ColorScheme }) {
   });
 
   return <StyledGradientDot colors={bellColors} />;
+}
+
+function RenderAvatar({ avatarDetails }: { avatarDetails: IAvatarDetails }) {
+  if (avatarDetails.type === AvatarTypeEnum.SYSTEM_CUSTOM && avatarDetails.data) {
+    return (
+      <MAvatar src={avatarDetails.data} radius="xl">
+        <Avatar />
+      </MAvatar>
+    );
+  }
+
+  if (avatarDetails.type === AvatarTypeEnum.SYSTEM_ICON) {
+    const selectedIcon = avatarSystemIcons.filter((data) => data.type === avatarDetails.data);
+
+    return selectedIcon.length > 0 ? (
+      <SystemIconWrapper bgColor={selectedIcon[0].bgColor}>{selectedIcon[0].icon}</SystemIconWrapper>
+    ) : (
+      <Avatar />
+    );
+  }
+
+  return <Avatar />;
 }
 
 const NotificationItemContainer = styled.div`
@@ -188,4 +279,45 @@ const TimeMark = styled.div<{ novuTheme: INovuTheme; unread?: boolean }>`
 const StyledGradientDot = styled(GradientDot)`
   height: 10px;
   width: 10px;
+`;
+
+const NotificationContentContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const AvatarContainer = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  border: 1px solid ${colors.B40};
+  overflow: hidden;
+`;
+
+const NotificationTextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+`;
+
+const SystemIconWrapper = styled.div<{ bgColor: string }>`
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background-color: ${({ bgColor }) => `${bgColor}15`};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  color: ${({ bgColor }) => bgColor};
+
+  & > svg {
+    width: 20px;
+    height: 20px;
+  }
 `;

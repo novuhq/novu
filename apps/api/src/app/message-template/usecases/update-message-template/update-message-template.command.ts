@@ -1,5 +1,5 @@
 import { IsDefined, IsEnum, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
-import { StepTypeEnum, IEmailBlock, IMessageCTA, ITemplateVariable } from '@novu/shared';
+import { StepTypeEnum, IEmailBlock, IMessageCTA, ITemplateVariable, IAvatarDetails } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
@@ -38,4 +38,7 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsMongoId()
   parentChangeId: string;
+
+  @IsOptional()
+  avatarDetails?: IAvatarDetails;
 }

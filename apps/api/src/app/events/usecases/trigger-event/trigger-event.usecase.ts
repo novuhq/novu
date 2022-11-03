@@ -33,6 +33,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
 
 @Injectable()
 export class TriggerEvent {
@@ -46,7 +47,8 @@ export class TriggerEvent {
     private addJobUsecase: AddJob,
     private notificationRepository: NotificationRepository,
     private storageHelperService: StorageHelperService,
-    protected createExecutionDetails: CreateExecutionDetails
+    protected createExecutionDetails: CreateExecutionDetails,
+    private getActorSubscriber: GetSubscriber
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -105,6 +107,7 @@ export class TriggerEvent {
             organizationId: command.organizationId,
             userId: command.organizationId,
             templateId: template._id,
+            actor: command.actor,
           })
         )
       );
@@ -316,5 +319,9 @@ export class TriggerEvent {
       file: Buffer.from(attachment.file, 'base64'),
       storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
     }));
+  }
+
+  private async getActorDetails(command: GetSubscriberCommand) {
+    return this.getActorSubscriber.execute(GetSubscriberCommand.create(command));
   }
 }

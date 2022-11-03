@@ -1,5 +1,5 @@
 import { useInputState } from '@mantine/hooks';
-import { ActionIcon, Container, Group } from '@mantine/core';
+import { ActionIcon, Container, Group, Divider } from '@mantine/core';
 import { IFeedEntity } from '@novu/shared';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { showNotification } from '@mantine/notifications';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Checkbox, Input } from '../../../design-system';
+import { Checkbox, Input, Switch, Text } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { createFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
@@ -123,6 +123,20 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             readonly={readonly}
             contentPlaceholder="Write your notification content here..."
           />
+          <Controller
+            name={`steps.${index}.template.enableAvatar` as any}
+            render={({ field }) => {
+              return (
+                <Group position="apart">
+                  <Text weight="bold">Add an Avatar</Text>
+                  <div>
+                    <Switch checked={field.value} onChange={field.onChange} />
+                  </div>
+                </Group>
+              );
+            }}
+          />
+          <Divider />
           <Controller
             name={`steps.${index}.template.feedId` as any}
             control={control}

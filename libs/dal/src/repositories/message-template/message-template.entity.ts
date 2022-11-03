@@ -1,4 +1,4 @@
-import { StepTypeEnum, IMessageCTA, TemplateVariableTypeEnum } from '@novu/shared';
+import { StepTypeEnum, IMessageCTA, TemplateVariableTypeEnum, IAvatarDetails } from '@novu/shared';
 
 export class MessageTemplateEntity {
   _id?: string;
@@ -30,6 +30,8 @@ export class MessageTemplateEntity {
   cta?: IMessageCTA;
 
   _parentId?: string;
+
+  avatarDetails?: IAvatarDetails;
 }
 
 export class IEmailBlock {

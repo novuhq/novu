@@ -44,6 +44,7 @@ export class RunJob {
         jobId: job._id,
         events: job.digest.events,
         job,
+        actorId: job._actorId,
       })
     );
 
