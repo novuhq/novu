@@ -120,6 +120,7 @@
     "cypress": "^10.2.0",
     "cypress-localstorage-commands": "^1.7.0",
     "cypress-network-idle": "^1.10.0",
+    "cypress-wait-until": "^1.7.2",
     "eslint-plugin-cypress": "^2.12.1",
     "http-server": "^0.12.3",
     "less-loader": "4.1.0",

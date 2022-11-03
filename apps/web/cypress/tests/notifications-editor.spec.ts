@@ -272,11 +272,12 @@ describe('Notifications Creator', function () {
       cy.intercept('GET', '/v1/notification-templates?page=0&limit=10').as('notification-templates');
       cy.visit('/templates');
       cy.wait('@notification-templates');
-      cy.get('tbody').contains('Test Notification Title').click();
 
-      click('workflowButton');
+      awaitGetContains('tbody', 'Test Notification Title').click({ force: true });
 
-      click(`node-digestSelector`);
+      cy.clickNodeButton('workflowButton');
+
+      cy.clickNodeButton(`node-digestSelector`);
 
       cy.getByTestId('time-amount').should('have.value', '20');
       cy.getByTestId('batch-key').should('have.value', 'id');
@@ -809,10 +810,19 @@ function clickWorkflow() {
   cy.wait(1000);
 }
 
-function click(testId: string) {
-  cy.getByTestId(testId)
-    .should('be.visible')
-    .then((e) => {
-      Cypress.$(e).trigger('click');
-    });
+function awaitGetContains(getSelector: string, contains: string) {
+  return cy
+    .waitUntil(
+      () =>
+        cy
+          .get(getSelector)
+          .contains(contains)
+          .as('awaitedElement')
+          .wait(1) // for some reason this is needed, otherwise next line returns `true` even if click() fails due to detached element in the next step
+          .then(($el) => {
+            return Cypress.dom.isAttached($el);
+          }),
+      { timeout: 5000, interval: 500 }
+    )
+    .get('@awaitedElement');
 }
