@@ -52,12 +52,12 @@ const avatarSystemIcons = [
   },
   {
     icon: <Up />,
-    type: SystemAvatarIconEnum.ERROR,
+    type: SystemAvatarIconEnum.UP,
     bgColor: colors.B70,
   },
   {
     icon: <Question />,
-    type: SystemAvatarIconEnum.ERROR,
+    type: SystemAvatarIconEnum.QUESTION,
     bgColor: colors.B70,
   },
 ];
@@ -183,7 +183,7 @@ function GradientDotWrapper({ colorScheme }: { colorScheme: ColorScheme }) {
 }
 
 function RenderAvatar({ avatarDetails }: { avatarDetails: IAvatarDetails }) {
-  if (avatarDetails.type === AvatarTypeEnum.SYSTEM_CUSTOM && avatarDetails.data) {
+  if ([AvatarTypeEnum.USER, AvatarTypeEnum.SYSTEM_CUSTOM].includes(avatarDetails.type) && avatarDetails.data) {
     return (
       <MAvatar src={avatarDetails.data} radius="xl">
         <Avatar />

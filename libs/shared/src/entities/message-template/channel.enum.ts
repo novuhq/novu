@@ -39,4 +39,6 @@ export enum SystemAvatarIconEnum {
   INFO = 'info',
   ERROR = 'error',
   SUCCESS = 'success',
+  UP = 'up',
+  QUESTION = 'question',
 }

@@ -39,12 +39,12 @@ const systemIcons = [
   },
   {
     icon: <UpCircleFilled />,
-    type: SystemAvatarIconEnum.ERROR,
+    type: SystemAvatarIconEnum.UP,
     bgColor: colors.B70,
   },
   {
     icon: <QuestionCircleFilled />,
-    type: SystemAvatarIconEnum.ERROR,
+    type: SystemAvatarIconEnum.QUESTION,
     bgColor: colors.B70,
   },
   {
