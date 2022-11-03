@@ -151,6 +151,7 @@ export function useTemplateController(templateId: string) {
           data: null,
         };
       }
+      delete step.template.enableAvatar;
 
       return step;
     });

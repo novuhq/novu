@@ -49,7 +49,9 @@ const systemIcons = [
 
 const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; value: IAvatarDetails }) => {
   const [opened, setOpened] = useState(false);
-  const [tooltipOpened, setTooltipOpened] = useState(true);
+  const [tooltipOpened, setTooltipOpened] = useState(() => {
+    return value.type === AvatarTypeEnum.NONE;
+  });
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
 
