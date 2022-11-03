@@ -98,6 +98,7 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
+    const mappedActor = this.mapActor(body.actor);
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -108,6 +109,7 @@ export class EventsController {
         payload: body.payload,
         transactionId,
         overrides: body.overrides || {},
+        actor: mappedActor,
       })
     );
   }

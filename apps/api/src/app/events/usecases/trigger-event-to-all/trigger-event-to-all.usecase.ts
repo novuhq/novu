@@ -53,7 +53,7 @@ export class TriggerEventToAll {
         })),
         transactionId: command.transactionId,
         overrides: command.overrides,
-        actor: null,
+        actor: command.actor,
       })
     );
   }

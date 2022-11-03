@@ -1,5 +1,5 @@
 import { IsDefined, IsString, IsOptional } from 'class-validator';
-import { ISubscribersDefine, TriggerRecipientsTypeSingle } from '@novu/node';
+import { ISubscribersDefine } from '@novu/node';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class TriggerEventCommand extends EnvironmentWithUserCommand {
@@ -21,5 +21,5 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   transactionId: string;
 
   @IsOptional()
-  actor: ISubscribersDefine;
+  actor?: ISubscribersDefine;
 }

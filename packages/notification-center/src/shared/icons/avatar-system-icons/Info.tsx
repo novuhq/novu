@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import React from 'react';
 
 export function Info(props: React.ComponentPropsWithoutRef<'svg'>) {

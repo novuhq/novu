@@ -79,6 +79,25 @@ export class TriggerEventRequestDto {
   @IsOptional()
   transactionId?: string;
 
+  @ApiProperty({
+    description: `It is used to display the Avatar of the provided actor's subscriber id or actor object.
+    If a new actor object is provided, we will create a new subsciber in our system
+    `,
+    oneOf: [
+      {
+        $ref: getSchemaPath(SubscriberPayloadDto),
+      },
+      {
+        type: '[SubscriberPayloadDto]',
+        description: 'List of actor objects',
+      },
+      { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
+      {
+        type: '[string]',
+        description: "List of actor's subscriber identifiers",
+      },
+    ],
+  })
   @IsOptional()
   actor?: TriggerRecipientsTypeSingle;
 }
