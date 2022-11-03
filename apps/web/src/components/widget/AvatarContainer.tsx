@@ -1,18 +1,6 @@
 import { useState } from 'react';
-import {
-  Box,
-  Menu,
-  ActionIcon,
-  Group,
-  Divider,
-  Popover,
-  List,
-  useMantineColorScheme,
-  Stack,
-  Avatar as MAvatar,
-} from '@mantine/core';
+import { Box, Group, Divider, Popover, useMantineColorScheme, Stack, Avatar as MAvatar } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Controller } from 'react-hook-form';
 import {
   WarningFilled,
   InfoCircleFilled,
@@ -22,7 +10,7 @@ import {
   QuestionCircleFilled,
 } from '@ant-design/icons';
 import { SystemAvatarIconEnum, IAvatarDetails, AvatarTypeEnum } from '@novu/shared';
-import { colors, Dropdown, Input, Radio, Switch, Text } from '../../design-system';
+import { colors, Input, Switch, Text, Tooltip } from '../../design-system';
 import { Camera } from '../../design-system/icons/general/Camera';
 import { Avatar } from '../../design-system/icons/general/Avatar';
 
@@ -61,18 +49,26 @@ const systemIcons = [
 
 const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; value: IAvatarDetails }) => {
   const [opened, setOpened] = useState(false);
+  const [tooltipOpened, setTooltipOpened] = useState(true);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
+
+  function handleAvatarPopover() {
+    setOpened((prev) => !prev);
+    if (tooltipOpened) {
+      setTooltipOpened(false);
+    }
+  }
 
   return (
     <>
       <Popover
         target={
-          <AvatarWrapper onClick={() => setOpened((prev) => !prev)}>
-            <ActionIcon>
+          <Tooltip label={<TooltipLabel />} position="left" opened={tooltipOpened}>
+            <AvatarWrapper onClick={handleAvatarPopover}>
               <RenderAvatar avatarDetails={value} />
-            </ActionIcon>
-          </AvatarWrapper>
+            </AvatarWrapper>
+          </Tooltip>
         }
         opened={opened}
         position="bottom"
@@ -82,14 +78,14 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
           inner: { margin: 0, padding: 15 },
           target: { height: '40px' },
           arrow: {
-            backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
+            backgroundColor: dark ? colors.B20 : colors.white,
             height: '-22px',
             border: 'none',
             margin: '0px',
           },
           body: {
-            backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
-            color: colorScheme === 'dark' ? colors.white : colors.B40,
+            backgroundColor: dark ? colors.B20 : colors.white,
+            color: dark ? colors.white : colors.B40,
             border: 'none',
             marginTop: '1px',
             width: '100%',
@@ -192,6 +188,17 @@ function RenderAvatar({ avatarDetails }: { avatarDetails: IAvatarDetails }) {
   return <Camera />;
 }
 
+function TooltipLabel() {
+  return (
+    <Stack spacing={8}>
+      <Text weight="bold" gradient>
+        SETUP AVATAR
+      </Text>
+      <Text>Click on the icon to setup avatar.</Text>
+    </Stack>
+  );
+}
+
 const AvatarWrapper = styled.div`
   width: 40px;
   height: 40px;
@@ -201,6 +208,8 @@ const AvatarWrapper = styled.div`
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  overflow: hidden;
+  user-select: none;
 `;
 
 const IconWrapper = styled.div<{ bgColor: string; size: number }>`
