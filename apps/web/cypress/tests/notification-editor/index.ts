@@ -1,13 +1,13 @@
 type Channel = 'inApp' | 'email' | 'sms' | 'digest';
 
-function addAndEditChannel(channel: Channel) {
+export function addAndEditChannel(channel: Channel) {
   clickWorkflow();
 
   dragAndDrop(channel);
   editChannel(channel);
 }
 
-function dragAndDrop(channel: Channel) {
+export function dragAndDrop(channel: Channel) {
   const dataTransfer = new DataTransfer();
 
   cy.wait(1000);
@@ -15,16 +15,16 @@ function dragAndDrop(channel: Channel) {
   cy.getByTestId('addNodeButton').parent().trigger('drop', { dataTransfer });
 }
 
-function editChannel(channel: Channel, last = false) {
+export function editChannel(channel: Channel, last = false) {
   cy.clickWorkflowNode(`node-${channel}Selector`, last);
   cy.getByTestId('edit-template-channel').click();
 }
 
-function goBack() {
+export function goBack() {
   cy.getByTestId('go-back-button').click();
 }
 
-function fillBasicNotificationDetails(title?: string) {
+export function fillBasicNotificationDetails(title?: string) {
   cy.waitForNetworkIdle(100);
   cy.getByTestId('title')
     .type(title || 'Test Notification Title')
@@ -33,7 +33,7 @@ function fillBasicNotificationDetails(title?: string) {
   cy.wait(100);
 }
 
-function waitLoadEnv(beforeWait: () => void) {
+export function waitLoadEnv(beforeWait: () => void) {
   cy.intercept('GET', 'http://localhost:1336/v1/environments').as('environments');
   cy.intercept('GET', 'http://localhost:1336/v1/environments/me').as('environments-me');
 
@@ -42,7 +42,7 @@ function waitLoadEnv(beforeWait: () => void) {
   cy.wait(['@environments', '@environments-me']);
 }
 
-function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
+export function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
   cy.intercept('GET', 'http://localhost:1336/v1/environments').as('environments');
   cy.intercept('GET', 'http://localhost:1336/v1/environments/me').as('environments-me');
   cy.intercept('GET', 'http://localhost:1336/v1/notification-groups').as('notification-groups');
@@ -63,7 +63,7 @@ function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
   ]);
 }
 
-function clickWorkflow() {
+export function clickWorkflow() {
   cy.getByTestId('workflowButton').click();
   cy.wait(1000);
 }
