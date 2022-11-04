@@ -2,7 +2,7 @@ import { NavMenu } from './NavMenu';
 import { MemoryRouter as Router } from 'react-router-dom';
 import { TestWrapper } from '../../testing';
 
-it('should active when clicked menu item', () => {
+it('should have active class when clicked menu item', () => {
   const activeClass = 'mantine-g10fyh';
   const notActiveClass = 'mantine-16w7c2e';
   const menuItems = [
