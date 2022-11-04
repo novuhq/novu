@@ -90,6 +90,24 @@ To render a specific block conditionally you can use `#if`:
 </div>
 ```
 
+### Dateformat
+
+To render a date in a specific format you can use the `dateFormat` helper, which formats the date using `format` function from [date-fns](https://date-fns.org).
+
+```typescript
+novu.trigger('template-name', {
+  payload: {
+    date: '2021-01-01',
+  },
+});
+```
+
+```handlebars
+<div class='entry'>
+  <h1>Mail is sent on {{dateFormat date 'MM/dd/yyyy'}}</h1>
+</div>
+```
+
 ## Trigger
 
 After a notification template is created, a trigger key will be automatically generated for it. To use the trigger you can install the server side SDK with:

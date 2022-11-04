@@ -130,9 +130,9 @@ export class PostmarkEmailProvider implements IEmailProvider {
       case 'Bounce':
         return EmailEventStatusEnum.BOUNCED;
       case 'SpamComplaint':
-        return EmailEventStatusEnum.SPAM_COMPLAINED;
+        return EmailEventStatusEnum.SPAM;
       case 'SubscriptionChange':
-        return EmailEventStatusEnum.SUBSCRIPTION_CHANGED;
+        return EmailEventStatusEnum.UNSUBSCRIBED;
     }
   }
 }

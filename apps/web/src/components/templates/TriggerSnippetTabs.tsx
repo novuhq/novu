@@ -55,12 +55,14 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
   `;
 
   const prismStyles = (theme) => ({
+    scrollArea: {
+      border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+      borderRadius: '7px',
+    },
     code: {
       fontWeight: 400,
       color: `${colors.B60} !important`,
       backgroundColor: 'transparent !important',
-      border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
-      borderRadius: '7px',
     },
   });
 
