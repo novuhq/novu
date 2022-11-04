@@ -1,16 +1,19 @@
-# Novu Ses Provider
+# Novu MSGraph API Provider
 
-A SES email provider library for [@novu/stateless](https://github.com/novuhq/novu)
+A MSGraph API email provider library for [@novu/stateless](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-import { SESEmailProvider } from "@novu/ses"
+import { MSGraphAPIProvider } from '@novu/msgraph';
 
-const provider = new SESEmailProvider({
-    region: "eu-west-1",
-    accessKeyId: "AWS_ACCESS_KEY_ID",
-    secretAccessKey: "AWS_SECRET_ACCESS_KEY",
-    from: "from@email.com",
+const provider = new MSGraphAPIProvider({
+  authority: '<authority>/<tenant>',
+  clientId: '<clientId>',
+  fromAddress: 'test@novu.dev',
+  fromName: 'novu',
+  scopes: '',
+  secret: '<secret>',
+  user: '<microsoft-user>',
 });
 ```
