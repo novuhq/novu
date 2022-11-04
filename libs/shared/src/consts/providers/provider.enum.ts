@@ -33,6 +33,7 @@ export enum EmailProviderIdEnum {
   Sendinblue = 'sendinblue',
   SES = 'ses',
   NetCore = 'netcore',
+  MSGraphAPI = 'msgraph',
 }
 
 export enum SmsProviderIdEnum {

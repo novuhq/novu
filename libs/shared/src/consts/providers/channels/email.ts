@@ -3,6 +3,7 @@ import {
   mailjetConfig,
   mailJsConfig,
   mandrillConfig,
+  msGraphConfigBase,
   netCoreConfig,
   nodemailerConfig,
   postmarkConfig,
@@ -15,6 +16,14 @@ import { ChannelTypeEnum } from '../../../entities/message-template';
 import { EmailProviderIdEnum } from '../provider.enum';
 
 export const emailProviders: IProviderConfig[] = [
+  {
+    id: EmailProviderIdEnum.MSGraphAPI,
+    displayName: 'MS Graph API',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: msGraphConfigBase,
+    docReference: '',
+    logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
+  },
   {
     id: EmailProviderIdEnum.EmailJS,
     displayName: 'Email.js',

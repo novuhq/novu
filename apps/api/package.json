@@ -43,6 +43,7 @@
     "@novu/emailjs": "^0.8.0",
     "@novu/expo": "^0.8.0",
     "@novu/fcm": "^0.8.0",
+    "@novu/msgraph": "^0.1.0",
     "@novu/firetext": "^0.8.0",
     "@novu/gupshup": "^0.8.0",
     "@novu/mailgun": "^0.8.0",

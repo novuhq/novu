@@ -28,6 +28,55 @@ const smsConfigBase: IConfigCredentials[] = [
 
 const pushConfigBase: IConfigCredentials[] = [];
 
+export const msGraphConfigBase: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client-ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Authority',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'secret',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'Scoped',
+    description: 'comma-seperated list of scoped',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'User',
+    description: 'USER-ID of the Sender, this is usually a email address',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Name of the Sender',
+    description: 'Max Mustermann, Mustermann GmbH etc...',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Host,
+    displayName: 'E-Mail Adress of the Sender',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const mailJsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,

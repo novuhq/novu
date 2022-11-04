@@ -11,6 +11,7 @@ import {
   SESHandler,
   NetCoreHandler,
 } from './handlers';
+import { MSGraphHandler } from './handlers/msgraph.handler';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
 export class MailFactory {
@@ -25,6 +26,7 @@ export class MailFactory {
     new PostmarkHandler(),
     new SendinblueHandler(),
     new SESHandler(),
+    new MSGraphHandler(),
   ];
 
   getHandler(
