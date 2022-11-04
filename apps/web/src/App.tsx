@@ -48,9 +48,6 @@ if (SENTRY_DSN) {
   });
 }
 
-// eslint-disable-next-line no-console
-console.log('trigger web ci test 1');
-
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
 
