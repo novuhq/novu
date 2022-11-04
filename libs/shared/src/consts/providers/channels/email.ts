@@ -22,7 +22,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: msGraphConfigBase,
     docReference: '',
-    logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
+    logoFileName: { light: 'msgraph.svg', dark: 'msgraph.svg' },
   },
   {
     id: EmailProviderIdEnum.EmailJS,
