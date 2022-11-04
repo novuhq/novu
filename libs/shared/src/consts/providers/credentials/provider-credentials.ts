@@ -74,7 +74,6 @@ export const msGraphConfigBase: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
-  ...mailConfigBase,
 ];
 
 export const mailJsConfig: IConfigCredentials[] = [
