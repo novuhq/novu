@@ -16,6 +16,8 @@ COPY packages/client ./packages/client
 COPY libs/embed ./libs/embed
 COPY packages/notification-center ./packages/notification-center
 
+#COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", "./"]
+
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
@@ -23,7 +25,7 @@ COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
-RUN pnpm install
+RUN pnpm install --reporter=silent
 RUN pnpm build
 
 CMD [ "pnpm", "start:docker:embed" ]

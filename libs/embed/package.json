@@ -30,7 +30,7 @@
     "start:dev": "concurrently \"pnpm start\"",
     "start:docker": "pnpm build && http-server -p 4701 dist",
     "start:test:web": "http-server -p 4701 -o test",
-    "docker:build": "docker build -f ./Dockerfile -t novu-embed ./../..",
+    "docker:build": "docker buildx build -f ./Dockerfile -t novu-embed ./../..",
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
     "test:prod": "pnpm lint && pnpm test -- --no-cache",

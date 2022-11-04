@@ -20,6 +20,8 @@ COPY packages/notification-center ./packages/notification-center
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
 
+#COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", "./"]
+
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
@@ -30,7 +32,7 @@ COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
-RUN pnpm install
+RUN pnpm install --reporter=silent
 RUN pnpm build
 
 RUN pnpm build:widget
