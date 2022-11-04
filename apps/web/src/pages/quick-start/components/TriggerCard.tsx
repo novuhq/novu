@@ -29,9 +29,12 @@ export const TriggerCard = ({
             minHeight: '115px',
             backgroundColor: 'transparent',
             borderColor: theme.colorScheme === 'dark' ? darkBorderColor : lightBorderColor,
-            [`&:hover`]: {
-              borderColor: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-            },
+            ...(exist && {
+              cursor: 'pointer',
+              [`&:hover`]: {
+                borderColor: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+              },
+            }),
           };
         }}
       >

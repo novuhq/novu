@@ -39,17 +39,22 @@ export function ExecutionDetailsModal({
         },
         body: {
           paddingTop: '5px',
-        },
-        inner: {
-          paddingTop: '180px',
+          paddingInline: '8px',
         },
       }}
-      title={<Title size={2}>Execution details</Title>}
+      title={
+        <>
+          <Title size={2}>Execution details</Title>
+          <small>( Updates every 3 sec )</small>
+        </>
+      }
       sx={{ backdropFilter: 'blur(10px)' }}
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"
       size="lg"
       onClose={onClose}
+      centered
+      overflow="inside"
     >
       <LoadingOverlay
         visible={isLoading}

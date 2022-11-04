@@ -89,10 +89,6 @@ export class CreateExecutionDetails {
         return ExecutionDetailsStatusEnum.FAILED;
       case EmailEventStatusEnum.UNSUBSCRIBED:
         return ExecutionDetailsStatusEnum.FAILED;
-      case EmailEventStatusEnum.SPAM:
-        return ExecutionDetailsStatusEnum.FAILED;
-      case EmailEventStatusEnum.SUBSCRIPTION_CHANGED:
-        return ExecutionDetailsStatusEnum.FAILED;
       default:
         return ExecutionDetailsStatusEnum.SUCCESS;
     }
@@ -103,8 +99,6 @@ export class CreateExecutionDetails {
       case SmsEventStatusEnum.CREATED:
         return ExecutionDetailsStatusEnum.PENDING;
       case SmsEventStatusEnum.DELIVERED:
-        return ExecutionDetailsStatusEnum.SUCCESS;
-      case SmsEventStatusEnum.RECEIVED:
         return ExecutionDetailsStatusEnum.SUCCESS;
       case SmsEventStatusEnum.ACCEPTED:
         return ExecutionDetailsStatusEnum.SUCCESS;
@@ -118,8 +112,6 @@ export class CreateExecutionDetails {
         return ExecutionDetailsStatusEnum.FAILED;
       case SmsEventStatusEnum.UNDELIVERED:
         return ExecutionDetailsStatusEnum.FAILED;
-      case SmsEventStatusEnum.RECEIVING:
-        return ExecutionDetailsStatusEnum.PENDING;
       default:
         return ExecutionDetailsStatusEnum.SUCCESS;
     }

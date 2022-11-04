@@ -28,6 +28,8 @@ export default function InvitationPage() {
       enabled: !!tokenParam,
     }
   );
+  const inviterFirstName = data?.inviter?.firstName || '';
+  const organizationName = data?.organization.name || '';
 
   const existingUser = tokenParam && data?._userId;
   const invalidCurrentUser = existingUser && currentUser && currentUser._id !== data._userId;
@@ -90,28 +92,35 @@ export default function InvitationPage() {
         <AuthContainer
           title="Get Started"
           customDescription={
-            <div>
-              <Text size="lg" mr={4} color={colors.B60} mt={10} mb={15}>
-                You've been invited by <b>{capitalize(data?.inviter?.firstName) || ''}</b> to join{' '}
-                <b>{data?.organization.name || ''}.</b>{' '}
-                {existingUser
-                  ? 'You already have an account, please log in to accept the invite.'
-                  : 'Please create an account to join.'}
-              </Text>
-            </div>
+            inviterFirstName && organizationName ? (
+              <Center inline mb={60} mt={20}>
+                <Text size="lg" mr={4} color={colors.B60}>
+                  You've been invited by
+                </Text>
+                <Text size="lg" weight="bold" mr={4}>
+                  {inviterFirstName[0].toUpperCase() + inviterFirstName.slice(1)}
+                </Text>
+                <Text size="lg" mr={4} color={colors.B60}>
+                  to join
+                </Text>
+                <Text size="lg" weight="bold">
+                  {organizationName}
+                </Text>
+                <Text size="lg" color={colors.B60}>
+                  .
+                </Text>
+              </Center>
+            ) : undefined
           }
         >
-          <div style={{ position: 'relative', minHeight: 'inherit' }}>
-            <LoadingOverlay
-              visible={isLoading}
-              overlayColor={colors.B30}
-              loaderProps={{
-                color: colors.error,
-              }}
-            />
-            {!isLoading && !existingUser && <SignUpForm email={data?.email} token={tokenParam} />}
-            {!isLoading && existingUser && <LoginForm email={data?.email} token={tokenParam} />}
-          </div>
+          <LoadingOverlay
+            visible={isLoading}
+            overlayColor={colors.B30}
+            loaderProps={{
+              color: colors.error,
+            }}
+          />
+          {!isLoading && <SignUpForm email={data?.email} token={tokenParam} />}
         </AuthContainer>
       )}
     </AuthLayout>

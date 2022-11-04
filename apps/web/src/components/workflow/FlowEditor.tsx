@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, {
   addEdge,
-  useNodesState,
-  useEdgesState,
-  Node,
   Background,
   BackgroundVariant,
-  ReactFlowInstance,
-  useUpdateNodeInternals,
-  getOutgoers,
-  ReactFlowProps,
   Controls,
+  Edge,
+  getOutgoers,
+  Node,
+  ReactFlowInstance,
+  ReactFlowProps,
+  useEdgesState,
+  useNodesState,
   useReactFlow,
 } from 'react-flow-renderer';
 import ChannelNode from './node-types/ChannelNode';
@@ -26,6 +26,7 @@ import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/use-env-controller';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -43,6 +44,8 @@ const initialNodes: Node[] = [
     position: { x: 0, y: 10 },
   },
 ];
+
+const initialEdges: Edge[] = [];
 
 export function FlowEditor({
   activePage,
@@ -67,13 +70,13 @@ export function FlowEditor({
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const updateNodeInternals = useUpdateNodeInternals();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<IAddNodeEdge>(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
   const { template, trigger, methods } = useTemplateController(templateId);
+  const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
     if (reactFlowWrapper) {
@@ -86,111 +89,22 @@ export function FlowEditor({
   }, [reactFlowInstance]);
 
   useEffect(() => {
-    let parentId = '1';
-    if (nodes.length === 1) {
-      setNodes([
-        {
-          ...initialNodes[0],
-        },
-      ]);
-    }
-    if (nodes.length > 1) {
-      setNodes([
-        {
-          ...initialNodes[0],
-          position: {
-            ...nodes[0].position,
-          },
-        },
-      ]);
-    }
-    if (steps.length) {
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
-        const newId = step._id || step.id;
-        const newNode = {
-          id: newId,
-          type: 'channelNode',
-          position: { x: oldNode.position.x, y: oldNode.position.y },
-          parentNode: parentId,
-          data: {
-            ...getChannel(step.template.type),
-            active: step.active,
-            index: nodes.length,
-            error: getChannelErrors(i, errors, step),
-            onDelete,
-            setActivePage,
-          },
-        };
-
-        const newEdge = {
-          id: `e-${parentId}-${newId}`,
-          source: parentId,
-          sourceHandle: 'a',
-          targetHandle: 'b',
-          target: newId,
-          type: 'smoothstep',
-        };
-        parentId = newId;
-        setNodes((nds) => nds.concat(newNode));
-        setEdges((eds) => addEdge(newEdge, eds));
-      }
-    }
-    if (!readonly) {
-      const addNodeButton = {
-        id: '2',
-        type: 'addNode',
-        data: {
-          label: '',
-          addNewNode,
-          parentId,
-          showDropZone: dragging,
-        },
-        className: 'nodrag',
-        isConnectable: false,
-        parentNode: parentId,
-        position: { x: 0, y: 90 },
-      };
-      setNodes((nds) => nds.concat(addNodeButton));
-    }
+    initializeWorkflowTree();
   }, [steps, dragging, errors]);
 
-  const addNewNode = useCallback((parentNodeId: string, channelType: string, index = -1) => {
-    const channel = getChannel(channelType);
+  const addNewNode = useCallback(
+    (parentNodeId: string, channelType: string, childId?: string) => {
+      const channel = getChannel(channelType);
 
-    if (!channel) {
-      return;
-    }
+      if (!channel) return;
 
-    const newId = uuid4();
-    const newNode = {
-      id: newId,
-      type: 'channelNode',
-      position: { x: 0, y: 120 },
-      parentNode: parentNodeId,
-      data: {
-        ...channel,
-        index: nodes.length,
-        active: true,
-      },
-    };
+      const newId = uuid4();
+      const nodeIndex = childId ? steps.findIndex((step) => step._id === parentNodeId) + 1 : undefined;
 
-    addStep(newNode.data.channelType, newId, index === -1 ? -1 : index === 0 ? 0 : index - 1);
-
-    updateNodeInternals(newId);
-
-    const newEdge = {
-      id: `e-${parentNodeId}-${newId}`,
-      source: parentNodeId,
-      sourceHandle: 'a',
-      targetHandle: 'b',
-      target: newId,
-      curvature: 7,
-    };
-
-    setEdges((eds) => addEdge(newEdge, eds));
-  }, []);
+      addStep(channel.channelType, newId, nodeIndex);
+    },
+    [steps]
+  );
 
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
@@ -211,7 +125,6 @@ export function FlowEditor({
 
       const type = event.dataTransfer.getData('application/reactflow');
       const parentId = nodes[nodes.length - 2].id;
-      const dropId = event.target.dataset.id;
 
       if (typeof type === 'undefined' || !type || typeof parentId === 'undefined') {
         return;
@@ -223,28 +136,154 @@ export function FlowEditor({
         return;
       }
 
-      // dropId === 2 condition will active only DropZone and will inactive other nodes
-      if (dropId === '2') {
-        // Add node
-        const childNode = getOutgoers(parentNode, nodes, edges);
-        if (childNode.length) return;
-        addNewNode(parentId, type);
-      } else if (dropId != null) {
-        // Add node to other index
-        const dropNode = reactFlowInstance?.getNode(dropId);
-        const edge = reactFlowInstance?.getEdge(`e-${dropNode?.parentNode}-${dropId}`);
-        setEdges((curEdges) =>
-          curEdges.filter((edg) => {
-            return edg.id !== edge?.id;
-          })
-        );
-        const nodesIdArray = nodes.map((json) => json.id);
-        const dropIndex = nodesIdArray.indexOf(dropId);
-        addNewNode(dropId, type, dropIndex);
+      const childNode = getOutgoers(parentNode, nodes, edges);
+
+      if (childNode.length) {
+        return;
       }
+
+      addNewNode(parentId, type);
     },
     [reactFlowInstance, nodes, edges]
   );
+
+  function initializeWorkflowTree() {
+    let parentId = '1';
+    initWorkflowTreeState();
+
+    if (steps.length) {
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
+        const newId = step._id || step.id;
+
+        const newNode = buildNewNode(newId, oldNode, parentId, step, i);
+
+        const newEdge = buildNewEdge(parentId, newId);
+
+        setNodes((nds) => nds.concat(newNode));
+        setEdges((eds) => addEdge(newEdge, eds));
+
+        parentId = newId;
+      }
+    }
+    if (!readonly) {
+      const addNodeButton = buildAddNodeButton(parentId);
+      setNodes((nds) => nds.concat(addNodeButton));
+    }
+  }
+
+  function initWorkflowTreeState() {
+    if (nodes.length === 1) {
+      setNodes([
+        {
+          ...initialNodes[0],
+        },
+      ]);
+      setEdges(initialEdges);
+    } else {
+      if (nodes.length > 1) {
+        setNodes([
+          {
+            ...initialNodes[0],
+            position: {
+              ...nodes[0].position,
+            },
+          },
+        ]);
+        setEdges(initialEdges);
+      }
+    }
+  }
+
+  function buildNewNode(
+    newId: string,
+    oldNode: { position: { x: number; y: number } },
+    parentId: string,
+    step: StepEntity,
+    i: number
+  ): Node {
+    return {
+      id: newId,
+      type: 'channelNode',
+      position: { x: oldNode.position.x, y: oldNode.position.y },
+      parentNode: parentId,
+      data: {
+        ...getChannel(step.template.type),
+        active: step.active,
+        index: nodes.length,
+        error: getChannelErrors(i, errors, step),
+        onDelete,
+        setActivePage,
+      },
+    };
+  }
+
+  function buildNewEdge(parentId: string, newId: string): Edge {
+    return {
+      id: `e-${parentId}-${newId}`,
+      source: parentId,
+      sourceHandle: 'a',
+      targetHandle: 'b',
+      target: newId,
+      type: 'special',
+      data: { addNewNode: addNewNode, parentId: parentId, childId: newId },
+    };
+  }
+
+  function buildAddNodeButton(parentId: string): Node {
+    return {
+      id: '2',
+      type: 'addNode',
+      data: {
+        label: '',
+        addNewNode,
+        parentId,
+        showDropZone: dragging,
+      },
+      className: 'nodrag',
+      connectable: false,
+      parentNode: parentId,
+      position: { x: 0, y: 90 },
+    };
+  }
+
+  const handleDisplayAddNodeOnEdge = (edgeId: string) => {
+    const edgeElement = document.getElementById(edgeId);
+
+    if (!edgeElement) return;
+    const ADD_NODE_DISPLAY_TIMEOUT = 10000;
+
+    if (isEdgeAddNodeButtonVisible(edgeElement)) {
+      const nodeTimeout = displayEdgeTimeout.get(edgeId);
+
+      if (nodeTimeout) {
+        clearTimeout(nodeTimeout);
+        setDisplayEdgeTimeout(displayEdgeTimeout.set(edgeId, null));
+      }
+    } else {
+      toggleAddNodeButtonOpacity(edgeElement);
+    }
+
+    setDisplayEdgeTimeout(
+      displayEdgeTimeout.set(
+        edgeId,
+        setTimeout(() => {
+          toggleAddNodeButtonOpacity(edgeElement);
+        }, ADD_NODE_DISPLAY_TIMEOUT)
+      )
+    );
+
+    function toggleAddNodeButtonOpacity(target) {
+      target.classList.toggle('fade');
+    }
+
+    function isEdgeAddNodeButtonVisible(element: HTMLElement) {
+      return element?.classList.contains('fade');
+    }
+  };
+
+  const edgeTypes = useMemo(() => ({ special: AddNodeEdge }), []);
 
   return (
     <>
@@ -260,6 +299,17 @@ export function FlowEditor({
             onDrop={onDrop}
             onDragOver={onDragOver}
             onNodeClick={onNodeClick}
+            edgeTypes={edgeTypes}
+            onNodeMouseMove={(event, node) => {
+              if (!readonly) {
+                handleDisplayAddNodeOnEdge(`edge-button-${node.id}`);
+              }
+            }}
+            onEdgeMouseMove={(event: ReactMouseEvent, edge: Edge) => {
+              if (!readonly) {
+                handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
+              }
+            }}
             {...reactFlowDefaultProps}
           >
             <MinimalTemplatesSideBar
@@ -311,6 +361,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     stroke: ${colors.B60};
     border-radius: 10px;
     stroke-dasharray: 5;
+    stroke-width: 2px;
   }
   .react-flow__node.selected {
     .react-flow__handle {
@@ -336,6 +387,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
   }
 `;
+
 function getChannelErrors(index: number, errors: any, step: any) {
   if (errors?.steps) {
     const stepErrors = errors.steps[index]?.template;
