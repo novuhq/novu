@@ -19,6 +19,7 @@ import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget'
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
+import { NotificationCenter } from '@novu/notification-center-react';
 
 type Props = {};
 const menuItem = [
@@ -153,6 +154,11 @@ export function HeaderNav({}: Props) {
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeTitle()}>{Icon()}</Tooltip>
           </ActionIcon>
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '30px', right: '400px', zIndex: 1 }}>
+              <NotificationCenter />
+            </div>
+          </div>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown
             control={

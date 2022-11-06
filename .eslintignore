@@ -10,3 +10,10 @@ node_modules
 
 # OSX
 .DS_Store
+
+# do not lint the generated files
+packages/notification-center-react/src/components/generated/*
+packages/notification-center-react/types/components/generated/*
+packages/notification-center-vue/src/components/generated/*
+packages/notification-center-vue/types/components/generated/*
+packages/notification-center-vue/types/plugin.d.ts

@@ -1,0 +1,44 @@
+{
+  "name": "@novu/notification-center-core",
+  "version": "0.0.1",
+  "description": "Core Notification Center Components",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "es2015": "dist/esm/index.mjs",
+  "es2017": "dist/esm/index.mjs",
+  "types": "dist/types/index.d.ts",
+  "collection": "dist/collection/collection-manifest.json",
+  "collection:main": "dist/collection/index.js",
+  "unpkg": "dist/notification-center/notification-center.esm.js",
+  "files": [
+    "dist/",
+    "loader/"
+  ],
+  "scripts": {
+    "build": "stencil build --docs",
+    "start": "stencil build --dev --watch --serve --no-open",
+    "test": "stencil test --spec --e2e",
+    "test.watch": "stencil test --spec --e2e --watchAll",
+    "generate": "stencil generate"
+  },
+  "dependencies": {
+    "@emotion/css": "^11.10.0",
+    "@novu/client": "^0.7.3",
+    "@novu/shared": "^0.7.2",
+    "@stencil/core": "^2.13.0",
+    "@stencil/vue-output-target": "^0.6.2",
+    "@tanstack/query-core": "^4.10.3",
+    "chroma-js": "^2.4.2",
+    "date-fns": "^2.29.1",
+    "socket.io-client": "2.3.1",
+    "lodash.merge": "^4.6.2"
+  },
+  "devDependencies": {
+    "@stencil/react-output-target": "^0.3.1",
+    "@types/jest": "^27.0.3",
+    "jest": "^27.4.5",
+    "jest-cli": "^27.4.5",
+    "puppeteer": "^10.0.0"
+  },
+  "license": "MIT"
+}
