@@ -96,7 +96,7 @@ const generateDetailByStepAndStatus = (status, step) => {
   if (step.type === StepTypeEnum.DELAY) {
     const { digest, step: stepMetadata, payload } = step;
     if (stepMetadata.metadata.type === DelayTypeEnum.SCHEDULED) {
-      return `Delaying execution to ${payload[stepMetadata.metadata.delayPath]}`;
+      return `Delaying execution until ${payload[stepMetadata.metadata.delayPath]}`;
     }
 
     return `Delaying execution for ${digest.amount} ${digest.unit}`;
