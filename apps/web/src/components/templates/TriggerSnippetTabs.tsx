@@ -10,11 +10,26 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
     ? [...triggerSubscriberVariables]
     : [{ name: 'subscriberId' }, ...triggerSubscriberVariables];
 
+  const prismTabs = [
+    {
+      label: 'Node.js',
+      content: getNodeTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables),
+    },
+    {
+      label: 'Curl',
+      content: getCurlTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables),
+    },
+  ];
+
+  return <Tabs data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
+}
+
+export const getNodeTriggerSnippet = (identifier, variables, subscriberVariables) => {
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
 const novu = new Novu('<API_KEY>');
 
-novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
+novu.trigger('${identifier?.replace(/'/g, "\\'")}', {
   to: { 
     ${subscriberVariables
       ?.map((variable) => {
@@ -23,7 +38,7 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
       .join(',\n    ')}
   },
   payload: {
-    ${trigger.variables
+    ${variables
       ?.map((variable) => {
         return `${variable.name}: '${variable.value || '<REPLACE_WITH_DATA>'}'`;
       })
@@ -32,11 +47,19 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
 });
 `;
 
+  return (
+    <Prism mt={5} styles={prismStyles} data-test-id="trigger-code-snippet" language="javascript">
+      {triggerCodeSnippet}
+    </Prism>
+  );
+};
+
+export const getCurlTriggerSnippet = (identifier, variables, subscriberVariables) => {
   const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
      --header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
      --header 'Content-Type: application/json' \\
      --data-raw '{
-        "name": "${trigger.identifier?.replace(/'/g, "\\'")}",
+        "name": "${identifier?.replace(/'/g, "\\'")}",
         "to" : {
             ${subscriberVariables
               ?.map((variable) => {
@@ -45,7 +68,7 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
               .join(',\n            ')} 
         },
         "payload": {
-            ${trigger.variables
+            ${variables
               ?.map((variable) => {
                 return `"${variable.name}": "${variable.value || '<REPLACE_WITH_DATA>'}"`;
               })
@@ -54,36 +77,21 @@ novu.trigger('${trigger.identifier?.replace(/'/g, "\\'")}', {
     }'
   `;
 
-  const prismStyles = (theme) => ({
-    scrollArea: {
-      border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
-      borderRadius: '7px',
-    },
-    code: {
-      fontWeight: 400,
-      color: `${colors.B60} !important`,
-      backgroundColor: 'transparent !important',
-    },
-  });
+  return (
+    <Prism mt={5} styles={prismStyles} language="bash" key="2" data-test-id="trigger-curl-snippet">
+      {curlSnippet}
+    </Prism>
+  );
+};
 
-  const prismTabs = [
-    {
-      label: 'Node.js',
-      content: (
-        <Prism mt={5} styles={prismStyles} data-test-id="trigger-code-snippet" language="javascript">
-          {triggerCodeSnippet}
-        </Prism>
-      ),
-    },
-    {
-      label: 'Curl',
-      content: (
-        <Prism mt={5} styles={prismStyles} language="bash" key="2" data-test-id="trigger-curl-snippet">
-          {curlSnippet}
-        </Prism>
-      ),
-    },
-  ];
-
-  return <Tabs data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
-}
+const prismStyles = (theme) => ({
+  scrollArea: {
+    border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+    borderRadius: '7px',
+  },
+  code: {
+    fontWeight: 400,
+    color: `${colors.B60} !important`,
+    backgroundColor: 'transparent !important',
+  },
+});
