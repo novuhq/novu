@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { useQuery } from 'react-query';
+import { ExecutionDetailsStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
 import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
@@ -7,6 +9,7 @@ import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
 import { getNotification } from '../../api/activity';
 import { colors, shadows, Text, Title } from '../../design-system';
 import { When } from '../utils/When';
+import { useNotificationStatus } from '../../pages/activities/hooks/useNotificationStatus';
 
 export function ExecutionDetailsModal({
   notificationId,
@@ -20,10 +23,19 @@ export function ExecutionDetailsModal({
   onViewDigestExecution?: (digestNotificationId: string) => void;
 }) {
   const theme = useMantineTheme();
+  const [shouldRefetch, setShouldRefetch] = useState(true);
   const { data: response, isLoading } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
     enabled: !!notificationId,
-    refetchInterval: 3000,
+    refetchInterval: shouldRefetch ? 1000 : false,
   });
+
+  const status = useNotificationStatus(response?.data);
+
+  useEffect(() => {
+    if (status && status !== ExecutionDetailsStatusEnum.PENDING) {
+      setShouldRefetch(false);
+    }
+  }, [status]);
 
   const {
     jobs,
@@ -49,12 +61,7 @@ export function ExecutionDetailsModal({
           paddingInline: '8px',
         },
       }}
-      title={
-        <>
-          <Title size={2}>Execution details</Title>
-          <small>( Updates every 3 sec )</small>
-        </>
-      }
+      title={<Title size={2}>Execution details</Title>}
       sx={{ backdropFilter: 'blur(10px)' }}
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"
