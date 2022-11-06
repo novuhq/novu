@@ -1,4 +1,5 @@
 import { Accordion, createStyles } from '@mantine/core';
+
 import { ExecutionDetailsStepContent } from './ExecutionDetailsStepContent';
 import { ExecutionDetailsStepHeader } from './ExecutionDetailsStepHeader';
 
