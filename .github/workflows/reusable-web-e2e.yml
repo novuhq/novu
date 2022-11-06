@@ -123,6 +123,12 @@ jobs:
           install: false
           config-file: cypress.config.ts
 
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: apps/web/cypress/screenshots
+
   component_web:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
 
