@@ -6,7 +6,7 @@ export const useNotificationStatus = (notification: any): ExecutionDetailsStatus
   const [status, setStatus] = useState(ExecutionDetailsStatusEnum.PENDING);
 
   useEffect(() => {
-    const result = notification.jobs
+    const result = notification?.jobs
       .map((job) => {
         return getJobStatus(job);
       })
