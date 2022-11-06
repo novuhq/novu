@@ -12,7 +12,7 @@ export const DigestedStep = ({ digestedId, span = 4, onClick }) => {
       }}
     >
       <Center mt={20}>
-        <Text mr={10} size="md" color={colors.B60}>
+        <Text align="center" mr={10} size="md" color={colors.B60}>
           Remaining execution has been merged to an active Digest.
         </Text>
       </Center>
