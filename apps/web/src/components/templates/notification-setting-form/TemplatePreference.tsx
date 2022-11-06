@@ -25,6 +25,7 @@ export function TemplatePreference() {
 export function ChannelPreference() {
   const { control } = useFormContext();
   const { colorScheme } = useMantineColorScheme();
+  const { readonly } = useEnvController();
   const dark = colorScheme === 'dark';
 
   return (
@@ -32,8 +33,6 @@ export function ChannelPreference() {
       name="preferenceSettings"
       control={control}
       render={({ field }) => {
-        const { readonly } = useEnvController();
-
         const preferences = field.value;
         const mock = { email: true, sms: true, in_app: true, chat: true, push: true };
         const data = Object.assign({}, mock, preferences);

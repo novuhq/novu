@@ -36,24 +36,23 @@ export function HeaderNav({}: Props) {
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
   const { addItem } = useContext(SpotlightContext);
+  const { boot } = useIntercom();
 
-  if (INTERCOM_APP_ID) {
-    const { boot } = useIntercom();
+  useEffect(() => {
+    if (!INTERCOM_APP_ID) return;
 
-    useEffect(() => {
-      if (currentUser && currentOrganization) {
-        boot({
-          email: currentUser?.email,
-          name: currentUser?.firstName + ' ' + currentUser?.lastName,
-          createdAt: currentUser?.createdAt,
-          company: {
-            name: currentOrganization?.name,
-            companyId: currentOrganization?._id as string,
-          },
-        });
-      }
-    }, [currentUser, currentOrganization]);
-  }
+    if (currentUser && currentOrganization) {
+      boot({
+        email: currentUser?.email,
+        name: currentUser?.firstName + ' ' + currentUser?.lastName,
+        createdAt: currentUser?.createdAt,
+        company: {
+          name: currentOrganization?.name,
+          companyId: currentOrganization?._id as string,
+        },
+      });
+    }
+  }, [currentUser, currentOrganization]);
 
   const themeTitle = () => {
     let title = 'Match System Appearance';

@@ -1,5 +1,4 @@
 module.exports = {
-  extends: ['../../.eslintrc.js'],
   rules: {
     'func-names': 'off',
     'react/jsx-props-no-spreading': 'off',
@@ -40,7 +39,7 @@ module.exports = {
     'cypress/globals': true,
   },
   ignorePatterns: ['craco.config.js', 'cypress/*'],
-  extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
+  extends: ['plugin:cypress/recommended', 'plugin:react-hooks/recommended', '../../.eslintrc.js'],
   plugins: ['cypress'],
   parserOptions: {
     project: './tsconfig.json',
