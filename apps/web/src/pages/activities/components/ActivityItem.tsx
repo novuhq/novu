@@ -1,14 +1,16 @@
-import { Grid, Text, UnstyledButton, useMantineTheme } from '@mantine/core';
-import { colors } from '../../../design-system';
-import styled from 'styled-components';
-import { When } from '../../../components/utils/When';
-import { format } from 'date-fns';
-import { useNotificationStatus } from '../hooks/useNotificationStatus';
-import { ActivityStep } from './ActivityStep';
-import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import { createStyles, CSSObject, Grid, MantineTheme, Text, UnstyledButton, useMantineTheme } from '@mantine/core';
+import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { format } from 'date-fns';
+import styled from 'styled-components';
+
+import { ActivityStep } from './ActivityStep';
 import { DigestedStep } from './DigestedStep';
+
+import { When } from '../../../components/utils/When';
+import { colors } from '../../../design-system';
+import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
+import { useNotificationStatus } from '../hooks/useNotificationStatus';
 
 const JOB_LENGTH_UPPER_THRESHOLD = 3;
 
@@ -25,11 +27,25 @@ const getJobsLength = (item) => {
   return length;
 };
 
+interface IUnstyledButtonProps {
+  isOld: boolean;
+}
+
+const useStyles = createStyles(
+  (theme: MantineTheme, { isOld }: IUnstyledButtonProps): Record<string, CSSObject> => ({
+    unstyledButton: {
+      width: '100%',
+      cursor: isOld ? 'default' : 'pointer',
+    },
+  })
+);
+
 export const ActivityItem = ({ item, onClick }) => {
   const status = useNotificationStatus(item);
   const theme = useMantineTheme();
   const [isOld, setIsOld] = useState<boolean>(false);
   const [digestedNode, setDigestedNode] = useState<string>('');
+  const { classes } = useStyles({ isOld });
 
   useEffect(() => {
     const details = item.jobs.reduce((items: any[], job) => [...items, ...job.executionDetails], []);
@@ -40,13 +56,7 @@ export const ActivityItem = ({ item, onClick }) => {
   }, [item]);
 
   return (
-    <UnstyledButton
-      onClick={isOld ? undefined : (event) => onClick(event, item.id)}
-      sx={{
-        width: '100%',
-        cursor: isOld ? 'default' : 'pointer',
-      }}
-    >
+    <UnstyledButton onClick={isOld ? undefined : (event) => onClick(event, item.id)} className={classes.unstyledButton}>
       <ListItem dark={theme.colorScheme === 'dark'}>
         <Grid gutter={10}>
           <Grid.Col span={3}>
@@ -129,7 +139,7 @@ export const ActivityItem = ({ item, onClick }) => {
                 height: '100%',
               }}
             >
-              {item.jobs.slice(0, 3).map((job) => (
+              {item.jobs.slice(0, JOB_LENGTH_UPPER_THRESHOLD).map((job) => (
                 <ActivityStep
                   isOld={isOld}
                   key={`activity-step-${job._id}`}
@@ -143,7 +153,7 @@ export const ActivityItem = ({ item, onClick }) => {
               <When truthy={checkJobsLength(item)}>
                 <Grid.Col span={1}>
                   <Text align="center" size="xl">
-                    +{getJobsLength(item) - 3}
+                    +{getJobsLength(item) - JOB_LENGTH_UPPER_THRESHOLD}
                   </Text>
                 </Grid.Col>
               </When>
@@ -164,4 +174,9 @@ const ListItem = styled.div<{ dark: boolean }>`
   margin-bottom: 15px;
   border-radius: 7px;
   color: ${({ dark }) => (dark ? colors.B80 : colors.B40)};
+
+  &:hover {
+    background-color: ${({ dark }) => (dark ? colors.B20 : colors.BGLight)};
+    border-radius: 7px;
+  },
 `;
