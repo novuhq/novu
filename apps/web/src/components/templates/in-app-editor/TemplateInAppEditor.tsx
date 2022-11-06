@@ -7,25 +7,21 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { showNotification } from '@mantine/notifications';
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Checkbox, Input, Switch, Text } from '../../../design-system';
+import { Checkbox, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { createFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
+import { EnableAvatarSwitch } from './EnableAvatarSwitch';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const [newFeed, setNewFeed] = useInputState('');
   const [variableContents, setVariableContents] = useState<string[]>([]);
-  const {
-    formState: { errors },
-    setValue,
-    getValues,
-    watch,
-  } = useFormContext();
+  const { setValue, getValues, watch } = useFormContext();
   const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
     IFeedEntity,
@@ -123,19 +119,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             readonly={readonly}
             contentPlaceholder="Write your notification content here..."
           />
-          <Controller
-            name={`steps.${index}.template.enableAvatar` as any}
-            render={({ field }) => {
-              return (
-                <Group position="apart">
-                  <Text weight="bold">Add an Avatar</Text>
-                  <div>
-                    <Switch checked={field.value} onChange={field.onChange} />
-                  </div>
-                </Group>
-              );
-            }}
-          />
+          <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} />
           <Divider />
           <Controller
             name={`steps.${index}.template.feedId` as any}

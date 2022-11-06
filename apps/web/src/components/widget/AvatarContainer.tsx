@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Box, Group, Divider, Popover, useMantineColorScheme, Stack, Avatar as MAvatar } from '@mantine/core';
-import styled from '@emotion/styled';
+import { Box, Group, Divider, Popover, Stack, Avatar as MAvatar } from '@mantine/core';
 import {
   WarningFilled,
   InfoCircleFilled,
@@ -13,6 +12,7 @@ import { SystemAvatarIconEnum, IAvatarDetails, AvatarTypeEnum } from '@novu/shar
 import { colors, Input, Switch, Text, Tooltip } from '../../design-system';
 import { Camera } from '../../design-system/icons/general/Camera';
 import { Avatar } from '../../design-system/icons/general/Avatar';
+import { AvatarWrapper, IconWrapper, useStyles } from './AvatarContainer.styles';
 
 const systemIcons = [
   {
@@ -52,8 +52,9 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
   const [tooltipOpened, setTooltipOpened] = useState(() => {
     return value.type === AvatarTypeEnum.NONE;
   });
-  const { colorScheme } = useMantineColorScheme();
-  const dark = colorScheme === 'dark';
+
+  const { classes, theme } = useStyles();
+  const dark = theme.colorScheme === 'dark';
 
   function handleAvatarPopover() {
     setOpened((prev) => !prev);
@@ -67,7 +68,7 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
       <Popover
         target={
           <Tooltip label={<TooltipLabel />} position="left" opened={tooltipOpened}>
-            <AvatarWrapper onClick={handleAvatarPopover}>
+            <AvatarWrapper onClick={handleAvatarPopover} dark={dark}>
               <RenderAvatar avatarDetails={value} />
             </AvatarWrapper>
           </Tooltip>
@@ -76,23 +77,12 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
         position="bottom"
         placement="start"
         withArrow
-        styles={{
-          inner: { margin: 0, padding: 15 },
-          target: { height: '40px' },
-          arrow: {
-            backgroundColor: dark ? colors.B20 : colors.white,
-            height: '-22px',
-            border: 'none',
-            margin: '0px',
-          },
-          body: {
-            backgroundColor: dark ? colors.B20 : colors.white,
-            color: dark ? colors.white : colors.B40,
-            border: 'none',
-            marginTop: '1px',
-            width: '100%',
-          },
-          popover: { width: '240px' },
+        classNames={{
+          inner: classes.inner,
+          target: classes.target,
+          arrow: classes.arrow,
+          body: classes.body,
+          popover: classes.popover,
         }}
       >
         <Stack>
@@ -121,7 +111,7 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
           </Group>
           <Divider label={<Text color={colors.B60}>Platform/System Avatars</Text>} labelPosition="left" />
 
-          <Group>
+          <Group align="center">
             <Box>
               <Camera />
             </Box>
@@ -200,31 +190,5 @@ function TooltipLabel() {
     </Stack>
   );
 }
-
-const AvatarWrapper = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid ${colors.B40};
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  overflow: hidden;
-  user-select: none;
-`;
-
-const IconWrapper = styled.div<{ bgColor: string; size: number }>`
-  width: ${({ size }) => size}px;
-  height: ${({ size }) => size}px;
-  border-radius: 50%;
-  cursor: pointer;
-  background-color: ${({ bgColor }) => `${bgColor}15`};
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 30px;
-  color: ${({ bgColor }) => bgColor};
-`;
 
 export default AvatarContainer;

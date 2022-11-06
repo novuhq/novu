@@ -162,8 +162,6 @@ export class NotificationTemplateController {
     @UserSession() user: IJwtPayload,
     @Body() body: CreateNotificationTemplateRequestDto
   ): Promise<NotificationTemplateResponse> {
-    console.log(body.steps);
-
     return this.createNotificationTemplateUsecase.execute(
       CreateNotificationTemplateCommand.create({
         organizationId: user.organizationId,

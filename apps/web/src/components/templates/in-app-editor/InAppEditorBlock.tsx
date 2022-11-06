@@ -7,6 +7,10 @@ import { IForm } from '../use-template-controller.hook';
 import AvatarContainer from '../../widget/AvatarContainer';
 import { Text, colors } from '../../../design-system';
 
+function minutesAgo(num: number): string {
+  return formatDistanceToNow(subMinutes(new Date(), num), { addSuffix: true });
+}
+
 export function InAppEditorBlock({
   contentPlaceholder,
   control,
@@ -18,10 +22,6 @@ export function InAppEditorBlock({
   index: number;
   readonly: boolean;
 }) {
-  function minutesAgo(num: number): string {
-    return formatDistanceToNow(subMinutes(new Date(), num), { addSuffix: true });
-  }
-
   const enableAvatar = useWatch({
     name: `steps.${index}.template.enableAvatar`,
     control,
@@ -73,41 +73,31 @@ function ContentContainerController({
   readonly: boolean;
 }) {
   return (
-    <>
-      <Controller
-        name={`steps.${index}.template.content` as any}
-        data-test-id="in-app-content-form-item"
-        control={control}
-        render={({ field }) => {
-          const { ref, ...fieldRefs } = field;
+    <Controller
+      name={`steps.${index}.template.content` as any}
+      data-test-id="in-app-content-form-item"
+      control={control}
+      render={({ field }) => {
+        const { ref, ...fieldRefs } = field;
 
-          return (
-            <ContentContainer
-              {...fieldRefs}
-              contentPlaceholder={contentPlaceholder}
-              readonly={readonly}
-              index={index}
-            />
-          );
-        }}
-      />
-    </>
+        return (
+          <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} index={index} />
+        );
+      }}
+    />
   );
 }
 
 function AvatarContainerController({ control, index }: { control: Control<IForm>; index: number }) {
   return (
-    <>
-      <Controller
-        name={`steps.${index}.template.avatarDetails` as any}
-        data-test-id="in-app-avatar-item"
-        control={control}
-        render={({ field }) => {
-          const { ref, ...fieldRefs } = field;
+    <Controller
+      name={`steps.${index}.template.avatarDetails` as any}
+      control={control}
+      render={({ field }) => {
+        const { ref, ...fieldRefs } = field;
 
-          return <AvatarContainer {...fieldRefs} />;
-        }}
-      />
-    </>
+        return <AvatarContainer {...fieldRefs} />;
+      }}
+    />
   );
 }

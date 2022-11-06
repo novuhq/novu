@@ -145,13 +145,16 @@ export function useTemplateController(templateId: string) {
         step.template.content = step.template.htmlContent as string;
       }
 
-      if (step.template.type === StepTypeEnum.IN_APP && !step.template.enableAvatar) {
-        step.template.avatarDetails = {
-          type: AvatarTypeEnum.NONE,
-          data: null,
-        };
+      if (step.template.type === StepTypeEnum.IN_APP) {
+        if (!step.template.enableAvatar) {
+          step.template.avatarDetails = {
+            type: AvatarTypeEnum.NONE,
+            data: null,
+          };
+        }
+
+        delete step.template.enableAvatar;
       }
-      delete step.template.enableAvatar;
 
       return step;
     });
@@ -223,11 +226,13 @@ export function useTemplateController(templateId: string) {
         type: channelType,
         content: [],
         variables: [],
-        avatarDetails: {
-          type: AvatarTypeEnum.NONE,
-          data: null,
-        },
-        enableAvatar: false,
+        ...(channelType === StepTypeEnum.IN_APP && {
+          avatarDetails: {
+            type: AvatarTypeEnum.NONE,
+            data: null,
+          },
+          enableAvatar: false,
+        }),
       },
       active: true,
       filters: [],

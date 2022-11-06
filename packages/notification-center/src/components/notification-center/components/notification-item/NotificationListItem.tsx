@@ -309,7 +309,7 @@ const SystemIconWrapper = styled.div<{ bgColor: string }>`
   width: 100%;
   height: 100%;
   cursor: pointer;
-  background-color: ${({ bgColor }) => `${bgColor}15`};
+  background-color: ${({ bgColor }) => `${bgColor}26`};
   display: flex;
   justify-content: center;
   align-items: center;

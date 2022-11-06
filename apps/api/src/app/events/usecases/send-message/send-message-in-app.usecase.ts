@@ -59,7 +59,8 @@ export class SendMessageInApp extends SendMessageType {
     });
     const inAppChannel: NotificationStepEntity = command.step;
     let content = '';
-    const avatarDetails = command.step.template.avatarDetails;
+
+    const { avatarDetails } = command.step.template;
 
     if (avatarDetails && avatarDetails.type !== AvatarTypeEnum.NONE) {
       avatarDetails.data = await this.processAvatar(avatarDetails, command.environmentId, command.actorId);
