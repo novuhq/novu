@@ -16,7 +16,7 @@ export class BulkSmsSmsProvider implements ISmsProvider {
   async sendMessage(options: ISmsOptions): Promise<ISendMessageSuccessResponse> {
     console.log(options);
     const response1 = await fetch(
-      'http://login.bulksmsoffers.com/api/sendhttp.php?authkey=273131Adqyvkvd5cb99570&mobiles=7735993629&message=1234 is your OTP. Thanks ITPL&sender=iSUPAS&route=OTP&DLT_TE_ID=1107161555177329736',
+      // I will put my API URL here so that we can send sms to our clients (Ex - 'http://login.bulksmsoffers.com/'),
       {
         method: 'GET',
         headers: {
