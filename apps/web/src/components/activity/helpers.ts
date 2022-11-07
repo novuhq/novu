@@ -16,7 +16,7 @@ export const getColorByStatus = (theme: MantineTheme, status: JobStatusEnum): st
   return theme.colorScheme === 'dark' ? colors.B60 : colors.B40;
 };
 
-export const getLogoByStatus = (): React.FunctionComponent<React.ComponentPropsWithoutRef<'svg'>> => {
+export const getCheckLogo = (): React.FunctionComponent<React.ComponentPropsWithoutRef<'svg'>> => {
   return Check;
 };
 
