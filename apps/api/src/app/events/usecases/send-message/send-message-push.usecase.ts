@@ -155,6 +155,8 @@ export class SendMessagePush extends SendMessageType {
             isRetry: false,
           })
         );
+
+        return;
       }
 
       for (const channel of pushChannels) {
@@ -185,17 +187,6 @@ export class SendMessagePush extends SendMessageType {
     integration: IntegrationEntity
   ) {
     if (!pushChannels) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
@@ -213,6 +204,19 @@ export class SendMessagePush extends SendMessageType {
           },
         })
       );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
     }
   }
 
@@ -281,6 +285,17 @@ export class SendMessagePush extends SendMessageType {
         })
       );
     } catch (e) {
+      await this.sendErrorStatus(
+        message,
+        'error',
+        'unexpected_push_error',
+        e.message || e.name || 'Un-expect Push provider error',
+        command,
+        notification,
+        LogCodeEnum.PUSH_ERROR,
+        e
+      );
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -293,16 +308,8 @@ export class SendMessagePush extends SendMessageType {
           raw: JSON.stringify(e),
         })
       );
-      await this.sendErrorStatus(
-        message,
-        'error',
-        'unexpected_push_error',
-        e.message || e.name || 'Un-expect Push provider error',
-        command,
-        notification,
-        LogCodeEnum.PUSH_ERROR,
-        e
-      );
+
+      return;
     }
   }
 }

@@ -26,14 +26,14 @@ const ExecutionDetailTime = ({ createdAt }) => {
   return <FormattedTime>{formattedTime}</FormattedTime>;
 };
 
-const getExecutionDetailStatus = (status, type) => {
+const getExecutionDetailStatus = (type) => {
   const logo = getLogoByType(type);
 
   if (logo) {
     return logo;
   }
 
-  return getLogoByStatus(status);
+  return getLogoByStatus();
 };
 
 export const ExecutionDetail = ({
@@ -45,7 +45,7 @@ export const ExecutionDetail = ({
   const theme = useMantineTheme();
   const { createdAt, detail, raw, status, type } = executionDetail;
   const color = getColorByStatus(theme, status);
-  const ExecutionDetailStatus = getExecutionDetailStatus(status, type);
+  const ExecutionDetailStatus = getExecutionDetailStatus(status);
 
   const secondColumnSpan = raw ? 8 : 11;
 

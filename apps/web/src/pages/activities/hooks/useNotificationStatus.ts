@@ -1,20 +1,19 @@
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { JobStatusEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
-import { getJobStatus } from './useJobStatus';
 
-export const useNotificationStatus = (notification: any): ExecutionDetailsStatusEnum => {
-  const [status, setStatus] = useState(ExecutionDetailsStatusEnum.PENDING);
+export const useNotificationStatus = (notification: any): JobStatusEnum => {
+  const [status, setStatus] = useState(JobStatusEnum.PENDING);
 
   useEffect(() => {
     const result = notification?.jobs
       .map((job) => {
-        return getJobStatus(job);
+        return job.status;
       })
-      .reduce((prev: ExecutionDetailsStatusEnum, item: ExecutionDetailsStatusEnum) => {
-        if (prev === ExecutionDetailsStatusEnum.FAILED) {
+      .reduce((prev: JobStatusEnum, item: JobStatusEnum) => {
+        if (prev === JobStatusEnum.FAILED) {
           return prev;
         }
-        if (prev === ExecutionDetailsStatusEnum.PENDING) {
+        if ([JobStatusEnum.PENDING, JobStatusEnum.DELAYED].includes(prev)) {
           return prev;
         }
 

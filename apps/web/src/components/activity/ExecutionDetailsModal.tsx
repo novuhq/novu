@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { useQuery } from 'react-query';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
 import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
@@ -32,7 +32,7 @@ export function ExecutionDetailsModal({
   const status = useNotificationStatus(response?.data);
 
   useEffect(() => {
-    if (status && status !== ExecutionDetailsStatusEnum.PENDING) {
+    if (status && ![JobStatusEnum.FAILED, JobStatusEnum.COMPLETED, JobStatusEnum.CANCELED].includes(status)) {
       setShouldRefetch(false);
     }
   }, [status]);

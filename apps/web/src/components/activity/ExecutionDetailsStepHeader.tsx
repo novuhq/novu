@@ -1,5 +1,5 @@
 import { Container, Grid, useMantineColorScheme } from '@mantine/core';
-import { ExecutionDetailsStatusEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
+import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
 
@@ -48,7 +48,7 @@ const LogoWrapper = styled(Container)`
 `;
 
 const getLogoStyledComponentByStepStatus = (status, type) => {
-  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
+  if (status === JobStatusEnum.COMPLETED) {
     return CheckCircle;
   }
 
@@ -56,7 +56,7 @@ const getLogoStyledComponentByStepStatus = (status, type) => {
 };
 
 const getColorByStatus = (status) => {
-  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
+  if (status === JobStatusEnum.COMPLETED) {
     return colors.success;
   }
 
@@ -70,7 +70,7 @@ const StepLogo = ({ status, type }) => {
   return (
     <LogoWrapper>
       {Logo && <Logo height="32px" width="32px" color={color} />}
-      {status === ExecutionDetailsStatusEnum.FAILED && (
+      {status === JobStatusEnum.FAILED && (
         <ErrorIcon
           height="15px"
           width="15px"
@@ -83,7 +83,7 @@ const StepLogo = ({ status, type }) => {
 };
 
 const generateDetailByStepAndStatus = (status, step) => {
-  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
+  if (status === JobStatusEnum.COMPLETED) {
     return `Success! ${step.executionDetails?.at(-1)?.detail}`;
   }
 
@@ -106,11 +106,11 @@ const generateDetailByStepAndStatus = (status, step) => {
 };
 
 const getDetailsStyledComponentByStepStatus = (status) => {
-  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
+  if (status === JobStatusEnum.COMPLETED) {
     return SuccessStepDetails;
   }
 
-  if (status === ExecutionDetailsStatusEnum.FAILED) {
+  if (status === JobStatusEnum.FAILED) {
     return FailedStepDetails;
   }
 
@@ -132,7 +132,7 @@ const StepOutcome = ({ createdAt, name, detail, status }) => {
 };
 
 export const ExecutionDetailsStepHeader = ({ step }) => {
-  const { status } = step?.executionDetails.at(-1) || {};
+  const { status } = step;
   const generatedDetail = generateDetailByStepAndStatus(status, step);
 
   return (

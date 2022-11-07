@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createStyles, CSSObject, Grid, MantineTheme, Text, UnstyledButton, useMantineTheme } from '@mantine/core';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { JobStatusEnum } from '@novu/shared';
 import { format } from 'date-fns';
 import styled from 'styled-components';
 
@@ -74,17 +74,13 @@ export const ActivityItem = ({ item, onClick }) => {
                     }}
                   >
                     <span>
-                      <When
-                        truthy={
-                          status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED
-                        }
-                      >
+                      <When truthy={status !== JobStatusEnum.COMPLETED && status !== JobStatusEnum.FAILED}>
                         <Timer width={26} height={26} />
                       </When>
-                      <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+                      <When truthy={status === JobStatusEnum.COMPLETED}>
                         <CheckCircle width="26" height="26" color={colors.success} />
                       </When>
-                      <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+                      <When truthy={status === JobStatusEnum.FAILED}>
                         <ErrorIcon width="26" height="26" color={colors.error} />
                       </When>
                     </span>
@@ -104,12 +100,12 @@ export const ActivityItem = ({ item, onClick }) => {
                     <Text>Done</Text>
                   </When>
                   <When truthy={!isOld}>
-                    <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+                    <When truthy={status === JobStatusEnum.COMPLETED}>
                       <Text data-test-id="status-badge-item" color={colors.success}>
                         Done
                       </Text>
                     </When>
-                    <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+                    <When truthy={status === JobStatusEnum.FAILED}>
                       <Text data-test-id="status-badge-item" color={colors.error}>
                         Failed
                       </Text>
