@@ -22,10 +22,11 @@ export function SignUpForm({ token, email }: Props) {
   const navigate = useNavigate();
 
   const { setToken } = useContext(AuthContext);
-  const { isFromVercel, code, next } = useVercelParams();
-  const loginLink = isFromVercel ? `/auth/login?code=${code}&next=${next}` : '/auth/login';
+  const { isFromVercel, code, next, configurationId } = useVercelParams();
+  const vercelQueryParamss = `code=${code}&next=${next}&configurationId=${configurationId}`;
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParamss}` : '/auth/login';
   const githubLink = isFromVercel
-    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}`
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
 
   const { isLoading: loadingAcceptInvite, mutateAsync: acceptInvite } = useMutation<
@@ -80,7 +81,7 @@ export function SignUpForm({ token, email }: Props) {
       setToken((response as any).token);
     }
 
-    navigate(isFromVercel ? `/auth/application?code=${code}&next=${next}` : '/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParamss}` : '/auth/application');
 
     return true;
   };

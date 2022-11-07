@@ -26,10 +26,11 @@ export function LoginForm({}: Props) {
     }
   >((data) => api.post(`/v1/auth/login`, data));
 
-  const { isFromVercel, code, next } = useVercelParams();
-  const signupLink = isFromVercel ? `/auth/signup?code=${code}&next=${next}` : '/auth/signup';
+  const { isFromVercel, code, next, configurationId } = useVercelParams();
+  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
+  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
   const githubLink = isFromVercel
-    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}`
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
 
   const {
