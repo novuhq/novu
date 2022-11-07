@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IPreferenceChannels,
+  StepTypeEnum,
+} from '@novu/shared';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
@@ -8,7 +14,23 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
 import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
-import { SubscriberRepository } from '@novu/dal';
+import {
+  JobEntity,
+  SubscriberRepository,
+  NotificationTemplateRepository,
+  JobRepository,
+  JobStatusEnum,
+} from '@novu/dal';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { SendMessageDelay } from './send-message-delay.usecase';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-template-preference';
 
 @Injectable()
 export class SendMessage {
@@ -19,14 +41,36 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private createExecutionDetails: CreateExecutionDetails,
+    private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private jobRepository: JobRepository,
+    private sendMessageDelay: SendMessageDelay
   ) {}
 
   public async execute(command: SendMessageCommand) {
     const shouldRun = await this.filter(command);
+    const preferred = await this.filterPreferredChannels(command.job);
 
-    if (!shouldRun) {
+    if (!shouldRun || !preferred) {
+      await this.jobRepository.updateStatus(command.jobId, JobStatusEnum.CANCELED);
+
       return;
+    }
+
+    if (command.step.template.type !== StepTypeEnum.DELAY) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail:
+            command.step.template.type === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
     }
 
     switch (command.step.template.type) {
@@ -42,13 +86,34 @@ export class SendMessage {
         return await this.sendMessagePush.execute(command);
       case StepTypeEnum.DIGEST:
         return await this.digest.execute(command);
+      case StepTypeEnum.DELAY:
+        return await this.sendMessageDelay.execute(command);
     }
   }
 
   private async filter(command: SendMessageCommand) {
     const data = await this.getFilterData(command);
 
-    return matchMessageWithFilters(command.step, data);
+    const shouldRun = matchMessageWithFilters(command.step, data);
+
+    if (!shouldRun) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.FILTER_STEPS,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            payload: data,
+            filters: command.step.filters,
+          }),
+        })
+      );
+    }
+
+    return shouldRun;
   }
 
   private async getFilterData(command: SendMessageCommand) {
@@ -67,5 +132,51 @@ export class SendMessage {
       subscriber,
       payload: command.payload,
     };
+  }
+
+  private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
+    const template = await this.notificationTemplateRepository.findById(job._templateId, job._organizationId);
+    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
+      organizationId: job._organizationId,
+      subscriberId: job._subscriberId,
+      environmentId: job._environmentId,
+      template,
+    });
+
+    const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
+
+    const result = this.isActionStep(job) || this.stepPreferred(preference, job);
+
+    if (!result) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(preference),
+        })
+      );
+    }
+
+    return result;
+  }
+
+  private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
+    const templatePreferred = preference.enabled;
+
+    const channelPreferred = Object.keys(preference.channels).some(
+      (channelKey) => channelKey === job.type && preference.channels[job.type]
+    );
+
+    return templatePreferred && channelPreferred;
+  }
+
+  private isActionStep(job: JobEntity) {
+    const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
+
+    return !channels.find((channel) => channel === job.type);
   }
 }

@@ -18,7 +18,7 @@ export function Box(props: React.ComponentPropsWithoutRef<'svg'>) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M10 18.4V10" stroke="#828299" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 18.4V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

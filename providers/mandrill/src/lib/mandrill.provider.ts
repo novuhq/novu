@@ -10,7 +10,7 @@ import {
 } from '@novu/stateless';
 
 import mailchimp from '@mailchimp/mailchimp_transactional';
-import { MandrillInterface } from './mandrill.interface';
+import { IMandrilInterface } from './mandril.interface';
 
 export enum MandrillStatusEnum {
   OPENED = 'open',
@@ -29,7 +29,7 @@ export class MandrillProvider implements IEmailProvider {
   id = 'mandrill';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  private transporter: MandrillInterface;
+  private transporter: IMandrilInterface;
 
   constructor(
     private config: {

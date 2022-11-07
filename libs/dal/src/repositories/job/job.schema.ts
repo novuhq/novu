@@ -90,10 +90,20 @@ const jobSchema = new Schema(
     },
     type: {
       type: Schema.Types.String,
+      index: true,
+    },
+    providerId: {
+      type: Schema.Types.String,
     },
   },
   schemaOptions
 );
+
+jobSchema.virtual('executionDetails', {
+  ref: 'ExecutionDetails',
+  localField: '_id',
+  foreignField: '_jobId',
+});
 
 interface IJobDocument extends JobEntity, Document {
   _id: never;

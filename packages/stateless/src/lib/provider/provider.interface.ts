@@ -91,7 +91,7 @@ export enum SmsEventStatusEnum {
 }
 
 export interface IEventBody {
-  status: string;
+  status: EmailEventStatusEnum | SmsEventStatusEnum;
   date: string;
   externalId?: string;
   attempts?: number;

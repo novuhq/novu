@@ -21,7 +21,7 @@ export class TriggerEventToAll {
       'subscriberId',
       {},
       batchSize
-    )) {
+    ) as any) {
       list.push(subscriber);
       if (list.length === batchSize) {
         await this.trigger(command, list);

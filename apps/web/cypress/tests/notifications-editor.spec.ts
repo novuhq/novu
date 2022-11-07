@@ -36,7 +36,7 @@ describe('Notifications Creator', function () {
       });
       fillBasicNotificationDetails('Test SMS Notification Title');
       clickWorkflow();
-      cy.clickWorkflowNode(`node-inAppSelector`).parent().should('have.class', 'selected');
+      cy.clickWorkflowNode(`node-inAppSelector`)?.parent().should('have.class', 'selected');
       cy.getByTestId(`step-properties-side-menu`).should('be.visible');
       cy.clickWorkflowNode(`node-triggerSelector`);
       cy.getByTestId(`drag-side-menu`).should('be.visible');
@@ -272,11 +272,12 @@ describe('Notifications Creator', function () {
       cy.intercept('GET', '/v1/notification-templates?page=0&limit=10').as('notification-templates');
       cy.visit('/templates');
       cy.wait('@notification-templates');
-      cy.get('tbody').contains('Test Notification Title').click();
 
-      clickWorkflow();
+      awaitGetContains('tbody', 'Test Notification Title').click({ force: true });
 
-      cy.clickWorkflowNode(`node-digestSelector`);
+      cy.clickNodeButton('workflowButton');
+
+      cy.clickNodeButton(`node-digestSelector`);
 
       cy.getByTestId('time-amount').should('have.value', '20');
       cy.getByTestId('batch-key').should('have.value', 'id');
@@ -748,12 +749,12 @@ function addAndEditChannel(channel: Channel) {
   editChannel(channel);
 }
 
-function dragAndDrop(channel: Channel) {
+function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {
   const dataTransfer = new DataTransfer();
 
   cy.wait(1000);
   cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer });
-  cy.getByTestId('addNodeButton').parent().trigger('drop', { dataTransfer });
+  cy.getByTestId(dropTestId).parent().trigger('drop', { dataTransfer });
 }
 
 function editChannel(channel: Channel, last = false) {
@@ -807,4 +808,21 @@ function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
 function clickWorkflow() {
   cy.getByTestId('workflowButton').click();
   cy.wait(1000);
+}
+
+function awaitGetContains(getSelector: string, contains: string) {
+  return cy
+    .waitUntil(
+      () =>
+        cy
+          .get(getSelector)
+          .contains(contains)
+          .as('awaitedElement')
+          .wait(1) // for some reason this is needed, otherwise next line returns `true` even if click() fails due to detached element in the next step
+          .then(($el) => {
+            return Cypress.dom.isAttached($el);
+          }),
+      { timeout: 5000, interval: 500 }
+    )
+    .get('@awaitedElement');
 }

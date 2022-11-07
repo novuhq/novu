@@ -1,7 +1,9 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { SharedModule } from '../shared/shared.module';
-import { WebhooksController } from './webhooks.controller';
+
 import { USE_CASES } from './usecases';
+import { WebhooksController } from './webhooks.controller';
+
+import { SharedModule } from '../shared/shared.module';
 
 @Module({
   imports: [SharedModule],

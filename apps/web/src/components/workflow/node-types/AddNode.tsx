@@ -2,24 +2,26 @@ import React, { memo } from 'react';
 import { colors, Dropdown, Text } from '../../../design-system';
 import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
+import { Digest, Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
 import { StepTypeEnum } from '@novu/shared';
-import { Digest } from '../../../design-system/icons/general/Digest';
 
 interface NodeData {
-  label: string;
-  addNewNode: (parentId: string, type: string) => void;
+  addNewNode: (parentId: string, type: string, childId?: string) => void;
   parentId: string;
   showDropZone: boolean;
+  childId: string;
 }
 export default memo(({ data }: { data: NodeData }) => {
+  const { parentId, childId } = data;
   const theme = useMantineTheme();
   const addNewNode = (type) => {
-    data.addNewNode(data.parentId, type);
+    data.addNewNode(data.parentId, type, data.childId);
   };
 
+  const dataTestId = parentId && childId ? `addNodeButton_${parentId}_${childId}` : 'addNodeButton';
+
   return (
-    <Container data-test-id={`addNodeButton`} style={{ pointerEvents: 'none' }}>
+    <Container data-test-id={dataTestId} style={{ pointerEvents: 'none' }}>
       <Dropdown
         placement="center"
         control={

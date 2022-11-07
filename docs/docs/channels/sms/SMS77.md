@@ -8,8 +8,8 @@ To use the SMS77 channel, the first step is to create a SMS77 account and add th
 
 ## Find the API key
 
-To find the SMS77 API key, log into the personal SMS77 account and navigate to the API Keys page by clicking on the 'Developer' tab present at the end of the sidebar. It is suggested to create a new API key for use with Novu. Copy the newly created API key. 
-    
+To find the SMS77 API key, log into the personal SMS77 account and navigate to the API Keys page by clicking on the 'Developer' tab present at the end of the sidebar. It is suggested to create a new API key for use with Novu. Copy the newly created API key.
+
 ## Create a AWS SNS integration with Novu
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
