@@ -18,6 +18,10 @@ const integrationSchema = new Schema(
     providerId: Schema.Types.String,
     channel: Schema.Types.String,
     credentials: {
+      sender: Schema.Types.String,
+      route: Schema.Types.String,
+      dltEntityId: Schema.Types.String,
+      authKey: Schema.Types.String,
       apiKey: Schema.Types.String,
       user: Schema.Types.String,
       secretKey: Schema.Types.String,

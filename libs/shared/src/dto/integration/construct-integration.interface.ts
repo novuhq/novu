@@ -1,4 +1,8 @@
 export interface ICredentialsDto {
+  sender?: string;
+  route?: string;
+  dltEntityId?: string;
+  authKey?: string;
   apiKey?: string;
   user?: string;
   secretKey?: string;
