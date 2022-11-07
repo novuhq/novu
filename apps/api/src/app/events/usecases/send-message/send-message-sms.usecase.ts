@@ -306,9 +306,10 @@ export class SendMessageSms extends SendMessageType {
         })
       );
 
-      if (!result.id) {
+      if (!result?.id) {
         return;
       }
+
       await this.messageRepository.update(
         {
           _id: message._id,
