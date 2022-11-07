@@ -1,5 +1,6 @@
 import { Group } from '@mantine/core';
 import { Button } from '../../../design-system';
+import { PlusCircle } from '../../../design-system/icons';
 
 type LinkMoreProjectRowProps = {
   addMoreProjectRow: VoidFunction;
@@ -7,9 +8,9 @@ type LinkMoreProjectRowProps = {
 };
 export function LinkMoreProjectRow({ addMoreProjectRow, disableMoreProjectsBtn }: LinkMoreProjectRowProps) {
   return (
-    <Group position="right">
-      <Button variant="outline" onClick={addMoreProjectRow} disabled={disableMoreProjectsBtn}>
-        Link more projects
+    <Group position="center">
+      <Button variant="outline" onClick={addMoreProjectRow} disabled={disableMoreProjectsBtn} icon={<PlusCircle />}>
+        Add more projects
       </Button>
     </Group>
   );

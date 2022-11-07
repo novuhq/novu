@@ -95,7 +95,7 @@ export class AuthController {
     }
 
     /**
-     * partnerCode and next are required during external partners integration
+     * partnerCode, next and configurationId are required during external partners integration
      * such as vercel integration etc
      */
     const partnerCode = JSON.parse(request.query.state).partnerCode;
@@ -106,6 +106,11 @@ export class AuthController {
     const next = JSON.parse(request.query.state).next;
     if (next) {
       url += `&next=${next}`;
+    }
+
+    const configurationId = JSON.parse(request.query.state).configurationId;
+    if (configurationId) {
+      url += `&configurationId=${configurationId}`;
     }
 
     return response.redirect(url);
