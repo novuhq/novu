@@ -66,7 +66,7 @@ const useMenuStyles = createStyles((theme: MantineTheme) => {
 });
 
 export function ChannelButton({
-  active,
+  active = false,
   action = false,
   switchButton,
   checked = false,
@@ -107,10 +107,10 @@ export function ChannelButton({
   }, [watch]);
 
   useEffect(() => {
-    if (dragging && showDotMenu) {
+    if (showDotMenu && (dragging || !active)) {
       setShowDotMenu(false);
     }
-  }, [dragging, showDotMenu]);
+  }, [dragging, showDotMenu, active]);
 
   return (
     <Button
