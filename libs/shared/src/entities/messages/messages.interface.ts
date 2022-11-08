@@ -14,7 +14,9 @@ export interface IMessage {
   content: string | IEmailBlock[];
   channel: ChannelTypeEnum;
   seen: boolean;
+  read: boolean;
   lastSeenDate: string;
+  lastReadDate: string;
   createdAt: string;
   cta: IMessageCTA;
   _feedId: string;

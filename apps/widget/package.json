@@ -27,7 +27,6 @@
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "4.1.0",
     "@mantine/hooks": "4.1.0",
-    "@novu/embed": "^0.8.0",
     "@novu/notification-center": "^0.8.0",
     "@novu/shared": "^0.8.0",
     "@testing-library/jest-dom": "^5.11.4",

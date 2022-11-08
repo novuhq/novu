@@ -7,6 +7,7 @@ import { BE } from './languages/be';
 import { BG } from './languages/bg';
 import { BH } from './languages/bh';
 import { BN } from './languages/bn';
+import { BS } from './languages/bs';
 import { CA } from './languages/ca';
 import { CS } from './languages/cs';
 import { DA } from './languages/da';
@@ -90,6 +91,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   bg: BG,
   bh: BH,
   bn: BN,
+  bs: BS,
   ca: CA,
   cs: CS,
   da: DA,
@@ -173,6 +175,7 @@ export type I18NLanguage =
   | 'bg'
   | 'bh'
   | 'bn'
+  | 'bs'
   | 'ca'
   | 'cs'
   | 'da'
@@ -224,6 +227,11 @@ export type I18NLanguage =
   | 'sv'
   | 'ta'
   | 'te'
+  | 'vi'
+  | 'zu'
+  | 'nl'
+  | 'uz'
+  | 'lo'
   | 'th'
   | 'tl'
   | 'tr'

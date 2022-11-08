@@ -41,7 +41,9 @@ export interface IThemeLayout {
 export interface IThemeHeader {
   badgeColor?: string;
   badgeTextColor?: string;
+  tabBorderColor?: string;
   fontColor?: string;
+  markAllAsReadButtonColor?: string;
 }
 
 export interface IThemePopover {
@@ -49,12 +51,12 @@ export interface IThemePopover {
 }
 
 export interface IThemeNotificationListItem {
-  seen?: {
+  read?: {
     fontColor?: string;
     background?: string;
     timeMarkFontColor?: string;
   };
-  unseen?: {
+  unread?: {
     fontColor?: string;
     background?: string;
     boxShadow?: string;
