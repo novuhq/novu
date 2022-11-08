@@ -179,7 +179,8 @@ export function ChannelButton({
                     />
                   }
                   data-test-id="edit-step-action"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowDotMenu(false);
                     setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
                   }}
