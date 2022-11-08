@@ -386,7 +386,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     template = await session.createTemplate({
       steps: [
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
         {
@@ -399,7 +399,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           },
         },
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
       ],
