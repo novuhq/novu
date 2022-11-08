@@ -1,4 +1,4 @@
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { JobStatusEnum } from '@novu/shared';
 
 describe('Activity Feed Screen', function () {
   beforeEach(function () {
@@ -34,10 +34,7 @@ describe('Activity Feed Screen', function () {
     cy.intercept(/.*notifications\?page.*/, (r) => {
       r.continue((res) => {
         if (!res.body?.data) return;
-
-        res.body.data[0].jobs[0].executionDetails[0].status = ExecutionDetailsStatusEnum.FAILED;
-        console.log(res.body.data[0].jobs[0].executionDetails[0].status);
-
+        res.body.data[0].jobs[0].status = JobStatusEnum.FAILED;
         res.send({ body: res.body });
       });
     });
