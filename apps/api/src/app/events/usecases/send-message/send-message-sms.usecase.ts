@@ -286,16 +286,13 @@ export class SendMessageSms extends SendMessageType {
     try {
       const smsHandler = this.smsFactory.getHandler(integration);
 
-      let result: ISendMessageSuccessResponse = {};
-      if (process.env.NODE_ENV !== 'test') {
-        result = await smsHandler.send({
-          to: phone,
-          from: integration.credentials.from,
-          content,
-          attachments: null,
-          id: message._id,
-        });
-      }
+      const result = await smsHandler.send({
+        to: phone,
+        from: integration.credentials.from,
+        content,
+        attachments: null,
+        id: message._id,
+      });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
