@@ -1,6 +1,6 @@
 import React from 'react';
 
 export const UnseenCountContext = React.createContext({
-  unseenCount: null,
+  unseenCount: 0,
   setUnseenCount: (count: number) => {},
 });

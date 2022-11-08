@@ -12,7 +12,13 @@ import {
   OrganizationEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  LogCodeEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -25,6 +31,11 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageType {
@@ -35,11 +46,12 @@ export class SendMessageEmail extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -69,24 +81,65 @@ export class SendMessageEmail extends SendMessageType {
       )
     )[0];
 
-    const overrides = command.overrides[integration.providerId] || {};
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
 
-    const subject = await this.renderContent(
-      emailChannel.template.subject,
-      emailChannel.template.subject,
-      organization,
-      subscriber,
-      command
-    );
+      return;
+    }
+    const overrides = command.overrides[integration?.providerId] || {};
+    let subject = '';
+    let content: string | IEmailBlock[] = '';
 
-    const content: string | IEmailBlock[] = await this.getContent(
-      isEditorMode,
-      emailChannel,
-      command,
+    const payload = {
+      subject: emailChannel.template.subject,
+      branding: {
+        logo: organization.branding?.logo,
+        color: organization.branding?.color || '#f47373',
+      },
+      blocks: [],
+      step: {
+        digest: !!command.events.length,
+        events: command.events,
+        total_count: command.events.length,
+      },
       subscriber,
-      subject,
-      organization
-    );
+      ...command.payload,
+    };
+
+    try {
+      subject = await this.renderContent(
+        emailChannel.template.subject,
+        emailChannel.template.subject,
+        organization,
+        subscriber,
+        command
+      );
+
+      content = await this.getContent(isEditorMode, emailChannel, command, subscriber, subject, organization);
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(payload),
+        })
+      );
+
+      return;
+    }
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -103,11 +156,25 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
-      providerId: integration.providerId,
+      providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
+      _jobId: command.jobId,
     });
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.MESSAGE_CREATED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        messageId: message._id,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(payload),
+      })
+    );
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -133,7 +200,7 @@ export class SendMessageEmail extends SendMessageType {
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>
         <IAttachmentOptions>{
-          file: Buffer.from(attachment.file),
+          file: attachment.file,
           mime: attachment.mime,
           name: attachment.name,
           channels: attachment.channels,
@@ -180,6 +247,20 @@ export class SendMessageEmail extends SendMessageType {
         notification,
         LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
       );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
     }
     if (!integration) {
       const integrationError = `${errorMessage} active email integration not found`;
@@ -193,6 +274,20 @@ export class SendMessageEmail extends SendMessageType {
         notification,
         LogCodeEnum.MISSING_EMAIL_INTEGRATION
       );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
     }
   }
 
@@ -207,9 +302,24 @@ export class SendMessageEmail extends SendMessageType {
 
     try {
       const result = await mailHandler.send(mailData);
-      if (!result.id) {
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.MESSAGE_SENT,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(result),
+        })
+      );
+
+      if (!result?.id) {
         return;
       }
+
       await this.messageRepository.update(
         {
           _id: message._id,
@@ -231,6 +341,21 @@ export class SendMessageEmail extends SendMessageType {
         LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
         error
       );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.PROVIDER_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(error),
+        })
+      );
+
+      return;
     }
   }
 

@@ -8,7 +8,7 @@ export class JobRepository extends BaseRepository<JobEntity> {
     super(Job, JobEntity);
   }
 
-  public async storeJobs(jobs: JobEntity[]): Promise<JobEntity> {
+  public async storeJobs(jobs: JobEntity[]): Promise<JobEntity[]> {
     const stored = [];
     for (let index = 0; index < jobs.length; index++) {
       if (index > 0) {
@@ -19,7 +19,7 @@ export class JobRepository extends BaseRepository<JobEntity> {
       stored.push(created);
     }
 
-    return stored[0];
+    return stored;
   }
 
   public async updateStatus(jobId: string, status: JobStatusEnum) {

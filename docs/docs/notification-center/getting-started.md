@@ -1,6 +1,7 @@
 ---
 position: 1
 ---
+
 # Getting Started
 
 Novu provides you with a set of APIs and components to create rich customized notification center experiences. You can either choose to work headless with our notification feed API and create your own custom notification center user interface, or use our ready-to-use UI and customize it partially.
@@ -18,13 +19,17 @@ npm install @novu/notification-center
 And in the appropriate place within your app add the `PopoverNotificationCenter` component with the `NovuProvider`
 
 ```tsx
-import { NovuProvider, PopoverNotificationCenter, NotificationBell } from '@novu/notification-center';
+import {
+  NovuProvider,
+  PopoverNotificationCenter,
+  NotificationBell,
+} from '@novu/notification-center';
 
 function Header() {
   function onNotificationClick(notification: IMessage) {
     navigate(notification.cta.data.url);
   }
-  
+
   return (
     <NovuProvider subscriberId={'USER_ID'} applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}>
       <PopoverNotificationCenter onNotificationClick={onNotificationClick}>
