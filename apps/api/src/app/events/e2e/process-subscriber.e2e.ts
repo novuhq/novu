@@ -13,6 +13,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
 
