@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { ApiService } from '@novu/client';
 import { IOrganizationEntity } from '@novu/shared';
 import { ColorScheme } from '../../index';
@@ -27,18 +27,12 @@ interface INovuProviderProps {
   i18n?: I18NLanguage | ITranslationEntry;
 }
 
-let api: ApiService;
-
 export function NovuProvider(props: INovuProviderProps) {
   const [isSessionInitialized, setIsSessionInitialized] = useState(false);
   const backendUrl = props.backendUrl ?? 'https://api.novu.co';
   const socketUrl = props.socketUrl ?? 'https://ws.novu.co';
 
-  if (!api) api = new ApiService(backendUrl);
-
-  useEffect(() => {
-    if (api?.isAuthenticated) setIsSessionInitialized(api?.isAuthenticated);
-  }, [api?.isAuthenticated]);
+  const { current: api } = useRef<ApiService>(new ApiService(backendUrl));
 
   const stores = props.stores ?? [{ storeId: 'default_store' }];
 
@@ -57,10 +51,7 @@ export function NovuProvider(props: INovuProviderProps) {
       <FeedProvider stores={stores}>
         <ApiContext.Provider value={{ api }}>
           <AuthProvider>
-            <SessionInitialization
-              applicationIdentifier={props.applicationIdentifier}
-              subscriberId={props.subscriberId}
-            >
+            <SessionInitialization onInit={setIsSessionInitialized}>
               <NotificationsProvider>
                 <SocketInitializationProvider>
                   <NovuI18NProvider i18n={props.i18n}>
@@ -77,47 +68,39 @@ export function NovuProvider(props: INovuProviderProps) {
 }
 
 interface ISessionInitializationProps {
-  applicationIdentifier: string;
-  subscriberId?: string;
+  onInit: (flag: boolean) => void;
   children: JSX.Element;
 }
 
-function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
-  const { api: apiService } = useApi();
+function SessionInitialization({ onInit, children }: ISessionInitializationProps) {
+  const { api } = useApi();
   const { applyToken, setUser } = useAuth();
-  const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
+  const { applicationIdentifier, subscriberId, subscriberHash, onLoad } = useContext<INovuProviderContext>(NovuContext);
 
-  useEffect(() => {
-    if (props?.subscriberId && props?.applicationIdentifier) {
-      (async (): Promise<void> => {
-        await initSession({
-          clientId: props.applicationIdentifier,
-          data: { subscriberId: props.subscriberId },
-          subscriberHash,
-        });
-      })();
-    }
-  }, [props?.subscriberId, props?.applicationIdentifier]);
-
-  async function initSession(payload: { clientId: string; data: { subscriberId: string }; subscriberHash: string }) {
+  const initSession = useCallback(async () => {
     if ('parentIFrame' in window) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).parentIFrame.autoResize(true);
     }
 
-    const response = await apiService.initializeSession(payload.clientId, payload.data.subscriberId, subscriberHash);
-
-    api.setAuthorizationToken(response.token);
+    const response = await api.initializeSession(applicationIdentifier, subscriberId, subscriberHash);
 
     setUser(response.profile);
     applyToken(response.token);
 
-    const organizationData = await api.getOrganization();
-
     if (onLoad) {
+      const organizationData = await api.getOrganization();
       onLoad({ organization: organizationData });
     }
-  }
+
+    return response;
+  }, [applicationIdentifier, subscriberId, subscriberHash]);
+
+  useEffect(() => {
+    if (subscriberId && applicationIdentifier) {
+      initSession().then(() => onInit(api.isAuthenticated));
+    }
+  }, [subscriberId, applicationIdentifier, initSession]);
 
   return children;
 }
