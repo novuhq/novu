@@ -35,6 +35,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { ISendMessageSuccessResponse } from '@novu/stateless';
 
 @Injectable()
 export class SendMessageSms extends SendMessageType {
@@ -285,13 +286,16 @@ export class SendMessageSms extends SendMessageType {
     try {
       const smsHandler = this.smsFactory.getHandler(integration);
 
-      const result = await smsHandler.send({
-        to: phone,
-        from: integration.credentials.from,
-        content,
-        attachments: null,
-        id: message._id,
-      });
+      let result: ISendMessageSuccessResponse = {};
+      if (process.env.NODE_ENV !== 'test') {
+        result = await smsHandler.send({
+          to: phone,
+          from: integration.credentials.from,
+          content,
+          attachments: null,
+          id: message._id,
+        });
+      }
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
