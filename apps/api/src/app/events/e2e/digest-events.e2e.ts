@@ -403,7 +403,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     template = await session.createTemplate({
       steps: [
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
         {
@@ -417,7 +417,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           },
         },
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{step.events.length}}' as string,
         },
       ],
