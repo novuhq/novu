@@ -49,7 +49,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
       providerId: 'sendgrid',
       channel: ChannelTypeEnum.EMAIL,
       credentials: {
-        apiKey: '',
+        apiKey: 'SG.123',
       },
       active: true,
     });
