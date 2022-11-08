@@ -255,7 +255,7 @@ describe('Notifications Creator', function () {
 
       dragAndDrop('digest');
 
-      cy.clickWorkflowNode(`node-digestSelector`);
+      cy.getByTestId('node-digestSelector').click({ force: true });
 
       cy.getByTestId('time-unit').click();
       cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
@@ -280,17 +280,19 @@ describe('Notifications Creator', function () {
 
       awaitGetContains('tbody', 'Test Notification Title').click({ force: true });
 
-      cy.clickNodeButton('workflowButton');
+      waitLoadTemplatePage(() => {
+        clickWorkflow();
 
-      cy.clickNodeButton(`node-digestSelector`);
+        cy.getByTestId('node-digestSelector').click({ force: true });
 
-      cy.getByTestId('time-amount').should('have.value', '20');
-      cy.getByTestId('batch-key').should('have.value', 'id');
-      cy.getByTestId('backoff-amount').should('have.value', '20');
-      cy.getByTestId('time-unit').should('have.value', 'Minutes');
-      cy.getByTestId('digest-type').should('have.value', 'Backoff');
-      cy.getByTestId('backoff-unit').should('have.value', 'Minutes');
-      // cy.getByTestId('updateMode').should('be.checked');
+        cy.getByTestId('time-amount').should('have.value', '20');
+        cy.getByTestId('batch-key').should('have.value', 'id');
+        cy.getByTestId('backoff-amount').should('have.value', '20');
+        cy.getByTestId('time-unit').should('have.value', 'Minutes');
+        cy.getByTestId('digest-type').should('have.value', 'Backoff');
+        cy.getByTestId('backoff-unit').should('have.value', 'Minutes');
+        // cy.getByTestId('updateMode').should('be.checked');
+      });
     });
 
     it('should create and edit group id', function () {
@@ -812,7 +814,7 @@ function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
 }
 
 function clickWorkflow() {
-  cy.getByTestId('workflowButton').click();
+  cy.getByTestId('workflowButton').click({ force: true });
   cy.wait(1000);
 }
 

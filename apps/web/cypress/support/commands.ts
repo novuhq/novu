@@ -37,7 +37,7 @@ Cypress.Commands.add('awaitAttachedGetByTestId', (selector: string) => {
 });
 
 Cypress.Commands.add('clickNodeButton', (selector: string) => {
-  cy.awaitAttachedGetByTestId(selector).click({ force: true });
+  return cy.awaitAttachedGetByTestId(selector).click({ force: true });
 });
 
 Cypress.Commands.add(
