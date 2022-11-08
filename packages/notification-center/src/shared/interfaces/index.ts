@@ -74,7 +74,7 @@ export interface INovuProviderContext {
 export interface INotificationsContext {
   notifications?: Record<string, IMessage[]>;
   fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
-  hasNextPage?: Map<string, boolean>;
+  hasNextPage?: Record<string, boolean>;
   fetching?: boolean;
   markAsRead?: (messageId: string, storeId?: string) => Promise<IMessage>;
   markAllAsRead?: (storeId?: string) => Promise<number>;
