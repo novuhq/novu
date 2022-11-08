@@ -10,6 +10,7 @@ export * from './entities/message-template';
 export * from './entities/log';
 export * from './entities/change';
 export * from './entities/step';
+export * from './entities/job';
 export * from './entities/subscriber-preference';
 export * from './entities/subscriber';
 export * from './types/builder/builder.types';

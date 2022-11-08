@@ -137,6 +137,8 @@ export class SendMessageEmail extends SendMessageType {
           raw: JSON.stringify(payload),
         })
       );
+
+      return;
     }
 
     const messagePayload = Object.assign({}, command.payload);
@@ -236,6 +238,16 @@ export class SendMessageEmail extends SendMessageType {
     if (!email) {
       const mailErrorMessage = `${errorMessage} email address`;
 
+      await this.sendErrorStatus(
+        message,
+        status,
+        errorId,
+        mailErrorMessage,
+        command,
+        notification,
+        LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
+      );
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -248,18 +260,20 @@ export class SendMessageEmail extends SendMessageType {
         })
       );
 
+      return;
+    }
+    if (!integration) {
+      const integrationError = `${errorMessage} active email integration not found`;
+
       await this.sendErrorStatus(
         message,
         status,
         errorId,
-        mailErrorMessage,
+        integrationError,
         command,
         notification,
-        LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
+        LogCodeEnum.MISSING_EMAIL_INTEGRATION
       );
-    }
-    if (!integration) {
-      const integrationError = `${errorMessage} active email integration not found`;
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -273,15 +287,7 @@ export class SendMessageEmail extends SendMessageType {
         })
       );
 
-      await this.sendErrorStatus(
-        message,
-        status,
-        errorId,
-        integrationError,
-        command,
-        notification,
-        LogCodeEnum.MISSING_EMAIL_INTEGRATION
-      );
+      return;
     }
   }
 
@@ -310,9 +316,10 @@ export class SendMessageEmail extends SendMessageType {
         })
       );
 
-      if (!result.id) {
+      if (!result?.id) {
         return;
       }
+
       await this.messageRepository.update(
         {
           _id: message._id,
@@ -324,6 +331,17 @@ export class SendMessageEmail extends SendMessageType {
         }
       );
     } catch (error) {
+      await this.sendErrorStatus(
+        message,
+        'error',
+        'mail_unexpected_error',
+        'Error while sending email with provider',
+        command,
+        notification,
+        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
+        error
+      );
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -336,16 +354,8 @@ export class SendMessageEmail extends SendMessageType {
           raw: JSON.stringify(error),
         })
       );
-      await this.sendErrorStatus(
-        message,
-        'error',
-        'mail_unexpected_error',
-        'Error while sending email with provider',
-        command,
-        notification,
-        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
-        error
-      );
+
+      return;
     }
   }
 

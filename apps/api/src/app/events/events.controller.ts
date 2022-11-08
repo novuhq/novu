@@ -54,7 +54,7 @@ export class EventsController {
 
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
 
-    return (await this.triggerEvent.execute(
+    const result = await this.triggerEvent.execute(
       TriggerEventCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
@@ -65,7 +65,9 @@ export class EventsController {
         to: mappedSubscribers,
         transactionId,
       })
-    )) as unknown as TriggerEventResponseDto;
+    );
+
+    return result as unknown as TriggerEventResponseDto;
   }
 
   @ExternalApiAccessible()
@@ -85,8 +87,8 @@ export class EventsController {
   })
   @ApiOperation({
     summary: 'Broadcast event to all',
-    description:
-      'Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc. In the future could be used to trigger events to a subset of subscribers based on defined filters.',
+    description: `Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc.
+      In the future could be used to trigger events to a subset of subscribers based on defined filters.`,
   })
   async trackEventToAll(
     @UserSession() user: IJwtPayload,

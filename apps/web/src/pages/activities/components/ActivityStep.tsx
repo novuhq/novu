@@ -1,9 +1,7 @@
 import { Grid, Text, useMantineTheme } from '@mantine/core';
-import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import * as capitalize from 'lodash.capitalize';
 import styled from 'styled-components';
-
-import { useJobStatus } from '../hooks/useJobStatus';
 import { colors, shadows } from '../../../design-system';
 import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
@@ -37,7 +35,7 @@ const TypeIcon = ({ type }: { type: StepTypeEnum }) => {
 };
 
 export const ActivityStep = ({ job, span = 4, isOld }) => {
-  const status = useJobStatus(job);
+  const status = job.status;
   const theme = useMantineTheme();
 
   return (
@@ -61,15 +59,13 @@ export const ActivityStep = ({ job, span = 4, isOld }) => {
                 marginRight: '8px',
               }}
             >
-              <When
-                truthy={status !== ExecutionDetailsStatusEnum.SUCCESS && status !== ExecutionDetailsStatusEnum.FAILED}
-              >
+              <When truthy={status !== JobStatusEnum.COMPLETED && status !== JobStatusEnum.FAILED}>
                 <Timer width={16} height={16} />
               </When>
-              <When truthy={status === ExecutionDetailsStatusEnum.SUCCESS}>
+              <When truthy={status === JobStatusEnum.COMPLETED}>
                 <CheckCircle width="16" height="16" color={colors.success} />
               </When>
-              <When truthy={status === ExecutionDetailsStatusEnum.FAILED}>
+              <When truthy={status === JobStatusEnum.FAILED}>
                 <ErrorIcon width="16" height="16" color={colors.error} />
               </When>
             </span>
@@ -77,8 +73,8 @@ export const ActivityStep = ({ job, span = 4, isOld }) => {
           <When truthy={!isOld}>
             <Header
               dark={theme.colorScheme === 'dark'}
-              done={status === ExecutionDetailsStatusEnum.SUCCESS}
-              failed={status === ExecutionDetailsStatusEnum.FAILED}
+              done={status === JobStatusEnum.COMPLETED}
+              failed={status === JobStatusEnum.FAILED}
             >
               {capitalize(job.type?.replace('_', ' '))}
             </Header>

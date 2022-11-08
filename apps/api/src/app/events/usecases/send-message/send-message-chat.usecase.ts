@@ -111,6 +111,8 @@ export class SendMessageChat extends SendMessageType {
           isRetry: false,
         })
       );
+
+      return;
     }
 
     for (const channel of chatChannels) {
@@ -200,18 +202,6 @@ export class SendMessageChat extends SendMessageType {
     notification: NotificationEntity
   ) {
     if (!chatWebhookUrl) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          messageId: message._id,
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
@@ -236,8 +226,31 @@ export class SendMessageChat extends SendMessageType {
         'no_subscriber_chat_channel_id',
         'Subscriber does not have active chat channel id'
       );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
     }
     if (!integration) {
+      await this.sendErrorStatus(
+        message,
+        'warning',
+        'chat_missing_integration_error',
+        'Subscriber does not have an active chat integration',
+        command,
+        notification,
+        LogCodeEnum.MISSING_CHAT_INTEGRATION
+      );
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -249,15 +262,8 @@ export class SendMessageChat extends SendMessageType {
           isRetry: false,
         })
       );
-      await this.sendErrorStatus(
-        message,
-        'warning',
-        'chat_missing_integration_error',
-        'Subscriber does not have an active chat integration',
-        command,
-        notification,
-        LogCodeEnum.MISSING_CHAT_INTEGRATION
-      );
+
+      return;
     }
   }
 
@@ -290,6 +296,17 @@ export class SendMessageChat extends SendMessageType {
         })
       );
     } catch (e) {
+      await this.sendErrorStatus(
+        message,
+        'error',
+        'unexpected_chat_error',
+        e.message || e.name || 'Un-expect CHAT provider error',
+        command,
+        notification,
+        LogCodeEnum.CHAT_ERROR,
+        e
+      );
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -301,17 +318,6 @@ export class SendMessageChat extends SendMessageType {
           isRetry: false,
           raw: JSON.stringify(e),
         })
-      );
-
-      await this.sendErrorStatus(
-        message,
-        'error',
-        'unexpected_chat_error',
-        e.message || e.name || 'Un-expect CHAT provider error',
-        command,
-        notification,
-        LogCodeEnum.CHAT_ERROR,
-        e
       );
     }
   }

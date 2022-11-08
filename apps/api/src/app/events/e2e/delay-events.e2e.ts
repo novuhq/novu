@@ -83,7 +83,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     template = await session.createTemplate({
       steps: [
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Not Delayed {{customVar}}' as string,
         },
         {
@@ -96,7 +96,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           },
         },
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
       ],
@@ -118,7 +118,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.SMS,
+      channel: StepTypeEnum.IN_APP,
     });
 
     expect(messages.length).to.equal(1);
@@ -137,7 +137,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const messagesAfter = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.SMS,
+      channel: StepTypeEnum.IN_APP,
     });
 
     expect(messagesAfter.length).to.equal(2);
@@ -386,7 +386,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     template = await session.createTemplate({
       steps: [
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
         {
@@ -399,7 +399,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
           },
         },
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
       ],

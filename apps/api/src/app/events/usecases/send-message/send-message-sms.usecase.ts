@@ -35,6 +35,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { ISendMessageSuccessResponse } from '@novu/stateless';
 
 @Injectable()
 export class SendMessageSms extends SendMessageType {
@@ -183,18 +184,6 @@ export class SendMessageSms extends SendMessageType {
     notification: NotificationEntity
   ) {
     if (!phone) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          messageId: message._id,
-          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-
       await this.createLogUsecase.execute(
         CreateLogCommand.create({
           transactionId: command.transactionId,
@@ -219,8 +208,32 @@ export class SendMessageSms extends SendMessageType {
         'no_subscriber_phone',
         'Subscriber does not have active phone'
       );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
     }
     if (!integration) {
+      await this.sendErrorStatus(
+        message,
+        'warning',
+        'sms_missing_integration_error',
+        'Subscriber does not have an active sms integration',
+        command,
+        notification,
+        LogCodeEnum.MISSING_SMS_INTEGRATION
+      );
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -232,17 +245,19 @@ export class SendMessageSms extends SendMessageType {
           isRetry: false,
         })
       );
+
+      return;
+    }
+    if (!integration?.credentials?.from) {
       await this.sendErrorStatus(
         message,
         'warning',
-        'sms_missing_integration_error',
-        'Subscriber does not have an active sms integration',
+        'no_integration_from_phone',
+        'Integration does not have from phone configured',
         command,
         notification,
-        LogCodeEnum.MISSING_SMS_INTEGRATION
+        LogCodeEnum.MISSING_SMS_PROVIDER
       );
-    }
-    if (!integration?.credentials?.from) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -254,15 +269,8 @@ export class SendMessageSms extends SendMessageType {
           isRetry: false,
         })
       );
-      await this.sendErrorStatus(
-        message,
-        'warning',
-        'no_integration_from_phone',
-        'Integration does not have from phone configured',
-        command,
-        notification,
-        LogCodeEnum.MISSING_SMS_PROVIDER
-      );
+
+      return;
     }
   }
 
@@ -299,9 +307,10 @@ export class SendMessageSms extends SendMessageType {
         })
       );
 
-      if (!result.id) {
+      if (!result?.id) {
         return;
       }
+
       await this.messageRepository.update(
         {
           _id: message._id,
@@ -313,6 +322,17 @@ export class SendMessageSms extends SendMessageType {
         }
       );
     } catch (e) {
+      await this.sendErrorStatus(
+        message,
+        'error',
+        'unexpected_sms_error',
+        e.message || e.name || 'Un-expect SMS provider error',
+        command,
+        notification,
+        LogCodeEnum.SMS_ERROR,
+        e
+      );
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -324,16 +344,6 @@ export class SendMessageSms extends SendMessageType {
           isRetry: false,
           raw: JSON.stringify(e),
         })
-      );
-      await this.sendErrorStatus(
-        message,
-        'error',
-        'unexpected_sms_error',
-        e.message || e.name || 'Un-expect SMS provider error',
-        command,
-        notification,
-        LogCodeEnum.SMS_ERROR,
-        e
       );
     }
   }

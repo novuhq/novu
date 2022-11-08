@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
 
 import { ExecutionDetailShowRaw } from './ExecutionDetailShowRaw';
-import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';
+import { getColorByStatus, getLogoByType, getCheckLogo } from './helpers';
 
 import { colors, Text } from '../../design-system';
 import { When } from '../utils/When';
@@ -26,14 +26,14 @@ const ExecutionDetailTime = ({ createdAt }) => {
   return <FormattedTime>{formattedTime}</FormattedTime>;
 };
 
-const getExecutionDetailStatus = (status, type) => {
+const getExecutionDetailLogoByType = (type) => {
   const logo = getLogoByType(type);
 
   if (logo) {
     return logo;
   }
 
-  return getLogoByStatus(status);
+  return getCheckLogo();
 };
 
 export const ExecutionDetail = ({
@@ -45,7 +45,7 @@ export const ExecutionDetail = ({
   const theme = useMantineTheme();
   const { createdAt, detail, raw, status, type } = executionDetail;
   const color = getColorByStatus(theme, status);
-  const ExecutionDetailStatus = getExecutionDetailStatus(status, type);
+  const ExecutionDetailStatus = getExecutionDetailLogoByType(status);
 
   const secondColumnSpan = raw ? 8 : 11;
 

@@ -41,7 +41,7 @@ export class AddJob {
 
     const delay = digestAmount ?? delayAmount;
 
-    this.createExecutionDetails.execute(
+    await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,

@@ -1,16 +1,7 @@
-import { StepTypeEnum, DigestUnitEnum, DigestTypeEnum, DelayTypeEnum } from '@novu/shared';
+import { StepTypeEnum, DigestUnitEnum, DigestTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 import { NotificationStepEntity } from '../notification-template';
 
-export enum JobStatusEnum {
-  PENDING = 'pending',
-  QUEUED = 'queued',
-  RUNNING = 'running',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  DELAYED = 'delayed',
-  CANCELED = 'canceled',
-}
-
+export { JobStatusEnum };
 export class JobEntity {
   _id?: string;
   identifier: string;
