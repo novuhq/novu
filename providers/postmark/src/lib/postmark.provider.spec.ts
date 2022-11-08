@@ -81,7 +81,7 @@ test('should parse postmark webhook', () => {
   const { date, ...result } = provider.parseEventBody(mockWebHook, identifier);
 
   /*
-   * Checking difference between current timestamp and timestamp recieved from result,
+   * Checking difference between current timestamp and timestamp received from result,
    * to be less than 5 seconds
    */
   expect(

@@ -21,6 +21,6 @@ describe('Activity page', function () {
     cy.location('pathname').should('equal', '/activities');
 
     // @ts-ignore
-    cy.getByTestId('activity-stats-weekly-sent').contains('50');
+    cy.getByTestId('activity-stats-weekly-sent').contains('25');
   });
 });

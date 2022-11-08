@@ -10,7 +10,7 @@ import {
 } from '@novu/stateless';
 
 import mailchimp from '@mailchimp/mailchimp_transactional';
-import { MandrillInterface } from './mandrill.interface';
+import { IMandrilInterface } from './mandril.interface';
 
 export enum MandrillStatusEnum {
   OPENED = 'open',
@@ -22,13 +22,14 @@ export enum MandrillStatusEnum {
   SPAM = 'spam',
   UNSUBSCRIBED = 'unsub',
   REJECTED = 'reject',
+  DELIVERED = 'delivered',
 }
-  
+
 export class MandrillProvider implements IEmailProvider {
   id = 'mandrill';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
-  private transporter: MandrillInterface;
+  private transporter: IMandrilInterface;
 
   constructor(
     private config: {
@@ -149,9 +150,11 @@ export class MandrillProvider implements IEmailProvider {
       case MandrillStatusEnum.SOFT_BOUNCED:
         return EmailEventStatusEnum.BOUNCED;
       case MandrillStatusEnum.UNSUBSCRIBED:
-        return EmailEventStatusEnum.SUBSCRIPTION_CHANGED;
+        return EmailEventStatusEnum.UNSUBSCRIBED;
       case MandrillStatusEnum.DEFERRED:
         return EmailEventStatusEnum.DEFERRED;
+      case MandrillStatusEnum.DELIVERED:
+        return EmailEventStatusEnum.DELIVERED;
     }
   }
 }

@@ -1,5 +1,6 @@
 import { IsArray, IsNumber, IsOptional } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
+import { StoreQuery } from '../../querys/store.query';
 
 export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
   @IsNumber()
@@ -11,5 +12,5 @@ export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
   feedId: string[];
 
   @IsOptional()
-  seen?: boolean;
+  query?: StoreQuery;
 }

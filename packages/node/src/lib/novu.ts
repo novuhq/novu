@@ -6,12 +6,14 @@ import { INovuConfiguration } from './novu.interface';
 import { Events } from './events/events';
 import { NotificationGroups } from './notification-groups/notification-groups';
 import { NotificationTemplates } from './notification-template/notification-template';
+import { Environments } from './environments/environments';
 import { Feeds } from './feeds/feeds';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
   private readonly http: AxiosInstance;
   readonly subscribers: Subscribers;
+  readonly environments: Environments;
   readonly events: Events;
   readonly changes: Changes;
   readonly notificationGroups: NotificationGroups;
@@ -30,6 +32,7 @@ export class Novu extends EventEmitter {
     });
 
     this.subscribers = new Subscribers(this.http);
+    this.environments = new Environments(this.http);
     this.events = new Events(this.http);
     this.trigger = this.events.trigger;
     this.broadcast = this.events.broadcast;

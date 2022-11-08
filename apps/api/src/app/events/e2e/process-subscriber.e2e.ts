@@ -13,6 +13,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
 
@@ -29,17 +30,17 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       steps: [
         {
           active: true,
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Welcome to {{organizationName}}' as string,
         },
         {
           active: true,
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Welcome to {{organizationName}}' as string,
         },
         {
           active: false,
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Welcome to {{organizationName}}' as string,
         },
       ],
@@ -67,7 +68,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       _environmentId: session.environment._id,
       _templateId: newTemplate._id,
       _subscriberId: subscriber._id,
-      channel: ChannelTypeEnum.SMS,
+      channel: ChannelTypeEnum.IN_APP,
     });
 
     expect(message.length).to.equal(2);

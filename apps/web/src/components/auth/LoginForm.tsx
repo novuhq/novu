@@ -12,9 +12,12 @@ import { Github } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/use-vercelParams';
 
-type Props = {};
+type Props = {
+  token?: string;
+  email?: string;
+};
 
-export function LoginForm({}: Props) {
+export function LoginForm({ email, token }: Props) {
   const navigate = useNavigate();
   const { setToken } = useContext(AuthContext);
   const { isLoading, mutateAsync, isError, error } = useMutation<
@@ -26,17 +29,23 @@ export function LoginForm({}: Props) {
     }
   >((data) => api.post(`/v1/auth/login`, data));
 
-  const { isFromVercel, code, next } = useVercelParams();
-  const signupLink = isFromVercel ? `/auth/signup?code=${code}&next=${next}` : '/auth/signup';
+  const { isFromVercel, code, next, configurationId } = useVercelParams();
+  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
+  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
   const githubLink = isFromVercel
-    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}`
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({});
+  } = useForm({
+    defaultValues: {
+      email: email || '',
+      password: '',
+    },
+  });
 
   const onLogin = async (data) => {
     const itemData = {
@@ -46,10 +55,9 @@ export function LoginForm({}: Props) {
 
     try {
       const response = await mutateAsync(itemData);
-
       setToken((response as any).token);
       if (isFromVercel) return;
-      navigate('/templates');
+      if (!token) navigate('/templates');
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
