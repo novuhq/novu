@@ -577,7 +577,6 @@ describe('Notifications Creator', function () {
         cy.visit('/changes');
 
         waitLoadTemplatePage(() => {
-          // TODO: Race condition around here, makes test flaky.
           cy.getByTestId('promote-btn').eq(0).click({ force: true });
           cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
           cy.getByTestId('notifications-template').find('tbody tr').first().click();
@@ -615,11 +614,12 @@ describe('Notifications Creator', function () {
 
     it('should show add step in sidebar after delete', function () {
       const template = this.session.templates[0];
+
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
+        clickWorkflow();
       });
 
-      clickWorkflow();
       cy.get('.react-flow__node').should('have.length', 4);
       cy.getByTestId('step-actions-dropdown').first().click().getByTestId('delete-step-action').click();
       cy.get('.mantine-Modal-modal button').contains('Yes').click();
@@ -630,19 +630,23 @@ describe('Notifications Creator', function () {
 
     it('should keep steps order on reload', function () {
       const template = this.session.templates[0];
+
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
+        clickWorkflow();
       });
-      clickWorkflow();
+
       dragAndDrop('sms');
 
       editChannel('sms');
       cy.getByTestId('smsNotificationContent').type('new content for sms');
       cy.getByTestId('submit-btn').click();
+
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
+        clickWorkflow();
       });
-      clickWorkflow();
+
       cy.get('.react-flow__node').should('have.length', 5);
       cy.get('.react-flow__node')
         .first()
@@ -659,17 +663,21 @@ describe('Notifications Creator', function () {
       const template = this.session.templates[0];
       waitLoadTemplatePage(() => {
         cy.visit('/templates/edit/' + template._id);
+        clickWorkflow();
       });
-      clickWorkflow();
+
       cy.clickWorkflowNode(`node-inAppSelector`);
       cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').get('label').contains('Step is active');
       cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').click();
       cy.getByTestId('submit-btn').click();
-      cy.clickWorkflowNode(`node-inAppSelector`);
-      cy.getByTestId(`step-properties-side-menu`)
-        .find('.mantine-Switch-input')
-        .get('label')
-        .contains('Step is not active');
+
+      waitLoadEnv(() => {
+        cy.clickWorkflowNode(`node-inAppSelector`);
+        cy.getByTestId(`step-properties-side-menu`)
+          .find('.mantine-Switch-input')
+          .get('label')
+          .contains('Step is not active');
+      });
     });
   });
 
