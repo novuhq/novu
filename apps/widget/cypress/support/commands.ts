@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { createHmac } from 'crypto';
+import { IInitializeSessionSetting, IInitializeShellSessionSettings } from '../global';
 
 Cypress.Commands.add('getByTestId', (selector, ...args) => {
   return cy.get(`[data-test-id=${selector}]`, ...args);
@@ -13,51 +14,56 @@ Cypress.Commands.add('openWidget', (settings = {}) => {
   return cy.get('#notification-bell').click();
 });
 
-Cypress.Commands.add('initializeShellSession', (subscriberId, identifier, encryptedHmacHash) => {
-  cy.visit('http://localhost:4700/cypress/test-shell', { log: false });
+Cypress.Commands.add(
+  'initializeShellSession',
+  ({ subscriberId, identifier, encryptedHmacHash, tabs, stores }: IInitializeShellSessionSettings) => {
+    cy.visit('http://localhost:4700/cypress/test-shell', { log: false });
 
+    return cy
+      .window()
+      .then((w) => {
+        const subscriber = {
+          subscriberId: subscriberId,
+          firstName: faker.name.firstName(),
+          lastName: faker.name.lastName(),
+          email: faker.internet.email(),
+          subscriberHash: encryptedHmacHash,
+        };
+
+        w.novu.init(
+          identifier,
+          {
+            unseenBadgeSelector: '#unseen-badge-span',
+            bellSelector: '#notification-bell',
+            tabs: tabs,
+            stores: stores,
+          },
+          subscriber
+        );
+
+        return subscriber;
+      })
+      .then(function (subscriber) {
+        return cy
+          .get('#novu-iframe-element')
+          .its('0.contentDocument.body')
+          .should('not.be.empty')
+          .then((body) => {
+            return cy
+              .wrap(body)
+              .window()
+              .then((w) => w.localStorage.clear());
+          })
+          .then(function () {
+            return subscriber;
+          });
+      });
+  }
+);
+
+Cypress.Commands.add('initializeSession', function (settings = {} as IInitializeSessionSetting, templateOverride?) {
   return cy
-    .window()
-    .then((w) => {
-      const subscriber = {
-        subscriberId: subscriberId,
-        firstName: faker.name.firstName(),
-        lastName: faker.name.lastName(),
-        email: faker.internet.email(),
-        subscriberHash: encryptedHmacHash,
-      };
-
-      w.novu.init(
-        identifier,
-        {
-          unseenBadgeSelector: '#unseen-badge-span',
-          bellSelector: '#notification-bell',
-        },
-        subscriber
-      );
-
-      return subscriber;
-    })
-    .then(function (subscriber) {
-      return cy
-        .get('#novu-iframe-element')
-        .its('0.contentDocument.body')
-        .should('not.be.empty')
-        .then((body) => {
-          return cy
-            .wrap(body)
-            .window()
-            .then((w) => w.localStorage.clear());
-        })
-        .then(function () {
-          return subscriber;
-        });
-    });
-});
-
-Cypress.Commands.add('initializeSession', function (settings = {}) {
-  return cy
-    .initializeOrganization()
+    .initializeOrganization({}, templateOverride)
     .then(function (session: any) {
       cy.log('Session created');
       cy.log(`Organization id: ${session.organization._id}`);
@@ -77,7 +83,13 @@ Cypress.Commands.add('initializeSession', function (settings = {}) {
 
       return settings?.shell
         ? cy
-            .initializeShellSession(session.subscriberId, session.environment.identifier, encryptedHmacHash)
+            .initializeShellSession({
+              subscriberId: session.subscriberId,
+              identifier: session.environment.identifier,
+              encryptedHmacHash: encryptedHmacHash,
+              tabs: settings.tabs,
+              stores: settings.stores,
+            })
             .then((subscriber) => ({
               ...session,
               subscriber,
@@ -128,8 +140,8 @@ Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash, theme, i
   );
 });
 
-Cypress.Commands.add('initializeOrganization', (settings = {}) => {
-  return cy.task('getSession', settings, { log: false }).then((response: any) => {
+Cypress.Commands.add('initializeOrganization', (settings = {}, templateOverride?) => {
+  return cy.task('getSession', { settings, templateOverride }, { log: false }).then((response: any) => {
     const subscriberId = faker.datatype.uuid();
 
     return {

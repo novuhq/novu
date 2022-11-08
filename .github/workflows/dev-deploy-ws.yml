@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - next
     paths:
       - 'apps/ws/**'
 

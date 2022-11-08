@@ -13,9 +13,13 @@ export function TestWorkflowModal({
   isVisible,
   onDismiss,
   trigger,
+  setTransactionId,
+  openExecutionModal,
 }: {
   isVisible: boolean;
   onDismiss: () => void;
+  openExecutionModal: () => void;
+  setTransactionId: (id: string) => void;
   trigger: INotificationTrigger;
 }) {
   const { currentUser } = useContext(AuthContext);
@@ -52,14 +56,19 @@ export function TestWorkflowModal({
     const payload = JSON.parse(payloadValue);
     const overrides = JSON.parse(overridesValue);
     try {
-      await triggerTestEvent({
+      const response = await triggerTestEvent({
         name: trigger?.identifier,
         to,
         payload,
         overrides,
       });
+
+      const { transactionId = '' } = response;
+
+      setTransactionId(transactionId);
       successMessage('Template triggered successfully');
       onDismiss();
+      openExecutionModal();
     } catch (e: any) {
       Sentry.captureException(e);
       errorMessage(e.message || 'Un-expected error occurred');
@@ -82,6 +91,8 @@ export function TestWorkflowModal({
         value={toValue}
         onChange={setToValue}
         minRows={3}
+        mb={15}
+        validationError="Invalid JSON"
       />
       <JsonInput
         data-test-id="test-trigger-payload-param"
@@ -92,6 +103,8 @@ export function TestWorkflowModal({
         value={payloadValue}
         onChange={setPayloadValue}
         minRows={3}
+        validationError="Invalid JSON"
+        mb={15}
       />
       <JsonInput
         data-test-id="test-trigger-overrides-param"
@@ -102,6 +115,7 @@ export function TestWorkflowModal({
         value={overridesValue}
         onChange={setOverridesValue}
         minRows={3}
+        validationError="Invalid JSON"
       />
 
       <div style={{ alignItems: 'end' }}>
