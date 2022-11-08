@@ -403,7 +403,7 @@ function getChannelErrors(index: number, errors: any, step: any) {
       return keys.map((key) => actionErrors[key]?.message);
     }
   }
-  if (step.template.type === StepTypeEnum.EMAIL && !step.template.content.subject) {
+  if (step.template.type === StepTypeEnum.EMAIL && !step.template.subject) {
     return 'Something is missing here';
   }
 
