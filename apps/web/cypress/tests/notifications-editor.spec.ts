@@ -573,18 +573,19 @@ describe('Notifications Creator', function () {
         cy.getByTestId('trigger-snippet-btn').click();
         cy.intercept('GET', '/v1/changes?promoted=false').as('unpromoted-changes');
         cy.visit('/changes');
-        cy.wait('@unpromoted-changes');
 
-        // TODO: Race condition around here, makes test flaky.
-        cy.getByTestId('promote-btn').eq(0).click();
-        cy.getByTestId('environment-switch').find(`input[value="Production"]`).click();
-        cy.getByTestId('notifications-template').find('tbody tr').first().click();
+        waitLoadTemplatePage(() => {
+          // TODO: Race condition around here, makes test flaky.
+          cy.getByTestId('promote-btn').eq(0).click({ force: true });
+          cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
+          cy.getByTestId('notifications-template').find('tbody tr').first().click();
 
-        cy.location('pathname').should('not.equal', `/templates/edit/${res.response?.body.data._id}`);
+          cy.location('pathname').should('not.equal', `/templates/edit/${res.response?.body.data._id}`);
 
-        cy.getByTestId('environment-switch').find(`input[value="Development"]`).click();
+          cy.getByTestId('environment-switch').find(`input[value="Development"]`).click({ force: true });
 
-        cy.location('pathname').should('equal', `/templates/edit/${res.response?.body.data._id}`);
+          cy.location('pathname').should('equal', `/templates/edit/${res.response?.body.data._id}`);
+        });
       });
     });
 
