@@ -18,11 +18,11 @@ export function Popover({ children, bell, theme, offset, position = 'bottom' }: 
   const [isVisible, setIsVisible] = useState<boolean>(false);
 
   const { activeTabStoreId } = useFeed();
-  const { markNotificationsAsSeen, onWidgetClose } = useNotifications({ storeId: activeTabStoreId });
+  const { markAsSeen, onWidgetClose } = useNotifications({ storeId: activeTabStoreId });
 
   function handlerBellClick() {
     if (isVisible) {
-      markNotificationsAsSeen(true);
+      markAsSeen(null, true);
       onWidgetClose();
     }
     setIsVisible(!isVisible);
@@ -30,7 +30,7 @@ export function Popover({ children, bell, theme, offset, position = 'bottom' }: 
 
   function handlerOnClose() {
     setIsVisible(false);
-    markNotificationsAsSeen(true);
+    markAsSeen(null, true);
     onWidgetClose();
   }
 

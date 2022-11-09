@@ -125,12 +125,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return stores?.find((store) => store.storeId === storeId)?.query || {};
   }
 
-  async function markNotificationsAsSeen(
-    readExist?: boolean,
-    messagesToMark?: IMessage | IMessage[],
-    storeId = 'default_store'
-  ) {
-    const notificationsToMark = getNotificationsToMark(messagesToMark, notifications, storeId);
+  async function markAsSeen(messageIds?: IMessage | IMessage[], readExist?: boolean, storeId = 'default_store') {
+    const notificationsToMark = getNotificationsToMark(messageIds, notifications, storeId);
 
     if (notificationsToMark.length) {
       const notificationsToUpdate = filterReadNotifications(readExist, notificationsToMark);
@@ -161,7 +157,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         markAsRead,
         updateAction,
         refetch,
-        markNotificationsAsSeen,
+        markAsSeen,
         onWidgetClose,
         onTabChange,
         markAllAsRead,
