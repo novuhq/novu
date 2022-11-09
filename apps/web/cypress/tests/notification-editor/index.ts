@@ -64,7 +64,7 @@ export function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
 }
 
 export function clickWorkflow() {
-  cy.getByTestId('workflowButton').click();
+  cy.getByTestId('workflowButton').click({ force: true });
   cy.wait(1000);
 }
 

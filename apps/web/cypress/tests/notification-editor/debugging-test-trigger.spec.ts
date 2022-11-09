@@ -15,11 +15,10 @@ describe('Debugging - test trigger', function () {
 
     cy.getByTestId('test-workflow-btn').click();
 
-    cy.waitForNetworkIdle(500);
     cy.getByTestId('test-trigger-modal').should('be.visible');
-
     cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
   });
+
   it('should create template before opening test trigger modal', function () {
     cy.intercept('POST', '*/notification-templates').as('createTemplate');
     const userId = this.session.user.id;
@@ -59,6 +58,7 @@ describe('Debugging - test trigger', function () {
       cy.location('pathname').should('equal', `/templates/edit/${createdTemplateId}`);
     });
   });
+
   it('should not test trigger on error ', function () {
     const template = this.session.templates[0];
     waitLoadTemplatePage(() => {

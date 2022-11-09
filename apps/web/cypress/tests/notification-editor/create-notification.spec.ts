@@ -1,4 +1,4 @@
-import { addAndEditChannel, dragAndDrop, goBack, waitLoadTemplatePage } from '.';
+import { addAndEditChannel, clickWorkflow, dragAndDrop, goBack, waitLoadTemplatePage } from '.';
 
 describe('Creation functionality', function () {
   beforeEach(function () {
@@ -45,6 +45,7 @@ describe('Creation functionality', function () {
       cy.visit('/templates/create');
     });
     cy.waitForNetworkIdle(1000);
+
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.get('body').click();
@@ -171,7 +172,7 @@ describe('Creation functionality', function () {
 
     dragAndDrop('digest');
 
-    cy.clickWorkflowNode(`node-digestSelector`);
+    cy.getByTestId('node-digestSelector').click({ force: true });
 
     cy.getByTestId('time-unit').click();
     cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
@@ -187,26 +188,28 @@ describe('Creation functionality', function () {
     cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
 
     cy.getByTestId('submit-btn').click();
-
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('trigger-snippet-btn').click();
+
     cy.intercept('GET', '/v1/notification-templates?page=0&limit=10').as('notification-templates');
     cy.visit('/templates');
     cy.wait('@notification-templates');
 
     awaitGetContains('tbody', 'Test Notification Title').click({ force: true });
 
-    cy.clickNodeButton('workflowButton');
+    waitLoadTemplatePage(() => {
+      clickWorkflow();
 
-    cy.clickNodeButton(`node-digestSelector`);
+      cy.getByTestId('node-digestSelector').click({ force: true });
 
-    cy.getByTestId('time-amount').should('have.value', '20');
-    cy.getByTestId('batch-key').should('have.value', 'id');
-    cy.getByTestId('backoff-amount').should('have.value', '20');
-    cy.getByTestId('time-unit').should('have.value', 'Minutes');
-    cy.getByTestId('digest-type').should('have.value', 'Backoff');
-    cy.getByTestId('backoff-unit').should('have.value', 'Minutes');
-    // cy.getByTestId('updateMode').should('be.checked');
+      cy.getByTestId('time-amount').should('have.value', '20');
+      cy.getByTestId('batch-key').should('have.value', 'id');
+      cy.getByTestId('backoff-amount').should('have.value', '20');
+      cy.getByTestId('time-unit').should('have.value', 'Minutes');
+      cy.getByTestId('digest-type').should('have.value', 'Backoff');
+      cy.getByTestId('backoff-unit').should('have.value', 'Minutes');
+      // cy.getByTestId('updateMode').should('be.checked');
+    });
   });
 
   it('should create and edit group id', function () {
