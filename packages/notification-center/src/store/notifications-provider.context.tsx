@@ -125,8 +125,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return stores?.find((store) => store.storeId === storeId)?.query || {};
   }
 
-  async function markAsSeen(messageIds?: IMessage | IMessage[], readExist?: boolean, storeId = 'default_store') {
-    const notificationsToMark = getNotificationsToMark(messageIds, notifications, storeId);
+  async function markAsSeen(
+    messageId?: string,
+    messages?: IMessage | IMessage[],
+    readExist?: boolean,
+    storeId = 'default_store'
+  ) {
+    if (messageId) {
+      await api.markMessageAsSeen(messageId);
+    }
+
+    const notificationsToMark = getNotificationsToMark(messages, notifications, storeId);
 
     if (notificationsToMark.length) {
       const notificationsToUpdate = filterReadNotifications(readExist, notificationsToMark);
