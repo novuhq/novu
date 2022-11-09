@@ -120,7 +120,7 @@ export const ActivityItem = ({ item, onClick }) => {
               </small>
               <div data-test-id="subscriber-id">
                 <small>
-                  <b>Subscriber id:</b> {item.subscriber.id}
+                  <b>Subscriber id:</b> {item?.subscriber?.id ? item.subscriber.id : 'Subscriber Deleted'}
                 </small>
               </div>
             </div>
