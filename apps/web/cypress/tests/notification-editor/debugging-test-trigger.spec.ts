@@ -7,27 +7,33 @@ describe('Debugging - test trigger', function () {
 
   it('should open test trigger modal', function () {
     const template = this.session.templates[0];
+    const userId = this.session.user.id;
+
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/edit/' + template._id);
     });
 
-    const userId = this.session.user.id;
-
-    cy.getByTestId('test-workflow-btn').click();
-
-    cy.getByTestId('test-trigger-modal').should('be.visible');
-    cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
+    cy.waitLoadEnv(() => {
+      cy.getByTestId('test-workflow-btn').click();
+      cy.getByTestId('test-trigger-modal').should('be.visible');
+      cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
+    });
   });
 
   it('should create template before opening test trigger modal', function () {
     cy.intercept('POST', '*/notification-templates').as('createTemplate');
-    const userId = this.session.user.id;
-    const userEmail = this.session.user.email;
+    const { id: userId, email: userEmail } = this.session.user;
+
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
+
     fillBasicNotificationDetails('Test workflow');
-    clickWorkflow();
+
+    cy.waitLoadEnv(() => {
+      clickWorkflow();
+    });
+
     addAndEditChannel('email');
 
     cy.getByTestId('emailSubject').type('Hello world {{newVar}}', {
@@ -40,9 +46,7 @@ describe('Debugging - test trigger', function () {
     cy.wait('@createTemplate').then((res) => {
       const createdTemplateId = res.response?.body.data._id;
       cy.get('.mantine-Notification-root').contains('Template saved successfully');
-
       cy.getByTestId('test-trigger-modal').should('be.visible');
-
       cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
       cy.getByTestId('test-trigger-modal')
         .getByTestId('test-trigger-to-param')
@@ -51,9 +55,7 @@ describe('Debugging - test trigger', function () {
       cy.getByTestId('test-trigger-modal')
         .getByTestId('test-trigger-payload-param')
         .should('have.value', '{\n    "newVar": "REPLACE_WITH_DATA" \n}');
-
       cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-btn').click();
-
       cy.location('pathname').should('equal', `/templates/edit/${createdTemplateId}`);
     });
   });

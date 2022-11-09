@@ -36,11 +36,13 @@ describe('Workflow Editor - Main Functionality', function () {
 
   it('should edit notification', function () {
     const template = this.session.templates[0];
+
     cy.visit('/templates/edit/' + template._id);
+    cy.waitLoadEnv(() => {
+      cy.getByTestId('title').should('have.value', template.name);
 
-    cy.getByTestId('title').should('have.value', template.name);
-
-    addAndEditChannel('inApp');
+      addAndEditChannel('inApp');
+    });
 
     cy.getByTestId('in-app-editor-content-input')
       .getByTestId('in-app-editor-content-input')
@@ -60,16 +62,19 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
     cy.getByTestId('submit-btn').click();
 
-    cy.waitForNetworkIdle(500);
     cy.visit('/templates');
+
     cy.getByTestId('template-edit-link');
     cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
       matchCase: false,
     });
-    cy.visit('/templates/edit/' + template._id);
-    cy.waitForNetworkIdle(500);
 
-    clickWorkflow();
+    cy.visit('/templates/edit/' + template._id);
+
+    cy.waitLoadEnv(() => {
+      clickWorkflow();
+    });
+
     editChannel('inApp', true);
 
     cy.getByTestId('feed-button-1-checked');
@@ -87,7 +92,9 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('active-toggle-switch').click();
     cy.getByTestId('active-toggle-switch').get('label').contains('Disabled');
 
-    cy.visit('/templates/edit/' + template._id);
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates/edit/' + template._id);
+    });
     cy.getByTestId('active-toggle-switch').get('label').contains('Disabled');
   });
 
@@ -247,8 +254,10 @@ describe('Workflow Editor - Main Functionality', function () {
   it('should save HTML template email', function () {
     cy.visit('/templates/create');
 
-    fillBasicNotificationDetails('Custom Code HTML Notification Title');
-    addAndEditChannel('email');
+    cy.waitLoadEnv(() => {
+      fillBasicNotificationDetails('Custom Code HTML Notification Title');
+      addAndEditChannel('email');
+    });
 
     cy.getByTestId('emailSubject').type('this is email subject');
 
@@ -257,6 +266,7 @@ describe('Workflow Editor - Main Functionality', function () {
       .contains('Custom Code', { matchCase: false })
       .click();
     cy.get('#codeEditor').type('Hello world code {{name}} <div>Test', { parseSpecialCharSequences: false });
+
     cy.intercept('GET', '/v1/notification-templates?page=0&limit=10').as('notification-templates');
     cy.getByTestId('submit-btn').click();
     cy.getByTestId('trigger-snippet-btn').click();
@@ -264,9 +274,11 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.wait('@notification-templates', { timeout: 60000 });
     cy.get('tbody').contains('Custom Code HTM').click();
 
-    clickWorkflow();
-    editChannel('email');
-    cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
+    cy.waitLoadEnv(() => {
+      clickWorkflow();
+      editChannel('email');
+      cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
+    });
   });
 
   it('should redirect to dev env for edit template', function () {
