@@ -16,7 +16,6 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   InAppProviderIdEnum,
-  StepTypeEnum,
   AvatarTypeEnum,
   IAvatarDetails,
 } from '@novu/shared';
@@ -63,7 +62,7 @@ export class SendMessageInApp extends SendMessageType {
     const { avatarDetails } = command.step.template;
 
     if (avatarDetails && avatarDetails.type !== AvatarTypeEnum.NONE) {
-      avatarDetails.data = await this.processAvatar(avatarDetails, command.environmentId, command.actorId);
+      avatarDetails.data = await this.processAvatar(avatarDetails, command.environmentId, command.job._actorId);
     }
 
     try {
@@ -278,7 +277,7 @@ export class SendMessageInApp extends SendMessageType {
     environmentId: string,
     actorId?: string
   ): Promise<string | null> {
-    if (avatarDetails.type === AvatarTypeEnum.USER) {
+    if (avatarDetails.type === AvatarTypeEnum.USER && actorId) {
       const actorSubscriber: SubscriberEntity = await this.subscriberRepository.findOne(
         {
           _environmentId: environmentId,
@@ -290,6 +289,6 @@ export class SendMessageInApp extends SendMessageType {
       return actorSubscriber?.avatar || null;
     }
 
-    return avatarDetails.data;
+    return avatarDetails.data || null;
   }
 }
