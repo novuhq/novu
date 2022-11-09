@@ -53,9 +53,9 @@ export function AppLayout() {
 }
 
 function SupportChatProvider({ children }) {
-  if (!INTERCOM_APP_ID) {
-    return children;
+  if (INTERCOM_APP_ID) {
+    return <IntercomProvider appId={INTERCOM_APP_ID}>{children}</IntercomProvider>;
   }
 
-  return <IntercomProvider appId={INTERCOM_APP_ID}>{children}</IntercomProvider>;
+  return children;
 }
