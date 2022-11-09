@@ -127,8 +127,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   async function markAsSeen(
     messageId?: string,
-    messages?: IMessage | IMessage[],
     readExist?: boolean,
+    messages?: IMessage | IMessage[],
     storeId = 'default_store'
   ) {
     if (messageId) {

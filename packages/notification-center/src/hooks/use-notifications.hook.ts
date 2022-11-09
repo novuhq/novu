@@ -50,8 +50,8 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapRefetch(storeId);
   }
 
-  async function markAsSeen(messageId?: string, messages?: IMessage | IMessage[], readExist?: boolean) {
-    await mapMarkAsSeen(messageId, messages, readExist, storeId);
+  async function markAsSeen(messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]) {
+    await mapMarkAsSeen(messageId, readExist, messages, storeId);
   }
 
   async function onTabChange() {
