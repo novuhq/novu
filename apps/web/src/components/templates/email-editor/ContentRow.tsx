@@ -63,7 +63,7 @@ export function ContentRow({
         <Button
           onClick={(e) => changeRowStyles(e, dir)}
           data-test-id={`align-${dir}-btn`}
-          variant={dir === textAlign ? 'filled' : 'outline'}
+          variant={dir === textAlign ? 'gradient' : 'outline'}
         >
           {icon}
         </Button>

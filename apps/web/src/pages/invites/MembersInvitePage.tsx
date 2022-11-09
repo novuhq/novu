@@ -1,7 +1,7 @@
 import { Form } from 'antd';
 import { useContext, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';

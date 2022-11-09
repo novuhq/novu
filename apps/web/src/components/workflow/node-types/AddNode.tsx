@@ -24,6 +24,7 @@ export default memo(({ data }: { data: NodeData }) => {
   return (
     <Container data-test-id={dataTestId} style={{ pointerEvents: 'none' }}>
       <Dropdown
+        withinPortal
         control={
           <ActionIcon
             data-test-id="button-add"

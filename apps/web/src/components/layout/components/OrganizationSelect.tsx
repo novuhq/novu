@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import * as capitalize from 'lodash.capitalize';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { IOrganizationEntity } from '@novu/shared';
 
 import { Select } from '../../../design-system';

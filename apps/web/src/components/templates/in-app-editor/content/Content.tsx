@@ -3,7 +3,7 @@ import { MantineTheme, Textarea } from '@mantine/core';
 import { colors } from '../../../../design-system';
 import { IEmailBlock } from '@novu/shared/src';
 import { FieldErrors, FieldValues } from 'react-hook-form';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 interface IContentProps {
   readonly: boolean;

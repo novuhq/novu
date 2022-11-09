@@ -1,5 +1,5 @@
 import { Grid, Input, useMantineColorScheme } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { useFormContext, Controller } from 'react-hook-form';
 
 import { useEnvController } from '../../../store/use-env-controller';
@@ -88,14 +88,14 @@ export function CriticalPreference() {
       control={control}
       render={({ field }) => {
         return (
-          <>
-            <InputBackground
-              dark={dark}
-              label="System Critical (Always Sent)"
-              description={<CriticalDescription field={field} />}
-              styles={inputStyles}
-            />
-          </>
+          // eslint-disable-next-line
+          // @ts-ignore
+          <InputBackground
+            dark={dark}
+            label="System Critical (Always Sent)"
+            description={<CriticalDescription field={field} />}
+            styles={inputStyles}
+          />
         );
       }}
     />
@@ -115,7 +115,7 @@ function CriticalDescription({ field }) {
   );
 }
 
-const InputBackground = styled(InputWrapperProxy)<{ dark }>`
+const InputBackground = styled(InputWrapperProxy)<{ dark: boolean }>`
   background: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
   border-radius: 7px;
   padding: 20px;
@@ -126,7 +126,7 @@ const DescriptionWrapper = styled.div`
   justify-content: space-between;
 `;
 
-const StyledCheckbox = styled(CheckboxProxy)<{ isChecked }>`
+const StyledCheckbox = styled(CheckboxProxy)<{ isChecked: boolean }>`
   label {
     ${({ isChecked }) =>
       !isChecked &&

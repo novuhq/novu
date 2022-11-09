@@ -4,7 +4,8 @@ import { Menu, MenuProps } from '@mantine/core';
 import useStyles from './Dropdown.styles';
 import { shadows } from '../config';
 
-interface IDropdownProps extends Pick<MenuProps, 'opened' | 'offset' | 'position' | 'onOpen' | 'onClose'> {
+interface IDropdownProps
+  extends Pick<MenuProps, 'opened' | 'offset' | 'position' | 'onOpen' | 'onClose' | 'withinPortal'> {
   control: React.ReactNode;
   children: React.ReactNode;
 }

@@ -1,5 +1,5 @@
 import { Group } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 import { colors, Container, Text } from '../../design-system';
 import { Clicked, Read, Received, Seen, Sent } from '../../design-system/icons';
