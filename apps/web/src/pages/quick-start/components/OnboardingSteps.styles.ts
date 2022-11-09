@@ -16,6 +16,9 @@ export default createStyles((theme, _params, getRef) => {
         fontSize: '20px',
         fontWeight: 700,
       },
+      ['&[data-active][data-with-child]']: {
+        color: 'inherit',
+      },
     },
     itemBody: {
       ref: getRef('itemBody'),

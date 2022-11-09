@@ -1,6 +1,5 @@
-import styled from 'styled-components';
 import { useInputState } from '@mantine/hooks';
-import { ActionIcon, Container, Group } from '@mantine/core';
+import { ActionIcon, Container, Stack } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -16,13 +15,6 @@ import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
-
-const GroupContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  align-items: stretch;
-`;
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
@@ -103,7 +95,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   return (
     <>
       <Container sx={{ maxWidth: '450px', margin: '0 auto 15px auto' }}>
-        <GroupContainer>
+        <Stack spacing={25}>
           <Controller
             name={`steps.${index}.template.cta.data.url` as any}
             control={control}
@@ -184,7 +176,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
               );
             }}
           />
-        </GroupContainer>
+        </Stack>
       </Container>
       <Container>
         <VariableManager index={index} contents={variableContents} />

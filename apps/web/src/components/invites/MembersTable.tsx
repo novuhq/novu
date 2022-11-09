@@ -1,4 +1,4 @@
-import { Avatar, Divider, Container, LoadingOverlay, Group, Text } from '@mantine/core';
+import { Avatar, Divider, Container, LoadingOverlay, Stack, Text } from '@mantine/core';
 import styled from 'styled-components';
 import * as capitalize from 'lodash.capitalize';
 import { useClipboard } from '@mantine/hooks';
@@ -56,7 +56,7 @@ export function MembersTable({
             <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={member.user?.profilePicture} radius="xl">
               {capitalize((member.user?.firstName || '')[0])} {capitalize((member.user?.lastName || '')[0])}
             </Avatar>
-            <Group style={{ flexDirection: 'column' }} spacing={5}>
+            <Stack spacing={5}>
               <Text className={classes.heading}>
                 {member.user
                   ? `${capitalize((member.user?.firstName || '') as string)} ${capitalize(
@@ -65,7 +65,7 @@ export function MembersTable({
                   : member.invite.email}
               </Text>
               {member.user?.email ? <Text className={classes.subHeading}>{member.user?.email}</Text> : null}
-            </Group>
+            </Stack>
             <ActionsSider>
               <div style={{ marginLeft: 10 }}>
                 {member.memberStatus === MemberStatusEnum.INVITED ? <Tag mr={10}>Invite Pending</Tag> : null}

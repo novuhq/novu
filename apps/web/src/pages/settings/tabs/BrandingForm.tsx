@@ -4,7 +4,7 @@ import { Dropzone } from '@mantine/dropzone';
 import { useMutation } from 'react-query';
 import axios from 'axios';
 import { showNotification } from '@mantine/notifications';
-import { useMantineTheme, Group, Input, LoadingOverlay } from '@mantine/core';
+import { useMantineTheme, Group, Input, LoadingOverlay, Flex } from '@mantine/core';
 import { IOrganizationEntity } from '@novu/shared';
 
 import { Button, colors, Select, ColorInput } from '../../../design-system';
@@ -123,7 +123,7 @@ export function BrandingForm({
     <>
       <LoadingOverlay visible={isLoading} />
       <form noValidate onSubmit={handleSubmit(saveBrandsForm)}>
-        <Group grow spacing={50} mt={0} align="flex-start">
+        <Flex columnGap={50} align="flex-start">
           <Card title="Brand Setting">
             <Controller
               render={({ field }) => (
@@ -140,6 +140,7 @@ export function BrandingForm({
                         border: ` 1px solid ${
                           theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]
                         }`,
+                        background: 'none',
                       },
                     }}
                     accept={Object.keys(mimeTypes)}
@@ -202,7 +203,7 @@ export function BrandingForm({
               name="fontFamily"
             />
           </Card>
-        </Group>
+        </Flex>
         <Button submit mb={20} mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
           Update
         </Button>

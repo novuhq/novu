@@ -53,17 +53,24 @@ export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
           variant="default"
           classNames={classes}
         >
-          {menuTabs.map((menuTab, i) =>
-            withIcon ? (
-              <MantineTabs.Tab value={menuTab.value} icon={menuTab.icon} key={i}>
-                {menuTab.content}
-              </MantineTabs.Tab>
-            ) : (
-              <MantineTabs.Tab value={menuTab.value} key={i}>
-                {menuTab.content}
-              </MantineTabs.Tab>
-            )
-          )}
+          <MantineTabs.List>
+            {menuTabs.map((menuTab, i) =>
+              withIcon ? (
+                <MantineTabs.Tab value={menuTab.value} icon={menuTab.icon} key={i}>
+                  {menuTab.value}
+                </MantineTabs.Tab>
+              ) : (
+                <MantineTabs.Tab value={menuTab.value} key={i}>
+                  {menuTab.value}
+                </MantineTabs.Tab>
+              )
+            )}
+          </MantineTabs.List>
+          {menuTabs.map((menuTab, i) => (
+            <MantineTabs.Panel value={menuTab.value} key={i}>
+              {menuTab.content}
+            </MantineTabs.Panel>
+          ))}
         </MantineTabs>
       </div>
     );

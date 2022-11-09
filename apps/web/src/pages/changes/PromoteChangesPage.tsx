@@ -90,7 +90,7 @@ export function PromoteChangesPage() {
 }
 
 const StyledTabs = styled.div`
-  .mantine-Tabs-tabsListWrapper {
+  .mantine-Tabs-tabsList {
     margin-left: 30px;
     margin-top: 15px;
   }

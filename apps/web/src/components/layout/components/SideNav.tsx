@@ -1,6 +1,14 @@
 import { useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Navbar, Popover, CloseButton, useMantineColorScheme, createStyles } from '@mantine/core';
+import {
+  Navbar,
+  Popover,
+  CloseButton,
+  useMantineColorScheme,
+  createStyles,
+  createPolymorphicComponent,
+  CloseButtonProps,
+} from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
@@ -142,9 +150,6 @@ export function SideNav({}: Props) {
           </Popover.Target>
           <Popover.Dropdown>
             <div style={{ maxWidth: '220px', paddingRight: '10px' }}>
-              {/*
-              // eslint-disable-next-line
-              // @ts-ignore */}
               <CloseButtonStyled onClick={() => setOpened(false)} aria-label="Close popover" />
               {'To make changes you’ll need to visit '}
               <StyledLink onClick={handlePopoverForChanges}>development changes</StyledLink>{' '}
@@ -174,12 +179,12 @@ export function SideNav({}: Props) {
   );
 }
 
-const CloseButtonStyled = styled(CloseButton)`
+const CloseButtonStyled = createPolymorphicComponent<'button', CloseButtonProps>(styled(CloseButton)`
   position: absolute;
   top: 7px;
   z-index: 2;
   right: 10px;
-`;
+`);
 
 const StyledLink = styled.a`
   font-weight: bold;
