@@ -167,7 +167,7 @@ describe('Creation functionality', function () {
 
     dragAndDrop('digest');
 
-    cy.getByTestId('node-digestSelector').click({ force: true });
+    cy.clickWorkflowNode('node-digestSelector');
 
     cy.getByTestId('time-unit').click();
     cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
@@ -195,7 +195,7 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       clickWorkflow();
 
-      cy.getByTestId('node-digestSelector').click({ force: true });
+      cy.clickWorkflowNode('node-digestSelector');
 
       cy.getByTestId('time-amount').should('have.value', '20');
       cy.getByTestId('batch-key').should('have.value', 'id');

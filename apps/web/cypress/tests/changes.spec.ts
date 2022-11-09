@@ -92,22 +92,22 @@ function createNotification() {
 
   cy.getByTestId('workflowButton').click({ force: true });
 
-  cy.wait(1000);
-  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
+  cy.waitLoadEnv(() => {
+    cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
 
-  cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer, force: true });
+    cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer, force: true });
 
-  cy.getByTestId('node-emailSelector').parent().click({ force: true });
-  cy.getByTestId('edit-template-channel').click({ force: true });
+    cy.getByTestId('node-emailSelector').parent().click({ force: true });
+    cy.getByTestId('edit-template-channel').click({ force: true });
 
-  cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailSubject').type('this is email subject');
 
-  cy.getByTestId('submit-btn').click();
-  cy.getByTestId('trigger-snippet-btn').click();
+    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('trigger-snippet-btn').click();
+  });
 }
 
 function promoteNotification() {
   cy.visit('/changes');
   cy.getByTestId('promote-btn').eq(0).click({ force: true });
-  cy.wait(500);
 }
