@@ -10,7 +10,6 @@ export function addAndEditChannel(channel: Channel) {
 export function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {
   const dataTransfer = new DataTransfer();
 
-  cy.wait(1000);
   cy.getByTestId(`dnd-${channel}Selector`).trigger('dragstart', { dataTransfer });
   cy.getByTestId(dropTestId).parent().trigger('drop', { dataTransfer });
 }
@@ -25,12 +24,10 @@ export function goBack() {
 }
 
 export function fillBasicNotificationDetails(title?: string) {
-  cy.waitForNetworkIdle(100);
   cy.getByTestId('title')
     .type(title || 'Test Notification Title')
     .blur();
   cy.getByTestId('description').type('This is a test description for a test title').blur();
-  cy.wait(100);
 }
 
 export function waitLoadEnv(beforeWait: () => void) {
@@ -65,7 +62,6 @@ export function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
 
 export function clickWorkflow() {
   cy.getByTestId('workflowButton').click({ force: true });
-  cy.wait(1000);
 }
 
 export function awaitGetContains(getSelector: string, contains: string) {

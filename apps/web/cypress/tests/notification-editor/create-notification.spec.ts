@@ -44,7 +44,6 @@ describe('Creation functionality', function () {
     waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
-    cy.waitForNetworkIdle(1000);
 
     cy.getByTestId('title').type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
@@ -60,11 +59,8 @@ describe('Creation functionality', function () {
       .type('{enter}Please check it.');
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('submit-btn').click();
-    cy.waitForNetworkIdle(1000);
 
     cy.getByTestId('trigger-snippet-btn').click();
-
-    cy.waitForNetworkIdle(1000);
 
     // trigger the notification
     cy.task('createNotifications', {
@@ -72,7 +68,6 @@ describe('Creation functionality', function () {
       token: this.session.token,
       subscriberId: this.session.user.id,
     });
-    cy.waitForNetworkIdle(1000);
 
     // click on the notifications bell
     cy.getByTestId('notification-bell').click();
@@ -223,8 +218,6 @@ describe('Creation functionality', function () {
     cy.getByTestId('groupSelector').type('New Test Category');
     cy.getByTestId('submit-category-btn').click();
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
-
-    cy.wait(500);
 
     cy.getByTestId('submit-btn').click();
 

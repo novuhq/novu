@@ -41,7 +41,6 @@ describe('Debugging - test trigger', function () {
       const createdTemplateId = res.response?.body.data._id;
       cy.get('.mantine-Notification-root').contains('Template saved successfully');
 
-      cy.waitForNetworkIdle(500);
       cy.getByTestId('test-trigger-modal').should('be.visible');
 
       cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);

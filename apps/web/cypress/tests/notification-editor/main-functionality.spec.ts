@@ -177,7 +177,6 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('title').type('filled title');
     clickWorkflow();
 
-    cy.wait(200);
     cy.get('.react-flow__node').should('exist');
   });
 
@@ -256,7 +255,6 @@ describe('Workflow Editor - Main Functionality', function () {
 
   it('should save HTML template email', function () {
     cy.visit('/templates/create');
-    cy.waitForNetworkIdle(500);
 
     fillBasicNotificationDetails('Custom Code HTML Notification Title');
     addAndEditChannel('email');
@@ -270,13 +268,10 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.get('#codeEditor').type('Hello world code {{name}} <div>Test', { parseSpecialCharSequences: false });
     cy.intercept('GET', '/v1/notification-templates?page=0&limit=10').as('notification-templates');
     cy.getByTestId('submit-btn').click();
-    cy.waitForNetworkIdle(500);
     cy.getByTestId('trigger-snippet-btn').click();
 
     cy.wait('@notification-templates', { timeout: 60000 });
     cy.get('tbody').contains('Custom Code HTM').click();
-
-    cy.waitForNetworkIdle(500);
 
     clickWorkflow();
     editChannel('email');
