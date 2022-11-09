@@ -1,10 +1,12 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { UnstyledButton, UnstyledButtonProps } from '@mantine/core';
+import { UnstyledButton, UnstyledButtonProps, createPolymorphicComponent } from '@mantine/core';
 
-export const Button = React.forwardRef<HTMLButtonElement, UnstyledButtonProps>((props, ref) => {
-  return <WrapperButton ref={ref} {...props} />;
-});
+export const Button = createPolymorphicComponent<'button', UnstyledButtonProps>(
+  React.forwardRef<HTMLButtonElement, UnstyledButtonProps>((props, ref) => {
+    return <WrapperButton ref={ref} {...props} />;
+  })
+);
 
 export const WrapperButton: any = styled(UnstyledButton)`
   position: relative;

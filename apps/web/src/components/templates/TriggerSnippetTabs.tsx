@@ -25,7 +25,7 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
     },
   ];
 
-  return <Tabs data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
+  return <Tabs defaultValue={NODE_JS} data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
 }
 
 export const getNodeTriggerSnippet = (identifier, variables, subscriberVariables) => {

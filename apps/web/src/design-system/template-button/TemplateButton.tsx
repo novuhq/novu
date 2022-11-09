@@ -67,8 +67,6 @@ export function TemplateButton({
 
   return (
     <Button
-      // eslint-disable-next-line
-      // @ts-ignore
       onMouseEnter={() => setPopoverOpened(true)}
       onMouseLeave={() => setPopoverOpened(false)}
       onClick={async () => {
