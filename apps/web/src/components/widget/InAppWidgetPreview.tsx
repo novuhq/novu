@@ -1,29 +1,37 @@
 import { Badge, Card, Container, Group, Space, useMantineTheme } from '@mantine/core';
-
 import { useState } from 'react';
-import { IMessageAction } from '@novu/shared';
-
 import { formatDistanceToNow, subMinutes } from 'date-fns';
+import { IMessageAction } from '@novu/shared';
 import { colors, shadows, Text, Title } from '../../design-system';
 import { ButtonsTemplatesPopover } from '../templates/in-app-editor/ButtonsTemplatesPopover';
 import { ActionBlockContainer } from './ActionBlockContainer';
+import AvatarContainer from './AvatarContainer';
+
+function minutesAgo(num: number): string {
+  return formatDistanceToNow(subMinutes(new Date(), num), { addSuffix: true });
+}
 
 export function InAppWidgetPreview({
   readonly,
   children,
   value,
   onChange,
+  index,
+  enableAvatar,
 }: {
   readonly: boolean;
   children: JSX.Element;
   value: IMessageAction;
   onChange: (data: any) => void;
+  index: number;
+  enableAvatar: boolean;
 }) {
   const theme = useMantineTheme();
   const [isButtonsTemplateVisible, setIsButtonsTemplateVisible] = useState<boolean>(false);
   const [isButtonsTemplateSelected, setIsButtonsTemplateSelected] = useState<boolean>(
     !!value?.buttons && value?.buttons?.length !== 0
   );
+  const [avatarContainerOpened, setAvatarContainerOpened] = useState(false);
 
   function onButtonAddClickHandle() {
     setIsButtonsTemplateVisible(true);
@@ -32,10 +40,6 @@ export function InAppWidgetPreview({
   function onRemoveTemplate() {
     setIsButtonsTemplateSelected(false);
     onChange({});
-  }
-
-  function minutesAgo(num: number): string {
-    return formatDistanceToNow(subMinutes(new Date(), num), { addSuffix: true });
   }
 
   return (
@@ -99,11 +103,27 @@ export function InAppWidgetPreview({
                     opacity: 0.6,
                   }
                 : {}),
+              ...(avatarContainerOpened && { opacity: 0.4 }),
             }}
           >
             <Group position="apart">
               <div style={{ width: '100%' }}>
-                {children}
+                <Group position="left">
+                  {enableAvatar && (
+                    <AvatarContainer
+                      index={index}
+                      opened={avatarContainerOpened}
+                      setOpened={setAvatarContainerOpened}
+                    />
+                  )}
+
+                  <div>
+                    <Text weight="bold">{children}</Text>
+                    <Text mt={5} color={colors.B60}>
+                      {minutesAgo(5)}
+                    </Text>
+                  </div>
+                </Group>
                 <ActionBlockContainer
                   value={value}
                   onChange={onChange}

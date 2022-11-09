@@ -1,15 +1,7 @@
 import { Control, Controller, useWatch } from 'react-hook-form';
-import { formatDistanceToNow, subMinutes } from 'date-fns';
-import { Group } from '@mantine/core';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
 import { ContentContainer } from './content/ContentContainer';
 import { IForm } from '../use-template-controller.hook';
-import AvatarContainer from '../../widget/AvatarContainer';
-import { Text, colors } from '../../../design-system';
-
-function minutesAgo(num: number): string {
-  return formatDistanceToNow(subMinutes(new Date(), num), { addSuffix: true });
-}
 
 export function InAppEditorBlock({
   contentPlaceholder,
@@ -23,7 +15,7 @@ export function InAppEditorBlock({
   readonly: boolean;
 }) {
   const enableAvatar = useWatch({
-    name: `steps.${index}.template.enableAvatar`,
+    name: `steps.${index}.template.enableAvatar` as any,
     control,
   });
 
@@ -36,24 +28,13 @@ export function InAppEditorBlock({
         const { ref, ...fieldRefs } = field;
 
         return (
-          <InAppWidgetPreview {...fieldRefs} readonly={readonly}>
-            <Group position="left">
-              {enableAvatar && <AvatarContainerController control={control} index={index} />}
-
-              <div>
-                <Text weight="bold">
-                  <ContentContainerController
-                    control={control}
-                    index={index}
-                    contentPlaceholder={contentPlaceholder}
-                    readonly={readonly}
-                  />
-                </Text>
-                <Text mt={5} color={colors.B60}>
-                  {minutesAgo(5)}
-                </Text>
-              </div>
-            </Group>
+          <InAppWidgetPreview {...fieldRefs} readonly={readonly} enableAvatar={!!enableAvatar} index={index}>
+            <ContentContainerController
+              control={control}
+              index={index}
+              contentPlaceholder={contentPlaceholder}
+              readonly={readonly}
+            />
           </InAppWidgetPreview>
         );
       }}
@@ -83,20 +64,6 @@ function ContentContainerController({
         return (
           <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} index={index} />
         );
-      }}
-    />
-  );
-}
-
-function AvatarContainerController({ control, index }: { control: Control<IForm>; index: number }) {
-  return (
-    <Controller
-      name={`steps.${index}.template.avatarDetails` as any}
-      control={control}
-      render={({ field }) => {
-        const { ref, ...fieldRefs } = field;
-
-        return <AvatarContainer {...fieldRefs} />;
       }}
     />
   );

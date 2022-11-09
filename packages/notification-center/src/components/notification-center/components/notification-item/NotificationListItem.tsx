@@ -33,32 +33,38 @@ const avatarSystemIcons = [
   {
     icon: <Warning />,
     type: SystemAvatarIconEnum.WARNING,
-    bgColor: '#FFF000',
+    iconColor: '#FFF000',
+    containerBgColor: '#FFF00026',
   },
   {
     icon: <Info />,
     type: SystemAvatarIconEnum.INFO,
-    bgColor: '#0000FF',
-  },
-  {
-    icon: <Success />,
-    type: SystemAvatarIconEnum.SUCCESS,
-    bgColor: colors.success,
-  },
-  {
-    icon: <ErrorIcon />,
-    type: SystemAvatarIconEnum.ERROR,
-    bgColor: colors.error,
+    iconColor: '#0000FF',
+    containerBgColor: '#0000FF26',
   },
   {
     icon: <Up />,
     type: SystemAvatarIconEnum.UP,
-    bgColor: colors.B70,
+    iconColor: colors.B70,
+    containerBgColor: `${colors.B70}26`,
   },
   {
     icon: <Question />,
     type: SystemAvatarIconEnum.QUESTION,
-    bgColor: colors.B70,
+    iconColor: colors.B70,
+    containerBgColor: `${colors.B70}26`,
+  },
+  {
+    icon: <Success />,
+    type: SystemAvatarIconEnum.SUCCESS,
+    iconColor: colors.success,
+    containerBgColor: `${colors.success}26`,
+  },
+  {
+    icon: <ErrorIcon />,
+    type: SystemAvatarIconEnum.ERROR,
+    iconColor: colors.error,
+    containerBgColor: `${colors.error}26`,
   },
 ];
 
@@ -195,7 +201,9 @@ function RenderAvatar({ avatarDetails }: { avatarDetails: IAvatarDetails }) {
     const selectedIcon = avatarSystemIcons.filter((data) => data.type === avatarDetails.data);
 
     return selectedIcon.length > 0 ? (
-      <SystemIconWrapper bgColor={selectedIcon[0].bgColor}>{selectedIcon[0].icon}</SystemIconWrapper>
+      <SystemIconWrapper iconColor={selectedIcon[0].iconColor} containerBgColor={selectedIcon[0].containerBgColor}>
+        {selectedIcon[0].icon}
+      </SystemIconWrapper>
     ) : (
       <Avatar />
     );
@@ -305,16 +313,16 @@ const NotificationTextContainer = styled.div`
   gap: 5px;
 `;
 
-const SystemIconWrapper = styled.div<{ bgColor: string }>`
+const SystemIconWrapper = styled.div<{ containerBgColor: string; iconColor: string }>`
   width: 100%;
   height: 100%;
   cursor: pointer;
-  background-color: ${({ bgColor }) => `${bgColor}26`};
+  background-color: ${({ containerBgColor }) => containerBgColor};
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 20px;
-  color: ${({ bgColor }) => bgColor};
+  color: ${({ iconColor }) => iconColor};
 
   & > svg {
     width: 20px;

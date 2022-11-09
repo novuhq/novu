@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Dispatch, SetStateAction } from 'react';
 import { Box, Group, Divider, Popover, Stack, Avatar as MAvatar } from '@mantine/core';
 import {
   WarningFilled,
@@ -8,6 +8,7 @@ import {
   UpCircleFilled,
   QuestionCircleFilled,
 } from '@ant-design/icons';
+import { useController } from 'react-hook-form';
 import { SystemAvatarIconEnum, IAvatarDetails, AvatarTypeEnum } from '@novu/shared';
 import { colors, Input, Switch, Text, Tooltip } from '../../design-system';
 import { Camera } from '../../design-system/icons/general/Camera';
@@ -18,39 +19,61 @@ const systemIcons = [
   {
     icon: <WarningFilled />,
     type: SystemAvatarIconEnum.WARNING,
-    bgColor: '#FFF000',
+    iconColor: '#FFF000',
+    containerBgColor: '#FFF00026',
   },
   {
     icon: <InfoCircleFilled />,
     type: SystemAvatarIconEnum.INFO,
-    bgColor: '#0000FF',
+    iconColor: '#0000FF',
+    containerBgColor: '#0000FF26',
   },
   {
     icon: <UpCircleFilled />,
     type: SystemAvatarIconEnum.UP,
-    bgColor: colors.B70,
+    iconColor: colors.B70,
+    containerBgColor: `${colors.B70}26`,
   },
   {
     icon: <QuestionCircleFilled />,
     type: SystemAvatarIconEnum.QUESTION,
-    bgColor: colors.B70,
+    iconColor: colors.B70,
+    containerBgColor: `${colors.B70}26`,
   },
   {
     icon: <CheckCircleFilled />,
     type: SystemAvatarIconEnum.SUCCESS,
-    bgColor: colors.success,
+    iconColor: colors.success,
+    containerBgColor: `${colors.success}26`,
   },
   {
     icon: <CloseCircleFilled />,
     type: SystemAvatarIconEnum.ERROR,
-    bgColor: colors.error,
+    iconColor: colors.error,
+    containerBgColor: `${colors.error}26`,
   },
 ];
 
-const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; value: IAvatarDetails }) => {
-  const [opened, setOpened] = useState(false);
+const AvatarContainer = ({
+  index,
+  opened,
+  setOpened,
+}: {
+  index: number;
+  opened: boolean;
+  setOpened: Dispatch<SetStateAction<boolean>>;
+}) => {
+  const {
+    field: { value, onChange },
+  } = useController({
+    name: `steps.${index}.template.avatarDetails` as any,
+  });
+
   const [tooltipOpened, setTooltipOpened] = useState(() => {
     return value.type === AvatarTypeEnum.NONE;
+  });
+  const [avatarURLInput, setAvatarURLInput] = useState(() => {
+    return value.type === AvatarTypeEnum.SYSTEM_CUSTOM && value.data ? value.data : '';
   });
 
   const { classes, theme } = useStyles();
@@ -74,7 +97,7 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
           </Tooltip>
         }
         opened={opened}
-        position="bottom"
+        position="right"
         placement="start"
         withArrow
         classNames={{
@@ -84,6 +107,8 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
           body: classes.body,
           popover: classes.popover,
         }}
+        onClose={() => setOpened(false)}
+        closeOnClickOutside
       >
         <Stack>
           <Group align="center">
@@ -121,19 +146,23 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
           </Group>
           <Input
             placeholder="Enter Avatar's URL"
-            onChange={(event) =>
+            onBlur={(event) =>
               onChange({
                 data: event.target.value,
                 type: event.target.value ? AvatarTypeEnum.SYSTEM_CUSTOM : AvatarTypeEnum.NONE,
               })
             }
-            value={value.type === AvatarTypeEnum.SYSTEM_CUSTOM && value.data ? value.data : ''}
+            onChange={(event) => {
+              setAvatarURLInput(event.target.value);
+            }}
+            value={avatarURLInput}
           />
           <Divider label={<Text color={colors.B60}>or choose a system avatar</Text>} labelPosition="center" />
-          <Group position="left" spacing={20}>
+          <Group position="center" spacing={20}>
             {systemIcons.map((icon) => (
               <IconWrapper
-                bgColor={icon.bgColor}
+                iconColor={icon.iconColor}
+                containerBgColor={icon.containerBgColor}
                 onClick={() =>
                   onChange({
                     type: AvatarTypeEnum.SYSTEM_ICON,
@@ -141,6 +170,7 @@ const AvatarContainer = ({ value, onChange }: { onChange: (data: any) => void; v
                   })
                 }
                 size={50}
+                key={icon.type}
               >
                 <div>{icon.icon}</div>
               </IconWrapper>
@@ -169,7 +199,7 @@ function RenderAvatar({ avatarDetails }: { avatarDetails: IAvatarDetails }) {
     const selectedIcon = systemIcons.filter((data) => data.type === avatarDetails.data);
 
     return selectedIcon.length > 0 ? (
-      <IconWrapper size={40} bgColor={selectedIcon[0].bgColor}>
+      <IconWrapper size={40} iconColor={selectedIcon[0].iconColor} containerBgColor={selectedIcon[0].containerBgColor}>
         {selectedIcon[0].icon}
       </IconWrapper>
     ) : (

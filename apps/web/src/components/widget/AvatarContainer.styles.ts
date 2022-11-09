@@ -10,18 +10,20 @@ export const useStyles = createStyles((theme) => {
     target: { height: '40px' },
     arrow: {
       backgroundColor: dark ? colors.B20 : colors.white,
-      height: '-22px',
+      marginBottom: '-1px',
       border: 'none',
-      margin: '0px',
     },
+
     body: {
       backgroundColor: dark ? colors.B20 : colors.white,
       color: dark ? colors.white : colors.B40,
-      border: 'none',
-      marginTop: '1px',
       width: '100%',
+      border: 'none',
     },
-    popover: { width: '240px' },
+    popover: {
+      borderRadius: '7px',
+      width: '260px',
+    },
   };
 });
 
@@ -38,15 +40,15 @@ export const AvatarWrapper = styled.div<{ dark: boolean }>`
   user-select: none;
 `;
 
-export const IconWrapper = styled.div<{ bgColor: string; size: number }>`
+export const IconWrapper = styled.div<{ containerBgColor: string; iconColor: string; size: number }>`
   width: ${({ size }) => size}px;
   height: ${({ size }) => size}px;
   border-radius: 50%;
   cursor: pointer;
-  background-color: ${({ bgColor }) => `${bgColor}26`};
+  background-color: ${({ containerBgColor }) => containerBgColor};
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 30px;
-  color: ${({ bgColor }) => bgColor};
+  color: ${({ iconColor }) => iconColor};
 `;

@@ -49,18 +49,8 @@ export class TriggerEventToAllRequestDto {
     If a new actor object is provided, we will create a new subsciber in our system
     `,
     oneOf: [
-      {
-        $ref: getSchemaPath(SubscriberPayloadDto),
-      },
-      {
-        type: '[SubscriberPayloadDto]',
-        description: 'List of actor objects',
-      },
       { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
-      {
-        type: '[string]',
-        description: "List of actor's subscriber identifiers",
-      },
+      { $ref: getSchemaPath(SubscriberPayloadDto) },
     ],
   })
   @IsOptional()
