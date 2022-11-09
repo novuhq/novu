@@ -20,6 +20,7 @@ export function Dropdown({ control, children, ...props }: IDropdownProps) {
       offset={10}
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
       classNames={classes}
+      clickOutsideEvents={['click', 'mousedown', 'touchstart']}
       {...props}
     >
       <Menu.Target>{control}</Menu.Target>

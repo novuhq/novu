@@ -85,7 +85,7 @@ const usePopoverStyles = createStyles(({ colorScheme }) => ({
 const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
 
 export function ChannelButton({
-  active,
+  active = false,
   action = false,
   switchButton,
   checked = false,
@@ -126,10 +126,10 @@ export function ChannelButton({
   }, [watch]);
 
   useEffect(() => {
-    if (dragging && showDotMenu) {
+    if (showDotMenu && (dragging || !active)) {
       setShowDotMenu(false);
     }
-  }, [dragging, showDotMenu]);
+  }, [dragging, showDotMenu, active]);
 
   return (
     <Button
@@ -202,7 +202,8 @@ export function ChannelButton({
                       />
                     }
                     data-test-id="edit-step-action"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setShowDotMenu(false);
                       setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
                     }}

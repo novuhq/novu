@@ -31,7 +31,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapFetchNextPage(storeId);
   }
 
-  const hasNextPage = mapHasNextPage?.has(storeId) ? mapHasNextPage.get(storeId) : true;
+  const hasNextPage = mapHasNextPage[storeId] ? mapHasNextPage[storeId] : false;
 
   async function markAsRead(messageId: string) {
     await mapMarkAsRead(messageId, storeId);

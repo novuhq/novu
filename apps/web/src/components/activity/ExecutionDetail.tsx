@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
 
 import { ExecutionDetailShowRaw } from './ExecutionDetailShowRaw';
-import { getColorByStatus, getLogoByType, getCheckLogo } from './helpers';
+import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';
 
 import { colors, Text } from '../../design-system';
 import { When } from '../utils/When';
@@ -33,7 +33,7 @@ const getExecutionDetailLogoByType = (type) => {
     return logo;
   }
 
-  return getCheckLogo();
+  return getLogoByStatus(type);
 };
 
 export const ExecutionDetail = ({
