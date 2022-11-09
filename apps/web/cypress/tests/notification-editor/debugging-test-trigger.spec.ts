@@ -9,15 +9,17 @@ describe('Debugging - test trigger', function () {
     const template = this.session.templates[0];
     const userId = this.session.user.id;
 
+    cy.intercept('GET', 'http://localhost:1336/v1/notification-templates/*').as('notification-templates');
+
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/edit/' + template._id);
     });
 
-    cy.waitLoadEnv(() => {
-      cy.getByTestId('test-workflow-btn').click();
-      cy.getByTestId('test-trigger-modal').should('be.visible');
-      cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
-    });
+    cy.wait('@notification-templates');
+
+    cy.getByTestId('test-workflow-btn').click();
+    cy.getByTestId('test-trigger-modal').should('be.visible');
+    cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
   });
 
   it('should create template before opening test trigger modal', function () {
