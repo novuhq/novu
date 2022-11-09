@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { useApi, useNovuContext } from '../hooks';
-import { IMessage, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { useApi } from '../hooks';
+import { ButtonTypeEnum, IMessage, MessageActionStatusEnum } from '@novu/shared';
 import { NotificationsContext } from './notifications.context';
+import { useFeed } from '../hooks/use-feed.hook';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { api } = useApi();
-  const { stores } = useNovuContext();
+  const { stores } = useFeed();
   const [notifications, setNotifications] = useState<Record<string, IMessage[]>>({ default_store: [] });
-  const [page, setPage] = useState<Map<string, number>>(new Map([['default_store', 0]]));
-  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(new Map([['default_store', true]]));
+  const [page, setPage] = useState<Map<string, number>>(new Map<string, number>([['default_store', 0]]));
+  const [hasNextPage, setHasNextPage] = useState<Record<string, boolean>>({ default_store: true });
   const [fetching, setFetching] = useState<boolean>(false);
   const [refetchTimeout, setRefetchTimeout] = useState<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -18,9 +19,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const newNotifications = await api.getNotificationsList(pageToFetch, getStoreQuery(storeId));
 
     if (newNotifications?.length < 10) {
-      setHasNextPage(hasNextPage.set(storeId, false));
+      hasNextPage[storeId] = false;
+      setHasNextPage(hasNextPage);
     } else {
-      setHasNextPage(hasNextPage.set(storeId, true));
+      hasNextPage[storeId] = true;
+      setHasNextPage(hasNextPage);
     }
 
     if (!page.has(storeId)) {
@@ -29,17 +32,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     if (isRefetch) {
       notifications[storeId] = newNotifications;
-      setNotifications(notifications);
+      setNotifications(Object.assign({}, notifications));
     } else {
       notifications[storeId] = [...(notifications[storeId] || []), ...newNotifications];
-      setNotifications(notifications);
+      setNotifications(Object.assign({}, notifications));
     }
 
     setFetching(false);
   }
 
   async function fetchNextPage(storeId = 'default_store') {
-    if (!hasNextPage.get(storeId)) return;
+    if (!hasNextPage[storeId]) return;
 
     const nextPage = page.get(storeId) + 1;
     setPage(page.set(storeId, nextPage));
@@ -47,8 +50,36 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     await fetchPage(nextPage, false, storeId);
   }
 
-  async function markAsSeen(messageId: string): Promise<IMessage> {
-    return await api.markMessageAsSeen(messageId);
+  async function markAsRead(messageId: string, storeId = 'default_store'): Promise<IMessage> {
+    notifications[storeId] = notifications[storeId].map((message) => {
+      if (message._id === messageId) {
+        message.read = true;
+        message.seen = true;
+      }
+
+      return message;
+    });
+
+    setNotifications(Object.assign({}, notifications));
+
+    return await api.markMessageAs(messageId, { seen: true, read: true });
+  }
+
+  async function markAllAsRead(storeId = 'default_store'): Promise<number> {
+    notifications[storeId] = notifications[storeId].map((message) => {
+      message.read = true;
+      message.seen = true;
+
+      return message;
+    });
+
+    setNotifications(Object.assign({}, notifications));
+
+    const messageIds = notifications[storeId].map((message) => {
+      return message._id;
+    });
+
+    return await api.markMessageAs(messageIds, { seen: true, read: true });
   }
 
   async function updateAction(
@@ -94,11 +125,65 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return stores?.find((store) => store.storeId === storeId)?.query || {};
   }
 
+  async function markNotificationsAsSeen(
+    readExist?: boolean,
+    messagesToMark?: IMessage | IMessage[],
+    storeId = 'default_store'
+  ) {
+    const notificationsToMark = getNotificationsToMark(messagesToMark, notifications, storeId);
+
+    if (notificationsToMark.length) {
+      const notificationsToUpdate = filterReadNotifications(readExist, notificationsToMark);
+
+      await api.markMessageAsSeen(notificationsToUpdate.map((notification) => notification._id));
+    }
+  }
+
+  function onWidgetClose() {
+    resetPageState();
+  }
+
+  function onTabChange(storeId = 'default_store') {
+    setPage(page.set(storeId, 0));
+  }
+
+  function resetPageState() {
+    setPage(new Map<string, number>([['default_store', 0]]));
+  }
+
   return (
     <NotificationsContext.Provider
-      value={{ notifications, fetchNextPage, hasNextPage, fetching, markAsSeen, updateAction, refetch }}
+      value={{
+        notifications,
+        fetchNextPage,
+        hasNextPage,
+        fetching,
+        markAsRead,
+        updateAction,
+        refetch,
+        markNotificationsAsSeen,
+        onWidgetClose,
+        onTabChange,
+        markAllAsRead,
+      }}
     >
       {children}
     </NotificationsContext.Provider>
   );
+}
+
+function getNotificationsToMark(
+  messagesToMark?: IMessage | IMessage[],
+  notifications?: Record<string, IMessage[]>,
+  storeId?: string
+) {
+  if (messagesToMark) {
+    return Array.isArray(messagesToMark) ? messagesToMark : [messagesToMark];
+  } else {
+    return notifications[storeId].filter((notification) => !notification.seen);
+  }
+}
+
+function filterReadNotifications(readExist: boolean | undefined, notificationsToMark) {
+  return readExist ? notificationsToMark.filter((msg) => typeof msg?.read !== 'undefined') : notificationsToMark;
 }

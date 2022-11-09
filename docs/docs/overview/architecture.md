@@ -8,7 +8,6 @@ Let's deep dive into the building blocks of Novu's OCL approach.
 
 ![Novu Architecture](https://user-images.githubusercontent.com/89788120/195802678-6d566d86-8175-490f-9ac9-dfd23b8959bd.png)
 
-
 ## Templates
 
 Templates are the blueprints for all notifications in Novu. They provide the base configurations for each message. A message is tied to a specific channel, for which a content template is provided, code rules and filters, priorities, and other metadata that will affect the delivery of a specific message.

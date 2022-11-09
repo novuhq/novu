@@ -10,6 +10,8 @@ import { LogsModule } from '../logs/logs.module';
 import { ContentTemplatesModule } from '../content-templates/content-templates.module';
 import { WorkflowQueueService } from './services/workflow.queue.service';
 import { IntegrationModule } from '../integrations/integrations.module';
+import { StorageHelperService } from './services/storage-helper-service/storage-helper.service';
+import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 
 @Module({
   imports: [
@@ -21,8 +23,9 @@ import { IntegrationModule } from '../integrations/integrations.module';
     LogsModule,
     ContentTemplatesModule,
     IntegrationModule,
+    ExecutionDetailsModule,
   ],
   controllers: [EventsController],
-  providers: [...USE_CASES, WorkflowQueueService],
+  providers: [...USE_CASES, WorkflowQueueService, StorageHelperService],
 })
 export class EventsModule {}

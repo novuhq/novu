@@ -10,7 +10,6 @@ COPY package.json .
 COPY apps/widget ./apps/widget
 
 COPY libs/dal ./libs/dal
-COPY libs/embed ./libs/embed
 COPY packages/client ./packages/client
 COPY libs/testing ./libs/testing
 COPY libs/shared ./libs/shared

@@ -2,7 +2,7 @@
 
 [Expo Push](https://docs.expo.dev/push-notifications/overview/) is a notification delivery service provided by Expo.
 
-To enable Expo Push integration, you need to create an [Expo Application Services (EAS)](https://expo.dev) account and generate an access token in the EAS dashboard. 
+To enable Expo Push integration, you need to create an [Expo Application Services (EAS)](https://expo.dev) account and generate an access token in the EAS dashboard.
 
 The overrides field supports all [Message Request](https://docs.expo.dev/push-notifications/sending-notifications/#message-request-format) values, example below:
 

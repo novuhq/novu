@@ -1,9 +1,12 @@
-import { ThemeProvider } from '../../../design-system/ThemeProvider';
+import { useEffect } from 'react';
+import { useMantineColorScheme } from '@mantine/core';
 
 export function PartnerIntegrationLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ThemeProvider>
-      <div>{children}</div>
-    </ThemeProvider>
-  );
+  const { toggleColorScheme } = useMantineColorScheme();
+
+  useEffect(() => {
+    toggleColorScheme('dark');
+  }, []);
+
+  return <div>{children}</div>;
 }

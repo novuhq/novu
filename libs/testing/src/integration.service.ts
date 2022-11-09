@@ -10,7 +10,7 @@ export class IntegrationService {
       _organizationId: organizationId,
       providerId: 'sendgrid',
       channel: ChannelTypeEnum.EMAIL,
-      credentials: { apiKey: '123', secretKey: 'abc' },
+      credentials: { apiKey: 'SG.123', secretKey: 'abc' },
       active: true,
     };
 

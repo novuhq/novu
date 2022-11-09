@@ -49,9 +49,9 @@ In the back-off strategy, before creating a digest, Novu will check if a message
 
 ## Writing digest templates
 
-In many cases, you will need to access all the digested events payload in order to show the user all or parts of the events included in this digest. For example: "John and 5 others liked your photo".
+In many cases, you will need to access all the digested events payload in order to show the user all or parts of the events included in this digest. For example: "John and 5 others liked your photo."
 
-As port of the digested template you will have access to a few properties:
+As part of the digested template, you will have access to a few properties:
 
 | Property           | Description                                                                                                                                         |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
