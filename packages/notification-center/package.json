@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
@@ -50,8 +50,8 @@
   "dependencies": {
     "@mantine/core": "^4.1.0",
     "@mantine/hooks": "^4.1.3",
-    "@novu/client": "^0.8.0",
-    "@novu/shared": "^0.8.0",
+    "@novu/client": "^0.9.0",
+    "@novu/shared": "^0.9.0",
     "acorn-jsx": "^5.3.2",
     "axios": "^0.26.1",
     "chroma-js": "^2.4.2",
