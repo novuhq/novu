@@ -1,4 +1,4 @@
-import { addAndEditChannel, clickWorkflow, fillBasicNotificationDetails, waitLoadTemplatePage } from '.';
+import { addAndEditChannel, clickWorkflow, fillBasicNotificationDetails } from '.';
 
 describe('Debugging - test trigger', function () {
   beforeEach(function () {
@@ -7,7 +7,7 @@ describe('Debugging - test trigger', function () {
 
   it('should open test trigger modal', function () {
     const template = this.session.templates[0];
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/edit/' + template._id);
     });
 
@@ -23,7 +23,7 @@ describe('Debugging - test trigger', function () {
     cy.intercept('POST', '*/notification-templates').as('createTemplate');
     const userId = this.session.user.id;
     const userEmail = this.session.user.email;
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
     fillBasicNotificationDetails('Test workflow');
@@ -60,7 +60,7 @@ describe('Debugging - test trigger', function () {
 
   it('should not test trigger on error ', function () {
     const template = this.session.templates[0];
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/edit/' + template._id);
     });
     cy.getByTestId('test-workflow-btn').click();

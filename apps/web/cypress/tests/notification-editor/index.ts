@@ -30,36 +30,6 @@ export function fillBasicNotificationDetails(title?: string) {
   cy.getByTestId('description').type('This is a test description for a test title').blur();
 }
 
-export function waitLoadEnv(beforeWait: () => void) {
-  cy.intercept('GET', 'http://localhost:1336/v1/environments').as('environments');
-  cy.intercept('GET', 'http://localhost:1336/v1/environments/me').as('environments-me');
-
-  beforeWait();
-
-  cy.wait(['@environments', '@environments-me']);
-}
-
-export function waitLoadTemplatePage(beforeWait = (): string[] | void => []) {
-  cy.intercept('GET', 'http://localhost:1336/v1/environments').as('environments');
-  cy.intercept('GET', 'http://localhost:1336/v1/environments/me').as('environments-me');
-  cy.intercept('GET', 'http://localhost:1336/v1/notification-groups').as('notification-groups');
-  cy.intercept('GET', 'http://localhost:1336/v1/changes/count').as('changes-count');
-  cy.intercept('GET', 'http://localhost:1336/v1/integrations/active').as('active-integrations');
-  cy.intercept('GET', 'http://localhost:1336/v1/users/me').as('me');
-
-  const waits = beforeWait();
-
-  cy.wait([
-    '@environments',
-    '@environments-me',
-    '@notification-groups',
-    '@changes-count',
-    '@active-integrations',
-    '@me',
-    ...(Array.isArray(waits) ? waits : []),
-  ]);
-}
-
 export function clickWorkflow() {
   cy.getByTestId('workflowButton').click({ force: true });
 }

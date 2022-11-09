@@ -1,4 +1,4 @@
-import { addAndEditChannel, clickWorkflow, dragAndDrop, goBack, waitLoadTemplatePage } from '.';
+import { addAndEditChannel, clickWorkflow, dragAndDrop, goBack } from '.';
 
 describe('Creation functionality', function () {
   beforeEach(function () {
@@ -6,7 +6,7 @@ describe('Creation functionality', function () {
   });
 
   it('should create in-app notification', function () {
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
     cy.getByTestId('title').type('Test Notification Title');
@@ -41,7 +41,7 @@ describe('Creation functionality', function () {
   });
 
   it('should create multiline in-app notification, send it and receive', function () {
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
 
@@ -82,7 +82,7 @@ describe('Creation functionality', function () {
   });
 
   it('should create email notification', function () {
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
     cy.getByTestId('title').type('Test Notification Title');
@@ -127,7 +127,7 @@ describe('Creation functionality', function () {
   });
 
   it('should add digest node', function () {
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
     cy.getByTestId('title').type('Test Notification Title');
@@ -192,7 +192,7 @@ describe('Creation functionality', function () {
 
     awaitGetContains('tbody', 'Test Notification Title').click({ force: true });
 
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       clickWorkflow();
 
       cy.getByTestId('node-digestSelector').click({ force: true });
@@ -209,7 +209,7 @@ describe('Creation functionality', function () {
 
   it('should create and edit group id', function () {
     const template = this.session.templates[0];
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/edit/' + template._id);
     });
 

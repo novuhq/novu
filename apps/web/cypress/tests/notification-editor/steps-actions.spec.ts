@@ -1,4 +1,4 @@
-import { clickWorkflow, dragAndDrop, editChannel, waitLoadEnv, waitLoadTemplatePage } from '.';
+import { clickWorkflow, dragAndDrop, editChannel } from '.';
 
 describe('Workflow Editor - Steps Actions', function () {
   beforeEach(function () {
@@ -10,7 +10,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.visit('/templates/edit/' + template._id);
 
-    waitLoadEnv(() => {
+    cy.waitLoadEnv(() => {
       clickWorkflow();
     });
 
@@ -24,7 +24,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.visit('/templates/edit/' + template._id);
 
-    waitLoadEnv(() => {
+    cy.waitLoadEnv(() => {
       clickWorkflow();
     });
 
@@ -35,7 +35,7 @@ describe('Workflow Editor - Steps Actions', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
-    waitLoadEnv(() => {
+    cy.waitLoadEnv(() => {
       clickWorkflow();
     });
 
@@ -51,7 +51,7 @@ describe('Workflow Editor - Steps Actions', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
-    waitLoadEnv(() => {
+    cy.waitLoadEnv(() => {
       clickWorkflow();
     });
 
@@ -63,7 +63,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.visit('/templates/edit/' + template._id);
 
-    waitLoadEnv(() => {
+    cy.waitLoadEnv(() => {
       clickWorkflow();
     });
 
@@ -84,7 +84,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.visit('/templates/edit/' + template._id);
 
-    waitLoadEnv(() => {
+    cy.waitLoadEnv(() => {
       clickWorkflow();
     });
 
