@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-slim
+FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine
 
 WORKDIR /usr/src/app
 
@@ -33,5 +33,7 @@ RUN pnpm add @babel/core -w
 COPY [".eslintrc.js",".prettierrc",".prettierignore","./"]
 
 RUN pnpm build:web
+
+#RUN chown -R 1000:root .
 
 CMD [ "pnpm", "start:static:web" ]

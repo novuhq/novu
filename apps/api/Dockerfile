@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-slim as dev_base
+FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
 
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@7.5.0
@@ -47,8 +47,6 @@ ENV CI=true
 
 WORKDIR /usr/src/app
 
-RUN chown -R 1000:root .
-
 COPY ./meta .
 
 # Get the build artifacts that only include dist folders
@@ -61,4 +59,4 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --reporter=silent
 
 WORKDIR /usr/src/app/apps/api
-CMD [ "pm2-runtime", "dist/main.js" ]
+CMD [ "pm2-runtime","start", "dist/main.js" ]

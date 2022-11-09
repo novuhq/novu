@@ -1,8 +1,6 @@
-FROM node:16-buster-slim
+FROM node:16-alpine3.16
 
 WORKDIR /usr/src/app
-
-RUN chown -R 1000:root .
 
 RUN npm install -g pnpm@7.5.0 --loglevel notice
 RUN npm i pm2 -g
@@ -29,5 +27,7 @@ RUN cp src/.example.env dist/src/.env
 RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
+
+#RUN chown -R 1000:root .
 
 CMD [ "pm2-runtime", "dist/src/main.js" ]
