@@ -6,6 +6,7 @@ export const mantineConfig: MantineThemeOverride = {
   fontFamily: 'Lato, sans serif',
   fontSizes: { xs: 10, sm: 12, md: 14, lg: 16, xl: 18 },
   primaryColor: 'gradient',
+  defaultGradient: { deg: 99, from: '#DD2476', to: '#FF512F' },
   radius: { md: 7, xl: 30 },
   lineHeight: '17px',
   shadows: {
@@ -39,7 +40,7 @@ export const mantineConfig: MantineThemeOverride = {
       colors.BGDark,
       colors.B17,
     ],
-    gradient: ['', '', '', '', '', colors.error, colors.horizontal, colors.vertical, colors.horizontal, ''],
+    gradient: ['', '', '', '', '', colors.error, colors.horizontal, colors.vertical, , ''],
   },
   headings: {
     fontFamily: 'Lato, sans-serif',

@@ -30,14 +30,14 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
 
           height: '2px',
           marginTop: '10px',
-          background: theme.colors.gradient[8],
+          background: colors.horizontal,
           borderRadius: '10px',
         },
       },
 
       [`& .${tabIcon}`]: {
         color: 'red',
-        background: theme.colors.gradient[8],
+        background: colors.horizontal,
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent',
       },

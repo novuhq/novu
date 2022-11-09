@@ -1,11 +1,11 @@
-import { LoadingOverlay, Tabs as MantineTabs } from '@mantine/core';
+import { LoadingOverlay, Tabs as MantineTabs, TabsValue } from '@mantine/core';
 import React, { ReactNode } from 'react';
 import useStyles from './Tabs.styles';
 import { colors } from '../config';
 import { SpacingProps } from '../shared/spacing.props';
 
 interface IMenuButtonProp {
-  label: string;
+  value: string;
   content?: ReactNode | string;
   icon?: ReactNode | string;
 }
@@ -13,9 +13,9 @@ interface IMenuButtonProp {
 interface ITabsProp extends SpacingProps {
   menuTabs: IMenuButtonProp[];
   orientation?: 'horizontal' | 'vertical';
-  active?: number;
-  onTabChange?: (tabIndex: number, tabKey?: string) => void;
-  position?: 'right' | 'center' | 'left' | 'apart';
+  value?: string | null;
+  defaultValue?: string | null;
+  onTabChange?: (value: TabsValue) => void;
   withIcon?: boolean;
   loading?: boolean;
 }
@@ -24,11 +24,11 @@ export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
   (
     {
       menuTabs,
-      active,
+      value,
+      defaultValue,
       onTabChange,
       orientation = 'horizontal',
       withIcon = false,
-      position = 'left',
       loading = false,
     }: ITabsProp,
     ref
@@ -47,19 +47,19 @@ export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
         <MantineTabs
           orientation={orientation}
           ref={ref}
-          active={active}
+          value={value}
+          defaultValue={defaultValue}
           onTabChange={onTabChange}
-          position={position}
-          variant="unstyled"
+          variant="default"
           classNames={classes}
         >
           {menuTabs.map((menuTab, i) =>
             withIcon ? (
-              <MantineTabs.Tab label={menuTab.label} icon={menuTab.icon} key={i}>
+              <MantineTabs.Tab value={menuTab.value} icon={menuTab.icon} key={i}>
                 {menuTab.content}
               </MantineTabs.Tab>
             ) : (
-              <MantineTabs.Tab label={menuTab.label} key={i}>
+              <MantineTabs.Tab value={menuTab.value} key={i}>
                 {menuTab.content}
               </MantineTabs.Tab>
             )

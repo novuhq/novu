@@ -1,11 +1,12 @@
-import { IOrganizationEntity } from '@novu/shared';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Dropzone, DropzoneStatus } from '@mantine/dropzone';
+import { Dropzone } from '@mantine/dropzone';
 import { useMutation } from 'react-query';
 import axios from 'axios';
 import { showNotification } from '@mantine/notifications';
-import { useMantineTheme, Group, InputWrapper, LoadingOverlay } from '@mantine/core';
+import { useMantineTheme, Group, Input, LoadingOverlay } from '@mantine/core';
+import { IOrganizationEntity } from '@novu/shared';
+
 import { Button, colors, Select, ColorInput } from '../../../design-system';
 import { getSignedUrl } from '../../../api/storage';
 import { updateBrandingSettings } from '../../../api/organization';
@@ -126,7 +127,7 @@ export function BrandingForm({
           <Card title="Brand Setting">
             <Controller
               render={({ field }) => (
-                <InputWrapper
+                <Input.Wrapper
                   styles={inputStyles}
                   label="Your Logo"
                   description="Will be used on email templates and inbox"
@@ -147,9 +148,24 @@ export function BrandingForm({
                     {...field}
                     data-test-id="upload-image-button"
                   >
-                    {(status) => dropzoneChildren(status, image)}
+                    <Group
+                      position="center"
+                      spacing="xl"
+                      style={{ minHeight: 100, minWidth: 100, pointerEvents: 'none' }}
+                    >
+                      {!image ? (
+                        <Upload style={{ width: 80, height: 80, color: colors.B60 }} />
+                      ) : (
+                        <img
+                          data-test-id="logo-image-wrapper"
+                          src={image}
+                          style={{ width: 100, height: 100, objectFit: 'contain' }}
+                          alt="avatar"
+                        />
+                      )}
+                    </Group>
                   </Dropzone>
-                </InputWrapper>
+                </Input.Wrapper>
               )}
               control={control}
               name="image"
@@ -194,18 +210,3 @@ export function BrandingForm({
     </>
   );
 }
-
-export const dropzoneChildren = (status: DropzoneStatus, image) => (
-  <Group position="center" spacing="xl" style={{ minHeight: 100, minWidth: 100, pointerEvents: 'none' }}>
-    {!image ? (
-      <Upload style={{ width: 80, height: 80, color: colors.B60 }} />
-    ) : (
-      <img
-        data-test-id="logo-image-wrapper"
-        src={image}
-        style={{ width: 100, height: 100, objectFit: 'contain' }}
-        alt="avatar"
-      />
-    )}
-  </Group>
-);

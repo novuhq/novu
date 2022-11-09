@@ -32,18 +32,28 @@ export const getOutlineStyles = (theme) => {
 };
 
 export default createStyles(
-  (theme: MantineTheme, { disabled, inherit }: { disabled: boolean; inherit: boolean }, getRef) => {
+  (
+    theme: MantineTheme,
+    { disabled, inherit, variant }: { disabled: boolean; inherit: boolean; variant?: string },
+    getRef
+  ) => {
     const loading = getRef('loading');
+    let overrides = {};
+    if (variant === 'filled') {
+      overrides = disabled ? getFilledDisabledStyles(theme) : getFilledStyles(theme);
+    }
+    if (variant === 'outline') {
+      overrides = getOutlineStyles(theme);
+    }
 
     return {
       label: disabled ? {} : getLabelStyles(),
-      filled: disabled ? getFilledDisabledStyles(theme) : getFilledStyles(theme),
-      outline: getOutlineStyles(theme),
       root: {
         width: inherit ? '100%' : '',
         [`&:not(.${loading}):disabled`]: {
           boxShadow: 'none',
         },
+        ...overrides,
       },
     };
   }

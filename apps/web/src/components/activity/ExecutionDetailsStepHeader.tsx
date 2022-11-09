@@ -1,7 +1,7 @@
 import { Container, Grid, useMantineColorScheme } from '@mantine/core';
-import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 import { format, parseISO } from 'date-fns';
 import styled from 'styled-components';
+import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
 import { getLogoByType } from './helpers';

@@ -1,10 +1,11 @@
-import { ActionIcon, InputWrapper } from '@mantine/core';
+import { ActionIcon, Input as MantineInput } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useQuery, useMutation } from 'react-query';
+import { useQuery } from 'react-query';
+import styled from 'styled-components';
+
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';
-import styled from 'styled-components';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
 import { Regenerate } from './components/Regenerate';
@@ -22,7 +23,11 @@ export const ApiKeysCard = () => {
   return (
     <>
       <ParamContainer>
-        <InputWrapper label="API Key" description="Use this API key to interact with the Novu API" styles={inputStyles}>
+        <MantineInput.Wrapper
+          label="API Key"
+          description="Use this API key to interact with the Novu API"
+          styles={inputStyles}
+        >
           <Input
             readOnly
             type={'password'}
@@ -36,10 +41,10 @@ export const ApiKeysCard = () => {
             value={apiKey}
             data-test-id="api-key-container"
           />
-        </InputWrapper>
+        </MantineInput.Wrapper>
       </ParamContainer>
       <ParamContainer>
-        <InputWrapper
+        <MantineInput.Wrapper
           label="Application Identifier"
           description="A public key identifier that can be exposed to the client applications"
           styles={inputStyles}
@@ -62,7 +67,7 @@ export const ApiKeysCard = () => {
             value={environmentIdentifier}
             data-test-id="api-identifier"
           />
-        </InputWrapper>
+        </MantineInput.Wrapper>
       </ParamContainer>
       <Regenerate fetchApiKeys={refetchApiKeys} />
     </>

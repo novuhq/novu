@@ -2,7 +2,6 @@ import { Accordion, createStyles } from '@mantine/core';
 
 import { ExecutionDetailsStepContent } from './ExecutionDetailsStepContent';
 import { ExecutionDetailsStepHeader } from './ExecutionDetailsStepHeader';
-
 import { colors } from '../../design-system';
 
 const useStyles = createStyles((theme) => ({
@@ -44,15 +43,20 @@ export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariabl
   }
 
   return (
-    <Accordion key="execution-details-accordion" iconPosition="right" classNames={classes}>
+    <Accordion key="execution-details-accordion" chevronPosition="right" classNames={classes}>
       {steps.map((step) => (
-        <Accordion.Item key={`execution-details-step-${step.id}`} label={<ExecutionDetailsStepHeader step={step} />}>
-          <ExecutionDetailsStepContent
-            key={`execution-details-step-content-${step.id}`}
-            identifier={identifier}
-            step={step}
-            subscriberVariables={subscriberVariables}
-          />
+        <Accordion.Item key={`execution-details-step-${step.id}`} value={step.id}>
+          <Accordion.Control>
+            <ExecutionDetailsStepHeader step={step} />
+          </Accordion.Control>
+          <Accordion.Panel>
+            <ExecutionDetailsStepContent
+              key={`execution-details-step-content-${step.id}`}
+              identifier={identifier}
+              step={step}
+              subscriberVariables={subscriberVariables}
+            />
+          </Accordion.Panel>
         </Accordion.Item>
       ))}
     </Accordion>

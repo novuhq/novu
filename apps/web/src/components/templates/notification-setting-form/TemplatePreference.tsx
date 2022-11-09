@@ -1,11 +1,11 @@
-import { Grid, InputWrapper, useMantineColorScheme } from '@mantine/core';
+import { Grid, Input, useMantineColorScheme } from '@mantine/core';
+import styled from 'styled-components';
+import { useFormContext, Controller } from 'react-hook-form';
+
 import { useEnvController } from '../../../store/use-env-controller';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Checkbox, colors, Switch } from '../../../design-system';
-import styled from 'styled-components';
 import { channels } from '../../../pages/templates/shared/channels';
-import React from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
 
 export function TemplatePreference() {
   return (
@@ -57,7 +57,7 @@ export function ChannelPreference() {
                 const checked = data[key] || false;
 
                 return (
-                  <Grid.Col md={6} lg={4}>
+                  <Grid.Col key={key} md={6} lg={4}>
                     <StyledCheckbox
                       isChecked={checked}
                       checked={checked}
@@ -137,7 +137,7 @@ const StyledCheckbox = styled(CheckboxProxy)<{ isChecked }>`
 `;
 
 export function InputWrapperProxy({ children, ...props }) {
-  return <InputWrapper {...props}>{children}</InputWrapper>;
+  return <Input.Wrapper {...props}>{children}</Input.Wrapper>;
 }
 
 export function CheckboxProxy({ ...props }) {

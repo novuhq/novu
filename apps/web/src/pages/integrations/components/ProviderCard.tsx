@@ -46,7 +46,7 @@ export function ProviderCard({
         </RibbonWrapper>
       </When>
 
-      <StyledGroup position="apart" direction="column">
+      <StyledGroup position="apart">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
           {provider.connected && !provider.betaVersion ? <Settings data-test-id="provider-card-settings-svg" /> : null}
@@ -76,6 +76,7 @@ const StyledButton = styled(Button)<{ theme: string }>`
 const StyledGroup = styled(Group)`
   height: 100%;
   justify-content: space-between;
+  flex-direction: column;
 `;
 
 const RibbonWrapper = styled.div`

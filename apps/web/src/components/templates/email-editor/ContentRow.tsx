@@ -1,8 +1,9 @@
-import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
-import { ActionIcon, MenuItem as DropdownItem, MenuLabel } from '@mantine/core';
+import { ActionIcon } from '@mantine/core';
 import styled from '@emotion/styled';
 import { AlignCenterOutlined, AlignLeftOutlined, AlignRightOutlined } from '@ant-design/icons';
+import { IEmailBlock } from '@novu/shared';
+
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { Button, colors, Dropdown } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -55,7 +56,7 @@ export function ContentRow({
   };
 
   const rowStyleMenu = [
-    <MenuLabel style={{ fontSize: '14px' }}>Align Text</MenuLabel>,
+    <Dropdown.Label style={{ fontSize: '14px' }}>Align Text</Dropdown.Label>,
     <TextAlignmentWrapper>
       {textAlignments.map(([dir, icon]) => (
         <Button
@@ -67,7 +68,7 @@ export function ContentRow({
         </Button>
       ))}
     </TextAlignmentWrapper>,
-    <DropdownItem
+    <Dropdown.Item
       key="removeBtn"
       disabled={!allowRemove}
       data-test-id="remove-row-btn"
@@ -75,7 +76,7 @@ export function ContentRow({
       icon={<Trash />}
     >
       Remove Row
-    </DropdownItem>,
+    </Dropdown.Item>,
   ];
 
   return (

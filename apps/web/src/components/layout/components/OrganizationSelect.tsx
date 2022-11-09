@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import * as capitalize from 'lodash.capitalize';
 import styled from 'styled-components';
 import { IOrganizationEntity } from '@novu/shared';
+
 import { Select } from '../../../design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
 import { AuthContext } from '../../../store/authContext';
@@ -29,11 +30,12 @@ export default function OrganizationSelect() {
     string
   >((name) => switchOrganization(name));
 
-  async function addOrganizationItem(newOrganization: string) {
+  function addOrganizationItem(newOrganization: string): undefined {
     if (!newOrganization) return;
 
-    const response = await createOrganization(newOrganization);
-    switchOrg(response._id);
+    createOrganization(newOrganization).then((response) => {
+      return switchOrg(response._id);
+    });
   }
 
   async function switchOrg(organizationId: string | string[] | null) {

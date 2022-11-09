@@ -1,11 +1,11 @@
-import React from 'react';
 import { Prism } from '@mantine/prism';
+import styled from '@emotion/styled';
+import { Input } from '@mantine/core';
+
 import { colors, Text } from '../../../design-system';
 import { WIDGET_EMEBED_PATH } from '../../../config';
 import { useEnvController } from '../../../store/use-env-controller';
 import { Security } from './components/Security';
-import styled from '@emotion/styled';
-import { InputWrapper } from '@mantine/core';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 
 export const InAppCenterCard = () => {
@@ -27,7 +27,7 @@ export const InAppCenterCard = () => {
 
   return (
     <>
-      <InputWrapper label={'In-App Widget Embed Code'} description={<DescriptionText />} styles={inputStyles}>
+      <Input.Wrapper label={'In-App Widget Embed Code'} description={<DescriptionText />} styles={inputStyles}>
         <PrismContainer>
           <Prism
             styles={(theme) => ({
@@ -47,7 +47,7 @@ export const InAppCenterCard = () => {
             {embedCode}
           </Prism>
         </PrismContainer>
-      </InputWrapper>
+      </Input.Wrapper>
       <Security />
     </>
   );

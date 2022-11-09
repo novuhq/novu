@@ -1,15 +1,19 @@
 import { useState } from 'react';
+import { useMutation, useQueryClient } from 'react-query';
+import styled from '@emotion/styled';
+
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, colors, Tabs } from '../../design-system';
+import { Button, Tabs } from '../../design-system';
 import PageMeta from '../../components/layout/components/PageMeta';
-import styled from '@emotion/styled';
 import { usePromotedChanges, useUnPromotedChanges } from '../../api/hooks/use-environment-changes';
 import { ChangesTable } from '../../components/changes/ChangesTableLayout';
-import { useMutation, useQueryClient } from 'react-query';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
 import { successMessage } from '../../utils/notifications';
+
+const PENDING = 'Pending';
+const HISTORY = 'History';
 
 export function PromoteChangesPage() {
   const [page, setPage] = useState<number>(0);
@@ -33,7 +37,7 @@ export function PromoteChangesPage() {
 
   const menuTabs = [
     {
-      label: 'Pending',
+      value: PENDING,
       content: (
         <ChangesTable
           loading={isLoadingChanges}
@@ -46,7 +50,7 @@ export function PromoteChangesPage() {
       ),
     },
     {
-      label: 'History',
+      value: HISTORY,
       content: (
         <ChangesTable
           loading={isLoadingHistory}
@@ -79,7 +83,7 @@ export function PromoteChangesPage() {
         }
       />
       <StyledTabs>
-        <Tabs menuTabs={menuTabs} />
+        <Tabs menuTabs={menuTabs} defaultValue={PENDING} />
       </StyledTabs>
     </PageContainer>
   );

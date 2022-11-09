@@ -1,10 +1,12 @@
+import styled from 'styled-components';
 import { useInputState } from '@mantine/hooks';
 import { ActionIcon, Container, Group } from '@mantine/core';
-import { IFeedEntity } from '@novu/shared';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { showNotification } from '@mantine/notifications';
+import { IFeedEntity } from '@novu/shared';
+
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, Input } from '../../../design-system';
@@ -15,17 +17,19 @@ import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
 
+const GroupContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  align-items: stretch;
+`;
+
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const [newFeed, setNewFeed] = useInputState('');
   const [variableContents, setVariableContents] = useState<string[]>([]);
-  const {
-    formState: { errors },
-    setValue,
-    getValues,
-    watch,
-  } = useFormContext();
+  const { setValue, getValues, watch } = useFormContext();
   const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
     IFeedEntity,
@@ -98,8 +102,8 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
 
   return (
     <>
-      <Container sx={{ maxWidth: '450px', paddingLeft: '0px', margin: '0 auto 15px auto' }}>
-        <Group grow direction="column">
+      <Container sx={{ maxWidth: '450px', margin: '0 auto 15px auto' }}>
+        <GroupContainer>
           <Controller
             name={`steps.${index}.template.cta.data.url` as any}
             control={control}
@@ -155,6 +159,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                         },
                       }}
                       label="Use Feeds"
+                      labelPosition="left"
                     />
                     <Input
                       data-test-id={`create-feed-input`}
@@ -179,7 +184,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
               );
             }}
           />
-        </Group>
+        </GroupContainer>
       </Container>
       <Container>
         <VariableManager index={index} contents={variableContents} />

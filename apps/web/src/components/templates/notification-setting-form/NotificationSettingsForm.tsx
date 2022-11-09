@@ -2,13 +2,14 @@ import { useEffect } from 'react';
 import { ActionIcon, Grid } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { Controller, useFormContext } from 'react-hook-form';
 import { INotificationTrigger } from '@novu/shared';
+
 import { getNotificationGroups } from '../../../api/notifications';
 import { api } from '../../../api/api.client';
 import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
-import { Controller, useFormContext } from 'react-hook-form';
 
 export const NotificationSettingsForm = ({
   editMode,
@@ -53,16 +54,20 @@ export const NotificationSettingsForm = ({
     }, 500);
   }
 
-  async function addGroupItem(newGroup) {
+  function addGroupItem(newGroup: string): undefined {
     if (newGroup) {
-      const response = await createNotificationGroup({
+      createNotificationGroup({
         name: newGroup,
-      });
+      }).then((response) => {
+        setTimeout(() => {
+          setValue('notificationGroup', response._id);
+        }, 0);
 
-      setTimeout(() => {
-        setValue('notificationGroup', response._id);
-      }, 0);
+        return;
+      });
     }
+
+    return;
   }
 
   return (
