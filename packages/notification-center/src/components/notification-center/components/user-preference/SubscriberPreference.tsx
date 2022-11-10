@@ -34,7 +34,7 @@ export function SubscriberPreference() {
 
       <ScrollArea style={{ height: 400 }}>
         <div style={{ padding: '15px' }}>
-          <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
+          <Accordion chevronPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
             {preferences?.map((item, index) => {
               const channelsKeys = Object.keys(item?.preference?.channels);
               const channelsPreference = item?.preference?.channels;
@@ -46,29 +46,28 @@ export function SubscriberPreference() {
               };
 
               return (
-                <Accordion.Item
-                  key={index}
-                  data-test-id="workflow-list-item"
-                  label={
+                <Accordion.Item value={item.template._id} key={index} data-test-id="workflow-list-item">
+                  <Accordion.Control>
                     <WorkflowHeader
                       theme={baseTheme}
                       label={item.template?.name}
                       channels={getEnabledChannels(channelsPreference)}
                     />
-                  }
-                >
-                  <ChannelsWrapper>
-                    <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
-                    {channelsKeys.map((key) => (
-                      <ChannelPreference
-                        key={key}
-                        type={key}
-                        active={channelsPreference[key]}
-                        disabled={loadingUpdate}
-                        handleUpdateChannelPreference={handleUpdateChannelPreference}
-                      />
-                    ))}
-                  </ChannelsWrapper>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <ChannelsWrapper>
+                      <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
+                      {channelsKeys.map((key) => (
+                        <ChannelPreference
+                          key={key}
+                          type={key}
+                          active={channelsPreference[key]}
+                          disabled={loadingUpdate}
+                          handleUpdateChannelPreference={handleUpdateChannelPreference}
+                        />
+                      ))}
+                    </ChannelsWrapper>
+                  </Accordion.Panel>
                 </Accordion.Item>
               );
             })}

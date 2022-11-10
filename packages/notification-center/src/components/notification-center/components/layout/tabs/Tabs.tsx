@@ -1,19 +1,20 @@
 import React from 'react';
-import { Tabs as MantineTabs } from '@mantine/core';
+import { Tabs as MantineTabs, TabsValue } from '@mantine/core';
 import useStyles from './Tabs.styles';
 import { useNovuTheme } from '../../../../../hooks';
 
 interface ITabsProps {
   children: React.ReactNode;
-  onTabChange?(tabIndex: number, tabKey?: string): void;
+  onTabChange?: (value: TabsValue) => void;
+  value: string;
 }
 
-export function Tabs({ children, onTabChange }: ITabsProps) {
+export function Tabs({ children, onTabChange, value }: ITabsProps) {
   const { theme: novuTheme, common, colorScheme } = useNovuTheme();
   const { classes } = useStyles({ novuTheme, common, colorScheme });
 
   return (
-    <MantineTabs onTabChange={onTabChange} variant="unstyled" classNames={classes}>
+    <MantineTabs onTabChange={onTabChange} defaultValue={value} variant="default" classNames={classes}>
       {children}
     </MantineTabs>
   );
