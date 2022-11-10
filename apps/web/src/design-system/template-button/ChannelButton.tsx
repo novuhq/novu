@@ -65,19 +65,17 @@ const useMenuStyles = createStyles((theme: MantineTheme) => {
   };
 });
 
-const usePopoverStyles = createStyles(({ colorScheme }) => ({
+const usePopoverStyles = createStyles(() => ({
   dropdown: {
     padding: '12px 15px 14px',
     backgroundColor: colors.error,
-    position: 'absolute',
     color: colors.white,
     border: 'none',
-    marginTop: '1px',
   },
   arrow: {
     backgroundColor: colors.error,
+    width: '7px',
     height: '7px',
-    border: 'none',
     margin: '0px',
   },
 }));
@@ -233,6 +231,7 @@ export function ChannelButton({
 
       {errors && (
         <Popover
+          withinPortal
           classNames={popoverClasses}
           withArrow
           opened={popoverOpened}

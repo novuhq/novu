@@ -22,15 +22,17 @@ describe('Settings Screen', function () {
   });
 
   it('should update logo', function () {
-    cy.fixture('test-logo.png', { encoding: null }).then((contents) => {
-      cy.getByTestId('upload-image-button').find('input').selectFile(
-        {
-          contents,
-          fileName: 'test-logo.png',
-          mimeType: 'image/png',
-        },
-        { force: true }
-      );
+    cy.fixture('test-logo.png', {}).then((contents) => {
+      cy.getByTestId('upload-image-button')
+        .find('input')
+        .selectFile(
+          {
+            contents: Buffer.from(contents),
+            fileName: 'test-logo.png',
+            mimeType: 'image/png',
+          },
+          { force: true }
+        );
     });
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 

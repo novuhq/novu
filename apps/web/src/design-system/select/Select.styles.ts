@@ -29,6 +29,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       margin: '2.5px 0px',
       lineHeight: '20px',
       ['&[data-selected]']: {
+        color: dark ? theme.white : theme.colors.gray[8],
         backgroundColor: dark
           ? theme.fn.lighten(theme.colors.dark[5], 0.1)
           : theme.fn.darken(theme.colors.gray[2], 0.1),

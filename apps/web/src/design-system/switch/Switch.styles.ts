@@ -25,7 +25,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
         height: '20px',
       },
       '&:not(checked) ~ label': {
-        backgroundColor: 'rgb(61, 61, 77)',
+        backgroundColor: dark ? 'rgb(61, 61, 77)' : theme.colors.gray[5],
       },
       '&:checked ~ label': {
         backgroundImage: colors.horizontal,
@@ -49,6 +49,9 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
     track: {
       width: '46px',
       height: '24px',
+      border: 'none',
+    },
+    thumb: {
       border: 'none',
     },
   };

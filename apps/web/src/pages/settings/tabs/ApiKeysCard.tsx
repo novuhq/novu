@@ -32,8 +32,12 @@ export const ApiKeysCard = () => {
             readOnly
             type={'password'}
             rightSection={
-              <Tooltip data-test-id={'api-key-tooltip'} label={clipboardApiKey.copied ? 'Copied!' : 'Copy Key'}>
-                <ActionIcon variant="transparent" onClick={() => clipboardApiKey.copy(apiKey)}>
+              <Tooltip label={clipboardApiKey.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon
+                  data-test-id={'api-key-copy'}
+                  variant="transparent"
+                  onClick={() => clipboardApiKey.copy(apiKey)}
+                >
                   {clipboardApiKey.copied ? <Check /> : <Copy />}
                 </ActionIcon>
               </Tooltip>
@@ -52,12 +56,10 @@ export const ApiKeysCard = () => {
           <Input
             readOnly
             rightSection={
-              <Tooltip
-                data-test-id={'application-identifier-tooltip'}
-                label={clipboardEnvironmentIdentifier.copied ? 'Copied!' : 'Copy Key'}
-              >
+              <Tooltip label={clipboardEnvironmentIdentifier.copied ? 'Copied!' : 'Copy Key'}>
                 <ActionIcon
                   variant="transparent"
+                  data-test-id={'application-identifier-copy'}
                   onClick={() => clipboardEnvironmentIdentifier.copy(environmentIdentifier)}
                 >
                   {clipboardEnvironmentIdentifier.copied ? <Check /> : <Copy />}

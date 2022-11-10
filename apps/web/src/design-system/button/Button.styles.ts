@@ -9,15 +9,6 @@ const getLabelStyles = () => ({
   fontWeight: 'bold',
 });
 
-const getFilledDisabledStyles = (theme) => ({
-  backgroundImage: theme.colorScheme === 'dark' ? getGradient(colors.B20) : getGradient(colors.B98),
-});
-
-export const getFilledStyles = (theme) => ({
-  border: 'transparent',
-  boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.color,
-});
-
 export const getOutlineStyles = (theme) => {
   const dark = theme.colorScheme === 'dark';
 
@@ -39,9 +30,6 @@ export default createStyles(
   ) => {
     const loading = getRef('loading');
     let overrides = {};
-    if (variant === 'filled') {
-      overrides = disabled ? getFilledDisabledStyles(theme) : getFilledStyles(theme);
-    }
     if (variant === 'outline') {
       overrides = getOutlineStyles(theme);
     }
@@ -49,9 +37,13 @@ export default createStyles(
     return {
       label: disabled ? {} : getLabelStyles(),
       root: {
+        backgroundImage: colors.horizontal,
         width: inherit ? '100%' : '',
         [`&:not(.${loading}):disabled`]: {
           boxShadow: 'none',
+        },
+        '&&:hover': {
+          backgroundSize: '100%',
         },
         ...overrides,
       },
