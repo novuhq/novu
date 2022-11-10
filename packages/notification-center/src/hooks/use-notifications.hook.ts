@@ -18,14 +18,14 @@ export function useNotifications(props?: IUseNotificationsProps) {
     updateAction: mapUpdateAction,
     refetch: mapRefetch,
     markAsSeen: mapMarkAsSeen,
-    onWidgetClose,
+    onWidgetClose: mapOnWidgetClose,
     onTabChange: mapOnTabChange,
     markAllAsRead: mapMarkAllAsRead,
   } = useContext<INotificationsContext>(NotificationsContext);
 
   const storeId = props?.storeId ? props?.storeId : 'default_store';
 
-  const notifications = mapNotifications[storeId];
+  const notifications: IMessage[] = mapNotifications[storeId];
 
   async function fetchNextPage() {
     await mapFetchNextPage(storeId);
@@ -60,6 +60,10 @@ export function useNotifications(props?: IUseNotificationsProps) {
 
   async function markAllAsRead() {
     await mapMarkAllAsRead(storeId);
+  }
+
+  function onWidgetClose() {
+    mapOnWidgetClose();
   }
 
   return {
