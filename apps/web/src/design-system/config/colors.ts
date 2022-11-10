@@ -1,5 +1,5 @@
-const gradientStart = '#DD2476';
-const gradientEnd = '#FF512F';
+const gradientStart = '#FF512F';
+const gradientEnd = '#DD2476';
 
 export const colors = {
   white: '#FFFFFF',
@@ -19,8 +19,8 @@ export const colors = {
   gradientEnd,
   success: '#4D9980',
   error: '#E54545',
-  vertical: `linear-gradient(0deg,${gradientStart} 0%,${gradientEnd} 100%)`,
-  horizontal: 'linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)',
+  vertical: `linear-gradient(0deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
+  horizontal: `linear-gradient(99deg, ${gradientEnd} 0% 0%, ${gradientStart} 100% 100%)`,
   disabled: 'linear-gradient(90deg, #F5C4D8 0%, #FFCBC1 100%)',
   darkDisabled: 'linear-gradient(90deg, #58203E 0%, #612E29 100%)',
 };

@@ -9,7 +9,7 @@ export type Size = 'md' | 'lg' | undefined;
 interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   loading?: boolean;
   size?: Size;
-  variant?: 'outline' | 'filled' | 'gradient';
+  variant?: 'outline' | 'gradient';
   disabled?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;

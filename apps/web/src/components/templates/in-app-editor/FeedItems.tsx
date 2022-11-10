@@ -28,7 +28,7 @@ export function FeedItems(props: IFeedItemPopoverProps) {
       <Grid gutter={'xs'} grow>
         {(feeds || []).map((item, feedIndex) => {
           return (
-            <Grid.Col span={4} key={item._id}>
+            <Grid.Col span={4} key={item._id} sx={{ position: 'relative' }}>
               <FeedPopover
                 field={props.field}
                 item={item}
@@ -70,27 +70,22 @@ function FeedPopover(props: IFeedPopoverProps) {
   const { classes } = usePopoverStyles();
 
   return (
-    <Popover
-      opened={opened}
-      onClose={() => setOpened(false)}
-      width={260}
-      position={'bottom'}
-      withArrow
-      classNames={classes}
-    >
+    <Popover opened={opened} onClose={() => setOpened(false)} position="bottom" withArrow classNames={classes}>
       <Popover.Target>
-        <FeedChip
-          item={props.item}
-          feedIndex={props.feedIndex}
-          setOpened={setOpened}
-          index={props.index}
-          showFeed={props.showFeed}
-          field={props.field}
-          setValue={props.setValue}
-          onEditClick={() => {
-            setOpened((prevCheck) => !prevCheck);
-          }}
-        />
+        <span>
+          <FeedChip
+            item={props.item}
+            feedIndex={props.feedIndex}
+            setOpened={setOpened}
+            index={props.index}
+            showFeed={props.showFeed}
+            field={props.field}
+            setValue={props.setValue}
+            onEditClick={() => {
+              setOpened((prevCheck) => !prevCheck);
+            }}
+          />
+        </span>
       </Popover.Target>
       <Popover.Dropdown>
         <PopoverActionBlock setOpened={setOpened} showFeed={props.showFeed} feedItem={props.item} />
