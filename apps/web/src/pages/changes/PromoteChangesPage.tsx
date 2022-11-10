@@ -46,6 +46,7 @@ export function PromoteChangesPage() {
           page={page}
           pageSize={changesPageSize}
           totalCount={totalChangesCount}
+          dataTestId="pending-changes-table"
         />
       ),
     },
@@ -59,6 +60,7 @@ export function PromoteChangesPage() {
           page={page}
           pageSize={historyPageSize}
           totalCount={totalHistoryCount}
+          dataTestId="history-changes-table"
         />
       ),
     },

@@ -95,7 +95,7 @@ describe('Workflow Editor - Main Functionality', function () {
       cy.visit('/templates/edit/' + template._id);
     });
     cy.getByTestId('active-toggle-switch').get('label').contains('Enabled');
-    cy.getByTestId('active-toggle-switch').click();
+    cy.getByTestId('active-toggle-switch').click({ force: true });
     cy.getByTestId('active-toggle-switch').get('label').contains('Disabled');
 
     cy.visit('/templates/edit/' + template._id);
@@ -114,10 +114,10 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.clickWorkflowNode(`node-emailSelector`);
 
     cy.get('.mantine-Switch-input').should('have.value', 'on');
-    cy.get('.mantine-Switch-input').click();
+    cy.get('.mantine-Switch-track').click();
 
     // enable email selector
-    cy.get('.mantine-Switch-input').click();
+    cy.get('.mantine-Switch-track').click();
     cy.getByTestId(`close-side-menu-btn`).click();
 
     dragAndDrop('inApp');
@@ -199,7 +199,7 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails('Test allow uploading a logo from email editor');
     addAndEditChannel('email');
 
-    cy.getByTestId('logo-upload-button').click();
+    cy.getByTestId('upload-image-button').click();
 
     cy.get('.mantine-Modal-modal button').contains('Yes').click();
     cy.location('pathname').should('equal', '/settings');
@@ -266,7 +266,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('emailSubject').type('this is email subject');
 
     cy.getByTestId('editor-type-selector')
-      .find('.mantine-Tabs-tabControl')
+      .find('.mantine-Tabs-tabsList')
       .contains('Custom Code', { matchCase: false })
       .click();
     cy.get('#codeEditor').type('Hello world code {{name}} <div>Test', { parseSpecialCharSequences: false });
@@ -385,7 +385,7 @@ describe('Workflow Editor - Main Functionality', function () {
     clickWorkflow();
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').get('label').contains('Step is active');
-    cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').click();
+    cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-label').click();
     cy.getByTestId('submit-btn').click();
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-properties-side-menu`)

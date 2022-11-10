@@ -138,12 +138,7 @@ export function EmailMessageEditor({
           >
             <Group position="center" style={{ height: '100%' }}>
               {!branding?.logo ? (
-                <Group
-                  style={{ height: '100%', flexDirection: 'column' }}
-                  spacing={5}
-                  position="center"
-                  data-test-id="logo-upload-button"
-                >
+                <Group style={{ height: '100%', flexDirection: 'column' }} spacing={5} position="center">
                   <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
                   <Text color={colors.B60}>Upload Brand Logo</Text>
                 </Group>

@@ -7,7 +7,7 @@ describe('Changes Screen', function () {
     createNotification();
 
     cy.visit('/changes');
-    cy.getByTestId('changes-table').find('tbody tr').should('have.length', 1);
+    cy.getByTestId('pending-changes-table').find('tbody tr').should('have.length', 1);
 
     promoteNotification();
     createNotification();
@@ -51,11 +51,11 @@ describe('Changes Screen', function () {
     createNotification();
     promoteNotification();
 
-    cy.getByTestId('changes-table').find('tbody tr').should('have.length', 0);
+    cy.getByTestId('pending-changes-table').find('tbody tr').should('not.exist');
 
     cy.get('.mantine-Tabs-tabsList').contains('History').click();
 
-    cy.getByTestId('changes-table').find('tbody tr').should('have.length', 1);
+    cy.getByTestId('history-changes-table').find('tbody tr').should('have.length', 1);
     cy.getByTestId('promote-btn').should('be.disabled');
   });
 
@@ -64,12 +64,12 @@ describe('Changes Screen', function () {
     createNotification();
 
     cy.visit('/changes');
-    cy.getByTestId('changes-table').find('tbody tr').should('have.length', 2);
+    cy.getByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
 
     cy.getByTestId('promote-all-btn').click({ force: true });
     cy.wait(500);
 
-    cy.getByTestId('changes-table').find('tbody tr').should('have.length', 0);
+    cy.getByTestId('pending-changes-table').find('tbody tr').should('not.exist');
 
     switchEnvironment('Production');
 
