@@ -17,7 +17,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     markAsRead: mapMarkAsRead,
     updateAction: mapUpdateAction,
     refetch: mapRefetch,
-    markNotificationsAsSeen: mapMarkNotificationsAsSeen,
+    markAsSeen: mapMarkAsSeen,
     onWidgetClose,
     onTabChange: mapOnTabChange,
     markAllAsRead: mapMarkAllAsRead,
@@ -50,8 +50,8 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapRefetch(storeId);
   }
 
-  async function markNotificationsAsSeen(readExist?: boolean, messagesToMark?: IMessage | IMessage[]) {
-    await mapMarkNotificationsAsSeen(readExist, messagesToMark, storeId);
+  async function markAsSeen(messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]) {
+    await mapMarkAsSeen(messageId, readExist, messages, storeId);
   }
 
   async function onTabChange() {
@@ -70,7 +70,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     markAsRead,
     updateAction,
     refetch,
-    markNotificationsAsSeen,
+    markAsSeen,
     onWidgetClose,
     onTabChange,
     markAllAsRead,

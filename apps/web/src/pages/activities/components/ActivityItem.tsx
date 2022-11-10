@@ -94,7 +94,7 @@ export const ActivityItem = ({ item, onClick }) => {
                     }}
                     data-test-id="row-template-name"
                   >
-                    {item?.template?.name}
+                    {item?.template?.name ? item.template.name : 'Deleted Template'}
                   </h3>
                   <When truthy={isOld}>
                     <Text>Done</Text>
@@ -120,7 +120,7 @@ export const ActivityItem = ({ item, onClick }) => {
               </small>
               <div data-test-id="subscriber-id">
                 <small>
-                  <b>Subscriber id:</b> {item.subscriber.id}
+                  <b>Subscriber id:</b> {item?.subscriber?.id ? item.subscriber.id : 'Deleted Subscriber'}
                 </small>
               </div>
             </div>

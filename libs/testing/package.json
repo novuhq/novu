@@ -1,6 +1,6 @@
 {
   "name": "@novu/testing",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "",
   "private": true,
   "scripts": {
@@ -22,7 +22,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.9.0",
+    "@novu/dal": "^0.9.1",
     "@novu/node": "^0.9.0",
     "@novu/shared": "^0.9.0",
     "JSONStream": "^1.3.5",

@@ -1,6 +1,6 @@
 {
   "name": "@novu/widget",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "scripts": {
     "start": "craco start",
@@ -27,7 +27,7 @@
     "@ant-design/icons": "^4.5.0",
     "@mantine/core": "4.1.0",
     "@mantine/hooks": "4.1.0",
-    "@novu/notification-center": "^0.9.0",
+    "@novu/notification-center": "^0.9.1",
     "@novu/shared": "^0.9.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -58,8 +58,8 @@
   "devDependencies": {
     "@craco/craco": "^6.1.1",
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.9.0",
-    "@novu/testing": "^0.9.0",
+    "@novu/dal": "^0.9.1",
+    "@novu/testing": "^0.9.1",
     "@types/jest": "^26.0.15",
     "@types/node": "^12.0.0",
     "@types/react": "17.0.2",
