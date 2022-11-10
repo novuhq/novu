@@ -86,7 +86,7 @@ export interface INotificationsContext {
     storeId?: string
   ) => void;
   refetch?: (storeId?: string, query?: IStoreQuery) => void;
-  markNotificationsAsSeen?: (readExist?: boolean, messageIdsToMark?: IMessage | IMessage[], storeId?: string) => void;
+  markAsSeen?: (messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[], storeId?: string) => void;
   onWidgetClose?: () => void;
   onTabChange?: (storeId?: string) => void;
 }
