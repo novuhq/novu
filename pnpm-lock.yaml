@@ -168,8 +168,8 @@ importers:
       '@nestjs/terminus': 9.0.0
       '@nestjs/testing': 9.0.2
       '@novu/apns': ^0.9.0
-      '@novu/application-generic': ^0.9.0
-      '@novu/dal': ^0.9.0
+      '@novu/application-generic': ^0.9.1
+      '@novu/dal': ^0.9.1
       '@novu/discord': ^0.9.0
       '@novu/emailjs': ^0.9.0
       '@novu/expo': ^0.9.0
@@ -195,7 +195,7 @@ importers:
       '@novu/stateless': ^0.9.0
       '@novu/telnyx': ^0.9.0
       '@novu/termii': ^0.9.0
-      '@novu/testing': ^0.9.0
+      '@novu/testing': ^0.9.1
       '@novu/twilio': ^0.9.0
       '@sendgrid/mail': ^7.6.0
       '@sentry/node': ^7.12.1
@@ -391,10 +391,10 @@ importers:
       '@mantine/notifications': ^5.7.1
       '@mantine/prism': ^5.7.1
       '@mantine/spotlight': ^5.7.1
-      '@novu/dal': ^0.9.0
-      '@novu/notification-center': ^0.9.0
+      '@novu/dal': ^0.9.1
+      '@novu/notification-center': ^0.9.1
       '@novu/shared': ^0.9.0
-      '@novu/testing': ^0.9.0
+      '@novu/testing': ^0.9.1
       '@sentry/react': ^6.3.1
       '@sentry/tracing': ^6.3.1
       '@storybook/addon-actions': ^6.4.14
@@ -581,11 +581,11 @@ importers:
       '@nestjs/swagger': ^4.8.0
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
-      '@novu/application-generic': ^0.9.0
-      '@novu/dal': ^0.9.0
+      '@novu/application-generic': ^0.9.1
+      '@novu/dal': ^0.9.1
       '@novu/shared': ^0.9.0
       '@novu/stateless': ^0.9.0
-      '@novu/testing': ^0.9.0
+      '@novu/testing': ^0.9.1
       '@sentry/node': ^6.3.3
       '@types/chai': ^4.2.11
       '@types/express': ^4.17.8
@@ -683,10 +683,10 @@ importers:
       '@faker-js/faker': ^6.0.0
       '@mantine/core': 4.1.0
       '@mantine/hooks': 4.1.0
-      '@novu/dal': ^0.9.0
-      '@novu/notification-center': ^0.9.0
+      '@novu/dal': ^0.9.1
+      '@novu/notification-center': ^0.9.1
       '@novu/shared': ^0.9.0
-      '@novu/testing': ^0.9.0
+      '@novu/testing': ^0.9.1
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
@@ -803,9 +803,9 @@ importers:
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
       '@nestjs/websockets': ^7.6.17
-      '@novu/dal': ^0.9.0
+      '@novu/dal': ^0.9.1
       '@novu/shared': ^0.9.0
-      '@novu/testing': ^0.9.0
+      '@novu/testing': ^0.9.1
       '@sentry/node': ^6.3.3
       '@types/express': ^4.17.8
       '@types/jest': ^27.0.2
@@ -874,7 +874,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
+      ts-jest: 27.1.4_zorco6kbqtso4tbodg3tzvjobe
       ts-loader: 8.3.0_actwkd5w3rxts7lmypgqrtezda
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -1050,7 +1050,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^7.1.2
       '@commitlint/config-conventional': ^7.1.2
-      '@novu/notification-center': ^0.9.0
+      '@novu/notification-center': ^0.9.1
       '@rollup/plugin-replace': ^2.4.2
       '@types/iframe-resizer': ^3.5.8
       '@types/jest': 27.4.0
@@ -1149,7 +1149,7 @@ importers:
   libs/testing:
     specifiers:
       '@faker-js/faker': ^6.0.0
-      '@novu/dal': ^0.9.0
+      '@novu/dal': ^0.9.1
       '@novu/node': ^0.9.0
       '@novu/shared': ^0.9.0
       '@types/async': ^3.2.1
@@ -1215,7 +1215,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^8.2.0
-      '@novu/dal': ^0.9.0
+      '@novu/dal': ^0.9.1
       '@novu/discord': ^0.9.0
       '@novu/emailjs': ^0.9.0
       '@novu/fcm': ^0.9.0
@@ -1238,7 +1238,7 @@ importers:
       '@novu/stateless': ^0.9.0
       '@novu/telnyx': ^0.9.0
       '@novu/termii': ^0.9.0
-      '@novu/testing': ^0.9.0
+      '@novu/testing': ^0.9.1
       '@novu/twilio': ^0.9.0
       '@sentry/node': ^7.12.1
       '@types/jest': 27.4.0
