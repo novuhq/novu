@@ -3,14 +3,14 @@ import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class SessionInitializeRequestDto {
   @ApiProperty({
-    description: 'Your internal identifire for subscriber',
+    description: 'Your internal identifier for subscriber',
   })
   @IsString()
   @IsDefined()
   subscriberId: string;
 
   @ApiProperty({
-    description: 'Identifire for your application can be found in settings for Novu',
+    description: 'Identifier for your application can be found in settings for Novu',
   })
   @IsString()
   @IsDefined()

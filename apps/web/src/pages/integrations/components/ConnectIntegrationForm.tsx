@@ -14,7 +14,7 @@ import { WarningOutlined } from '@ant-design/icons';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
-  HANLDE_ALERT_AND_ERROR_MSG = 'handle_alert_and_error_msg',
+  HANDLE_ALERT_AND_ERROR_MSG = 'handle_alert_and_error_msg',
   TOGGLE_CHECK = 'toggle_check',
 }
 
@@ -25,7 +25,7 @@ type ActionType =
       payload: boolean;
     }
   | {
-      type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG;
+      type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG;
       payload: {
         isShowAlert: boolean;
         errorMsg: string;
@@ -47,7 +47,7 @@ const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, act
         isShowSwitch: action.payload,
       };
 
-    case ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG:
+    case ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG:
       return {
         ...state,
         isShowAlert: action.payload.isShowAlert,
@@ -122,7 +122,7 @@ export function ConnectIntegrationForm({
     try {
       if (checkIntegrationState.isShowAlert) {
         dispatch({
-          type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG,
+          type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG,
           payload: {
             isShowAlert: false,
             errorMsg: '',
@@ -149,7 +149,7 @@ export function ConnectIntegrationForm({
         payload: true,
       });
       dispatch({
-        type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG,
+        type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG,
         payload: {
           isShowAlert: true,
           errorMsg: e?.message,
