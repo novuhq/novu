@@ -50,7 +50,7 @@ export class SubscribersController {
     private getPreferenceUsecase: GetPreferences,
     private updatePreferenceUsecase: UpdatePreference,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
-    private genFeedCountUsecase: GetFeedCount,
+    private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions
   ) {}
@@ -115,7 +115,8 @@ export class SubscribersController {
     description:
       'Creates a subscriber entity, in the Novu platform. ' +
       'The subscriber will be later used to receive notifications, and access notification feeds. ' +
-      'Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.',
+      'Communication credentials such as email, phone number, and 3 rd party credentials ' +
+      'i.e slack tokens could be later associated to this entity.',
   })
   async createSubscriber(
     @UserSession() user: IJwtPayload,
@@ -333,7 +334,7 @@ export class SubscribersController {
       seen,
     });
 
-    return await this.genFeedCountUsecase.execute(command);
+    return await this.getFeedCountUsecase.execute(command);
   }
 
   @ExternalApiAccessible()

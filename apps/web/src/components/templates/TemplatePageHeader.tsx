@@ -74,7 +74,7 @@ export const TemplatePageHeader = ({
     setActivePage(activePage === ActivePageEnum.WORKFLOW ? ActivePageEnum.SETTINGS : ActivePageEnum.WORKFLOW);
   };
 
-  const activePageIsNotOneOfThis = [
+  const activePageIsNotOneOfThis = ![
     ActivePageEnum.SETTINGS,
     ActivePageEnum.USER_PREFERENCE,
     ActivePageEnum.WORKFLOW,

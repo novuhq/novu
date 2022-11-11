@@ -10,12 +10,20 @@ import { SideNav } from './components/SideNav';
 import { colors } from '../../design-system';
 import { INTERCOM_APP_ID } from '../../config';
 
+const SupportChatProvider = ({ children, appId, isIntercomEnabled }) => {
+  if (isIntercomEnabled) {
+    return <IntercomProvider appId={appId}>{children}</IntercomProvider>;
+  }
+
+  return <>{children}</>;
+};
+
 export function AppLayout() {
-  const SupportChatProvider = useSupportChatProvider();
+  const [isIntercomEnabled] = useState<boolean>(!!INTERCOM_APP_ID);
 
   return (
     <ThemeProvider>
-      <IntercomProvider appId={INTERCOM_APP_ID}>
+      <SupportChatProvider appId={INTERCOM_APP_ID} isIntercomEnabled={isIntercomEnabled}>
         <AppShell
           padding="lg"
           navbar={<SideNav />}
@@ -51,22 +59,7 @@ export function AppLayout() {
             <Outlet />
           </Sentry.ErrorBoundary>
         </AppShell>
-      </IntercomProvider>
+      </SupportChatProvider>
     </ThemeProvider>
   );
 }
-
-const useSupportChatProvider = () => {
-  const [isIntercomEnabled] = useState<boolean>(!!INTERCOM_APP_ID);
-
-  return useCallback(
-    ({ children }) => {
-      if (isIntercomEnabled) {
-        return <IntercomProvider appId={INTERCOM_APP_ID}>{children}</IntercomProvider>;
-      }
-
-      return <>{children}</>;
-    },
-    [isIntercomEnabled]
-  );
-};

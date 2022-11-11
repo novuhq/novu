@@ -84,16 +84,18 @@ export default function TemplateEditorPage() {
     }
   };
 
-  const { _id: environmentId } = environment || {};
-  const { _environmentId: templateEnvironmentId, _parentId: templateParentId } = template || {};
-
-  const path = templateParentId ? `/templates/edit/${templateParentId}` : '/templates/';
-
   useEffect(() => {
-    if (environmentId !== templateEnvironmentId) {
+    const navigateTo = (parentTemplateId) => {
+      const path = parentTemplateId ? `/templates/edit/${parentTemplateId}` : '/templates/';
       navigate(path);
+    };
+
+    if (environment && template) {
+      if (environment._id !== template._environmentId) {
+        navigateTo(template._parentId);
+      }
     }
-  }, [environmentId, templateEnvironmentId, navigate, path]);
+  }, [environment, template, navigate]);
 
   if (isLoading) return null;
 

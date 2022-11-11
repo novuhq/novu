@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, INotificationTrigger } from '@novu/shared';
-import { createContext, useContext, useReducer } from 'react';
+import { createContext, useCallback, useContext, useMemo, useReducer } from 'react';
 
 const actionEditMode = 'editMode';
 const actionIsDirty = 'isDirty';
@@ -74,40 +74,71 @@ const TemplateEditorProvider = ({ children }) => {
     trigger: undefined,
   });
 
-  const setEditMode = (editMode: boolean) => {
-    dispatch({
-      type: actionEditMode,
-      payload: editMode,
-    });
-  };
+  const setEditMode = useCallback(
+    (editMode: boolean) => {
+      dispatch({
+        type: actionEditMode,
+        payload: editMode,
+      });
+    },
+    [dispatch]
+  );
 
-  const setIsDirty = (isDirty: boolean) => {
-    dispatch({
-      type: actionIsDirty,
-      payload: isDirty,
-    });
-  };
+  const setIsDirty = useCallback(
+    (isDirty: boolean) => {
+      dispatch({
+        type: actionIsDirty,
+        payload: isDirty,
+      });
+    },
+    [dispatch]
+  );
 
-  const setIsEmbedModalVisible = (isEmbedModalVisible: boolean) => {
-    dispatch({
-      type: actionIsEmbedModalVisible,
-      payload: isEmbedModalVisible,
-    });
-  };
+  const setIsEmbedModalVisible = useCallback(
+    (isEmbedModalVisible: boolean) => {
+      dispatch({
+        type: actionIsEmbedModalVisible,
+        payload: isEmbedModalVisible,
+      });
+    },
+    [dispatch]
+  );
 
-  const setTrigger = (trigger: INotificationTrigger) => {
-    dispatch({
-      type: actionTrigger,
-      payload: trigger,
-    });
-  };
+  const setTrigger = useCallback(
+    (trigger: INotificationTrigger) => {
+      dispatch({
+        type: actionTrigger,
+        payload: trigger,
+      });
+    },
+    [dispatch]
+  );
 
-  const setCreatedTemplateId = (createdTemplateId: string) => {
-    dispatch({
-      type: actionCreatedTemplateId,
-      payload: createdTemplateId,
-    });
-  };
+  const setCreatedTemplateId = useCallback(
+    (createdTemplateId: string) => {
+      dispatch({
+        type: actionCreatedTemplateId,
+        payload: createdTemplateId,
+      });
+    },
+    [dispatch]
+  );
+
+  const value = useMemo(
+    () => ({
+      setTrigger,
+      setIsDirty,
+      setEditMode,
+      setIsEmbedModalVisible,
+      setCreatedTemplateId,
+      editMode: state.editMode,
+      isDirty: state.isDirty,
+      isEmbedModalVisible: state.isEmbedModalVisible,
+      trigger: state.trigger,
+      createdTemplateId: state.createdTemplateId,
+    }),
+    [setTrigger, setIsDirty, setEditMode, setIsEmbedModalVisible, setCreatedTemplateId, state]
+  );
 
   return (
     <Provider

@@ -89,7 +89,7 @@ const WorkflowEditorPage = ({
     }
     setSelectedChannel(step.template.type);
     setActiveStep(index);
-  }, [selectedNodeId]);
+  }, [selectedNodeId, setActiveStep, steps]);
 
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item._id === toDelete);
