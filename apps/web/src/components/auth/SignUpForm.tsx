@@ -8,7 +8,7 @@ import { showNotification } from '@mantine/notifications';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
-import { Github } from '../../design-system/icons';
+import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { applyToken } from '../../store/use-auth-controller';
 import { useAcceptInvite } from './use-accept-invite.hook';
@@ -118,18 +118,18 @@ export function SignUpForm({ token, email }: Props) {
     <>
       {!IS_DOCKER_HOSTED && !token && (
         <>
-          <GithubButton
+          <GitHubButton
             my={30}
             component="a"
             href={githubLink}
             variant="white"
             fullWidth
             radius="md"
-            leftIcon={<Github />}
+            leftIcon={<GitHub />}
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
-            Sign Up with Github
-          </GithubButton>
+            Sign Up with GitHub
+          </GitHubButton>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
       )}
@@ -240,7 +240,7 @@ function Accept() {
   );
 }
 
-const GithubButton = styled(MantineButton)<{
+const GitHubButton = styled(MantineButton)<{
   component: 'a';
   my: number;
   href: string;
