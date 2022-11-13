@@ -55,16 +55,16 @@ export function useNotifications(props?: IUseNotificationsProps): IUseNotificati
     await mapMarkAsSeen(messageId, readExist, messages, storeId);
   }
 
-  async function onTabChange() {
-    await mapOnTabChange(storeId);
+  function onTabChange() {
+    mapOnTabChange(storeId);
   }
 
   async function markAllAsRead(): Promise<number> {
     return await mapMarkAllAsRead(storeId);
   }
 
-  async function onWidgetClose() {
-    await mapOnWidgetClose();
+  function onWidgetClose() {
+    mapOnWidgetClose();
   }
 
   return {
