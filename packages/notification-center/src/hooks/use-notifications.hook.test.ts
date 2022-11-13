@@ -13,8 +13,16 @@ describe('@novu/notification-center - useNotifications', () => {
     useContextMock = React.useContext = jest.fn();
     useContextMock.mockReturnValue({
       notifications: { default_store: [...messages] },
-      hasNextPage: true,
+      fetchNextPage: () => {},
+      hasNextPage: { default_store: true },
       fetching: false,
+      markAsRead: () => {},
+      updateAction: () => {},
+      refetch: () => {},
+      markAsSeen: () => {},
+      onWidgetClose: () => {},
+      onTabChange: () => {},
+      markAllAsRead: () => {},
     });
     renderedUseNotification = renderHook(() => useNotifications({ storeId: 'default_store' })).result.current;
   });
