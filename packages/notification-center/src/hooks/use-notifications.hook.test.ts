@@ -7,7 +7,7 @@ let realUseContext;
 let useContextMock;
 let renderedUseNotification: IUseNotifications;
 
-describe('@novu/hooks/use-notifications', () => {
+describe('@novu/notification-center - useNotifications', () => {
   beforeEach(() => {
     realUseContext = React.useContext;
     useContextMock = React.useContext = jest.fn();
