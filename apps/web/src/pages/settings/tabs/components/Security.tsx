@@ -64,7 +64,7 @@ export const Security = () => {
             />
           </RowDiv>
         </Input.Wrapper>
-        <Button submit mb={20} mt={10} data-test-id="submit-branding-settings">
+        <Button submit mb={20} mt={10} data-test-id="submit-hmac-settings">
           Update
         </Button>
       </form>

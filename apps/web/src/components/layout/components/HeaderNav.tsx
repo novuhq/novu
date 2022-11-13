@@ -147,7 +147,9 @@ export function HeaderNav({}: Props) {
         </Link>
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
-            <Tooltip label={themeTitle()}>{Icon()}</Tooltip>
+            <Tooltip label={themeTitle()}>
+              <div>{Icon()}</div>
+            </Tooltip>
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown
