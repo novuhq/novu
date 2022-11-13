@@ -14,7 +14,13 @@ export function Tabs({ children, onTabChange, value }: ITabsProps) {
   const { classes } = useStyles({ novuTheme, common, colorScheme });
 
   return (
-    <MantineTabs onTabChange={onTabChange} defaultValue={value} variant="default" classNames={classes}>
+    <MantineTabs
+      onTabChange={onTabChange}
+      defaultValue={value}
+      keepMounted={false}
+      variant="default"
+      classNames={classes}
+    >
       {children}
     </MantineTabs>
   );
