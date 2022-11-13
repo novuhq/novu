@@ -30,10 +30,16 @@ export const accordionStyles = (baseTheme: IThemeUserPreferences, font: string) 
 
 export const switchStyles = (baseTheme: IThemeUserPreferences) => {
   return {
+    root: {
+      width: '100%',
+      maxWidth: '70px',
+      display: 'flex',
+      alignItems: 'center',
+    },
     input: {
       background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
-      width: '41px',
-      height: '24px',
+      width: '1px',
+      height: '1px',
       border: 'transparent',
       cursor: 'pointer',
       '&::before': {
@@ -44,17 +50,22 @@ export const switchStyles = (baseTheme: IThemeUserPreferences) => {
       '&:checked ~ label': {
         background: baseTheme.accordionItem?.switch?.backgroundChecked,
       },
-
+      '&:not(checked) ~ label': {
+        background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
+      },
+      '&:disabled:not(:checked) ~ label': {
+        background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
+      },
       '&:disabled': {
         opacity: 0.3,
       },
-      '&:disabled:not(:checked)': {
-        background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
-      },
     },
     track: {
-      width: '41px',
+      width: '46px',
       height: '24px',
+      border: 'none',
+    },
+    thumb: {
       border: 'none',
     },
   };
