@@ -36,6 +36,12 @@ describe('@novu/notification-center - useNotifications', () => {
     expect(fetchNextPageSpy).toBeCalledWith();
   });
 
+  it('validate hasNextPage interface', () => {
+    const { hasNextPage } = renderedUseNotification;
+
+    expect(hasNextPage).toBe(true);
+  });
+
   it('validate fetching interface', () => {
     const { fetching } = renderedUseNotification;
 
