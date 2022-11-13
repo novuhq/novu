@@ -3,12 +3,13 @@ import { NotificationsContext } from '../store/notifications.context';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { INotificationsContext } from '../shared/interfaces';
 import { IMessage } from '@novu/shared';
+import { IStoreQuery } from '@novu/client';
 
 interface IUseNotificationsProps {
   storeId?: string;
 }
 
-export function useNotifications(props?: IUseNotificationsProps) {
+export function useNotifications(props?: IUseNotificationsProps): IUseNotifications {
   const {
     notifications: mapNotifications,
     fetchNextPage: mapFetchNextPage,
@@ -33,7 +34,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
 
   const hasNextPage = mapHasNextPage[storeId] ? mapHasNextPage[storeId] : false;
 
-  async function markAsRead(messageId: string) {
+  async function markAsRead(messageId: string): Promise<void> {
     await mapMarkAsRead(messageId, storeId);
   }
 
@@ -50,7 +51,7 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapRefetch(storeId);
   }
 
-  async function markAsSeen(messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]) {
+  async function markAsSeen(messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]): Promise<void> {
     await mapMarkAsSeen(messageId, readExist, messages, storeId);
   }
 
@@ -58,12 +59,12 @@ export function useNotifications(props?: IUseNotificationsProps) {
     await mapOnTabChange(storeId);
   }
 
-  async function markAllAsRead() {
-    await mapMarkAllAsRead(storeId);
+  async function markAllAsRead(): Promise<number> {
+    return await mapMarkAllAsRead(storeId);
   }
 
-  function onWidgetClose() {
-    mapOnWidgetClose();
+  async function onWidgetClose() {
+    await mapOnWidgetClose();
   }
 
   return {
@@ -79,4 +80,23 @@ export function useNotifications(props?: IUseNotificationsProps) {
     onTabChange,
     markAllAsRead,
   };
+}
+
+export interface IUseNotifications {
+  notifications: IMessage[];
+  fetchNextPage: () => void;
+  hasNextPage: boolean;
+  fetching: boolean;
+  markAsRead?: (messageId: string) => void;
+  markAllAsRead: () => Promise<number>;
+  updateAction: (
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ) => void;
+  refetch: (query?: IStoreQuery) => void;
+  markAsSeen: (messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]) => void;
+  onWidgetClose: () => void;
+  onTabChange: () => void;
 }

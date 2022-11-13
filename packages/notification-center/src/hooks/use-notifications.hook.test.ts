@@ -1,10 +1,11 @@
 import { renderHook } from '@testing-library/react-hooks';
-import { useNotifications } from './use-notifications.hook';
+import { IUseNotifications, useNotifications } from './use-notifications.hook';
 import React from 'react';
-import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
+import { IMessage, ChannelCTATypeEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
 let realUseContext;
 let useContextMock;
+let renderedUseNotification: IUseNotifications;
 
 describe('@novu/hooks/use-notifications', () => {
   beforeEach(() => {
@@ -15,23 +16,96 @@ describe('@novu/hooks/use-notifications', () => {
       hasNextPage: true,
       fetching: false,
     });
+    renderedUseNotification = renderHook(() => useNotifications({ storeId: 'default_store' })).result.current;
   });
   afterEach(() => {
     React.useContext = realUseContext;
   });
-  it('validate markAsSeen interface', () => {
-    const hook = renderHook(() => useNotifications({ storeId: 'default_store' }));
 
-    const markAsSeen = hook.result.current.markAsSeen;
+  it('validate notification interface', () => {
+    const { notifications } = renderedUseNotification;
+
+    expect(notifications).toStrictEqual(messages);
+  });
+
+  it('validate fetchNextPage interface', () => {
+    const fetchNextPageSpy = jest.spyOn(renderedUseNotification, 'fetchNextPage');
+
+    renderedUseNotification.fetchNextPage();
+
+    expect(fetchNextPageSpy).toBeCalledWith();
+  });
+
+  it('validate fetching interface', () => {
+    const { fetching } = renderedUseNotification;
+
+    expect(fetching).toBe(false);
+  });
+
+  it('validate markAsRead interface', () => {
+    const markAsReadSpy = jest.spyOn(renderedUseNotification, 'markAsRead');
+
+    const messageId = 'message-id-123';
+
+    renderedUseNotification.markAsRead(messageId);
+
+    expect(markAsReadSpy).toBeCalledWith(messageId);
+  });
+
+  it('validate updateAction interface', () => {
+    const updateActionSpy = jest.spyOn(renderedUseNotification, 'updateAction');
+
+    const messageId = 'message-id-123';
+    const actionType = ButtonTypeEnum.PRIMARY;
+    const messageAction = MessageActionStatusEnum.DONE;
+    const payload = { cta: 'click on me!' };
+
+    renderedUseNotification.updateAction(messageId, actionType, messageAction, payload);
+
+    expect(updateActionSpy).toBeCalledWith(messageId, actionType, messageAction, payload);
+  });
+
+  it('validate refetch interface', () => {
+    const refetchSpy = jest.spyOn(renderedUseNotification, 'refetch');
+
+    renderedUseNotification.refetch();
+
+    expect(refetchSpy).toBeCalledWith();
+  });
+
+  it('validate markAsSeen interface', () => {
+    const markAsSeenSpy = jest.spyOn(renderedUseNotification, 'markAsSeen');
 
     const messageId = '123';
     const readExist = true;
+    renderedUseNotification.markAsSeen(messageId, readExist, messages);
 
-    try {
-      markAsSeen(messageId, readExist, messages);
-    } catch (e) {
-      expect(e).toBe(true);
-    }
+    expect(markAsSeenSpy).toBeCalledWith(messageId, readExist, messages);
+  });
+
+  it('validate onWidgetClose interface', () => {
+    const onWidgetCloseSpy = jest.spyOn(renderedUseNotification, 'onWidgetClose');
+    const { onWidgetClose } = renderedUseNotification;
+
+    onWidgetClose();
+
+    expect(onWidgetCloseSpy).toBeCalledWith();
+  });
+
+  it('validate onTabChange interface', () => {
+    const onTabChangeSpy = jest.spyOn(renderedUseNotification, 'onTabChange');
+
+    renderedUseNotification.onTabChange();
+
+    expect(onTabChangeSpy).toBeCalledWith();
+  });
+
+  it('validate markAllAsRead interface', () => {
+    const markAllAsReadSpy = jest.spyOn(renderedUseNotification, 'markAllAsRead');
+
+    renderedUseNotification.markAllAsRead();
+
+    expect(markAllAsReadSpy).toBeCalledWith();
   });
 });
 
