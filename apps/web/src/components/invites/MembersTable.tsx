@@ -117,7 +117,7 @@ export function MembersTable({
                 </Dropdown>
               </div>
             </When>
-            <Divider className={classes.seperator} />
+            <Divider className={classes.separator} />
           </MemberRowWrapper>
         );
       })}

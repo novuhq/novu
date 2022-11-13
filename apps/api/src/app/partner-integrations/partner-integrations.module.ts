@@ -10,4 +10,4 @@ import { EnvironmentsModule } from '../environments/environments.module';
   providers: [...USE_CASES],
   controllers: [PartnerIntegrationsController],
 })
-export class PartnerIntegratiosnModule {}
+export class PartnerIntegrationsModule {}

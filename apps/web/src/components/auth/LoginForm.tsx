@@ -8,7 +8,7 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
-import { Github } from '../../design-system/icons';
+import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/use-vercelParams';
 
@@ -85,18 +85,18 @@ export function LoginForm({ email, token }: Props) {
     <>
       {!IS_DOCKER_HOSTED && (
         <>
-          <GithubButton
+          <GitHubButton
             component="a"
             href={githubLink}
             my={30}
             variant="white"
             fullWidth
             radius="md"
-            leftIcon={<Github />}
+            leftIcon={<GitHub />}
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
             Sign In with GitHub
-          </GithubButton>
+          </GitHubButton>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
       )}
@@ -153,7 +153,7 @@ export function LoginForm({ email, token }: Props) {
   );
 }
 
-const GithubButton = styled(MantineButton)<{
+const GitHubButton = styled(MantineButton)<{
   component: 'a';
   my: number;
   href: string;

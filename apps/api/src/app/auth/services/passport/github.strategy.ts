@@ -6,7 +6,7 @@ import { AuthProviderEnum } from '@novu/shared';
 import { AuthService } from '../auth.service';
 
 @Injectable()
-export class GithubStrategy extends PassportStrategy(githubPassport.Strategy, 'github') {
+export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'github') {
   constructor(private authService: AuthService) {
     super({
       clientID: process.env.GITHUB_OAUTH_CLIENT_ID,
