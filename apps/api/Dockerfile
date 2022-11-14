@@ -41,7 +41,7 @@ FROM dev AS assets
 
 WORKDIR /usr/src/app
 
-# Remove all dependencies so later we can only install prod dependencies without devDepen
+# Remove all dependencies so later we can only install prod dependencies without devDependencies
 RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------

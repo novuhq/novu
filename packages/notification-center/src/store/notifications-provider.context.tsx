@@ -125,17 +125,23 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return stores?.find((store) => store.storeId === storeId)?.query || {};
   }
 
-  async function markNotificationsAsSeen(
+  async function markAsSeen(
+    messageId?: string,
     readExist?: boolean,
-    messagesToMark?: IMessage | IMessage[],
+    messages?: IMessage | IMessage[],
     storeId = 'default_store'
   ) {
-    const notificationsToMark = getNotificationsToMark(messagesToMark, notifications, storeId);
+    if (messageId) {
+      await api.markMessageAsSeen(messageId);
+    }
+
+    const notificationsToMark = getNotificationsToMark(messages, notifications, storeId);
 
     if (notificationsToMark.length) {
       const notificationsToUpdate = filterReadNotifications(readExist, notificationsToMark);
 
-      await api.markMessageAsSeen(notificationsToUpdate.map((notification) => notification._id));
+      const messagesIdsToMark = notificationsToUpdate.map((notification) => notification._id);
+      await api.markMessageAs(messagesIdsToMark, { seen: true });
     }
   }
 
@@ -161,7 +167,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         markAsRead,
         updateAction,
         refetch,
-        markNotificationsAsSeen,
+        markAsSeen,
         onWidgetClose,
         onTabChange,
         markAllAsRead,

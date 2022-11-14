@@ -24,11 +24,11 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
 
 function PopoverWrapper() {
   const { colorScheme } = useMantineColorScheme();
-  const { updateAction, markNotificationsAsSeen } = useNotifications();
+  const { updateAction, markAsSeen } = useNotifications();
 
   function handlerOnNotificationClick(message: IMessage) {
     if (message?.cta?.data?.url) {
-      markNotificationsAsSeen();
+      markAsSeen();
       window.location.href = message.cta.data.url;
     }
   }
