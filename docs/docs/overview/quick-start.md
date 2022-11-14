@@ -47,7 +47,7 @@ You can specify custom variables using the [{{handlebars}}](https://handlebarsjs
 
 #### SMS
 
-Inside SMS you can specify custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax.
+Inside SMS, you can specify custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax.
 
 #### In-app
 
