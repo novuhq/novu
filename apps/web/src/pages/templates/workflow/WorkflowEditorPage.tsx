@@ -203,7 +203,7 @@ const WorkflowEditorPage = ({
                       onClick={() => {
                         setFilterOpen(true);
                       }}
-                      dark={colorScheme === 'dark'}
+                      theme={colorScheme}
                     >
                       <PlusCircle
                         style={{
@@ -397,10 +397,10 @@ const DeleteStepButton = styled(Button)`
   }
 `;
 
-const FilterButton = styled(Button)<{ dark: boolean }>`
-  background: ${({ dark }) => (dark ? colors.B20 : colors.white)};
+const FilterButton = styled(Button)`
+  background: ${({ theme }) => (theme === 'dark' ? colors.B20 : colors.white)};
   box-shadow: 0px 5px 20px rgb(0 0 0 / 20%);
   :hover {
-    background-color: ${({ dark }) => (dark ? colors.B20 : colors.white)};
+    background-color: ${({ theme }) => (theme === 'dark' ? colors.B20 : colors.white)};
   }
 `;
