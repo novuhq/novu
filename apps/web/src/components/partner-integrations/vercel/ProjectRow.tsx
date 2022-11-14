@@ -26,7 +26,7 @@ export function ProjectRow(props: ProjectRowProps) {
 
   const eligibleProjectOptions = projectData.filter((project) =>
     formValues.every(
-      (state) => formValues[index].projectIds.includes(project.id) || !state.projectIds?.includes(project.id)
+      (state) => formValues[index].projectIds?.includes(project.id) || !state.projectIds?.includes(project.id)
     )
   );
 
