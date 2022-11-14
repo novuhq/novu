@@ -17,7 +17,7 @@ Templates are the blueprints for all the notifications in Novu. They provide bas
 ## Environments
 
 
-This is the context in which all of your subscribers and templates exist. This will usually map to your own environments, so any new changes you are making will be  firstly included in the Development environment and once they are tested, you can use our merging changes tool to add them to production.
+This is the context in which all of your subscribers and templates exist. This will usually map to your own environments, so any new changes you are making will be  firstly included in the Development environment and once they are tested, you can use our merging changes tool to promote them to production environment.
 
 The production environment is a read-only environment. It means that you can only promote changes to it from the Development environment rather than modifying it directly.
 
