@@ -1,22 +1,32 @@
-import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { MantineTheme } from '@mantine/core';
 
 import { colors } from '../../design-system';
-import { Chat, Check, Digest, InApp, Mail, Sms, Timer } from '../../design-system/icons';
+import { Chat, Check, CheckCircle, Digest, ErrorIcon, InApp, Mail, Sms, Timer } from '../../design-system/icons';
 
-export const getColorByStatus = (theme: MantineTheme, status: JobStatusEnum): string => {
-  if (status === JobStatusEnum.FAILED) {
+export const getColorByStatus = (theme: MantineTheme, status: ExecutionDetailsStatusEnum): string => {
+  if (status === ExecutionDetailsStatusEnum.FAILED) {
     return colors.error;
   }
 
-  if (status === JobStatusEnum.COMPLETED) {
+  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
     return colors.success;
   }
 
   return theme.colorScheme === 'dark' ? colors.B60 : colors.B40;
 };
 
-export const getCheckLogo = (): React.FunctionComponent<React.ComponentPropsWithoutRef<'svg'>> => {
+export const getLogoByStatus = (
+  status: ExecutionDetailsStatusEnum
+): React.FunctionComponent<React.ComponentPropsWithoutRef<'svg'>> => {
+  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
+    return CheckCircle;
+  }
+
+  if (status === ExecutionDetailsStatusEnum.FAILED) {
+    return ErrorIcon;
+  }
+
   return Check;
 };
 

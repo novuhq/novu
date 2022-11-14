@@ -9,9 +9,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const { stores } = useFeed();
   const [notifications, setNotifications] = useState<Record<string, IMessage[]>>({ default_store: [] });
   const [page, setPage] = useState<Map<string, number>>(new Map<string, number>([['default_store', 0]]));
-  const [hasNextPage, setHasNextPage] = useState<Map<string, boolean>>(
-    new Map<string, boolean>([['default_store', true]])
-  );
+  const [hasNextPage, setHasNextPage] = useState<Record<string, boolean>>({ default_store: true });
   const [fetching, setFetching] = useState<boolean>(false);
   const [refetchTimeout, setRefetchTimeout] = useState<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -21,9 +19,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const newNotifications = await api.getNotificationsList(pageToFetch, getStoreQuery(storeId));
 
     if (newNotifications?.length < 10) {
-      setHasNextPage(hasNextPage.set(storeId, false));
+      hasNextPage[storeId] = false;
+      setHasNextPage(hasNextPage);
     } else {
-      setHasNextPage(hasNextPage.set(storeId, true));
+      hasNextPage[storeId] = true;
+      setHasNextPage(hasNextPage);
     }
 
     if (!page.has(storeId)) {
@@ -42,7 +42,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }
 
   async function fetchNextPage(storeId = 'default_store') {
-    if (!hasNextPage.get(storeId)) return;
+    if (!hasNextPage[storeId]) return;
 
     const nextPage = page.get(storeId) + 1;
     setPage(page.set(storeId, nextPage));
@@ -125,12 +125,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return stores?.find((store) => store.storeId === storeId)?.query || {};
   }
 
-  async function markNotificationsAsSeen(
+  async function markAsSeen(
+    messageId?: string,
     readExist?: boolean,
-    messagesToMark?: IMessage | IMessage[],
+    messages?: IMessage | IMessage[],
     storeId = 'default_store'
   ) {
-    const notificationsToMark = getNotificationsToMark(messagesToMark, notifications, storeId);
+    if (messageId) {
+      await api.markMessageAsSeen(messageId);
+    }
+
+    const notificationsToMark = getNotificationsToMark(messages, notifications, storeId);
 
     if (notificationsToMark.length) {
       const notificationsToUpdate = filterReadNotifications(readExist, notificationsToMark);
@@ -161,7 +166,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         markAsRead,
         updateAction,
         refetch,
-        markNotificationsAsSeen,
+        markAsSeen,
         onWidgetClose,
         onTabChange,
         markAllAsRead,

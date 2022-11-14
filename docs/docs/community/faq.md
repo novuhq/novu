@@ -17,24 +17,21 @@ In Novu, [handlebar variables](https://handlebarsjs.com/guide/) (variables enclo
 
 - **Custom Variables:** You can create [custom variables](https://docs.novu.co/platform/templates#variable-usage) by defining it in the payload and accessing its value using the following syntax:
 
-  ```
+  ```html
   {{variable_name}}
   ```
 
-- **Iteration/Looping:** You can iterate through a list of variables using the [each](https://docs.novu.co/platform/templates#iteration) keyword. The code within the block will loop once for each element that is present in the iterable variable. The syntax is as follows:
+- **Iteration/Looping:** You can iterate through a list of variables using [each](https://docs.novu.co/platform/templates#iteration) keyword. The code within the block will loop once for each element that is present in the iterable variable. The syntax is as follows:
 
-  ```
-  {{#each iterable}}
-    ...
-  {{/each}}
+  ```html
+  {{#each iterable}} ... {{/each}}
   ```
 
 - **Conditional Block:**
   You can render a block conditionally using the [if](https://docs.novu.co/platform/templates#conditional) keyword. The block is defined similar to the iteration block:
-  ```
-  {{#if condition}}
-    ...
-  {{/if}}
+
+  ```html
+  {{#if condition}} ... {{/if}}
   ```
 
 For an in-depth explanation with examples, check out [Templates](https://docs.novu.co/platform/templates#messages).

@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         # run 3 copies of the current job in parallel
-        containers: [1, 2, 3]
+        containers: [1, 2, 3, 4, 5, 6, 7]
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -93,7 +93,7 @@ jobs:
       # Runs a single command using the runners shell
       - name: Build
         run: CI='' pnpm build:web
-        
+
       - name: Build API
         run: CI='' pnpm build:api
 
@@ -120,20 +120,6 @@ jobs:
           browser: chrome
           record: true
           parallel: true
-          install: false
-          config-file: cypress.config.ts
-
-      - name: Cypress run component tests
-        uses: cypress-io/github-action@v4
-        env:
-          NODE_ENV: test
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
-        with:
-          working-directory: apps/web
-          browser: chrome
-          component: true
-          record: true
           install: false
           config-file: cypress.config.ts
 
@@ -175,7 +161,6 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-
-
       - uses: pnpm/action-setup@v2.0.1
         with:
           version: 7.5.0
