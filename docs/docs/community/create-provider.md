@@ -16,7 +16,7 @@ Providers allow us to handle message delivery over multiple channels. We have mu
 
 ### Initialization
 
-To setup the repository, run the initial setup command:
+To set up the repository, run the initial setup command:
 
 ```zsh
 npm run setup:project

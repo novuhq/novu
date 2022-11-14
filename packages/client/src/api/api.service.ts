@@ -49,6 +49,9 @@ export class ApiService {
     );
   }
 
+  /**
+   * @deprecated The method should not be used - Use markMessageAs instead.
+   */
   async markMessageAsSeen(messageId: string | string[]): Promise<any> {
     return await this.httpClient.post(
       `/widgets/messages/${messageId}/seen`,
@@ -56,6 +59,9 @@ export class ApiService {
     );
   }
 
+  /**
+   * @deprecated The method should not be used - Use markMessageAs instead.
+   */
   async markMessageAsRead(messageId: string | string[]): Promise<any> {
     return await this.httpClient.post(
       `/widgets/messages/${messageId}/read`,

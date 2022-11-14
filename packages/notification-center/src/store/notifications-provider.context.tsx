@@ -140,7 +140,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     if (notificationsToMark.length) {
       const notificationsToUpdate = filterReadNotifications(readExist, notificationsToMark);
 
-      await api.markMessageAsSeen(notificationsToUpdate.map((notification) => notification._id));
+      const messagesIdsToMark = notificationsToUpdate.map((notification) => notification._id);
+      await api.markMessageAs(messagesIdsToMark, { seen: true });
     }
   }
 

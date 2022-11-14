@@ -8,8 +8,8 @@ Novu manages your users in a specific subscribers data model, that allows the No
 
 A novu subscriber contains the following data points:
 
-- **User data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as name, gender, profile picture and etc...
-- **Contact information** - Things like e-mail, phone number, push tokens and etc... They will be used when a multi-channel template will be configured. Managing all communication credentials will reduce the amount of data you need to pass when triggering a notification.
+- **User data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as name, gender, profile picture, etc...
+- **Contact information** - Things like e-mail, phone number, push tokens, etc... They will be used when a multi-channel template will be configured. Managing all communication credentials will reduce the amount of data you need to pass when triggering a notification.
 
 ## Creating a subscriber
 
@@ -29,7 +29,7 @@ await novu.subscribers.identify(user.id, {
 });
 ```
 
-Novu will create a subscriber if one does not exist, and will update existing subscribers based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up to date.
+Novu will create a subscriber if one does not exist, and will update existing subscribers based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up-to-date.
 
 ### Subscriber identifier
 
