@@ -7,6 +7,7 @@ import {
   SubscriberEntity,
   MessageEntity,
   IEmailBlock,
+  NotificationEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -62,7 +63,7 @@ export class SendMessageInApp extends SendMessageType {
     const { avatarDetails } = command.step.template;
 
     if (avatarDetails && avatarDetails.type !== AvatarTypeEnum.NONE) {
-      avatarDetails.data = await this.processAvatar(avatarDetails, command.environmentId, command.job._actorId);
+      avatarDetails.data = await this.processAvatar(avatarDetails, command, notification);
     }
 
     try {
@@ -274,19 +275,43 @@ export class SendMessageInApp extends SendMessageType {
 
   private async processAvatar(
     avatarDetails: IAvatarDetails,
-    environmentId: string,
-    actorId?: string
+    command: SendMessageCommand,
+    notification: NotificationEntity
   ): Promise<string | null> {
+    const actorId = command.job?._actorId;
     if (avatarDetails.type === AvatarTypeEnum.USER && actorId) {
-      const actorSubscriber: SubscriberEntity = await this.subscriberRepository.findOne(
-        {
-          _environmentId: environmentId,
-          _id: actorId,
-        },
-        'avatar'
-      );
+      try {
+        const actorSubscriber: SubscriberEntity = await this.subscriberRepository.findOne(
+          {
+            _environmentId: command.environmentId,
+            _id: actorId,
+          },
+          'avatar'
+        );
 
-      return actorSubscriber?.avatar || null;
+        return actorSubscriber?.avatar || null;
+      } catch (error) {
+        await this.createLogUsecase.execute(
+          CreateLogCommand.create({
+            transactionId: command.transactionId,
+            status: LogStatusEnum.ERROR,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            notificationId: notification._id,
+            text: 'Couldnt get Avatar actor details',
+            userId: command.userId,
+            subscriberId: command.subscriberId,
+            code: LogCodeEnum.AVATAR_ACTOR_ERROR,
+            templateId: notification._templateId,
+            raw: {
+              payload: command.payload,
+              triggerIdentifier: command.identifier,
+            },
+          })
+        );
+
+        return null;
+      }
     }
 
     return avatarDetails.data || null;

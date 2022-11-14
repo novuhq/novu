@@ -11,8 +11,7 @@ import {
 import { useController } from 'react-hook-form';
 import { SystemAvatarIconEnum, IAvatarDetails, AvatarTypeEnum } from '@novu/shared';
 import { colors, Input, Switch, Text, Tooltip } from '../../design-system';
-import { Camera } from '../../design-system/icons/general/Camera';
-import { Avatar } from '../../design-system/icons/general/Avatar';
+import { Avatar, Camera } from '../../design-system/icons';
 import { AvatarWrapper, IconWrapper, useStyles } from './AvatarContainer.styles';
 
 const systemIcons = [

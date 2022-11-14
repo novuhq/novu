@@ -10,7 +10,6 @@ export const useStyles = createStyles((theme) => {
     target: { height: '40px' },
     arrow: {
       backgroundColor: dark ? colors.B20 : colors.white,
-      marginBottom: '-1px',
       border: 'none',
     },
 
