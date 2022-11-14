@@ -19,7 +19,7 @@ import { colors } from '../config';
 import { Text } from '../index';
 import { SpacingProps } from '../shared/spacing.props';
 
-interface ISelectProps extends SpacingProps, Pick<SelectProps, 'onCreate'> {
+interface ISelectProps extends SpacingProps {
   data: (string | { value: string; label?: string })[];
   value?: string[] | string | null;
   onChange?: (value: string[] | string | null) => void;
@@ -31,6 +31,7 @@ interface ISelectProps extends SpacingProps, Pick<SelectProps, 'onCreate'> {
   getCreateLabel?: (query: string) => React.ReactNode;
   onDropdownOpen?: () => void;
   onSearchChange?: (query: string) => void;
+  onCreate?: SelectProps['onCreate'];
   searchable?: boolean;
   creatable?: boolean;
   disabled?: boolean;

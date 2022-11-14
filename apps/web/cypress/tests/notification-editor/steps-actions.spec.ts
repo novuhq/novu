@@ -90,7 +90,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').get('label').contains('Step is active');
-    cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').click();
+    cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').click({ force: true });
     cy.getByTestId('submit-btn').click();
 
     cy.clickWorkflowNode(`node-inAppSelector`);

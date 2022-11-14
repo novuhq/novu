@@ -63,7 +63,7 @@ export function useAuthController() {
 
   useEffect(() => {
     if (token) {
-      queryClient.removeQueries({
+      queryClient.refetchQueries({
         predicate: (query) =>
           query.queryKey !== '/v1/users/me' &&
           query.queryKey !== '/v1/environments' &&
