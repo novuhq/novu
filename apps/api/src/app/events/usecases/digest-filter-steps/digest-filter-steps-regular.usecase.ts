@@ -26,6 +26,7 @@ export class DigestFilterStepsRegular {
     if (this.shouldContinue(delayedDigests)) {
       await this.notificationRepository.update(
         {
+          _environmentId: command.environmentId,
           _id: command.notificationId,
         },
         {

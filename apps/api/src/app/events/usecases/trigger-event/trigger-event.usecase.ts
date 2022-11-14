@@ -168,6 +168,7 @@ export class TriggerEvent {
 
     await this.notificationRepository.update(
       {
+        _environmentId: firstJob._environmentId,
         _id: firstJob._notificationId,
       },
       {

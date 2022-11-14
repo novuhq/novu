@@ -1,8 +1,7 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
-import { WorkflowQueueService } from '../../services/workflow.queue.service';
 import { QueueNextJobCommand } from '../queue-next-job/queue-next-job.command';
 import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
@@ -25,7 +24,7 @@ export class RunJob {
       return;
     }
 
-    await this.jobRepository.updateStatus(job._id, JobStatusEnum.RUNNING);
+    await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.RUNNING);
 
     await this.storageHelperService.getAttachments(job.payload?.attachments);
 
@@ -64,6 +63,7 @@ export class RunJob {
       return false;
     }
     const count = await this.jobRepository.count({
+      _environmentId: job._environmentId,
       _id: job._id,
       status: JobStatusEnum.CANCELED,
     });

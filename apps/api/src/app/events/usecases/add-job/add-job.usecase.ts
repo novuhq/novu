@@ -36,7 +36,7 @@ export class AddJob {
     }
 
     if (digestAmount === undefined && delayAmount == undefined) {
-      await this.jobRepository.updateStatus(job._id, JobStatusEnum.QUEUED);
+      await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
     }
 
     const delay = digestAmount ?? delayAmount;

@@ -1,11 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  MessageEntity,
-  MessageRepository,
-  MessageTemplateEntity,
-  SubscriberRepository,
-  OrganizationRepository,
-} from '@novu/dal';
+import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
@@ -15,8 +9,7 @@ export class UpdateMessageActions {
   constructor(
     private messageRepository: MessageRepository,
     private subscriberRepository: SubscriberRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private organizationRepository: OrganizationRepository
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
@@ -38,6 +31,7 @@ export class UpdateMessageActions {
 
     await this.messageRepository.update(
       {
+        _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _id: command.messageId,
       },

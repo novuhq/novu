@@ -72,8 +72,8 @@ export class ProcessSubscriber {
 
     for (const step of steps) {
       const integration = await this.integrationRepository.findOne({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
         channel: step.template.type,
         active: true,
       });

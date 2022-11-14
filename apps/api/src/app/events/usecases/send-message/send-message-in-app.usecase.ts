@@ -16,7 +16,6 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   InAppProviderIdEnum,
-  StepTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -145,9 +144,7 @@ export class SendMessageInApp extends SendMessageType {
 
     if (oldMessage) {
       await this.messageRepository.update(
-        {
-          _id: oldMessage._id,
-        },
+        { _environmentId: command.environmentId, _id: oldMessage._id },
         {
           $set: {
             seen: false,

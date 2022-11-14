@@ -83,16 +83,16 @@ describe('Create Notification template - /notification-templates (POST)', async 
     }
 
     let change = await changeRepository.findOne({
+      _environmentId: session.environment._id,
       _entityId: message._templateId,
     });
     await session.testAgent.post(`/v1/changes/${change._id}/apply`);
 
-    change = await changeRepository.findOne({
-      _entityId: template._id,
-    });
+    change = await changeRepository.findOne({ _environmentId: session.environment._id, _entityId: template._id });
     await session.testAgent.post(`/v1/changes/${change._id}/apply`);
 
     const prodVersionNotification = await notificationTemplateRepository.findOne({
+      _environmentId: session.environment._id,
       _parentId: template._id,
     });
 
@@ -106,6 +106,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(prodVersionNotification.description).to.equal(template.description);
 
     const prodVersionMessage = await messageTemplateRepository.findOne({
+      _environmentId: session.environment._id,
       _parentId: message._templateId,
     });
 

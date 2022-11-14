@@ -48,7 +48,10 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
       const thirdUserSession = new UserSession();
       await thirdUserSession.initialize();
 
-      const inviteeMembers = await memberRepository.find({ _userId: invitedUserSession.user._id });
+      const inviteeMembers = await memberRepository.find({
+        _organizationId: session.organization._id,
+        _userId: invitedUserSession.user._id,
+      });
       expect(inviteeMembers.length).to.eq(1);
 
       await thirdUserSession.testAgent.post('/v1/invites/bulk').send({
@@ -69,7 +72,10 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
 
       await invitedUserSession.testAgent.post(`/v1/invites/${newInvitee.invite.token}/accept`).expect(201);
 
-      const newInviteeMembers = await memberRepository.find({ _userId: invitedUserSession.user._id });
+      const newInviteeMembers = await memberRepository.find({
+        _organizationId: session.organization._id,
+        _userId: invitedUserSession.user._id,
+      });
       expect(newInviteeMembers.length).to.eq(2);
     });
   });

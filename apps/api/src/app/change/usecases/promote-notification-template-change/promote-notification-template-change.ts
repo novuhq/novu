@@ -70,6 +70,7 @@ export class PromoteNotificationTemplateChange {
 
     if (!notificationGroup) {
       const changes = await this.changeRepository.getEntityChanges(
+        command.environmentId,
         ChangeEntityTypeEnum.NOTIFICATION_GROUP,
         newItem._notificationGroupId
       );
@@ -110,17 +111,19 @@ export class PromoteNotificationTemplateChange {
       });
     }
 
-    const count = await this.notificationTemplateRepository.count({ _id: command.item._id });
+    const count = await this.notificationTemplateRepository.count({
+      _environmentId: command.environmentId,
+      _id: command.item._id,
+    });
     if (count === 0) {
-      await this.notificationTemplateRepository.delete({
-        _id: item._id,
-      });
+      await this.notificationTemplateRepository.delete({ _environmentId: command.environmentId, _id: item._id });
 
       return;
     }
 
     return await this.notificationTemplateRepository.update(
       {
+        _environmentId: command.environmentId,
         _id: item._id,
       },
       {

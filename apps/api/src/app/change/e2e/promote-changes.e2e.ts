@@ -84,6 +84,7 @@ describe('Promote changes', () => {
     });
 
     const prodVersion = await notificationTemplateRepository.findOne({
+      _environmentId: session.environment._id,
       _parentId: notificationTemplateId,
     });
 
@@ -141,6 +142,7 @@ describe('Promote changes', () => {
     });
 
     const prodVersion = await notificationTemplateRepository.findOne({
+      _environmentId: session.environment._id,
       _parentId: notificationTemplateId,
     });
 
@@ -169,6 +171,7 @@ describe('Promote changes', () => {
     });
 
     const prodVersion = await notificationTemplateRepository.findOne({
+      _environmentId: session.environment._id,
       _parentId: notificationTemplateId,
     });
 
@@ -245,6 +248,7 @@ describe('Promote changes', () => {
     });
 
     const prodVersion = await messageTemplateRepository.findOne({
+      _environmentId: session.environment._id,
       _parentId: step._templateId,
     });
 
@@ -348,6 +352,7 @@ describe('Promote changes', () => {
     });
 
     const prodVersion = await notificationTemplateRepository.find({
+      _environmentId: session.environment._id,
       _parentId: notificationTemplateId,
     });
 

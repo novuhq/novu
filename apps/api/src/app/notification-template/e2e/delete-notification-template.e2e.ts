@@ -1,12 +1,6 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { INotificationTemplate } from '@novu/shared';
-import {
-  EnvironmentRepository,
-  MessageTemplateRepository,
-  NotificationGroupRepository,
-  NotificationTemplateRepository,
-} from '@novu/dal';
+import { NotificationGroupRepository, NotificationTemplateRepository } from '@novu/dal';
 
 describe('Delete notification template by id - /notification-templates/:templateId (DELETE)', async () => {
   let session: UserSession;
@@ -28,11 +22,16 @@ describe('Delete notification template by id - /notification-templates/:template
 
     await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
 
-    const isDeleted = !(await notificationTemplateRepository.findOne({ _id: template._id }));
+    const isDeleted = !(await notificationTemplateRepository.findOne({
+      _environmentId: session.environment._id,
+      _id: template._id,
+    }));
 
     expect(isDeleted).to.equal(true);
 
-    const deletedIntegration = (await notificationTemplateRepository.findDeleted({ _id: template._id }))[0];
+    const deletedIntegration = (
+      await notificationTemplateRepository.findDeleted({ _environmentId: session.environment._id, _id: template._id })
+    )[0];
 
     expect(deletedIntegration.deleted).to.equal(true);
   });
@@ -57,7 +56,10 @@ describe('Delete notification template by id - /notification-templates/:template
       enabled: false,
     });
 
-    const isCreated = await notificationTemplateRepository.findOne({ _parentId: notificationTemplateId });
+    const isCreated = await notificationTemplateRepository.findOne({
+      _environmentId: session.environment._id,
+      _parentId: notificationTemplateId,
+    });
 
     expect(isCreated).to.exist;
 
@@ -72,7 +74,10 @@ describe('Delete notification template by id - /notification-templates/:template
       enabled: false,
     });
 
-    const isDeleted = !(await notificationTemplateRepository.findOne({ _parentId: notificationTemplateId }));
+    const isDeleted = !(await notificationTemplateRepository.findOne({
+      _environmentId: session.environment._id,
+      _parentId: notificationTemplateId,
+    }));
 
     expect(isDeleted).to.equal(true);
   });
