@@ -30,7 +30,7 @@ const codeTheme = require('./src/utils/prism');
             showLastUpdateTime: true,
           },
           gtag: {
-            trackingID: 'G-226F0LR9KE',
+            trackingID: 'G-ZC17SLMXRN',
             anonymizeIP: true,
           },
           theme: {
@@ -48,7 +48,7 @@ const codeTheme = require('./src/utils/prism');
           {
             name: 'keywords',
             content:
-              'novu,novu documentation,novu docs,notification,notification insfrastructure,open source,oss',
+              'novu,novu documentation,novu docs,notification,notification infrastructure,open source,oss',
           },
         ],
         image: '/img/social-preview.jpg',

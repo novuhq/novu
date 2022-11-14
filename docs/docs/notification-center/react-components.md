@@ -171,13 +171,16 @@ The `i18n` prop can accept 2 different types of values
       <div>
         <ul>
           <li><code>af</code> (Afrikaans)</li>
+          <li><code>am</code> (Amharic)</li>
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
           <li><code>az</code> (Azerbaijani)</li>
           <li><code>ba</code> (Bashkir)</li>
           <li><code>be</code> (Belarusian)</li>
           <li><code>bg</code> (Bulgarian)</li>
+          <li><code>bh</code> (Bihari)</li>
           <li><code>bn</code> (Bengali)</li>
+          <li><code>bs</code> (Bosnian)</li>
           <li><code>ca</code> (Catalan)</li>
           <li><code>cs</code> (Czech)</li>
           <li><code>da</code> (Danish)</li>
@@ -208,6 +211,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ku</code> (Kurdish)</li>
           <li><code>lo</code> (Lao)</li>
           <li><code>lt</code> (Lithuanian)</li>
+          <li><code>lv</code> (Latvian)</li>
           <li><code>ml</code> (Malayalam)</li>
           <li><code>mr</code> (Marathi)</li>
           <li><code>ms</code> (Malay)</li>
@@ -223,6 +227,8 @@ The `i18n` prop can accept 2 different types of values
           <li><code>sa</code> (Sanskrit)</li>
           <li><code>sd</code> (Sindhi)</li>
           <li><code>si</code> (Sinhala)</li>
+          <li><code>sm</code> (Samoan)</li>
+          <li><code>sq</code> (Albanian)</li>
           <li><code>sv</code> (Swedish)</li>
           <li><code>sq</code> (Albanian)</li>
           <li><code>ta</code> (Tamil)</li>
@@ -234,8 +240,8 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ur</code> (Urdu)</li>
           <li><code>uz</code> (Uzbek)</li>
           <li><code>vi</code> (Vietnamese)</li>
-          <li><code>zu</code> (Zulu)</li>
           <li><code>zh</code> (Chinese)</li>
+          <li><code>zu</code> (Zulu)</li>
         </ul>
       </div>
   </details>

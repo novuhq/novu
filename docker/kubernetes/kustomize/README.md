@@ -26,7 +26,7 @@ kustomize build . | kubectl apply -f -
 
 ## Convert
 
-These files have been genereated with the following command, having the `docker-compose.yaml` in the directory:
+These files have been generated with the following command, having the `docker-compose.yaml` in the directory:
 
 ```bash
 kompose convert

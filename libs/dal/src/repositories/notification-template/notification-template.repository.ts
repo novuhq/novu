@@ -6,10 +6,10 @@ import { NotificationTemplateEntity } from './notification-template.entity';
 import { DalException } from '../../shared';
 
 export class NotificationTemplateRepository extends BaseRepository<NotificationTemplateEntity> {
-  private notifcationTemplate: SoftDeleteModel;
+  private notificationTemplate: SoftDeleteModel;
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
-    this.notifcationTemplate = NotificationTemplate;
+    this.notificationTemplate = NotificationTemplate;
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string) {
@@ -57,11 +57,11 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
   async delete(query: FilterQuery<NotificationTemplateEntity & Document>) {
     const item = await this.findOne({ _id: query._id });
     if (!item) throw new DalException(`Could not find notification template with id ${query._id}`);
-    await this.notifcationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
+    await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
   }
 
   async findDeleted(query: FilterQuery<NotificationTemplateEntity & Document>): Promise<NotificationTemplateEntity> {
-    const res = await this.notifcationTemplate.findDeleted(query);
+    const res = await this.notificationTemplate.findDeleted(query);
 
     return this.mapEntity(res);
   }
