@@ -42,7 +42,7 @@ export class EventsController {
     description: `
     Trigger event is the main (and the only) way to send notification to subscribers. 
     The trigger identifier is used to match the particular template associated with it. 
-    Additional information can be passed according the the body interface below.
+    Additional information can be passed according the body interface below.
     `,
   })
   async trackEvent(

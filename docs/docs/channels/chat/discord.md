@@ -5,7 +5,7 @@ When using Discord you will have to save the integration credentials on the subs
 1. Using the **Discord Webhook** integration.
 2. Using the **Discord Bot** integration.
 
-Right now Novu only supports the **Discord Webhook** integration, since the easiest way to setup is when you know in advance where the notifications should be sent. This is a common approach when you need to notify a particular channel about updates.
+Right now Novu only supports the **Discord Webhook** integration, since the easiest way to set up is when you know in advance where the notifications should be sent. This is a common approach when you need to notify a particular channel about updates.
 
 ## Quickstart
 
