@@ -9,7 +9,8 @@
     "build": "rollup -c",
     "build:watch": "rollup -c -w",
     "storybook": "start-storybook -p 6006",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook",
+    "test": "jest --env=jsdom"
   },
   "author": "",
   "license": "ISC",
@@ -27,6 +28,8 @@
     "@storybook/manager-webpack5": "^6.4.19",
     "@storybook/react": "^6.4.19",
     "@storybook/testing-library": "0.0.9",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@types/jest": "^26.0.23",
     "@types/react": "^17.0.34",
     "acorn": "^8.7.1",
     "babel-loader": "^8.2.4",
