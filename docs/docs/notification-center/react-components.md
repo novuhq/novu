@@ -175,6 +175,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
           <li><code>az</code> (Azerbaijani)</li>
+          <li><code>ba</code> (Bashkir)</li>
           <li><code>be</code> (Belarusian)</li>
           <li><code>bg</code> (Bulgarian)</li>
           <li><code>bh</code> (Bihari)</li>
@@ -229,6 +230,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>sm</code> (Samoan)</li>
           <li><code>sq</code> (Albanian)</li>
           <li><code>sv</code> (Swedish)</li>
+          <li><code>sq</code> (Albanian)</li>
           <li><code>ta</code> (Tamil)</li>
           <li><code>te</code> (Telugu)</li>
           <li><code>th</code> (Thai)</li>
