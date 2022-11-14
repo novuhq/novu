@@ -195,7 +195,7 @@ const WorkflowEditorPage = ({
                       labelPosition="center"
                     />
                     {steps.map((i, index) => {
-                      return index !== activeStep ? null : <Filters step={i} />;
+                      return index !== activeStep ? null : <Filters key={index} step={i} />;
                     })}
                     <FilterButton
                       fullWidth
@@ -346,7 +346,14 @@ const WorkflowEditorPage = ({
           </SideBarWrapper>
         </Grid.Col>
       </Grid>
-      <DeleteConfirmModal target="step" isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
+      <DeleteConfirmModal
+        target={
+          selectedChannel !== null && getChannel(selectedChannel)?.type === NodeTypeEnum.CHANNEL ? 'step' : 'action'
+        }
+        isOpen={toDelete.length > 0}
+        confirm={confirmDelete}
+        cancel={cancelDelete}
+      />
     </>
   );
 };

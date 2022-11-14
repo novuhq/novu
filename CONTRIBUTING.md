@@ -53,7 +53,7 @@ To ensure consistency throughout the source code, please keep these rules in min
 
 ## Need help? Questions and suggestions
 
-Questions, suggestions, and thoughts are most welcome. Feel free to open a [Github Discussion](https://github.com/novuhq/novu/discussions/new). We can also be reached in our [Discord Server](https://discord.novu.co).
+Questions, suggestions, and thoughts are most welcome. Feel free to open a [GitHub Discussion](https://github.com/novuhq/novu/discussions/new). We can also be reached in our [Discord Server](https://discord.novu.co).
 
 ## Ways to contribute
 

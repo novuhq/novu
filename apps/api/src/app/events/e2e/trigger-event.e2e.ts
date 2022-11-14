@@ -860,7 +860,7 @@ async function createTemplate(session, channelType) {
   });
 }
 
-async function sendTrigger(
+export async function sendTrigger(
   session,
   template,
   newSubscriberIdInAppNotification: string,

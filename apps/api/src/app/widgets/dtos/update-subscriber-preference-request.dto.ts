@@ -6,7 +6,7 @@ import { ChannelPreference } from '../../shared/dtos/channel-preference';
 export class UpdateSubscriberPreferenceRequestDto {
   @ApiProperty({
     type: ChannelPreference,
-    description: 'Channel with prefrence',
+    description: 'Channel with preference',
   })
   @ValidateNested()
   channel?: ChannelPreference;

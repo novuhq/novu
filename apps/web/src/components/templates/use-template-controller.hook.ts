@@ -196,20 +196,23 @@ export function useTemplateController(templateId: string) {
     }
   };
 
-  const addStep = (channelType: StepTypeEnum, id: string) => {
-    steps.append({
+  const addStep = (channelType: StepTypeEnum, id: string, stepIndex?: number) => {
+    const newStep = {
       _id: id,
       template: {
         type: channelType,
         content: [],
-        contentType: 'editor',
-        subject: '',
-        name: 'Email Message Template',
         variables: [],
       },
       active: true,
       filters: [],
-    });
+    };
+
+    if (stepIndex != null) {
+      steps.insert(stepIndex, newStep);
+    } else {
+      steps.append(newStep);
+    }
   };
 
   const deleteStep = (index: number) => {

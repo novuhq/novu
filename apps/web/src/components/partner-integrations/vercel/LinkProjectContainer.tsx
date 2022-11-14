@@ -42,7 +42,7 @@ export function LinkProjectContainer() {
       projectLinkState: [
         {
           projectIds: [],
-          organizationId: '',
+          organizationId: organizations && organizations.length > 0 ? organizations[0]._id : '',
         },
       ],
     },
@@ -118,7 +118,7 @@ export function LinkProjectContainer() {
             ))}
           </Stack>
           <LinkMoreProjectRow addMoreProjectRow={addMoreProjectRow} disableMoreProjectsBtn={disableMoreProjectsBtn} />
-          <Button submit>Submit</Button>
+          <Button submit>Link Projects</Button>
         </Stack>
       </form>
     </Stack>

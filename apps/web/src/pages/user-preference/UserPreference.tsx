@@ -23,6 +23,7 @@ export function UserPreference({ activePage, setActivePage, showErrors, template
             />
           </SideBarWrapper>
         </Grid.Col>
+
         <Grid.Col md={8} sm={6} style={{ position: 'relative' }}>
           <div style={{ paddingLeft: 23 }}>
             <TemplatePreference />

@@ -13,7 +13,7 @@ export default createStyles((theme: MantineTheme) => {
     subHeading: {
       color: dark ? colors.B40 : primaryColor,
     },
-    seperator: {
+    separator: {
       borderTopColor: dark ? colors.B20 : colors.BGLight,
       margin: '24px 0',
     },

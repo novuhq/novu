@@ -42,7 +42,7 @@ If you only want to run parts of the platform, you can use the following run com
 ## Set up your environment variables
 
 The command `npm run setup:project` creates default environment variables that are required to run Novu in a development environment.
-However, if you want to test certain parts of Novu or run it in production mode, you need to change some of them. These are all the available environment variables: 
+However, if you want to test certain parts of Novu or run it in production mode, you need to change some of them. These are all the available environment variables:
 
 <details>
     <summary>API Backend</summary>
@@ -104,7 +104,6 @@ To run the front end tests for the web project using cypress you need to install
 The cypress tests perform E2E tests. To be able to perform E2E tests, you need to run the API service in the appropriate test environment.
 
 Run the services in test env with the following commands:
-
 
 ```shell
 npm run start:e2e:api

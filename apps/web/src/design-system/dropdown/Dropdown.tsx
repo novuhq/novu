@@ -24,7 +24,7 @@ export function Dropdown({ children, ...props }: IDropdownProps) {
   } as MenuProps;
 
   return (
-    <Menu {...defaultDesign} {...props}>
+    <Menu {...defaultDesign} {...props} clickOutsideEvents={['click', 'mousedown', 'touchstart']}>
       {children}
     </Menu>
   );
