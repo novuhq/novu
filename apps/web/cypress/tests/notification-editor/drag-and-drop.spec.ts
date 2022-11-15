@@ -1,4 +1,4 @@
-import { clickWorkflow, dragAndDrop, fillBasicNotificationDetails, waitLoadTemplatePage } from '.';
+import { clickWorkflow, dragAndDrop, fillBasicNotificationDetails } from '.';
 
 describe('Workflow Editor - Drag and Drop', function () {
   beforeEach(function () {
@@ -6,7 +6,7 @@ describe('Workflow Editor - Drag and Drop', function () {
   });
 
   it('should drag and drop channel', function () {
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
     fillBasicNotificationDetails('Test drag and drop channel');
@@ -19,7 +19,7 @@ describe('Workflow Editor - Drag and Drop', function () {
   });
 
   it('should not be able to drop when not on last node', function () {
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
     fillBasicNotificationDetails('Test only drop on last node');
@@ -32,7 +32,7 @@ describe('Workflow Editor - Drag and Drop', function () {
 
   it('should be able to select a step', function () {
     const template = this.session.templates[0];
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/edit/' + template._id);
     });
     fillBasicNotificationDetails('Test SMS Notification Title');
@@ -45,7 +45,7 @@ describe('Workflow Editor - Drag and Drop', function () {
   });
 
   it('should add a step with plus button', function () {
-    waitLoadTemplatePage(() => {
+    cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
     fillBasicNotificationDetails('Test Plus Button');
