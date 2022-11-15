@@ -4,7 +4,7 @@ import {
   IEmailBlock,
   ITemplateVariable,
   IMessageCTA,
-  AvatarTypeEnum,
+  ActorTypeEnum,
   MessageTemplateContentType,
 } from '@novu/shared';
 
@@ -42,8 +42,8 @@ export class MessageTemplate {
   @IsString()
   title?: string;
 
-  avatarDetails?: {
-    type: AvatarTypeEnum;
+  actor?: {
+    type: ActorTypeEnum;
     data: string | null;
   };
 }

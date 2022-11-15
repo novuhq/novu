@@ -27,7 +27,7 @@ export enum TemplateVariableTypeEnum {
   BOOLEAN = 'Boolean',
 }
 
-export enum AvatarTypeEnum {
+export enum ActorTypeEnum {
   NONE = 'none',
   USER = 'user',
   SYSTEM_ICON = 'system_icon',

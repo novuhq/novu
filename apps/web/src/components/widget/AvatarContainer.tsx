@@ -9,7 +9,7 @@ import {
   QuestionCircleFilled,
 } from '@ant-design/icons';
 import { useController } from 'react-hook-form';
-import { SystemAvatarIconEnum, IAvatarDetails, AvatarTypeEnum } from '@novu/shared';
+import { SystemAvatarIconEnum, IActor, ActorTypeEnum } from '@novu/shared';
 import { colors, Input, Switch, Text, Tooltip } from '../../design-system';
 import { Avatar, Camera } from '../../design-system/icons';
 import { AvatarWrapper, IconWrapper, useStyles } from './AvatarContainer.styles';
@@ -65,14 +65,14 @@ const AvatarContainer = ({
   const {
     field: { value, onChange },
   } = useController({
-    name: `steps.${index}.template.avatarDetails` as any,
+    name: `steps.${index}.template.actor` as any,
   });
 
   const [tooltipOpened, setTooltipOpened] = useState(() => {
-    return value.type === AvatarTypeEnum.NONE;
+    return value.type === ActorTypeEnum.NONE;
   });
   const [avatarURLInput, setAvatarURLInput] = useState(() => {
-    return value.type === AvatarTypeEnum.SYSTEM_CUSTOM && value.data ? value.data : '';
+    return value.type === ActorTypeEnum.SYSTEM_CUSTOM && value.data ? value.data : '';
   });
 
   const { classes, theme } = useStyles();
@@ -91,7 +91,7 @@ const AvatarContainer = ({
         target={
           <Tooltip label={<TooltipLabel />} position="left" opened={tooltipOpened}>
             <AvatarWrapper onClick={handleAvatarPopover} dark={dark}>
-              <RenderAvatar avatarDetails={value} />
+              <RenderAvatar actor={value} />
             </AvatarWrapper>
           </Tooltip>
         }
@@ -123,10 +123,10 @@ const AvatarContainer = ({
               }}
             >
               <Switch
-                checked={value.type === AvatarTypeEnum.USER}
+                checked={value.type === ActorTypeEnum.USER}
                 onChange={(event) =>
                   onChange({
-                    type: event.currentTarget.checked ? AvatarTypeEnum.USER : AvatarTypeEnum.NONE,
+                    type: event.currentTarget.checked ? ActorTypeEnum.USER : ActorTypeEnum.NONE,
                     data: null,
                   })
                 }
@@ -148,7 +148,7 @@ const AvatarContainer = ({
             onBlur={(event) =>
               onChange({
                 data: event.target.value,
-                type: event.target.value ? AvatarTypeEnum.SYSTEM_CUSTOM : AvatarTypeEnum.NONE,
+                type: event.target.value ? ActorTypeEnum.SYSTEM_CUSTOM : ActorTypeEnum.NONE,
               })
             }
             onChange={(event) => {
@@ -164,7 +164,7 @@ const AvatarContainer = ({
                 containerBgColor={icon.containerBgColor}
                 onClick={() =>
                   onChange({
-                    type: AvatarTypeEnum.SYSTEM_ICON,
+                    type: ActorTypeEnum.SYSTEM_ICON,
                     data: icon.type,
                   })
                 }
@@ -181,21 +181,21 @@ const AvatarContainer = ({
   );
 };
 
-function RenderAvatar({ avatarDetails }: { avatarDetails: IAvatarDetails }) {
-  if (!avatarDetails.type || avatarDetails.type === AvatarTypeEnum.NONE) {
+function RenderAvatar({ actor }: { actor: IActor }) {
+  if (!actor.type || actor.type === ActorTypeEnum.NONE) {
     return <Camera />;
   }
 
-  if (avatarDetails.type === AvatarTypeEnum.USER) {
+  if (actor.type === ActorTypeEnum.USER) {
     return <Avatar />;
   }
 
-  if (avatarDetails.type === AvatarTypeEnum.SYSTEM_CUSTOM && avatarDetails.data) {
-    return <MAvatar src={avatarDetails.data} radius="xl" />;
+  if (actor.type === ActorTypeEnum.SYSTEM_CUSTOM && actor.data) {
+    return <MAvatar src={actor.data} radius="xl" />;
   }
 
-  if (avatarDetails.type === AvatarTypeEnum.SYSTEM_ICON) {
-    const selectedIcon = systemIcons.filter((data) => data.type === avatarDetails.data);
+  if (actor.type === ActorTypeEnum.SYSTEM_ICON) {
+    const selectedIcon = systemIcons.filter((data) => data.type === actor.data);
 
     return selectedIcon.length > 0 ? (
       <IconWrapper size={40} iconColor={selectedIcon[0].iconColor} containerBgColor={selectedIcon[0].containerBgColor}>

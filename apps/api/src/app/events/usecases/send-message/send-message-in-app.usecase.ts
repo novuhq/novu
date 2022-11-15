@@ -17,8 +17,8 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   InAppProviderIdEnum,
-  AvatarTypeEnum,
-  IAvatarDetails,
+  ActorTypeEnum,
+  IActor,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -60,10 +60,10 @@ export class SendMessageInApp extends SendMessageType {
     const inAppChannel: NotificationStepEntity = command.step;
     let content = '';
 
-    const { avatarDetails } = command.step.template;
+    const { actor } = command.step.template;
 
-    if (avatarDetails && avatarDetails.type !== AvatarTypeEnum.NONE) {
-      avatarDetails.data = await this.processAvatar(avatarDetails, command, notification);
+    if (actor && actor.type !== ActorTypeEnum.NONE) {
+      actor.data = await this.processAvatar(actor, command, notification);
     }
 
     try {
@@ -148,9 +148,9 @@ export class SendMessageInApp extends SendMessageType {
         payload: messagePayload,
         templateIdentifier: command.identifier,
         _jobId: command.jobId,
-        ...(avatarDetails &&
-          avatarDetails.type !== AvatarTypeEnum.NONE && {
-            avatarDetails,
+        ...(actor &&
+          actor.type !== ActorTypeEnum.NONE && {
+            actor,
           }),
       });
     }
@@ -274,12 +274,12 @@ export class SendMessageInApp extends SendMessageType {
   }
 
   private async processAvatar(
-    avatarDetails: IAvatarDetails,
+    actor: IActor,
     command: SendMessageCommand,
     notification: NotificationEntity
   ): Promise<string | null> {
     const actorId = command.job?._actorId;
-    if (avatarDetails.type === AvatarTypeEnum.USER && actorId) {
+    if (actor.type === ActorTypeEnum.USER && actorId) {
       try {
         const actorSubscriber: SubscriberEntity = await this.subscriberRepository.findOne(
           {
@@ -314,6 +314,6 @@ export class SendMessageInApp extends SendMessageType {
       }
     }
 
-    return avatarDetails.data || null;
+    return actor.data || null;
   }
 }

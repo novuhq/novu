@@ -68,8 +68,8 @@ export class UpdateMessageTemplate {
       updatePayload.title = command.title;
     }
 
-    if (command.avatarDetails) {
-      updatePayload.avatarDetails = command.avatarDetails;
+    if (command.actor) {
+      updatePayload.actor = command.actor;
     }
 
     if (!Object.keys(updatePayload).length) {

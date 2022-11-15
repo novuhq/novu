@@ -12,9 +12,9 @@ import {
   ButtonTypeEnum,
   IMessageAction,
   MessageActionStatusEnum,
-  AvatarTypeEnum,
+  ActorTypeEnum,
   SystemAvatarIconEnum,
-  IAvatarDetails,
+  IActor,
 } from '@novu/shared';
 import {
   DotsHorizontal,
@@ -100,9 +100,9 @@ export function NotificationListItem({
     >
       <NotificationItemContainer>
         <NotificationContentContainer>
-          {notification.avatarDetails && notification.avatarDetails.type !== AvatarTypeEnum.NONE && (
+          {notification.actor && notification.actor.type !== ActorTypeEnum.NONE && (
             <AvatarContainer>
-              <RenderAvatar avatarDetails={notification.avatarDetails} />
+              <RenderAvatar actor={notification.actor} />
             </AvatarContainer>
           )}
           <NotificationTextContainer>
@@ -188,17 +188,17 @@ function GradientDotWrapper({ colorScheme }: { colorScheme: ColorScheme }) {
   return <StyledGradientDot colors={bellColors} />;
 }
 
-function RenderAvatar({ avatarDetails }: { avatarDetails: IAvatarDetails }) {
-  if ([AvatarTypeEnum.USER, AvatarTypeEnum.SYSTEM_CUSTOM].includes(avatarDetails.type) && avatarDetails.data) {
+function RenderAvatar({ actor }: { actor: IActor }) {
+  if ([ActorTypeEnum.USER, ActorTypeEnum.SYSTEM_CUSTOM].includes(actor.type) && actor.data) {
     return (
-      <MAvatar src={avatarDetails.data} radius="xl">
+      <MAvatar src={actor.data} radius="xl">
         <Avatar />
       </MAvatar>
     );
   }
 
-  if (avatarDetails.type === AvatarTypeEnum.SYSTEM_ICON) {
-    const selectedIcon = avatarSystemIcons.filter((data) => data.type === avatarDetails.data);
+  if (actor.type === ActorTypeEnum.SYSTEM_ICON) {
+    const selectedIcon = avatarSystemIcons.filter((data) => data.type === actor.data);
 
     return selectedIcon.length > 0 ? (
       <SystemIconWrapper iconColor={selectedIcon[0].iconColor} containerBgColor={selectedIcon[0].containerBgColor}>

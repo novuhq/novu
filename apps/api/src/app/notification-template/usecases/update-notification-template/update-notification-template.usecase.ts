@@ -133,7 +133,7 @@ export class UpdateNotificationTemplate {
               feedId: message.template.feedId ? message.template.feedId : null,
               subject: message.template.subject,
               title: message.template.title,
-              avatarDetails: message.template.avatarDetails,
+              actor: message.template.actor,
               parentChangeId,
             })
           );

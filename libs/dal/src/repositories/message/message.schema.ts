@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
 import * as mongooseDelete from 'mongoose-delete';
-import { AvatarTypeEnum } from '@novu/shared';
+import { ActorTypeEnum } from '@novu/shared';
 import { schemaOptions } from '../schema-default.options';
 import { MessageEntity } from './message.entity';
 
@@ -104,10 +104,10 @@ const messageSchema = new Schema(
     identifier: Schema.Types.String,
     payload: Schema.Types.Mixed,
     overrides: Schema.Types.Mixed,
-    avatarDetails: {
+    actor: {
       type: {
         type: Schema.Types.String,
-        enum: AvatarTypeEnum,
+        enum: ActorTypeEnum,
       },
       data: Schema.Types.Mixed,
     },

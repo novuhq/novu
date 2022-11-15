@@ -1,6 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
-import { AvatarTypeEnum } from '@novu/shared';
+import { ActorTypeEnum } from '@novu/shared';
 import { schemaOptions } from '../schema-default.options';
 import { MessageTemplateEntity } from './message-template.entity';
 
@@ -58,10 +58,10 @@ const messageTemplateSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
-    avatarDetails: {
+    actor: {
       type: {
         type: Schema.Types.String,
-        enum: AvatarTypeEnum,
+        enum: ActorTypeEnum,
       },
       data: Schema.Types.Mixed,
     },

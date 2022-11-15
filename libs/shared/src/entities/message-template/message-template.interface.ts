@@ -1,4 +1,4 @@
-import { AvatarTypeEnum, ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from './channel.enum';
+import { ActorTypeEnum, ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from './channel.enum';
 
 export type MessageTemplateContentType = 'editor' | 'customHtml';
 
@@ -33,8 +33,8 @@ export interface IMessageTemplate {
   };
   _feedId?: string;
   active?: boolean;
-  avatarDetails?: {
-    type: AvatarTypeEnum;
+  actor?: {
+    type: ActorTypeEnum;
     data: string | null;
   };
 }

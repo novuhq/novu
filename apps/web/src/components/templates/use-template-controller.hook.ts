@@ -10,7 +10,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   BuilderFieldOperator,
-  AvatarTypeEnum,
+  ActorTypeEnum,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
@@ -109,16 +109,13 @@ export function useTemplateController(templateId: string) {
             template: {
               ...item.template,
               feedId: item.template._feedId || '',
-              avatarDetails: item.template.avatarDetails?.type
-                ? item.template.avatarDetails
+              actor: item.template.actor?.type
+                ? item.template.actor
                 : {
-                    type: AvatarTypeEnum.NONE,
+                    type: ActorTypeEnum.NONE,
                     data: null,
                   },
-              enableAvatar:
-                item.template.avatarDetails?.type && item.template.avatarDetails.type !== AvatarTypeEnum.NONE
-                  ? true
-                  : false,
+              enableAvatar: item.template.actor?.type && item.template.actor.type !== ActorTypeEnum.NONE ? true : false,
             },
           };
         }
@@ -147,8 +144,8 @@ export function useTemplateController(templateId: string) {
 
       if (step.template.type === StepTypeEnum.IN_APP) {
         if (!step.template.enableAvatar) {
-          step.template.avatarDetails = {
-            type: AvatarTypeEnum.NONE,
+          step.template.actor = {
+            type: ActorTypeEnum.NONE,
             data: null,
           };
         }
@@ -227,8 +224,8 @@ export function useTemplateController(templateId: string) {
         content: [],
         variables: [],
         ...(channelType === StepTypeEnum.IN_APP && {
-          avatarDetails: {
-            type: AvatarTypeEnum.NONE,
+          actor: {
+            type: ActorTypeEnum.NONE,
             data: null,
           },
           enableAvatar: false,
