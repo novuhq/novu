@@ -99,7 +99,7 @@ export function EmailContentCard({
           marginBottom: '10px',
         }}
       >
-        Preheader (line preview)
+        Inbox View
       </div>
       <div
         style={{
@@ -153,7 +153,7 @@ export function EmailContentCard({
                     error={fieldState.error?.message}
                     disabled={readonly}
                     value={field.value}
-                    placeholder="Email preheader"
+                    placeholder="Preheader..."
                     data-test-id="emailPreheader"
                   />
                 );
