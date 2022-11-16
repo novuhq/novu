@@ -52,11 +52,11 @@ describe('Debugging - test trigger', function () {
       cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
       cy.getByTestId('test-trigger-modal')
         .getByTestId('test-trigger-to-param')
-        .should('have.value', `{ \n    "subscriberId": "${userId}",\n    "email": "${userEmail}"\n}`);
+        .should('have.value', `{\n  "subscriberId": "${userId}",\n  "email": "${userEmail}"\n}`);
 
       cy.getByTestId('test-trigger-modal')
         .getByTestId('test-trigger-payload-param')
-        .should('have.value', '{\n    "newVar": "REPLACE_WITH_DATA" \n}');
+        .should('have.value', '{\n  "newVar": "REPLACE_WITH_DATA"\n}');
       cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-btn').click();
       cy.location('pathname').should('equal', `/templates/edit/${createdTemplateId}`);
     });

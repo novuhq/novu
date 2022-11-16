@@ -1,13 +1,47 @@
-import { INotificationTrigger } from '@novu/shared';
+import { useMemo, useEffect } from 'react';
 import { JsonInput } from '@mantine/core';
+import { useMutation } from 'react-query';
+import * as Sentry from '@sentry/react';
+import { INotificationTrigger, IUserEntity } from '@novu/shared';
+
 import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
-import { useMutation } from 'react-query';
 import { testTrigger } from '../../api/templates';
 import { useContext, useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
-import * as Sentry from '@sentry/react';
 import { AuthContext } from '../../store/authContext';
+
+const makeToValue = (subscriberVariables: { name: string; value?: any }[], currentUser?: IUserEntity) => {
+  let to = `{\n`;
+
+  to +=
+    subscriberVariables
+      ?.map((variable) => {
+        return `  "${variable.name}": "${
+          (currentUser && currentUser[variable.name === 'subscriberId' ? 'id' : variable.name]) ?? 'REPLACE_WITH_DATA'
+        }"`;
+      })
+      .join(',\n') ?? '';
+
+  to += `\n}`;
+
+  return to;
+};
+
+const makePayloadValue = (trigger?: INotificationTrigger) => {
+  let payload = `{\n`;
+
+  payload +=
+    trigger?.variables
+      .map((variable) => {
+        return `  "${variable.name}": "REPLACE_WITH_DATA"`;
+      })
+      .join(',\n') ?? '';
+
+  payload += `\n}`;
+
+  return payload;
+};
 
 export function TestWorkflowModal({
   isVisible,
@@ -25,31 +59,19 @@ export function TestWorkflowModal({
   const { currentUser } = useContext(AuthContext);
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
 
-  const subscriberVariables = [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
+  const subscriberVariables = useMemo(
+    () => [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])],
+    [trigger]
+  );
 
-  const toTrigger = `{ 
-    ${subscriberVariables
-      ?.map((variable) => {
-        return `"${variable.name}": "${
-          (currentUser && currentUser[variable.name === 'subscriberId' ? 'id' : variable.name]) ?? 'REPLACE_WITH_DATA'
-        }"`;
-      })
-      .join(',\n    ')}
-}`;
-  const payloadTrigger = `{
-    ${trigger?.variables
-      .map((variable) => {
-        return `"${variable.name}": "REPLACE_WITH_DATA"`;
-      })
-      .join(',\n    ')} 
-}`;
-  const overridesTrigger = `{
-
-}`;
-
-  const [toValue, setToValue] = useState(toTrigger);
-  const [payloadValue, setPayloadValue] = useState(payloadTrigger);
+  const overridesTrigger = `{\n\n}`;
+  const [toValue, setToValue] = useState(() => makeToValue(subscriberVariables, currentUser));
+  const [payloadValue, setPayloadValue] = useState(() => makePayloadValue(trigger));
   const [overridesValue, setOverridesValue] = useState(overridesTrigger);
+
+  useEffect(() => {
+    setToValue(makeToValue(subscriberVariables, currentUser));
+  }, [setToValue, subscriberVariables, currentUser]);
 
   const onTrigger = async () => {
     const to = JSON.parse(toValue);
