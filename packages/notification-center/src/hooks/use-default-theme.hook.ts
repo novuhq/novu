@@ -42,8 +42,8 @@ export function useDefaultBellColors(props: IDefaultBellColors): { bellColors: I
 
   const bellColors =
     colorScheme === 'light'
-      ? merge(defaultNotificationBellLightTheme, props?.bellColors)
-      : merge(defaultNotificationBellDarkTheme, props?.bellColors);
+      ? { ...defaultNotificationBellLightTheme, bellColors: props?.bellColors }
+      : { ...defaultNotificationBellDarkTheme, bellColors: props?.bellColors };
 
   return {
     bellColors,

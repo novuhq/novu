@@ -32,6 +32,8 @@ export { Received } from './general/Received';
 export { Read } from './general/Read';
 export { Seen } from './general/Seen';
 export { Clicked } from './general/Clicked';
+export { Camera } from './general/Camera';
+export { Avatar } from './general/Avatar';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
@@ -60,4 +62,4 @@ export { ChatGradient } from './gradient/ChatGradient';
 export { LevelsGradient } from './gradient/LevelsGradient';
 export { TimerGradient } from './gradient/TimerGradient';
 
-export { Github } from './social/Github';
+export { GitHub } from './social/GitHub';

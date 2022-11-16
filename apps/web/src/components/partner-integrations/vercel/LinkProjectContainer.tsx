@@ -2,13 +2,19 @@ import { useState } from 'react';
 import { Stack, Group, Box } from '@mantine/core';
 import { useQuery, useMutation } from 'react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { completeVercelIntegration, getVercelProjects } from '../../../api/vercel-integration';
+import {
+  completeVercelIntegration,
+  getVercelConfigurationDetails,
+  getVercelProjects,
+  updateVercelIntegration,
+} from '../../../api/vercel-integration';
 import { useVercelParams } from '../../../hooks/use-vercelParams';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '../../../design-system';
 import { useAuthController } from '../../../store/use-auth-controller';
 import VercelSetupLoader from '../../auth/VercelSetupLoader';
+import { errorMessage, successMessage } from '../../../utils/notifications';
 
 export type ProjectLinkFormValues = {
   projectLinkState: {
@@ -17,7 +23,7 @@ export type ProjectLinkFormValues = {
   }[];
 };
 
-export function LinkProjectContainer() {
+export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   const { organizations } = useAuthController();
   const { configurationId, next } = useVercelParams();
   const { data: vercelProjects } = useQuery(
@@ -28,16 +34,30 @@ export function LinkProjectContainer() {
       placeholderData: [],
     }
   );
-  const { mutateAsync, isLoading } = useMutation(completeVercelIntegration, {
+
+  const { mutateAsync: completeIntegrationMutate, isLoading } = useMutation(completeVercelIntegration, {
     onSuccess: () => {
-      if (next) {
+      if (next && type === 'create') {
         window.location.replace(next);
       }
     },
+    onError: (err: any) => {
+      errorMessage(err?.message);
+    },
   });
+
+  const { mutateAsync: updateIntegrationMutate, isLoading: loading } = useMutation(updateVercelIntegration, {
+    onSuccess: () => {
+      successMessage('Updated Successfully');
+    },
+    onError: (err: any) => {
+      errorMessage(err?.message);
+    },
+  });
+
   const [projectRowCount, setProjectRowCount] = useState(1);
 
-  const { control, handleSubmit } = useForm<ProjectLinkFormValues>({
+  const { control, handleSubmit, reset } = useForm<ProjectLinkFormValues>({
     defaultValues: {
       projectLinkState: [
         {
@@ -51,6 +71,18 @@ export function LinkProjectContainer() {
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'projectLinkState',
+  });
+
+  useQuery(['configurationDetails', configurationId], () => getVercelConfigurationDetails(configurationId as string), {
+    enabled: typeof configurationId === 'string' && type === 'edit',
+    placeholderData: [],
+    onSuccess: (data) => {
+      reset({ projectLinkState: data });
+      setProjectRowCount(data.length);
+    },
+    onError: (err: any) => {
+      errorMessage(err?.message);
+    },
   });
 
   const disableMoreProjectsBtn = Boolean(
@@ -79,15 +111,22 @@ export function LinkProjectContainer() {
     }, {} as Record<string, string[]>);
 
     if (configurationId) {
-      mutateAsync({
-        data: payload,
-        configurationId,
-      });
+      if (type === 'create') {
+        completeIntegrationMutate({
+          data: payload,
+          configurationId,
+        });
+      } else {
+        updateIntegrationMutate({
+          data: payload,
+          configurationId,
+        });
+      }
     }
   };
 
-  if (isLoading) {
-    return <VercelSetupLoader title="Setting up Vercel integration..." />;
+  if (isLoading || loading) {
+    return <VercelSetupLoader title={`${type === 'create' ? 'Setting up' : 'Updating'} Vercel integration...`} />;
   }
 
   return (

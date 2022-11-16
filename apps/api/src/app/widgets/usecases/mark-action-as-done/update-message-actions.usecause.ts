@@ -1,22 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  MessageEntity,
-  MessageRepository,
-  MessageTemplateEntity,
-  SubscriberRepository,
-  OrganizationRepository,
-} from '@novu/dal';
+import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class UpdateMessageActions {
   constructor(
     private messageRepository: MessageRepository,
     private subscriberRepository: SubscriberRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private organizationRepository: OrganizationRepository
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
@@ -36,7 +30,16 @@ export class UpdateMessageActions {
 
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
-    await this.messageRepository.update(
+    if (!subscriber) {
+      throw new ApiException(
+        'Subscriber with the id: ' +
+          command.subscriberId +
+          ' was not found for this environment. ' +
+          'Make sure to create a subscriber before trying to modify it.'
+      );
+    }
+
+    const modificationResponse = await this.messageRepository.update(
       {
         _subscriberId: subscriber._id,
         _id: command.messageId,
@@ -45,6 +48,15 @@ export class UpdateMessageActions {
         $set: updatePayload,
       }
     );
+
+    if (!modificationResponse.modified) {
+      throw new ApiException(
+        'Message with the id: ' +
+          command.messageId +
+          ' was not found for this environment. ' +
+          'Make sure to address correct message before trying to modify it.'
+      );
+    }
 
     this.analyticsService.track('Notification Action Clicked - [Notification Center]', command.organizationId, {
       _subscriber: subscriber._id,

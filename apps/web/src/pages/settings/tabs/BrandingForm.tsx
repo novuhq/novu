@@ -177,7 +177,7 @@ export function BrandingForm({
                   label="Font Family"
                   description="Will be used as the main font-family in the in-app widget"
                   placeholder="Select a font family"
-                  data={['Roboto', 'Montserrat', 'Open Sans', 'Lato', 'Nunito', 'Oswald', 'Raleway']}
+                  data={['Fira Code', 'Roboto', 'Montserrat', 'Open Sans', 'Lato', 'Nunito', 'Oswald', 'Raleway']}
                   data-test-id="font-family-selector"
                   {...field}
                 />

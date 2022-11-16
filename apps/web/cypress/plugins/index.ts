@@ -63,7 +63,7 @@ module.exports = (on, config) => {
       const organizationService = new OrganizationService();
 
       const organization = await organizationService.createOrganization();
-      await organizationService.addMember(organization._id, userId);
+      await organizationService.addMember(organization._id as string, userId);
 
       return organization;
     },
@@ -81,7 +81,7 @@ module.exports = (on, config) => {
       const notificationTemplateService = new NotificationTemplateService(
         session.user._id,
         session.organization._id,
-        session.environment._id
+        session.environment._id as string
       );
 
       let templates;
