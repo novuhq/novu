@@ -53,9 +53,9 @@ jobs:
         AWS_ACCESS_KEY_ID: test
         AWS_SECRET_ACCESS_KEY: test
         AWS_EC2_METADATA_DISABLED: true
-      working-directory: environment/test
+      working-directory: docker/local
       run: |
-        docker-compose up -d
+        docker-compose -f docker-compose.localstack.yml up -d
         sleep 10
         max_retry=30
         counter=0
@@ -79,4 +79,3 @@ jobs:
       run: |
         cd apps/webhook && pnpm test:e2e
         pnpm test
-
