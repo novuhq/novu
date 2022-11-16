@@ -8,7 +8,7 @@ import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { VariableManager } from '../VariableManager';
 import { useIntegrations } from '../../../api/hooks';
-import { Grid, Group } from '@mantine/core';
+import { Grid, Group, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
 
 export function EmailContentCard({
@@ -25,6 +25,7 @@ export function EmailContentCard({
   isIntegrationActive: boolean;
 }) {
   const { readonly } = useEnvController();
+  const theme = useMantineTheme();
   const {
     control,
     formState: { errors },
@@ -103,7 +104,7 @@ export function EmailContentCard({
       </div>
       <div
         style={{
-          background: colors.B17,
+          background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
           borderRadius: '7px',
           marginBottom: '40px',
           padding: '5px 10px',
@@ -115,7 +116,7 @@ export function EmailContentCard({
               style={{
                 padding: '15px',
                 borderRadius: '7px',
-                border: `1px solid ${colors.B30}`,
+                border: `1px solid ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
                 margin: '5px 0px',
               }}
             >
