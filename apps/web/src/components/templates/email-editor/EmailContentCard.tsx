@@ -8,7 +8,7 @@ import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { VariableManager } from '../VariableManager';
 import { useIntegrations } from '../../../api/hooks';
-import { Grid, Group, useMantineTheme } from '@mantine/core';
+import { Grid, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
 
 export function EmailContentCard({
@@ -42,7 +42,7 @@ export function EmailContentCard({
       return;
     }
     setIntegration(integrations.find((item) => item.channel === 'email') || null);
-  }, [integrations]);
+  }, [integrations, setIntegration]);
 
   useEffect(() => {
     if (contentType === 'customHtml') {
