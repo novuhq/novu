@@ -85,7 +85,15 @@ function App() {
                     path="/partner-integrations/vercel/link-projects"
                     element={
                       <RequiredAuth>
-                        <LinkVercelProjectPage />
+                        <LinkVercelProjectPage type="create" />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/partner-integrations/vercel/link-projects/edit"
+                    element={
+                      <RequiredAuth>
+                        <LinkVercelProjectPage type="edit" />
                       </RequiredAuth>
                     }
                   />
