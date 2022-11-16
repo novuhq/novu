@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Generic backend code used inside of Novus different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@nestjs/common": "^8.2.0",
-    "@novu/dal": "^0.9.0",
+    "@novu/dal": "^0.9.1",
     "@novu/discord": "^0.9.0",
     "@novu/emailjs": "^0.9.0",
     "@novu/fcm": "^0.9.0",
@@ -58,7 +58,7 @@
     "@novu/stateless": "^0.9.0",
     "@novu/telnyx": "^0.9.0",
     "@novu/termii": "^0.9.0",
-    "@novu/testing": "^0.9.0",
+    "@novu/testing": "^0.9.1",
     "@novu/twilio": "^0.9.0",
     "@sentry/node": "^7.12.1",
     "class-transformer": "^0.5.1",

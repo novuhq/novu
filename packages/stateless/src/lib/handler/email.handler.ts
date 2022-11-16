@@ -1,4 +1,7 @@
-import { compileTemplate } from '../content/content.engine';
+import {
+  HandlebarsContentEngine,
+  IContentEngine,
+} from '../content/content.engine';
 import { IEmailProvider } from '../provider/provider.interface';
 import {
   ChannelTypeEnum,
@@ -8,11 +11,16 @@ import {
 import { ITheme } from '../theme/theme.interface';
 
 export class EmailHandler {
+  private readonly contentEngine: IContentEngine;
+
   constructor(
     private message: IMessage,
     private provider: IEmailProvider,
-    private theme?: ITheme
-  ) {}
+    private theme?: ITheme,
+    contentEngine?: IContentEngine
+  ) {
+    this.contentEngine = contentEngine ?? new HandlebarsContentEngine();
+  }
 
   async send(data: ITriggerPayload) {
     const attachments = data.$attachments?.filter((item) =>
@@ -32,9 +40,12 @@ export class EmailHandler {
     let html = '';
 
     if (typeof this.message.template === 'string') {
-      html = compileTemplate(this.message.template, templatePayload);
+      html = this.contentEngine.compileTemplate(
+        this.message.template,
+        templatePayload
+      );
     } else {
-      html = compileTemplate(
+      html = this.contentEngine.compileTemplate(
         await this.message.template(templatePayload),
         templatePayload
       );
@@ -43,9 +54,12 @@ export class EmailHandler {
     let text = '';
 
     if (typeof this.message.textTemplate === 'string') {
-      text = compileTemplate(this.message.textTemplate, templatePayload);
+      text = this.contentEngine.compileTemplate(
+        this.message.textTemplate,
+        templatePayload
+      );
     } else if (typeof this.message.textTemplate === 'function') {
-      text = compileTemplate(
+      text = this.contentEngine.compileTemplate(
         await this.message.textTemplate(templatePayload),
         templatePayload
       );
@@ -64,17 +78,20 @@ export class EmailHandler {
       );
     }
 
-    const subject = compileTemplate(subjectParsed, data);
+    const subject = this.contentEngine.compileTemplate(subjectParsed, data);
 
     if (this.theme?.emailTemplate?.getEmailLayout()) {
       const themeVariables =
         this.theme?.emailTemplate?.getTemplateVariables() || {};
 
-      html = compileTemplate(this.theme?.emailTemplate?.getEmailLayout(), {
-        ...templatePayload,
-        ...themeVariables,
-        body: html,
-      });
+      html = this.contentEngine.compileTemplate(
+        this.theme?.emailTemplate?.getEmailLayout(),
+        {
+          ...templatePayload,
+          ...themeVariables,
+          body: html,
+        }
+      );
     }
 
     if (!data.$email) {

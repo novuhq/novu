@@ -27,7 +27,7 @@ export const Regenerate = ({ fetchApiKeys }: { fetchApiKeys: () => void }) => {
     await fetchApiKeys();
     setModalIsOpened(false);
     showNotification({
-      message: `Successfully regenereated API keys!`,
+      message: `Successfully regenerated API keys!`,
       color: 'green',
     });
   }

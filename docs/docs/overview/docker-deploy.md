@@ -74,7 +74,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 
 ### Pointing IFrame embed to custom installation
 
-When using the IFrame embed to attach the notification center rather than the react component, you need to specify the `backendUrl` and the `socketUrl` when initializing the iframe.
+When using the IFrame embed to attach the notification center rather than the React component, you need to specify the `backendUrl` and the `socketUrl` when initializing the iframe.
 
 ```html
 <script>
