@@ -81,8 +81,8 @@ export class MailersendEmailProvider implements IEmailProvider {
 
     const message = await emailSendResponse
       .json()
-      .then((res) => res?.message || 'Unknown error occured')
-      .catch(() => 'Unknown error occured');
+      .then((res) => res?.message || 'Unknown error occurred')
+      .catch(() => 'Unknown error occurred');
 
     return {
       success: false,

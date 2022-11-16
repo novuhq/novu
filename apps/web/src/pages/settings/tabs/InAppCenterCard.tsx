@@ -41,7 +41,7 @@ export const InAppCenterCard = () => {
                 backgroundColor: 'transparent !important',
               },
             })}
-            language="jsx"
+            language="javascript"
             data-test-id="embed-code-snippet"
           >
             {embedCode}

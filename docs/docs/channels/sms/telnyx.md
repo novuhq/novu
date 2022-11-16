@@ -10,11 +10,11 @@ To use the Telnyx channel, you will need to create a Telnyx account and add your
 
 To find your Telnyx API key:
 
-- Log in to your Telnyx account.
+- Log into your Telnyx account.
 - Navigate to Account Setting.
 - Then go to [Keys & Credentials](https://portal.telnyx.com/#/app/api-keys).
 - You can copy API key from there.
-- Alternatively, you can create a API key by tapping on the Create API Key button.
+- Alternatively, you can create an API key by tapping on the Create API Key button.
 
 Before copying it, make sure it's status is showing active.
 

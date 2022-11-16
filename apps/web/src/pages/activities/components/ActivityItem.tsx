@@ -123,6 +123,11 @@ export const ActivityItem = ({ item, onClick }) => {
                   <b>Subscriber id:</b> {item?.subscriber?.id ? item.subscriber.id : 'Deleted Subscriber'}
                 </small>
               </div>
+              <div data-test-id="transaction-id">
+                <small>
+                  <b>Transaction id:</b> {item.transactionId}
+                </small>
+              </div>
             </div>
           </Grid.Col>
           <Grid.Col span={9}>

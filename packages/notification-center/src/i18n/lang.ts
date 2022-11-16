@@ -68,6 +68,7 @@ import { UZ } from './languages/uz';
 import { VI } from './languages/vi';
 import { ZH } from './languages/zh';
 import { ZU } from './languages/zu';
+import { BA } from './languages/ba';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -152,6 +153,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   vi: VI,
   zh: ZH,
   zu: ZU,
+  ba: BA,
 };
 
 /**
@@ -240,4 +242,6 @@ export type I18NLanguage =
   | 'uz'
   | 'vi'
   | 'zh'
-  | 'zu';
+  | 'zu'
+  | 'ba';
+

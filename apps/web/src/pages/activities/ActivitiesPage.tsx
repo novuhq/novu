@@ -108,6 +108,21 @@ export function ActivitiesPage() {
                 <Input
                   {...field}
                   error={fieldState.error?.message}
+                  label="Transaction ID"
+                  placeholder="Search by transaction id"
+                  value={field.value || ''}
+                />
+              )}
+              control={control}
+              name="transactionId"
+            />
+          </div>
+          <div style={{ minWidth: '250px' }}>
+            <Controller
+              render={({ field, fieldState }) => (
+                <Input
+                  {...field}
+                  error={fieldState.error?.message}
                   label="Search"
                   placeholder="Select Email or ID"
                   value={field.value || ''}

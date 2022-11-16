@@ -67,7 +67,6 @@ describe('Changes Screen', function () {
     cy.getByTestId('changes-table').find('tbody tr').should('have.length', 2);
 
     cy.getByTestId('promote-all-btn').click({ force: true });
-    cy.wait(500);
 
     cy.getByTestId('changes-table').find('tbody tr').should('have.length', 0);
 
@@ -93,23 +92,22 @@ function createNotification() {
 
   cy.getByTestId('workflowButton').click({ force: true });
 
-  cy.wait(1000);
-  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
+  cy.waitLoadEnv(() => {
+    cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
 
-  cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer, force: true });
+    cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer, force: true });
 
-  cy.getByTestId('node-emailSelector').parent().click({ force: true });
-  cy.getByTestId('edit-template-channel').click({ force: true });
+    cy.getByTestId('node-emailSelector').parent().click({ force: true });
+    cy.getByTestId('edit-template-channel').click({ force: true });
 
-  cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailSubject').type('this is email subject');
 
-  cy.getByTestId('submit-btn').click();
-  cy.getByTestId('trigger-snippet-btn').click();
-  cy.wait(500);
+    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('trigger-snippet-btn').click();
+  });
 }
 
 function promoteNotification() {
   cy.visit('/changes');
   cy.getByTestId('promote-btn').eq(0).click({ force: true });
-  cy.wait(500);
 }

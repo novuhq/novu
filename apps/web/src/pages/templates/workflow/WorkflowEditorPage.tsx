@@ -346,7 +346,14 @@ const WorkflowEditorPage = ({
           </SideBarWrapper>
         </Grid.Col>
       </Grid>
-      <DeleteConfirmModal target="step" isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
+      <DeleteConfirmModal
+        target={
+          selectedChannel !== null && getChannel(selectedChannel)?.type === NodeTypeEnum.CHANNEL ? 'step' : 'action'
+        }
+        isOpen={toDelete.length > 0}
+        confirm={confirmDelete}
+        cancel={cancelDelete}
+      />
     </>
   );
 };
