@@ -38,4 +38,7 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsMongoId()
   parentChangeId: string;
+
+  @IsOptional()
+  preheader?: string;
 }

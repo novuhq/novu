@@ -34,4 +34,8 @@ export class MessageTemplate {
   @IsOptional()
   @IsString()
   title?: string;
+
+  @IsOptional()
+  @IsString()
+  preheader?: string;
 }

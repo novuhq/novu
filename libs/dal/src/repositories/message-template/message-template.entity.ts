@@ -25,6 +25,8 @@ export class MessageTemplateEntity {
 
   name?: string;
 
+  preheader?: string;
+
   _feedId?: string;
 
   cta?: IMessageCTA;
