@@ -16,7 +16,9 @@ export class MsTeamsProvider implements IChatProvider {
   async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {
     const response = await this.axiosInstance.post(
       data.webhookUrl,
-      JSON.parse(data.content)
+      {
+        text: data.content
+      }
     );
 
     return {
