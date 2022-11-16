@@ -28,6 +28,4 @@ RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
 
-#RUN chown -R 1000:root .
-
 CMD [ "pm2-runtime", "dist/src/main.js" ]

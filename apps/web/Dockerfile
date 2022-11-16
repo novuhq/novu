@@ -24,7 +24,6 @@ COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
-#RUN pnpm install
 RUN --mount=type=cache,id=pnpm-store-web,target=/root/.pnpm-store\
   pnpm install --reporter=silent
 
@@ -33,7 +32,5 @@ RUN pnpm add @babel/core -w
 COPY [".eslintrc.js",".prettierrc",".prettierignore","./"]
 
 RUN pnpm build:web
-
-#RUN chown -R 1000:root .
 
 CMD [ "pnpm", "start:static:web" ]
