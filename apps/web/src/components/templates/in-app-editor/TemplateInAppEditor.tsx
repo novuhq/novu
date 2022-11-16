@@ -1,5 +1,5 @@
 import { useInputState } from '@mantine/hooks';
-import { ActionIcon, Container, Stack } from '@mantine/core';
+import { ActionIcon, Container, Stack, Divider } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -15,6 +15,7 @@ import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
+import { EnableAvatarSwitch } from './EnableAvatarSwitch';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
@@ -119,6 +120,8 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             readonly={readonly}
             contentPlaceholder="Write your notification content here..."
           />
+          <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} />
+          <Divider />
           <Controller
             name={`steps.${index}.template.feedId` as any}
             control={control}

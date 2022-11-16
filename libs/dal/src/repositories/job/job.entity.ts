@@ -36,4 +36,5 @@ export class JobEntity {
     updateMode?: boolean;
   };
   type?: StepTypeEnum;
+  _actorId?: string;
 }
