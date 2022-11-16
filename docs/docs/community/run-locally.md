@@ -132,3 +132,41 @@ cd apps/web && npm run cypress:open
 ### Testing providers
 
 To run tests against the providers folder, you can use the `npm run test:providers` command.
+
+### Local environment setup script (beta)
+
+As an option in our script runner `Jarvis` we have made available an option to run [this script](https://github.com/novuhq/novu/blob/2f2abdcaaad8a7735e0a2d488607c3276c8975fd/scripts/dev-environment-setup.sh) that will automatically try to install all the dependencies needed to be able to run Novu locally, as previous step of installing the project dependencies through `pnpm install`.
+When executing it inside of `Jarvis` you will need to have previously installed by yourself `git` and `node`, as we earlier in this page is mentioned.
+
+The script can be run on its own without any previously dependency installed, as it is prepared to execute the following tasks:
+
+- Check of the running OS in the local machine (currently only MacOSx and [GNU Linux](https://en.wikipedia.org/wiki/GNU/Linux_naming_controversy) supported)
+- Install of OS dependencies (currently only MacOSx supported)
+  -- MacOSx: It will execute the following tasks
+  --- Will try to install or update [XCode](https://developer.apple.com/xcode/) (skippable step; though XCode installs [`git`](https://git-scm.com/) that is a required dependency for later)
+  --- Will install [Rosetta](https://support.apple.com/en-gb/HT211861) for Apple CPUs
+  --- Will set up some opinionated OS settings
+- Will check if [`git`](https://git-scm.com/) is installed and if not will abort operation
+- Will make [ZSH](https://en.wikipedia.org/wiki/Z_shell) as the default shell to be able to execute the next task
+- Will (opinionatedly) install [Oh My Zsh!](https://ohmyz.sh/) (skippable task)
+- Will (opinionatedly) install the [Homebrew](https://brew.sh/) package manager and will set up your local environment to execute it besides adding some casks
+- Will (opinionatedly) install [NVM](https://github.com/nvm-sh/nvm) as Node.js version manager
+- Will install the required [Node.js](https://nodejs.org/en/) version to be able to [run Novu](https://github.com/novuhq/novu/blob/2f2abdcaaad8a7735e0a2d488607c3276c8975fd/package.json#L180)
+- Will install [PNPM](https://pnpm.io/) as package manager, required dependency for some of the tasks inside Novu's scripts
+- Will install [Docker](https://www.docker.com/) as containerized application development tool
+- Will install required databases [MongoDB](https://www.mongodb.com/) (Community version) and [Redis](https://redis.io/) through Homebrew
+- Will install the [AWS CLI](https://aws.amazon.com/cli/) tool (not required to run Novu; it is a core maintainers used tool)
+- Will create a local development domain `local.novu.co` in your local machine
+- Will clone Novu repository in your local machine (skippable step) to a selected folder `$HOME/Dev`
+
+:::warn
+
+This script has only been thoroughly tested in MacOSx. Little testing has been run in GNU Linux.
+
+:::
+
+:::info
+This script is not bullet-proof and some of the tasks have intertwined dependencies with each other. We have tried to make it as idempotent as possible but some loose knots will probably show or because conflicts between versions of the different dependencies.
+Please report to us any problem found and we will try to fix or assist though we have not the resources to make it idempotent in every potential system and potential combinations.
+
+:::
