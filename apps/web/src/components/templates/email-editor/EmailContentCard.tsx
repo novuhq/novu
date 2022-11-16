@@ -33,7 +33,6 @@ export function EmailContentCard({
     watch,
   } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
-  const subject = watch(`steps.${index}.template.subject`);
   const [activeTab, setActiveTab] = useState(0);
   const { integrations = [] } = useIntegrations();
   const [integration, setIntegration]: any = useState(null);
@@ -120,7 +119,7 @@ export function EmailContentCard({
                 margin: '5px 0px',
               }}
             >
-              {integration?.credentials?.from}
+              {integration ? integration?.credentials?.from : 'No active email integration'}
             </div>
           </Grid.Col>
           <Grid.Col span={4}>
