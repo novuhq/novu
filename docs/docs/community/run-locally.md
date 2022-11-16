@@ -136,7 +136,7 @@ To run tests against the providers folder, you can use the `npm run test:provide
 ### Local environment setup script (beta)
 
 As an option in our script runner `Jarvis` we have made available an option to run [this script](https://github.com/novuhq/novu/blob/2f2abdcaaad8a7735e0a2d488607c3276c8975fd/scripts/dev-environment-setup.sh) that will automatically try to install all the dependencies needed to be able to run Novu locally, as previous step of installing the project dependencies through `pnpm install`.
-When executing it inside of `Jarvis` you will need to have previously installed by yourself `git` and `node`, as we earlier in this page is mentioned.
+When executing it inside `Jarvis`, you will need to have previously installed by yourself `git` and `node`, as we mentioned earlier on this page.
 
 The script can be run on its own without any previously dependency installed, as it is prepared to execute the following tasks:
 
