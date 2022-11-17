@@ -68,7 +68,7 @@ export class UpdateMessageTemplate {
       updatePayload.title = command.title;
     }
 
-    if (command.preheader) {
+    if (command.preheader !== undefined || command.preheader !== null) {
       updatePayload.preheader = command.preheader;
     }
 
