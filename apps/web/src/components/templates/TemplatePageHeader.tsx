@@ -51,6 +51,8 @@ interface Props {
   setActivePage: (activePage: ActivePageEnum) => void;
   activePage: ActivePageEnum;
   onTestWorkflowClicked: () => void;
+  view?: 'Edit' | 'Preview';
+  setView?: (view: 'Edit' | 'Preview') => void;
 }
 
 export const TemplatePageHeader = ({
@@ -60,9 +62,10 @@ export const TemplatePageHeader = ({
   activePage,
   setActivePage,
   onTestWorkflowClicked,
+  view = 'Edit',
+  setView = () => {},
 }: Props) => {
   const { editMode, template } = useTemplateController(templateId);
-  const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
   const { readonly } = useEnvController();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
@@ -103,9 +106,11 @@ export const TemplatePageHeader = ({
             </Center>
           </When>
         </div>
-        <div>
-          <EditorPreviewSwitch view={view} setView={setView} />
-        </div>
+        <When truthy={activePage === ActivePageEnum.EMAIL}>
+          <div>
+            <EditorPreviewSwitch view={view} setView={setView} />
+          </div>
+        </When>
         <div>
           <Grid align="center" gutter={50}>
             {editMode && (
