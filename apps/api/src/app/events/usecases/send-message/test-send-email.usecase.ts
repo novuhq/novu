@@ -10,18 +10,10 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
-import { EnvironmentWithUserCommand } from '@novu/application-generic';
-
-class Command extends EnvironmentWithUserCommand {
-  contentType: 'customHtml' | 'editor';
-  payload: any;
-  subject: string;
-  content: string | IEmailBlock[];
-  to: string | string[];
-}
+import { TestSendMessageCommand } from './send-message.command';
 
 @Injectable()
-export class SendMessageEmail {
+export class SendTestEmail {
   private mailFactory = new MailFactory();
 
   constructor(
@@ -30,7 +22,7 @@ export class SendMessageEmail {
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {}
 
-  public async execute(command: Command) {
+  public async execute(command: TestSendMessageCommand) {
     const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
     const email = command.to;
 
@@ -60,10 +52,9 @@ export class SendMessageEmail {
 
     try {
       subject = await this.renderContent(command.subject, command.subject, organization, command);
-
       content = await this.getContent(isEditorMode, command, subject, organization);
     } catch (e) {
-      // do something...
+      console.log(e.message);
 
       return;
     }
@@ -110,19 +101,21 @@ export class SendMessageEmail {
     try {
       await mailHandler.send(mailData);
     } catch (error) {
-      // do something...
+      console.log(error);
+
       return;
     }
   }
 
   private async getContent(
     isEditorMode,
-    command: Command,
+    command: TestSendMessageCommand,
     subject,
     organization: OrganizationEntity
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode) {
       const content: IEmailBlock[] = [...command.content] as IEmailBlock[];
+      console.log(content);
       for (const block of content) {
         /*
          * We need to trim the content in order to avoid mail provider like GMail
@@ -139,7 +132,12 @@ export class SendMessageEmail {
     return command.content;
   }
 
-  private async renderContent(content: string, subject, organization: OrganizationEntity, command: Command) {
+  private async renderContent(
+    content: string,
+    subject,
+    organization: OrganizationEntity,
+    command: TestSendMessageCommand
+  ) {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
@@ -156,7 +154,6 @@ export class SendMessageEmail {
             events: [],
             total_count: 1,
           },
-          subscriber: '?',
           ...command.payload,
         },
       })

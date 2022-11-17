@@ -12,6 +12,9 @@ import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigge
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
+import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
+import { TestSendEmailRequestDto } from './dtos/test-email-request.dto';
 
 @Controller('events')
 @ApiTags('Events')
@@ -19,7 +22,8 @@ export class EventsController {
   constructor(
     private triggerEvent: TriggerEvent,
     private cancelDelayedUsecase: CancelDelayed,
-    private triggerEventToAll: TriggerEventToAll
+    private triggerEventToAll: TriggerEventToAll,
+    private sendTestEmail: SendTestEmail
   ) {}
 
   @ExternalApiAccessible()
@@ -106,6 +110,23 @@ export class EventsController {
         payload: body.payload,
         transactionId,
         overrides: body.overrides || {},
+      })
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/test/email')
+  async testEmailMessage(@UserSession() user: IJwtPayload, @Body() body: TestSendEmailRequestDto): Promise<void> {
+    return await this.sendTestEmail.execute(
+      TestSendMessageCommand.create({
+        subject: body.subject,
+        payload: body.payload,
+        contentType: body.contentType,
+        content: body.content,
+        to: body.to,
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
       })
     );
   }

@@ -22,6 +22,7 @@ import { AddDigestJob } from './add-job/add-digest-job.usecase';
 import { AddDelayJob } from './add-job/add-delay-job.usecase';
 import { ShouldAddDigestJob } from './add-job/should-add-digest-job.usecase';
 import { SendMessageDelay } from './send-message/send-message-delay.usecase';
+import { SendTestEmail } from './send-message/test-send-email.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -48,4 +49,5 @@ export const USE_CASES = [
   AddDelayJob,
   ShouldAddDigestJob,
   SendMessageDelay,
+  SendTestEmail,
 ];

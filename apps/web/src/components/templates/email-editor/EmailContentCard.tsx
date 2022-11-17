@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Input, Tabs } from '../../../design-system';
+import { Button, Input, Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { VariableManager } from '../VariableManager';
+import { TestSendEmailModal } from './TestSendEmailModal';
 
 export function EmailContentCard({
   index,
@@ -27,9 +28,11 @@ export function EmailContentCard({
     formState: { errors },
     setValue,
     watch,
+    getValues,
   } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState(0);
+  const [showTestModal, setShowTestModal] = useState(false);
 
   useEffect(() => {
     if (contentType === 'customHtml') {
@@ -80,6 +83,7 @@ export function EmailContentCard({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
+      <Button onClick={() => setShowTestModal(true)}>Test Email</Button>
       <Controller
         name={`steps.${index}.template.subject` as any}
         control={control}
@@ -97,6 +101,12 @@ export function EmailContentCard({
             />
           );
         }}
+      />
+      <TestSendEmailModal
+        index={index}
+        isVisible={showTestModal}
+        onDismiss={() => setShowTestModal(false)}
+        template={getValues(`steps.${index}.template` as any)}
       />
       <div data-test-id="editor-type-selector">
         <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
