@@ -109,7 +109,7 @@ export function InAppWidgetPreview({
           >
             <Group position="apart">
               <div style={{ width: '100%' }}>
-                <Group position="left" spacing={10}>
+                <Group position="left" spacing={10} noWrap>
                   {enableAvatar && (
                     <AvatarContainer
                       index={index}
@@ -118,7 +118,7 @@ export function InAppWidgetPreview({
                     />
                   )}
 
-                  <div>
+                  <div style={{ flexGrow: 1 }}>
                     <Text weight="bold">{children}</Text>
                     <Text mt={5} color={colors.B60}>
                       {minutesAgo(5)}
