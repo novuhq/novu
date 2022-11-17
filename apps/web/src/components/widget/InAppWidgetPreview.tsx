@@ -108,7 +108,7 @@ export function InAppWidgetPreview({
           >
             <Group position="apart">
               <div style={{ width: '100%' }}>
-                <Group position="left" spacing={10}>
+                <Group position="left" spacing={10} noWrap>
                   {enableAvatar && (
                     <AvatarContainer
                       index={index}
