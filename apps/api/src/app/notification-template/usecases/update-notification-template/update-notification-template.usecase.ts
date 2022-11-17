@@ -134,6 +134,7 @@ export class UpdateNotificationTemplate {
               subject: message.template.subject,
               title: message.template.title,
               preheader: message.template.preheader,
+              actor: message.template.actor,
               parentChangeId,
             })
           );

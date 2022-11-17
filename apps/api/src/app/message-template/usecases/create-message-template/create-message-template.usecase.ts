@@ -31,6 +31,7 @@ export class CreateMessageTemplate {
       _environmentId: command.environmentId,
       _creatorId: command.userId,
       preheader: command.preheader,
+      actor: command.actor,
     });
 
     item = await this.messageTemplateRepository.findById(item._id);

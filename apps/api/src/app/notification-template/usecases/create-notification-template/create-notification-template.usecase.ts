@@ -69,6 +69,7 @@ export class CreateNotificationTemplate {
           feedId: message.template.feedId,
           preheader: message.template.preheader,
           parentChangeId,
+          actor: message.template.actor,
         })
       );
 

@@ -72,6 +72,10 @@ export class UpdateMessageTemplate {
       updatePayload.preheader = command.preheader;
     }
 
+    if (command.actor) {
+      updatePayload.actor = command.actor;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
