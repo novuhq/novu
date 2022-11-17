@@ -19,7 +19,7 @@ import { TestWorkflowModal } from '../../../components/templates/TestWorkflowMod
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
 import { useDisclosure } from '@mantine/hooks';
 import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
-import Frame from 'react-frame-component';
+import { PreviewWeb } from './PreviewWeb';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -151,17 +151,7 @@ export default function TemplateEditorPage() {
 
           {!loadingEditTemplate && !isIntegrationsLoading ? (
             view === 'Preview' && activePage === ActivePageEnum.EMAIL ? (
-              <Frame
-                style={{
-                  width: '80%',
-                  marginLeft: '10%',
-                  height: '50vh',
-                  border: '0px',
-                }}
-                initialContent={`<html><head></head><body><div></div></body></html>`}
-              >
-                <></>
-              </Frame>
+              <PreviewWeb activeStep={activeStep} />
             ) : (
               <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
             )
