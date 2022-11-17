@@ -4,7 +4,7 @@ import { LinkProjectContainer } from '../../components/partner-integrations/verc
 import { Container, Title, Text } from '../../design-system';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 
-export function LinkVercelProjectPage() {
+export function LinkVercelProjectPage({ type }: { type: 'edit' | 'create' }) {
   return (
     <ThemeProvider>
       <PartnerIntegrationLayout>
@@ -21,7 +21,7 @@ export function LinkVercelProjectPage() {
               <Title>Link Vercel Projects to Novu</Title>
               <Text>Choose the projects to link with your Organizations</Text>
             </Stack>
-            <LinkProjectContainer />
+            <LinkProjectContainer type={type} />
           </Stack>
         </Container>
       </PartnerIntegrationLayout>

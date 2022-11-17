@@ -7,6 +7,7 @@ import {
   SubscriberEntity,
   MessageEntity,
   IEmailBlock,
+  NotificationEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -16,7 +17,8 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   InAppProviderIdEnum,
-  StepTypeEnum,
+  ActorTypeEnum,
+  IActor,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -57,6 +59,12 @@ export class SendMessageInApp extends SendMessageType {
     });
     const inAppChannel: NotificationStepEntity = command.step;
     let content = '';
+
+    const { actor } = command.step.template;
+
+    if (actor && actor.type !== ActorTypeEnum.NONE) {
+      actor.data = await this.processAvatar(actor, command, notification);
+    }
 
     try {
       content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
@@ -140,6 +148,10 @@ export class SendMessageInApp extends SendMessageType {
         payload: messagePayload,
         templateIdentifier: command.identifier,
         _jobId: command.jobId,
+        ...(actor &&
+          actor.type !== ActorTypeEnum.NONE && {
+            actor,
+          }),
       });
     }
 
@@ -259,5 +271,49 @@ export class SendMessageInApp extends SendMessageType {
         },
       })
     );
+  }
+
+  private async processAvatar(
+    actor: IActor,
+    command: SendMessageCommand,
+    notification: NotificationEntity
+  ): Promise<string | null> {
+    const actorId = command.job?._actorId;
+    if (actor.type === ActorTypeEnum.USER && actorId) {
+      try {
+        const actorSubscriber: SubscriberEntity = await this.subscriberRepository.findOne(
+          {
+            _environmentId: command.environmentId,
+            _id: actorId,
+          },
+          'avatar'
+        );
+
+        return actorSubscriber?.avatar || null;
+      } catch (error) {
+        await this.createLogUsecase.execute(
+          CreateLogCommand.create({
+            transactionId: command.transactionId,
+            status: LogStatusEnum.ERROR,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            notificationId: notification._id,
+            text: 'Couldnt get Avatar actor details',
+            userId: command.userId,
+            subscriberId: command.subscriberId,
+            code: LogCodeEnum.AVATAR_ACTOR_ERROR,
+            templateId: notification._templateId,
+            raw: {
+              payload: command.payload,
+              triggerIdentifier: command.identifier,
+            },
+          })
+        );
+
+        return null;
+      }
+    }
+
+    return actor.data || null;
   }
 }
