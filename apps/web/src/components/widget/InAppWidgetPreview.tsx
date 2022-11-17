@@ -117,7 +117,7 @@ export function InAppWidgetPreview({
                     />
                   )}
 
-                  <div>
+                  <div style={{ flexGrow: 1 }}>
                     <Text weight="bold">{children}</Text>
                     <Text mt={5} color={colors.B60}>
                       {minutesAgo(5)}
