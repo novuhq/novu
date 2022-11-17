@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { Document, Model, Types, ProjectionType } from 'mongoose';
-
 export class BaseRepository<T_Query, T_Response> {
   public _model: Model<any & Document>;
 
@@ -43,7 +42,7 @@ export class BaseRepository<T_Query, T_Response> {
 
   async find(
     query: T_Query,
-    select = '',
+    select: ProjectionType<T> = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
   ): Promise<T_Response[]> {
     const data = await this.MongooseModel.find(query, select, {
@@ -103,6 +102,10 @@ export class BaseRepository<T_Query, T_Response> {
       matched: saved.matchedCount,
       modified: saved.modifiedCount,
     };
+  }
+
+  async bulkWrite(bulkOperations: any) {
+    await this.MongooseModel.bulkWrite(bulkOperations);
   }
 
   protected mapEntity(data: any): T_Response {

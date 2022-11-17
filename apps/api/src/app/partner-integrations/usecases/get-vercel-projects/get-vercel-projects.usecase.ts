@@ -37,8 +37,8 @@ export class GetVercelProjects {
     );
 
     return {
-      accessToken: organization.partnerConfigurations[0].accessToken,
-      teamId: organization.partnerConfigurations[0].teamId,
+      accessToken: organization[0].partnerConfigurations[0].accessToken,
+      teamId: organization[0].partnerConfigurations[0].teamId,
     };
   }
 

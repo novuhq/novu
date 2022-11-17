@@ -32,6 +32,8 @@ export { Received } from './general/Received';
 export { Read } from './general/Read';
 export { Seen } from './general/Seen';
 export { Clicked } from './general/Clicked';
+export { Camera } from './general/Camera';
+export { Avatar } from './general/Avatar';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';

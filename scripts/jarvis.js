@@ -33,6 +33,7 @@ const API_TESTS = 'API tests';
 const API_E2E_TESTS = 'API E2E tests';
 const API_INTEGRATION_TESTS = 'API integration tests';
 const DOCS = 'Docs';
+const DEV_ENVIRONMENT_SETUP = 'Development environment setup';
 const FULL_PROJECT = 'Full project';
 const WEB_AND_API = 'WEB & API';
 const WEB_TESTS = 'WEB tests';
@@ -52,7 +53,7 @@ async function setupRunner() {
       type: 'list',
       name: 'action',
       message: 'How can I help today?',
-      choices: [RUN_PROJECT, TEST_PROJECT],
+      choices: [RUN_PROJECT, TEST_PROJECT, DEV_ENVIRONMENT_SETUP],
     },
     {
       type: 'list',
@@ -93,7 +94,9 @@ async function setupRunner() {
   ];
 
   inquirer.prompt(questions).then(async (answers) => {
-    if (answers.runConfiguration === FULL_PROJECT) {
+    if (answers.action === DEV_ENVIRONMENT_SETUP) {
+      shell.exec('npm run dev-environment-setup');
+    } else if (answers.runConfiguration === FULL_PROJECT) {
       shell.exec('npm run nx build @novu/api');
       shell.exec('npm run start:dev', { async: true });
 
