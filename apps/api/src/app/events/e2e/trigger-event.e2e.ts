@@ -198,7 +198,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
             },
             {
               name: 'text2.txt',
-              file: new Buffer('hello world!', 'utf-8'),
+              file: Buffer.from('hello world!', 'utf-8'),
             },
           ],
         },

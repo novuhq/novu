@@ -15,13 +15,13 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
   }
 
   public async getEntityChanges(
-    environmentId: string,
+    organizationId: string,
     entityType: ChangeEntityTypeEnum,
     entityId: string
   ): Promise<ChangeEntity[]> {
     return await this.find(
       {
-        _environmentId: environmentId,
+        _organizationId: organizationId,
         _entityId: entityId,
         type: entityType,
       },

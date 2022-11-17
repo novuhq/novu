@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ChangeRepository,
-  NotificationTemplateRepository,
+  EnvironmentRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
-  EnvironmentRepository,
+  NotificationTemplateRepository,
 } from '@novu/dal';
-import { ChannelCTATypeEnum, StepTypeEnum, ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, ChannelCTATypeEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -28,9 +28,7 @@ describe('Promote changes', () => {
   });
 
   it('should set correct notification group for notification template', async () => {
-    const prodEnv = await environmentRepository.findOne({
-      _parentId: session.environment._id,
-    });
+    const prodEnv = await getProductionEnvironment();
 
     const parentGroup = await notificationGroupRepository.create({
       name: 'test',
@@ -84,7 +82,7 @@ describe('Promote changes', () => {
     });
 
     const prodVersion = await notificationTemplateRepository.findOne({
-      _environmentId: session.environment._id,
+      _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -141,8 +139,10 @@ describe('Promote changes', () => {
       enabled: false,
     });
 
+    const prodEnv = await getProductionEnvironment();
+
     const prodVersion = await notificationTemplateRepository.findOne({
-      _environmentId: session.environment._id,
+      _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -159,6 +159,7 @@ describe('Promote changes', () => {
     };
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
     await session.applyChanges({
       enabled: false,
     });
@@ -166,12 +167,16 @@ describe('Promote changes', () => {
     const notificationTemplateId = body.data._id;
 
     await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
+
     await session.applyChanges({
       enabled: false,
     });
 
+    const prodEnv = await getProductionEnvironment();
+
     const prodVersion = await notificationTemplateRepository.findOne({
-      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      _notificationId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -247,8 +252,10 @@ describe('Promote changes', () => {
       enabled: false,
     });
 
+    const prodEnv = await getProductionEnvironment();
+
     const prodVersion = await messageTemplateRepository.findOne({
-      _environmentId: session.environment._id,
+      _environmentId: prodEnv._id,
       _parentId: step._templateId,
     });
 
@@ -351,8 +358,10 @@ describe('Promote changes', () => {
       enabled: false,
     });
 
+    const prodEnv = await getProductionEnvironment();
+
     const prodVersion = await notificationTemplateRepository.find({
-      _environmentId: session.environment._id,
+      _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -491,6 +500,13 @@ describe('Promote changes', () => {
       _organizationId: session.organization._id,
       enabled: false,
     });
+
     expect(count).to.eq(0);
   });
+
+  async function getProductionEnvironment() {
+    return await environmentRepository.findOne({
+      _parentId: session.environment._id,
+    });
+  }
 });

@@ -7,7 +7,12 @@ import {
   INotificationTemplate,
   TriggerTypeEnum,
 } from '@novu/shared';
-import { ChangeRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
+import {
+  ChangeRepository,
+  NotificationTemplateRepository,
+  MessageTemplateRepository,
+  EnvironmentRepository,
+} from '@novu/dal';
 import { isSameDay } from 'date-fns';
 import { CreateNotificationTemplateRequestDto } from '../dto';
 
@@ -16,6 +21,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
   const changeRepository: ChangeRepository = new ChangeRepository();
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
+  const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
 
   before(async () => {
     session = new UserSession();
@@ -69,13 +75,10 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(message.template.subject).to.equal(`${testTemplate.steps[0].template.subject}`);
     expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
     expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
-
     expect(message.filters[0].children[0].value).to.equal(testTemplate.steps[0].filters[0].children[0].value);
-
     expect(message.filters[0].children[0].operator).to.equal(testTemplate.steps[0].filters[0].children[0].operator);
-
-    expect(message.template.type).to.equal(ChannelTypeEnum.EMAIL);
     expect(template.tags[0]).to.equal('test-tag');
+
     if (Array.isArray(message.template.content) && Array.isArray(testTemplate.steps[0].template.content)) {
       expect(message.template.content[0].type).to.equal(testTemplate.steps[0].template.content[0].type);
     } else {
@@ -91,8 +94,10 @@ describe('Create Notification template - /notification-templates (POST)', async 
     change = await changeRepository.findOne({ _environmentId: session.environment._id, _entityId: template._id });
     await session.testAgent.post(`/v1/changes/${change._id}/apply`);
 
+    const prodEnv = await getProductionEnvironment();
+
     const prodVersionNotification = await notificationTemplateRepository.findOne({
-      _environmentId: session.environment._id,
+      _environmentId: prodEnv._id,
       _parentId: template._id,
     });
 
@@ -106,7 +111,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(prodVersionNotification.description).to.equal(template.description);
 
     const prodVersionMessage = await messageTemplateRepository.findOne({
-      _environmentId: session.environment._id,
+      _environmentId: prodEnv._id,
       _parentId: message._templateId,
     });
 
@@ -262,4 +267,10 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(steps[0]._parentId).to.equal(null);
     expect(steps[0]._id).to.equal(steps[1]._parentId);
   });
+
+  async function getProductionEnvironment() {
+    return await environmentRepository.findOne({
+      _parentId: session.environment._id,
+    });
+  }
 });

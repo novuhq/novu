@@ -28,10 +28,10 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     return stored;
   }
 
-  public async updateStatus(environmentId: string, jobId: string, status: JobStatusEnum) {
+  public async updateStatus(organizationId: string, jobId: string, status: JobStatusEnum) {
     await this.update(
       {
-        _environmentId: environmentId,
+        _organizationId: organizationId,
         _id: jobId,
       },
       {
@@ -42,10 +42,10 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     );
   }
 
-  public async setError(environmentId: string, jobId: string, error: Error) {
+  public async setError(organizationId: string, jobId: string, error: Error) {
     await this.update(
       {
-        _environmentId: environmentId,
+        _organizationId: organizationId,
         _id: jobId,
       },
       {
@@ -56,9 +56,9 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     );
   }
 
-  public async findInAppsForDigest(environmentId: string, transactionId: string, subscriberId: string) {
+  public async findInAppsForDigest(organizationId: string, transactionId: string, subscriberId: string) {
     return await this.find({
-      _environmentId: environmentId,
+      _organizationId: organizationId,
       type: ChannelTypeEnum.IN_APP,
       _subscriberId: subscriberId,
       transactionId,
