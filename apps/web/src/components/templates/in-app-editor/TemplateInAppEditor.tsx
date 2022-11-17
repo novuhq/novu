@@ -8,7 +8,7 @@ import { IFeedEntity } from '@novu/shared';
 
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Checkbox, Input } from '../../../design-system';
+import { Checkbox, colors, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { createFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
@@ -121,7 +121,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             contentPlaceholder="Write your notification content here..."
           />
           <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} />
-          <Divider />
+          <Divider sx={{ borderTopColor: colors.B40 }} />
           <Controller
             name={`steps.${index}.template.feedId` as any}
             control={control}

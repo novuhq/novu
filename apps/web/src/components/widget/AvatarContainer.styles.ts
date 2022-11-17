@@ -6,22 +6,17 @@ export const useStyles = createStyles((theme) => {
   const dark = theme.colorScheme === 'dark';
 
   return {
-    inner: { margin: 0, padding: 15 },
-    target: { height: '40px' },
+    dropdown: {
+      margin: 0,
+      padding: 15,
+      backgroundColor: dark ? colors.B20 : colors.white,
+      color: dark ? colors.white : colors.B40,
+      border: 'none',
+      borderRadius: '7px',
+    },
     arrow: {
       backgroundColor: dark ? colors.B20 : colors.white,
       border: 'none',
-    },
-
-    body: {
-      backgroundColor: dark ? colors.B20 : colors.white,
-      color: dark ? colors.white : colors.B40,
-      width: '100%',
-      border: 'none',
-    },
-    popover: {
-      borderRadius: '7px',
-      width: '260px',
     },
   };
 });

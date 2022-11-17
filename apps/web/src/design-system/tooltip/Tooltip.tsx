@@ -11,7 +11,7 @@ export function Tooltip({
   label,
   opened = undefined,
   ...props
-}: Pick<TooltipProps, 'label' | 'opened' | 'position' | 'disabled' | 'children'>) {
+}: Pick<TooltipProps, 'label' | 'opened' | 'position' | 'disabled' | 'children' | 'sx' | 'withinPortal'>) {
   const { classes } = useStyles();
 
   return (
