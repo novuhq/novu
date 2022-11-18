@@ -20,6 +20,7 @@ export enum CredentialsKeyEnum {
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
+  WebhookUrl = 'webhoohUrl',
 }
 
 export enum EmailProviderIdEnum {

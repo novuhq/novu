@@ -105,6 +105,7 @@ export class TriggerEvent {
             organizationId: command.organizationId,
             userId: command.organizationId,
             templateId: template._id,
+            actor: command.actor,
           })
         )
       );
