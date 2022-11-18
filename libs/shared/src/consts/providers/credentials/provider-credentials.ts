@@ -404,3 +404,12 @@ export const firetextConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const linenotifyConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Auth token',
+    type: 'string',
+    required: true,
+  },
+];

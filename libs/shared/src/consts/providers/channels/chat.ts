@@ -29,4 +29,12 @@ export const chatProviders: IProviderConfig[] = [
       'https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook',
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
   },
+  {
+    id: ChatProviderIdEnum.LineNotify,
+    displayName: 'Line Notify',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: 'https://notify-bot.line.me/doc/en/',
+    logoFileName: { light: 'line.svg', dark: 'line.svg' },
+  },
 ];
