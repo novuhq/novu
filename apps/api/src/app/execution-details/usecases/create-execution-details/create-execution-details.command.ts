@@ -4,6 +4,7 @@ import { EnvironmentWithSubscriber } from '../../../shared/commands/project.comm
 import { JobEntity } from '@novu/dal';
 
 export enum DetailEnum {
+  CHAT_WEBHOOK_URL_MISSING = 'Webhook URL for the chat channel is missing',
   STEP_CREATED = 'Step created',
   STEP_QUEUED = 'Step queued',
   STEP_DELAYED = 'Step delayed',
