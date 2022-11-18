@@ -34,7 +34,7 @@ export const PreviewMobile = ({
 }: {
   integration: any;
   subject: string;
-  content?: string;
+  content: string;
 }) => {
   const { classes } = useStyles();
 
@@ -123,7 +123,7 @@ export const PreviewMobile = ({
             height: '609px',
             borderRadius: '0 0 30px 30px',
           }}
-          initialContent={content ? content : `<html><head></head><body><div></div></body></html>`}
+          initialContent={content}
         >
           <></>
         </Frame>

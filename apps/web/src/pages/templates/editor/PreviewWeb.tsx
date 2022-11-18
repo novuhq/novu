@@ -12,7 +12,7 @@ export const PreviewWeb = ({
 }: {
   integration: any;
   subject: string;
-  content?: string;
+  content: string;
 }) => {
   return (
     <>
@@ -148,7 +148,7 @@ export const PreviewWeb = ({
               width: '100%',
               height: '100%',
             }}
-            initialContent={content ? content : `<html><head></head><body><div></div></body></html>`}
+            initialContent={content}
           >
             <></>
           </Frame>

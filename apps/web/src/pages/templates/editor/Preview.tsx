@@ -1,3 +1,4 @@
+import { Loader } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useMutation } from 'react-query';
@@ -14,11 +15,14 @@ export const Preview = ({ activeStep }: { activeStep: number }) => {
   const editorContent = watch(`steps.${activeStep}.template.content`);
   const { integrations = [] } = useIntegrations();
   const [integration, setIntegration]: any = useState(null);
-  const [content, setContent] = useState<string | undefined>(undefined);
+  const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
   const { isLoading, mutateAsync } = useMutation(previewEmail);
 
   useEffect(() => {
     if (contentType !== 'editor') {
+      if (htmlContent.length < 50) {
+        return;
+      }
       setContent(htmlContent);
 
       return;
@@ -41,7 +45,7 @@ export const Preview = ({ activeStep }: { activeStep: number }) => {
   }, [integrations, setIntegration]);
 
   if (isLoading) {
-    return null;
+    return <Loader />;
   }
 
   return (
