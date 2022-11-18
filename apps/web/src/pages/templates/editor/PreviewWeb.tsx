@@ -4,27 +4,16 @@ import { colors } from '../../../design-system';
 import { PreviewDateIcon } from './PreviewDateIcon';
 import { PreviewUserIcon } from './PreviewUserIcon';
 import Frame from 'react-frame-component';
-import { useFormContext } from 'react-hook-form';
-import { useIntegrations } from '../../../api/hooks';
-import { useEffect, useState } from 'react';
 
-export const PreviewWeb = ({ activeStep }: { activeStep: number }) => {
-  const { watch } = useFormContext();
-  const subject = watch(`steps.${activeStep}.template.subject`);
-  const contentType = watch(`steps.${activeStep}.template.contentType`);
-  const htmlContent = watch(`steps.${activeStep}.template.htmlContent`);
-  const { integrations = [] } = useIntegrations();
-  const [integration, setIntegration]: any = useState(null);
-
-  useEffect(() => {}, []);
-
-  useEffect(() => {
-    if (integrations.length === 0) {
-      return;
-    }
-    setIntegration(integrations.find((item) => item.channel === 'email') || null);
-  }, [integrations, setIntegration]);
-
+export const PreviewWeb = ({
+  integration,
+  subject,
+  content,
+}: {
+  integration: any;
+  subject: string;
+  content?: string;
+}) => {
   return (
     <>
       <div
@@ -159,9 +148,7 @@ export const PreviewWeb = ({ activeStep }: { activeStep: number }) => {
               width: '100%',
               height: '100%',
             }}
-            initialContent={
-              contentType === 'customHtml' ? htmlContent : `<html><head></head><body><div></div></body></html>`
-            }
+            initialContent={content ? content : `<html><head></head><body><div></div></body></html>`}
           >
             <></>
           </Frame>
