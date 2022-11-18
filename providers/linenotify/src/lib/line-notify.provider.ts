@@ -6,7 +6,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 
-export class LinenotifyProvider implements IChatProvider {
+export class LineNotifyProvider implements IChatProvider {
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = 'linenotify';
   private axiosInstance = axios.create();

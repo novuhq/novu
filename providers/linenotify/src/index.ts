@@ -1,1 +1,1 @@
-export * from './lib/linenotify.provider';
+export * from './lib/line-notify.provider';

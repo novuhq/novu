@@ -1,9 +1,9 @@
 import { ICredentials } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { BaseChatHandler } from './base.handler';
-import { LinenotifyProvider } from '@novu/linenotify';
+import { LineNotifyProvider } from '@novu/line-notify';
 
-export class LINENotifyHandler extends BaseChatHandler {
+export class LineNotifyHandler extends BaseChatHandler {
   constructor() {
     super('linenotify', ChannelTypeEnum.CHAT);
   }
@@ -13,6 +13,6 @@ export class LINENotifyHandler extends BaseChatHandler {
       authToken: string;
     } = { authToken: credentials.token };
 
-    this.provider = new LinenotifyProvider(config);
+    this.provider = new LineNotifyProvider(config);
   }
 }

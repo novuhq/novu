@@ -1,10 +1,10 @@
-import { LinenotifyProvider } from './linenotify.provider';
+import { LineNotifyProvider } from './line-notify.provider';
 
 const mockConfig = {
   authToken: 'LINE_NOTIFY_TOKEN',
 };
 test('should trigger LINENotify provider correctly', async () => {
-  const provider = new LinenotifyProvider(mockConfig);
+  const provider = new LineNotifyProvider(mockConfig);
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore

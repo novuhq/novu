@@ -5,9 +5,9 @@ A Linenotify chat provider library for [@novu/node](https://github.com/novuhq/no
 ## Usage
 
 ```javascript
-const { LinenotifyProvider } = require('@novu/linenotify-provider');
+const { LineNotifyProvider } = require('@novu/line-notify');
 
-const provider = new LinenotifyProvider({
+const provider = new LineNotifyProvider({
      authToken: 'LINE_NOTIFY_TOKEN',
 });
 ```
