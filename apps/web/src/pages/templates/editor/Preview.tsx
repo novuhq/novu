@@ -20,7 +20,7 @@ export const Preview = ({ activeStep }: { activeStep: number }) => {
 
   useEffect(() => {
     if (contentType !== 'editor') {
-      if (htmlContent.length < 50) {
+      if (!htmlContent || htmlContent.length < 50) {
         return;
       }
       setContent(htmlContent);
