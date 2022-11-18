@@ -42,7 +42,7 @@ export class BaseRepository<T_Query, T_Response> {
 
   async find(
     query: T_Query,
-    select: ProjectionType<T> = '',
+    select: ProjectionType<T_Response> = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
   ): Promise<T_Response[]> {
     const data = await this.MongooseModel.find(query, select, {
