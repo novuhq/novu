@@ -411,6 +411,7 @@ export const outlook365Config: IConfigCredentials[] = [
 =======
     key: CredentialsKeyEnum.User,
     displayName: 'User',
+    description: 'Full email address. (e.g. jdoe@mycompany.com)',
     type: 'string',
     required: true,
   },
@@ -421,6 +422,7 @@ export const outlook365Config: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
   {
@@ -443,4 +445,6 @@ export const outlook365Config: IConfigCredentials[] = [
   },
 >>>>>>> df77c37be (feat: New Office365 provider)
   ...mailConfigBase,
+=======
+>>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
 ];
