@@ -52,7 +52,7 @@ export class SendTestEmail {
     let content: string | IEmailBlock[] = '';
 
     try {
-      subject = await this.renderContent(command.subject, command.subject, organization, command);
+      subject = await this.renderContent(command.subject, command.subject, organization, command, command.preheader);
       content = await this.getContent(isEditorMode, command, subject, organization);
     } catch (e) {
       throw new ApiException(`Message content could not be generated`);
@@ -64,6 +64,7 @@ export class SendTestEmail {
         customTemplate: command.contentType === 'customHtml' ? (content as string) : undefined,
         data: {
           subject,
+          preheader: command.preheader,
           branding: {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
@@ -116,9 +117,9 @@ export class SendTestEmail {
          * We need to trim the content in order to avoid mail provider like GMail
          * to display the mail with `[Message clipped]` footer.
          */
-        block.content = await this.renderContent(block.content, subject, organization, command);
+        block.content = await this.renderContent(block.content, subject, organization, command, command.preheader);
         block.content = block.content.trim();
-        block.url = await this.renderContent(block.url || '', subject, organization, command);
+        block.url = await this.renderContent(block.url || '', subject, organization, command, command.preheader);
       }
 
       return content;
@@ -131,7 +132,8 @@ export class SendTestEmail {
     content: string,
     subject,
     organization: OrganizationEntity,
-    command: TestSendMessageCommand
+    command: TestSendMessageCommand,
+    preheader?: string
   ) {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -139,6 +141,7 @@ export class SendTestEmail {
         customTemplate: content as string,
         data: {
           subject,
+          preheader,
           branding: {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',

@@ -10,6 +10,8 @@ export class TestSendEmailRequestDto {
   @IsDefined()
   @IsString()
   subject: string;
+  @IsString()
+  preheader?: string;
   @IsDefined()
   content: string | IEmailBlock[];
   @IsDefined()

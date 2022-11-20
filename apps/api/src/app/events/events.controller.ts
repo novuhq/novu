@@ -127,6 +127,7 @@ export class EventsController {
         payload: body.payload,
         contentType: body.contentType,
         content: body.content,
+        preheader: body.preheader,
         to: body.to,
         userId: user._id,
         environmentId: user.environmentId,
