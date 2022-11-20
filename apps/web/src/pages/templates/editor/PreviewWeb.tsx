@@ -68,6 +68,7 @@ const useStyles = createStyles(() => ({
     width: '100%',
     height: '100%',
     padding: '15px',
+    textAlign: 'center',
   },
   bottom: {
     height: '30px',
@@ -137,7 +138,11 @@ export const PreviewWeb = ({
         </div>
         <div className={classes.content}>
           <ErrorBoundary
-            FallbackComponent={() => <div className={classes.fallbackFrame}>test</div>}
+            FallbackComponent={() => (
+              <div className={classes.fallbackFrame}>
+                Oops! We've recognized some glitch in this HTML. Please give it another look!
+              </div>
+            )}
             resetKeys={[content]}
           >
             <Frame className={classes.frame} initialContent={content}>

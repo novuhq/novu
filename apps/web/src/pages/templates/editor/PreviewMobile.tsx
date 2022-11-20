@@ -66,6 +66,7 @@ const useStyles = createStyles(() => ({
     height: '609px',
     borderRadius: '0 0 30px 30px',
     padding: '15px',
+    textAlign: 'center',
   },
   bottom: {
     height: '30px',
@@ -125,7 +126,11 @@ export const PreviewMobile = ({
         </div>
         <div className={classes.line}></div>
         <ErrorBoundary
-          FallbackComponent={() => <div className={classes.fallbackFrame}>test</div>}
+          FallbackComponent={() => (
+            <div className={classes.fallbackFrame}>
+              Oops! We've recognized some glitch in this HTML. Please give it another look!
+            </div>
+          )}
           resetKeys={[content]}
         >
           <Frame className={classes.frame} initialContent={content}>
