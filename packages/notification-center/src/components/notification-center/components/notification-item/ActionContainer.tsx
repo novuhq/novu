@@ -1,5 +1,5 @@
 import React from 'react';
-import { NotificationButton } from './NorificationItemButton';
+import { NotificationButton } from './NotificationItemButton';
 import { IMessageAction, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
 

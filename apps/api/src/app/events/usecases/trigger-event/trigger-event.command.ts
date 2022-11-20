@@ -1,4 +1,4 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsString, IsOptional } from 'class-validator';
 import { ISubscribersDefine } from '@novu/node';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -19,4 +19,7 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsDefined()
   transactionId: string;
+
+  @IsOptional()
+  actor?: ISubscribersDefine;
 }

@@ -7,6 +7,8 @@ import { IJwtPayload } from '@novu/shared';
 import { Button, Input } from '../../design-system';
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
+import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
+import { useVercelParams } from '../../hooks/use-vercelParams';
 
 type Props = {};
 
@@ -20,6 +22,9 @@ export function CreateOrganization({}: Props) {
   const navigate = useNavigate();
   const { setToken, token } = useContext(AuthContext);
   const [loading, setLoading] = useState<boolean>();
+  const { startVercelSetup } = useVercelIntegration();
+  const { isFromVercel } = useVercelParams();
+
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
     { error: string; message: string; statusCode: number },
@@ -41,6 +46,11 @@ export function CreateOrganization({}: Props) {
       const userData = decode<IJwtPayload>(token);
 
       if (userData.environmentId) {
+        if (isFromVercel) {
+          startVercelSetup();
+
+          return;
+        }
         navigate('/');
       }
     }
@@ -77,11 +87,16 @@ export function CreateOrganization({}: Props) {
     }
 
     setLoading(false);
+    if (isFromVercel) {
+      startVercelSetup();
+
+      return;
+    }
     navigate('/quickstart');
   };
 
   return (
-    <form name="create-app-form" onSubmit={handleSubmit(onCreateEnvironment)}>
+    <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateEnvironment)}>
       <Input
         error={errors.organizationName?.message}
         {...register('organizationName', {

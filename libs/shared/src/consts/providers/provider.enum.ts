@@ -20,6 +20,7 @@ export enum CredentialsKeyEnum {
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
+  WebhookUrl = 'webhoohUrl',
 }
 
 export enum EmailProviderIdEnum {
@@ -43,16 +44,19 @@ export enum SmsProviderIdEnum {
   Telnyx = 'telnyx',
   Twilio = 'twilio',
   Gupshup = 'gupshup',
+  Firetext = 'firetext',
 }
 
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
+  MsTeams = 'msteams',
 }
 
 export enum PushProviderIdEnum {
   FCM = 'fcm',
   APNS = 'apns',
+  EXPO = 'expo',
 }
 
 export enum InAppProviderIdEnum {

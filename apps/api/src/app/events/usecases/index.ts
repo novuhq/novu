@@ -16,6 +16,12 @@ import { DigestFilterStepsRegular } from './digest-filter-steps/digest-filter-st
 import { GetDigestEventsRegular } from './send-message/digest/get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './send-message/digest/get-digest-events-backoff.usecase';
 import { VerifyPayload } from './verify-payload/verify-payload.usecase';
+import { RunJob } from './run-job/run-job.usecase';
+import { AddJob } from './add-job/add-job.usecase';
+import { AddDigestJob } from './add-job/add-digest-job.usecase';
+import { AddDelayJob } from './add-job/add-delay-job.usecase';
+import { ShouldAddDigestJob } from './add-job/should-add-digest-job.usecase';
+import { SendMessageDelay } from './send-message/send-message-delay.usecase';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -36,4 +42,10 @@ export const USE_CASES = [
   GetDigestEventsBackoff,
   GetDigestEventsRegular,
   VerifyPayload,
+  RunJob,
+  AddJob,
+  AddDigestJob,
+  AddDelayJob,
+  ShouldAddDigestJob,
+  SendMessageDelay,
 ];

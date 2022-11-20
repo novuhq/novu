@@ -20,6 +20,7 @@ module.exports = {
     project: './tsconfig.json',
     ecmaVersion: 2020,
     sourceType: 'module',
+    tsconfigRootDir: __dirname,
   },
   rules: {
     '@typescript-eslint/space-before-blocks': 'off',
@@ -88,6 +89,12 @@ module.exports = {
         selector: ['function'],
         format: ['camelCase'],
         leadingUnderscore: 'allow',
+      },
+    ],
+    'prettier/prettier': [
+      'error',
+      {
+        endOfLine: 'auto',
       },
     ],
   },

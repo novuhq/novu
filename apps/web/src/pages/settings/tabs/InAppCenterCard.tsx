@@ -31,15 +31,17 @@ export const InAppCenterCard = () => {
         <PrismContainer>
           <Prism
             styles={(theme) => ({
+              scrollArea: {
+                border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+                borderRadius: '7px',
+              },
               code: {
                 fontWeight: 400,
                 color: `${colors.B60} !important`,
                 backgroundColor: 'transparent !important',
-                border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
-                borderRadius: '7px',
               },
             })}
-            language="jsx"
+            language="javascript"
             data-test-id="embed-code-snippet"
           >
             {embedCode}
@@ -56,13 +58,13 @@ function DescriptionText() {
     <div>
       Copy this snippet to your code before the closing body tag.
       <br />
-      Change the #notification-bell selector with the appropriate bell css selector in your app layout.
+      Change the #notification-bell selector with the appropriate bell CSS selector in your app layout.
     </div>
   );
 }
 
 export const PrismContainer = styled.div`
-  padding: 25px 0 32px 0;
+  margin: 25px 0 32px 0;
   @media screen and (max-width: 1400px) {
     width: 600px;
   }

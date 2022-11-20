@@ -19,7 +19,7 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
-    image: "ghcr.io/novuhq/novu/api:0.8.0"
+    image: "ghcr.io/novuhq/novu/api:0.9.0"
     depends_on:
       - mongodb
       - redis
@@ -41,10 +41,13 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       JWT_SECRET: ${JWT_SECRET}
       STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY}
+      SENTRY_DSN: ${SENTRY_DSN}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
     ports:
       - "3000:3000"
   ws:
-    image: "ghcr.io/novuhq/novu/ws:0.8.0"
+    image: "ghcr.io/novuhq/novu/ws:0.9.0"
     depends_on:
       - mongodb
       - redis
@@ -59,7 +62,7 @@ services:
     ports:
       - "3002:3002"
   web:
-    image: "ghcr.io/novuhq/novu/web:0.8.0"
+    image: "ghcr.io/novuhq/novu/web:0.9.0"
     depends_on:
       - api
     container_name: web
@@ -71,7 +74,7 @@ services:
     ports:
       - 4200:4200
   widget:
-    image: "ghcr.io/novuhq/novu/widget:0.8.0"
+    image: "ghcr.io/novuhq/novu/widget:0.9.0"
     depends_on:
       - api
       - web
@@ -85,7 +88,7 @@ services:
   embed:
     depends_on:
       - widget
-    image: "ghcr.io/novuhq/novu/embed:0.8.0"
+    image: "ghcr.io/novuhq/novu/embed:0.9.0"
     container_name: embed
     environment:
       WIDGET_URL: ${WIDGET_URL}

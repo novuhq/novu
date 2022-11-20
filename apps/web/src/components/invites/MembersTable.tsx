@@ -6,6 +6,8 @@ import styled from 'styled-components';
 import * as capitalize from 'lodash.capitalize';
 import useStyles from '../../design-system/config/text.styles';
 import { MemberRole } from './MemberRole';
+import { When } from '../utils/When';
+import { useClipboard } from '@mantine/hooks';
 
 export function MembersTable({
   members,
@@ -16,6 +18,8 @@ export function MembersTable({
   onChangeMemberRole,
 }) {
   const { classes, theme } = useStyles();
+  const clipboardInviteLink = useClipboard({ timeout: 1000 });
+  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
   function isEnableMemberActions(currentMember): boolean {
     const currentUserRoles = members?.find((memberEntity) => memberEntity._userId == currentUser?._id)?.roles || [];
@@ -26,8 +30,13 @@ export function MembersTable({
     return isNotMyself && isAllowedToRemove;
   }
 
-  function canResendInvite(currentMember): boolean {
-    return currentMember && currentMember.memberStatus === MemberStatusEnum.INVITED;
+  function memberInvited(currentMember): boolean {
+    return currentMember?.memberStatus === MemberStatusEnum.INVITED;
+  }
+
+  function onCopyInviteLinkClick(currentMemberToken: any): void {
+    const inviteLink = `${window.location.origin.toString()}/auth/invitation/${currentMemberToken}`;
+    clipboardInviteLink.copy(inviteLink);
   }
 
   return (
@@ -66,7 +75,7 @@ export function MembersTable({
                 />
               </div>
             </ActionsSider>
-            {isEnableMemberActions(member) ? (
+            <When truthy={isEnableMemberActions(member)}>
               <div>
                 <Dropdown
                   control={
@@ -83,32 +92,37 @@ export function MembersTable({
                   >
                     Remove Member
                   </DropdownItem>
-                  {canResendInvite(member) ? (
+                  <When truthy={memberInvited(member)}>
                     <DropdownItem
-                      key="resendInviteBtn"
-                      data-test-id="resend-invite-btn"
-                      onClick={() => onResendInviteMember(member)}
+                      key="copyInviteBtn"
+                      data-test-id="copy-invite-btn"
+                      onClick={() => onCopyInviteLinkClick(member.invite.token)}
                       icon={<Mail />}
                     >
-                      Resend Invite
+                      Copy Invite Link
                     </DropdownItem>
-                  ) : null}
+
+                    <When truthy={!selfHosted}>
+                      <DropdownItem
+                        key="resendInviteBtn"
+                        data-test-id="resend-invite-btn"
+                        onClick={() => onResendInviteMember(member)}
+                        icon={<Mail />}
+                      >
+                        Resend Invite
+                      </DropdownItem>
+                    </When>
+                  </When>
                 </Dropdown>
               </div>
-            ) : null}
-
-            <Divider className={classes.seperator} />
+            </When>
+            <Divider className={classes.separator} />
           </MemberRowWrapper>
         );
       })}
     </Container>
   );
 }
-
-const AddMemberRow = styled.div`
-  margin-top: 30px;
-`;
-
 const ActionsSider = styled.div`
   margin-left: auto;
 `;

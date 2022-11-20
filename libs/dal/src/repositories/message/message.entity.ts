@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IMessageCTA } from '@novu/shared';
+import { ChannelTypeEnum, IMessageCTA, IActor } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 import { IEmailBlock } from '../message-template';
 import { SubscriberEntity } from '../subscriber';
@@ -16,6 +16,8 @@ export class MessageEntity {
   _organizationId: string;
 
   _notificationId: string;
+
+  _jobId?: string;
 
   _subscriberId: string;
 
@@ -37,6 +39,8 @@ export class MessageEntity {
 
   seen: boolean;
 
+  read: boolean;
+
   email?: string;
 
   phone?: string;
@@ -50,6 +54,8 @@ export class MessageEntity {
   title?: string;
 
   lastSeenDate: string;
+
+  lastReadDate: string;
 
   cta: IMessageCTA;
 
@@ -67,4 +73,8 @@ export class MessageEntity {
   payload: Record<string, unknown>;
 
   overrides: Record<string, unknown>;
+
+  identifier?: string;
+
+  actor?: IActor;
 }

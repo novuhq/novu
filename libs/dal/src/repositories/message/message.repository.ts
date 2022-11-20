@@ -16,13 +16,13 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     this.message = Message;
   }
 
-  async findBySubscriberChannel(
+  private async getFilterQueryForMessage(
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
-  ) {
+  ): Promise<FilterQuery<MessageEntity>> {
     const requestQuery: FilterQuery<MessageEntity> = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
@@ -52,64 +52,60 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       requestQuery.seen = query.seen;
     }
 
-    return await this.find(requestQuery, '', {
+    if (query.read != null) {
+      requestQuery.read = query.read;
+    }
+
+    return requestQuery;
+  }
+
+  async findBySubscriberChannel(
+    environmentId: string,
+    subscriberId: string,
+    channel: ChannelTypeEnum,
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
+    options: { limit: number; skip?: number } = { limit: 10 }
+  ) {
+    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
+    const messages = await this.find(requestQuery, '', {
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
     });
+
+    return messages;
   }
 
-  async getUnseenCount(
+  async getTotalCount(
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean } = {}
   ) {
-    const requestQuery: FilterQuery<MessageEntity> = {
-      _environmentId: new Types.ObjectId(environmentId),
-      _subscriberId: new Types.ObjectId(subscriberId),
-      seen: false,
-      channel,
-    };
-
-    if (query.feedId === null) {
-      requestQuery._feedId = { $eq: null };
-    }
-
-    if (query.feedId) {
-      const feeds = await this.feedRepository.find(
-        {
-          _environmentId: environmentId,
-          identifier: {
-            $in: query.feedId,
-          },
-        },
-        '_id'
-      );
-      requestQuery._feedId = {
-        $in: feeds.map((feed) => feed._id),
-      };
-    }
-
-    if (query.seen != null) {
-      requestQuery.seen = query.seen;
-    }
+    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
 
     return await this.count(requestQuery);
   }
 
-  async changeSeenStatus(subscriberId: string, messageId: string, isSeen: boolean) {
+  async getCount(
+    environmentId: string,
+    subscriberId: string,
+    channel: ChannelTypeEnum,
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
+  ) {
+    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
+      feedId: query.feedId,
+      seen: query.seen,
+      read: query.read,
+    });
+
+    return await this.count(requestQuery);
+  }
+
+  async markAllUnseenAsSeen(subscriberId: string, environmentId: string) {
     return this.update(
-      {
-        _subscriberId: subscriberId,
-        _id: messageId,
-      },
-      {
-        $set: {
-          seen: isSeen,
-          lastSeenDate: new Date(),
-        },
-      }
+      { _subscriberId: subscriberId, _environmentId: environmentId, seen: false },
+      { $set: { seen: true, lastSeenDate: new Date() } }
     );
   }
 
@@ -223,6 +219,40 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       totalCount,
       data: this.mapEntities(response),
     };
+  }
+
+  async changeStatus(
+    environmentId: string,
+    subscriberId: string,
+    messageIds: string[],
+    mark: { seen?: boolean; read?: boolean }
+  ) {
+    const requestQuery: FilterQuery<MessageEntity> = {};
+
+    if (mark.seen != null) {
+      requestQuery.seen = mark.seen;
+      requestQuery.lastSeenDate = new Date();
+    }
+
+    if (mark.read != null) {
+      requestQuery.read = mark.read;
+      requestQuery.lastReadDate = new Date();
+    }
+
+    await this.update(
+      {
+        _environmentId: environmentId,
+        _subscriberId: subscriberId,
+        _id: {
+          $in: messageIds.map((id) => {
+            return new Types.ObjectId(id);
+          }),
+        },
+      },
+      {
+        $set: requestQuery,
+      }
+    );
   }
 
   async delete(query: FilterQuery<MessageEntity & Document>) {

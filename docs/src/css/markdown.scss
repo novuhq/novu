@@ -1,21 +1,19 @@
 .markdown {
   h1,
   h1:first-child {
-    font-size: 40px;
-  }
-
-  > h2 {
     font-size: 30px;
   }
 
-  > h3 {
+  > h2 {
     font-size: 24px;
-    font-weight: 400;
+  }
+
+  > h3 {
+    font-size: 20px;
   }
 
   > h4 {
     font-size: 18px;
-    font-weight: 500;
   }
 
   strong {

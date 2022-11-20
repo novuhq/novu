@@ -22,11 +22,11 @@ The ultimate service for managing multi-channel notifications with a single API.
     <br />
 
   <br/>
-    <a href="https://github.com/novuhq/novu/issues">Report Bug</a>
+    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
     ·
-    <a href="https://github.com/novuhq/novu/discussions">Request Feature</a>
+    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
     ·
-  <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a>
+  <a href="https://discord.novu.co">Join Our Discord</a>
     ·
     <a href="https://github.com/orgs/novuhq/projects/2">Roadmap</a>
     ·
@@ -34,7 +34,7 @@ The ultimate service for managing multi-channel notifications with a single API.
   </p>
   
 ## ⭐️ Why
-Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, chat and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
+Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multichannel communication experience over email, sms, push, chat and more... An ever-growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
@@ -43,7 +43,7 @@ Building a notification system is hard, at first it seems like just sending an e
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
-- 🛡 Debug and analyze multi channel messages in a single dashboard
+- 🛡 Debug and analyze multichannel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
@@ -95,7 +95,7 @@ Using the Novu API and admin panel you can easily add real-time notification cen
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
 
 #### 💌 Email
 
@@ -124,16 +124,18 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push (Coming Soon...)
+#### 📱 Push 
 
+- [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
+- [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
+- [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
-- [ ] SNS
 
-#### 👇 Chat (Coming Soon...)
+#### 👇 Chat 
 
-- [ ] Slack
+- [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
+- [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 - [ ] MS Teams
-- [ ] Discord
 - [ ] Mattermost
 
 #### 📱 In-App
@@ -149,7 +151,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 We are more than happy to help you. Don't worry if you are getting some errors or problems while working with the project. Or just want to discuss something related to the project.
 
-Just <a href="https://discord.gg/TT6TttXjRe">Join Our Discord</a> server and ask for help.
+Just <a href="https://discord.novu.co">Join Our Discord</a> server and ask for help.
 
 ## 🔗 Links
 

@@ -3,6 +3,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Param,
   Post,
   Put,
   UseGuards,
@@ -26,6 +27,10 @@ import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestj
 import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
+import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
+import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
+import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -34,7 +39,9 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 export class EnvironmentsController {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,
+    private updateEnvironmentUsecase: UpdateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
+    private regenerateApiKeysUsecase: RegenerateApiKeys,
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private updateWidgetSettingsUsecase: UpdateWidgetSettings
@@ -97,6 +104,27 @@ export class EnvironmentsController {
     );
   }
 
+  @Put('/:environmentId')
+  @ApiOperation({
+    summary: 'Update env by id',
+  })
+  async updateMyEnvironment(
+    @UserSession() user: IJwtPayload,
+    @Param('environmentId') environmentId: string,
+    @Body() payload: UpdateEnvironmentRequestDto
+  ) {
+    return await this.updateEnvironmentUsecase.execute(
+      UpdateEnvironmentCommand.create({
+        environmentId: environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        name: payload.name,
+        identifier: payload.identifier,
+        _parentId: payload.parentId,
+      })
+    );
+  }
+
   @Get('/api-keys')
   @Get('/me')
   @ApiOperation({
@@ -114,6 +142,24 @@ export class EnvironmentsController {
     });
 
     return await this.getApiKeysUsecase.execute(command);
+  }
+
+  @Post('/api-keys/regenerate')
+  @ApiOperation({
+    summary: 'Regenerate api keys',
+  })
+  @ApiOkResponse({
+    type: [ApiKey],
+  })
+  @ExternalApiAccessible()
+  async regenerateOrganizationApiKeys(@UserSession() user: IJwtPayload): Promise<ApiKey[]> {
+    const command = GetApiKeysCommand.create({
+      userId: user._id,
+      organizationId: user.organizationId,
+      environmentId: user.environmentId,
+    });
+
+    return await this.regenerateApiKeysUsecase.execute(command);
   }
 
   @Put('/widget/settings')

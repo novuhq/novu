@@ -61,7 +61,7 @@ export class AuthController {
   githubAuth() {
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
       throw new ApiException(
-        'Github auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
+        'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
     }
 
@@ -92,6 +92,25 @@ export class AuthController {
 
     if (request.user.newUser) {
       url += '&newUser=true';
+    }
+
+    /**
+     * partnerCode, next and configurationId are required during external partners integration
+     * such as vercel integration etc
+     */
+    const partnerCode = JSON.parse(request.query.state).partnerCode;
+    if (partnerCode) {
+      url += `&code=${partnerCode}`;
+    }
+
+    const next = JSON.parse(request.query.state).next;
+    if (next) {
+      url += `&next=${next}`;
+    }
+
+    const configurationId = JSON.parse(request.query.state).configurationId;
+    if (configurationId) {
+      url += `&configurationId=${configurationId}`;
     }
 
     return response.redirect(url);

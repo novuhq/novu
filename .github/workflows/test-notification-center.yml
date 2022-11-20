@@ -29,3 +29,6 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Run tests
+        run: |
+          cd packages/notification-center && pnpm test

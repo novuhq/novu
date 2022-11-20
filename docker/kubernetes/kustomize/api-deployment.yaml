@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.1 (HEAD)
+  labels:
+    app.novu.co/name: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.novu.co/name: api
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.1 (HEAD)
+      labels:
+        app.novu.co/name: api
+    spec:
+      containers:
+        - envFrom:
+            - configMapRef:
+                name: novu-env
+          image: ghcr.io/novuhq/novu/api:0.9.0
+          name: api
+          ports:
+            - containerPort: 3000

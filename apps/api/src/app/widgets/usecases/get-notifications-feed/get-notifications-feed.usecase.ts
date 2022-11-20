@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
+import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
@@ -14,7 +15,9 @@ export class GetNotificationsFeed {
     private subscriberRepository: SubscriberRepository
   ) {}
 
-  async execute(command: GetNotificationsFeedCommand): Promise<MessageEntity[]> {
+  async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
+    const LIMIT = 10;
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) {
       throw new ApiException(
@@ -23,30 +26,41 @@ export class GetNotificationsFeed {
           '. Make sure to create a subscriber before fetching the feed.'
       );
     }
+
     const feed = await this.messageRepository.findBySubscriberChannel(
       command.environmentId,
       subscriber._id,
       ChannelTypeEnum.IN_APP,
-      { feedId: command.feedId, seen: command.seen },
+      { feedId: command.feedId, seen: command.query.seen, read: command.query.read },
       {
-        limit: 10,
-        skip: command.page * 10,
+        limit: LIMIT,
+        skip: command.page * LIMIT,
       }
     );
 
-    let sampleFeedItem: MessageEntity;
     if (feed.length) {
-      sampleFeedItem = feed[0];
-    }
-
-    if (sampleFeedItem) {
       this.analyticsService.track('Fetch Feed - [Notification Center]', command.organizationId, {
-        _subscriber: sampleFeedItem._subscriberId,
+        _subscriber: feed[0]?._subscriberId,
         _organization: command.organizationId,
         feedSize: feed.length,
       });
     }
 
-    return feed;
+    const totalCount = await this.messageRepository.getTotalCount(
+      command.environmentId,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP,
+      {
+        feedId: command.feedId,
+        seen: command.query.seen,
+      }
+    );
+
+    return {
+      data: feed,
+      totalCount: totalCount,
+      pageSize: LIMIT,
+      page: command.page,
+    };
   }
 }

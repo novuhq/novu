@@ -1,4 +1,4 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsString, IsOptional } from 'class-validator';
 import { ISubscribersDefine } from '@novu/node';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -22,4 +22,7 @@ export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   templateId: string;
+
+  @IsOptional()
+  actor: ISubscribersDefine;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useReducer } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
 import { useMutation } from 'react-query';
 import { showNotification } from '@mantine/notifications';
@@ -14,7 +14,7 @@ import { WarningOutlined } from '@ant-design/icons';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
-  HANLDE_ALERT_AND_ERROR_MSG = 'handle_alert_and_error_msg',
+  HANDLE_ALERT_AND_ERROR_MSG = 'handle_alert_and_error_msg',
   TOGGLE_CHECK = 'toggle_check',
 }
 
@@ -25,7 +25,7 @@ type ActionType =
       payload: boolean;
     }
   | {
-      type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG;
+      type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG;
       payload: {
         isShowAlert: boolean;
         errorMsg: string;
@@ -47,7 +47,7 @@ const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, act
         isShowSwitch: action.payload,
       };
 
-    case ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG:
+    case ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG:
       return {
         ...state,
         isShowAlert: action.payload.isShowAlert,
@@ -89,7 +89,7 @@ export function ConnectIntegrationForm({
 
   const [checkIntegrationState, dispatch] = useReducer(checkIntegrationReducer, checkIntegrationInitialState);
 
-  const { mutateAsync: createIntegrationApi } = useMutation<
+  const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
     {
@@ -101,7 +101,7 @@ export function ConnectIntegrationForm({
     }
   >(createIntegration);
 
-  const { mutateAsync: updateIntegrationApi } = useMutation<
+  const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
     { res: string },
     { error: string; message: string; statusCode: number },
     {
@@ -118,11 +118,11 @@ export function ConnectIntegrationForm({
     }
   }, [provider]);
 
-  async function onCreatIntegration(credentials: ICredentialsDto) {
+  async function onCreateIntegration(credentials: ICredentialsDto) {
     try {
       if (checkIntegrationState.isShowAlert) {
         dispatch({
-          type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG,
+          type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG,
           payload: {
             isShowAlert: false,
             errorMsg: '',
@@ -149,7 +149,7 @@ export function ConnectIntegrationForm({
         payload: true,
       });
       dispatch({
-        type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG,
+        type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG,
         payload: {
           isShowAlert: true,
           errorMsg: e?.message,
@@ -180,8 +180,8 @@ export function ConnectIntegrationForm({
   const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
 
   return (
-    <Form onSubmit={handleSubmit(onCreatIntegration)}>
-      <CloseButton onClick={onClose}>
+    <Form noValidate onSubmit={handleSubmit(onCreateIntegration)}>
+      <CloseButton data-test-id="connection-integration-form-close" type="button" onClick={onClose}>
         <Close />
       </CloseButton>
 
@@ -214,7 +214,9 @@ export function ConnectIntegrationForm({
                 <Switch checked={isActive} data-test-id="is_active_id" {...field} onChange={handlerSwitchChange} />
               )}
             />
-            <StyledText>{isActive ? 'Active' : 'Disabled'}</StyledText>
+            <StyledText data-test-id="connect-integration-form-active-text">
+              {isActive ? 'Active' : 'Disabled'}
+            </StyledText>
           </ActiveWrapper>
           {provider?.channel === ChannelTypeEnum.EMAIL && checkIntegrationState.isShowSwitch && (
             <CheckIntegrationWrapper>
@@ -241,7 +243,7 @@ export function ConnectIntegrationForm({
           )}
         </Stack>
 
-        <Button submit fullWidth>
+        <Button submit fullWidth loading={isLoadingUpdate || isLoadingCreate}>
           {createModel ? 'Connect' : 'Update'}
         </Button>
       </ColumnDiv>

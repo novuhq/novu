@@ -1,4 +1,4 @@
-import { Badge, createStyles, MantineTheme } from '@mantine/core';
+import { createStyles, MantineTheme } from '@mantine/core';
 import { INovuTheme } from '../../../../../store/novu-theme.context';
 import { ICommonTheme } from '../../../../../store/novu-theme-provider.context';
 import { colors } from '../../../../../shared/config/colors';
@@ -47,7 +47,7 @@ export default createStyles(
             content: '""',
             display: 'block',
             height: '2px',
-            background: novuTheme.header?.badgeColor,
+            background: novuTheme?.popover?.tabBorderColor || novuTheme.header?.badgeColor,
             borderRadius: '10px',
           },
         },

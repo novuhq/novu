@@ -29,6 +29,10 @@ const codeTheme = require('./src/utils/prism');
             showLastUpdateAuthor: true,
             showLastUpdateTime: true,
           },
+          gtag: {
+            trackingID: 'G-ZC17SLMXRN',
+            anonymizeIP: true,
+          },
           theme: {
             customCss: require.resolve('./src/css/custom.scss'),
           },
@@ -44,7 +48,7 @@ const codeTheme = require('./src/utils/prism');
           {
             name: 'keywords',
             content:
-              'novu,novu documentation,novu docs,notification,notification insfrastructure,open source,oss',
+              'novu,novu documentation,novu docs,notification,notification infrastructure,open source,oss',
           },
         ],
         image: '/img/social-preview.jpg',
@@ -89,7 +93,7 @@ const codeTheme = require('./src/utils/prism');
               position: 'right',
             },
             {
-              href: 'https://discord.gg/9wcGSf22PM',
+              href: 'https://discord.novu.co',
               label: 'Community',
               position: 'right',
             },
@@ -118,7 +122,7 @@ const codeTheme = require('./src/utils/prism');
                 },
                 {
                   label: 'Contact Us',
-                  href: 'https://discord.gg/9wcGSf22PM',
+                  href: 'https://discord.novu.co',
                 },
               ],
             },
@@ -126,7 +130,7 @@ const codeTheme = require('./src/utils/prism');
               items: [
                 {
                   label: 'Discord',
-                  href: 'https://discord.gg/9wcGSf22PM',
+                  href: 'https://discord.novu.co',
                 },
                 {
                   label: 'Twitter',

@@ -32,26 +32,28 @@ function QuickStart() {
   return (
     <PageContainer>
       <PageMeta title="Getting Started" />
-      <div style={{ padding: '40px' }}>
+      <div style={{ padding: '16px' }}>
+        <div style={{ padding: '40px' }}>
+          <Center>
+            <Title>Welcome to Novu!</Title>
+          </Center>
+          <Center>
+            <Text my={10} color={colors.B60}>
+              Let's get you started
+            </Text>
+          </Center>
+        </div>
+        <div style={{ maxWidth: '800px', margin: 'auto' }}>
+          <OnboardingSteps onFinishedAll={disableOnboarding} />
+        </div>
         <Center>
-          <Title>Welcome to Novu!</Title>
-        </Center>
-        <Center>
-          <Text my={10} color={colors.B60}>
-            Let's get you started
+          <Text my={40} color={colors.B60}>
+            <div onClick={onDismissOnboarding} style={{ cursor: 'pointer' }} data-test-id="dismiss-onboarding-btn">
+              Don't show onboarding guide
+            </div>
           </Text>
         </Center>
       </div>
-      <div style={{ maxWidth: '800px', margin: 'auto' }}>
-        <OnboardingSteps onFinishedAll={disableOnboarding} />
-      </div>
-      <Center>
-        <Text my={40} color={colors.B60}>
-          <div onClick={onDismissOnboarding} style={{ cursor: 'pointer' }} data-test-id="dismiss-onboarding-btn">
-            Don't show onboarding guide
-          </div>
-        </Text>
-      </Center>
     </PageContainer>
   );
 }

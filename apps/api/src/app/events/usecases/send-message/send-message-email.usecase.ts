@@ -12,11 +12,16 @@ import {
   OrganizationEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  LogCodeEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
@@ -26,6 +31,11 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageType {
@@ -36,11 +46,12 @@ export class SendMessageEmail extends SendMessageType {
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase);
+    super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -70,24 +81,65 @@ export class SendMessageEmail extends SendMessageType {
       )
     )[0];
 
-    const overrides = command.overrides[integration.providerId] || {};
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
 
-    const subject = await this.renderContent(
-      emailChannel.template.subject,
-      emailChannel.template.subject,
-      organization,
-      subscriber,
-      command
-    );
+      return;
+    }
+    const overrides = command.overrides[integration?.providerId] || {};
+    let subject = '';
+    let content: string | IEmailBlock[] = '';
 
-    const content: string | IEmailBlock[] = await this.getContent(
-      isEditorMode,
-      emailChannel,
-      command,
+    const payload = {
+      subject: emailChannel.template.subject,
+      branding: {
+        logo: organization.branding?.logo,
+        color: organization.branding?.color || '#f47373',
+      },
+      blocks: [],
+      step: {
+        digest: !!command.events.length,
+        events: command.events,
+        total_count: command.events.length,
+      },
       subscriber,
-      subject,
-      organization
-    );
+      ...command.payload,
+    };
+
+    try {
+      subject = await this.renderContent(
+        emailChannel.template.subject,
+        emailChannel.template.subject,
+        organization,
+        subscriber,
+        command
+      );
+
+      content = await this.getContent(isEditorMode, emailChannel, command, subscriber, subject, organization);
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(payload),
+        })
+      );
+
+      return;
+    }
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -104,11 +156,25 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
-      providerId: integration.providerId,
+      providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
+      _jobId: command.jobId,
     });
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.MESSAGE_CREATED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        messageId: message._id,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(payload),
+      })
+    );
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -134,7 +200,7 @@ export class SendMessageEmail extends SendMessageType {
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>
         <IAttachmentOptions>{
-          file: Buffer.from(attachment.file),
+          file: attachment.file,
           mime: attachment.mime,
           name: attachment.name,
           channels: attachment.channels,
@@ -147,6 +213,7 @@ export class SendMessageEmail extends SendMessageType {
       html,
       from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
       attachments,
+      id: message._id,
     };
 
     if (email && integration) {
@@ -180,6 +247,20 @@ export class SendMessageEmail extends SendMessageType {
         notification,
         LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
       );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
     }
     if (!integration) {
       const integrationError = `${errorMessage} active email integration not found`;
@@ -193,6 +274,20 @@ export class SendMessageEmail extends SendMessageType {
         notification,
         LogCodeEnum.MISSING_EMAIL_INTEGRATION
       );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
     }
   }
 
@@ -206,39 +301,61 @@ export class SendMessageEmail extends SendMessageType {
     const mailHandler = this.mailFactory.getHandler(integration, mailData.from);
 
     try {
-      await mailHandler.send(mailData);
-    } catch (error) {
-      console.error(error);
-      Sentry.captureException(error?.response?.body || error?.response || error?.errors || error);
-      const text =
-        String(error?.response?.body || error?.response || error) || 'Error while sending email with provider';
-      this.messageRepository.updateMessageStatus(
-        message._id,
-        'error',
-        String(error?.response?.body || error?.response || error),
-        'mail_unexpected_error',
-        text
-      );
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          notificationId: notification._id,
+      const result = await mailHandler.send(mailData);
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          text,
-          userId: command.userId,
-          subscriberId: command.subscriberId,
-          code: LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
-          templateId: notification._templateId,
-          raw: {
-            error: String(error?.response?.body || error?.response || error),
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
+          detail: DetailEnum.MESSAGE_SENT,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(result),
         })
       );
+
+      if (!result?.id) {
+        return;
+      }
+
+      await this.messageRepository.update(
+        {
+          _id: message._id,
+        },
+        {
+          $set: {
+            identifier: result.id,
+          },
+        }
+      );
+    } catch (error) {
+      await this.sendErrorStatus(
+        message,
+        'error',
+        'mail_unexpected_error',
+        'Error while sending email with provider',
+        command,
+        notification,
+        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
+        error
+      );
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.PROVIDER_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(error),
+        })
+      );
+
+      return;
     }
   }
 

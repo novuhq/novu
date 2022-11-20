@@ -2,6 +2,7 @@ import { Button, colors, Switch, Text } from '../../../../design-system';
 import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { ColorScheme, InputWrapper, useMantineTheme } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
@@ -35,6 +36,11 @@ export const Security = () => {
 
     await updateWidgetSettingsMutation(data);
     await refetchEnvironment();
+
+    showNotification({
+      message: 'Security info updated successfully',
+      color: 'green',
+    });
   }
 
   const { handleSubmit } = useForm({
@@ -45,7 +51,7 @@ export const Security = () => {
 
   return (
     <>
-      <form onSubmit={handleSubmit(saveSecurityForm)}>
+      <form noValidate onSubmit={handleSubmit(saveSecurityForm)}>
         <Title>Security</Title>
         <InputWrapper label="Enable HMAC encryption" description={<DescriptionText />} styles={inputStyles}>
           <RowDiv>

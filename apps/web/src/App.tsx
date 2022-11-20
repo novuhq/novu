@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
@@ -32,6 +32,7 @@ import { TemplateEditorProvider } from './components/templates/TemplateEditorPro
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
+import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -80,6 +81,22 @@ function App() {
                   <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
                   <Route path="/auth/invitation/:token" element={<InvitationPage />} />
                   <Route path="/auth/application" element={<CreateOrganizationPage />} />
+                  <Route
+                    path="/partner-integrations/vercel/link-projects"
+                    element={
+                      <RequiredAuth>
+                        <LinkVercelProjectPage type="create" />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/partner-integrations/vercel/link-projects/edit"
+                    element={
+                      <RequiredAuth>
+                        <LinkVercelProjectPage type="edit" />
+                      </RequiredAuth>
+                    }
+                  />
                   <Route element={<AppLayout />}>
                     <Route
                       path="/*"
@@ -221,6 +238,7 @@ function jwtHasKey(key: string) {
 
 function RequiredAuth({ children }: any) {
   const { logout } = useContext(AuthContext);
+  const location = useLocation();
 
   // TODO: remove after env migration
   const payload = getTokenPayload();
@@ -238,7 +256,10 @@ function RequiredAuth({ children }: any) {
 
   if (!getToken()) {
     return <Navigate to="/auth/login" replace />;
-  } else if (!jwtHasKey('organizationId') || !jwtHasKey('environmentId')) {
+  } else if (
+    !jwtHasKey('organizationId') ||
+    (!jwtHasKey('environmentId') && location.pathname !== '/auth/application')
+  ) {
     return <Navigate to="/auth/application" replace />;
   } else {
     return children;

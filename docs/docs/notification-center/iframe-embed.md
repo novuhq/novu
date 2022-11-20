@@ -1,7 +1,7 @@
 # iFrame Embed
 
-If you are using an unsupported (yet) client framework, you can use our embed script, this will generate the notification center inside an iframe.
-You can find the embed code in the `Settings` page within the Admin Panel. It will look similar to this:
+If you are using a (currently) unsupported client framework, you can use our embedded script. This will generate the notification center inside an iframe.
+You can find the embedded code in the `Settings` page, within the Admin Panel. It will look similar to this:
 
 <!-- prettier-ignore-start -->
 ```html
@@ -29,7 +29,7 @@ You can find the embed code in the `Settings` page within the Admin Panel. It wi
 ```
 <!-- prettier-ignore-end -->
 
-Replace the selectors for the bell icon and the unseen badge withing your code. Let's take a look at this example code:
+Replace the selectors for the bell icon and the unseen badge within your code. Let's take a look at this example code:
 
 ```html
 <nav>
@@ -42,7 +42,7 @@ Replace the selectors for the bell icon and the unseen badge withing your code. 
 
 ## Customizing the dropdown position
 
-Optionally the embed init script receives a position object, you can use it to specify the `left` and `top` position of the notification center.
+Optionally, the embedded init script receives a position object, you can use this to specify the `left` and `top` position of the notification center.
 
 ```html
 <script>
@@ -94,7 +94,7 @@ More information on all possible theme properties can be found [here](/notificat
 
 ## Customizing the UI language
 
-The language of the UI can be customized by passing a `i18n` component to the init script.
+The language of the UI can be customized by passing an `i18n` component to the init script.
 More information on all possible properties for it can be found [here](/notification-center/react-components#customize-the-ui-language).
 
 ```html
@@ -122,7 +122,7 @@ More information on all possible properties for it can be found [here](/notifica
 
 ## Handle User Interaction
 
-In order to handle certain events like the user clicking on the notification or clicking on an action button inside a notification, you can listen for these events and handle them accordingly.
+In order to handle certain events like the user clicking on the notification, or clicking on an action button inside a notification, you can listen for these events and handle them accordingly.
 
 ```ts
 novu.on('notification_click', (notification) => {
@@ -136,9 +136,9 @@ novu.on('action_click', ({ templateIdentifier, type, notification }) => {
 
 ## Enabling HMAC Encryption
 
-In order to enable Hash-Based Message Authentication Codes, you need to visit the admin panel in-app settings page and enable HMAC encryption for your environment.
+In order to enable Hash-Based Message Authentication Codes, you need to visit the admin panel's in-app settings page and enable HMAC encryption for your environment.
 
-Next step would be to generate an HMAC encrypted subscriberId on your backend:
+The next step would be to generate an HMAC encrypted subscriberId on your backend:
 
 ```ts
 import { createHmac } from 'crypto';

@@ -1,8 +1,8 @@
 describe('User Sign-up and Login', function () {
   describe('Sign up', function () {
     beforeEach(function () {
-      cy.task('clearDatabase');
-      cy.seed();
+      cy.clearDatabase();
+      cy.seedDatabase();
     });
 
     it('should allow a visitor to sign-up, login, and logout', function () {
@@ -42,6 +42,8 @@ describe('User Sign-up and Login', function () {
 
   describe('Password Reset', function () {
     before(() => {
+      cy.clearDatabase();
+      cy.seedDatabase();
       cy.initializeSession().as('session');
     });
 
@@ -61,9 +63,9 @@ describe('User Sign-up and Login', function () {
   });
 
   describe('Login', function () {
-    beforeEach(function () {
-      cy.task('clearDatabase');
-      cy.seed();
+    beforeEach(() => {
+      cy.clearDatabase();
+      cy.seedDatabase();
     });
 
     it('should redirect to the dashboard page when a token exists in query', function () {
@@ -117,8 +119,8 @@ describe('User Sign-up and Login', function () {
 
   describe('Logout', function () {
     beforeEach(function () {
-      cy.task('clearDatabase');
-      cy.seed();
+      cy.clearDatabase();
+      cy.seedDatabase();
     });
 
     it('should logout user when auth token is expired', function () {
@@ -135,7 +137,7 @@ describe('User Sign-up and Login', function () {
 
       cy.visit('/templates');
 
-      // checkig if token is removed from local storage
+      // checking if token is removed from local storage
       cy.getLocalStorage('auth_token').should('be.null');
       // checking if user is redirected to login page
       cy.location('pathname').should('equal', '/auth/login');
