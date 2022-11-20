@@ -9,6 +9,7 @@ import {
   sendgridConfig,
   sendinblueConfig,
   sesConfig,
+  outlook365Config,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
@@ -94,5 +95,13 @@ export const emailProviders: IProviderConfig[] = [
     credentials: netCoreConfig,
     docReference: 'https://netcorecloud.com/email/email-api/',
     logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Outlook365,
+    displayName: 'Microsoft Outlook365',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: outlook365Config,
+    docReference: 'https://docs.microsoft.com/en-us/outlook/rest/node-tutorial',
+    logoFileName: { light: 'outlook365.png', dark: 'outlook365.png' },
   },
 ];
