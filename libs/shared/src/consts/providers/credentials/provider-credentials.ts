@@ -409,6 +409,7 @@ export const outlook365Config: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.User,
     displayName: 'User',
+    description: 'Full email address. (e.g. jdoe@mycompany.com)',
     type: 'string',
     required: true,
   },
@@ -418,23 +419,4 @@ export const outlook365Config: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
-  {
-    key: CredentialsKeyEnum.Domain,
-    displayName: 'DKIM: Domain name',
-    type: 'string',
-    required: false,
-  },
-  {
-    key: CredentialsKeyEnum.SecretKey,
-    displayName: 'DKIM: Private key',
-    type: 'string',
-    required: false,
-  },
-  {
-    key: CredentialsKeyEnum.AccountSid,
-    displayName: 'DKIM: Key selector',
-    type: 'string',
-    required: false,
-  },
-  ...mailConfigBase,
 ];
