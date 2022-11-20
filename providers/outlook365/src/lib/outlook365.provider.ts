@@ -1,22 +1,39 @@
 import {
   ChannelTypeEnum,
+<<<<<<< HEAD
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+=======
+  ISendMessageSuccessResponse,
+  IEmailOptions,
+  IEmailProvider,
+>>>>>>> df77c37be (feat: New Office365 provider)
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
+<<<<<<< HEAD
 
 export class Outlook365Provider implements IEmailProvider {
   id = 'outlook365';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
+=======
+import DKIM from 'nodemailer/lib/dkim';
+
+export class Outlook365Provider implements IEmailProvider {
+  channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
+
+  id = 'outlook365';
+
+>>>>>>> df77c37be (feat: New Office365 provider)
   private transports: Transporter;
 
   constructor(
     private config: {
       from: string;
+<<<<<<< HEAD
       senderName: string;
       password: string;
     }
@@ -28,6 +45,26 @@ export class Outlook365Provider implements IEmailProvider {
       connectionTImeout: 30000,
       auth: {
         user: this.config.from,
+=======
+      user: string;
+      password: string;
+      dkim?: DKIM.SingleKeyOptions | undefined;
+    }
+  ) {
+    let dkim = this.config.dkim;
+
+    if (!dkim?.domainName || !dkim?.privateKey || !dkim?.keySelector) {
+      dkim = undefined;
+    }
+
+    this.transports = nodemailer.createTransport({
+      host: 'smtp.office365.com',
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: this.config.user,
+>>>>>>> df77c37be (feat: New Office365 provider)
         pass: this.config.password,
       },
       tls: {
@@ -44,7 +81,11 @@ export class Outlook365Provider implements IEmailProvider {
 
     return {
       id: info?.messageId,
+<<<<<<< HEAD
       date: new Date().toISOString(),
+=======
+      data: new Date().toISOString(),
+>>>>>>> df77c37be (feat: New Office365 provider)
     };
   }
 
@@ -71,7 +112,11 @@ export class Outlook365Provider implements IEmailProvider {
 
   private createMailData(options: IEmailOptions): SendMailOptions {
     return {
+<<<<<<< HEAD
       from: this.config.from,
+=======
+      from: options.from || this.config.from,
+>>>>>>> df77c37be (feat: New Office365 provider)
       to: options.to,
       subject: options.subject,
       html: options.html,
