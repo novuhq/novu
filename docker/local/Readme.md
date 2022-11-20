@@ -36,7 +36,7 @@ Update the `.env` file with your own secrets. In particular, these are required:
 
 To start the local infrastructure run the following: 
 ```sh
-docker-compose -f ./devlopment/docker-compose.yml
+docker-compose -f ./local/docker-compose.yml
 ```
 
 This will spin up redis, mongo, and local-stacks in your local docker. 
