@@ -45,7 +45,7 @@ This will spin up redis, mongo, and local-stacks in your local docker.
 
 If you need to start all the Novu services start the Novu run the following:
 ```sh
-docker-compose -f ./devlopment/docker-compose.development.yml
+docker-compose -f ./local/docker-compose.development.yml
 ```
 
 Now visit [http://localhost:4200](http://localhost:4200) to start developing Novu.
