@@ -63,13 +63,13 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
-          projects: "@novu/web"
+          projects: '@novu/web'
 
       - name: Start Local Stack
         env:
           DEFAULT_REGION: us-east-1
           AWS_DEFAULT_REGION: us-east-1
-          AWS_ACCOUNT_ID: "000000000000"
+          AWS_ACCOUNT_ID: '000000000000'
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
           AWS_EC2_METADATA_DISABLED: true
