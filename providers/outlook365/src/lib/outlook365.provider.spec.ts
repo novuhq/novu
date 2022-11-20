@@ -1,4 +1,4 @@
-import { Outlook365EmailProvider } from './outlook365.provider';
+import { Outlook365Provider } from './outlook365.provider';
 
 const sendMailMock = jest.fn().mockReturnValue(() => {
   return {} as any;
@@ -27,7 +27,7 @@ const mockNovuMessage = {
 };
 
 test('should trigger outlook365 library correctly', async () => {
-  const provider = new Outlook365EmailProvider(mockConfig);
+  const provider = new Outlook365Provider(mockConfig);
   await provider.sendMessage(mockNovuMessage);
 
   expect(sendMailMock).toHaveBeenCalled();
@@ -47,7 +47,7 @@ test('should trigger outlook365 library correctly', async () => {
 });
 
 test('should check provider integration correctly', async () => {
-  const provider = new Outlook365EmailProvider(mockConfig);
+  const provider = new Outlook365Provider(mockConfig);
   const response = await provider.checkIntegration(mockNovuMessage);
 
   expect(sendMailMock).toHaveBeenCalled();

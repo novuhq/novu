@@ -1,40 +1,30 @@
 import {
   ChannelTypeEnum,
-  ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
+  ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
-import DKIM from 'nodemailer/lib/dkim';
 
 export class Outlook365Provider implements IEmailProvider {
-  channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-
   id = 'outlook365';
+  channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
 
   private transports: Transporter;
 
   constructor(
     private config: {
-      from: string;
       user: string;
       password: string;
-      dkim?: DKIM.SingleKeyOptions | undefined;
     }
   ) {
-    let dkim = this.config.dkim;
-
-    if (!dkim?.domainName || !dkim?.privateKey || !dkim?.keySelector) {
-      dkim = undefined;
-    }
-
     this.transports = nodemailer.createTransport({
       host: 'smtp.office365.com',
       port: 587,
-      secure: false,
       requireTLS: true,
+      connectionTImeout: 30000,
       auth: {
         user: this.config.user,
         pass: this.config.password,
@@ -53,7 +43,7 @@ export class Outlook365Provider implements IEmailProvider {
 
     return {
       id: info?.messageId,
-      data: new Date().toISOString(),
+      date: new Date().toISOString(),
     };
   }
 
@@ -80,7 +70,7 @@ export class Outlook365Provider implements IEmailProvider {
 
   private createMailData(options: IEmailOptions): SendMailOptions {
     return {
-      from: options.from || this.config.from,
+      from: this.config.user,
       to: options.to,
       subject: options.subject,
       html: options.html,
