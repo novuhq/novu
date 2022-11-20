@@ -4,6 +4,7 @@ import Frame from 'react-frame-component';
 import { colors } from '../../../design-system';
 import { PreviewDateIcon } from './PreviewDateIcon';
 import { PreviewUserIcon } from './PreviewUserIcon';
+import { ErrorBoundary } from 'react-error-boundary';
 
 const useStyles = createStyles(() => ({
   phone: {
@@ -25,6 +26,50 @@ const useStyles = createStyles(() => ({
     marginRight: 'auto',
     borderRadius: '0 0 20px 20px',
   },
+  header: {
+    width: '100%',
+    marginTop: '20px',
+    paddingLeft: '15px',
+    paddingRight: '15px',
+  },
+  subject: {
+    marginBottom: '3px',
+    fontWeight: 'bolder',
+  },
+  from: {
+    color: colors.B60,
+    fontWeight: 'normal',
+  },
+  date: {
+    height: '20px',
+    marginTop: '20px',
+    color: colors.B60,
+    fontWeight: 'normal',
+  },
+  line: {
+    height: '2px',
+    width: '340px',
+    marginLeft: '15px',
+    marginRight: '15px',
+    background: colors.B20,
+    marginTop: '19px',
+  },
+  frame: {
+    border: '0px',
+    width: '100%',
+    height: '609px',
+    borderRadius: '0 0 30px 30px',
+  },
+  fallbackFrame: {
+    border: '0px',
+    width: '100%',
+    height: '609px',
+    borderRadius: '0 0 30px 30px',
+    padding: '15px',
+  },
+  bottom: {
+    height: '30px',
+  },
 }));
 
 export const PreviewMobile = ({
@@ -42,19 +87,12 @@ export const PreviewMobile = ({
     <>
       <div className={classes.phone}>
         <div className={classes.cameraDent}></div>
-        <div
-          style={{
-            width: '100%',
-            marginTop: '20px',
-            paddingLeft: '15px',
-            paddingRight: '15px',
-          }}
-        >
+        <div className={classes.header}>
           <Group
             sx={{
               height: '40px',
             }}
-            spacing={20}
+            spacing={0}
             position="apart"
           >
             <div>
@@ -66,34 +104,13 @@ export const PreviewMobile = ({
               >
                 <PreviewUserIcon />
                 <div>
-                  <div
-                    style={{
-                      marginBottom: '3px',
-                      fontWeight: 'bolder',
-                    }}
-                  >
-                    {subject}
-                  </div>
-                  <div
-                    style={{
-                      color: colors.B60,
-                      fontWeight: 'normal',
-                    }}
-                  >
-                    {integration?.credentials?.from || 'No active email integration'}
-                  </div>
+                  <div className={classes.subject}>{subject}</div>
+                  <div className={classes.from}>{integration?.credentials?.from || 'No active email integration'}</div>
                 </div>
               </Group>
             </div>
             <div>
-              <div
-                style={{
-                  height: '20px',
-                  marginTop: '20px',
-                  color: colors.B60,
-                  fontWeight: 'normal',
-                }}
-              >
+              <div className={classes.date}>
                 <PreviewDateIcon />
                 <span
                   style={{
@@ -106,33 +123,17 @@ export const PreviewMobile = ({
             </div>
           </Group>
         </div>
-        <div
-          style={{
-            height: '2px',
-            width: '340px',
-            marginLeft: '15px',
-            marginRight: '15px',
-            background: colors.B20,
-            marginTop: '19px',
-          }}
-        ></div>
-        <Frame
-          style={{
-            border: '0px',
-            width: '100%',
-            height: '609px',
-            borderRadius: '0 0 30px 30px',
-          }}
-          initialContent={content}
+        <div className={classes.line}></div>
+        <ErrorBoundary
+          FallbackComponent={() => <div className={classes.fallbackFrame}>test</div>}
+          resetKeys={[content]}
         >
-          <></>
-        </Frame>
+          <Frame className={classes.frame} initialContent={content}>
+            <></>
+          </Frame>
+        </ErrorBoundary>
       </div>
-      <div
-        style={{
-          height: '30px',
-        }}
-      ></div>
+      <div className={classes.bottom}></div>
     </>
   );
 };
