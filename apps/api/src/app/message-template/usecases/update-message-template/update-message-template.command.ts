@@ -40,5 +40,8 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   parentChangeId: string;
 
   @IsOptional()
+  preheader?: string;
+
+  @IsOptional()
   actor?: IActor;
 }
