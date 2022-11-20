@@ -1,6 +1,4 @@
 
-Local Development with docker is one of the easiest ways to get started
-
 ## Before you begin
 
 You need the following installed in your system:
@@ -36,7 +34,7 @@ Update the `.env` file with your own secrets. In particular, these are required:
 
 To start the local infrastructure run the following: 
 ```sh
-docker-compose -f ./local/docker-compose.yml
+docker-compose -f ./development/docker-compose.yml up
 ```
 
 This will spin up redis, mongo, and local-stacks in your local docker. 
@@ -45,7 +43,7 @@ This will spin up redis, mongo, and local-stacks in your local docker.
 
 If you need to start all the Novu services start the Novu run the following:
 ```sh
-docker-compose -f ./local/docker-compose.development.yml
+docker-compose -f ./development/docker-compose.development.yml up
 ```
 
 Now visit [http://localhost:4200](http://localhost:4200) to start developing Novu.
