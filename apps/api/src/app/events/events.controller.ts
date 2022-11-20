@@ -5,7 +5,7 @@ import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ISubscribersDefine } from '@novu/node';
+import { ISubscribersDefine, TriggerRecipientsTypeSingle } from '@novu/node';
 import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
 import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
@@ -54,6 +54,7 @@ export class EventsController {
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const mappedSubscribers = this.mapSubscribers(body);
+    const mappedActor = this.mapActor(body.actor);
     const transactionId = body.transactionId || uuidv4();
 
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
@@ -67,6 +68,7 @@ export class EventsController {
         payload: body.payload,
         overrides: body.overrides || {},
         to: mappedSubscribers,
+        actor: mappedActor,
         transactionId,
       })
     );
@@ -100,6 +102,7 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
+    const mappedActor = this.mapActor(body.actor);
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -110,6 +113,7 @@ export class EventsController {
         payload: body.payload,
         transactionId,
         overrides: body.overrides || {},
+        actor: mappedActor,
       })
     );
   }
@@ -170,5 +174,14 @@ export class EventsController {
         return subscriber;
       }
     });
+  }
+
+  private mapActor(actor: TriggerRecipientsTypeSingle): ISubscribersDefine {
+    if (!actor) return;
+    if (typeof actor === 'string') {
+      return { subscriberId: actor };
+    }
+
+    return actor;
   }
 }

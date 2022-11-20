@@ -59,7 +59,8 @@
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
     "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env",
     "pnpm-context": "node scripts/pnpm-context.mjs",
-    "jarvis": "node scripts/jarvis.js"
+    "jarvis": "node scripts/jarvis.js",
+    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
