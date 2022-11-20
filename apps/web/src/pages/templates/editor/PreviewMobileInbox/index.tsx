@@ -90,10 +90,6 @@ export const PreviewMobileInbox = ({
         </div>
         <ItemSkeleton />
         <ItemSkeleton />
-        <ItemSkeleton />
-        <ItemSkeleton />
-        <ItemSkeleton />
-        <ItemSkeleton />
       </Mobile>
       <div className={classes.bottom}></div>
     </>
