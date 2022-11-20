@@ -75,32 +75,42 @@ export function BrandingForm({
   async function handleUpload() {
     if (!file) return;
 
-    setImageLoading(true);
-    const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(mimeTypes[file.type]);
+    try {
+      setImageLoading(true);
+      const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(mimeTypes[file.type]);
 
-    const contentTypeHeaders = {
-      'Content-Type': file.type,
-    };
-    const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
-    await axios.put(signedUrl, file, {
-      headers: mergedHeaders,
-      transformRequest: [
-        (data, headers) => {
-          if (headers) {
-            // eslint-disable-next-line
-            delete headers.Authorization;
-            // eslint-disable-next-line
-            delete headers.common.Authorization;
-          }
+      const contentTypeHeaders = {
+        'Content-Type': file.type,
+      };
+      const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
+      await axios.put(signedUrl, file, {
+        headers: mergedHeaders,
+        transformRequest: [
+          (data, headers) => {
+            if (headers) {
+              // eslint-disable-next-line
+              delete headers.Authorization;
+              // eslint-disable-next-line
+              delete headers.common.Authorization;
+            }
 
-          return data;
-        },
-      ],
-    });
+            return data;
+          },
+        ],
+      });
 
-    imageRef.current = path;
-    setImage(path);
-    setImageLoading(false);
+      imageRef.current = path;
+      setImage(path);
+      setImageLoading(false);
+    } catch (e) {
+      setImageLoading(false);
+      showNotification({
+        color: 'red',
+        message: 'Error uploading image.',
+      });
+
+      throw e;
+    }
   }
 
   async function saveBrandsForm({ color, fontFamily }) {
@@ -199,7 +209,13 @@ export function BrandingForm({
             />
           </Card>
         </Group>
-        <Button submit mb={20} mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
+        <Button
+          submit
+          mb={20}
+          mt={25}
+          loading={isUpdateBrandingLoading || imageLoading}
+          data-test-id="submit-branding-settings"
+        >
           Update
         </Button>
       </form>
