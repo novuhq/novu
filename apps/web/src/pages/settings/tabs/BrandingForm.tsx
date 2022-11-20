@@ -174,6 +174,7 @@ export function BrandingForm({
                   label="Brand Color"
                   description="Will be used to style emails and inbox experience"
                   data-test-id="color-picker"
+                  disallowInput={false}
                   {...field}
                 />
               )}
@@ -188,7 +189,7 @@ export function BrandingForm({
                   label="Font Family"
                   description="Will be used as the main font-family in the in-app widget"
                   placeholder="Select a font family"
-                  data={['Roboto', 'Montserrat', 'Open Sans', 'Lato', 'Nunito', 'Oswald', 'Raleway']}
+                  data={['Fira Code', 'Roboto', 'Montserrat', 'Open Sans', 'Lato', 'Nunito', 'Oswald', 'Raleway']}
                   data-test-id="font-family-selector"
                   {...field}
                 />
@@ -211,7 +212,12 @@ export const dropzoneChildren = (status: DropzoneStatus, image) => (
     {!image ? (
       <Upload style={{ width: 80, height: 80, color: colors.B60 }} />
     ) : (
-      <img data-test-id="logo-image-wrapper" src={image} style={{ width: '100%', height: 80 }} alt="avatar" />
+      <img
+        data-test-id="logo-image-wrapper"
+        src={image}
+        style={{ width: 100, height: 100, objectFit: 'contain' }}
+        alt="avatar"
+      />
     )}
   </Group>
 );

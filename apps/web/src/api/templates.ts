@@ -20,3 +20,7 @@ export async function updateTemplateStatus(templateId: string, active: boolean) 
 export async function deleteTemplateById(templateId: string) {
   return api.delete(`/v1/notification-templates/${templateId}`);
 }
+
+export async function testTrigger(data: Record<string, unknown>) {
+  return api.post(`/v1/events/trigger`, data);
+}

@@ -1,30 +1,31 @@
 # Postmark
 
-You can use the [Postmark](https://postmarkapp.com/) provider to send transactional emails to your customers using the Novu Platform with a single API.
+Is it possible to use [Postmark](https://postmarkapp.com/) as a provider to send transactional emails to the customers using the Novu Platform with a single API.
 
 ## Getting Started
 
-To use the Postmark channel, you will need to create a Postmark account and add your API key to the Postmark integration on the Novu platform.
+The first step to use the Postmark channel is to create a Postmark account and add the personal API key to the Postmark integration on the Novu platform.
 
 ## Find the API Key
 
-- To find your Postmark API key, log into your Postmark account and navigate to the servers page.
-- After selecting the server of your choice, you will find your API key (referred to as "Server API tokens") in the "API Tokens" section of your server.
+- To find the Postmark API key, log into the personal Postmark account and navigate to the servers page.
+- After selecting the server to use, the API key (referred to as "Server API tokens") will be in the "API Tokens" section of server chosen.
 
-## Authenticate your sender identity
+## Authenticate the sender identity
 
-Before you can send emails on a large scale, you will need to authenticate your sender's identity. This is due to the latest regulatory changes regarding SPAM rules and email fraud. Most of the providers including Postmark require you to authenticate your sender identity before you can send emails.
+Due to the latest regulatory changes regarding SPAM rules and email fraud it is needed to authenticate the sender's identity before sending emails on a large scale.
+Most of the providers, including Postmark, require an authentication to unlock the possibility of sending emails.
 
-Postmark allows you to authenticate your sender identity using one of the following methods:
+Postmark allows the authentication of the sender identity using one of the following methods:
 
-- [Single Sender Verification](https://account.postmarkapp.com/signatures/new) - This is the easiest way to authenticate your sender identity.
-- [Entire Domain Authentication](https://postmarkapp.com/support/article/1046-how-do-i-verify-a-domain#:~:text=be%20verified%20automatically.-,Navigate%20to%20Sender%20Signatures.,to%20your%20DNS%2C%20choose%20Verify.) - This is recommended if you are sending emails from multiple accounts under your domain.
+- [Single Sender Verification](https://account.postmarkapp.com/signatures/new) - This is the easiest way to authenticate the sender identity.
+- [Entire Domain Authentication](https://postmarkapp.com/support/article/1046-how-do-i-verify-a-domain#:~:text=be%20verified%20automatically.-,Navigate%20to%20Sender%20Signatures.,to%20your%20DNS%2C%20choose%20Verify.) - This is recommended for sending emails from multiple accounts under the same domain.
 
 ## Create a Postmark integration with Novu
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate Postmark and click on the **Connect** button.
-- Enter your Postmark API key.
+- Enter the Postmark API key.
 - Fill the `From email address` field using the authenticated email from the previous step.
 - Click on the **Save** button.
-- You should now be able to send notifications using Postmark in Novu.
+- Now is possible to send notifications using Postmark in Novu.

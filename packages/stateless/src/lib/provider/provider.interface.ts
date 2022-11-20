@@ -67,29 +67,31 @@ export interface ISendMessageSuccessResponse {
 
 export enum EmailEventStatusEnum {
   OPENED = 'opened',
+  REJECTED = 'rejected',
+  SENT = 'sent',
+  DEFERRED = 'deferred',
   DELIVERED = 'delivered',
   BOUNCED = 'bounced',
   DROPPED = 'dropped',
   CLICKED = 'clicked',
-  SPAM_COMPLAINED = 'spam complained',
-  SUBSCRIPTION_CHANGED = 'subscription changed',
+  BLOCKED = 'blocked',
+  SPAM = 'spam',
+  UNSUBSCRIBED = 'unsubscribed',
 }
 
 export enum SmsEventStatusEnum {
   CREATED = 'created',
   DELIVERED = 'delivered',
-  RECEIVED = 'received',
   ACCEPTED = 'accepted',
   QUEUED = 'queued',
   SENDING = 'sending',
   SENT = 'sent',
   FAILED = 'failed',
   UNDELIVERED = 'undelivered',
-  RECEIVING = 'receiving',
 }
 
 export interface IEventBody {
-  status: string;
+  status: EmailEventStatusEnum | SmsEventStatusEnum;
   date: string;
   externalId?: string;
   attempts?: number;

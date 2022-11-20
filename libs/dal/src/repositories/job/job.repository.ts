@@ -8,7 +8,7 @@ export class JobRepository extends BaseRepository<JobEntity> {
     super(Job, JobEntity);
   }
 
-  public async storeJobs(jobs: JobEntity[]): Promise<JobEntity> {
+  public async storeJobs(jobs: JobEntity[]): Promise<JobEntity[]> {
     const stored = [];
     for (let index = 0; index < jobs.length; index++) {
       if (index > 0) {
@@ -19,7 +19,7 @@ export class JobRepository extends BaseRepository<JobEntity> {
       stored.push(created);
     }
 
-    return stored[0];
+    return stored;
   }
 
   public async updateStatus(jobId: string, status: JobStatusEnum) {
@@ -57,19 +57,24 @@ export class JobRepository extends BaseRepository<JobEntity> {
   }
 
   public async findJobsToDigest(from: Date, templateId: string, environmentId: string, subscriberId: string) {
+    /**
+     * Remove digest jobs that have been completed and currently delayed jobs that have a digest pending.
+     */
     const digests = await this.find({
       updatedAt: {
         $gte: from,
       },
       _templateId: templateId,
-      status: JobStatusEnum.COMPLETED,
-      type: StepTypeEnum.DIGEST,
+      $or: [
+        { status: JobStatusEnum.COMPLETED, type: StepTypeEnum.DIGEST },
+        { status: JobStatusEnum.DELAYED, type: StepTypeEnum.DELAY },
+      ],
       _environmentId: environmentId,
       _subscriberId: subscriberId,
     });
     const transactionIds = digests.map((job) => job.transactionId);
 
-    return await this.find({
+    const result = await this.find({
       updatedAt: {
         $gte: from,
       },
@@ -82,5 +87,35 @@ export class JobRepository extends BaseRepository<JobEntity> {
         $nin: transactionIds,
       },
     });
+
+    const transactionIdsTriggers = result.map((job) => job.transactionId);
+
+    /**
+     * Update events that have been digested (events that have been sent) to be of status completed.
+     * To avoid cases of same events being sent multiple times.
+     * Happens in cases of delay followed by digest
+     */
+    await this.update(
+      {
+        updatedAt: {
+          $gte: from,
+        },
+        _templateId: templateId,
+        status: JobStatusEnum.PENDING,
+        type: StepTypeEnum.DIGEST,
+        _environmentId: environmentId,
+        _subscriberId: subscriberId,
+        transactionId: {
+          $in: transactionIdsTriggers,
+        },
+      },
+      {
+        $set: {
+          status: JobStatusEnum.COMPLETED,
+        },
+      }
+    );
+
+    return result;
   }
 }

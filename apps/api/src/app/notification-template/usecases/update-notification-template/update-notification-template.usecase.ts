@@ -106,7 +106,7 @@ export class UpdateNotificationTemplate {
 
       const subscribersVariables = contentService.extractSubscriberMessageVariables(command.steps);
 
-      updatePayload['triggers.0.subscribersVariables'] = subscribersVariables.map((i) => {
+      updatePayload['triggers.0.subscriberVariables'] = subscribersVariables.map((i) => {
         return {
           name: i,
         };
@@ -133,6 +133,7 @@ export class UpdateNotificationTemplate {
               feedId: message.template.feedId ? message.template.feedId : null,
               subject: message.template.subject,
               title: message.template.title,
+              actor: message.template.actor,
               parentChangeId,
             })
           );

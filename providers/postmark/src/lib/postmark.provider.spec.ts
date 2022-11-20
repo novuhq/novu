@@ -77,10 +77,19 @@ test('should get message ID', () => {
 test('should parse postmark webhook', () => {
   const provider = new PostmarkEmailProvider(mockConfig);
   const identifier = '883953f4-6105-42a2-a16a-77a8eac79483';
-  const date = new Date().toISOString();
-  expect(provider.parseEventBody(mockWebHook, identifier)).toEqual({
+  const currentDateTimestamp = new Date().getTime();
+  const { date, ...result } = provider.parseEventBody(mockWebHook, identifier);
+
+  /*
+   * Checking difference between current timestamp and timestamp received from result,
+   * to be less than 5 seconds
+   */
+  expect(
+    Math.abs(currentDateTimestamp - new Date(date).getTime())
+  ).toBeLessThanOrEqual(5000);
+
+  expect(result).toStrictEqual({
     status: 'delivered',
-    date: date,
     externalId: '883953f4-6105-42a2-a16a-77a8eac79483',
     attempts: 1,
     response: '',

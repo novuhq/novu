@@ -3,15 +3,15 @@ import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 import { useNotifications, useApi, useNotificationCenter, useUnseenCount } from '../../../hooks';
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
-import { ITab } from '../../../index';
+import { ITab } from '../../../shared/interfaces';
 
 export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();
-  const { onNotificationClick, onUrlChange } = useNotificationCenter();
+  const { onNotificationClick, onUrlChange, emptyState } = useNotificationCenter();
 
   const storeId = tab?.storeId || 'default_store';
   const {
-    markAsSeen: markNotificationAsSeen,
+    markAsRead: markNotificationAsRead,
     fetchNextPage,
     refetch,
     notifications: data,
@@ -38,7 +38,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
   }
 
   async function onNotificationClicked(notification: IMessage) {
-    await markNotificationAsSeen(notification._id);
+    markNotificationAsRead(notification._id);
 
     if (onNotificationClick) {
       onNotificationClick(notification);
@@ -53,24 +53,28 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     if (hasCta && notification.cta?.data?.url && onUrlChange) {
       onUrlChange(notification.cta.data.url);
     }
-
-    refetch();
   }
 
   return (
     <>
       {!isLoading && data?.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            minHeight: 350,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <img src={image as any} alt="logo" style={{ maxWidth: 200 }} />
-        </div>
+        <>
+          {emptyState ? (
+            emptyState
+          ) : (
+            <div
+              style={{
+                textAlign: 'center',
+                minHeight: 350,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <img src={image as any} alt="logo" style={{ maxWidth: 200 }} />
+            </div>
+          )}
+        </>
       ) : (
         <NotificationsList
           onNotificationClicked={onNotificationClicked}
