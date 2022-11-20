@@ -105,8 +105,12 @@ export const PreviewMobile = ({
               >
                 <PreviewUserIcon />
                 <div>
-                  <div className={classes.subject}>{subject}</div>
-                  <div className={classes.from}>{integration?.credentials?.from || 'No active email integration'}</div>
+                  <div data-test-id="preview-subject" className={classes.subject}>
+                    {subject}
+                  </div>
+                  <div data-test-id="preview-from" className={classes.from}>
+                    {integration?.credentials?.from || 'No active email integration'}
+                  </div>
                 </div>
               </Group>
             </div>
@@ -117,6 +121,7 @@ export const PreviewMobile = ({
                   style={{
                     marginLeft: '6px',
                   }}
+                  data-test-id="preview-date"
                 >
                   {format(new Date(), 'EEE, MMM d, HH:mm')}
                 </span>
@@ -127,13 +132,13 @@ export const PreviewMobile = ({
         <div className={classes.line}></div>
         <ErrorBoundary
           FallbackComponent={() => (
-            <div className={classes.fallbackFrame}>
+            <div data-test-id="preview-content" className={classes.fallbackFrame}>
               Oops! We've recognized some glitch in this HTML. Please give it another look!
             </div>
           )}
           resetKeys={[content]}
         >
-          <Frame className={classes.frame} initialContent={content}>
+          <Frame data-test-id="preview-content" className={classes.frame} initialContent={content}>
             <></>
           </Frame>
         </ErrorBoundary>

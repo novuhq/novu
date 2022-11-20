@@ -117,8 +117,12 @@ export const PreviewWeb = ({
               >
                 <PreviewUserIcon />
                 <div>
-                  <div className={classes.subject}>{subject}</div>
-                  <div className={classes.from}>{integration?.credentials?.from || 'No active email integration'}</div>
+                  <div data-test-id="preview-subject" className={classes.subject}>
+                    {subject}
+                  </div>
+                  <div data-test-id="preview-from" className={classes.from}>
+                    {integration?.credentials?.from || 'No active email integration'}
+                  </div>
                 </div>
               </Group>
             </div>
@@ -126,6 +130,7 @@ export const PreviewWeb = ({
               <div className={classes.date}>
                 <PreviewDateIcon />
                 <span
+                  data-test-id="preview-date"
                   style={{
                     marginLeft: '15px',
                   }}
@@ -139,13 +144,13 @@ export const PreviewWeb = ({
         <div className={classes.content}>
           <ErrorBoundary
             FallbackComponent={() => (
-              <div className={classes.fallbackFrame}>
+              <div data-test-id="preview-content" className={classes.fallbackFrame}>
                 Oops! We've recognized some glitch in this HTML. Please give it another look!
               </div>
             )}
             resetKeys={[content]}
           >
-            <Frame className={classes.frame} initialContent={content}>
+            <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
               <></>
             </Frame>
           </ErrorBoundary>
