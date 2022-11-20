@@ -11,7 +11,7 @@ const useStyles = createStyles(() => ({
     background: colors.B17,
     marginLeft: '30px',
     marginRight: '30px',
-    marginTop: '68px',
+    marginTop: '20px',
     borderRadius: '7px',
   },
   bar: {
@@ -71,7 +71,7 @@ const useStyles = createStyles(() => ({
     textAlign: 'center',
   },
   bottom: {
-    height: '30px',
+    height: '70px',
   },
 }));
 
