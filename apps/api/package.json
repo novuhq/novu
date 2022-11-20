@@ -67,7 +67,6 @@
     "@novu/termii": "^0.9.0",
     "@novu/testing": "^0.9.1",
     "@novu/twilio": "^0.9.0",
-    "@novu/outlook365": "^0.9.0",
     "@sendgrid/mail": "^7.6.0",
     "@sentry/node": "^7.12.1",
     "@sentry/tracing": "^7.12.1",

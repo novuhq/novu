@@ -9,6 +9,7 @@ export class Outlook365Handler extends BaseHandler {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   buildProvider(credentials: ICredentials) {
     const config: {
       from: string;
@@ -20,25 +21,24 @@ export class Outlook365Handler extends BaseHandler {
       password: credentials.password,
 =======
   buildProvider(credentials: ICredentials, from: string) {
+=======
+  buildProvider(credentials: ICredentials) {
+>>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
     const config: {
-      from: string;
       user: string;
       password: string;
-      dkim: {
-        domainName: string;
-        keySelector: string;
-        privateKey: string;
-      };
     } = {
-      from,
       user: credentials.user,
       password: credentials.password,
+<<<<<<< HEAD
       dkim: {
         domainName: credentials.domain,
         keySelector: credentials.accountSid,
         privateKey: credentials.secretKey,
       },
 >>>>>>> df77c37be (feat: New Office365 provider)
+=======
+>>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
     };
 
     this.provider = new Outlook365Provider(config);
