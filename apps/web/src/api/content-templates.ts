@@ -1,4 +1,4 @@
-import { IEmailBlock } from '@novu/shared';
+import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { api } from './api.client';
 
 export async function previewEmail({
@@ -6,7 +6,7 @@ export async function previewEmail({
   contentType,
 }: {
   content: string | IEmailBlock[];
-  contentType: 'editor' | 'customHtml';
+  contentType: MessageTemplateContentType;
 }) {
   return api.post('/v1/content-templates/preview/email', { content, contentType });
 }

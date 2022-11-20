@@ -35,7 +35,7 @@ export const Preview = ({ activeStep }: { activeStep: number }) => {
 
       return result;
     });
-  }, [contentType, htmlContent, editorContent, setContent]);
+  }, [contentType, htmlContent, editorContent, setContent, mutateAsync]);
 
   useEffect(() => {
     if (integrations.length === 0) {

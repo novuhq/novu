@@ -9,9 +9,11 @@ export class PreviewEmail {
   constructor(private compileTemplate: CompileTemplate, private organizationRepository: OrganizationRepository) {}
 
   public async execute(command: PreviewEmailCommand) {
-    const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
     const isEditorMode = command.contentType === 'editor';
-    const content = await this.getContent(isEditorMode, command.content);
+    const [organization, content]: [OrganizationEntity, string | IEmailBlock[]] = await Promise.all([
+      this.organizationRepository.findById(command.organizationId),
+      this.getContent(isEditorMode, command.content),
+    ]);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -31,7 +33,7 @@ export class PreviewEmail {
   }
 
   private async getContent(isEditorMode, content: string | IEmailBlock[]): Promise<string | IEmailBlock[]> {
-    if (isEditorMode) {
+    if (isEditorMode && Array.isArray(content)) {
       content = [...content] as IEmailBlock[];
       for (const block of content) {
         block.content = await this.renderContent(block.content);
