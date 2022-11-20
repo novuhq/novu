@@ -1,8 +1,8 @@
 import { IMessageTemplate, TemplateVariableTypeEnum, TemplateSystemVariables } from '@novu/shared';
 import { Divider, Grid } from '@mantine/core';
-import { Button, Title, Modal, Text, Input, Select, Switch, colors } from '../../../design-system';
+import { Button, Title, Modal, Text, Input, Switch, colors } from '../../../design-system';
 import { useMutation } from 'react-query';
-import { testTestEmail } from '../../../api/templates';
+import { testSendEmailMessage } from '../../../api/templates';
 import { useContext, useEffect, useState } from 'react';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { AuthContext } from '../../../store/authContext';
@@ -10,6 +10,14 @@ import { useInputState, useListState } from '@mantine/hooks';
 import { useFormContext } from 'react-hook-form';
 import styled from 'styled-components';
 import { When } from '../../utils/When';
+
+interface IVariable {
+  type: TemplateVariableTypeEnum;
+  name: string;
+  value: string | boolean | undefined;
+  required?: boolean;
+  ind: number;
+}
 
 export function TestSendEmailModal({
   isVisible,
@@ -24,16 +32,20 @@ export function TestSendEmailModal({
 }) {
   const { currentUser } = useContext(AuthContext);
   const { watch } = useFormContext();
-  const { mutateAsync: testEmailEvent } = useMutation(testTestEmail);
+  const { mutateAsync: testSendEmailEvent } = useMutation(testSendEmailMessage);
+
   const [toValue, setToValue] = useInputState<string>(currentUser?.email || '');
-  const [submitted, setSubmitted] = useState(false);
-  const [variablesValue, handlers] = useListState<{
-    name: string;
-    value: string | boolean | undefined;
-    required: boolean;
-    type: TemplateVariableTypeEnum;
-    ind: number;
-  }>([]);
+  const [showRequired, setShowRequired] = useState(false);
+  const [variablesValue, handlers] = useListState<IVariable>([]);
+
+  const isSystemVariable = (variableName) =>
+    TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
+
+  const systemVars = variablesValue.filter((variable) => isSystemVariable(variable.name));
+  const userVars = variablesValue.filter((variable) => !isSystemVariable(variable.name));
+  const allRequired = variablesValue
+    .filter((value) => value.type === TemplateVariableTypeEnum.STRING)
+    .some((value) => (value.required || isSystemVariable(value.name)) && !value.value);
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -66,14 +78,14 @@ export function TestSendEmailModal({
     };
 
     if (allRequired) {
-      setSubmitted(true);
+      setShowRequired(true);
 
       return;
     } else {
-      setSubmitted(false);
+      setShowRequired(false);
     }
     try {
-      await testEmailEvent(toSend);
+      await testSendEmailEvent(toSend);
       successMessage('Test sent successfully!');
       onDismiss();
     } catch (e: any) {
@@ -81,23 +93,16 @@ export function TestSendEmailModal({
     }
   };
 
-  const isSystemVariable = (variableName) =>
-    TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
-
-  const sysVars = variablesValue.filter((variable) => isSystemVariable(variable.name));
-  const userVars = variablesValue.filter((variable) => !isSystemVariable(variable.name));
-  const allRequired = variablesValue.some((value) => (value.required || isSystemVariable(value.name)) && !value.value);
-
   return (
     <Modal
       onClose={onDismiss}
       opened={isVisible}
       title={<Title>Send A Test Email</Title>}
-      data-test-id="test-trigger-modal"
+      data-test-id="test-send-email-modal"
     >
-      <Text>This will explain what this modal does.</Text>
+      <Text color={colors.B60}>This will explain what this modal does.</Text>
       <Input mt={30} label="Send to" value={toValue} onChange={setToValue} />
-      <When truthy={sysVars.length}>
+      <When truthy={systemVars.length}>
         <Divider
           label={<Text color={colors.B40}>System Variables</Text>}
           color={colors.B30}
@@ -105,7 +110,7 @@ export function TestSendEmailModal({
           my="md"
         />
         <Grid>
-          {sysVars
+          {systemVars
             .filter(({ type }) => type === TemplateVariableTypeEnum.STRING)
             .map(({ name, value, ind }) => (
               <Grid.Col span={6}>
@@ -114,25 +119,25 @@ export function TestSendEmailModal({
                   label={name}
                   value={value as string}
                   required={true}
-                  error={submitted && !value && 'required'}
+                  error={showRequired && !value && 'required'}
                   onChange={(event) => handlers.setItemProp(ind, 'value', event.currentTarget.value)}
                 />
               </Grid.Col>
             ))}
         </Grid>
         <Grid>
-          {sysVars
+          {systemVars
             .filter(({ type }) => type === TemplateVariableTypeEnum.BOOLEAN)
             .map(({ name, value, ind }) => (
               <Grid.Col span={4}>
-                <DescriptionWrapper>
+                <SwitchWrapper>
                   <Switch
                     key={ind}
                     label={name}
                     checked={value as boolean}
                     onChange={(event) => handlers.setItemProp(ind, 'value', event.currentTarget.checked)}
                   />
-                </DescriptionWrapper>
+                </SwitchWrapper>
               </Grid.Col>
             ))}
         </Grid>
@@ -149,16 +154,14 @@ export function TestSendEmailModal({
             .filter(({ type }) => type === TemplateVariableTypeEnum.STRING)
             .map(({ name, required, value, ind }) => (
               <Grid.Col span={6}>
-                {/*<InputWrapper>*/}
                 <Input
                   key={ind}
                   label={name}
                   value={value as string}
                   required={required}
-                  error={submitted && required && !value && 'required'}
+                  error={showRequired && required && !value && 'required'}
                   onChange={(event) => handlers.setItemProp(ind, 'value', event.currentTarget.value)}
                 />
-                {/*</InputWrapper>*/}
               </Grid.Col>
             ))}
         </Grid>
@@ -167,21 +170,21 @@ export function TestSendEmailModal({
             .filter(({ type }) => type === TemplateVariableTypeEnum.BOOLEAN)
             .map(({ name, value, ind }) => (
               <Grid.Col span={4}>
-                <DescriptionWrapper>
+                <SwitchWrapper>
                   <Switch
                     key={ind}
                     label={name}
                     checked={value as boolean}
                     onChange={(event) => handlers.setItemProp(ind, 'value', event.currentTarget.checked)}
                   />
-                </DescriptionWrapper>
+                </SwitchWrapper>
               </Grid.Col>
             ))}
         </Grid>
       </When>
 
       <div style={{ alignItems: 'end' }}>
-        <Button data-test-id="test-trigger-btn" mt={30} inherit onClick={() => onTestEmail()}>
+        <Button data-test-id="test-send-email-btn" mt={30} inherit onClick={() => onTestEmail()}>
           Test
         </Button>
       </div>
@@ -189,22 +192,11 @@ export function TestSendEmailModal({
   );
 }
 
-const DescriptionWrapper = styled.div`
+const SwitchWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   .mantine-Switch-root {
     width: auto;
     max-width: inherit;
-  }
-`;
-
-const InputWrapper = styled.div`
-  .mantine-TextInput-root {
-    //position: relative;
-    label {
-      position: absolute;
-      padding-left: 5px;
-      padding-top: 5px;
-    }
   }
 `;

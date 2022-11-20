@@ -11,6 +11,7 @@ import {
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { TestSendMessageCommand } from './send-message.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SendTestEmail {
@@ -44,7 +45,7 @@ export class SendTestEmail {
     )[0];
 
     if (!integration) {
-      // do something...
+      throw new ApiException(`Missing an active email integration`);
     }
 
     let subject = '';
@@ -54,9 +55,7 @@ export class SendTestEmail {
       subject = await this.renderContent(command.subject, command.subject, organization, command);
       content = await this.getContent(isEditorMode, command, subject, organization);
     } catch (e) {
-      console.log(e.message);
-
-      return;
+      throw new ApiException(`Message content could not be generated`);
     }
 
     const html = await this.compileTemplate.execute(
@@ -75,7 +74,6 @@ export class SendTestEmail {
             events: [],
             total_count: 1,
           },
-          subscriber: '?',
           ...command.payload,
         },
       })
@@ -101,9 +99,7 @@ export class SendTestEmail {
     try {
       await mailHandler.send(mailData);
     } catch (error) {
-      console.log(error);
-
-      return;
+      throw new ApiException(`Unexpected provider error`);
     }
   }
 
@@ -115,7 +111,6 @@ export class SendTestEmail {
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode) {
       const content: IEmailBlock[] = [...command.content] as IEmailBlock[];
-      console.log(content);
       for (const block of content) {
         /*
          * We need to trim the content in order to avoid mail provider like GMail
@@ -153,10 +148,24 @@ export class SendTestEmail {
             digest: true,
             events: [],
             total_count: 1,
+            ...this.getSystemVariables('step', command),
           },
+          subscriber: this.getSystemVariables('subscriber', command),
           ...command.payload,
         },
       })
     );
+  }
+
+  private getSystemVariables(variableType: 'subscriber' | 'step' | 'branding', command: TestSendMessageCommand) {
+    const variables = {};
+    for (const variable in command.payload) {
+      const [type, names] = variable.includes('.') ? variable.split('.') : variable;
+      if (type === variableType) {
+        variables[names] = command.payload[variable];
+      }
+    }
+
+    return variables;
   }
 }

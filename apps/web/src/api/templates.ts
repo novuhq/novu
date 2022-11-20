@@ -25,6 +25,6 @@ export async function testTrigger(data: Record<string, unknown>) {
   return api.post(`/v1/events/trigger`, data);
 }
 
-export async function testTestEmail(data: any) {
+export async function testSendEmailMessage(data: Record<string, unknown>) {
   return api.post(`/v1/events/test/email`, data);
 }
