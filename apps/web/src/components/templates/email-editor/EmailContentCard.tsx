@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Input, Tabs, colors } from '../../../design-system';
+import { Button, Input, Tabs, colors } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
@@ -10,6 +10,7 @@ import { VariableManager } from '../VariableManager';
 import { useIntegrations } from '../../../api/hooks';
 import { Grid, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
+import { TestSendEmailModal } from './TestSendEmailModal';
 
 export function EmailContentCard({
   index,
@@ -31,9 +32,11 @@ export function EmailContentCard({
     formState: { errors },
     setValue,
     watch,
+    getValues,
   } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState(0);
+  const [showTestModal, setShowTestModal] = useState(false);
   const { integrations = [] } = useIntegrations();
   const [integration, setIntegration]: any = useState(null);
 
@@ -93,6 +96,8 @@ export function EmailContentCard({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
+      <Button onClick={() => setShowTestModal(true)}>Test Email</Button>
+
       <div
         style={{
           fontWeight: 'bolder',
@@ -171,6 +176,12 @@ export function EmailContentCard({
           </Grid.Col>
         </Grid>
       </div>
+      <TestSendEmailModal
+        index={index}
+        isVisible={showTestModal}
+        onDismiss={() => setShowTestModal(false)}
+        template={getValues(`steps.${index}.template` as any)}
+      />
       <div data-test-id="editor-type-selector">
         <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
       </div>

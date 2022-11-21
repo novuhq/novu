@@ -160,7 +160,21 @@ export class SendMessagePush extends SendMessageType {
       }
 
       for (const channel of pushChannels) {
-        if (!channel.credentials.deviceTokens) continue;
+        if (!channel.credentials?.deviceTokens) {
+          await this.createExecutionDetails.execute(
+            CreateExecutionDetailsCommand.create({
+              ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+              detail: DetailEnum.PUSH_MISSING_DEVICE_TOKENS,
+              source: ExecutionDetailsSourceEnum.INTERNAL,
+              status: ExecutionDetailsStatusEnum.FAILED,
+              isTest: false,
+              isRetry: false,
+            })
+          );
+
+          continue;
+        }
+
         await this.sendMessage(
           integration,
           channel.credentials.deviceTokens,
