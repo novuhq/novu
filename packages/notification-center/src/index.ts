@@ -18,5 +18,4 @@ export { SubscriberPreference } from './components/notification-center/component
 export { ColorScheme } from './shared/config/colors';
 
 export * from './shared/enums';
-
 export * from './shared/interfaces';
