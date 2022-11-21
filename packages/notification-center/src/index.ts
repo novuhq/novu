@@ -18,11 +18,19 @@ export { SubscriberPreference } from './components/notification-center/component
 export { ColorScheme } from './shared/config/colors';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 export * from './shared/enums';
 <<<<<<< HEAD
 =======
 
 =======
 >>>>>>> c5a5741d5 (fix: interface exports)
+<<<<<<< HEAD
 >>>>>>> 608606e61 (fix: interface exports)
+=======
+=======
+export * from './shared/enums';
+
+>>>>>>> 500d2ba65 (feat: add interface tests)
+>>>>>>> 366d0a9f2 (feat: add interface tests)
 export * from './shared/interfaces';
