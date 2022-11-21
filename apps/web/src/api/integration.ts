@@ -21,3 +21,13 @@ export function createIntegration(data: {
 export function updateIntegration(integrationId: string, data: { credentials: ICredentialsDto; active: boolean }) {
   return api.put(`/v1/integrations/${integrationId}`, data);
 }
+
+export function getWebhookSupportStatus({
+  channel,
+  providerId,
+}: {
+  channel: ChannelTypeEnum.EMAIL | ChannelTypeEnum.SMS;
+  providerId: string;
+}) {
+  return api.get(`/v1/integrations/get-webhook-support-status/${channel}/${providerId}`);
+}

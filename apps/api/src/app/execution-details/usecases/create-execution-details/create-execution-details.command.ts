@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { JobEntity } from '@novu/dal';
 
@@ -66,6 +67,8 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @IsString()
   raw?: string;
+
+  webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
 
   static getDetailsFromJob(
     job: JobEntity
