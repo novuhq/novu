@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/notifire.iml" filepath="$PROJECT_DIR$/.idea/notifire.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/novu.iml" filepath="$PROJECT_DIR$/.idea/novu.iml" />
     </modules>
   </component>
 </project>

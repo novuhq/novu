@@ -12,6 +12,7 @@ export type TriggerRecipientsType =
 
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsType;
+  actor?: TriggerRecipientsTypeSingle;
 }
 
 export interface IBroadcastPayloadOptions {

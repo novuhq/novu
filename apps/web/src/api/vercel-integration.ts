@@ -17,5 +17,13 @@ export async function getVercelProjects(configurationId: string) {
 }
 
 export async function completeVercelIntegration(payload: { data: Record<string, string[]>; configurationId: string }) {
-  return api.post(`${partnerIntegrationBaseUrl}/vercel/complete`, { ...payload });
+  return api.post(`${partnerIntegrationBaseUrl}/vercel/configuration/complete`, { ...payload });
+}
+
+export async function getVercelConfigurationDetails(configurationId: string) {
+  return api.get(`${partnerIntegrationBaseUrl}/vercel/configuration/${configurationId}`);
+}
+
+export async function updateVercelIntegration(payload: { data: Record<string, string[]>; configurationId: string }) {
+  return api.put(`${partnerIntegrationBaseUrl}/vercel/configuration/update`, { ...payload });
 }

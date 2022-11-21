@@ -156,7 +156,7 @@
   var getNow =
     Date.now ||
     function () {
-      /* istanbul ignore next */ // Not testable in PhantonJS
+      /* istanbul ignore next */ // Not testable in PhantomJS
       return new Date().getTime()
     }
 
@@ -501,7 +501,7 @@
 
   function disconnectMutationObserver() {
     if (null !== bodyObserver) {
-      /* istanbul ignore next */ // Not testable in PhantonJS
+      /* istanbul ignore next */ // Not testable in PhantomJS
       bodyObserver.disconnect()
     }
   }
@@ -623,7 +623,7 @@
     }
 
     function enableInPageLinks() {
-      /* istanbul ignore else */ // Not testable in phantonJS
+      /* istanbul ignore else */ // Not testable in phantomJS
       if (Array.prototype.forEach && document.querySelectorAll) {
         log('Setting up location.hash handlers')
         bindAnchors()
@@ -812,7 +812,7 @@
         'mutationObserver: ' + mutations[0].target + ' ' + mutations[0].type
       )
 
-      // Deal with WebKit / Blink asyncing image loading when tags are injected into the page
+      // Deal with WebKit / Blink async image loading when tags are injected into the page
       mutations.forEach(addImageLoadListeners)
     }
 
@@ -874,7 +874,7 @@
   // we have to jump through hoops to get a better value.
   function getComputedStyle(prop, el) {
     var retVal = 0
-    el = el || document.body // Not testable in phantonJS
+    el = el || document.body // Not testable in phantomJS
 
     retVal = document.defaultView.getComputedStyle(el, null)
     retVal = null !== retVal ? retVal[prop] : 0
@@ -882,7 +882,7 @@
     return parseInt(retVal, base)
   }
 
-  function chkEventThottle(timer) {
+  function chkEventThrottle(timer) {
     if (timer > throttledTimer / 2) {
       throttledTimer = 2 * timer
       log('Event throttle increased to ' + throttledTimer + 'ms')
@@ -911,7 +911,7 @@
     log('Parsed ' + elementsLength + ' HTML elements')
     log('Element position calculated in ' + timer + 'ms')
 
-    chkEventThottle(timer)
+    chkEventThrottle(timer)
 
     return maxVal
   }
@@ -1050,7 +1050,7 @@
     }
 
     function isSizeChangeDetected() {
-      function checkTolarance(a, b) {
+      function checkTolerance(a, b) {
         var retVal = Math.abs(a - b) <= tolerance
         return !retVal
       }
@@ -1061,8 +1061,8 @@
         undefined !== customWidth ? customWidth : getWidth[widthCalcMode]()
 
       return (
-        checkTolarance(height, currentHeight) ||
-        (calculateWidth && checkTolarance(width, currentWidth))
+        checkTolerance(height, currentHeight) ||
+        (calculateWidth && checkTolerance(width, currentWidth))
       )
     }
 

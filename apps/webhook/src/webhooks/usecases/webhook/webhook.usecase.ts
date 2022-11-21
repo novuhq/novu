@@ -3,14 +3,13 @@ import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@no
 import { ChannelTypeEnum } from '@novu/shared';
 import { IEmailProvider, IEventBody, ISmsProvider } from '@novu/stateless';
 import { MailFactory, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
+
 import { WebhookCommand } from './webhook.command';
 
-export interface IWebhookResult {
-  id: string;
-  event: IEventBody;
-}
+import { CreateExecutionDetails } from '../execution-details/create-execution-details.usecase';
 
-export type WebhookTypes = 'sms' | 'email';
+import { IWebhookResult } from '../../dtos/webhooks-response.dto';
+import { WebhookTypes } from '../../interfaces/webhook.interface';
 
 @Injectable()
 export class Webhook {
@@ -18,16 +17,21 @@ export class Webhook {
   public readonly smsFactory = new SmsFactory();
   private provider: IEmailProvider | ISmsProvider;
 
-  constructor(private integrationRepository: IntegrationRepository, private messageRepository: MessageRepository) {}
+  constructor(
+    private createExecutionDetails: CreateExecutionDetails,
+    private integrationRepository: IntegrationRepository,
+    private messageRepository: MessageRepository
+  ) {}
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
     const providerId = command.providerId;
+    const channel: ChannelTypeEnum = command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS;
 
     const integration: IntegrationEntity = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       providerId,
-      channel: command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS,
+      channel,
     });
 
     if (!integration) {
@@ -40,17 +44,17 @@ export class Webhook {
       throw new NotFoundException(`Provider with ${providerId} can not handle webhooks`);
     }
 
-    return this.parseEvents(command);
+    return await this.parseEvents(command, channel);
   }
 
-  private async parseEvents(command: WebhookCommand): Promise<IWebhookResult[]> {
+  private async parseEvents(command: WebhookCommand, channel: ChannelTypeEnum): Promise<IWebhookResult[]> {
     const body = command.body;
     const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
     const events: IWebhookResult[] = [];
 
     for (const messageIdentifier of messageIdentifiers) {
-      const event = await this.parseEvent(messageIdentifier, command);
+      const event = await this.parseEvent(messageIdentifier, command, channel);
 
       if (event === undefined) {
         continue;
@@ -62,7 +66,11 @@ export class Webhook {
     return events;
   }
 
-  private async parseEvent(messageIdentifier, command: WebhookCommand): Promise<IWebhookResult | undefined> {
+  private async parseEvent(
+    messageIdentifier,
+    command: WebhookCommand,
+    channel: ChannelTypeEnum
+  ): Promise<IWebhookResult | undefined> {
     const message = await this.messageRepository.findOne({
       identifier: messageIdentifier,
       _environmentId: command.environmentId,
@@ -81,10 +89,24 @@ export class Webhook {
       return undefined;
     }
 
-    return {
+    const parsedEvent = {
       id: messageIdentifier,
       event,
     };
+
+    /**
+     * TODO: Individually performing the creation of the execution details because here we can pass message that contains
+     * most of the __foreign keys__ we need. But we can't take advantage of a bulk write of all events. Besides the writing
+     * being hiding inside auxiliary methods of the use case.
+     */
+    await this.createExecutionDetails.execute({
+      message,
+      webhook: command,
+      webhookEvent: parsedEvent,
+      channel,
+    });
+
+    return parsedEvent;
   }
 
   private getHandler(integration, type: WebhookTypes): ISmsHandler | IMailHandler {

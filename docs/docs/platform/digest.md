@@ -45,13 +45,13 @@ In regular strategy, a digest will always be created for the specified window ti
 
 ### Back-off Strategy
 
-In the back-off strategy, before creating a digest, Novu will check if a message was sent to the user in the back-off period. If a message was sent, a digest will be created. Otherwise a message will be sent directly to the user and the digest creation will be skipped.
+In the back-off strategy, before creating a digest, Novu will check if a message was sent to the user in the back-off period. If a message was sent, a digest will be created. Otherwise, a message will be sent directly to the user and the digest creation will be skipped.
 
 ## Writing digest templates
 
-In many cases, you will need to access all the digested events payload in order to show the user all or parts of the events included in this digest. For example: "John and 5 others liked your photo".
+In many cases, you will need to access all the digested events payload in order to show the user all or parts of the events included in this digest. For example: "John and 5 others liked your photo."
 
-As port of the digested template you will have access to a few properties:
+As part of the digested template, you will have access to a few properties:
 
 | Property           | Description                                                                                                                                         |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -76,21 +76,17 @@ describe('Notifications List', function () {
     cy.getByTestId('notification-list-item').should('have.length', 25);
   });
 
-  it('toggle seen state on click of notification', function () {
+  it.skip('toggle read state on click of notification', function () {
     cy.getByTestId('unseen-count-label').contains('5');
-    cy.intercept('**/messages/**/seen').as('seenRequest');
+    cy.intercept('**/messages/**/read').as('readRequest');
     cy.getByTestId('notification-list-item').first().click();
-    cy.wait('@seenRequest');
+    cy.wait('@readRequest');
     cy.getByTestId('unseen-count-label').contains('4');
   });
 
-  it('count seen-unseen notification', function () {
+  it.only('count seen-unseen notification', function () {
     cy.getByTestId('unseen-count-label').contains('5');
-    cy.intercept('**/messages/**/seen').as('seenRequest');
     cy.intercept('**/notifications/feed?page=0').as('getNotifications');
-    cy.getByTestId('notification-list-item').first().click();
-    cy.wait('@seenRequest');
-    cy.wait('@getNotifications');
     cy.getByTestId('notification-list-item').should('have.length', 5);
   });
 });

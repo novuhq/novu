@@ -7,7 +7,7 @@ on:
     secrets:
       cypress_key:
         required: false
-        
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -51,6 +51,10 @@ jobs:
         with:
           targets: lint
           projects: '@novu/widget'
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI=false pnpm build:embed
 
       # Runs a single command using the runners shell
       - name: Build

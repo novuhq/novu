@@ -1,6 +1,7 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
 import * as mongooseDelete from 'mongoose-delete';
+import { ActorTypeEnum } from '@novu/shared';
 import { schemaOptions } from '../schema-default.options';
 import { MessageEntity } from './message.entity';
 
@@ -32,6 +33,10 @@ const messageSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
       index: true,
+    },
+    _jobId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Job',
     },
     templateIdentifier: Schema.Types.String,
     email: Schema.Types.String,
@@ -75,7 +80,12 @@ const messageSchema = new Schema(
       type: Schema.Types.Boolean,
       default: false,
     },
+    read: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     lastSeenDate: Schema.Types.Date,
+    lastReadDate: Schema.Types.Date,
     createdAt: {
       type: Schema.Types.Date,
       default: Date.now,
@@ -94,6 +104,13 @@ const messageSchema = new Schema(
     identifier: Schema.Types.String,
     payload: Schema.Types.Mixed,
     overrides: Schema.Types.Mixed,
+    actor: {
+      type: {
+        type: Schema.Types.String,
+        enum: ActorTypeEnum,
+      },
+      data: Schema.Types.Mixed,
+    },
   },
   { ...schemaOptions }
 );

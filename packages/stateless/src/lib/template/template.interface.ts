@@ -54,3 +54,7 @@ export interface IAttachmentOptions {
   name?: string;
   channels?: ChannelTypeEnum[];
 }
+
+export interface IAttachmentOptionsExtended extends IAttachmentOptions {
+  storagePath?: string;
+}

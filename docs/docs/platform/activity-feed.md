@@ -9,7 +9,6 @@ This can be used to monitor activity and discover potential issues with a specif
 
 ![Activity Screen](/img/activity.png)
 
-
 ## Viewing a specific subscriber's activity
 
 To use a subscriber's activity feed you can filter the feed by using the subscriberId or email. This will show only the relevant data for this particular subscriber.
