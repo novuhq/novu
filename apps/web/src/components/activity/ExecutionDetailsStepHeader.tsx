@@ -117,10 +117,6 @@ const getDetailsStyledComponentByStepStatus = (status) => {
   return StepDetails;
 };
 
-const getStepWebhookStatus = (step) => {
-  return step.executionDetails?.at(-1)?.webhookStatus;
-};
-
 const StepOutcome = ({ createdAt, name, detail, status }) => {
   const theme = useMantineColorScheme();
   const Details = getDetailsStyledComponentByStepStatus(status);
@@ -138,7 +134,6 @@ const StepOutcome = ({ createdAt, name, detail, status }) => {
 export const ExecutionDetailsStepHeader = ({ step }) => {
   const { status } = step;
   const generatedDetail = generateDetailByStepAndStatus(status, step);
-  const webhookStatus = getStepWebhookStatus(step);
 
   return (
     <Grid>
