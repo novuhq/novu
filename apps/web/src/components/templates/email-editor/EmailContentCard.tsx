@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Input, Tabs, colors } from '../../../design-system';
+import { Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { VariableManager } from '../VariableManager';
 import { useIntegrations } from '../../../api/hooks';
-import { Grid, useMantineTheme } from '@mantine/core';
-import { format } from 'date-fns';
+import { useMantineTheme } from '@mantine/core';
 import { EmailInboxContent } from './EmailInboxContent';
 
 export function EmailContentCard({
