@@ -1,11 +1,3 @@
-import {
-  ButtonTypeEnum,
-  IMessage,
-  IMessageAction,
-  IOrganizationEntity,
-  ISubscriberJwt,
-  MessageActionStatusEnum,
-} from '@novu/shared';
 import { IStoreQuery } from '@novu/client';
 export { IStoreQuery };
 export { IUserPreferenceSettings } from '@novu/client';
@@ -27,15 +19,4 @@ export { SubscriberPreference } from './components/notification-center/component
 
 export { ColorScheme } from './shared/config/colors';
 
-export {
-  IAuthContext,
-  ISocket,
-  ISocketContext,
-  IUserInfo,
-  ListItem,
-  INotificationCenterContext,
-  IStore,
-  INovuProviderContext,
-  INotificationsContext,
-  ITab,
-} from './shared/interfaces';
+export * from './shared/interfaces';
