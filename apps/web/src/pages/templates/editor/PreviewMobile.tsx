@@ -5,27 +5,9 @@ import { colors } from '../../../design-system';
 import { PreviewDateIcon } from './PreviewDateIcon';
 import { PreviewUserIcon } from './PreviewUserIcon';
 import { ErrorBoundary } from 'react-error-boundary';
+import { Mobile } from './Mobile';
 
 const useStyles = createStyles(() => ({
-  phone: {
-    display: 'block',
-    margin: 'auto',
-    width: '390px',
-    height: '740px',
-    position: 'relative',
-    borderColor: colors.B20,
-    borderWidth: '10px',
-    borderStyle: 'solid',
-    borderRadius: '40px',
-  },
-  cameraDent: {
-    background: colors.B20,
-    width: '148px',
-    height: '30px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    borderRadius: '0 0 20px 20px',
-  },
   header: {
     width: '100%',
     marginTop: '20px',
@@ -86,8 +68,7 @@ export const PreviewMobile = ({
 
   return (
     <>
-      <div className={classes.phone}>
-        <div className={classes.cameraDent}></div>
+      <Mobile>
         <div className={classes.header}>
           <Group
             sx={{
@@ -142,7 +123,7 @@ export const PreviewMobile = ({
             <></>
           </Frame>
         </ErrorBoundary>
-      </div>
+      </Mobile>
       <div className={classes.bottom}></div>
     </>
   );
