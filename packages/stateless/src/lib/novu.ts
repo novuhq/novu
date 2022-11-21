@@ -13,12 +13,17 @@ import { TemplateStore } from './template/template.store';
 import { TriggerEngine } from './trigger/trigger.engine';
 import { ThemeStore } from './theme/theme.store';
 import { ITheme } from './theme/theme.interface';
+import {
+  HandlebarsContentEngine,
+  IContentEngine,
+} from './content/content.engine';
 
 export class NovuStateless extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
   private readonly themeStore: ThemeStore;
   private readonly config: INovuConfig;
+  private readonly contentEngine: IContentEngine;
 
   constructor(config?: INovuConfig) {
     super();
@@ -34,6 +39,8 @@ export class NovuStateless extends EventEmitter {
     this.themeStore = this.config?.themeStore || new ThemeStore();
     this.templateStore = this.config?.templateStore || new TemplateStore();
     this.providerStore = this.config?.providerStore || new ProviderStore();
+    this.contentEngine =
+      this.config?.contentEngine || new HandlebarsContentEngine();
   }
 
   async registerTheme(id: string, theme: ITheme) {
@@ -85,6 +92,7 @@ export class NovuStateless extends EventEmitter {
       this.templateStore,
       this.providerStore,
       this.themeStore,
+      this.contentEngine,
       this.config,
       this
     );

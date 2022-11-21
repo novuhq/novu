@@ -1,5 +1,8 @@
 import * as Handlebars from 'handlebars';
-import { IAttachmentOptions } from '../template/template.interface';
+import {
+  IAttachmentOptions,
+  ITriggerPayload,
+} from '../template/template.interface';
 
 Handlebars.registerHelper(
   'equals',
@@ -9,7 +12,7 @@ Handlebars.registerHelper(
   }
 );
 
-type HandlebarsContext = {
+type ContentEnginePayload = {
   [key: string]:
     | string
     | { key: string }[]
@@ -24,13 +27,24 @@ type HandlebarsContext = {
     | Record<string, unknown>;
 };
 
-export function compileTemplate(content: string, data: HandlebarsContext) {
-  const template = Handlebars.compile<HandlebarsContext>(content);
-
-  return template(data);
+export interface IContentEngine {
+  compileTemplate: (content: string, payload: ContentEnginePayload) => string;
+  extractMessageVariables: (content: string) => Array<string>;
 }
 
-export function getHandlebarsVariables(input: string): string[] {
+export class HandlebarsContentEngine implements IContentEngine {
+  compileTemplate(content: string, payload: ContentEnginePayload): string {
+    const template = Handlebars.compile<ContentEnginePayload>(content);
+
+    return template(payload);
+  }
+
+  extractMessageVariables(content: string): string[] {
+    return getHandlebarsVariables(content);
+  }
+}
+
+function getHandlebarsVariables(input: string): string[] {
   const ast: hbs.AST.Program = Handlebars.parseWithoutProcessing(input);
 
   return ast.body

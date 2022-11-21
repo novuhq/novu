@@ -137,7 +137,7 @@ describe('User Sign-up and Login', function () {
 
       cy.visit('/templates');
 
-      // checkig if token is removed from local storage
+      // checking if token is removed from local storage
       cy.getLocalStorage('auth_token').should('be.null');
       // checking if user is redirected to login page
       cy.location('pathname').should('equal', '/auth/login');

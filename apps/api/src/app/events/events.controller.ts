@@ -5,7 +5,7 @@ import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ISubscribersDefine } from '@novu/node';
+import { ISubscribersDefine, TriggerRecipientsTypeSingle } from '@novu/node';
 import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
 import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
@@ -42,7 +42,7 @@ export class EventsController {
     description: `
     Trigger event is the main (and the only) way to send notification to subscribers. 
     The trigger identifier is used to match the particular template associated with it. 
-    Additional information can be passed according the the body interface below.
+    Additional information can be passed according the body interface below.
     `,
   })
   async trackEvent(
@@ -50,11 +50,12 @@ export class EventsController {
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const mappedSubscribers = this.mapSubscribers(body);
+    const mappedActor = this.mapActor(body.actor);
     const transactionId = body.transactionId || uuidv4();
 
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
 
-    return (await this.triggerEvent.execute(
+    const result = await this.triggerEvent.execute(
       TriggerEventCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
@@ -63,9 +64,12 @@ export class EventsController {
         payload: body.payload,
         overrides: body.overrides || {},
         to: mappedSubscribers,
+        actor: mappedActor,
         transactionId,
       })
-    )) as unknown as TriggerEventResponseDto;
+    );
+
+    return result as unknown as TriggerEventResponseDto;
   }
 
   @ExternalApiAccessible()
@@ -85,8 +89,8 @@ export class EventsController {
   })
   @ApiOperation({
     summary: 'Broadcast event to all',
-    description:
-      'Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc. In the future could be used to trigger events to a subset of subscribers based on defined filters.',
+    description: `Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc.
+      In the future could be used to trigger events to a subset of subscribers based on defined filters.`,
   })
   async trackEventToAll(
     @UserSession() user: IJwtPayload,
@@ -94,6 +98,7 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
+    const mappedActor = this.mapActor(body.actor);
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -104,6 +109,7 @@ export class EventsController {
         payload: body.payload,
         transactionId,
         overrides: body.overrides || {},
+        actor: mappedActor,
       })
     );
   }
@@ -147,5 +153,14 @@ export class EventsController {
         return subscriber;
       }
     });
+  }
+
+  private mapActor(actor: TriggerRecipientsTypeSingle): ISubscribersDefine {
+    if (!actor) return;
+    if (typeof actor === 'string') {
+      return { subscriberId: actor };
+    }
+
+    return actor;
   }
 }

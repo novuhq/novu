@@ -4,8 +4,6 @@ describe('Activity page', function () {
     cy.initializeSession()
       .as('session')
       .then((session: any) => {
-        cy.wait(500);
-
         return cy.task('createNotifications', {
           identifier: session.templates[0].triggers[0].identifier,
           token: session.token,
@@ -21,6 +19,6 @@ describe('Activity page', function () {
     cy.location('pathname').should('equal', '/activities');
 
     // @ts-ignore
-    cy.getByTestId('activity-stats-weekly-sent').contains('50');
+    cy.getByTestId('activity-stats-weekly-sent').contains('25');
   });
 });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Accordion, Divider } from '@mantine/core';
+import { Accordion, Divider, ScrollArea } from '@mantine/core';
 import styled from 'styled-components';
 import { useNovuTheme, useSubscriberPreference } from '../../../../hooks';
 import { accordionStyles, Text, TextBlock } from './styles';
@@ -31,47 +31,50 @@ export function SubscriberPreference() {
           <img src={image as any} alt="logo" style={{ maxWidth: 300 }} />
         </div>
       )}
-      <div style={{ padding: '15px' }}>
-        <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
-          {preferences?.map((item, index) => {
-            const channelsKeys = Object.keys(item?.preference?.channels);
-            const channelsPreference = item?.preference?.channels;
 
-            const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
-              setLoadingUpdate(true);
-              await updatePreference(item, type, checked, index);
-              setLoadingUpdate(false);
-            };
+      <ScrollArea style={{ height: 400 }}>
+        <div style={{ padding: '15px' }}>
+          <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
+            {preferences?.map((item, index) => {
+              const channelsKeys = Object.keys(item?.preference?.channels);
+              const channelsPreference = item?.preference?.channels;
 
-            return (
-              <Accordion.Item
-                key={index}
-                data-test-id="workflow-list-item"
-                label={
-                  <WorkflowHeader
-                    theme={baseTheme}
-                    label={item.template?.name}
-                    channels={getEnabledChannels(channelsPreference)}
-                  />
-                }
-              >
-                <ChannelsWrapper>
-                  <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
-                  {channelsKeys.map((key) => (
-                    <ChannelPreference
-                      key={key}
-                      type={key}
-                      active={channelsPreference[key]}
-                      disabled={loadingUpdate}
-                      handleUpdateChannelPreference={handleUpdateChannelPreference}
+              const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
+                setLoadingUpdate(true);
+                await updatePreference(item, type, checked, index);
+                setLoadingUpdate(false);
+              };
+
+              return (
+                <Accordion.Item
+                  key={index}
+                  data-test-id="workflow-list-item"
+                  label={
+                    <WorkflowHeader
+                      theme={baseTheme}
+                      label={item.template?.name}
+                      channels={getEnabledChannels(channelsPreference)}
                     />
-                  ))}
-                </ChannelsWrapper>
-              </Accordion.Item>
-            );
-          })}
-        </Accordion>
-      </div>
+                  }
+                >
+                  <ChannelsWrapper>
+                    <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
+                    {channelsKeys.map((key) => (
+                      <ChannelPreference
+                        key={key}
+                        type={key}
+                        active={channelsPreference[key]}
+                        disabled={loadingUpdate}
+                        handleUpdateChannelPreference={handleUpdateChannelPreference}
+                      />
+                    ))}
+                  </ChannelsWrapper>
+                </Accordion.Item>
+              );
+            })}
+          </Accordion>
+        </div>
+      </ScrollArea>
     </>
   );
 }

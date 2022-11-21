@@ -1,9 +1,10 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
+import { EnvironmentRepository, EnvironmentEntity, OrganizationRepository } from '@novu/dal';
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 interface ISetEnvironment {
   token: string;
@@ -24,34 +25,41 @@ export class CompleteVercelIntegration {
   constructor(
     private httpService: HttpService,
     private environmentRepository: EnvironmentRepository,
-    private getVercelProjectsUsecase: GetVercelProjects
+    private getVercelProjectsUsecase: GetVercelProjects,
+    private organizationRepository: OrganizationRepository
   ) {}
 
   async execute(command: CompleteVercelIntegrationCommand): Promise<{ success: boolean }> {
-    const organizationIds = Object.keys(command.data);
+    try {
+      const organizationIds = Object.keys(command.data);
 
-    const envKeys = await this.getEnvKeys(organizationIds);
+      const envKeys = await this.getEnvKeys(organizationIds);
 
-    const mappedProjectData = this.mapProjectKeys(envKeys, command.data);
+      const mappedProjectData = this.mapProjectKeys(envKeys, command.data);
 
-    const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration({
-      configurationId: command.configurationId,
-      userId: command.userId,
-    });
-
-    for (const key of Object.keys(mappedProjectData)) {
-      await this.setEnvironments({
-        clientKey: mappedProjectData[key].clientKey,
-        privateKey: mappedProjectData[key].privateKey,
-        projectIds: mappedProjectData[key].projectIds,
-        teamId: configurationDetails.teamId,
-        token: configurationDetails.accessToken,
+      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration({
+        configurationId: command.configurationId,
+        userId: command.userId,
       });
-    }
 
-    return {
-      success: true,
-    };
+      await this.saveProjectIds(command);
+
+      for (const key of Object.keys(mappedProjectData)) {
+        await this.setEnvironments({
+          clientKey: mappedProjectData[key].clientKey,
+          privateKey: mappedProjectData[key].privateKey,
+          projectIds: mappedProjectData[key].projectIds,
+          teamId: configurationDetails.teamId,
+          token: configurationDetails.accessToken,
+        });
+      }
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      throw new ApiException(error.message);
+    }
   }
 
   private async getEnvKeys(organizationIds: string[]): Promise<EnvironmentEntity[]> {
@@ -109,6 +117,14 @@ export class CompleteVercelIntegration {
           })
         )
       )
+    );
+  }
+
+  private async saveProjectIds(command: CompleteVercelIntegrationCommand) {
+    await this.organizationRepository.bulkUpdatePartnerConfiguration(
+      command.userId,
+      command.data,
+      command.configurationId
     );
   }
 }

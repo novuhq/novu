@@ -1,5 +1,5 @@
 import React from 'react';
-import { INotificationBellColors } from '../../store/novu-theme.context';
+import { INotificationBellColors, ISvgStopColor } from '../../store/novu-theme.context';
 
 interface IGradientDotProps {
   props?: React.ComponentPropsWithoutRef<'svg'>;
@@ -25,8 +25,8 @@ export function GradientDot(props: IGradientDotProps) {
       />
       <defs>
         <linearGradient id="paint0_linear_1722_2699" x1="8" y1="13" x2="8" y2="3" gradientUnits="userSpaceOnUse">
-          <stop stopColor={regularColor ? color : color.stopColor} />
-          <stop offset="1" stopColor={regularColor ? color : color.stopColorOffset} />
+          <stop stopColor={regularColor ? (color as string) : (color as ISvgStopColor).stopColor} />
+          <stop offset="1" stopColor={regularColor ? (color as string) : (color as ISvgStopColor).stopColorOffset} />
         </linearGradient>
       </defs>
     </svg>
