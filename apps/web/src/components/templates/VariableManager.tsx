@@ -169,6 +169,16 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
       })
       .flat();
 
+    /*
+     *   .map((mustVar) => {
+     *   return {
+     *     ...mustVar,
+     *     name: body.params[0].original + '.' + mustVar.name,
+     *   };
+     * });
+     * console.log(nestedVariablesInBlock);
+     */
+
     const boolVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'BlockStatement' && ['if'].includes(body.path.head))
       .map((body) => {

@@ -1,5 +1,6 @@
 import { SegmentedControl } from '@mantine/core';
 import { colors } from '../../design-system';
+import { ViewEnum } from '../../pages/templates/editor/TemplateEditorPage';
 
 export const EditorPreviewSwitch = ({ view, setView }) => {
   return (
@@ -21,7 +22,7 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
           color: `${colors.B40} !important`,
         },
       }}
-      data={['Edit', 'Preview']}
+      data={Object.values(ViewEnum)}
       value={view}
       onChange={(value) => {
         setView(value);

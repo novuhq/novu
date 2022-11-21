@@ -2,7 +2,7 @@ import { Center, Container, Grid, Group } from '@mantine/core';
 import { useState } from 'react';
 import { Button, colors, Switch, Title, Text } from '../../design-system';
 import { ArrowLeft } from '../../design-system/icons';
-import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { ActivePageEnum, ViewEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { useEnvController } from '../../store/use-env-controller';
 import { When } from '../utils/When';
 import { EditorPreviewSwitch } from './EditorPreviewSwitch';
@@ -51,8 +51,8 @@ interface Props {
   setActivePage: (activePage: ActivePageEnum) => void;
   activePage: ActivePageEnum;
   onTestWorkflowClicked: () => void;
-  view?: 'Edit' | 'Preview';
-  setView?: (view: 'Edit' | 'Preview') => void;
+  view?: ViewEnum;
+  setView?: (view: ViewEnum) => void;
 }
 
 export const TemplatePageHeader = ({
@@ -62,7 +62,7 @@ export const TemplatePageHeader = ({
   activePage,
   setActivePage,
   onTestWorkflowClicked,
-  view = 'Edit',
+  view = ViewEnum.EDIT,
   setView = () => {},
 }: Props) => {
   const { editMode, template } = useTemplateController(templateId);

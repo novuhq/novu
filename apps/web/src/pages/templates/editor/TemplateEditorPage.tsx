@@ -20,6 +20,7 @@ import { SaveChangesModal } from '../../../components/templates/SaveChangesModal
 import { useDisclosure } from '@mantine/hooks';
 import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
 import { Preview } from './Preview';
+import { TestSendEmail } from '../../../components/templates/email-editor/TestSendEmail';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -31,6 +32,11 @@ export enum ActivePageEnum {
   PUSH = 'Push',
   CHAT = 'Chat',
   TRIGGER_SNIPPET = 'TriggerSnippet',
+}
+export enum ViewEnum {
+  EDIT = 'Edit',
+  PREVIEW = 'Preview',
+  TEST = 'Test',
 }
 
 export default function TemplateEditorPage() {
@@ -59,7 +65,7 @@ export default function TemplateEditorPage() {
   } = useTemplateController(templateId);
 
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
-  const [view, setView] = useState<'Edit' | 'Preview'>('Edit');
+  const [view, setView] = useState<ViewEnum>(ViewEnum.EDIT);
 
   const [testWorkflowModalOpened, { close: closeTestWorkflowModal, open: openTestWorkflowModal }] = useDisclosure(
     false,
