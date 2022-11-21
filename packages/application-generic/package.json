@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "0.8.0",
+  "version": "0.9.1",
   "description": "Generic backend code used inside of Novus different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -48,6 +48,7 @@
     "@novu/nodemailer": "^0.9.0",
     "@novu/plivo": "^0.9.0",
     "@novu/postmark": "^0.9.0",
+    "@novu/pushwoosh": "^0.9.0",
     "@novu/sendgrid": "^0.9.0",
     "@novu/sendinblue": "^0.9.0",
     "@novu/ses": "^0.9.0",
