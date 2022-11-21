@@ -20,6 +20,7 @@ export { ColorScheme } from './shared/config/colors';
 <<<<<<< HEAD
 <<<<<<< HEAD
 export * from './shared/enums';
+<<<<<<< HEAD
 
 =======
 >>>>>>> c5a5741d5 (fix: interface exports)
@@ -27,4 +28,6 @@ export * from './shared/enums';
 export * from './shared/enums';
 
 >>>>>>> 500d2ba65 (feat: add interface tests)
+=======
+>>>>>>> 9205e7a72 (fix: interface exports)
 export * from './shared/interfaces';
