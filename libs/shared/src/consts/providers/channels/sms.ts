@@ -80,7 +80,7 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'firetext.svg', dark: 'firetext.svg' },
   },
   {
-    id: SmsProviderIdEnum.Bulksms,
+    id: SmsProviderIdEnum.BulkSMS,
     displayName: 'BulkSMS',
     channel: ChannelTypeEnum.SMS,
     credentials: bulksmsConfig,
