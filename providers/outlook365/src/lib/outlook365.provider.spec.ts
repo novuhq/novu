@@ -4,7 +4,7 @@ const sendMailMock = jest.fn().mockReturnValue(() => {
   return {} as any;
 });
 
-jest.mock('office365', () => {
+jest.mock('./outlook365.provider', () => {
   return {
     createTransport: jest.fn().mockReturnValue({
       sendMail: sendMailMock,
