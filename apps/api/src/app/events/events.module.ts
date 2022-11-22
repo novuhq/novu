@@ -12,6 +12,7 @@ import { WorkflowQueueService } from './services/workflow.queue.service';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { StorageHelperService } from './services/storage-helper-service/storage-helper.service';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
+import { MessagesModule } from '../messages/messages.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ExecutionDetailsModule } from '../execution-details/execution-details.m
     ContentTemplatesModule,
     IntegrationModule,
     ExecutionDetailsModule,
+    MessagesModule,
   ],
   controllers: [EventsController],
   providers: [...USE_CASES, WorkflowQueueService, StorageHelperService],

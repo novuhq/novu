@@ -158,6 +158,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       messageIds,
       mark: { [MarkEnum.SEEN]: true },
+      invalidate: true,
     });
 
     return await this.markMessageAsUsecase.execute(command);
@@ -182,6 +183,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       messageIds,
       mark: { [MarkEnum.READ]: true },
+      invalidate: true,
     });
 
     return await this.markMessageAsUsecase.execute(command);
@@ -204,6 +206,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       messageIds,
       mark: body.mark,
+      invalidate: true,
     });
 
     return await this.markMessageAsUsecase.execute(command);
@@ -214,7 +217,8 @@ export class WidgetsController {
   async markAllUnseenAsSeen(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<number> {
     const command = MarkAllMessageAsSeenCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      _subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
     });
 

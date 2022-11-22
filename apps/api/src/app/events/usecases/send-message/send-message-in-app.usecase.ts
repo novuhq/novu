@@ -33,6 +33,8 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { CreateMessage, CreateMessageCommand } from '../../../messages/usecases/create-message';
+import { UpdateMessage, UpdateMessageCommand } from '../../../messages/usecases/update-message';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -43,7 +45,9 @@ export class SendMessageInApp extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private subscriberRepository: SubscriberRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private createMessageUsecase: CreateMessage,
+    private updateMessageUsecase: UpdateMessage
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
@@ -133,42 +137,51 @@ export class SendMessageInApp extends SendMessageType {
     let message: MessageEntity;
 
     if (!oldMessage) {
-      message = await this.messageRepository.create({
-        _notificationId: notification._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _subscriberId: command.subscriberId,
-        _templateId: notification._templateId,
-        _messageTemplateId: inAppChannel.template._id,
-        channel: ChannelTypeEnum.IN_APP,
-        cta: inAppChannel.template.cta,
-        _feedId: inAppChannel.template._feedId,
-        transactionId: command.transactionId,
-        content,
-        payload: messagePayload,
-        templateIdentifier: command.identifier,
-        _jobId: command.jobId,
-        ...(actor &&
-          actor.type !== ActorTypeEnum.NONE && {
-            actor,
-          }),
-      });
+      const messageActor = actor && actor.type !== ActorTypeEnum.NONE && { actor };
+
+      message = await this.createMessageUsecase.execute(
+        CreateMessageCommand.create({
+          _notificationId: notification._id,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          _subscriberId: command.subscriberId,
+          subscriberId: subscriber.subscriberId,
+          _templateId: notification._templateId,
+          _messageTemplateId: inAppChannel.template._id,
+          channel: ChannelTypeEnum.IN_APP,
+          cta: inAppChannel.template.cta,
+          _feedId: inAppChannel.template._feedId,
+          transactionId: command.transactionId,
+          content,
+          payload: messagePayload,
+          templateIdentifier: command.identifier,
+          _jobId: command.jobId,
+          actor: messageActor.actor,
+          invalidate: true,
+        })
+      );
     }
 
     if (oldMessage) {
-      await this.messageRepository.update(
-        {
-          _id: oldMessage._id,
-        },
-        {
-          $set: {
-            seen: false,
-            cta: inAppChannel.template.cta,
-            content,
-            payload: messagePayload,
-            createdAt: new Date(),
+      await this.updateMessageUsecase.execute(
+        UpdateMessageCommand.create({
+          query: {
+            _id: oldMessage._id,
           },
-        }
+          updateBody: {
+            $set: {
+              seen: false,
+              cta: inAppChannel.template.cta,
+              content,
+              payload: messagePayload,
+              createdAt: new Date(),
+            },
+          },
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: subscriber.subscriberId,
+          invalidate: true,
+        })
       );
       message = await this.messageRepository.findById(oldMessage._id);
     }

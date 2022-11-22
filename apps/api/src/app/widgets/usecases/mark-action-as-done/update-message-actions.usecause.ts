@@ -4,12 +4,15 @@ import { UpdateMessageActionsCommand } from './update-message-actions.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { UpdateMessageCommand, UpdateMessage } from '../../../messages/usecases/update-message';
 
 @Injectable()
 export class UpdateMessageActions {
   constructor(
     private messageRepository: MessageRepository,
     private subscriberRepository: SubscriberRepository,
+    private updateMessageUsecase: UpdateMessage,
+
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -39,14 +42,22 @@ export class UpdateMessageActions {
       );
     }
 
-    const modificationResponse = await this.messageRepository.update(
-      {
-        _subscriberId: subscriber._id,
-        _id: command.messageId,
-      },
-      {
-        $set: updatePayload,
-      }
+    const modificationResponse = await this.updateMessageUsecase.execute(
+      UpdateMessageCommand.create({
+        query: {
+          _subscriberId: subscriber._id,
+          _id: command.messageId,
+        },
+        updateBody: {
+          $set: {
+            $set: updatePayload,
+          },
+        },
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        invalidate: true,
+      })
     );
 
     if (!modificationResponse.modified) {

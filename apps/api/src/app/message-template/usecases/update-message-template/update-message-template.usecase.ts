@@ -7,6 +7,7 @@ import { CreateChangeCommand } from '../../../change/usecases/create-change.comm
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
 import { UpdateChange } from '../../../change/usecases/update-change/update-change';
+import { UpdateMessageCommand, UpdateMessage } from '../../../messages/usecases/update-message';
 
 @Injectable()
 export class UpdateMessageTemplate {
@@ -15,7 +16,8 @@ export class UpdateMessageTemplate {
     private messageRepository: MessageRepository,
     private createChange: CreateChange,
     private changeRepository: ChangeRepository,
-    private updateChange: UpdateChange
+    private updateChange: UpdateChange,
+    private updateMessageUsecase: UpdateMessage
   ) {}
 
   async execute(command: UpdateMessageTemplateCommand): Promise<MessageTemplateEntity> {
@@ -89,7 +91,22 @@ export class UpdateMessageTemplate {
     const item = await this.messageTemplateRepository.findById(command.templateId);
 
     if (command.feedId || (!command.feedId && existingTemplate._feedId)) {
-      await this.messageRepository.updateFeedByMessageTemplateId(command.templateId, command.feedId);
+      await this.updateMessageUsecase.execute(
+        UpdateMessageCommand.create({
+          query: {
+            _messageTemplateId: command.templateId,
+          },
+          updateBody: {
+            $set: {
+              _feedId: command.feedId,
+            },
+          },
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          subscriberId: '',
+          invalidate: true,
+        })
+      );
     }
 
     const changeId = await this.changeRepository.getChangeId(ChangeEntityTypeEnum.MESSAGE_TEMPLATE, item._id);

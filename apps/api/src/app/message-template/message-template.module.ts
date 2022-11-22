@@ -3,9 +3,10 @@ import { USE_CASES } from './usecases';
 import { MessageTemplateController } from './message-template.controller';
 import { SharedModule } from '../shared/shared.module';
 import { ChangeModule } from '../change/change.module';
+import { MessagesModule } from '../messages/messages.module';
 
 @Module({
-  imports: [SharedModule, ChangeModule],
+  imports: [SharedModule, ChangeModule, MessagesModule],
   providers: [...USE_CASES],
   exports: [...USE_CASES],
   controllers: [MessageTemplateController],

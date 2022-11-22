@@ -5,6 +5,7 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class MarkMessageAs {
@@ -15,9 +16,9 @@ export class MarkMessageAs {
     private subscriberRepository: SubscriberRepository
   ) {}
 
+  @InvalidateCache('messages-feed')
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
-
     await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
 
     const messages = await this.messageRepository.find({

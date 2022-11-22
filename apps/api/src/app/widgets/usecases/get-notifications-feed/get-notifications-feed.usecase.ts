@@ -6,6 +6,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { Cached } from '../../../shared/interceptors';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -15,6 +16,7 @@ export class GetNotificationsFeed {
     private subscriberRepository: SubscriberRepository
   ) {}
 
+  @Cached('messages-feed')
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
     const LIMIT = 10;
 

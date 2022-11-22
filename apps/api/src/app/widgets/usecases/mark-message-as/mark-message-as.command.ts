@@ -1,4 +1,4 @@
-import { IsArray, IsDefined } from 'class-validator';
+import { IsArray, IsDefined, IsOptional } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class MarkMessageAsCommand extends EnvironmentWithSubscriber {
@@ -7,6 +7,9 @@ export class MarkMessageAsCommand extends EnvironmentWithSubscriber {
 
   @IsDefined()
   mark: { seen?: boolean; read?: boolean };
+
+  @IsOptional()
+  invalidate?: boolean;
 }
 
 export enum MarkEnum {
