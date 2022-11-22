@@ -74,21 +74,20 @@ export class IntegrationsController {
     );
   }
 
-  @Get('/get-webhook-support-status/:channel/:providerId')
+  @Get('/webhook/provider/:providerId/status')
   @ApiOperation({
     summary: 'Get webhook support status for provider',
   })
   @ExternalApiAccessible()
   async getWebhookSupportStatus(
     @UserSession() user: IJwtPayload,
-    @Param() param: GetWebhookSupportStatusRequestDto
+    @Param('providerId') providerId: string
   ): Promise<boolean> {
     return await this.getWebhookSupportStatusUsecase.execute(
       GetWebhookSupportStatusCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        channel: param.channel,
-        providerId: param.providerId,
+        providerId: providerId,
         userId: user._id,
       })
     );

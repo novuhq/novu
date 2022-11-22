@@ -2,7 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
 import { MailFactory, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
+import { ChannelTypeEnum } from '@novu/shared';
 import { GetWebhookSupportStatusCommand } from './get-webhook-support-status.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class GetWebhookSupportStatus {
@@ -13,15 +15,22 @@ export class GetWebhookSupportStatus {
   constructor(private integrationRepository: IntegrationRepository) {}
 
   async execute(command: GetWebhookSupportStatusCommand): Promise<boolean> {
-    const { providerId, channel } = command;
+    const { providerId } = command;
 
     const integration: IntegrationEntity = await this.getIntegration(command);
+    const { channel } = integration;
 
     if (!integration) {
       throw new NotFoundException(`Integration for ${providerId} was not found`);
     }
 
-    this.createProvider(integration, providerId, channel);
+    if (![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
+      throw new ApiException(`Webhook for ${providerId}-${channel} is not supported yet`);
+    }
+
+    if (channel === 'sms' || channel === 'email') {
+      this.createProvider(integration, providerId, channel);
+    }
 
     if (!this.provider.getMessageId || !this.provider.parseEventBody) {
       return false;
@@ -35,7 +44,6 @@ export class GetWebhookSupportStatus {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       providerId: command.providerId,
-      channel: command.channel,
     });
   }
 
@@ -48,8 +56,8 @@ export class GetWebhookSupportStatus {
     }
   }
 
-  private createProvider(integration: IntegrationEntity, providerId: string, type: 'sms' | 'email') {
-    const handler = this.getHandler(integration, type);
+  private createProvider(integration: IntegrationEntity, providerId: string, channel: 'email' | 'sms') {
+    const handler = this.getHandler(integration, channel);
     if (!handler) {
       throw new NotFoundException(`Handler for integration of ${providerId} was not found`);
     }
