@@ -1,6 +1,7 @@
 import { useMantineTheme } from '@mantine/core';
 import { colors } from '../../../design-system';
 
+/* eslint-disable */
 export const PreviewUserIcon = () => {
   const theme = useMantineTheme();
 
