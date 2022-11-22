@@ -1,4 +1,4 @@
-import { Control, Controller } from 'react-hook-form';
+import { Control, Controller, useWatch } from 'react-hook-form';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
 import { ContentContainer } from './content/ContentContainer';
 import { IForm } from '../use-template-controller.hook';
@@ -14,6 +14,11 @@ export function InAppEditorBlock({
   index: number;
   readonly: boolean;
 }) {
+  const enableAvatar = useWatch({
+    name: `steps.${index}.template.enableAvatar` as any,
+    control,
+  });
+
   return (
     <Controller
       name={`steps.${index}.template.cta.action` as any}
@@ -23,7 +28,7 @@ export function InAppEditorBlock({
         const { ref, ...fieldRefs } = field;
 
         return (
-          <InAppWidgetPreview {...fieldRefs} readonly={readonly}>
+          <InAppWidgetPreview {...fieldRefs} readonly={readonly} enableAvatar={!!enableAvatar} index={index}>
             <ContentContainerController
               control={control}
               index={index}
@@ -49,24 +54,17 @@ function ContentContainerController({
   readonly: boolean;
 }) {
   return (
-    <>
-      <Controller
-        name={`steps.${index}.template.content` as any}
-        data-test-id="in-app-content-form-item"
-        control={control}
-        render={({ field }) => {
-          const { ref, ...fieldRefs } = field;
+    <Controller
+      name={`steps.${index}.template.content` as any}
+      data-test-id="in-app-content-form-item"
+      control={control}
+      render={({ field }) => {
+        const { ref, ...fieldRefs } = field;
 
-          return (
-            <ContentContainer
-              {...fieldRefs}
-              contentPlaceholder={contentPlaceholder}
-              readonly={readonly}
-              index={index}
-            />
-          );
-        }}
-      />
-    </>
+        return (
+          <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} index={index} />
+        );
+      }}
+    />
   );
 }

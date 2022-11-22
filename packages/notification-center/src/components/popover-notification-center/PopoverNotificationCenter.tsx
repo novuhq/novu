@@ -15,6 +15,7 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
+  emptyState?: () => JSX.Element;
   listItem?: ListItem;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
@@ -58,6 +59,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         footer={props.footer}
         colorScheme={props.colorScheme}
         theme={props.theme}
+        emptyState={props.emptyState}
         onActionClick={props.onActionClick}
         actionsResultBlock={props.actionsResultBlock}
         listItem={props.listItem}

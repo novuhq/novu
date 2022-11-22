@@ -1,5 +1,5 @@
 import { useInputState } from '@mantine/hooks';
-import { ActionIcon, Container, Group } from '@mantine/core';
+import { ActionIcon, Container, Group, Divider } from '@mantine/core';
 import { IFeedEntity } from '@novu/shared';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
@@ -14,18 +14,14 @@ import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
+import { EnableAvatarSwitch } from './EnableAvatarSwitch';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const [newFeed, setNewFeed] = useInputState('');
   const [variableContents, setVariableContents] = useState<string[]>([]);
-  const {
-    formState: { errors },
-    setValue,
-    getValues,
-    watch,
-  } = useFormContext();
+  const { setValue, getValues, watch } = useFormContext();
   const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
     IFeedEntity,
@@ -123,6 +119,8 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             readonly={readonly}
             contentPlaceholder="Write your notification content here..."
           />
+          <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} />
+          <Divider />
           <Controller
             name={`steps.${index}.template.feedId` as any}
             control={control}

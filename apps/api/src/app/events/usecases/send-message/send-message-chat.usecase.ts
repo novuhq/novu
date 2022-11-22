@@ -72,6 +72,7 @@ export class SendMessageChat extends SendMessageType {
       },
       ...command.payload,
     };
+
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
@@ -127,7 +128,20 @@ export class SendMessageChat extends SendMessageType {
     chatChannel,
     content: string
   ) {
-    const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials.webhookUrl;
+    const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+
+    if (!chatWebhookUrl) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+    }
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
