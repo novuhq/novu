@@ -14,7 +14,7 @@ jest.mock('office365', () => {
 
 const mockConfig = {
   from: 'test@test.com',
-  user: 'test@test.com',
+  senderName: 'test@test.com',
   password: 'test123',
 };
 

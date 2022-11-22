@@ -16,7 +16,8 @@ export class Outlook365Provider implements IEmailProvider {
 
   constructor(
     private config: {
-      user: string;
+      from: string;
+      senderName: string;
       password: string;
     }
   ) {
@@ -26,7 +27,7 @@ export class Outlook365Provider implements IEmailProvider {
       requireTLS: true,
       connectionTImeout: 30000,
       auth: {
-        user: this.config.user,
+        user: this.config.from,
         pass: this.config.password,
       },
       tls: {
@@ -70,7 +71,7 @@ export class Outlook365Provider implements IEmailProvider {
 
   private createMailData(options: IEmailOptions): SendMailOptions {
     return {
-      from: this.config.user,
+      from: this.config.from,
       to: options.to,
       subject: options.subject,
       html: options.html,

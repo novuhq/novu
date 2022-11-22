@@ -407,16 +407,10 @@ export const firetextConfig: IConfigCredentials[] = [
 
 export const outlook365Config: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.User,
-    displayName: 'User',
-    description: 'Full email address. (e.g. jdoe@mycompany.com)',
-    type: 'string',
-    required: true,
-  },
-  {
     key: CredentialsKeyEnum.Password,
     displayName: 'Password',
     type: 'string',
     required: true,
   },
+  ...mailConfigBase,
 ];
