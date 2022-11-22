@@ -29,13 +29,10 @@ export const ChatIcon = /*@__PURE__*/ createReactComponent<JSX.ChatIcon, HTMLCha
 export const CheckIcon = /*@__PURE__*/ createReactComponent<JSX.CheckIcon, HTMLCheckIconElement>('check-icon');
 export const ChevronIcon = /*@__PURE__*/ createReactComponent<JSX.ChevronIcon, HTMLChevronIconElement>('chevron-icon');
 export const CogIcon = /*@__PURE__*/ createReactComponent<JSX.CogIcon, HTMLCogIconElement>('cog-icon');
-export const ContextConsumer = /*@__PURE__*/ createReactComponent<JSX.ContextConsumer, HTMLContextConsumerElement>(
-  'context-consumer'
-);
-export const ContextProvider = /*@__PURE__*/ createReactComponent<JSX.ContextProvider, HTMLContextProviderElement>(
-  'context-provider'
-);
 export const EmailIcon = /*@__PURE__*/ createReactComponent<JSX.EmailIcon, HTMLEmailIconElement>('email-icon');
+export const FeedTabLabel = /*@__PURE__*/ createReactComponent<JSX.FeedTabLabel, HTMLFeedTabLabelElement>(
+  'feed-tab-label'
+);
 export const LoadingIcon = /*@__PURE__*/ createReactComponent<JSX.LoadingIcon, HTMLLoadingIconElement>('loading-icon');
 export const MobileIcon = /*@__PURE__*/ createReactComponent<JSX.MobileIcon, HTMLMobileIconElement>('mobile-icon');
 export const NotificationButton = /*@__PURE__*/ createReactComponent<
@@ -58,10 +55,9 @@ export const NotificationsListItem = /*@__PURE__*/ createReactComponent<
   JSX.NotificationsListItem,
   HTMLNotificationsListItemElement
 >('notifications-list-item');
-export const NotificationsListTab = /*@__PURE__*/ createReactComponent<
-  JSX.NotificationsListTab,
-  HTMLNotificationsListTabElement
->('notifications-list-tab');
+export const NotificationsTab = /*@__PURE__*/ createReactComponent<JSX.NotificationsTab, HTMLNotificationsTabElement>(
+  'notifications-tab'
+);
 export const NotificationsTabHeader = /*@__PURE__*/ createReactComponent<
   JSX.NotificationsTabHeader,
   HTMLNotificationsTabHeaderElement
@@ -77,6 +73,15 @@ export const SettingsButton = /*@__PURE__*/ createReactComponent<JSX.SettingsBut
   'settings-button'
 );
 export const SmsIcon = /*@__PURE__*/ createReactComponent<JSX.SmsIcon, HTMLSmsIconElement>('sms-icon');
+export const StencilConsumer = /*@__PURE__*/ createReactComponent<JSX.StencilConsumer, HTMLStencilConsumerElement>(
+  'stencil-consumer'
+);
+export const StencilProvider = /*@__PURE__*/ createReactComponent<JSX.StencilProvider, HTMLStencilProviderElement>(
+  'stencil-provider'
+);
+export const StencilQuery = /*@__PURE__*/ createReactComponent<JSX.StencilQuery, HTMLStencilQueryElement>(
+  'stencil-query'
+);
 export const SubscriberPreferencesList = /*@__PURE__*/ createReactComponent<
   JSX.SubscriberPreferencesList,
   HTMLSubscriberPreferencesListElement
@@ -84,8 +89,13 @@ export const SubscriberPreferencesList = /*@__PURE__*/ createReactComponent<
 export const SwitchComponent = /*@__PURE__*/ createReactComponent<JSX.SwitchComponent, HTMLSwitchComponentElement>(
   'switch-component'
 );
+export const TabComponent = /*@__PURE__*/ createReactComponent<JSX.TabComponent, HTMLTabComponentElement>(
+  'tab-component'
+);
+export const TabsComponent = /*@__PURE__*/ createReactComponent<JSX.TabsComponent, HTMLTabsComponentElement>(
+  'tabs-component'
+);
 export const TimeMark = /*@__PURE__*/ createReactComponent<JSX.TimeMark, HTMLTimeMarkElement>('time-mark');
-export const UnseenBadge = /*@__PURE__*/ createReactComponent<JSX.UnseenBadge, HTMLUnseenBadgeElement>('unseen-badge');
 export const UserPreferencesHeader = /*@__PURE__*/ createReactComponent<
   JSX.UserPreferencesHeader,
   HTMLUserPreferencesHeaderElement

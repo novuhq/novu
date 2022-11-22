@@ -39,17 +39,16 @@ export const ChevronIcon = /*@__PURE__*/ defineContainer<JSX.ChevronIcon>('chevr
 
 export const CogIcon = /*@__PURE__*/ defineContainer<JSX.CogIcon>('cog-icon', undefined);
 
-export const ContextConsumer = /*@__PURE__*/ defineContainer<JSX.ContextConsumer>('context-consumer', undefined, [
-  'renderer',
-  'mountConsumer',
-]);
-
-export const ContextProvider = /*@__PURE__*/ defineContainer<JSX.ContextProvider>('context-provider', undefined, [
-  'STENCIL_CONTEXT',
-  'mountConsumer',
-]);
-
 export const EmailIcon = /*@__PURE__*/ defineContainer<JSX.EmailIcon>('email-icon', undefined, ['width', 'height']);
+
+export const FeedTabLabel = /*@__PURE__*/ defineContainer<JSX.FeedTabLabel>('feed-tab-label', undefined, [
+  'api',
+  'tab',
+  'isActive',
+  'token',
+  'socketUrl',
+  'query',
+]);
 
 export const LoadingIcon = /*@__PURE__*/ defineContainer<JSX.LoadingIcon>('loading-icon', undefined, [
   'stroke',
@@ -87,10 +86,10 @@ export const NotificationsListItem = /*@__PURE__*/ defineContainer<JSX.Notificat
   ['notification']
 );
 
-export const NotificationsListTab = /*@__PURE__*/ defineContainer<JSX.NotificationsListTab>(
-  'notifications-list-tab',
-  undefined
-);
+export const NotificationsTab = /*@__PURE__*/ defineContainer<JSX.NotificationsTab>('notifications-tab', undefined, [
+  'tabs',
+  'onSettingsBtnClick',
+]);
 
 export const NotificationsTabHeader = /*@__PURE__*/ defineContainer<JSX.NotificationsTabHeader>(
   'notifications-tab-header',
@@ -109,7 +108,6 @@ export const NovuProvider = /*@__PURE__*/ defineContainer<JSX.NovuProvider>('nov
   'socketUrl',
   'subscriberHash',
   'i18n',
-  'renderChildren',
 ]);
 
 export const SettingsAction = /*@__PURE__*/ defineContainer<JSX.SettingsAction>('settings-action', undefined);
@@ -117,6 +115,24 @@ export const SettingsAction = /*@__PURE__*/ defineContainer<JSX.SettingsAction>(
 export const SettingsButton = /*@__PURE__*/ defineContainer<JSX.SettingsButton>('settings-button', undefined);
 
 export const SmsIcon = /*@__PURE__*/ defineContainer<JSX.SmsIcon>('sms-icon', undefined, ['width', 'height']);
+
+export const StencilConsumer = /*@__PURE__*/ defineContainer<JSX.StencilConsumer>('stencil-consumer', undefined, [
+  'renderer',
+  'contextName',
+  'mountConsumer',
+]);
+
+export const StencilProvider = /*@__PURE__*/ defineContainer<JSX.StencilProvider>('stencil-provider', undefined, [
+  'contextName',
+  'STENCIL_CONTEXT',
+  'mountConsumer',
+]);
+
+export const StencilQuery = /*@__PURE__*/ defineContainer<JSX.StencilQuery>('stencil-query', undefined, [
+  'listen',
+  'renderChildren',
+  'options',
+]);
 
 export const SubscriberPreferencesList = /*@__PURE__*/ defineContainer<JSX.SubscriberPreferencesList>(
   'subscriber-preferences-list',
@@ -130,9 +146,17 @@ export const SwitchComponent = /*@__PURE__*/ defineContainer<JSX.SwitchComponent
   'onChange',
 ]);
 
-export const TimeMark = /*@__PURE__*/ defineContainer<JSX.TimeMark>('time-mark', undefined, ['notification']);
+export const TabComponent = /*@__PURE__*/ defineContainer<JSX.TabComponent>('tab-component', undefined, [
+  'active',
+  'label',
+]);
 
-export const UnseenBadge = /*@__PURE__*/ defineContainer<JSX.UnseenBadge>('unseen-badge', undefined);
+export const TabsComponent = /*@__PURE__*/ defineContainer<JSX.TabsComponent>('tabs-component', undefined, [
+  'tabs',
+  'active',
+]);
+
+export const TimeMark = /*@__PURE__*/ defineContainer<JSX.TimeMark>('time-mark', undefined, ['notification']);
 
 export const UserPreferencesHeader = /*@__PURE__*/ defineContainer<JSX.UserPreferencesHeader>(
   'user-preferences-header',

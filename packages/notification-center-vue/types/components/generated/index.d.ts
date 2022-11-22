@@ -1,4 +1,4 @@
-import type { JSX } from '@novu/notification-center';
+import type { JSX } from '@novu/notification-center-core';
 export declare const AccordionComponent: import('vue').DefineComponent<
   JSX.AccordionComponent & import('./vue-component-lib/utils').InputProps<string | number | boolean>,
   object,
@@ -39,20 +39,6 @@ export declare const ArrowLeft: import('vue').DefineComponent<
   string,
   import('vue').VNodeProps & import('vue').AllowedComponentProps & import('vue').ComponentCustomProps,
   Readonly<JSX.ArrowLeft & import('./vue-component-lib/utils').InputProps<string | number | boolean>>,
-  {}
->;
-export declare const AuthProvider: import('vue').DefineComponent<
-  JSX.AuthProvider & import('./vue-component-lib/utils').InputProps<string | number | boolean>,
-  object,
-  {},
-  import('vue').ComputedOptions,
-  import('vue').MethodOptions,
-  import('vue').ComponentOptionsMixin,
-  import('vue').ComponentOptionsMixin,
-  {},
-  string,
-  import('vue').VNodeProps & import('vue').AllowedComponentProps & import('vue').ComponentCustomProps,
-  Readonly<JSX.AuthProvider & import('./vue-component-lib/utils').InputProps<string | number | boolean>>,
   {}
 >;
 export declare const BellIcon: import('vue').DefineComponent<
@@ -154,7 +140,7 @@ export declare const CogIcon: import('vue').DefineComponent<
   {}
 >;
 export declare const ContextConsumer: import('vue').DefineComponent<
-  JSX.ContextConsumer & import('./vue-component-lib/utils').InputProps<string | number | boolean>,
+  any,
   object,
   {},
   import('vue').ComputedOptions,
@@ -164,13 +150,14 @@ export declare const ContextConsumer: import('vue').DefineComponent<
   {},
   string,
   import('vue').VNodeProps & import('vue').AllowedComponentProps & import('vue').ComponentCustomProps,
-  Readonly<JSX.ContextConsumer & import('./vue-component-lib/utils').InputProps<string | number | boolean>>,
-  {
-    renderer?: any;
-  }
+  Readonly<any>,
+  | {}
+  | {
+      [x: string]: any;
+    }
 >;
 export declare const ContextProvider: import('vue').DefineComponent<
-  JSX.ContextProvider & import('./vue-component-lib/utils').InputProps<string | number | boolean>,
+  any,
   object,
   {},
   import('vue').ComputedOptions,
@@ -180,8 +167,11 @@ export declare const ContextProvider: import('vue').DefineComponent<
   {},
   string,
   import('vue').VNodeProps & import('vue').AllowedComponentProps & import('vue').ComponentCustomProps,
-  Readonly<JSX.ContextProvider & import('./vue-component-lib/utils').InputProps<string | number | boolean>>,
-  {}
+  Readonly<any>,
+  | {}
+  | {
+      [x: string]: any;
+    }
 >;
 export declare const EmailIcon: import('vue').DefineComponent<
   JSX.EmailIcon & import('./vue-component-lib/utils').InputProps<string | number | boolean>,
@@ -296,7 +286,7 @@ export declare const NotificationsListItem: import('vue').DefineComponent<
   {}
 >;
 export declare const NotificationsListTab: import('vue').DefineComponent<
-  JSX.NotificationsListTab & import('./vue-component-lib/utils').InputProps<string | number | boolean>,
+  any,
   object,
   {},
   import('vue').ComputedOptions,
@@ -306,8 +296,11 @@ export declare const NotificationsListTab: import('vue').DefineComponent<
   {},
   string,
   import('vue').VNodeProps & import('vue').AllowedComponentProps & import('vue').ComponentCustomProps,
-  Readonly<JSX.NotificationsListTab & import('./vue-component-lib/utils').InputProps<string | number | boolean>>,
-  {}
+  Readonly<any>,
+  | {}
+  | {
+      [x: string]: any;
+    }
 >;
 export declare const NotificationsTabHeader: import('vue').DefineComponent<
   JSX.NotificationsTabHeader & import('./vue-component-lib/utils').InputProps<string | number | boolean>,
@@ -436,7 +429,7 @@ export declare const TimeMark: import('vue').DefineComponent<
   {}
 >;
 export declare const UnseenBadge: import('vue').DefineComponent<
-  JSX.UnseenBadge & import('./vue-component-lib/utils').InputProps<string | number | boolean>,
+  any,
   object,
   {},
   import('vue').ComputedOptions,
@@ -446,8 +439,11 @@ export declare const UnseenBadge: import('vue').DefineComponent<
   {},
   string,
   import('vue').VNodeProps & import('vue').AllowedComponentProps & import('vue').ComponentCustomProps,
-  Readonly<JSX.UnseenBadge & import('./vue-component-lib/utils').InputProps<string | number | boolean>>,
-  {}
+  Readonly<any>,
+  | {}
+  | {
+      [x: string]: any;
+    }
 >;
 export declare const UserPreferencesHeader: import('vue').DefineComponent<
   JSX.UserPreferencesHeader & import('./vue-component-lib/utils').InputProps<string | number | boolean>,

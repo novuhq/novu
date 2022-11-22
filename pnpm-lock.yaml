@@ -1554,6 +1554,7 @@ importers:
       '@emotion/css': ^11.10.0
       '@novu/client': ^0.7.3
       '@novu/shared': ^0.7.2
+      '@stencil/angular-output-target': ^0.4.0
       '@stencil/core': ^2.13.0
       '@stencil/react-output-target': ^0.3.1
       '@stencil/vue-output-target': ^0.6.2
@@ -1570,6 +1571,7 @@ importers:
       '@emotion/css': 11.10.0_@babel+core@7.18.9
       '@novu/client': 0.7.3
       '@novu/shared': 0.7.2
+      '@stencil/angular-output-target': 0.4.0_@stencil+core@2.18.1
       '@stencil/core': 2.18.1
       '@stencil/vue-output-target': 0.6.2_@stencil+core@2.18.1
       '@tanstack/query-core': 4.10.3
@@ -16276,6 +16278,14 @@ packages:
   /@socket.io/component-emitter/3.0.0:
     resolution: {integrity: sha512-2pTGuibAXJswAPJjaKisthqS/NOK5ypG4LYT6tEAV0S/mxW0zOIvYvGK0V8w8+SHxAm6vRMSjqSalFXeBAqs+Q==}
     dev: true
+
+  /@stencil/angular-output-target/0.4.0_@stencil+core@2.18.1:
+    resolution: {integrity: sha512-zauaj0za46IWoPgv2IanDp3tiljwDRDNk4jB7WII6KeL66dkk7ffeqYZ0CgySTU5W2FjnKR6JEKbAnwUxjGIsA==}
+    peerDependencies:
+      '@stencil/core': ^2.9.0
+    dependencies:
+      '@stencil/core': 2.18.1
+    dev: false
 
   /@stencil/core/2.18.1:
     resolution: {integrity: sha512-/fXkh1lwZ+X9JQCw50mPjhBogzEHOBvVC5pLoDLZqodVYK0DGWILM2YLV4dcIUBNEK8/HMDpO/Rq81/rS3mNOw==}

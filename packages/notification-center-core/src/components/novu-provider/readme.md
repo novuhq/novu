@@ -7,17 +7,16 @@
 
 ## Properties
 
-| Property                | Attribute                | Description | Type                                                         | Default     |
-| ----------------------- | ------------------------ | ----------- | ------------------------------------------------------------ | ----------- |
-| `applicationIdentifier` | `application-identifier` |             | `string`                                                     | `undefined` |
-| `backendUrl`            | `backend-url`            |             | `string`                                                     | `undefined` |
-| `colorScheme`           | `color-scheme`           |             | `"dark" \| "light"`                                          | `undefined` |
-| `i18n`                  | `i-1-8n`                 |             | `ITranslationEntry \| I18NLanguage`                          | `undefined` |
-| `renderChildren`        | --                       |             | `(props: { organization: IOrganizationEntity; }) => Element` | `undefined` |
-| `socketUrl`             | `socket-url`             |             | `string`                                                     | `undefined` |
-| `stores`                | --                       |             | `IStore[]`                                                   | `undefined` |
-| `subscriberHash`        | `subscriber-hash`        |             | `string`                                                     | `undefined` |
-| `subscriberId`          | `subscriber-id`          |             | `string`                                                     | `undefined` |
+| Property                | Attribute                | Description | Type                                | Default                          |
+| ----------------------- | ------------------------ | ----------- | ----------------------------------- | -------------------------------- |
+| `applicationIdentifier` | `application-identifier` |             | `string`                            | `undefined`                      |
+| `backendUrl`            | `backend-url`            |             | `string`                            | `undefined`                      |
+| `colorScheme`           | `color-scheme`           |             | `"dark" \| "light"`                 | `undefined`                      |
+| `i18n`                  | `i-1-8n`                 |             | `ITranslationEntry \| I18NLanguage` | `undefined`                      |
+| `socketUrl`             | `socket-url`             |             | `string`                            | `undefined`                      |
+| `stores`                | --                       |             | `IStore[]`                          | `[{ storeId: 'default_store' }]` |
+| `subscriberHash`        | `subscriber-hash`        |             | `string`                            | `undefined`                      |
+| `subscriberId`          | `subscriber-id`          |             | `string`                            | `undefined`                      |
 
 
 ## Dependencies
@@ -26,9 +25,18 @@
 
  - [notification-center](../notification-center)
 
+### Depends on
+
+- [stencil-query](../stencil-query)
+- [stencil-provider](../context)
+- [stencil-consumer](../context)
+
 ### Graph
 ```mermaid
 graph TD;
+  novu-provider --> stencil-query
+  novu-provider --> stencil-provider
+  novu-provider --> stencil-consumer
   notification-center --> novu-provider
   style novu-provider fill:#f9f,stroke:#333,stroke-width:4px
 ```
