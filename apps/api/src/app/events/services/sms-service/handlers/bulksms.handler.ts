@@ -15,7 +15,7 @@ export class BulkSmsSmsHandler extends BaseSmsHandler {
       // dltEntityId?: string;
     } = {
       authKey: credentials.authKey,
-      sender: credentials.sender,
+      sender: credentials.from,
       route: credentials.route,
       // dltEntityId: credentials.dltEntityId,
     };
