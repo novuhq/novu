@@ -1,48 +1,22 @@
 import {
   ChannelTypeEnum,
-<<<<<<< HEAD
-<<<<<<< HEAD
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-=======
-  ISendMessageSuccessResponse,
-  IEmailOptions,
-  IEmailProvider,
->>>>>>> df77c37be (feat: New Office365 provider)
-=======
-  IEmailOptions,
-  IEmailProvider,
-  ISendMessageSuccessResponse,
->>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
+  IEmailEventBody,
 } from '@novu/stateless';
 import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 export class Outlook365Provider implements IEmailProvider {
   id = 'outlook365';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-
-=======
-import DKIM from 'nodemailer/lib/dkim';
-=======
->>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
-
-export class Outlook365Provider implements IEmailProvider {
-  id = 'outlook365';
-  channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-
->>>>>>> df77c37be (feat: New Office365 provider)
   private transports: Transporter;
 
   constructor(
     private config: {
-<<<<<<< HEAD
       from: string;
-<<<<<<< HEAD
       senderName: string;
       password: string;
     }
@@ -54,22 +28,7 @@ export class Outlook365Provider implements IEmailProvider {
       connectionTImeout: 30000,
       auth: {
         user: this.config.from,
-=======
-=======
->>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
-      user: string;
-      password: string;
-    }
-  ) {
-    this.transports = nodemailer.createTransport({
-      host: 'smtp.office365.com',
-      port: 587,
-      requireTLS: true,
-      connectionTImeout: 30000,
-      auth: {
-        user: this.config.user,
->>>>>>> df77c37be (feat: New Office365 provider)
-        pass: this.config.password,
+        password: this.config.password,
       },
       tls: {
         ciphers: 'SSLv3',
@@ -85,15 +44,7 @@ export class Outlook365Provider implements IEmailProvider {
 
     return {
       id: info?.messageId,
-<<<<<<< HEAD
-<<<<<<< HEAD
       date: new Date().toISOString(),
-=======
-      data: new Date().toISOString(),
->>>>>>> df77c37be (feat: New Office365 provider)
-=======
-      date: new Date().toISOString(),
->>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
     };
   }
 
@@ -118,17 +69,12 @@ export class Outlook365Provider implements IEmailProvider {
     }
   }
 
+  getMessageId?: (body: any) => string[];
+  parseEventBody?: (body: any, identifier: string) => IEmailEventBody;
+
   private createMailData(options: IEmailOptions): SendMailOptions {
     return {
-<<<<<<< HEAD
-<<<<<<< HEAD
       from: this.config.from,
-=======
-      from: options.from || this.config.from,
->>>>>>> df77c37be (feat: New Office365 provider)
-=======
-      from: this.config.user,
->>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
       to: options.to,
       subject: options.subject,
       html: options.html,

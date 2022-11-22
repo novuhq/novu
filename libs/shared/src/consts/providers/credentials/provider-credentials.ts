@@ -407,44 +407,10 @@ export const firetextConfig: IConfigCredentials[] = [
 
 export const outlook365Config: IConfigCredentials[] = [
   {
-<<<<<<< HEAD
-=======
-    key: CredentialsKeyEnum.User,
-    displayName: 'User',
-    description: 'Full email address. (e.g. jdoe@mycompany.com)',
-    type: 'string',
-    required: true,
-  },
-  {
->>>>>>> df77c37be (feat: New Office365 provider)
     key: CredentialsKeyEnum.Password,
     displayName: 'Password',
     type: 'string',
     required: true,
   },
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  {
-    key: CredentialsKeyEnum.Domain,
-    displayName: 'DKIM: Domain name',
-    type: 'string',
-    required: false,
-  },
-  {
-    key: CredentialsKeyEnum.SecretKey,
-    displayName: 'DKIM: Private key',
-    type: 'string',
-    required: false,
-  },
-  {
-    key: CredentialsKeyEnum.AccountSid,
-    displayName: 'DKIM: Key selector',
-    type: 'string',
-    required: false,
-  },
->>>>>>> df77c37be (feat: New Office365 provider)
   ...mailConfigBase,
-=======
->>>>>>> 623a888d8 (feat: Updated docs, updated logo, updated config)
 ];
