@@ -7,7 +7,7 @@ import { PreviewUserIcon } from './PreviewUserIcon';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Mobile } from './Mobile';
 
-const useStyles = createStyles(() => ({
+const useStyles = createStyles((theme) => ({
   header: {
     width: '100%',
     marginTop: '20px',
@@ -19,13 +19,13 @@ const useStyles = createStyles(() => ({
     fontWeight: 'bolder',
   },
   from: {
-    color: colors.B60,
+    color: theme.colorScheme === 'dark' ? colors.B60 : colors.B70,
     fontWeight: 'normal',
   },
   date: {
     height: '20px',
     marginTop: '20px',
-    color: colors.B60,
+    color: theme.colorScheme === 'dark' ? colors.B60 : colors.B70,
     fontWeight: 'normal',
   },
   line: {
@@ -33,7 +33,7 @@ const useStyles = createStyles(() => ({
     width: '340px',
     marginLeft: '15px',
     marginRight: '15px',
-    background: colors.B20,
+    background: theme.colorScheme === 'dark' ? colors.B20 : colors.B85,
     marginTop: '19px',
   },
   frame: {

@@ -1,20 +1,20 @@
 import { createStyles } from '@mantine/core';
 import { colors } from '../../../design-system';
 
-const useStyles = createStyles(() => ({
+const useStyles = createStyles((theme) => ({
   phone: {
     display: 'block',
     margin: 'auto',
     width: '390px',
     height: '740px',
     position: 'relative',
-    borderColor: colors.B20,
+    borderColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B85,
     borderWidth: '10px',
     borderStyle: 'solid',
     borderRadius: '40px',
   },
   cameraDent: {
-    background: colors.B20,
+    background: theme.colorScheme === 'dark' ? colors.B20 : colors.B85,
     width: '148px',
     height: '30px',
     marginLeft: 'auto',

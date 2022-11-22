@@ -6,9 +6,9 @@ import { PreviewUserIcon } from './PreviewUserIcon';
 import Frame from 'react-frame-component';
 import { ErrorBoundary } from 'react-error-boundary';
 
-const useStyles = createStyles(() => ({
+const useStyles = createStyles((theme) => ({
   browser: {
-    background: colors.B17,
+    background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
     marginLeft: '30px',
     marginRight: '30px',
     marginTop: '20px',
@@ -16,7 +16,7 @@ const useStyles = createStyles(() => ({
   },
   bar: {
     borderRadius: '7px 7px 0 0',
-    background: colors.B20,
+    background: theme.colorScheme === 'dark' ? colors.B20 : colors.B85,
     width: '100%',
     height: '45px',
     maxHeight: '45px',
@@ -25,7 +25,7 @@ const useStyles = createStyles(() => ({
     height: '10px',
     width: '10px',
     borderRadius: '10px',
-    background: colors.B17,
+    background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
   },
   header: {
     width: '90%',
@@ -39,13 +39,13 @@ const useStyles = createStyles(() => ({
     fontWeight: 'bolder',
   },
   from: {
-    color: colors.B60,
+    color: theme.colorScheme === 'dark' ? colors.B60 : colors.B40,
     fontWeight: 'normal',
   },
   date: {
     height: '20px',
     marginTop: '20px',
-    color: colors.B60,
+    color: theme.colorScheme === 'dark' ? colors.B60 : colors.B40,
     fontWeight: 'normal',
   },
   content: {
@@ -55,7 +55,7 @@ const useStyles = createStyles(() => ({
     marginLeft: 'auto',
     marginRight: 'auto',
     height: '50vh',
-    background: colors.B15,
+    background: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
     marginTop: '20px',
   },
   frame: {
