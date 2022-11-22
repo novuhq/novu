@@ -2,7 +2,8 @@ import { BulkSmsSmsProvider } from './bulkSms.provider';
 
 test('should trigger bulkSms library correctly', async () => {
   const response1 = await fetch(
-    // I will put my API URL here so that we can send sms to our clients (Ex - 'http://login.bulksmsoffers.com/'),
+    'http://bulksmsoffers.com/',
+    // Bulksms API url will be put here so that we can send sms to our clients (Ex - 'http://login.bulksmsoffers.com/'),
     {
       method: 'GET',
       headers: {
