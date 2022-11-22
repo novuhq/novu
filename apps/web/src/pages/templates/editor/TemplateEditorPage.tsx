@@ -19,8 +19,6 @@ import { TestWorkflowModal } from '../../../components/templates/TestWorkflowMod
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
 import { useDisclosure } from '@mantine/hooks';
 import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
-import { Preview } from './Preview';
-import { TestSendEmail } from '../../../components/templates/email-editor/TestSendEmail';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -65,7 +63,6 @@ export default function TemplateEditorPage() {
   } = useTemplateController(templateId);
 
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
-  const [view, setView] = useState<ViewEnum>(ViewEnum.EDIT);
 
   const [testWorkflowModalOpened, { close: closeTestWorkflowModal, open: openTestWorkflowModal }] = useDisclosure(
     false,
@@ -119,8 +116,6 @@ export default function TemplateEditorPage() {
               setActivePage={setActivePage}
               activePage={activePage}
               onTestWorkflowClicked={onTestWorkflowClicked}
-              view={view}
-              setView={setView}
             />
           </When>
 
@@ -156,11 +151,7 @@ export default function TemplateEditorPage() {
           </When>
 
           {!loadingEditTemplate && !isIntegrationsLoading ? (
-            view === 'Preview' && activePage === ActivePageEnum.EMAIL ? (
-              <Preview activeStep={activeStep} />
-            ) : (
-              <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
-            )
+            <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
           ) : null}
           {trigger && (
             <TemplateTriggerModal
