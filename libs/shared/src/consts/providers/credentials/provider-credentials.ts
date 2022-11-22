@@ -407,12 +407,6 @@ export const bulksmsConfig: IConfigCredentials[] = [
     required: true,
   },
   {
-    key: CredentialsKeyEnum.Sender,
-    displayName: 'Sender',
-    type: 'string',
-    required: true,
-  },
-  {
     key: CredentialsKeyEnum.Route,
     displayName: 'Route',
     type: 'string',
@@ -424,4 +418,5 @@ export const bulksmsConfig: IConfigCredentials[] = [
     type: 'string',
     required: false,
   },
+  ...smsConfigBase,
 ];
