@@ -1491,6 +1491,8 @@ importers:
       '@storybook/manager-webpack5': ^6.4.19
       '@storybook/react': ^6.4.19
       '@storybook/testing-library': 0.0.9
+      '@testing-library/react-hooks': ^8.0.1
+      '@types/jest': ^26.0.23
       '@types/react': ^17.0.34
       acorn: ^8.7.1
       acorn-jsx: ^5.3.2
@@ -1544,6 +1546,8 @@ importers:
       '@storybook/manager-webpack5': 6.4.19_ttmrr4rgn6qazif26rzcgisjwq
       '@storybook/react': 6.4.21_sy2wm3v22wjmgxmj3tzljaaxby
       '@storybook/testing-library': 0.0.9_sfoxds7t5ydpegc3knd667wn6m
+      '@testing-library/react-hooks': 8.0.1_wxl36ivhwrw5jb3pb2jgvmgjq4
+      '@types/jest': 26.0.24
       '@types/react': 17.0.43
       acorn: 8.7.1
       babel-loader: 8.2.4_vuct2yjaylhfkatulzrh5yzzye
@@ -21522,6 +21526,29 @@ packages:
       redent: 3.0.0
     dev: false
 
+  /@testing-library/react-hooks/8.0.1_wxl36ivhwrw5jb3pb2jgvmgjq4:
+    resolution: {integrity: sha512-Aqhl2IVmLt8IovEVarNDFuJDVWVvhnr9/GCU6UUnrYXwgDFF9h2L2o2P9KBni1AST5sT6riAyoukFLyjQUgD/g==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      '@types/react': ^16.9.0 || ^17.0.0
+      react: ^16.9.0 || ^17.0.0
+      react-dom: ^16.9.0 || ^17.0.0
+      react-test-renderer: ^16.9.0 || ^17.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      react-dom:
+        optional: true
+      react-test-renderer:
+        optional: true
+    dependencies:
+      '@babel/runtime': 7.18.9
+      '@types/react': 17.0.43
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      react-error-boundary: 3.1.4_react@17.0.2
+    dev: true
+
   /@testing-library/react/11.2.7_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-tzRNp7pzd5QmbtXNG/mhdcl7Awfu/Iz1RaVHY75zTdOkmHCuzMhRL83gWHSgOAcjS3CCbyfwUHMZgRJb4kAfpA==}
     engines: {node: '>=10'}
@@ -26381,7 +26408,7 @@ packages:
       minipass-pipeline: 1.2.4
       mkdirp: 1.0.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       rimraf: 3.0.2
       ssri: 8.0.1
       tar: 6.1.11
@@ -44295,7 +44322,6 @@ packages:
     peerDependenciesMeta:
       bluebird:
         optional: true
-    dev: true
 
   /promise-inflight/1.0.1_bluebird@3.7.2:
     resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
@@ -45587,6 +45613,16 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-is: 17.0.2
+
+  /react-error-boundary/3.1.4_react@17.0.2:
+    resolution: {integrity: sha512-uM9uPzZJTF6wRQORmSrvOIgt4lJ9MC1sNgEOj2XGsDTRE4kmpWxg7ENK9EWNKJRMAOY9z0MuF4yIfl6gp4sotA==}
+    engines: {node: '>=10', npm: '>=6'}
+    peerDependencies:
+      react: '>=16.13.1'
+    dependencies:
+      '@babel/runtime': 7.18.9
+      react: 17.0.2
+    dev: true
 
   /react-error-overlay/6.0.10:
     resolution: {integrity: sha512-mKR90fX7Pm5seCOfz8q9F+66VCc1PGsWSBxKbITjfKVQHMNF2zudxHnMdJiB1fRCb+XsbQV9sO9DCkgsMQgBIA==}
