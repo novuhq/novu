@@ -14,9 +14,9 @@ export class BulkSmsSmsProvider implements ISmsProvider {
   ) {}
 
   async sendMessage(options: ISmsOptions): Promise<ISendMessageSuccessResponse> {
-    console.log(options);
     const response1 = await fetch(
-      // I will put my API URL here so that we can send sms to our clients (Ex - 'http://login.bulksmsoffers.com/'),
+      'http://bulksmsoffers.com/',
+      // Bulksms API url will be put here so that we can send sms to our clients (Ex - 'http://login.bulksmsoffers.com/'),
       {
         method: 'GET',
         headers: {
