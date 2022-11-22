@@ -21,14 +21,9 @@ const WebhookFeedbackTitle = styled(Text)`
 `;
 
 const WebhookTimeStamp = ({ timeStamp }) => {
-  const formattedDate = format(parseISO(timeStamp), 'dd/MM/yyyy');
-  const formattedTime = format(parseISO(timeStamp), 'HH:mm:ss');
+  const formattedDate = format(parseISO(timeStamp), 'hh:mm aaa, dd/MM/yyyy');
 
-  return (
-    <span>
-      {formattedDate}, {formattedTime}
-    </span>
-  );
+  return <span>{formattedDate}</span>;
 };
 
 const WebhookFeedback = ({ icon, text, timeStamp }) => {
@@ -44,7 +39,6 @@ const WebhookFeedback = ({ icon, text, timeStamp }) => {
   );
 };
 
-// TODO: Render based on API response. So far we do placeholders.
 export const ExecutionDetailsWebhookFeedback = ({ executionDetails }) => {
   const getWebhookIcons = () => {
     const icons: JSX.Element[] = [];
