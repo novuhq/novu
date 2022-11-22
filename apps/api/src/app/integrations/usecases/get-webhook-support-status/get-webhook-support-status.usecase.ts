@@ -18,19 +18,17 @@ export class GetWebhookSupportStatus {
     const { providerId } = command;
 
     const integration: IntegrationEntity = await this.getIntegration(command);
-    const { channel } = integration;
 
     if (!integration) {
       throw new NotFoundException(`Integration for ${providerId} was not found`);
     }
 
+    const { channel } = integration;
     if (![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
       throw new ApiException(`Webhook for ${providerId}-${channel} is not supported yet`);
     }
 
-    if (channel === 'sms' || channel === 'email') {
-      this.createProvider(integration, providerId, channel);
-    }
+    this.createProvider(integration);
 
     if (!this.provider.getMessageId || !this.provider.parseEventBody) {
       return false;
@@ -38,7 +36,6 @@ export class GetWebhookSupportStatus {
 
     return true;
   }
-
   private async getIntegration(command: GetWebhookSupportStatusCommand): Promise<IntegrationEntity> {
     return await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
@@ -47,8 +44,8 @@ export class GetWebhookSupportStatus {
     });
   }
 
-  private getHandler(integration: IntegrationEntity, channel: 'email' | 'sms'): ISmsHandler | IMailHandler {
-    switch (channel) {
+  private getHandler(integration: IntegrationEntity): ISmsHandler | IMailHandler {
+    switch (integration.channel) {
       case 'sms':
         return this.smsFactory.getHandler(integration);
       default:
@@ -56,10 +53,10 @@ export class GetWebhookSupportStatus {
     }
   }
 
-  private createProvider(integration: IntegrationEntity, providerId: string, channel: 'email' | 'sms') {
-    const handler = this.getHandler(integration, channel);
+  private createProvider(integration: IntegrationEntity) {
+    const handler = this.getHandler(integration);
     if (!handler) {
-      throw new NotFoundException(`Handler for integration of ${providerId} was not found`);
+      throw new NotFoundException(`Handler for integration of ${integration.providerId} was not found`);
     }
     handler.buildProvider({});
 

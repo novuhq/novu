@@ -28,7 +28,6 @@ import { GetActiveIntegrations } from './usecases/get-active-integration/get-act
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { GetWebhookSupportStatusRequestDto } from './dtos/get-webhook-support-status-request.dto';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
 
