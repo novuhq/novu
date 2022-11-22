@@ -42,7 +42,8 @@
     "typescript": "^4.4.4"
   },
   "peerDependencies": {
-    "react": ">=16.8.0"
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
   },
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -62,6 +63,7 @@
     "lodash.merge": "^4.6.2",
     "react-infinite-scroll-component": "^6.0.0",
     "react-query": "^3.34.19",
+    "react-to-webcomponent": "2.0.0-alpha.0",
     "rollup-plugin-node-externals": "^4.0.0",
     "socket.io-client": "2.3.1",
     "styled-components": "^5.3.5",

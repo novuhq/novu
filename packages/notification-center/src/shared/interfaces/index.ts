@@ -6,7 +6,7 @@ import {
   MessageActionStatusEnum,
   IMessageAction,
 } from '@novu/shared';
-import { IStoreQuery } from '@novu/client';
+import type { IStoreQuery } from '@novu/client';
 
 export interface IAuthContext {
   applyToken: (token: string | null) => void;

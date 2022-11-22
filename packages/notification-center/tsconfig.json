@@ -11,6 +11,6 @@
     "declarationDir": "types",
     "sourceMap": true,
     "outDir": "dist",
-    "emitDeclarationOnly": true,
+    "emitDeclarationOnly": true
   }
 }

@@ -6,9 +6,9 @@ import {
   ISubscriberJwt,
   MessageActionStatusEnum,
 } from '@novu/shared';
-import { IStoreQuery } from '@novu/client';
-export { IStoreQuery };
-export { IUserPreferenceSettings } from '@novu/client';
+import type { IStoreQuery } from '@novu/client';
+export type { IStoreQuery };
+export type { IUserPreferenceSettings } from '@novu/client';
 
 export * from './components';
 export * from './hooks/use-unseen-count.hook';
