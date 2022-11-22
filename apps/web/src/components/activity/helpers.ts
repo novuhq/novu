@@ -77,7 +77,7 @@ export const getLogoByType = (
 export const mappedWebhookStatuses = {
   sent: { label: 'Sent', icon: Sent, status: ['processed'] },
   received: { label: 'Received', icon: Received, status: ['delivered'] },
-  read: { label: 'Read', icon: Read, status: ['open'] },
+  read: { label: 'Read', icon: Read, status: [] },
   seen: { label: 'Seen', icon: Seen, status: ['open'] },
   clicked: { label: 'Clicked', icon: Clicked, status: ['click'] },
 };
