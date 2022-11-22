@@ -123,12 +123,8 @@ export function ConnectIntegrationForm({
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
   const { data: webhookSupportStatus } = useQuery(
-    ['webhookSupportStatus', provider?.channel, provider?.providerId],
-    () =>
-      getWebhookSupportStatus({
-        channel: provider?.channel as ChannelTypeEnum.EMAIL | ChannelTypeEnum.SMS,
-        providerId: provider?.providerId as string,
-      }),
+    ['webhookSupportStatus', provider?.providerId],
+    () => getWebhookSupportStatus(provider?.providerId as string),
     {
       enabled: Boolean(
         provider?.providerId && [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider.channel) && !createModel

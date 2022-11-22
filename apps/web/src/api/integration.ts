@@ -22,12 +22,6 @@ export function updateIntegration(integrationId: string, data: { credentials: IC
   return api.put(`/v1/integrations/${integrationId}`, data);
 }
 
-export function getWebhookSupportStatus({
-  channel,
-  providerId,
-}: {
-  channel: ChannelTypeEnum.EMAIL | ChannelTypeEnum.SMS;
-  providerId: string;
-}) {
-  return api.get(`/v1/integrations/get-webhook-support-status/${channel}/${providerId}`);
+export function getWebhookSupportStatus(providerId: string) {
+  return api.get(`/v1/integrations/webhook/provider/${providerId}/status`);
 }
