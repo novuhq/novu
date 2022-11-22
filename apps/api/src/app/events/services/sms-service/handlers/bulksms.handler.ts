@@ -1,6 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
-import { BulkSmsSmsProvider } from 'D:/Novu_latest/novu/providers/bulkSms/src/lib/bulkSms.provider';
+import { BulkSmsSmsProvider } from '@novu/bulkSms';
 import { BaseSmsHandler } from './base.handler';
 
 export class BulkSmsSmsHandler extends BaseSmsHandler {
