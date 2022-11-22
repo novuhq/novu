@@ -17,9 +17,9 @@ export class PushwooshPushProvider implements IPushProvider {
   constructor(
     private config: {
       applicationCode: string;
-      defaultNotificationTitle: string;
-      autoSubscribe: boolean;
-      triggeredFunction: triggeredFunctionType;
+      defaultNotificationTitle?: string;
+      autoSubscribe?: boolean;
+      triggeredFunction?: triggeredFunctionType;
       userId?: string;
       tags?: object;
       defaultNotificationImageURL?: string;
