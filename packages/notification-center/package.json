@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
@@ -30,6 +30,7 @@
     "@types/react": "^17.0.34",
     "acorn": "^8.7.1",
     "babel-loader": "^8.2.4",
+    "jest-transform-stub": "^2.0.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.60.0",
     "rollup-plugin-dts": "^4.0.1",
