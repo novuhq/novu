@@ -10,10 +10,12 @@ export class Outlook365Handler extends BaseHandler {
 
   buildProvider(credentials: ICredentials) {
     const config: {
-      user: string;
+      from: string;
+      senderName: string;
       password: string;
     } = {
-      user: credentials.user,
+      from: credentials.from,
+      senderName: credentials.senderName,
       password: credentials.password,
     };
 
