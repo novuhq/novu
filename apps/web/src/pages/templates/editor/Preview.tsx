@@ -64,26 +64,24 @@ export const Preview = ({ activeStep }: { activeStep: number }) => {
   }
 
   return (
-    <>
-      <Tabs
-        position="center"
-        menuTabs={[
-          {
-            label: 'Web',
-            content: <PreviewWeb subject={subject} content={content} integration={integration} />,
-          },
-          {
-            label: 'Mobile',
-            content: (
-              <Grid>
-                <Grid.Col span={12}>
-                  <PreviewMobile subject={subject} content={content} integration={integration} />
-                </Grid.Col>
-              </Grid>
-            ),
-          },
-        ]}
-      />
-    </>
+    <Tabs
+      position="center"
+      menuTabs={[
+        {
+          label: 'Web',
+          content: <PreviewWeb subject={subject} content={content} integration={integration} />,
+        },
+        {
+          label: 'Mobile',
+          content: (
+            <Grid>
+              <Grid.Col span={12}>
+                <PreviewMobile subject={subject} content={content} integration={integration} />
+              </Grid.Col>
+            </Grid>
+          ),
+        },
+      ]}
+    />
   );
 };

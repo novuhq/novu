@@ -71,7 +71,7 @@ const useStyles = createStyles((theme) => ({
     textAlign: 'center',
   },
   bottom: {
-    height: '70px',
+    height: '30px',
   },
 }));
 
