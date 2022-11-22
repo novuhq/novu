@@ -85,6 +85,6 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: infobipConfig,
     docReference: 'https://www.infobip.com/docs',
-    logoFileName: { light: 'firetext.svg', dark: 'firetext.svg' },
+    logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
   },
 ];

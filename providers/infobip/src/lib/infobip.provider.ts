@@ -33,16 +33,19 @@ export class InfobipSmsProvider implements ISmsProvider {
       messages: [
         {
           text: options.content,
-          destinations: {
-            to: options.to,
-          },
+          destinations: [
+            {
+              to: options.to,
+            },
+          ],
           from: this.config.from || options.from,
         },
       ],
     });
+    const { messageId } = infobipResponse.data.messages.pop();
 
     return {
-      id: infobipResponse.bulkId,
+      id: messageId,
       date: new Date().toISOString(),
     };
   }
