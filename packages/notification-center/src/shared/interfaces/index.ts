@@ -1,12 +1,23 @@
 import {
   ButtonTypeEnum,
   IMessage,
+  IMessageAction,
   IOrganizationEntity,
   ISubscriberJwt,
   MessageActionStatusEnum,
-  IMessageAction,
 } from '@novu/shared';
+
 import { IStoreQuery } from '@novu/client';
+
+export {
+  IMessage,
+  IMessageAction,
+  IOrganizationEntity,
+  ISubscriberJwt,
+  IPreferenceChannels,
+  IMessageCTA,
+  IMessageButton,
+} from '@novu/shared';
 
 export interface IAuthContext {
   applyToken: (token: string | null) => void;
