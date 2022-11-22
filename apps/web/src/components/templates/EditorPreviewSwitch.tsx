@@ -23,7 +23,7 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
           color: `${colors.B40} !important`,
         },
       }}
-      data={['Edit', 'Preview']}
+      data={['Edit', 'Preview', 'Test']}
       value={view}
       onChange={(value) => {
         setView(value);
