@@ -2,7 +2,6 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 export interface ICredentials {
   authKey?: string;
-  sender?: string;
   route?: string;
   dltEntityId?: string;
   apiKey?: string;
