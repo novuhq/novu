@@ -5,26 +5,7 @@ import { Mobile } from '../Mobile';
 import { DateArrow } from './DateArrow';
 import { ItemSkeleton } from './InboxItem';
 
-const useStyles = createStyles(() => ({
-  phone: {
-    display: 'block',
-    margin: 'auto',
-    width: '390px',
-    height: '740px',
-    position: 'relative',
-    borderColor: colors.B20,
-    borderWidth: '10px',
-    borderStyle: 'solid',
-    borderRadius: '40px',
-  },
-  cameraDent: {
-    background: colors.B20,
-    width: '148px',
-    height: '30px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    borderRadius: '0 0 20px 20px',
-  },
+const useStyles = createStyles((theme) => ({
   bottom: {
     height: '70px',
   },
@@ -43,7 +24,7 @@ const useStyles = createStyles(() => ({
   },
   preheader: {
     fontSize: '12px',
-    color: colors.B60,
+    color: theme.colorScheme === 'dark' ? colors.B60 : colors.B70,
   },
   subject: {
     marginBottom: '5px',
@@ -56,7 +37,7 @@ const useStyles = createStyles(() => ({
   },
   date: {
     marginRight: '7px',
-    color: colors.B60,
+    color: theme.colorScheme === 'dark' ? colors.B60 : colors.B70,
   },
 }));
 
