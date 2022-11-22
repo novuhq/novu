@@ -16,8 +16,6 @@ export {
   ISubscriberJwt,
   IPreferenceChannels,
   IMessageCTA,
-  IActor,
-  ActorTypeEnum,
   IMessageButton,
 } from '@novu/shared';
 
