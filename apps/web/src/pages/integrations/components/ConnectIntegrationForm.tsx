@@ -9,12 +9,7 @@ import { WarningOutlined } from '@ant-design/icons';
 import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
-import {
-  createIntegration,
-  getActiveIntegrations,
-  getWebhookSupportStatus,
-  updateIntegration,
-} from '../../../api/integration';
+import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IntegrationInput } from './IntegrationInput';
 import { API_ROOT } from '../../../config';
