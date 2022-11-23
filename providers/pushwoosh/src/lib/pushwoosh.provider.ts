@@ -6,6 +6,9 @@ import {
 } from '@novu/stateless';
 
 import { Pushwoosh } from 'web-push-notifications';
+
+type triggeredFunctionType = () => void;
+
 export class PushwooshPushProvider implements IPushProvider {
   id = 'pushwoosh';
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;

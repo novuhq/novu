@@ -2,10 +2,12 @@
 </br>
 
 <div align="center">
+  <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
     <img src="https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png" width="280" alt="Logo"/>
   </picture>
+  </a>
 </div>
 
 <h1 align="center">Notification management simplified.</h1>
@@ -33,7 +35,7 @@ The ultimate service for managing multi-channel notifications with a single API.
 
 ## ⭐️ Why Novu?
 
-Building a notification system is hard, at first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
+Building a notification system is complicated. At first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
@@ -57,11 +59,10 @@ Building a notification system is hard, at first, it seems like just sending an 
   - [Chat](https://github.com/novuhq/novu#-chat)
   - [In-App](https://github.com/novuhq/novu#-in-app)
   - [Others](https://github.com/novuhq/novu#other-coming-soon)
-- [Need Help?](https://github.com/novuhq/novu#--need-help)
+- [Jarvis](https://github.com/novuhq/novu#-meet-jarvis)
+- [Need Help?](https://github.com/novuhq/novu#-need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
-
-<<<<<<< HEAD
 
 ## 📋 Read Our Code Of Conduct
 
@@ -110,7 +111,7 @@ await novu.trigger('<TRIGGER_NAME>', {
 
 ## Embeddable Notification Center
 
-Using the Novu API and admin panel you can easily add real-time notification center to your web-app without the hassle of building it yourself. You can use our React component or an iframe embed if you are not using React.
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our React component or an iframe embed if you are not using React.
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
@@ -155,7 +156,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
-- [ ] [Pushwoosh](https://github.com/novuhq/novu/tree/main/providers/pushwoosh)
+- [ ] Pushwoosh
 
 #### 👇 Chat
 
@@ -173,10 +174,35 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [ ] PagerDuty
 
+## 🤵 Meet Jarvis
+
+Meet Jarvis, a shell client sporting a dashing text gradient for all your Novu needs. Jarvis makes the following functions as simple as a few `yes` or `no` questions:
+
+- Reinstall Novu
+- Run Novu
+  - Full Project
+  - Web and API
+  - API only
+  - Docs
+- Test Novu
+  - Web tests
+  - API tests
+
+To run Jarvis at the root of Novu, you can use one of the following commands
+
+```
+npm run start
+```
+
+```
+npm run jarvis
+```
+
+Want to look through Jarvis' source code? Check out: [Jarvis.js](https://github.com/novuhq/novu/blob/main/scripts/jarvis.js)
+
 ## 💻 Need Help?
 
-We are more than happy to help you. If you are getting any errors or facing problems while working with the project, then join our
-[Discord server](https://discord.novu.co) and ask for help. We are open to discuss anything related to the project
+We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
 
 ## 🔗 Links
 
@@ -190,8 +216,8 @@ Novu is licensed under the MIT License - see the [LICENSE](https://github.com/no
 
 ## 💪 Thanks To All Contributors
 
-Thanks a lot for spending your time helping Novu grow. Thanks a lot! Keep rocking 🥂
+Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
 <a href="https://novu.co/contributors">
-  <img src="https://contrib.rocks/image?repo=novuhq/novu" />
+  <img src="https://contributors-img.web.app/image?repo=novuhq/novu" />
 </a>
