@@ -173,7 +173,6 @@
     "novu.code-workspace",
     "packages/notification-center/src/i18n/languages/**",
     "apps/widget/public/iframeResizer.contentWindow.js",
-    ".eslintrc.js",
-    ""
+    ".eslintrc.js"
   ]
 }
