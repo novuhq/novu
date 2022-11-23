@@ -144,7 +144,7 @@ export const ExecutionDetailsStepHeader = ({ step }) => {
         <StepOutcome createdAt={step?.createdAt} name={step?.type} detail={generatedDetail} status={status} />
       </Grid.Col>
       <Grid.Col span={4}>
-        <ExecutionDetailsWebhookFeedback show={false} />
+        <ExecutionDetailsWebhookFeedback executionDetails={step.executionDetails} />
       </Grid.Col>
     </Grid>
   );

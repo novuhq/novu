@@ -184,12 +184,6 @@ export const sendgridConfig: IConfigCredentials[] = [
     required: true,
   },
   ...mailConfigBase,
-  {
-    key: CredentialsKeyEnum.WebhookUrl,
-    displayName: 'Webhook url',
-    type: 'url',
-    required: false,
-  },
 ];
 
 export const netCoreConfig: IConfigCredentials[] = [
