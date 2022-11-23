@@ -48,7 +48,9 @@
     "localstack",
     "backoff",
     "Mailjet",
-    "envalid"
+    "envalid",
+    "usecases",
+    "nestjs"
   ],
   "flagWords": [],
   "patterns": [
@@ -92,6 +94,8 @@
     "package-lock.json",
     "yarn.lock",
     "tsconfig.json",
-    "node_modules/**"
+    "node_modules/**",
+    "pnpm-lock.yaml",
+    "packages/notification-center/src/i18n/languages/**",
   ]
 }
