@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - next
     paths:
       - 'package.json'
       - 'yarn.lock'
@@ -49,7 +49,7 @@ jobs:
         with:
           version: 7.5.0
           run_install: false
-        
+
       - name: Install root dependencies
         run: pnpm --filter novuhq install
 

@@ -4,9 +4,10 @@ import { HeaderContainer as Header } from './header/HeaderContainer';
 import { FooterContainer as Footer } from './footer/FooterContainer';
 import React from 'react';
 import { useNovuContext, useNovuTheme, useScreens } from '../../../../hooks';
-import { INovuTheme, ScreensEnum } from '../../../../store';
 import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 import { SubscriberPreference } from '../user-preference/SubscriberPreference';
+import { INovuTheme } from '../../../../store/novu-theme.context';
+import { ScreensEnum } from '../../../../shared/enums/screens.enum';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();

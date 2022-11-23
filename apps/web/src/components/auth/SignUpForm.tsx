@@ -2,15 +2,16 @@ import { useContext, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
-import { showNotification } from '@mantine/notifications';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
-import { Github } from '../../design-system/icons';
+import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { applyToken } from '../../store/use-auth-controller';
+import { useAcceptInvite } from './use-accept-invite.hook';
 import { useVercelParams } from '../../hooks/use-vercelParams';
 
 type Props = {
@@ -22,17 +23,13 @@ export function SignUpForm({ token, email }: Props) {
   const navigate = useNavigate();
 
   const { setToken } = useContext(AuthContext);
-  const { isFromVercel, code, next } = useVercelParams();
-  const loginLink = isFromVercel ? `/auth/login?code=${code}&next=${next}` : '/auth/login';
+  const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
+  const { isFromVercel, code, next, configurationId } = useVercelParams();
+  const vercelQueryParamss = `code=${code}&next=${next}&configurationId=${configurationId}`;
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParamss}` : '/auth/login';
   const githubLink = isFromVercel
-    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}`
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
-
-  const { isLoading: loadingAcceptInvite, mutateAsync: acceptInvite } = useMutation<
-    string,
-    { error: string; message: string; statusCode: number },
-    string
-  >((tokenItem) => api.post(`/v1/invites/${tokenItem}/accept`, {}));
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -70,9 +67,9 @@ export function SignUpForm({ token, email }: Props) {
     applyToken((response as any).token);
 
     if (token) {
-      const responseInvite = await acceptInvite(token);
+      const result = await submitToken(token);
+      if (!result) return;
 
-      setToken(responseInvite);
       navigate('/templates');
 
       return true;
@@ -80,7 +77,7 @@ export function SignUpForm({ token, email }: Props) {
       setToken((response as any).token);
     }
 
-    navigate(isFromVercel ? `/auth/application?code=${code}&next=${next}` : '/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParamss}` : '/auth/application');
 
     return true;
   };
@@ -121,18 +118,18 @@ export function SignUpForm({ token, email }: Props) {
     <>
       {!IS_DOCKER_HOSTED && !token && (
         <>
-          <GithubButton
+          <GitHubButton
             my={30}
             component="a"
             href={githubLink}
             variant="white"
             fullWidth
             radius="md"
-            leftIcon={<Github />}
+            leftIcon={<GitHub />}
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
-            Sign Up with Github
-          </GithubButton>
+            Sign Up with GitHub
+          </GitHubButton>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
       )}
@@ -243,7 +240,7 @@ function Accept() {
   );
 }
 
-const GithubButton = styled(MantineButton)<{
+const GitHubButton = styled(MantineButton)<{
   component: 'a';
   my: number;
   href: string;

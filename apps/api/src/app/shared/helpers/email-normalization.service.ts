@@ -1,6 +1,6 @@
 const PLUS_ONLY = /\+.*$/;
 const PLUS_AND_DOT = /\.|\+.*$/g;
-const normalizeableProviders = {
+const normalizableProviders = {
   'gmail.com': {
     cut: PLUS_AND_DOT,
   },
@@ -34,13 +34,13 @@ export function normalizeEmail(email: string): string {
   let username = emailParts[0];
   let domain = emailParts[1];
 
-  if (normalizeableProviders.hasOwnProperty(domain)) {
-    if (normalizeableProviders[domain].hasOwnProperty('cut')) {
-      username = username.replace(normalizeableProviders[domain].cut, '');
+  if (normalizableProviders.hasOwnProperty(domain)) {
+    if (normalizableProviders[domain].hasOwnProperty('cut')) {
+      username = username.replace(normalizableProviders[domain].cut, '');
     }
 
-    if (normalizeableProviders[domain].hasOwnProperty('aliasOf')) {
-      domain = normalizeableProviders[domain].aliasOf;
+    if (normalizableProviders[domain].hasOwnProperty('aliasOf')) {
+      domain = normalizableProviders[domain].aliasOf;
     }
   }
 

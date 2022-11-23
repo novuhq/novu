@@ -1,20 +1,25 @@
 import { useEffect, useState, useReducer } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled/macro';
-import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import { showNotification } from '@mantine/notifications';
+import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
-import { Button, colors, Switch, Text } from '../../../design-system';
+import { WarningOutlined } from '@ant-design/icons';
+import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
+import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
-import { createIntegration, updateIntegration } from '../../../api/integration';
+import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IntegrationInput } from './IntegrationInput';
-import { WarningOutlined } from '@ant-design/icons';
+import { API_ROOT } from '../../../config';
+import { useEnvController } from '../../../store/use-env-controller';
+import { useAuthController } from '../../../store/use-auth-controller';
+import { Check, Copy } from '../../../design-system/icons';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
-  HANLDE_ALERT_AND_ERROR_MSG = 'handle_alert_and_error_msg',
+  HANDLE_ALERT_AND_ERROR_MSG = 'handle_alert_and_error_msg',
   TOGGLE_CHECK = 'toggle_check',
 }
 
@@ -25,7 +30,7 @@ type ActionType =
       payload: boolean;
     }
   | {
-      type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG;
+      type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG;
       payload: {
         isShowAlert: boolean;
         errorMsg: string;
@@ -47,7 +52,7 @@ const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, act
         isShowSwitch: action.payload,
       };
 
-    case ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG:
+    case ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG:
       return {
         ...state,
         isShowAlert: action.payload.isShowAlert,
@@ -86,7 +91,9 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
-
+  const { environment } = useEnvController();
+  const { organization } = useAuthController();
+  const webhookUrlClipboard = useClipboard({ timeout: 1000 });
   const [checkIntegrationState, dispatch] = useReducer(checkIntegrationReducer, checkIntegrationInitialState);
 
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
@@ -110,6 +117,16 @@ export function ConnectIntegrationForm({
     }
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
+  const { data: webhookSupportStatus } = useQuery(
+    ['webhookSupportStatus', provider?.providerId],
+    () => getWebhookSupportStatus(provider?.providerId as string),
+    {
+      enabled: Boolean(
+        provider?.providerId && [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider.channel) && !createModel
+      ),
+    }
+  );
+
   useEffect(() => {
     if (provider?.credentials) {
       for (const credential of provider.credentials) {
@@ -122,7 +139,7 @@ export function ConnectIntegrationForm({
     try {
       if (checkIntegrationState.isShowAlert) {
         dispatch({
-          type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG,
+          type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG,
           payload: {
             isShowAlert: false,
             errorMsg: '',
@@ -149,7 +166,7 @@ export function ConnectIntegrationForm({
         payload: true,
       });
       dispatch({
-        type: ACTION_TYPE_ENUM.HANLDE_ALERT_AND_ERROR_MSG,
+        type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG,
         payload: {
           isShowAlert: true,
           errorMsg: e?.message,
@@ -179,6 +196,9 @@ export function ConnectIntegrationForm({
 
   const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
 
+  // eslint-disable-next-line max-len
+  const webhookUrl = `${API_ROOT}/v1/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
+
   return (
     <Form noValidate onSubmit={handleSubmit(onCreateIntegration)}>
       <CloseButton data-test-id="connection-integration-form-close" type="button" onClick={onClose}>
@@ -205,6 +225,22 @@ export function ConnectIntegrationForm({
             />
           </InputWrapper>
         ))}
+        {webhookSupportStatus &&
+          provider?.channel &&
+          [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel) && (
+            <InputWrapper>
+              <Input
+                label="Webhook URL"
+                value={webhookUrl}
+                readOnly
+                rightSection={
+                  <CopyWrapper onClick={() => webhookUrlClipboard.copy(webhookUrl)}>
+                    {webhookUrlClipboard.copied ? <Check /> : <Copy />}
+                  </CopyWrapper>
+                }
+              />
+            </InputWrapper>
+          )}
         <Stack my={30}>
           <ActiveWrapper active={isActive}>
             <Controller
@@ -321,5 +357,12 @@ const CheckIntegrationWrapper = styled(SideElementBase)`
   align-items: center;
   ${StyledText} {
     flex-grow: 1;
+  }
+`;
+
+const CopyWrapper = styled.div`
+  cursor: pointer;
+  &:hover {
+    opacity: 0.8;
   }
 `;
