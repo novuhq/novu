@@ -9,6 +9,7 @@ import {
   telnyxConfig,
   twilioConfig,
   firetextConfig,
+  burstSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -77,5 +78,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: firetextConfig,
     docReference: 'https://www.firetext.co.uk/docs',
     logoFileName: { light: 'firetext.svg', dark: 'firetext.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Burstsms,
+    displayName: 'BurstSMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: burstSmsConfig,
+    docReference: 'https://developer.transmitsms.com/',
+    logoFileName: { light: 'burstsms.svg', dark: 'burstsms.svg' },
   },
 ];

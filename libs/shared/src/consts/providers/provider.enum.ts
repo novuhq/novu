@@ -45,6 +45,7 @@ export enum SmsProviderIdEnum {
   Twilio = 'twilio',
   Gupshup = 'gupshup',
   Firetext = 'firetext',
+  Burstsms = 'burstsms',
 }
 
 export enum ChatProviderIdEnum {
