@@ -1,13 +1,9 @@
-name: Typo Check
+name: 'Check spelling'
 on: [pull_request]
 
 jobs:
-  run:
-    name: Spell Check with Typos
+  spellcheck: # run the action
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Actions Repository
-      uses: actions/checkout@v2
-
-    - name: Ignore implicit configuration file
-      uses: crate-ci/typos@master
+      - uses: actions/checkout@v3
+      - uses: streetsidesoftware/cspell-action@v2

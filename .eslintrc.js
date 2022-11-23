@@ -7,9 +7,10 @@ module.exports = {
     'prettier/@typescript-eslint',
     'plugin:prettier/recommended',
     'plugin:promise/recommended',
+    'plugin:@cspell/recommended',
   ],
   ignorePatterns: ['.eslintrc.js', '*.json', 'jest.config.js'],
-  plugins: ['import', 'promise', '@typescript-eslint', 'prettier', 'spellcheck'],
+  plugins: ['import', 'promise', '@typescript-eslint', 'prettier'],
   parser: '@typescript-eslint/parser',
   settings: {
     'import/parsers': {
@@ -95,20 +96,6 @@ module.exports = {
       'error',
       {
         endOfLine: 'auto',
-      },
-    ],
-    'spellcheck/spell-checker': [
-      1,
-      {
-        comments: false,
-        strings: true,
-        identifiers: true,
-        templates: true,
-        lang: 'en_US',
-        skipWords: ['dict', 'aff', 'hunspellchecker', 'hunspell', 'utils', '$nin', 'ba', 'als'],
-        skipIfMatch: ['http://[^s]*', '^[-\\w]+/[-\\w\\.]+$'],
-        skipWordIfMatch: ['^foobar.*$'],
-        minLength: 3,
       },
     ],
   },
