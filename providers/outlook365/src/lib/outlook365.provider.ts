@@ -69,9 +69,6 @@ export class Outlook365Provider implements IEmailProvider {
     }
   }
 
-  getMessageId?: (body: any) => string[];
-  parseEventBody?: (body: any, identifier: string) => IEmailEventBody;
-
   private createMailData(options: IEmailOptions): SendMailOptions {
     return {
       from: this.config.from,
