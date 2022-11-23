@@ -68,9 +68,6 @@ Building a notification system is complicated. At first, it seems like just send
 
 Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you are agreeing to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
 
-=======
-
-> > > > > > > 99e14fb1a (feat: adding pushwoosh_base)
 
 ## 🚀 Getting Started
 
