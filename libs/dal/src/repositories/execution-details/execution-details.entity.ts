@@ -19,4 +19,5 @@ export class ExecutionDetailsEntity {
   isRetry: boolean;
   createdAt?: string;
   raw?: string;
+  webhookStatus?: string;
 }
