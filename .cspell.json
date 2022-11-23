@@ -50,7 +50,10 @@
     "Mailjet",
     "envalid",
     "usecases",
-    "nestjs"
+    "nestjs",
+    "mantine",
+    "scope",
+    "novuhq"
   ],
   "flagWords": [],
   "patterns": [
