@@ -19,13 +19,6 @@ export interface ICredentials {
   clientId?: string;
   projectName?: string;
   serviceAccount?: string;
-  applicationCode?: string;
-  defaultNotificationTitle?: string;
-  triggeredFunction?: any;
-  autoSubscribe?: boolean;
-  userId?: string;
-  tags?: object;
-  defaultNotificationImageURL?: string;
 }
 
 export class IntegrationEntity {
