@@ -97,30 +97,19 @@ module.exports = {
         endOfLine: 'auto',
       },
     ],
-    "spellcheck/spell-checker": [
+    'spellcheck/spell-checker': [
       1,
-       {
-           "comments": false,
-           "strings": true,
-           "identifiers": true,
-           "templates": true,
-           "lang": "en_US",
-           "skipWords": [
-               "dict",
-               "aff",
-               "hunspellchecker",
-               "hunspell",
-               "utils"
-           ],
-           "skipIfMatch": [
-               "http://[^s]*",
-               "^[-\\w]+\/[-\\w\\.]+$"
-           ],
-           "skipWordIfMatch": [
-               "^foobar.*$"
-           ],
-           "minLength": 3
-        }
-    ]
+      {
+        comments: false,
+        strings: true,
+        identifiers: true,
+        templates: true,
+        lang: 'en_US',
+        skipWords: ['dict', 'aff', 'hunspellchecker', 'hunspell', 'utils', '$nin', 'ba', 'als'],
+        skipIfMatch: ['http://[^s]*', '^[-\\w]+/[-\\w\\.]+$'],
+        skipWordIfMatch: ['^foobar.*$'],
+        minLength: 3,
+      },
+    ],
   },
 };
