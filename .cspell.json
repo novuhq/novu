@@ -93,7 +93,24 @@
     "Quickstart",
     "signup",
     "plusplus",
-    "wscript"
+    "wscript",
+    "mailchimp",
+    "Telnyx",
+    "unsub",
+    "VERCEL",
+    "RELEASLY",
+    "kompose",
+    "NOTIFGROUPID",
+    "Projectkeys",
+    "smoothstep",
+    "nodrag",
+    "Outgoers",
+    "chartjs",
+    "clonedeep",
+    "scopsy",
+    "fjogeleit",
+    "iframe",
+    "Resizer"
   ],
   "flagWords": [],
   "patterns": [
@@ -133,6 +150,7 @@
     "HTML Tags"
   ],
   "ignorePaths": [
+    ".cspell.json",
     "package.json",
     "package-lock.json",
     "yarn.lock",
