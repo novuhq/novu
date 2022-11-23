@@ -21,3 +21,13 @@ To get your provider specific webhook URL, follow the below steps:
 ![Webhook URL](/img/webhook-url.png)
 
 **Note**: Webhook URL will only be visible for connected providers and after you've connected the provider.
+
+## Supported Providers
+
+- Mailjet
+- Mandrill
+- Postmark
+- Sendgrid
+- Sendinblue
+- Telnyx
+- Twilio
