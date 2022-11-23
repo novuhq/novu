@@ -110,7 +110,20 @@
     "scopsy",
     "fjogeleit",
     "iframe",
-    "Resizer"
+    "Resizer",
+    "npmrc",
+    "loglevel",
+    "nikolaik",
+    "msteams",
+    "buildscript",
+    "dbaeumer",
+    "bullmq",
+    "kustomize",
+    "Unpromoted",
+    "Termii",
+    "IAPNS",
+    "multilines",
+    "nvsk"
   ],
   "flagWords": [],
   "patterns": [
@@ -159,6 +172,8 @@
     "pnpm-lock.yaml",
     "novu.code-workspace",
     "packages/notification-center/src/i18n/languages/**",
-    "apps/widget/public/iframeResizer.contentWindow.js"
+    "apps/widget/public/iframeResizer.contentWindow.js",
+    ".eslintrc.js",
+    ""
   ]
 }
