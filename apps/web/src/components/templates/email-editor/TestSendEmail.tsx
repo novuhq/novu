@@ -1,90 +1,61 @@
-import { IMessageTemplate, TemplateVariableTypeEnum, TemplateSystemVariables } from '@novu/shared';
-import { Divider, Grid } from '@mantine/core';
-import { Button, Title, Modal, Text, Input, Switch, colors } from '../../../design-system';
-import { useMutation } from 'react-query';
+import React, { useContext, useEffect, useState } from 'react';
+import { TemplateVariableTypeEnum, MemberStatusEnum } from '@novu/shared';
+import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
+import { Button, Text, colors, Tooltip } from '../../../design-system';
+import { useClipboard } from '@mantine/hooks';
+import { useMutation, useQuery } from 'react-query';
+import { useFormContext, useWatch } from 'react-hook-form';
+import styled from 'styled-components';
 import { testSendEmailMessage } from '../../../api/templates';
-import { useContext, useEffect, useState } from 'react';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { AuthContext } from '../../../store/authContext';
-import { useInputState, useListState } from '@mantine/hooks';
-import { useFormContext } from 'react-hook-form';
-import styled from 'styled-components';
-import { When } from '../../utils/When';
+import { ArrowDown, Check, Copy, Invite } from '../../../design-system/icons';
+import { inputStyles } from '../../../design-system/config/inputs.styles';
+import useStyles from '../../../design-system/select/Select.styles';
+import { IMustacheVariable } from '../VariableManager';
+import { getOrganizationMembers } from '../../../api/organization';
 
-interface IVariable {
-  type: TemplateVariableTypeEnum;
-  name: string;
-  value: string | boolean | undefined;
-  required?: boolean;
-  ind: number;
-}
-
-export function TestSendEmail({ index }: { index: number }) {
+export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentUser } = useContext(AuthContext);
-  const { watch } = useFormContext();
-  const { mutateAsync: testSendEmailEvent } = useMutation(testSendEmailMessage);
-  /*
-   * const subject = watch(`steps.${index}.template.subject`);
-   * const contentType = watch(`steps.${index}.template.contentType`);
-   * const htmlContent = watch(`steps.${index}.template.htmlContent`);
-   */
+  const { control } = useFormContext();
 
-  // const content = watch(`steps.${index}.template.content`);
-  const [toValue, setToValue] = useInputState<string>(currentUser?.email || '');
-  const [showRequired, setShowRequired] = useState(false);
-  // const [content, setContent] = useState(false);
-  const [variablesValue, handlers] = useListState<IVariable>([]);
+  const clipboardJson = useClipboard({ timeout: 1000 });
+  const { classes } = useStyles();
 
-  const isSystemVariable = (variableName) =>
-    TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
+  const { mutateAsync: testSendEmailEvent, isLoading } = useMutation(testSendEmailMessage);
+  const template = useWatch({
+    name: `steps.${index}.template`,
+    control,
+  });
+  const { data: organizationMembers } = useQuery<any[]>('getOrganizationMembers', getOrganizationMembers);
 
-  const systemVars = variablesValue.filter((variable) => isSystemVariable(variable.name));
-  const userVars = variablesValue.filter((variable) => !isSystemVariable(variable.name));
-  const allRequired = variablesValue
-    .filter((value) => value.type === TemplateVariableTypeEnum.STRING)
-    .some((value) => (value.required || isSystemVariable(value.name)) && !value.value);
+  const [sendTo, setSendTo] = useState<string[]>(currentUser?.email ? [currentUser?.email] : []);
+  const [membersEmails, setMembersEmails] = useState<string[]>([currentUser?.email || '']);
 
   useEffect(() => {
-    const subscription = watch((values) => {
-      const variables = values.steps[index].template.variables
-        ? values.steps[index].template.variables.map(({ name, defaultValue, required, type }, ind) => ({
-            name,
-            value: defaultValue,
-            required,
-            type,
-            ind,
-          }))
-        : [];
-      console.log(variables);
-      handlers.setState(variables);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch]);
-  console.log(variablesValue);
-  const onTestEmail = async () => {
-    const payload = variablesValue.reduce((prev, curr) => {
-      return { ...prev, [curr.name]: curr.value };
-    }, {});
-
-    const toSend = {
-      payload,
-      to: toValue,
-      // contentType: contentType ?? 'editor',
-      contentType: 'editor',
-      subject: 'sub',
-      content: 'con',
-    };
-
-    if (allRequired) {
-      setShowRequired(true);
-
+    if (organizationMembers?.length === 0) {
       return;
-    } else {
-      setShowRequired(false);
     }
+    setMembersEmails(
+      organizationMembers
+        ?.filter((member) => member.memberStatus === MemberStatusEnum.ACTIVE)
+        .map((member) => member.user?.email) || []
+    );
+  }, [organizationMembers, setMembersEmails]);
+
+  const processedVariables = processVariables(template.variables);
+  const [payloadValue, setPayloadValue] = useState(processedVariables);
+
+  const onTestEmail = async () => {
+    const payload = JSON.parse(payloadValue);
+
     try {
-      await testSendEmailEvent(toSend);
+      await testSendEmailEvent({
+        ...template,
+        payload,
+        to: sendTo,
+        content: template.contentType === 'customHtml' ? (template.htmlContent as string) : template.content,
+      });
       successMessage('Test sent successfully!');
     } catch (e: any) {
       errorMessage(e.message || 'Un-expected error occurred');
@@ -92,104 +63,116 @@ export function TestSendEmail({ index }: { index: number }) {
   };
 
   return (
-    <>
-      <Text color={colors.B60}>This will explain what this modal does.</Text>
-      <Input mt={30} label="Send to" value={toValue} onChange={setToValue} />
-      <When truthy={systemVars.length}>
-        <Divider
-          label={<Text color={colors.B40}>System Variables</Text>}
-          color={colors.B30}
-          labelPosition="center"
-          my="md"
-        />
-        <Grid>
-          {systemVars
-            .filter(({ type }) => type === TemplateVariableTypeEnum.STRING)
-            .map(({ name, value, ind }) => (
-              <Grid.Col span={6}>
-                <Input
-                  key={ind}
-                  label={name}
-                  value={value as string}
-                  required={true}
-                  error={showRequired && !value && 'required'}
-                  onChange={(event) => handlers.setItemProp(ind, 'value', event.currentTarget.value)}
-                />
-              </Grid.Col>
-            ))}
-        </Grid>
-        <Grid>
-          {systemVars
-            .filter(({ type }) => type === TemplateVariableTypeEnum.BOOLEAN)
-            .map(({ name, value, ind }) => (
-              <Grid.Col span={4}>
-                <SwitchWrapper>
-                  <Switch
-                    key={ind}
-                    label={name}
-                    checked={value as boolean}
-                    onChange={(event) => handlers.setItemProp(ind, 'value', event.currentTarget.checked)}
-                  />
-                </SwitchWrapper>
-              </Grid.Col>
-            ))}
-        </Grid>
-      </When>
-      <When truthy={userVars.length}>
-        <Divider
-          label={<Text color={colors.B40}>User Variables</Text>}
-          color={colors.B30}
-          labelPosition="center"
-          my="md"
-        />
-        <Grid>
-          {userVars
-            .filter(({ type }) => type === TemplateVariableTypeEnum.STRING)
-            .map(({ name, required, value, ind }) => (
-              <Grid.Col span={6}>
-                <Input
-                  key={ind}
-                  label={name}
-                  value={value as string}
-                  required={required}
-                  error={showRequired && required && !value && 'required'}
-                  onChange={(event) => handlers.setItemProp(ind, 'value', event.currentTarget.value)}
-                />
-              </Grid.Col>
-            ))}
-        </Grid>
-        <Grid>
-          {userVars
-            .filter(({ type }) => type === TemplateVariableTypeEnum.BOOLEAN)
-            .map(({ name, value, ind }) => (
-              <Grid.Col span={4}>
-                <SwitchWrapper>
-                  <Switch
-                    key={ind}
-                    label={name}
-                    checked={value as boolean}
-                    onChange={(event) => handlers.setItemProp(ind, 'value', event.currentTarget.checked)}
-                  />
-                </SwitchWrapper>
-              </Grid.Col>
-            ))}
-        </Grid>
-      </When>
+    <div style={{ maxWidth: '800px', margin: 'auto', padding: '20px 25px' }}>
+      <Text my={30} color={colors.B60}>
+        Fill in the required variables and send send a test to your desired address.
+      </Text>
 
-      <div style={{ alignItems: 'end' }}>
-        <Button data-test-id="test-send-email-btn" mt={30} inherit onClick={() => onTestEmail()}>
-          Test
+      <Wrapper>
+        <MultiSelect
+          mt={20}
+          radius="md"
+          size="md"
+          rightSection={<ArrowDown />}
+          rightSectionWidth={50}
+          required
+          error={!sendTo.length && 'At least one email is required'}
+          value={sendTo}
+          label="Send to"
+          classNames={classes}
+          styles={inputStyles}
+          data={membersEmails}
+          onChange={setSendTo}
+          creatable
+          searchable
+          getCreateLabel={(newEmail) => <div>+ Send to {newEmail}</div>}
+          onCreate={(query) => setMembersEmails((current) => [...current, query])}
+        />
+      </Wrapper>
+
+      <JsonInput
+        data-test-id="test-email-json-param"
+        formatOnBlur
+        mt={20}
+        autosize
+        styles={inputStyles}
+        label="Variables"
+        value={payloadValue}
+        onChange={setPayloadValue}
+        minRows={6}
+        mb={15}
+        validationError="Invalid JSON"
+        rightSectionWidth={50}
+        rightSectionProps={{ style: { alignItems: 'start', padding: '5px' } }}
+        rightSection={
+          <Tooltip label={clipboardJson.copied ? 'Copied!' : 'Copy Json'}>
+            <ActionIcon variant="transparent" onClick={() => clipboardJson.copy(payloadValue)}>
+              {clipboardJson.copied ? <Check /> : <Copy />}
+            </ActionIcon>
+          </Tooltip>
+        }
+      />
+
+      <Group direction="row" mt={30}>
+        <Button
+          loading={isLoading}
+          icon={<Invite />}
+          data-test-id="test-send-email-btn"
+          disabled={!isIntegrationActive}
+          onClick={() => onTestEmail()}
+        >
+          Send Test Email
         </Button>
-      </div>
-    </>
+        {!isIntegrationActive && (
+          <Text color={colors.error}>{`* Looks like you haven’t configured your email provider yet`}</Text>
+        )}
+      </Group>
+    </div>
   );
 }
 
-const SwitchWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
-  .mantine-Switch-root {
-    width: auto;
-    max-width: inherit;
+const processVariables = (variables: IMustacheVariable[]) => {
+  const varsObj: Record<string, any> = {};
+  variables.forEach((variable) => {
+    if (variable.name.includes('.')) {
+      const [first, sec] = variable.name.split('.');
+      if (variables.find((field) => field.type === TemplateVariableTypeEnum.ARRAY && field.name === first)) {
+        varsObj[first] = [{ ...varsObj[first][0], [sec]: getVariableValue(variable) }];
+      } else {
+        varsObj[first] = { ...varsObj[first], [sec]: getVariableValue(variable) };
+      }
+    } else {
+      varsObj[variable.name] = getVariableValue(variable);
+    }
+  });
+
+  return JSON.stringify(varsObj, null, 2);
+};
+
+const getVariableValue = (variable: IMustacheVariable) => {
+  if (variable.type === TemplateVariableTypeEnum.BOOLEAN) {
+    return variable.defaultValue;
+  }
+  if (variable.type === TemplateVariableTypeEnum.STRING) {
+    return variable.defaultValue ? variable.defaultValue : variable.name;
+  }
+
+  if (variable.type === TemplateVariableTypeEnum.ARRAY) {
+    return [];
+  }
+};
+
+const Wrapper = styled.div`
+  .mantine-MultiSelect-values {
+    min-height: 48px;
+    padding: 0;
+  }
+
+  .mantine-MultiSelect-input {
+    min-height: 50px;
+
+    input {
+      height: 100%;
+    }
   }
 `;

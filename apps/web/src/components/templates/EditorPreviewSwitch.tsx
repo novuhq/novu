@@ -1,6 +1,6 @@
 import { SegmentedControl, useMantineTheme } from '@mantine/core';
 import { colors } from '../../design-system';
-import { ViewEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { ViewEnum } from './email-editor/EmailMessagesCards';
 
 export const EditorPreviewSwitch = ({ view, setView }) => {
   const theme = useMantineTheme();

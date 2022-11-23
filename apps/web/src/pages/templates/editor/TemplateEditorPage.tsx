@@ -31,11 +31,6 @@ export enum ActivePageEnum {
   CHAT = 'Chat',
   TRIGGER_SNIPPET = 'TriggerSnippet',
 }
-export enum ViewEnum {
-  EDIT = 'Edit',
-  PREVIEW = 'Preview',
-  TEST = 'Test',
-}
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();

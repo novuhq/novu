@@ -17,7 +17,7 @@ interface VariableComponentProps {
   template: string;
 }
 
-interface IMustacheVariable {
+export interface IMustacheVariable {
   type: TemplateVariableTypeEnum;
   name: string;
   defaultValue?: string | boolean;
@@ -156,7 +156,12 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
     const arrayVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'BlockStatement' && ['each', 'with'].includes(body.path.head))
       .map((body) => {
-        const nestedVariablesInBlock = getMustacheVariables(body.program.body);
+        const nestedVariablesInBlock = getMustacheVariables(body.program.body).map((mustVar) => {
+          return {
+            ...mustVar,
+            name: body.params[0].original + '.' + mustVar.name,
+          };
+        });
 
         return [
           {
@@ -168,16 +173,6 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
         ];
       })
       .flat();
-
-    /*
-     *   .map((mustVar) => {
-     *   return {
-     *     ...mustVar,
-     *     name: body.params[0].original + '.' + mustVar.name,
-     *   };
-     * });
-     * console.log(nestedVariablesInBlock);
-     */
 
     const boolVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'BlockStatement' && ['if'].includes(body.path.head))

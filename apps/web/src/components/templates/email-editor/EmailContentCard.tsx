@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Button, Input, Tabs, colors } from '../../../design-system';
+import { Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { VariableManager } from '../VariableManager';
 import { useIntegrations } from '../../../api/hooks';
-import { useMantineTheme } from '@mantine/core';
 import { EmailInboxContent } from './EmailInboxContent';
-import { TestSendEmailModal } from './TestSendEmailModal';
 
 export function EmailContentCard({
   index,
@@ -26,17 +24,14 @@ export function EmailContentCard({
   isIntegrationActive: boolean;
 }) {
   const { readonly } = useEnvController();
-  const theme = useMantineTheme();
   const {
     control,
     formState: { errors },
     setValue,
     watch,
-    getValues,
   } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState(0);
-  const [showTestModal, setShowTestModal] = useState(false);
   const { integrations = [] } = useIntegrations();
   const [integration, setIntegration]: any = useState(null);
 
@@ -96,8 +91,6 @@ export function EmailContentCard({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
-      <Button onClick={() => setShowTestModal(true)}>Test Email</Button>
-
       <div
         style={{
           fontWeight: 'bolder',
@@ -107,12 +100,7 @@ export function EmailContentCard({
         Inbox View
       </div>
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />
-      <TestSendEmailModal
-        index={index}
-        isVisible={showTestModal}
-        onDismiss={() => setShowTestModal(false)}
-        template={getValues(`steps.${index}.template` as any)}
-      />
+
       <div data-test-id="editor-type-selector">
         <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
       </div>
