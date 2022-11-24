@@ -5,7 +5,7 @@
   "scripts": {
     "start": "cross-env PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
-    "build": "node --max_old_space_size=8192 ./node_modules/react-app-rewired/bin/index.js build",
+    "build": "react-app-rewired --max_old_space_size=4096 build",
     "test": "react-app-rewired test",
     "precommit": "lint-staged",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
