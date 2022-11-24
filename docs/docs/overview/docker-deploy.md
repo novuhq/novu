@@ -17,17 +17,16 @@ Clone the Novu repo and enter the docker directory locally:
 
 ```bash
 # Get the code
-git clone --depth 1 https://github.com/novuhq/novu
+git clone https://github.com/novuhq/novu
 
 # Go to the docker folder
 cd novu/docker
 
 # Copy the example env file
-cp .env.example .env
+cp .env.example ./local/deployment/.env
 
-# Start
-docker-compose up
-
+# Start Novu
+docker-compose -f ./local/deployment/docker-compose.yml up
 ```
 
 Now visit [http://localhost:4200](http://localhost:4200/) to start using Novu.
