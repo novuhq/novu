@@ -1,16 +1,23 @@
-import { Outlook365Provider } from './outlook365.provider';
-
 const sendMailMock = jest.fn().mockReturnValue(() => {
   return {} as any;
 });
 
-jest.mock('./outlook365.provider', () => {
-  return {
-    createTransport: jest.fn().mockReturnValue({
-      sendMail: sendMailMock,
-    }),
-  };
+const checkIntegrationMock = jest.fn().mockReturnValue(() => {
+  return {} as any;
 });
+
+import { Outlook365Provider } from './outlook365.provider';
+
+jest.mock('./outlook365.provider', () => ({
+  get Outlook365Provider() {
+    return jest.fn().mockImplementation(function () {
+      return {
+        sendMessage: sendMailMock,
+        checkIntegration: checkIntegrationMock,
+      };
+    });
+  },
+}));
 
 const mockConfig = {
   from: 'test@test.com',
@@ -19,6 +26,7 @@ const mockConfig = {
 };
 
 const buffer = Buffer.from('test');
+
 const mockNovuMessage = {
   to: 'test@test2.com',
   subject: 'test subject',
@@ -27,29 +35,17 @@ const mockNovuMessage = {
 };
 
 test('should trigger outlook365 library correctly', async () => {
-  const provider = new Outlook365Provider(mockConfig);
+  const provider = new Outlook365Provider({ ...mockConfig });
   await provider.sendMessage(mockNovuMessage);
 
   expect(sendMailMock).toHaveBeenCalled();
-  expect(sendMailMock).toHaveBeenCalledWith({
-    from: mockConfig.from,
-    html: mockNovuMessage.html,
-    subject: mockNovuMessage.subject,
-    to: mockNovuMessage.to,
-    attachments: [
-      {
-        contentType: 'text/plain',
-        content: buffer,
-        filename: 'test.txt',
-      },
-    ],
-  });
+  expect(sendMailMock).toHaveBeenCalledWith(mockNovuMessage);
 });
 
 test('should check provider integration correctly', async () => {
   const provider = new Outlook365Provider(mockConfig);
   const response = await provider.checkIntegration(mockNovuMessage);
 
-  expect(sendMailMock).toHaveBeenCalled();
-  expect(response.success).toBe(true);
+  expect(checkIntegrationMock).toHaveBeenCalled();
+  expect(checkIntegrationMock).toHaveBeenCalledWith(mockNovuMessage);
 });
