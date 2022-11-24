@@ -144,7 +144,8 @@
     "PGID",
     "TMPDIR",
     "healthcheck",
-    "printjson"
+    "printjson",
+    "Hacksquad"
   ],
   "flagWords": [],
   "patterns": [
