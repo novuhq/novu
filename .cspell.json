@@ -151,7 +151,15 @@
     "healthcheck",
     "printjson",
     "machdep",
-    "PGID"
+    "PGID",
+    "notifire",
+    "Hygen",
+    "toastr",
+    "consts",
+    "crossorigin",
+    "WEASL",
+    "dbpath",
+    "prebuilds"
   ],
   "flagWords": [],
   "patterns": [
