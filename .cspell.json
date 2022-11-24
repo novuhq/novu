@@ -138,7 +138,16 @@
     "keybase",
     "classpath",
     "Lato",
-    "TTFB"
+    "TTFB",
+    "xcodebuild",
+    "softwareupdate",
+    "chsh",
+    "ohmyzsh",
+    "AWSCLIV",
+    "PUID",
+    "TMPDIR",
+    "healthcheck",
+    "printjson"
   ],
   "flagWords": [],
   "patterns": [
