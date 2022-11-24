@@ -105,8 +105,6 @@ export class TermiiSmsProvider implements ISmsProvider {
         return SmsEventStatusEnum.FAILED;
       case 'Delivered':
         return SmsEventStatusEnum.DELIVERED;
-      case 'Received':
-        return SmsEventStatusEnum.RECEIVED;
     }
   }
 }
