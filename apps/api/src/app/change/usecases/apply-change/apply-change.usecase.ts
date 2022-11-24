@@ -19,7 +19,7 @@ export class ApplyChange {
     });
 
     const changes = await this.changeRepository.find(
-      { _environmentId: command.environmentId, _parentId: parentChange._id },
+      { _environmentId: parentChange._environmentId, _parentId: parentChange._id },
       '',
       {
         sort: { createdAt: 1 },
