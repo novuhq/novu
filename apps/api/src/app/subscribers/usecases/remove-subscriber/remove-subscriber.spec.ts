@@ -3,14 +3,14 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { NotFoundException } from '@nestjs/common';
 import { expect } from 'chai';
 
-import { GetSubscriber } from './get-subscriber.usecase';
-import { GetSubscriberCommand } from './get-subscriber.command';
+import { RemoveSubscriber } from './remove-subscriber.usecase';
+import { RemoveSubscriberCommand } from './remove-subscriber.command';
 
-import { SubscribersModule } from '../../subscribers.module';
 import { SharedModule } from '../../../shared/shared.module';
+import { SubscribersModule } from '../../subscribers.module';
 
-describe('Get Subscriber', function () {
-  let useCase: GetSubscriber;
+describe('Remove Subscriber', function () {
+  let useCase: RemoveSubscriber;
   let session: UserSession;
 
   beforeEach(async () => {
@@ -22,28 +22,30 @@ describe('Get Subscriber', function () {
     session = new UserSession();
     await session.initialize();
 
-    useCase = moduleRef.get<GetSubscriber>(GetSubscriber);
+    useCase = moduleRef.get<RemoveSubscriber>(RemoveSubscriber);
   });
 
-  it('should get a subscriber', async function () {
+  it('should remove a subscriber', async function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
+
     const res = await useCase.execute(
-      GetSubscriberCommand.create({
+      RemoveSubscriberCommand.create({
         subscriberId: subscriber.subscriberId,
         environmentId: session.environment._id,
         organizationId: session.organization._id,
       })
     );
-    expect(res.subscriberId).to.equal(subscriber.subscriberId);
+
+    expect(res).to.eql({ acknowledged: true, status: 'deleted' });
   });
 
-  it('should get a not found exception if subscriber does not exist', async () => {
+  it('should throw a not found exception if subscriber to remove does not exist', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
 
     try {
       await useCase.execute(
-        GetSubscriberCommand.create({
+        RemoveSubscriberCommand.create({
           subscriberId: 'invalid-subscriber-id',
           environmentId: session.environment._id,
           organizationId: session.organization._id,
