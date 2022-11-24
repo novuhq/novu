@@ -30,6 +30,8 @@ export class RunJob {
     }
 
     if (!shouldRun) {
+      await this.jobRepository.updateStatus(command.organizationId, job._id, JobStatusEnum.FAILED);
+
       return;
     }
 
