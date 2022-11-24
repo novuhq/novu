@@ -98,20 +98,13 @@ export class TermiiSmsProvider implements ISmsProvider {
 
   private getStatus(event: string): SmsEventStatusEnum | undefined {
     switch (event) {
-      case 'DND Active on Phone Number':
-        return SmsEventStatusEnum.DND_ACTIVATED;
-      case 'Expired':
-        return SmsEventStatusEnum.EXPIRED;
       case 'Message sent':
         return SmsEventStatusEnum.SENT;
       case 'Message failed':
+      case 'Rejected':
         return SmsEventStatusEnum.FAILED;
       case 'Delivered':
         return SmsEventStatusEnum.DELIVERED;
-      case 'Disconnected':
-        return SmsEventStatusEnum.DISCONNECTED;
-      case 'Rejected':
-        return SmsEventStatusEnum.REJECTED;
       case 'Received':
         return SmsEventStatusEnum.RECEIVED;
     }
