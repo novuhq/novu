@@ -1,10 +1,10 @@
 import { Types } from 'mongoose';
 
-type EnvironmentId = Types.ObjectId;
-type OrganizationId = Types.ObjectId;
-type TopicId = Types.ObjectId;
+export type EnvironmentId = Types.ObjectId;
+export type OrganizationId = Types.ObjectId;
+export type TopicId = Types.ObjectId;
 type TopicKey = string;
-type UserId = Types.ObjectId;
+export type UserId = Types.ObjectId;
 
 export class TopicEntity {
   _id: TopicId;
