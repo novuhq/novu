@@ -123,7 +123,20 @@
     "Termii",
     "IAPNS",
     "multilines",
-    "nvsk"
+    "nvsk",
+    "TEMPLATEID",
+    "xkeysib",
+    "Kustomization",
+    "antd",
+    "Sider",
+    "replayable",
+    "alexjoverm",
+    "Greenkeeper",
+    "Embeddable",
+    "SLMXRN",
+    "behaviour",
+    "keybase",
+    "classpath"
   ],
   "flagWords": [],
   "patterns": [
@@ -163,6 +176,7 @@
     "HTML Tags"
   ],
   "ignorePaths": [
+    "apps/api/src/.env.test",
     ".cspell.json",
     "package.json",
     "package-lock.json",
