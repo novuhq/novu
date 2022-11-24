@@ -1,2 +1,0 @@
-[files]
-extend-exclude = ["app/*", "*.yaml", "providers/*", "packages/*", "docker/*", "libs/*", "docs/src/usage-examples.md"]
