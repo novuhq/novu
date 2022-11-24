@@ -44,8 +44,11 @@ export class CacheService implements ICacheService {
     this.updateTtl(key, options);
   }
 
-  public async keys(pattern = '*') {
-    return this.client.keys(pattern);
+  public async keys(pattern?: string) {
+    const ALL_KEYS = '*';
+    const queryPattern = pattern ?? ALL_KEYS;
+
+    return this.client.keys(queryPattern);
   }
 
   public async get(key: string) {
