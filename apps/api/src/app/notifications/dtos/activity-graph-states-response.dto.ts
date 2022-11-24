@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ActivityGraphqStatesResponse {
+export class ActivityGraphStatesResponse {
   @ApiProperty()
   _id: string;
   @ApiProperty()
