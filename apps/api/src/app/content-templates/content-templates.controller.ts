@@ -9,7 +9,7 @@ export class ContentTemplatesController {
   constructor(private previewEmailUsecase: PreviewEmail) {}
 
   @Post('/preview/email')
-  public preveiwEmail(
+  public previewEmail(
     @UserSession() user: IJwtPayload,
     @Body('content') content: string | IEmailBlock[],
     @Body('contentType') contentType: MessageTemplateContentType
