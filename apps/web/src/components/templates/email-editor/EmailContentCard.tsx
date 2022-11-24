@@ -8,7 +8,6 @@ import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { VariableManager } from '../VariableManager';
 import { useIntegrations } from '../../../api/hooks';
-import { useMantineTheme } from '@mantine/core';
 import { EmailInboxContent } from './EmailInboxContent';
 
 export function EmailContentCard({
@@ -25,7 +24,6 @@ export function EmailContentCard({
   isIntegrationActive: boolean;
 }) {
   const { readonly } = useEnvController();
-  const theme = useMantineTheme();
   const {
     control,
     formState: { errors },
@@ -102,6 +100,7 @@ export function EmailContentCard({
         Inbox View
       </div>
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />
+
       <div data-test-id="editor-type-selector">
         <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
       </div>
