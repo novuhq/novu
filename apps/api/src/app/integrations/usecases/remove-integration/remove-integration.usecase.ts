@@ -11,7 +11,7 @@ export class RemoveIntegration {
 
   async execute(command: RemoveIntegrationCommand) {
     try {
-      await this.integrationRepository.delete({ _id: command.integrationId });
+      await this.integrationRepository.delete({ _environmentId: command.environmentId, _id: command.integrationId });
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);

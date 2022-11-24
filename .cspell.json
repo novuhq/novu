@@ -138,7 +138,20 @@
     "keybase",
     "classpath",
     "Lato",
-    "TTFB"
+    "TTFB",
+    "webfontloader",
+    "Hacksquad",
+    "xcodebuild",
+    "softwareupdate",
+    "chsh",
+    "ohmyzsh",
+    "AWSCLIV",
+    "PUID",
+    "TMPDIR",
+    "healthcheck",
+    "printjson",
+    "machdep",
+    "PGID"
   ],
   "flagWords": [],
   "patterns": [
@@ -190,6 +203,7 @@
     "packages/notification-center/src/i18n/languages/**",
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
-    ".vscode/settings.json"
+    ".vscode/settings.json",
+    "docs/src/usage-examples.md"
   ]
 }

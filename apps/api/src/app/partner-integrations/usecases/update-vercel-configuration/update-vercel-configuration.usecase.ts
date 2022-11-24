@@ -54,7 +54,7 @@ export class UpdateVercelConfiguration {
 
       const envKeys = await this.getEnvKeys(organizationIds);
 
-      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration({
+      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration(command.environmentId, {
         configurationId: command.configurationId,
         userId: command.userId,
       });

@@ -25,6 +25,7 @@ export class PromoteNotificationGroupChange {
 
     return await this.notificationGroupRepository.update(
       {
+        _environmentId: command.environmentId,
         _id: item._id,
       },
       {
