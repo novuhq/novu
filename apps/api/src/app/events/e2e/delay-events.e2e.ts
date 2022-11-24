@@ -34,6 +34,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     let runningJobs = 0;
     do {
       runningJobs = await jobRepository.count({
+        _environmentId: session.environment._id,
         type: {
           $nin: [StepTypeEnum.DELAY],
         },
@@ -109,6 +110,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     await awaitRunningJobs(1);
 
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
     });
@@ -205,6 +207,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     await awaitRunningJobs(1);
 
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
     });
@@ -250,6 +253,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     await awaitRunningJobs(2);
 
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
     });
@@ -264,6 +268,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     );
 
     const digestedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -420,6 +425,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     });
 
     let delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
     });
@@ -434,6 +440,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     );
 
     const pendingJobs = await jobRepository.count({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       status: JobStatusEnum.PENDING,
       transactionId: id,
@@ -442,6 +449,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     expect(pendingJobs).to.equal(1);
 
     delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
       transactionId: id,

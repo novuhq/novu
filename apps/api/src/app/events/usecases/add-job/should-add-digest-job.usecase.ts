@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { AddJobCommand } from './add-job.command';
 
@@ -15,15 +15,13 @@ export class ShouldAddDigestJob {
       return true;
     }
 
-    const where: Partial<JobEntity> = {
+    const delayedDigest = await this.jobRepository.findOne({
       status: JobStatusEnum.DELAYED,
       type: StepTypeEnum.DIGEST,
       _subscriberId: data._subscriberId,
       _templateId: data._templateId,
       _environmentId: data._environmentId,
-    };
-
-    const delayedDigest = await this.jobRepository.findOne(where);
+    });
 
     return !delayedDigest;
   }

@@ -14,5 +14,5 @@ export class MemberEntity {
 
   memberStatus: MemberStatusEnum;
 
-  _organizationId?: string;
+  _organizationId: string;
 }

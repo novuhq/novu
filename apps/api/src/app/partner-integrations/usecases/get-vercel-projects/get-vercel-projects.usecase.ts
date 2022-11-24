@@ -15,7 +15,7 @@ export class GetVercelProjects {
   constructor(private httpService: HttpService, private organizationRepository: OrganizationRepository) {}
 
   async execute(command: GetVercelProjectsCommand) {
-    const configuration = await this.getVercelConfiguration({
+    const configuration = await this.getVercelConfiguration(command.environmentId, {
       configurationId: command.configurationId,
       userId: command.userId,
     });
@@ -29,15 +29,16 @@ export class GetVercelProjects {
     return projects;
   }
 
-  async getVercelConfiguration(payload: IGetVercelConfiguration) {
+  async getVercelConfiguration(environmentId: string, payload: IGetVercelConfiguration) {
     const organization = await this.organizationRepository.findPartnerConfigurationDetails(
+      environmentId,
       payload.userId,
       payload.configurationId
     );
 
     return {
-      accessToken: organization.partnerConfigurations[0].accessToken,
-      teamId: organization.partnerConfigurations[0].teamId,
+      accessToken: organization[0].partnerConfigurations[0].accessToken,
+      teamId: organization[0].partnerConfigurations[0].teamId,
     };
   }
 

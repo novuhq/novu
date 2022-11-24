@@ -88,6 +88,7 @@ export class UpdateNotificationTemplate {
     }
 
     const parentChangeId: string = await this.changeRepository.getChangeId(
+      command.environmentId,
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
       existingTemplate._id
     );
@@ -133,6 +134,7 @@ export class UpdateNotificationTemplate {
               feedId: message.template.feedId ? message.template.feedId : null,
               subject: message.template.subject,
               title: message.template.title,
+              actor: message.template.actor,
               parentChangeId,
             })
           );

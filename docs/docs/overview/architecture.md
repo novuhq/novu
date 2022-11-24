@@ -2,7 +2,6 @@
 
 OCL was built around the idea of separation of concerns (SoC). The idea is that transactional communication is composed of many different parts, each of which is responsible for a specific task. Modeling the communication layer is the key for easy maintenance and integration of new functionality.
 
-
 Let's deep dive into the building blocks of Novu's OCL approach.
 
 ## The mental model
@@ -15,8 +14,7 @@ Templates are the blueprints for all the notifications in Novu. They provide bas
 
 ## Environments
 
-
-This is the context in which all of your subscribers and templates exist. This will usually map to your own environments, so any new changes you are making will be  firstly included in the Development environment and once they are tested, you can use our merging changes tool to promote them to production environment.
+This is the context in which all of your subscribers and templates exist. This will usually map to your own environments, so any new changes you are making will be firstly included in the Development environment and once they are tested, you can use our merging changes tool to promote them to production environment.
 
 The production environment is a read-only environment. It means that you can only promote changes to it from the Development environment rather than modifying it directly.
 
@@ -43,7 +41,6 @@ Populating a subscriber with data can be done using our server side SDK. Read mo
 ## Trigger
 
 The trigger is responsible to let the engine know what happened and what notification template will be triggered in response to the event. Each trigger will pass the variables and data required to render the notification messages. If a value is missing, the variable protection mode will be enabled and the message won't be sent.
-
 
 The trigger should only be responsible to let the system know that something has happened, but not where and when the message will be delivered.
 

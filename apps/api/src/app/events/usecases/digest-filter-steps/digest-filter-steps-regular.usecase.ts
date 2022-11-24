@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, JobRepository, NotificationStepEntity, NotificationRepository } from '@novu/dal';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterSteps } from './digest-filter-steps.usecase';
 
@@ -16,16 +16,17 @@ export class DigestFilterStepsRegular {
         delayedDigests = await this.getDigest(command, step);
       }
 
-      if (this.shouldContinue(delayedDigests)) {
+      if (delayedDigests) {
         continue;
       }
 
       steps.push(step);
     }
 
-    if (this.shouldContinue(delayedDigests)) {
+    if (delayedDigests) {
       await this.notificationRepository.update(
         {
+          _environmentId: command.environmentId,
           _id: command.notificationId,
         },
         {
@@ -53,19 +54,5 @@ export class DigestFilterStepsRegular {
     }
 
     return await this.jobRepository.findOne(where);
-  }
-
-  private shouldContinue(delayedDigests): boolean {
-    if (!delayedDigests) {
-      return false;
-    }
-    if (!delayedDigests.digest.updateMode) {
-      return true;
-    }
-    if (delayedDigests.type !== ChannelTypeEnum.IN_APP) {
-      return true;
-    }
-
-    return false;
   }
 }

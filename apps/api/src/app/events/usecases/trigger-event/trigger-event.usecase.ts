@@ -105,6 +105,7 @@ export class TriggerEvent {
             organizationId: command.organizationId,
             userId: command.organizationId,
             templateId: template._id,
+            actor: command.actor,
           })
         )
       );
@@ -168,6 +169,7 @@ export class TriggerEvent {
 
     await this.notificationRepository.update(
       {
+        _organizationId: firstJob._organizationId,
         _id: firstJob._notificationId,
       },
       {

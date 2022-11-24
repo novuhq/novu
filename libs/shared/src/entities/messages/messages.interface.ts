@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, ChannelTypeEnum, IEmailBlock } from '../message-template';
+import { ChannelCTATypeEnum, ChannelTypeEnum, IEmailBlock, ActorTypeEnum } from '../message-template';
 import { INotificationTemplate } from '../notification-template';
 import { ButtonTypeEnum } from './action.enum';
 
@@ -21,6 +21,7 @@ export interface IMessage {
   cta: IMessageCTA;
   _feedId: string;
   payload: Record<string, unknown>;
+  actor?: IActor;
 }
 
 export interface IMessageCTA {
@@ -49,4 +50,9 @@ export interface IMessageButton {
 export enum MessageActionStatusEnum {
   PENDING = 'pending',
   DONE = 'done',
+}
+
+export interface IActor {
+  type: ActorTypeEnum;
+  data: string | null;
 }
