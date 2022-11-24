@@ -45,7 +45,7 @@
     "@novu/fcm": "^0.9.0",
     "@novu/firetext": "^0.9.0",
     "@novu/gupshup": "^0.9.0",
-    "@novu/infobip": "^0.0.0",
+    "@novu/infobip": "^0.9.0",
     "@novu/mailgun": "^0.9.0",
     "@novu/mailjet": "^0.9.0",
     "@novu/mandrill": "^0.9.0",
