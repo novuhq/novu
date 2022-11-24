@@ -392,7 +392,7 @@ importers:
       '@mantine/prism': 4.1.0
       '@mantine/spotlight': ^5.3.2
       '@novu/dal': ^0.9.1
-      '@novu/notification-center': ^0.9.1
+      '@novu/notification-center': ^0.9.2
       '@novu/shared': ^0.9.0
       '@novu/testing': ^0.9.1
       '@sentry/react': ^6.3.1
@@ -690,7 +690,7 @@ importers:
       '@mantine/core': 4.1.0
       '@mantine/hooks': 4.1.0
       '@novu/dal': ^0.9.1
-      '@novu/notification-center': ^0.9.1
+      '@novu/notification-center': ^0.9.2
       '@novu/shared': ^0.9.0
       '@novu/testing': ^0.9.1
       '@testing-library/jest-dom': ^5.11.4
@@ -1056,7 +1056,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^7.1.2
       '@commitlint/config-conventional': ^7.1.2
-      '@novu/notification-center': ^0.9.1
+      '@novu/notification-center': ^0.9.2
       '@rollup/plugin-replace': ^2.4.2
       '@types/iframe-resizer': ^3.5.8
       '@types/jest': 27.4.0
@@ -1498,6 +1498,7 @@ importers:
       babel-loader: ^8.2.4
       chroma-js: ^2.4.2
       date-fns: ^2.29.1
+      jest-transform-stub: ^2.0.0
       lodash.merge: ^4.6.2
       react-infinite-scroll-component: ^6.0.0
       react-query: ^3.34.19
@@ -1546,6 +1547,7 @@ importers:
       '@types/react': 17.0.43
       acorn: 8.7.1
       babel-loader: 8.2.4_vuct2yjaylhfkatulzrh5yzzye
+      jest-transform-stub: 2.0.0
       rimraf: 3.0.2
       rollup: 2.70.1
       rollup-plugin-dts: 4.2.0_3zpigpz7crs5s43nhxirf6uitu
@@ -20518,7 +20520,7 @@ packages:
       '@pmmmwh/react-refresh-webpack-plugin': 0.5.4_i2d7je5f5v7ij2zz2puljbrnzu
       '@storybook/node-logger': 6.4.19
       '@storybook/react': 6.4.21_6wtrbglmq34r33lxxttgtwiqny
-      '@storybook/react-docgen-typescript-plugin': 1.0.2-canary.6.9d540b91e815f8fc2f8829189deb00553559ff63.0_ttrao37nuk7vg6nnwicoi3pt2a
+      '@storybook/react-docgen-typescript-plugin': 1.0.2--canary.7.324a727c65a1819f7f3ede5abc1f32d440e4530a.0_ttrao37nuk7vg6nnwicoi3pt2a
       '@types/babel__core': 7.1.19
       babel-plugin-react-docgen: 4.2.1
       pnp-webpack-plugin: 1.7.0_typescript@4.5.4
@@ -20587,6 +20589,25 @@ packages:
       unfetch: 4.2.0
       util-deprecate: 1.0.2
 
+  /@storybook/react-docgen-typescript-plugin/1.0.2--canary.7.324a727c65a1819f7f3ede5abc1f32d440e4530a.0_ttrao37nuk7vg6nnwicoi3pt2a:
+    resolution: {integrity: sha512-tnaT0VqSGhmMi/I880aMOToSrNd7XCr1avS/M1tk/+FDO+0GqHXo9abC5sos705ly3Hmi1FxFvHnzV/cvU1JTg==}
+    peerDependencies:
+      typescript: '>= 3.x'
+      webpack: '>= 4'
+    dependencies:
+      debug: 4.3.4
+      endent: 2.1.0
+      find-cache-dir: 3.3.2
+      flat-cache: 3.0.4
+      micromatch: 4.0.5
+      react-docgen-typescript: 2.2.2_typescript@4.5.4
+      tslib: 2.4.0
+      typescript: 4.5.4
+      webpack: 5.74.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@storybook/react-docgen-typescript-plugin/1.0.2-canary.253f8c1.0_nsxf7ncibhkvddkocuxjl34lwu:
     resolution: {integrity: sha512-mmoRG/rNzAiTbh+vGP8d57dfcR2aP+5/Ll03KKFyfy5FqWFm/Gh7u27ikx1I3LmVMI8n6jh5SdWMkMKon7/tDw==}
     peerDependencies:
@@ -20623,25 +20644,6 @@ packages:
       webpack: 4.46.0
     transitivePeerDependencies:
       - supports-color
-
-  /@storybook/react-docgen-typescript-plugin/1.0.2-canary.6.9d540b91e815f8fc2f8829189deb00553559ff63.0_ttrao37nuk7vg6nnwicoi3pt2a:
-    resolution: {integrity: sha512-eVg3BxlOm2P+chijHBTByr90IZVUtgRW56qEOLX7xlww2NBuKrcavBlcmn+HH7GIUktquWkMPtvy6e0W0NgA5w==}
-    peerDependencies:
-      typescript: '>= 3.x'
-      webpack: '>= 4'
-    dependencies:
-      debug: 4.3.4
-      endent: 2.1.0
-      find-cache-dir: 3.3.2
-      flat-cache: 3.0.4
-      micromatch: 4.0.5
-      react-docgen-typescript: 2.2.2_typescript@4.5.4
-      tslib: 2.4.0
-      typescript: 4.5.4
-      webpack: 5.74.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
 
   /@storybook/react/6.4.21_6wtrbglmq34r33lxxttgtwiqny:
     resolution: {integrity: sha512-7SJJnEbZ5THQBjor37shxnhXiFTB7g46U68I/PY56A5ZLb4TkorKStrniKgTcxG9xNqQjyxm0S6CICUp9gn8PQ==}
@@ -31051,6 +31053,7 @@ packages:
     dependencies:
       eslint: 7.32.0
       globals: 11.12.0
+    dev: false
 
   /eslint-plugin-cypress/2.12.1_eslint@8.20.0:
     resolution: {integrity: sha512-c2W/uPADl5kospNDihgiLc7n87t5XhUbFDoTl6CfVkmG+kDAb5Ux10V9PoLPu9N+r7znpc+iQlcmAqT1A/89HA==}
@@ -37421,6 +37424,10 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /jest-transform-stub/2.0.0:
+    resolution: {integrity: sha512-lspHaCRx/mBbnm3h4uMMS3R5aZzMwyNpNIJLXj4cEsV0mIUtS4IjYJLSoyjRCtnxb6RIGJ4NL2quZzfIeNhbkg==}
+    dev: true
+
   /jest-util/26.6.2:
     resolution: {integrity: sha512-MDW0fKfsn0OI7MS7Euz6h8HNDXVQ0gaM9uW6RjfDmd1DAFcaxX9OqIakHIqhbnmF08Cf2DLDG+ulq8YQQ0Lp0Q==}
     engines: {node: '>= 10.14.2'}
@@ -42245,7 +42252,7 @@ packages:
     resolution: {integrity: sha512-7Wjy+9E3WwLOEL30D+m8TSTF7qJJUJLONBnwQp0518siuMxUQUbgZwssaFX+QKlZkjHZcw/IpZCt/H0srrntSg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.3.5
     transitivePeerDependencies:
       - typescript
 
@@ -42270,7 +42277,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.3.5
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -45937,7 +45944,7 @@ packages:
       semver: 7.3.2
       style-loader: 1.3.0_webpack@4.44.2
       terser-webpack-plugin: 4.2.3_webpack@4.44.2
-      ts-pnp: 1.2.0_typescript@4.5.4
+      ts-pnp: 1.2.0_typescript@4.3.5
       typescript: 4.3.5
       url-loader: 4.1.1_7hroj2mdu577asu2zyhaasbvae
       webpack: 4.44.2
@@ -51003,6 +51010,17 @@ packages:
       typescript: 4.6.3
       yn: 3.1.1
     dev: true
+
+  /ts-pnp/1.2.0_typescript@4.3.5:
+    resolution: {integrity: sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==}
+    engines: {node: '>=6'}
+    peerDependencies:
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      typescript: 4.3.5
 
   /ts-pnp/1.2.0_typescript@4.5.4:
     resolution: {integrity: sha512-csd+vJOb/gkzvcCHgTGSChYpy5f1/XKNsmvBGO4JXS+z1v2HobugDz4s1IeFXM3wZB44uczs+eazB5Q/ccdhQw==}
