@@ -139,6 +139,8 @@
     "classpath",
     "Lato",
     "TTFB",
+    "webfontloader",
+    "Hacksquad",
     "xcodebuild",
     "softwareupdate",
     "chsh",
@@ -201,6 +203,7 @@
     "packages/notification-center/src/i18n/languages/**",
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
-    ".vscode/settings.json"
+    ".vscode/settings.json",
+    "docs/src/usage-examples.md"
   ]
 }
