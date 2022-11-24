@@ -413,4 +413,5 @@ export const infobipConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
+  ...mailConfigBase,
 ];

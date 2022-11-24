@@ -34,6 +34,7 @@ export enum EmailProviderIdEnum {
   Sendinblue = 'sendinblue',
   SES = 'ses',
   NetCore = 'netcore',
+  Infobip = 'infobip',
 }
 
 export enum SmsProviderIdEnum {
