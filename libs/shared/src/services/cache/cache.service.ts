@@ -1,29 +1,42 @@
 import Redis from 'ioredis';
-import { getRedisPrefix } from '@novu/shared';
+import { getRedisPrefix } from '../../config';
 
-interface ICacheService {
+export interface ICacheService {
   set(key: string, value: string, options?: CachingConfig);
   get(key: string);
   del(key: string);
-  reset();
+  delByPattern(pattern: string);
 }
 
 export type CachingConfig = {
   ttl?: number;
 };
 
-export class CacheService {
+export class CacheService implements ICacheService {
   private readonly client: Redis;
   private readonly DEFAULT_TTL = 60;
+  private readonly cacheTtl: number;
 
-  constructor() {
-    this.client = new Redis(Number(process.env.REDIS_PORT), process.env.REDIS_HOST, {
-      password: process.env.REDIS_PASSWORD,
-      connectTimeout: 50000,
-      keepAlive: 30000,
-      family: 4,
-      keyPrefix: getRedisPrefix(),
+  constructor(
+    private config: {
+      cachePort: string;
+      cacheHost: string;
+      cachePassword?: string;
+      cacheConnectTimeout?: string;
+      cacheKeepAlive?: string;
+      cacheFamily?: string;
+      cacheKeyPrefix?: string;
+      cacheTtl?: string;
+    }
+  ) {
+    this.client = new Redis(Number(this.config.cachePort), this.config.cacheHost, {
+      password: this.config.cachePassword,
+      connectTimeout: Number(this.config.cacheConnectTimeout) ?? 50000,
+      keepAlive: Number(this.config.cacheKeepAlive) ?? 30000,
+      family: Number(this.config.cacheFamily) ?? 4,
+      keyPrefix: this.config.cacheKeyPrefix ?? getRedisPrefix(),
     });
+    this.cacheTtl = Number(this.config.cacheTtl) ?? this.DEFAULT_TTL;
   }
 
   public async set(key: string, value: string, options?: CachingConfig) {
@@ -60,12 +73,8 @@ export class CacheService {
     });
   }
 
-  public async reset() {
-    return this.client.reset();
-  }
-
   private updateTtl(key: string, options?: CachingConfig) {
-    const seconds = options?.ttl || this.DEFAULT_TTL;
+    const seconds = options?.ttl || this.cacheTtl || this.DEFAULT_TTL;
 
     return this.client.expire(key, seconds);
   }

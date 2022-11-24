@@ -27,6 +27,7 @@ import {
   S3StorageService,
   StorageService,
 } from './services/storage/storage.service';
+import { CacheService } from '@novu/shared';
 
 const DAL_MODELS = [
   UserRepository,
@@ -63,6 +64,23 @@ const dalService = new DalService();
 
 export const ANALYTICS_SERVICE = 'AnalyticsService';
 
+const cacheService = {
+  provide: CacheService,
+  useFactory: async () => {
+    return new CacheService({ cachePort: process.env.CACHE_PORT, cacheHost: process.env.CACHE_HOST });
+  },
+};
+
+const dalProviders = DAL_MODELS.map((repository) => {
+  return {
+    provide: repository,
+    useFactory: async (service: CacheService) => {
+      return new repository(service);
+    },
+    inject: [CacheService],
+  };
+});
+
 const PROVIDERS = [
   {
     provide: QueueService,
@@ -78,7 +96,8 @@ const PROVIDERS = [
       return dalService;
     },
   },
-  ...DAL_MODELS,
+  cacheService,
+  ...dalProviders,
   {
     provide: StorageService,
     useClass: getStorageServiceClass(),
