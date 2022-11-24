@@ -1,16 +1,21 @@
 import { useEffect, useState, useReducer } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled/macro';
-import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import { showNotification } from '@mantine/notifications';
+import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
-import { Button, colors, Switch, Text } from '../../../design-system';
+import { WarningOutlined } from '@ant-design/icons';
+import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
+import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
-import { createIntegration, updateIntegration } from '../../../api/integration';
+import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IntegrationInput } from './IntegrationInput';
-import { WarningOutlined } from '@ant-design/icons';
+import { API_ROOT } from '../../../config';
+import { useEnvController } from '../../../store/use-env-controller';
+import { useAuthController } from '../../../store/use-auth-controller';
+import { Check, Copy } from '../../../design-system/icons';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -86,7 +91,9 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
-
+  const { environment } = useEnvController();
+  const { organization } = useAuthController();
+  const webhookUrlClipboard = useClipboard({ timeout: 1000 });
   const [checkIntegrationState, dispatch] = useReducer(checkIntegrationReducer, checkIntegrationInitialState);
 
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
@@ -109,6 +116,16 @@ export function ConnectIntegrationForm({
       data: { credentials: ICredentialsDto; active: boolean; check: boolean };
     }
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
+
+  const { data: webhookSupportStatus } = useQuery(
+    ['webhookSupportStatus', provider?.providerId],
+    () => getWebhookSupportStatus(provider?.providerId as string),
+    {
+      enabled: Boolean(
+        provider?.providerId && [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider.channel) && !createModel
+      ),
+    }
+  );
 
   useEffect(() => {
     if (provider?.credentials) {
@@ -179,6 +196,9 @@ export function ConnectIntegrationForm({
 
   const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
 
+  // eslint-disable-next-line max-len
+  const webhookUrl = `${API_ROOT}/v1/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
+
   return (
     <Form noValidate onSubmit={handleSubmit(onCreateIntegration)}>
       <CloseButton data-test-id="connection-integration-form-close" type="button" onClick={onClose}>
@@ -205,6 +225,22 @@ export function ConnectIntegrationForm({
             />
           </InputWrapper>
         ))}
+        {webhookSupportStatus &&
+          provider?.channel &&
+          [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel) && (
+            <InputWrapper>
+              <Input
+                label="Webhook URL"
+                value={webhookUrl}
+                readOnly
+                rightSection={
+                  <CopyWrapper onClick={() => webhookUrlClipboard.copy(webhookUrl)}>
+                    {webhookUrlClipboard.copied ? <Check /> : <Copy />}
+                  </CopyWrapper>
+                }
+              />
+            </InputWrapper>
+          )}
         <Stack my={30}>
           <ActiveWrapper active={isActive}>
             <Controller
@@ -321,5 +357,12 @@ const CheckIntegrationWrapper = styled(SideElementBase)`
   align-items: center;
   ${StyledText} {
     flex-grow: 1;
+  }
+`;
+
+const CopyWrapper = styled.div`
+  cursor: pointer;
+  &:hover {
+    opacity: 0.8;
   }
 `;

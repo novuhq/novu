@@ -1,10 +1,8 @@
-import { Inject, Injectable, Logger, Scope } from '@nestjs/common';
-import { OrganizationEntity, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
+import { Inject, Injectable, Scope } from '@nestjs/common';
+import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { MemberRoleEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../environments/usecases/create-environment/create-environment.usecase';
-import { capitalize } from '../../../shared/services/helper/helper.service';
-import { QueueService } from '../../../shared/services/queue';
 import { GetOrganizationCommand } from '../get-organization/get-organization.command';
 import { GetOrganization } from '../get-organization/get-organization.usecase';
 import { AddMemberCommand } from '../membership/add-member/add-member.command';
@@ -21,7 +19,6 @@ export class CreateOrganization {
     private readonly organizationRepository: OrganizationRepository,
     private readonly addMemberUsecase: AddMember,
     private readonly getOrganizationUsecase: GetOrganization,
-    private readonly queueService: QueueService,
     private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService

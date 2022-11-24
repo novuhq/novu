@@ -32,8 +32,8 @@ import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
 import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
-import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
-import { StoreQuery } from '../widgets/querys/store.query';
+import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecase';
+import { StoreQuery } from '../widgets/queries/store.query';
 import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
 import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
 

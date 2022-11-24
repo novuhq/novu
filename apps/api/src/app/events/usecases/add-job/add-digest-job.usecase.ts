@@ -42,7 +42,7 @@ export class AddDigestJob {
 
       return undefined;
     }
-    await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
+    await this.jobRepository.updateStatus(command.organizationId, data._id, JobStatusEnum.DELAYED);
 
     return AddJob.toMilliseconds(data.digest.amount, data.digest.unit);
   }

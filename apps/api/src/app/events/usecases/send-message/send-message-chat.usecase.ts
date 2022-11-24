@@ -21,7 +21,6 @@ import {
   ChatProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  StepTypeEnum,
 } from '@novu/shared';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
@@ -234,6 +233,7 @@ export class SendMessageChat extends SendMessageType {
         })
       );
       await this.messageRepository.updateMessageStatus(
+        command.environmentId,
         message._id,
         'warning',
         null,

@@ -2,8 +2,7 @@ import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
-import { CreateNotificationTemplateRequestDto } from '../dto/create-notification-template.request.dto';
-import { UpdateNotificationTemplateRequestDto } from '../dto/update-notification-template-request.dto';
+import { CreateNotificationTemplateRequestDto, UpdateNotificationTemplateRequestDto } from '../dto';
 
 describe('Update notification template by id - /notification-templates/:templateId (PUT)', async () => {
   let session: UserSession;
@@ -42,6 +41,7 @@ describe('Update notification template by id - /notification-templates/:template
     expect(foundTemplate.steps[0].template.content).to.equal(update.steps[0].template.content);
 
     const change = await changeRepository.findOne({
+      _environmentId: session.environment._id,
       _entityId: foundTemplate._id,
     });
     expect(change._entityId).to.eq(foundTemplate._id);
@@ -90,6 +90,7 @@ describe('Update notification template by id - /notification-templates/:template
     expect(foundTemplate.triggers[0].identifier).to.equal(newIdentifier);
 
     const change = await changeRepository.findOne({
+      _environmentId: session.environment._id,
       _entityId: foundTemplate._id,
     });
     expect(change._entityId).to.eq(foundTemplate._id);
