@@ -1,6 +1,6 @@
 {
   "name": "@novu/infobip",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "A infobip wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
