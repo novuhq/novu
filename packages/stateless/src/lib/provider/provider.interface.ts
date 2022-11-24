@@ -87,11 +87,7 @@ export enum SmsEventStatusEnum {
   SENDING = 'sending',
   SENT = 'sent',
   FAILED = 'failed',
-  UNDELIVERED = 'undelivered',
-  DND_ACTIVATED = 'DND activated',
-  REJECTED = 'rejected',
-  EXPIRED = 'expired',
-  DISCONNECTED = 'disconnected',
+  UNDELIVERED = 'undelivered'
 }
 
 
