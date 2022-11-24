@@ -41,6 +41,7 @@ export class UpdateMessageActions {
 
     const modificationResponse = await this.messageRepository.update(
       {
+        _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _id: command.messageId,
       },

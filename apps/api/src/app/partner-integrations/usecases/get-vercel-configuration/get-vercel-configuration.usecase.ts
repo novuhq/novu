@@ -12,6 +12,7 @@ export class GetVercelConfiguration {
 
   private async getConfigurationDetails(command: GetVercelConfigurationCommand) {
     const details = await this.organizationRepository.findPartnerConfigurationDetails(
+      command.organizationId,
       command.userId,
       command.configurationId
     );
