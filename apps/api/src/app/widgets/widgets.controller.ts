@@ -12,7 +12,7 @@ import { GetOrganizationDataCommand } from './usecases/get-organization-data/get
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
-import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
+import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
 import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
@@ -32,10 +32,10 @@ import { MarkAllMessageAsSeen } from './usecases/mark-all-message-as-seen/mark-a
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
 import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
-import { StoreQuery } from './querys/store.query';
+import { StoreQuery } from './queries/store.query';
 import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
 import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
-import { GetCountQuery } from './querys/get-count.query';
+import { GetCountQuery } from './queries/get-count.query';
 
 @Controller('/widgets')
 @ApiExcludeController()

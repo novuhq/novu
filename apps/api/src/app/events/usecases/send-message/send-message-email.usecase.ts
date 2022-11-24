@@ -12,13 +12,7 @@ import {
   OrganizationEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  LogCodeEnum,
-  StepTypeEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -324,9 +318,7 @@ export class SendMessageEmail extends SendMessageType {
       }
 
       await this.messageRepository.update(
-        {
-          _id: message._id,
-        },
+        { _environmentId: command.environmentId, _id: message._id },
         {
           $set: {
             identifier: result.id,
