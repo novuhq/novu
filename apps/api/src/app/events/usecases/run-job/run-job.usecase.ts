@@ -83,10 +83,10 @@ export class RunJob {
   private async shouldRun(job: JobEntity, organizationId: string) {
     const parentJob = await this.jobRepository.findOne({
       _id: job.step._parentId,
-      status: JobStatusEnum.FAILED,
       _organizationId: organizationId,
     });
+    if (!parentJob) return true;
 
-    return parentJob?.step?.shouldStopOnFail;
+    return parentJob.status === JobStatusEnum.FAILED && parentJob?.step?.shouldStopOnFail;
   }
 }
