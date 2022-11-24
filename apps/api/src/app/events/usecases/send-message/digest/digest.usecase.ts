@@ -43,6 +43,7 @@ export class Digest extends SendMessageType {
 
     await this.jobRepository.update(
       {
+        _environmentId: command.environmentId,
         _id: {
           $in: nextJobs.map((job) => job._id),
         },
@@ -58,9 +59,7 @@ export class Digest extends SendMessageType {
   }
 
   private async getEvents(command: SendMessageCommand) {
-    const currentJob = await this.jobRepository.findOne({
-      _id: command.jobId,
-    });
+    const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
 
     if (currentJob.digest.type === DigestTypeEnum.BACKOFF) {
       return this.getDigestEventsBackoff.execute(command);
@@ -71,6 +70,7 @@ export class Digest extends SendMessageType {
 
   private async getJobsToUpdate(command: SendMessageCommand) {
     const nextJobs = await this.jobRepository.find({
+      _environmentId: command.environmentId,
       transactionId: command.transactionId,
       _id: {
         $ne: command.jobId,

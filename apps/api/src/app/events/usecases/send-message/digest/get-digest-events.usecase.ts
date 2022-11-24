@@ -20,6 +20,7 @@ export abstract class GetDigestEvents {
     }
 
     const currentTrigger = await this.jobRepository.findOne({
+      _environmentId: currentJob._environmentId,
       transactionId: transactionId,
       type: StepTypeEnum.TRIGGER,
     });

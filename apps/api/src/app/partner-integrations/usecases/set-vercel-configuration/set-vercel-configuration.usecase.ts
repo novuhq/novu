@@ -25,7 +25,7 @@ export class SetVercelConfiguration {
         partnerType: PartnerTypeEnum.VERCEL,
       };
 
-      await this.saveConfiguration(command.userId, saveConfigurationData);
+      await this.saveConfiguration(command.organizationId, command.userId, saveConfigurationData);
 
       return {
         success: true,
@@ -66,7 +66,7 @@ export class SetVercelConfiguration {
     };
   }
 
-  private async saveConfiguration(userId: string, configuration: IPartnerConfiguration) {
-    await this.organizationRepository.updatePartnerConfiguration(userId, configuration);
+  private async saveConfiguration(organizationId: string, userId: string, configuration: IPartnerConfiguration) {
+    await this.organizationRepository.updatePartnerConfiguration(organizationId, userId, configuration);
   }
 }

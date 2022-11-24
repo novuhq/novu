@@ -16,7 +16,6 @@ import {
   LogStatusEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  StepTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -35,7 +34,6 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { ISendMessageSuccessResponse } from '@novu/stateless';
 
 @Injectable()
 export class SendMessageSms extends SendMessageType {
@@ -202,6 +200,7 @@ export class SendMessageSms extends SendMessageType {
         })
       );
       await this.messageRepository.updateMessageStatus(
+        command.environmentId,
         message._id,
         'warning',
         null,
@@ -312,9 +311,7 @@ export class SendMessageSms extends SendMessageType {
       }
 
       await this.messageRepository.update(
-        {
-          _id: message._id,
-        },
+        { _environmentId: command.environmentId, _id: message._id },
         {
           $set: {
             identifier: result.id,

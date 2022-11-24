@@ -38,7 +38,12 @@ export class UpdateSubscriberChannel {
     );
 
     if (existingChannel) {
-      await this.updateExistingSubscriberChannel(existingChannel, updatePayload, foundSubscriber);
+      await this.updateExistingSubscriberChannel(
+        command.environmentId,
+        existingChannel,
+        updatePayload,
+        foundSubscriber
+      );
     } else {
       await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
@@ -56,7 +61,7 @@ export class UpdateSubscriberChannel {
     updatePayload.providerId = command.providerId;
 
     await this.subscriberRepository.update(
-      { _id: foundSubscriber },
+      { _environmentId: command.environmentId, _id: foundSubscriber },
       {
         $push: {
           channels: updatePayload,
@@ -66,6 +71,7 @@ export class UpdateSubscriberChannel {
   }
 
   private async updateExistingSubscriberChannel(
+    environmentId: string,
     existingChannel,
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber
@@ -73,7 +79,11 @@ export class UpdateSubscriberChannel {
     const mergedChannel = Object.assign(existingChannel, updatePayload);
 
     await this.subscriberRepository.update(
-      { _id: foundSubscriber, 'channels._integrationId': existingChannel._integrationId },
+      {
+        _environmentId: environmentId,
+        _id: foundSubscriber,
+        'channels._integrationId': existingChannel._integrationId,
+      },
       { $set: { 'channels.$': mergedChannel } }
     );
   }

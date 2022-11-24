@@ -140,12 +140,18 @@
     "Lato",
     "TTFB",
     "webfontloader",
+    "Hacksquad"
+    "xcodebuild",
+    "softwareupdate",
+    "chsh",
+    "ohmyzsh",
+    "AWSCLIV",
     "PUID",
-    "PGID",
     "TMPDIR",
     "healthcheck",
     "printjson",
-    "Hacksquad"
+    "machdep",
+    "PGID"
   ],
   "flagWords": [],
   "patterns": [
