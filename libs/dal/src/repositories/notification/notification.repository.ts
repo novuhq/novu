@@ -96,7 +96,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
         populate: [
           {
             path: 'executionDetails',
-            select: 'createdAt detail isRetry isTest providerId raw source status updatedAt',
+            select: 'createdAt detail isRetry isTest providerId raw source status updatedAt webhookStatus',
           },
           {
             path: 'step',

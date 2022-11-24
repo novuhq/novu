@@ -37,6 +37,8 @@ export class InviteMember {
     if (process.env.NOVU_API_KEY && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod')) {
       const novu = new Novu(process.env.NOVU_API_KEY);
 
+      // eslint-disable-next-line @cspell/spellchecker
+      // cspell:disable-next
       await novu.trigger(process.env.NOVU_TEMPLATEID_INVITE_TO_ORGANISATION || 'invite-to-organization-wBnO8NpDn', {
         to: {
           subscriberId: command.email,

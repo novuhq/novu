@@ -296,7 +296,7 @@ export class SendMessageInApp extends SendMessageType {
             environmentId: command.environmentId,
             organizationId: command.organizationId,
             notificationId: notification._id,
-            text: 'Couldnt get Avatar actor details',
+            text: "Couldn't get Avatar actor details",
             userId: command.userId,
             subscriberId: command.subscriberId,
             code: LogCodeEnum.AVATAR_ACTOR_ERROR,
