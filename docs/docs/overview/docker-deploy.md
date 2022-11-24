@@ -17,7 +17,7 @@ Clone the Novu repo and enter the docker directory locally:
 
 ```bash
 # Get the code
-git clone https://github.com/novuhq/novu
+git clone --depth 1 https://github.com/novuhq/novu
 
 # Go to the docker folder
 cd novu/docker
