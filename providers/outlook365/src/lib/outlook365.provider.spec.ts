@@ -35,7 +35,7 @@ const mockNovuMessage = {
 };
 
 test('should trigger outlook365 library correctly', async () => {
-  const provider = new Outlook365Provider({ ...mockConfig });
+  const provider = new Outlook365Provider(mockConfig);
   await provider.sendMessage(mockNovuMessage);
 
   expect(sendMailMock).toHaveBeenCalled();
