@@ -20,6 +20,7 @@ export class RunJob {
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
     const job = await this.jobRepository.findById(command.jobId);
     const canceled = await this.delayedEventIsCanceled(job);
+    const isDigestType = job.type === StepTypeEnum.DIGEST;
     if (canceled) {
       return;
     }
@@ -39,14 +40,16 @@ export class RunJob {
 
     await this.storageHelperService.getAttachments(job.payload?.attachments);
 
-    await this.queueNextJob.execute(
-      QueueNextJobCommand.create({
-        parentId: job._id,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        userId: job._userId,
-      })
-    );
+    if (!isDigestType) {
+      await this.queueNextJob.execute(
+        QueueNextJobCommand.create({
+          parentId: job._id,
+          environmentId: job._environmentId,
+          organizationId: job._organizationId,
+          userId: job._userId,
+        })
+      );
+    }
 
     await this.sendMessage.execute(
       SendMessageCommand.create({
@@ -67,6 +70,17 @@ export class RunJob {
     );
 
     await this.storageHelperService.deleteAttachments(job.payload?.attachments);
+
+    if (isDigestType) {
+      await this.queueNextJob.execute(
+        QueueNextJobCommand.create({
+          parentId: job._id,
+          environmentId: job._environmentId,
+          organizationId: job._organizationId,
+          userId: job._userId,
+        })
+      );
+    }
   }
 
   private async delayedEventIsCanceled(job: JobEntity): Promise<boolean> {
