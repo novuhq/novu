@@ -91,6 +91,8 @@ export class NotificationStepEntity {
     backoffAmount?: number;
     updateMode?: boolean;
   };
+
+  shouldStopOnFail?: boolean;
 }
 
 export class StepFilter {

@@ -23,10 +23,28 @@ export class RunJob {
     if (canceled) {
       return;
     }
+    let shouldRun = true;
+
+    if (job.step._parentId) {
+      shouldRun = await this.shouldRun(job);
+    }
+
+    if (!shouldRun) {
+      return;
+    }
 
     await this.jobRepository.updateStatus(command.organizationId, job._id, JobStatusEnum.RUNNING);
 
     await this.storageHelperService.getAttachments(job.payload?.attachments);
+
+    await this.queueNextJob.execute(
+      QueueNextJobCommand.create({
+        parentId: job._id,
+        environmentId: job._environmentId,
+        organizationId: job._organizationId,
+        userId: job._userId,
+      })
+    );
 
     await this.sendMessage.execute(
       SendMessageCommand.create({
@@ -69,5 +87,14 @@ export class RunJob {
     });
 
     return count > 0;
+  }
+
+  private async shouldRun(job: JobEntity) {
+    const parentJob = await this.jobRepository.findOne({
+      _id: job.step._parentId,
+      status: JobStatusEnum.FAILED,
+    });
+
+    return parentJob?.step?.shouldStopOnFail;
   }
 }
