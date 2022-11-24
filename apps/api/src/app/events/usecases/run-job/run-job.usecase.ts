@@ -65,15 +65,6 @@ export class RunJob {
     );
 
     await this.storageHelperService.deleteAttachments(job.payload?.attachments);
-
-    await this.queueNextJob.execute(
-      QueueNextJobCommand.create({
-        parentId: job._id,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        userId: job._userId,
-      })
-    );
   }
 
   private async delayedEventIsCanceled(job: JobEntity): Promise<boolean> {
