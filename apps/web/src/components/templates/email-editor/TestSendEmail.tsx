@@ -14,6 +14,8 @@ import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';
 import { IMustacheVariable } from '../VariableManager';
 import { getOrganizationMembers } from '../../../api/organization';
+import * as set from 'lodash.set';
+import * as get from 'lodash.get';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentUser } = useContext(AuthContext);
@@ -48,7 +50,6 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
   const onTestEmail = async () => {
     const payload = JSON.parse(payloadValue);
-
     try {
       await testSendEmailEvent({
         ...template,
@@ -133,18 +134,18 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
 const processVariables = (variables: IMustacheVariable[]) => {
   const varsObj: Record<string, any> = {};
-  variables.forEach((variable) => {
-    if (variable.name.includes('.')) {
-      const [first, sec] = variable.name.split('.');
-      if (variables.find((field) => field.type === TemplateVariableTypeEnum.ARRAY && field.name === first)) {
-        varsObj[first] = [{ ...varsObj[first][0], [sec]: getVariableValue(variable) }];
-      } else {
-        varsObj[first] = { ...varsObj[first], [sec]: getVariableValue(variable) };
-      }
-    } else {
-      varsObj[variable.name] = getVariableValue(variable);
-    }
-  });
+
+  variables
+    .filter((variable) => variable.type !== TemplateVariableTypeEnum.ARRAY)
+    .forEach((variable) => {
+      set(varsObj, variable.name, getVariableValue(variable));
+    });
+
+  variables
+    .filter((variable) => variable.type === TemplateVariableTypeEnum.ARRAY)
+    .forEach((variable) => {
+      set(varsObj, variable.name, [get(varsObj, variable.name, [])]);
+    });
 
   return JSON.stringify(varsObj, null, 2);
 };
@@ -160,6 +161,8 @@ const getVariableValue = (variable: IMustacheVariable) => {
   if (variable.type === TemplateVariableTypeEnum.ARRAY) {
     return [];
   }
+
+  return '';
 };
 
 const Wrapper = styled.div`

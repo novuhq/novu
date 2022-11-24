@@ -68,6 +68,8 @@
     "less": "^4.1.0",
     "lodash.capitalize": "^4.2.1",
     "lodash.clonedeep": "^4.5.0",
+    "lodash.set": "^4.3.2",
+    "lodash.get": "^4.3.2",
     "polished": "^4.1.3",
     "react": "^17.0.1",
     "react-ace": "^9.4.3",
