@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IPreferenceChannels,
@@ -54,7 +53,7 @@ export class SendMessage {
     const preferred = await this.filterPreferredChannels(command.job);
 
     if (!shouldRun || !preferred) {
-      await this.jobRepository.updateStatus(command.jobId, JobStatusEnum.CANCELED);
+      await this.jobRepository.updateStatus(command.organizationId, command.jobId, JobStatusEnum.CANCELED);
 
       return;
     }

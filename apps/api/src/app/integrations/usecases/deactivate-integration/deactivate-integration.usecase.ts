@@ -15,7 +15,7 @@ export class DeactivateSimilarChannelIntegrations {
 
     if (otherExistedIntegration.length) {
       await this.integrationRepository.update(
-        { _id: { $in: otherExistedIntegration.map((i) => i._id) } },
+        { _environmentId: command.environmentId, _id: { $in: otherExistedIntegration.map((i) => i._id) } },
         { $set: { active: false } }
       );
     }

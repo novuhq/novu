@@ -44,6 +44,7 @@ export class PromoteMessageTemplateChange {
 
     return this.messageTemplateRepository.update(
       {
+        _environmentId: command.environmentId,
         _id: item._id,
       },
       {
