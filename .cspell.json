@@ -147,7 +147,9 @@
     "PUID",
     "TMPDIR",
     "healthcheck",
-    "printjson"
+    "printjson",
+    "machdep",
+    "PGID"
   ],
   "flagWords": [],
   "patterns": [
