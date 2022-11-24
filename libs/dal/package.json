@@ -21,6 +21,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "ioredis": "^5.2.4",
     "@aws-sdk/client-s3": "^3.14.0",
     "@aws-sdk/s3-request-presigner": "^3.14.0",
     "@faker-js/faker": "^6.0.0",

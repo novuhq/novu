@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { Document, FilterQuery, Model, Types, ProjectionType } from 'mongoose';
-import { CacheService } from '@novu/shared';
+import { CacheService } from '../shared';
 
 export class BaseRepository<T> {
   public _model: Model<any & Document>;

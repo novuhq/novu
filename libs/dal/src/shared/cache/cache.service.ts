@@ -1,5 +1,4 @@
 import Redis from 'ioredis';
-import { getRedisPrefix } from '../../config';
 
 export interface ICacheService {
   set(key: string, value: string, options?: CachingConfig);
@@ -34,7 +33,7 @@ export class CacheService implements ICacheService {
       connectTimeout: Number(this.config.cacheConnectTimeout) ?? 50000,
       keepAlive: Number(this.config.cacheKeepAlive) ?? 30000,
       family: Number(this.config.cacheFamily) ?? 4,
-      keyPrefix: this.config.cacheKeyPrefix ?? getRedisPrefix(),
+      keyPrefix: this.config.cacheKeyPrefix ?? '',
     });
     this.cacheTtl = Number(this.config.cacheTtl) ?? this.DEFAULT_TTL;
   }

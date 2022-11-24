@@ -88,7 +88,6 @@
     "envalid": "^6.0.1",
     "handlebars": "^4.7.7",
     "hat": "^0.0.3",
-    "ioredis": "^5.2.4",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "nanoid": "^3.1.20",

@@ -6,13 +6,13 @@ import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { NotificationTemplateEntity } from '../notification-template';
 import { FeedRepository } from '../feed';
-import { DalException } from '../../shared';
+import { DalException, CacheService } from '../../shared';
 
 export class MessageRepository extends BaseRepository<MessageEntity> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
-  constructor() {
-    super(Message, MessageEntity);
+  constructor(cacheService?: CacheService) {
+    super(Message, MessageEntity, cacheService);
     this.message = Message;
   }
 
