@@ -9,8 +9,27 @@
     "test": "ng test"
   },
   "private": true,
+  "module": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
+  "es2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
+  "esm2020": "dist/notification-center-angular/esm2020/novu-notification-center-angular.mjs",
+  "fesm2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
+  "fesm2015": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
+  "typings": "dist/notification-center-angular/index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./dist/notification-center-angular/index.d.ts",
+      "esm2020": "./dist/notification-center-angular/esm2020/novu-notification-center-angular.mjs",
+      "es2020": "./dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
+      "es2015": "./dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
+      "node": "./dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
+      "default": "./dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs"
+    }
+  },
   "dependencies": {
-    "@novu/notification-center": "^0.9.1",
+    "@novu/notification-center": "0.9.1",
     "@angular/animations": "^15.0.0",
     "@angular/common": "^15.0.0",
     "@angular/compiler": "^15.0.0",

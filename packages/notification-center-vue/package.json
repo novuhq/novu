@@ -30,7 +30,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "@novu/notification-center": "^0.9.1",
+    "@novu/notification-center": "0.9.1",
     "vue": "3"
   },
   "jest": {

@@ -3,7 +3,6 @@
   "version": "0.9.1",
   "peerDependencies": {
     "@angular/common": "^15.0.0",
-    "@novu/notification-center": "^0.9.1",
     "@angular/core": "^15.0.0"
   },
   "dependencies": {

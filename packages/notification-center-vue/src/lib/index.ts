@@ -1,4 +1,4 @@
-// eslint-disable-next-line
+/* eslint-disable @typescript-eslint/ban-ts-comment, @typescript-eslint/naming-convention */
 // @ts-ignore
 import * as Vue from 'vue';
 import {
@@ -11,7 +11,6 @@ import { defineContainer } from './vue-component-lib/utils';
 
 customElements.define('notification-center-component', NotificationCenterWebComponent);
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const NotificationCenterComponent = defineContainer<NotificationCenterComponentProps>(
   'notification-center-component',
   undefined,

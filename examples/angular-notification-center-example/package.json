@@ -10,8 +10,8 @@
   },
   "private": true,
   "dependencies": {
-    "@novu/notification-center-angular": "^0.9.1",
-    "@novu/notification-center": "^0.9.1",
+    "@novu/notification-center-angular": "0.9.1",
+    "@novu/notification-center": "0.9.1",
     "@angular/animations": "^15.0.0",
     "@angular/common": "^15.0.0",
     "@angular/compiler": "^15.0.0",

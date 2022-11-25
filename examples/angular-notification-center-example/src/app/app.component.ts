@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,10 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.sass'],
 })
 export class AppComponent {
-  asd = { asd: 123 };
+  subscriberId = environment.subscriberId;
+  applicationIdentifier = environment.applicationIdentifier;
+
+  sessionLoaded = (data: unknown) => {
+    console.log('loaded', { data });
+  };
 }

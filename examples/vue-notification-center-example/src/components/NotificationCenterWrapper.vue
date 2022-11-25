@@ -5,16 +5,17 @@ export default {
   components: {
     NotificationCenterComponent,
   },
+  data() {
+    return {
+      applicationIdentifier: import.meta.env.VITE_NOVU_APP_IDENTIFIER,
+      subscriberId: import.meta.env.VITE_NOVU_SUBSCRIBER_ID,
+    };
+  },
 };
 </script>
 
 <template>
-  <NotificationCenterComponent
-    backendUrl="http://localhost:3000"
-    socketUrl="http://localhost:3002"
-    subscriberId="636b882596b705b341e5978a"
-    applicationIdentifier="jDGZ6J573CSD"
-  />
+  <NotificationCenterComponent :subscriberId="subscriberId" :applicationIdentifier="applicationIdentifier" />
 </template>
 
 <style scoped></style>

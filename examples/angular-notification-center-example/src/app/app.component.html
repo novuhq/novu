@@ -341,30 +341,12 @@
 </div>
 
 <main>
-  <div class="content">test</div>
-  <!-- the pure web component -->
-  <!-- <notification-center-component
-    backend-url="http://localhost:3000"
-    socket-url="http://localhost:3002"
-    subscriber-id="636b882596b705b341e5978a"
-    application-identifier="jDGZ6J573CSD"
-    [asd]="asd"
-    ></notification-center-component> -->
-  <!-- the notification center proxy component -->
-  <!-- <notification-center
-    backendUrl="http://localhost:3000"
-    socketUrl="http://localhost:3002"
-    subscriberId="636b882596b705b341e5978a"
-    applicationIdentifier="jDGZ6J573CSD"
-    [asd]="asd"
-    ></notification-center> -->
-  <!-- the notification center component from the angular package -->
-  <notification-center-component
-    backendUrl="http://localhost:3000"
-    socketUrl="http://localhost:3002"
-    subscriberId="636b882596b705b341e5978a"
-    applicationIdentifier="jDGZ6J573CSD"
-  ></notification-center-component>
+  <div class="content"><h2>Angular Notification Center Web Component Demo</h2></div>
+  <notification-center
+    [subscriberId]="subscriberId"
+    [applicationIdentifier]="applicationIdentifier"
+    [sessionLoaded]="sessionLoaded"
+  ></notification-center>
 </main>
 
 <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->

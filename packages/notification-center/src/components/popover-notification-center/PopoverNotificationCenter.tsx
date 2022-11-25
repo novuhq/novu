@@ -8,7 +8,7 @@ import { useDefaultTheme, useUnseenCount } from '../../hooks';
 import { ColorScheme, INovuThemePopoverProvider } from '../../index';
 import { ITab, ListItem } from '../../shared/interfaces';
 
-interface IPopoverNotificationCenterProps {
+export interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;

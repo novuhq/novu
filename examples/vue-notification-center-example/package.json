@@ -9,12 +9,12 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "vue": "^3.2.41",
-    "@novu/notification-center-vue": "^0.9.1",
-    "@novu/notification-center": "^0.9.0"
+    "@novu/notification-center": "0.9.1",
+    "@novu/notification-center-vue": "0.9.1",
+    "vue": "^3.2.41"
   },
   "devDependencies": {
-    "@types/node": "^16.11.68",
+    "@types/node": "^16.18.3",
     "@vitejs/plugin-vue": "^3.1.2",
     "@vitejs/plugin-vue-jsx": "^2.0.1",
     "@vue/tsconfig": "^0.1.3",
