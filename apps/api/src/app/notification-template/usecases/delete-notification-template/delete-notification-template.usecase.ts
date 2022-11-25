@@ -18,8 +18,14 @@ export class DeleteNotificationTemplate {
 
   async execute(command: GetNotificationTemplateCommand) {
     try {
-      await this.notificationTemplateRepository.delete({ _id: command.templateId });
-      const items = await this.notificationTemplateRepository.findDeleted({ _id: command.templateId });
+      await this.notificationTemplateRepository.delete({
+        _environmentId: command.environmentId,
+        _id: command.templateId,
+      });
+      const items = await this.notificationTemplateRepository.findDeleted({
+        _environmentId: command.environmentId,
+        _id: command.templateId,
+      });
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,

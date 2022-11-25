@@ -1,11 +1,16 @@
 import { SoftDeleteModel } from 'mongoose-delete';
-import { BaseRepository } from '../base-repository';
+import { BaseRepository, Omit } from '../base-repository';
 import { SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { DalException } from '../../shared';
 import { Document, FilterQuery } from 'mongoose';
 
-export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
+class PartialIntegrationEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery, SubscriberEntity> {
   private subscriber: SoftDeleteModel;
   constructor() {
     super(Subscriber, SubscriberEntity);
@@ -48,26 +53,30 @@ export class SubscriberRepository extends BaseRepository<SubscriberEntity> {
     });
   }
 
-  async delete(query: FilterQuery<SubscriberEntity & Document>) {
+  async delete(query: EnforceEnvironmentQuery) {
     const foundSubscriber = await this.findOne({
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
     });
     if (!foundSubscriber) {
-      throw new DalException(`Could not find subscriber with id ${query.subscriberId} to delete`);
+      throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
     }
 
-    await this.subscriber.delete({
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: foundSubscriber._environmentId,
       subscriberId: foundSubscriber.subscriberId,
-    });
+    };
+
+    await this.subscriber.delete(requestQuery);
   }
 
-  async findDeleted(query: FilterQuery<SubscriberEntity & Document>) {
-    const res = await this.subscriber.findDeleted({
+  async findDeleted(query: EnforceEnvironmentQuery) {
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
-    });
+    };
+
+    const res = await this.subscriber.findDeleted(requestQuery);
 
     return this.mapEntity(res);
   }

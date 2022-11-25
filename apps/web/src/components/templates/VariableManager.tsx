@@ -17,7 +17,7 @@ interface VariableComponentProps {
   template: string;
 }
 
-interface IMustacheVariable {
+export interface IMustacheVariable {
   type: TemplateVariableTypeEnum;
   name: string;
   defaultValue?: string | boolean;
@@ -155,20 +155,41 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
 
     const arrayVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'BlockStatement' && ['each', 'with'].includes(body.path.head))
-      .map((body) => ({
-        type: TemplateVariableTypeEnum.ARRAY,
-        name: body.params[0].original as string,
-        required: false,
-      }));
+      .map((body) => {
+        const nestedVariablesInBlock = getMustacheVariables(body.program.body).map((mustVar) => {
+          return {
+            ...mustVar,
+            name: body.params[0].original + '.' + mustVar.name,
+          };
+        });
+
+        return [
+          {
+            type: TemplateVariableTypeEnum.ARRAY,
+            name: body.params[0].original as string,
+            required: false,
+          },
+          ...nestedVariablesInBlock,
+        ];
+      })
+      .flat();
 
     const boolVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'BlockStatement' && ['if'].includes(body.path.head))
-      .map((body) => ({
-        type: TemplateVariableTypeEnum.BOOLEAN,
-        name: body.params[0].original as string,
-        defaultValue: true,
-        required: false,
-      }));
+      .map((body) => {
+        const nestedVariablesInBlock = getMustacheVariables(body.program.body);
+
+        return [
+          {
+            type: TemplateVariableTypeEnum.BOOLEAN,
+            name: body.params[0].original as string,
+            defaultValue: true,
+            required: false,
+          },
+          ...nestedVariablesInBlock,
+        ];
+      })
+      .flat();
 
     return stringVariables.concat(arrayVariables).concat(boolVariables);
   }

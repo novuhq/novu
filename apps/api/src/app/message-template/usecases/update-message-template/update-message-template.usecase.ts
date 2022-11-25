@@ -68,6 +68,10 @@ export class UpdateMessageTemplate {
       updatePayload.title = command.title;
     }
 
+    if (command.preheader !== undefined || command.preheader !== null) {
+      updatePayload.preheader = command.preheader;
+    }
+
     if (command.actor) {
       updatePayload.actor = command.actor;
     }
@@ -89,10 +93,18 @@ export class UpdateMessageTemplate {
     const item = await this.messageTemplateRepository.findById(command.templateId);
 
     if (command.feedId || (!command.feedId && existingTemplate._feedId)) {
-      await this.messageRepository.updateFeedByMessageTemplateId(command.templateId, command.feedId);
+      await this.messageRepository.updateFeedByMessageTemplateId(
+        command.environmentId,
+        command.templateId,
+        command.feedId
+      );
     }
 
-    const changeId = await this.changeRepository.getChangeId(ChangeEntityTypeEnum.MESSAGE_TEMPLATE, item._id);
+    const changeId = await this.changeRepository.getChangeId(
+      command.environmentId,
+      ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+      item._id
+    );
 
     await this.createChange.execute(
       CreateChangeCommand.create({

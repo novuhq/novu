@@ -1,4 +1,4 @@
-import { addAndEditChannel, clickWorkflow, fillBasicNotificationDetails } from '.';
+import { addAndEditChannel, clickWorkflow, fillBasicNotificationDetails, goBack } from '.';
 
 describe('Debugging - test trigger', function () {
   beforeEach(function () {
@@ -41,6 +41,8 @@ describe('Debugging - test trigger', function () {
     cy.getByTestId('emailSubject').type('Hello world {{newVar}}', {
       parseSpecialCharSequences: false,
     });
+
+    goBack();
 
     cy.getByTestId('test-workflow-btn').click();
     cy.getByTestId('save-changes-modal').get('button').contains('Save').click();

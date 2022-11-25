@@ -69,6 +69,7 @@ describe('Get changes', () => {
     } = await session.testAgent.get(`/v1/changes?promoted=true`);
 
     const changes = await changeRepository.find({
+      _environmentId: session.environment._id,
       enabled: true,
       _parentId: { $exists: false, $eq: null },
     });

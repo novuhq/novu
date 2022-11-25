@@ -35,7 +35,14 @@ export abstract class SendMessageType {
       Sentry.captureException(errorString);
     }
 
-    await this.messageRepository.updateMessageStatus(message._id, status, null, errorId, errorString);
+    await this.messageRepository.updateMessageStatus(
+      command.environmentId,
+      message._id,
+      status,
+      null,
+      errorId,
+      errorString
+    );
 
     await this.createLogUsecase.execute(
       CreateLogCommand.create({
