@@ -23,6 +23,7 @@ describe('Workflow Editor - Main Functionality', function () {
       parseSpecialCharSequences: false,
     });
     cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailPreheader').type('this is email preheader');
     goBack();
 
     editChannel('inApp');
@@ -32,6 +33,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.getByTestId('editable-text-content').contains('This text is written from a test');
     cy.getByTestId('emailSubject').should('have.value', 'this is email subject');
+    cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 
   it('should edit notification', function () {

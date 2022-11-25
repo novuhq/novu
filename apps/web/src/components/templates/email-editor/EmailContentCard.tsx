@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { IOrganizationEntity, IEmailBlock } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Input, Tabs } from '../../../design-system';
+import { Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { VariableManager } from '../VariableManager';
+import { useIntegrations } from '../../../api/hooks';
+import { EmailInboxContent } from './EmailInboxContent';
 
 export function EmailContentCard({
   index,
@@ -30,6 +32,15 @@ export function EmailContentCard({
   } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState(0);
+  const { integrations = [] } = useIntegrations();
+  const [integration, setIntegration]: any = useState(null);
+
+  useEffect(() => {
+    if (integrations.length === 0) {
+      return;
+    }
+    setIntegration(integrations.find((item) => item.channel === 'email') || null);
+  }, [integrations, setIntegration]);
 
   useEffect(() => {
     if (contentType === 'customHtml') {
@@ -80,24 +91,16 @@ export function EmailContentCard({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
-      <Controller
-        name={`steps.${index}.template.subject` as any}
-        control={control}
-        render={({ field, fieldState }) => {
-          return (
-            <Input
-              {...field}
-              mb={40}
-              error={fieldState.error?.message}
-              label="Subject line"
-              disabled={readonly}
-              value={field.value}
-              placeholder="Type the email subject..."
-              data-test-id="emailSubject"
-            />
-          );
+      <div
+        style={{
+          fontWeight: 'bolder',
+          marginBottom: '10px',
         }}
-      />
+      >
+        Inbox View
+      </div>
+      <EmailInboxContent integration={integration} index={index} readonly={readonly} />
+
       <div data-test-id="editor-type-selector">
         <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
       </div>

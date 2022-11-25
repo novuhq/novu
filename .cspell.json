@@ -151,7 +151,8 @@
     "healthcheck",
     "printjson",
     "machdep",
-    "PGID"
+    "PGID",
+    "preheader"
   ],
   "flagWords": [],
   "patterns": [

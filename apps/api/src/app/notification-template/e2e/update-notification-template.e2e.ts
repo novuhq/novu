@@ -177,6 +177,7 @@ describe('Update notification template by id - /notification-templates/:template
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
+            preheader: 'Test email preheader',
             type: StepTypeEnum.EMAIL,
             content: [],
           },
@@ -207,6 +208,7 @@ describe('Update notification template by id - /notification-templates/:template
             template: {
               name: 'Message Name',
               subject: 'Test email subject',
+              preheader: '',
               type: StepTypeEnum.EMAIL,
               content: [],
               cta: null,
@@ -235,6 +237,7 @@ describe('Update notification template by id - /notification-templates/:template
     const steps = template.steps;
 
     expect(steps[0]._parentId).to.equal(null);
+    expect(steps[0].template.preheader).to.equal('');
     expect(steps[0]._id).to.equal(steps[1]._parentId);
     expect(steps[1]._id).to.equal(steps[2]._parentId);
   });
