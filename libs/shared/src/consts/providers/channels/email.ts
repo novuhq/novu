@@ -9,6 +9,7 @@ import {
   sendgridConfig,
   sendinblueConfig,
   sesConfig,
+  infobipConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
@@ -94,5 +95,13 @@ export const emailProviders: IProviderConfig[] = [
     credentials: netCoreConfig,
     docReference: 'https://netcorecloud.com/email/email-api/',
     logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Infobip,
+    displayName: 'Infobip',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: infobipConfig,
+    docReference: 'https://www.infobip.com/docs',
+    logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
   },
 ];
