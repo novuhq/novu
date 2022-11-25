@@ -11,11 +11,20 @@ export default {
       subscriberId: import.meta.env.VITE_NOVU_SUBSCRIBER_ID,
     };
   },
+  methods: {
+    sessionLoaded() {
+      console.log('Vue app loaded!');
+    },
+  },
 };
 </script>
 
 <template>
-  <NotificationCenterComponent :subscriberId="subscriberId" :applicationIdentifier="applicationIdentifier" />
+  <NotificationCenterComponent
+    :subscriberId="subscriberId"
+    :applicationIdentifier="applicationIdentifier"
+    :sessionLoaded="sessionLoaded"
+  />
 </template>
 
 <style scoped></style>

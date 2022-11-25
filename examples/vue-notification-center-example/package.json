@@ -1,5 +1,5 @@
 {
-  "name": "vue-project",
+  "name": "vue-notification-center-example",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
