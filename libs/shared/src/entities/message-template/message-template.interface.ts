@@ -33,6 +33,7 @@ export interface IMessageTemplate {
   };
   _feedId?: string;
   active?: boolean;
+  preheader?: string;
   actor?: {
     type: ActorTypeEnum;
     data: string | null;
