@@ -19,9 +19,19 @@ type NovuProviderProps = Pick<
   | 'subscriberHash'
   | 'i18n'
 > & {
-  // Angular props
+  // Angular/Vue props
   sessionLoaded?: INovuProviderProps['onLoad'];
 };
+
+// Angular/Vue props
+interface PopoverAdditionalProps {
+  urlChanged?: IPopoverNotificationCenterProps['onUrlChange'];
+  notificationClicked?: IPopoverNotificationCenterProps['onNotificationClick'];
+  unseenCountChanged?: IPopoverNotificationCenterProps['onUnseenCountChanged'];
+  actionClicked?: IPopoverNotificationCenterProps['onActionClick'];
+  tabClicked?: IPopoverNotificationCenterProps['onTabClick'];
+}
+
 type PopoverProps = Pick<
   IPopoverNotificationCenterProps,
   | 'onUrlChange'
@@ -36,13 +46,8 @@ type PopoverProps = Pick<
 > & {
   onNotificationClick?: IPopoverNotificationCenterProps['onNotificationClick'];
   colorScheme?: ColorScheme;
-  // Angular props
-  urlChanged?: IPopoverNotificationCenterProps['onUrlChange'];
-  notificationClicked?: IPopoverNotificationCenterProps['onNotificationClick'];
-  unseenCountChanged?: IPopoverNotificationCenterProps['onUnseenCountChanged'];
-  actionClicked?: IPopoverNotificationCenterProps['onActionClick'];
-  tabClicked?: IPopoverNotificationCenterProps['onTabClick'];
-};
+} & PopoverAdditionalProps;
+
 type BellProps = { unseenBadgeColor?: string; unseenBadgeBackgroundColor?: string };
 
 export type NotificationCenterComponentProps = NovuProviderProps & PopoverProps & BellProps;
