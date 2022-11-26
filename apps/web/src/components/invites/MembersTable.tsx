@@ -49,7 +49,7 @@ export function MembersTable({
         }}
       />
 
-      {members?.map((member) => {
+      {members?.map((member, index: number) => {
         return (
           <MemberRowWrapper key={member._id} data-test-id={'member-row-' + member._id}>
             <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={member.user?.profilePicture} radius="xl">
@@ -69,6 +69,7 @@ export function MembersTable({
               <div style={{ marginLeft: 10 }}>
                 {member.memberStatus === MemberStatusEnum.INVITED ? <Tag mr={10}>Invite Pending</Tag> : null}
                 <MemberRole
+                  key={index}
                   onChangeMemberRole={onChangeMemberRole}
                   member={member}
                   isEnableMemberActions={isEnableMemberActions}

@@ -30,8 +30,9 @@ export function MemberRole({ member, onChangeMemberRole, isEnableMemberActions }
           </ClickableTag>
         }
       >
-        {availableRoles().map((role) => (
+        {availableRoles().map((role, index: number) => (
           <DropdownItem
+            key={index}
             data-test-id={`change-member-role-to-${role[1]}-btn`}
             onClick={() => onChangeMemberRole(member, role[1])}
           >

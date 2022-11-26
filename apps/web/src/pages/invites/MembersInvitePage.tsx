@@ -24,7 +24,7 @@ import { AuthContext } from '../../store/authContext';
 export function MembersInvitePage() {
   const [form] = Form.useForm();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
-  const [invitedMember, setInvitedMember] = useState<string>('');
+  const [invitedMemberEmail, setInvitedMemberEmail] = useState<string>('');
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
   const { currentOrganization, currentUser } = useContext(AuthContext);
 
@@ -41,25 +41,18 @@ export function MembersInvitePage() {
   >((email) => inviteMember(email));
 
   useEffect(() => {
-    if (!invitedMember) return;
-    const currentMember = members?.find((member) => member?.invite?.email === invitedMember);
-    if (!currentMember) return;
+    if (!invitedMemberEmail) return;
 
-    const inviteHref = buildInviteHref(currentMember, currentOrganization?.name, currentUser, generateInviteLink);
+    inviteByLink(invitedMemberEmail);
 
-    showNotification({
-      message: getInviteMemberByLinkDiv(inviteHref, currentMember),
-      color: 'green',
-    });
-
-    setInvitedMember('');
+    setInvitedMemberEmail('');
   }, [members]);
 
   async function onSubmit({ email }) {
     if (!email) return;
 
     if (selfHosted) {
-      setInvitedMember(email);
+      setInvitedMemberEmail(email);
     }
 
     try {
@@ -121,6 +114,12 @@ export function MembersInvitePage() {
   }
 
   async function resendInviteMemberClick(member) {
+    if (selfHosted) {
+      inviteByLink(member.invite.email);
+
+      return;
+    }
+
     try {
       await resendInviteMember(member._id);
 
@@ -135,6 +134,18 @@ export function MembersInvitePage() {
       });
     }
   }
+
+  const inviteByLink = (invitedEmail: string) => {
+    const currentMember = members?.find((member) => member?.invite?.email === invitedEmail);
+    if (!currentMember) return;
+
+    const inviteHref = buildInviteHref(currentMember, currentOrganization?.name, currentUser, generateInviteLink);
+
+    showNotification({
+      message: getInviteMemberByLinkDiv(inviteHref, currentMember),
+      color: 'green',
+    });
+  };
 
   const clipboardCopyInviteLink = (memberToken: string) => {
     clipboardInviteLink.copy(generateInviteLink(memberToken));
