@@ -34,6 +34,7 @@ export enum EmailProviderIdEnum {
   Sendinblue = 'sendinblue',
   SES = 'ses',
   NetCore = 'netcore',
+  MailerSend = 'mailersend',
 }
 
 export enum SmsProviderIdEnum {
