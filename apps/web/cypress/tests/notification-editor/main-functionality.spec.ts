@@ -111,17 +111,17 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.clickWorkflowNode(`node-emailSelector`);
 
-    cy.get('.mantine-Switch-input').should('have.value', 'on');
-    cy.get('.mantine-Switch-input').click();
+    cy.getByTestId(`step-active-switch`).should('have.value', 'on');
+    cy.getByTestId(`step-active-switch`).click();
 
     // enable email selector
-    cy.get('.mantine-Switch-input').click();
+    cy.getByTestId(`step-active-switch`).click();
     cy.getByTestId(`close-side-menu-btn`).click();
 
     dragAndDrop('inApp');
 
     cy.clickWorkflowNode(`node-inAppSelector`);
-    cy.get('.mantine-Switch-input').should('have.value', 'on');
+    cy.getByTestId(`step-active-switch`).should('have.value', 'on');
   });
 
   it('should show trigger snippet block when editing', function () {

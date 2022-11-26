@@ -12,7 +12,13 @@ export const ShouldStopOnFailSwitch = ({ control, index }) => {
       name={`steps.${index}.shouldStopOnFail`}
       render={({ field: { value, ...field } }) => {
         return (
-          <StyledSwitch {...field} disabled={readonly} checked={value} label="Stop workflow if this step fails?" />
+          <StyledSwitch
+            {...field}
+            disabled={readonly}
+            checked={value}
+            label="Stop workflow if this step fails?"
+            data-test-id="step-should-stop-on-fail-switch"
+          />
         );
       }}
     />
