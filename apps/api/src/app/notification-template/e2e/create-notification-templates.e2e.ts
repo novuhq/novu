@@ -41,6 +41,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
+            preheader: 'Test email preheader',
             content: [{ type: 'text', content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
@@ -73,6 +74,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(message.template.name).to.equal(`${testTemplate.steps[0].template.name}`);
     expect(message.template.active).to.equal(defaultMessageIsActive);
     expect(message.template.subject).to.equal(`${testTemplate.steps[0].template.subject}`);
+    expect(message.template.preheader).to.equal(`${testTemplate.steps[0].template.preheader}`);
     expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
     expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
     expect(message.filters[0].children[0].value).to.equal(testTemplate.steps[0].filters[0].children[0].value);
