@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { QueueNextJobCommand } from '../queue-next-job/queue-next-job.command';
 import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
@@ -20,66 +21,51 @@ export class RunJob {
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
     const job = await this.jobRepository.findById(command.jobId);
     const canceled = await this.delayedEventIsCanceled(job);
-    const isDigestType = job.type === StepTypeEnum.DIGEST;
     if (canceled) {
       return;
     }
-    let shouldRun = true;
+    let shouldQueueNextJob = true;
 
-    if (job.step._parentId) {
-      shouldRun = await this.shouldRun(job, command.organizationId);
-    }
+    try {
+      await this.jobRepository.updateStatus(command.organizationId, job._id, JobStatusEnum.RUNNING);
 
-    if (!shouldRun) {
-      await this.jobRepository.updateStatus(command.organizationId, job._id, JobStatusEnum.FAILED);
+      await this.storageHelperService.getAttachments(job.payload?.attachments);
 
-      return;
-    }
-
-    await this.jobRepository.updateStatus(command.organizationId, job._id, JobStatusEnum.RUNNING);
-
-    await this.storageHelperService.getAttachments(job.payload?.attachments);
-
-    if (!isDigestType) {
-      await this.queueNextJob.execute(
-        QueueNextJobCommand.create({
-          parentId: job._id,
+      await this.sendMessage.execute(
+        SendMessageCommand.create({
+          identifier: job.identifier,
+          payload: job.payload ?? {},
+          overrides: job.overrides ?? {},
+          step: job.step,
+          transactionId: job.transactionId,
+          notificationId: job._notificationId,
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           userId: job._userId,
+          subscriberId: job._subscriberId,
+          jobId: job._id,
+          events: job.digest.events,
+          job,
         })
       );
-    }
 
-    await this.sendMessage.execute(
-      SendMessageCommand.create({
-        identifier: job.identifier,
-        payload: job.payload ?? {},
-        overrides: job.overrides ?? {},
-        step: job.step,
-        transactionId: job.transactionId,
-        notificationId: job._notificationId,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        userId: job._userId,
-        subscriberId: job._subscriberId,
-        jobId: job._id,
-        events: job.digest.events,
-        job,
-      })
-    );
-
-    await this.storageHelperService.deleteAttachments(job.payload?.attachments);
-
-    if (isDigestType) {
-      await this.queueNextJob.execute(
-        QueueNextJobCommand.create({
-          parentId: job._id,
-          environmentId: job._environmentId,
-          organizationId: job._organizationId,
-          userId: job._userId,
-        })
-      );
+      await this.storageHelperService.deleteAttachments(job.payload?.attachments);
+    } catch (error) {
+      if (job.step.shouldStopOnFail) {
+        shouldQueueNextJob = false;
+      }
+      throw new ApiException(error);
+    } finally {
+      if (shouldQueueNextJob) {
+        await this.queueNextJob.execute(
+          QueueNextJobCommand.create({
+            parentId: job._id,
+            environmentId: job._environmentId,
+            organizationId: job._organizationId,
+            userId: job._userId,
+          })
+        );
+      }
     }
   }
 
@@ -94,15 +80,5 @@ export class RunJob {
     });
 
     return count > 0;
-  }
-
-  private async shouldRun(job: JobEntity, organizationId: string) {
-    const parentJob = await this.jobRepository.findOne({
-      _id: job.step._parentId,
-      _organizationId: organizationId,
-    });
-    if (!parentJob) return true;
-
-    return parentJob.status === JobStatusEnum.FAILED && parentJob?.step?.shouldStopOnFail;
   }
 }
