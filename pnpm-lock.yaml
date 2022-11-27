@@ -180,6 +180,7 @@ importers:
       '@novu/fcm': ^0.9.0
       '@novu/firetext': ^0.9.0
       '@novu/gupshup': ^0.9.0
+      '@novu/mailersend': ^0.9.0
       '@novu/mailgun': ^0.9.0
       '@novu/mailjet': ^0.9.0
       '@novu/mandrill': ^0.9.0
@@ -284,6 +285,7 @@ importers:
       '@novu/fcm': link:../../providers/fcm
       '@novu/firetext': link:../../providers/firetext
       '@novu/gupshup': link:../../providers/gupshup
+      '@novu/mailersend': link:../../providers/mailersend
       '@novu/mailgun': link:../../providers/mailgun
       '@novu/mailjet': link:../../providers/mailjet
       '@novu/mandrill': link:../../providers/mandrill
@@ -1238,6 +1240,7 @@ importers:
       '@novu/emailjs': ^0.9.0
       '@novu/fcm': ^0.9.0
       '@novu/gupshup': ^0.9.0
+      '@novu/mailersend': ^0.9.0
       '@novu/mailgun': ^0.9.0
       '@novu/mailjet': ^0.9.0
       '@novu/mandrill': ^0.9.0
@@ -1287,6 +1290,7 @@ importers:
       '@novu/emailjs': link:../../providers/emailjs
       '@novu/fcm': link:../../providers/fcm
       '@novu/gupshup': link:../../providers/gupshup
+      '@novu/mailersend': link:../../providers/mailersend
       '@novu/mailgun': link:../../providers/mailgun
       '@novu/mailjet': link:../../providers/mailjet
       '@novu/mandrill': link:../../providers/mandrill
@@ -1327,7 +1331,7 @@ importers:
       rimraf: 3.0.2
       sinon: 9.2.4
       standard-version: 9.3.2
-      ts-jest: 27.1.4_vqlr6pm7mnv5rngd46vdqt4eby
+      ts-jest: 27.1.4_gxtntv5dwbdy7daxb4td26n5ra
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -51147,40 +51151,6 @@ packages:
         optional: true
     dependencies:
       '@babel/core': 7.18.9
-      '@types/jest': 27.4.0
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.7
-      typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_vqlr6pm7mnv5rngd46vdqt4eby:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
       '@types/jest': 27.4.0
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
