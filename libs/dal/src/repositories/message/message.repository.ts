@@ -5,7 +5,7 @@ import { BaseRepository, Omit } from '../base-repository';
 import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
-import { DalException } from '../../shared';
+import { DalException, CacheService } from '../../shared';
 
 class PartialIntegrationEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
 
@@ -15,8 +15,8 @@ type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> 
 export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, MessageEntity> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
-  constructor() {
-    super(Message, MessageEntity);
+  constructor(cacheService?: CacheService) {
+    super(Message, MessageEntity, cacheService);
     this.message = Message;
   }
 

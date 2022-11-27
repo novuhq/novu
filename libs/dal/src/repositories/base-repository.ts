@@ -1,10 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { Document, Model, Types, ProjectionType } from 'mongoose';
+import { CacheService } from '../shared';
+
 export class BaseRepository<T_Query, T_Response> {
   public _model: Model<any & Document>;
 
-  constructor(protected MongooseModel: Model<any & Document>, protected entity: ClassConstructor<T_Response>) {
+  constructor(
+    protected MongooseModel: Model<any & Document>,
+    protected entity: ClassConstructor<T_Response>,
+    protected cacheService?: CacheService
+  ) {
     this._model = MongooseModel;
   }
 
