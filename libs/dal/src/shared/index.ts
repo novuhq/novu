@@ -1,3 +1,3 @@
 export * from './exceptions';
-export * from './cache';
+export * from './services';
 export * from './interceptors';

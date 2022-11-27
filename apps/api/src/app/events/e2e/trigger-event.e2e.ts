@@ -738,7 +738,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       channel: channelType,
-    });
+    } as any);
+
     expect(messages.length).to.equal(4);
     const isUnique = (value, index, self) => self.indexOf(value) === index;
     const subscriberIds = messages.map((message) => message._subscriberId).filter(isUnique);

@@ -1,11 +1,12 @@
+import { appendCredentials, isStoreConnected } from './shared-cache.interceptor';
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function Cached(storeKeyPrefix?: string) {
   return (target: any, key: string, descriptor: any) => {
-    const STORE_CONNECTED = 'ready';
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      if (this.cacheService?.status !== STORE_CONNECTED) return await originalMethod.apply(this, args);
+      if (!isStoreConnected(this.cacheService?.getStatus())) return await originalMethod.apply(this, args);
 
       const query = args.reduce((obj, item) => Object.assign(obj, item), {});
       const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel.modelName, query);
@@ -42,22 +43,6 @@ function buildKey(prefix: string, keyConfig: Record<undefined, string>): string 
   cacheKey = appendQueryParams(cacheKey, keyConfig);
 
   return appendCredentials(cacheKey, keyConfig);
-}
-
-function appendCredentials(cacheKey: string, keyConfig: Record<undefined, string>) {
-  let result = cacheKey;
-
-  const credentials: Array<string> = ['id', 'subscriberId', 'environmentId'];
-
-  credentials.forEach((element) => {
-    const credential = keyConfig['_' + element] ?? keyConfig[element];
-
-    if (credential) {
-      result += ':' + credential;
-    }
-  });
-
-  return result;
 }
 
 function getCredentialsKeys() {

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import { GetMessagesCommand } from './get-messages.command';
 
 @Injectable()
@@ -12,22 +12,17 @@ export class GetMessages {
     if (LIMIT > 1000) {
       throw new BadRequestException('Limit can not be larger then 1000');
     }
-
-    const query: Partial<MessageEntity> & { _environmentId: string } = {
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-    };
+    let subscriber: SubscriberEntity;
 
     if (command.subscriberId) {
-      const subscriber = await this.subscriberRepository.findBySubscriberId(
-        command.environmentId,
-        command.subscriberId
-      );
-
-      if (subscriber) {
-        query._subscriberId = subscriber._id;
-      }
+      subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     }
+
+    const query: Partial<MessageEntity> & { _environmentId: string } & { _subscriberId: string } = {
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _subscriberId: subscriber?._id,
+    };
 
     if (command.channel) {
       query.channel = command.channel;

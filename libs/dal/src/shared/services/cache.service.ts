@@ -5,6 +5,8 @@ export interface ICacheService {
   get(key: string);
   del(key: string);
   delByPattern(pattern: string);
+  keys(pattern?: string);
+  getStatus();
 }
 
 export type CachingConfig = {
@@ -41,7 +43,7 @@ export class CacheService implements ICacheService {
     }
   }
 
-  get status() {
+  public getStatus() {
     return this.client?.status;
   }
 
