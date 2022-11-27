@@ -1,7 +1,7 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
-import { BurstSmsSmsProvider } from '@novu/burstsms';
+import { BurstSmsProvider } from '@novu/burst-sms';
 
 export class BurstSmsHandler extends BaseSmsHandler {
   constructor() {
@@ -13,6 +13,6 @@ export class BurstSmsHandler extends BaseSmsHandler {
       secretKey: string;
     } = { apiKey: credentials.apiKey, secretKey: credentials.secretKey };
 
-    this.provider = new BurstSmsSmsProvider(config);
+    this.provider = new BurstSmsProvider(config);
   }
 }
