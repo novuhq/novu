@@ -1,5 +1,5 @@
 {
-  "name": "@novu/burstsms",
+  "name": "@novu/burst-sms",
   "version": "0.9.0",
   "description": "A burstSms wrapper for novu",
   "main": "build/main/index.js",
