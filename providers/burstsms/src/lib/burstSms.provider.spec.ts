@@ -14,7 +14,7 @@ test('should trigger Burst SMS axios request correctly', async () => {
     } as any;
   });
 
-  const provider = new BurstSmsSmsProvider({ apiKey: '', secretKey: '' });
+  const provider = new BurstSmsProvider({ apiKey: '', secretKey: '' });
 
   const testTo = '+15555555';
   const testContent = 'Welcome. This is a test message';
