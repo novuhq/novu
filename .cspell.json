@@ -152,7 +152,16 @@
     "printjson",
     "machdep",
     "PGID",
-    "preheader"
+    "preheader",
+    "notifire",
+    "Hygen",
+    "toastr",
+    "consts",
+    "crossorigin",
+    "WEASL",
+    "dbpath",
+    "prebuilds",
+    "mongod"
   ],
   "flagWords": [],
   "patterns": [
