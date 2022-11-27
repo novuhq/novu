@@ -7,7 +7,7 @@ import {
 import axios, { AxiosInstance } from 'axios';
 import qs from 'qs';
 
-export class BurstSmsSmsProvider implements ISmsProvider {
+export class BurstSmsProvider implements ISmsProvider {
   id = 'burstsms';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private axiosInstance: AxiosInstance;
