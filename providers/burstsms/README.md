@@ -1,6 +1,6 @@
-# Novu BurstSms Provider
+# Novu Burst SMS Provider
 
-A BurstSms sms provider library for [@novu/node](https://github.com/novuhq/novu)
+A Burst SMS sms provider library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 
