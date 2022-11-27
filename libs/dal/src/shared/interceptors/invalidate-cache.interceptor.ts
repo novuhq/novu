@@ -1,38 +1,30 @@
-const USECASE_FUNCTION_NAME = 'execute';
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function InvalidateCache(storeKey?: string) {
+export function InvalidateCache(storeKeyPrefix?: string) {
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
-    const context = getKeyContext(key, target);
+    const STORE_CONNECTED = 'ready';
 
     descriptor.value = async function (...args: any[]) {
-      const command = args[0];
+      if (this.cacheService?.status !== STORE_CONNECTED) return await originalMethod.apply(this, args);
 
-      // if (command.invalidate !== true) return originalMethod.apply(this, args);
+      const query = args[0];
 
-      const cacheKey = buildKey(context, command);
+      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel?.modelName, query);
 
       if (!cacheKey) {
-        return originalMethod.apply(args);
+        return await originalMethod.apply(this, args);
       }
 
       try {
-        await this.cacheService.delByPattern(cacheKey);
+        this.cacheService.delByPattern(cacheKey);
       } catch (err) {
         // Logger.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache');
-        return originalMethod.apply(this, args);
+        return await originalMethod.apply(this, args);
       }
 
-      return originalMethod.apply(this, args);
+      return await originalMethod.apply(this, args);
     };
   };
-
-  function getKeyContext(key: string, target: any) {
-    const originCaller = key === USECASE_FUNCTION_NAME ? target.constructor.name : key;
-
-    return storeKey ? storeKey : originCaller;
-  }
 }
 
 function buildKey(prefix: string, keyConfig: Record<undefined, string>): string {
@@ -46,10 +38,10 @@ function buildKey(prefix: string, keyConfig: Record<undefined, string>): string 
 function appendCredentials(key: string, keyConfig: Record<undefined, string>) {
   let result = key;
 
-  const credentials: Array<string> = ['id', 'subscriberId', 'organizationId', 'environmentId'];
+  const credentials: Array<string> = ['id', 'subscriberId', 'environmentId'];
 
   credentials.forEach((element) => {
-    const credential = keyConfig[element];
+    const credential = keyConfig['_' + element] ?? keyConfig[element];
 
     if (credential) {
       result += ':' + credential;

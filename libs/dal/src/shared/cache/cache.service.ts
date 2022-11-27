@@ -13,7 +13,7 @@ export type CachingConfig = {
 
 export class CacheService implements ICacheService {
   private readonly client: Redis;
-  private readonly DEFAULT_TTL = 60;
+  private readonly DEFAULT_TTL_SECONDS = 60;
   private readonly cacheTtl: number;
 
   constructor(
@@ -28,14 +28,21 @@ export class CacheService implements ICacheService {
       cacheTtl?: string;
     }
   ) {
-    this.client = new Redis(Number(this.config.cachePort), this.config.cacheHost, {
-      password: this.config.cachePassword,
-      connectTimeout: Number(this.config.cacheConnectTimeout) ?? 50000,
-      keepAlive: Number(this.config.cacheKeepAlive) ?? 30000,
-      family: Number(this.config.cacheFamily) ?? 4,
-      keyPrefix: this.config.cacheKeyPrefix ?? '',
-    });
-    this.cacheTtl = Number(this.config.cacheTtl) ?? this.DEFAULT_TTL;
+    if (this.config.cachePort && this.config.cacheHost) {
+      this.client = new Redis(Number(this.config.cachePort), this.config.cacheHost, {
+        password: this.config.cachePassword,
+        connectTimeout: this.config.cacheConnectTimeout ? Number(this.config.cacheConnectTimeout) : 50000,
+        keepAlive: this.config.cacheKeepAlive ? Number(this.config.cacheKeepAlive) : 30000,
+        family: this.config.cacheFamily ? Number(this.config.cacheFamily) : 4,
+        keyPrefix: this.config.cacheKeyPrefix ?? '',
+      });
+
+      this.cacheTtl = this.config.cacheTtl ? Number(this.config.cacheTtl) : this.DEFAULT_TTL_SECONDS;
+    }
+  }
+
+  get status() {
+    return this.client?.status;
   }
 
   public async set(key: string, value: string, options?: CachingConfig) {
@@ -58,7 +65,7 @@ export class CacheService implements ICacheService {
     return this.client.del([key]);
   }
 
-  public async delByPattern(pattern: string) {
+  public delByPattern(pattern: string) {
     const client = this.client;
     const stream = client.scanStream({
       match: pattern,
@@ -76,7 +83,7 @@ export class CacheService implements ICacheService {
   }
 
   private updateTtl(key: string, options?: CachingConfig) {
-    const seconds = options?.ttl || this.cacheTtl || this.DEFAULT_TTL;
+    const seconds = options?.ttl || this.cacheTtl;
 
     return this.client.expire(key, seconds);
   }

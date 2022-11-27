@@ -1,11 +1,11 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { Document, FilterQuery, Types } from 'mongoose';
+import { Document, FilterQuery, ProjectionType, Types } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
 import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
-import { DalException, CacheService } from '../../shared';
+import { DalException, ICacheService, Cached, InvalidateCache } from '../../shared';
 
 class PartialIntegrationEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
 
@@ -15,9 +15,34 @@ type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> 
 export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, MessageEntity> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
-  constructor(cacheService?: CacheService) {
+  constructor(cacheService?: ICacheService) {
     super(Message, MessageEntity, cacheService);
     this.message = Message;
+  }
+
+  @InvalidateCache()
+  async update(
+    query: EnforceEnvironmentQuery,
+    updateBody: any
+  ): Promise<{
+    matched: number;
+    modified: number;
+  }> {
+    return super.update(query, updateBody);
+  }
+
+  @Cached()
+  async find(
+    query: EnforceEnvironmentQuery,
+    select: ProjectionType<any> = '',
+    options: { limit?: number; sort?: any; skip?: number } = {}
+  ) {
+    return super.find(query, select, options);
+  }
+
+  @InvalidateCache()
+  async create(data: EnforceEnvironmentQuery) {
+    return super.create(data);
   }
 
   private async getFilterQueryForMessage(
@@ -260,6 +285,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     );
   }
 
+  @InvalidateCache()
   async delete(query: EnforceEnvironmentQuery) {
     const message = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!message) {

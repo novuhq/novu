@@ -1,18 +1,17 @@
-const USECASE_FUNCTION_NAME = 'execute';
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function Cached(storeKey?: string) {
+export function Cached(storeKeyPrefix?: string) {
   return (target: any, key: string, descriptor: any) => {
+    const STORE_CONNECTED = 'ready';
     const originalMethod = descriptor.value;
-    const context = getKeyContext(key, target);
 
     descriptor.value = async function (...args: any[]) {
-      const command = args[0];
+      if (this.cacheService?.status !== STORE_CONNECTED) return await originalMethod.apply(this, args);
 
-      const cacheKey = buildKey(context, command);
+      const query = args.reduce((obj, item) => Object.assign(obj, item), {});
+      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel.modelName, query);
 
       if (!cacheKey) {
-        return originalMethod.apply(args);
+        return await originalMethod.apply(this, args);
       }
 
       try {
@@ -28,36 +27,30 @@ export function Cached(storeKey?: string) {
           return response;
         } catch (err) {
           // Logger.error(`An error has occured when inserting "key: ${key}", "value: ${response}"`, 'CacheInterceptor');
-          return originalMethod.apply(this, args);
+          return await originalMethod.apply(this, args);
         }
       } catch (e) {
-        return originalMethod.apply(this, args);
+        return await originalMethod.apply(this, args);
       }
     };
   };
-
-  function getKeyContext(key: string, target: any) {
-    const originCaller = key === USECASE_FUNCTION_NAME ? target.constructor.name : key;
-
-    return storeKey ? storeKey : originCaller;
-  }
 }
 
 function buildKey(prefix: string, keyConfig: Record<undefined, string>): string {
-  let key = prefix;
+  let cacheKey = prefix;
 
-  key = appendQueryParams(key, keyConfig);
+  cacheKey = appendQueryParams(cacheKey, keyConfig);
 
-  return appendCredentials(key, keyConfig);
+  return appendCredentials(cacheKey, keyConfig);
 }
 
-function appendCredentials(key: string, keyConfig: Record<undefined, string>) {
-  let result = key;
+function appendCredentials(cacheKey: string, keyConfig: Record<undefined, string>) {
+  let result = cacheKey;
 
   const credentials: Array<string> = ['id', 'subscriberId', 'environmentId'];
 
   credentials.forEach((element) => {
-    const credential = keyConfig[element];
+    const credential = keyConfig['_' + element] ?? keyConfig[element];
 
     if (credential) {
       result += ':' + credential;
@@ -67,23 +60,32 @@ function appendCredentials(key: string, keyConfig: Record<undefined, string>) {
   return result;
 }
 
-function appendQueryParams(key: string, keyConfig: any): string {
-  let queryParamsKey = key;
-  // todo exclude
-  const keyElements: Array<string> = ['feedId', 'seen', 'read', 'page', 'query'];
+function getCredentialsKeys() {
+  return ['id', 'subscriberId', 'environmentId', 'organizationId'].map((cred) => [cred, `_${cred}`]).flat();
+}
 
-  keyElements.forEach((element) => {
-    if (keyConfig[element] == null) return;
+function appendQueryParams(cacheKey: string, keysConfig: any): string {
+  let result = cacheKey;
 
-    const elementValue =
-      typeof keyConfig[element] === 'object' ? JSON.stringify(keyConfig[element]) : keyConfig[element];
+  const keysToExclude = [...getCredentialsKeys()];
 
-    const elementKey = `${element}=${elementValue}`;
+  const filteredContextKeys = Object.fromEntries(
+    Object.entries(keysConfig).filter(([key, value]) => {
+      return !keysToExclude.some((element) => element === key);
+    })
+  );
+
+  for (const [key, value] of Object.entries(filteredContextKeys)) {
+    if (value == null) return;
+
+    const elementValue = typeof value === 'object' ? JSON.stringify(value) : value;
+
+    const elementKey = `${key}=${elementValue}`;
 
     if (elementKey) {
-      queryParamsKey += ':' + elementKey;
+      result += ':' + elementKey;
     }
-  });
+  }
 
-  return queryParamsKey;
+  return result;
 }
