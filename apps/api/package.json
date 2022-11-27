@@ -48,6 +48,7 @@
     "@novu/infobip": "^0.9.0",
     "@novu/mailgun": "^0.9.0",
     "@novu/mailjet": "^0.9.0",
+    "@novu/mailersend": "^0.9.0",
     "@novu/mandrill": "^0.9.0",
     "@novu/ms-teams": "^0.9.0",
     "@novu/netcore": "^0.9.0",

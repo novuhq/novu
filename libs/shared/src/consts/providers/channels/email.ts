@@ -1,4 +1,5 @@
 import {
+  mailerSendConfig,
   mailgunConfig,
   mailjetConfig,
   mailJsConfig,
@@ -95,6 +96,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: netCoreConfig,
     docReference: 'https://netcorecloud.com/email/email-api/',
     logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
+  },
+  {
+    id: EmailProviderIdEnum.MailerSend,
+    displayName: 'MailerSend',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: mailerSendConfig,
+    docReference: 'https://developers.mailersend.com/',
+    logoFileName: { light: 'mailersend.svg', dark: 'mailersend.svg' },
   },
   {
     id: EmailProviderIdEnum.Infobip,

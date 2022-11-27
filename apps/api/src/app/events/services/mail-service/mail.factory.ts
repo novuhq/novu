@@ -11,6 +11,7 @@ import {
   SESHandler,
   NetCoreHandler,
   InfobipEmailHandler,
+  MailerSendHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -27,6 +28,7 @@ export class MailFactory {
     new SendinblueHandler(),
     new SESHandler(),
     new InfobipEmailHandler(),
+    new MailerSendHandler(),
   ];
 
   getHandler(
