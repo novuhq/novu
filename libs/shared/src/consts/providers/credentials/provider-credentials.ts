@@ -408,3 +408,20 @@ export const firetextConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const infobipConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+  ...mailConfigBase,
+];

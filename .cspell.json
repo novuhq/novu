@@ -161,7 +161,8 @@
     "WEASL",
     "dbpath",
     "prebuilds",
-    "mongod"
+    "mongod",
+    "infobip"
   ],
   "flagWords": [],
   "patterns": [
