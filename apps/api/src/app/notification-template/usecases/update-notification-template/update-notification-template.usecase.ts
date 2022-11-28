@@ -147,6 +147,7 @@ export class UpdateNotificationTemplate {
             _parentId: parentStepId,
             active: message.active,
             metadata: message.metadata,
+            shouldStopOnFail: message.shouldStopOnFail,
           });
         } else {
           const template = await this.createMessageTemplate.execute(
@@ -176,6 +177,7 @@ export class UpdateNotificationTemplate {
             _parentId: parentStepId,
             active: message.active,
             metadata: message.metadata,
+            shouldStopOnFail: message.shouldStopOnFail,
           });
         }
         parentStepId = stepId;
