@@ -57,7 +57,7 @@ export function Content(props: IContentProps) {
 
 /**
  * Recursively remove a pattern from a string until there are no more matches.
- * Avoids incomplete sanitization e.g. "aabcbc".replace(/abc/g, "") === "abc"
+ * Avoids incomplete sanitization e.g. "abcBanana".replace(/abc/g, "") === "abc"
  * See: https://github.com/novuhq/novu/security/code-scanning/9
  */
 function sanitizeHandlebarsVariables(content: string): string {

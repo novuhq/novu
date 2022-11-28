@@ -48,6 +48,7 @@ export class CreateExecutionDetails {
       raw: JSON.stringify(row),
       isRetry: false,
       isTest: false,
+      webhookStatus: status,
     };
   }
 

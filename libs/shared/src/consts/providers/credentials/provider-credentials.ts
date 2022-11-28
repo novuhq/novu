@@ -184,12 +184,6 @@ export const sendgridConfig: IConfigCredentials[] = [
     required: true,
   },
   ...mailConfigBase,
-  {
-    key: CredentialsKeyEnum.WebhookUrl,
-    displayName: 'Webhook url',
-    type: 'url',
-    required: false,
-  },
 ];
 
 export const netCoreConfig: IConfigCredentials[] = [
@@ -228,6 +222,16 @@ export const sesConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.Region,
     displayName: 'Region',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
+export const mailerSendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
     type: 'string',
     required: true,
   },

@@ -37,7 +37,7 @@ export class CompleteVercelIntegration {
 
       const mappedProjectData = this.mapProjectKeys(envKeys, command.data);
 
-      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration({
+      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration(command.environmentId, {
         configurationId: command.configurationId,
         userId: command.userId,
       });

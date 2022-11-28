@@ -20,7 +20,7 @@ export enum CredentialsKeyEnum {
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
-  WebhookUrl = 'webhoohUrl',
+  WebhookUrl = 'webhookUrl',
 }
 
 export enum EmailProviderIdEnum {
@@ -34,6 +34,7 @@ export enum EmailProviderIdEnum {
   Sendinblue = 'sendinblue',
   SES = 'ses',
   NetCore = 'netcore',
+  MailerSend = 'mailersend',
 }
 
 export enum SmsProviderIdEnum {

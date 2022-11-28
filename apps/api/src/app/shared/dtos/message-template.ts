@@ -42,6 +42,11 @@ export class MessageTemplate {
   @IsString()
   title?: string;
 
+  @IsOptional()
+  @IsString()
+  preheader?: string;
+
+  @IsOptional()
   actor?: {
     type: ActorTypeEnum;
     data: string | null;

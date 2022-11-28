@@ -6,17 +6,17 @@ import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.us
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateVercelConfigurationCommand } from './update-vercel-configuration.command';
 
-interface IBaseEnvironemt {
+interface IBaseEnvironment {
   token: string;
   teamId: string | null;
   clientKey: string;
   privateKey: string;
 }
-interface ISetEnvironment extends IBaseEnvironemt {
+interface ISetEnvironment extends IBaseEnvironment {
   projectIds: string[];
 }
 
-interface IUpdateEnvironment extends IBaseEnvironemt {
+interface IUpdateEnvironment extends IBaseEnvironment {
   projectDetails: ProjectDetails[];
 }
 
@@ -54,7 +54,7 @@ export class UpdateVercelConfiguration {
 
       const envKeys = await this.getEnvKeys(organizationIds);
 
-      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration({
+      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration(command.environmentId, {
         configurationId: command.configurationId,
         userId: command.userId,
       });

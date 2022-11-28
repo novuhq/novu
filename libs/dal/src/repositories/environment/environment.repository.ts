@@ -1,8 +1,12 @@
 import { BaseRepository } from '../base-repository';
 import { IApiKey, EnvironmentEntity } from './environment.entity';
 import { Environment } from './environment.schema';
+import { Document, FilterQuery } from 'mongoose';
 
-export class EnvironmentRepository extends BaseRepository<EnvironmentEntity> {
+export class EnvironmentRepository extends BaseRepository<
+  FilterQuery<EnvironmentEntity & Document>,
+  EnvironmentEntity
+> {
   constructor() {
     super(Environment, EnvironmentEntity);
   }
