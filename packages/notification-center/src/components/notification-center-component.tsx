@@ -8,7 +8,7 @@ import { useNotifications } from '../hooks';
 import { reactToWebComponent } from '../utils';
 import { ColorScheme } from '../shared/config/colors';
 
-type NovuProviderProps = Pick<
+type SelectedProviderProps = Pick<
   INovuProviderProps,
   | 'onLoad'
   | 'stores'
@@ -18,7 +18,8 @@ type NovuProviderProps = Pick<
   | 'applicationIdentifier'
   | 'subscriberHash'
   | 'i18n'
-> & {
+>;
+type NovuProviderProps = SelectedProviderProps & {
   // Angular/Vue props
   sessionLoaded?: INovuProviderProps['onLoad'];
 };
@@ -32,7 +33,7 @@ interface PopoverAdditionalProps {
   tabClicked?: IPopoverNotificationCenterProps['onTabClick'];
 }
 
-type PopoverProps = Pick<
+type SelectedPopoverProps = Pick<
   IPopoverNotificationCenterProps,
   | 'onUrlChange'
   | 'onUnseenCountChanged'
@@ -43,7 +44,8 @@ type PopoverProps = Pick<
   | 'showUserPreferences'
   | 'offset'
   | 'position'
-> & {
+>;
+type PopoverProps = SelectedPopoverProps & {
   onNotificationClick?: IPopoverNotificationCenterProps['onNotificationClick'];
   colorScheme?: ColorScheme;
 } & PopoverAdditionalProps;
