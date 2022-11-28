@@ -112,10 +112,10 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.clickWorkflowNode(`node-emailSelector`);
 
     cy.getByTestId(`step-active-switch`).should('have.value', 'on');
-    cy.getByTestId(`step-active-switch`).click();
+    cy.getByTestId(`step-active-switch`).click({ force: true });
 
     // enable email selector
-    cy.getByTestId(`step-active-switch`).click();
+    cy.getByTestId(`step-active-switch`).click({ force: true });
     cy.getByTestId(`close-side-menu-btn`).click();
 
     dragAndDrop('inApp');
