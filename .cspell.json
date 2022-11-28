@@ -165,6 +165,7 @@
     "prebuild",
     "rimraf",
     "istanbuljs"
+    "infobip"
   ],
   "flagWords": [],
   "patterns": [
