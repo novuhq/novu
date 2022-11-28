@@ -161,6 +161,8 @@
     "WEASL",
     "dbpath",
     "prebuilds",
+    "noconflict",
+    "monokai",
     "mongod"
   ],
   "flagWords": [],
