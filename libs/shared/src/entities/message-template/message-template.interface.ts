@@ -46,11 +46,11 @@ export const TemplateSystemVariables = ['subscriber', 'step', 'branding'];
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const SystemVariablesWithTypes = {
   subscriber: {
-    'firstName?': 'string',
-    'lastName?': 'string',
+    firstName: 'string',
+    lastName: 'string',
     email: 'string',
-    'phone?': 'string',
-    'avatar?': 'string',
+    phone: 'string',
+    avatar: 'string',
     subscriberId: 'string',
   },
   step: {
@@ -59,7 +59,7 @@ export const SystemVariablesWithTypes = {
     total_count: 'number',
   },
   branding: {
-    'logo?': 'string',
+    logo: 'string',
     color: 'string',
   },
 };
