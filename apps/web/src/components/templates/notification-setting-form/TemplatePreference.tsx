@@ -1,4 +1,5 @@
-import { Grid, Input, useMantineColorScheme } from '@mantine/core';
+import { FunctionComponent } from 'react';
+import { Grid, Input, useMantineColorScheme, InputWrapperProps } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext, Controller } from 'react-hook-form';
 
@@ -88,13 +89,12 @@ export function CriticalPreference() {
       control={control}
       render={({ field }) => {
         return (
-          // eslint-disable-next-line
-          // @ts-ignore
           <InputBackground
             dark={dark}
             label="System Critical (Always Sent)"
             description={<CriticalDescription field={field} />}
             styles={inputStyles}
+            children={null}
           />
         );
       }}
@@ -114,6 +114,10 @@ function CriticalDescription({ field }) {
     </DescriptionWrapper>
   );
 }
+
+export const InputWrapperProxy: FunctionComponent<InputWrapperProps> = ({ children, ...props }) => {
+  return <Input.Wrapper {...props}>{children}</Input.Wrapper>;
+};
 
 const InputBackground = styled(InputWrapperProxy)<{ dark: boolean }>`
   background: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
@@ -135,10 +139,6 @@ const StyledCheckbox = styled(CheckboxProxy)<{ isChecked: boolean }>`
   `}
   }
 `;
-
-export function InputWrapperProxy({ children, ...props }) {
-  return <Input.Wrapper {...props}>{children}</Input.Wrapper>;
-}
 
 export function CheckboxProxy({ ...props }) {
   return <Checkbox {...props} />;

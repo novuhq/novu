@@ -17,7 +17,7 @@ export default createStyles(
         gap: '30px',
         padding: '15px',
         paddingBottom: 0,
-        borderBottom: '1px solid ' + (colorScheme === 'dark' ? colors.B20 : colors.B98),
+        borderBottom: `1px solid ${colorScheme === 'dark' ? colors.B20 : colors.B98}`,
       },
 
       tab: {
@@ -29,7 +29,7 @@ export default createStyles(
         height: '36px',
         [`.mantine-Badge-root`]: {
           background: 'transparent',
-          border: '1px solid ' + colors.B60,
+          border: `1px solid ${colors.B60}`,
           color: colors.B60,
         },
 
