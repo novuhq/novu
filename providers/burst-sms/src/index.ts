@@ -1,1 +1,1 @@
-export * from './lib/burstSms.provider';
+export * from './lib/burst-sms.provider';

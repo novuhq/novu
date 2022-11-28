@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { BurstSmsProvider } from './burstSms.provider';
+import { BurstSmsProvider } from './burst-sms.provider';
 
 test('should trigger Burst SMS axios request correctly', async () => {
   const fakePost = jest.fn(() => {
