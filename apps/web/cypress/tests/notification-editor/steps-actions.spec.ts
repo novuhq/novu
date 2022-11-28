@@ -89,14 +89,29 @@ describe('Workflow Editor - Steps Actions', function () {
     });
 
     cy.clickWorkflowNode(`node-inAppSelector`);
-    cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').get('label').contains('Step is active');
-    cy.getByTestId(`step-properties-side-menu`).find('.mantine-Switch-input').click({ force: true });
+    cy.getByTestId(`step-active-switch`).get('label').contains('Step is active');
+    cy.getByTestId(`step-active-switch`).click({ force: true });
     cy.getByTestId('submit-btn').click();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
-    cy.getByTestId(`step-properties-side-menu`)
-      .find('.mantine-Switch-input')
-      .get('label')
-      .contains('Step is not active');
+    cy.getByTestId(`step-active-switch`).get('label').contains('Step is not active');
+  });
+
+  it('should be able to toggle ShouldStopOnFailSwitch', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/templates/edit/' + template._id);
+
+    cy.waitLoadEnv(() => {
+      clickWorkflow();
+    });
+
+    cy.clickWorkflowNode(`node-inAppSelector`);
+    cy.getByTestId(`step-should-stop-on-fail-switch`).get('label').contains('Stop workflow if this step fails?');
+    cy.getByTestId(`step-should-stop-on-fail-switch`).click();
+    cy.getByTestId('submit-btn').click();
+
+    cy.clickWorkflowNode(`node-inAppSelector`);
+    cy.getByTestId(`step-should-stop-on-fail-switch`).should('be.checked');
   });
 });

@@ -3,21 +3,21 @@ import { Controller } from 'react-hook-form';
 import { Switch } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 
-export const StepActiveSwitch = ({ control, index }) => {
+export const ShouldStopOnFailSwitch = ({ control, index }) => {
   const { readonly } = useEnvController();
 
   return (
     <Controller
       control={control}
-      name={`steps.${index}.active`}
+      name={`steps.${index}.shouldStopOnFail`}
       render={({ field: { value, ...field } }) => {
         return (
           <StyledSwitch
             {...field}
             disabled={readonly}
             checked={value}
-            label={`Step is ${value ? 'active' : 'not active'}`}
-            data-test-id="step-active-switch"
+            label="Stop workflow if this step fails?"
+            data-test-id="step-should-stop-on-fail-switch"
           />
         );
       }}
