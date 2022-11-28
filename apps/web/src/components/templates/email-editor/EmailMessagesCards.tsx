@@ -4,7 +4,7 @@ import { AuthContext } from '../../../store/authContext';
 import { When } from '../../utils/When';
 import { Preview } from '../../../pages/templates/editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
-import { Grid, Group, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
+import { Grid, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
 import { colors, shadows } from '../../../design-system';
 import { MobileIcon } from '../../../pages/templates/editor/PreviewSegment/MobileIcon';
@@ -69,51 +69,65 @@ export function EmailMessagesCards({
 
   return (
     <>
-      <Group position="apart" mb={view === ViewEnum.PREVIEW ? 40 : 20}>
-        <div>
-          <EditorPreviewSwitch view={view} setView={setView} />
-        </div>
-        <When truthy={view === ViewEnum.PREVIEW}>
-          <div>
-            <SegmentedControl
-              styles={{
-                root: {
-                  background: 'transparent',
-                  border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
-                  borderRadius: '30px',
-                },
-                control: {
-                  width: '70px',
-                },
-                active: {
-                  background: theme.colorScheme === 'dark' ? colors.white : colors.B98,
-                  borderRadius: '30px',
-                },
-                labelActive: {
-                  color: `${colors.B40} !important`,
-                },
-              }}
-              data={[
-                {
-                  value: 'web',
-                  label: <WebIcon />,
-                },
-                {
-                  value: 'mobile',
-                  label: <MobileIcon />,
-                },
-              ]}
-              value={preview}
-              onChange={(value: any) => {
-                setPreview(value);
-              }}
-              defaultValue={preview}
-              fullWidth
-            />
-          </div>
-        </When>
+      <div
+        style={{
+          position: 'relative',
+        }}
+      >
+        <Grid mb={view === ViewEnum.PREVIEW ? 40 : 20}>
+          <Grid.Col span={6}>
+            <Grid justify="right" mr={7}>
+              <EditorPreviewSwitch view={view} setView={setView} />
+            </Grid>
+          </Grid.Col>
+          <Grid.Col p={0} span={6}>
+            <When truthy={view === ViewEnum.PREVIEW}>
+              <SegmentedControl
+                styles={{
+                  root: {
+                    background: 'transparent',
+                    border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
+                    borderRadius: '30px',
+                    marginLeft: 7,
+                  },
+                  control: {
+                    width: '70px',
+                  },
+                  active: {
+                    background: theme.colorScheme === 'dark' ? colors.white : colors.B98,
+                    borderRadius: '30px',
+                  },
+                  labelActive: {
+                    color: `${colors.B40} !important`,
+                  },
+                }}
+                data={[
+                  {
+                    value: 'web',
+                    label: <WebIcon />,
+                  },
+                  {
+                    value: 'mobile',
+                    label: <MobileIcon />,
+                  },
+                ]}
+                value={preview}
+                onChange={(value: any) => {
+                  setPreview(value);
+                }}
+                defaultValue={preview}
+              />
+            </When>
+          </Grid.Col>
+        </Grid>
         <When truthy={view === ViewEnum.EDIT}>
-          <div>
+          <div
+            style={{
+              position: 'absolute',
+              right: 0,
+              top: '0',
+            }}
+          >
             <UnstyledButton
               type="button"
               onClick={() => {
@@ -124,7 +138,7 @@ export function EmailMessagesCards({
             </UnstyledButton>
           </div>
         </When>
-      </Group>
+      </div>
       <When truthy={view === ViewEnum.PREVIEW}>
         <Preview activeStep={index} view={preview} />
       </When>
