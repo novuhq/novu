@@ -4,11 +4,11 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { useMutation } from 'react-query';
 import { previewEmail } from '../../../api/content-templates';
 import { useIntegrations } from '../../../api/hooks';
-import { Tabs } from '../../../design-system';
+import { When } from '../../../components/utils/When';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 
-export const Preview = ({ activeStep }: { activeStep: number }) => {
+export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
   const { control } = useFormContext();
 
   const subject = useWatch({
@@ -64,24 +64,17 @@ export const Preview = ({ activeStep }: { activeStep: number }) => {
   }
 
   return (
-    <Tabs
-      position="center"
-      menuTabs={[
-        {
-          label: 'Web',
-          content: <PreviewWeb subject={subject} content={content} integration={integration} />,
-        },
-        {
-          label: 'Mobile',
-          content: (
-            <Grid>
-              <Grid.Col span={12}>
-                <PreviewMobile subject={subject} content={content} integration={integration} />
-              </Grid.Col>
-            </Grid>
-          ),
-        },
-      ]}
-    />
+    <>
+      <When truthy={view === 'web'}>
+        <PreviewWeb subject={subject} content={content} integration={integration} />
+      </When>
+      <When truthy={view === 'mobile'}>
+        <Grid>
+          <Grid.Col span={12}>
+            <PreviewMobile subject={subject} content={content} integration={integration} />
+          </Grid.Col>
+        </Grid>
+      </When>
+    </>
   );
 };

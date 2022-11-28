@@ -47,6 +47,8 @@ export { Invite } from './actions/Invite';
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';
 export { ArrowLeft } from './arrows/ArrowLeft';
+export { ChevronDown } from './arrows/ChevronDown';
+export { ChevronUp } from './arrows/ChevronUp';
 
 export { BellGradient } from './gradient/BellGradient';
 export { MailGradient } from './gradient/MailGradient';
