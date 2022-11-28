@@ -6,10 +6,12 @@ import { Code, Space, Table } from '@mantine/core';
 import styled from 'styled-components';
 import { colors, Input, Switch, Text } from '../../design-system';
 import { FieldArrayProvider } from './FieldArrayProvider';
+import { When } from '../utils/When';
 
 interface VariableManagerProps {
   index: number;
   contents: string[];
+  hideLabel?: boolean;
 }
 
 interface VariableComponentProps {
@@ -107,7 +109,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   );
 };
 
-export const VariableManager = ({ index, contents }: VariableManagerProps) => {
+export const VariableManager = ({ index, contents, hideLabel = false }: VariableManagerProps) => {
   const [ast, setAst] = useState<any>({ body: [] });
   const [textContent, setTextContent] = useState<string>('');
   const { watch, control, getValues } = useFormContext();
@@ -217,9 +219,11 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
 
   return (
     <>
-      <Text size="md" weight="bold" mt={20}>
-        Variables
-      </Text>
+      <When truthy={hideLabel === false}>
+        <Text size="md" weight="bold" mt={20}>
+          Variables
+        </Text>
+      </When>
 
       <Table>
         <thead>

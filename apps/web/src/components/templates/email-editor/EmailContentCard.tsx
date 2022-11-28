@@ -6,7 +6,6 @@ import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
-import { VariableManager } from '../VariableManager';
 import { useIntegrations } from '../../../api/hooks';
 import { EmailInboxContent } from './EmailInboxContent';
 
@@ -104,7 +103,6 @@ export function EmailContentCard({
       <div data-test-id="editor-type-selector">
         <Tabs active={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} />
       </div>
-      <VariableManager index={index} contents={['content', 'htmlContent', 'subject']} />
     </>
   );
 }
