@@ -1,7 +1,8 @@
-import { compileTemplate, getHandlebarsVariables } from './content.engine';
+import { HandlebarsContentEngine } from './content.engine';
 
 test('should parse basic variables correctly', () => {
-  const html = compileTemplate(
+  const engine = new HandlebarsContentEngine();
+  const html = engine.compileTemplate(
     `
     Basic Html <div> {{firstName}} {{user.lastName}} </div>
   `,
@@ -17,7 +18,8 @@ test('should parse basic variables correctly', () => {
 });
 
 test('should parse loop iterations', () => {
-  const html = compileTemplate(
+  const engine = new HandlebarsContentEngine();
+  const html = engine.compileTemplate(
     `
     Basic Html <div> {{#each items}} {{this}} {{/each}} </div>
   `,
@@ -31,7 +33,8 @@ test('should parse loop iterations', () => {
 });
 
 test('should parse if statements', () => {
-  const html = compileTemplate(
+  const engine = new HandlebarsContentEngine();
+  const html = engine.compileTemplate(
     `
     Basic Html <div> {{#if flag}} Content to display {{/if}} </div>
   `,
@@ -42,7 +45,7 @@ test('should parse if statements', () => {
 
   expect(html).toContain('Content to display');
 
-  const htmlWithoutContent = compileTemplate(
+  const htmlWithoutContent = engine.compileTemplate(
     `
     Basic Html <div> {{#if flag}} Content to display {{/if}} </div>
   `,
@@ -55,7 +58,8 @@ test('should parse if statements', () => {
 });
 
 test('should extract template variables', () => {
-  const variables = getHandlebarsVariables(`
+  const engine = new HandlebarsContentEngine();
+  const variables = engine.extractMessageVariables(`
     {{firstName}}
     <div> {{#if name}} {{/if}} {{cats}} </div>
 

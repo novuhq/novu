@@ -29,7 +29,7 @@ describe('test use of novus node package - NotificationTemplates class', () => {
     });
   });
 
-  test('should create a template wth the given parameters', async () => {
+  test('should create a template with the given parameters', async () => {
     mockedAxios.post.mockResolvedValue({});
 
     await novu.notificationTemplates.create({

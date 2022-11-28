@@ -1,3 +1,3 @@
 window._env_ = {
-  SKIP_PREFLIGHT_CHECK: "true",
-}
+  SKIP_PREFLIGHT_CHECK: 'true',
+};

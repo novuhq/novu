@@ -1,4 +1,7 @@
-import { compileTemplate } from '../content/content.engine';
+import {
+  HandlebarsContentEngine,
+  IContentEngine,
+} from '../content/content.engine';
 import { ISmsProvider } from '../provider/provider.interface';
 import {
   ChannelTypeEnum,
@@ -7,7 +10,15 @@ import {
 } from '../template/template.interface';
 
 export class SmsHandler {
-  constructor(private message: IMessage, private provider: ISmsProvider) {}
+  private readonly contentEngine: IContentEngine;
+
+  constructor(
+    private message: IMessage,
+    private provider: ISmsProvider,
+    contentEngine?: IContentEngine
+  ) {
+    this.contentEngine = contentEngine ?? new HandlebarsContentEngine();
+  }
 
   async send(data: ITriggerPayload) {
     const attachments = data.$attachments?.filter((item) =>
@@ -18,7 +29,7 @@ export class SmsHandler {
 
     let content = '';
     if (typeof this.message.template === 'string') {
-      content = compileTemplate(this.message.template, data);
+      content = this.contentEngine.compileTemplate(this.message.template, data);
     } else {
       content = await this.message.template(data);
     }

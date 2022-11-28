@@ -1,1 +1,1 @@
-export * from './subscriber-preference/update-subascriber-preference.dto';
+export * from './subscriber-preference/update-subscriber-preference.dto';

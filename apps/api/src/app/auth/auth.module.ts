@@ -9,7 +9,7 @@ import { UserModule } from '../user/user.module';
 import { AuthService } from './services/auth.service';
 import { USE_CASES } from './usecases';
 import { SharedModule } from '../shared/shared.module';
-import { GithubStrategy } from './services/passport/github.strategy';
+import { GitHubStrategy } from './services/passport/github.strategy';
 import { OrganizationModule } from '../organization/organization.module';
 import { EnvironmentsModule } from '../environments/environments.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
@@ -19,7 +19,7 @@ import { RootEnvironmentGuard } from './framework/root-environment-guard.service
 const AUTH_STRATEGIES = [];
 
 if (process.env.GITHUB_OAUTH_CLIENT_ID) {
-  AUTH_STRATEGIES.push(GithubStrategy);
+  AUTH_STRATEGIES.push(GitHubStrategy);
 }
 
 @Module({
