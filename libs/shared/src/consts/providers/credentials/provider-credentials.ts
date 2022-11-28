@@ -408,3 +408,13 @@ export const firetextConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const outlook365Config: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];

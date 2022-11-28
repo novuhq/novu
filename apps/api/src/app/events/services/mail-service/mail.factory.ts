@@ -11,6 +11,7 @@ import {
   SESHandler,
   NetCoreHandler,
   MailerSendHandler,
+  Outlook365Handler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -27,6 +28,7 @@ export class MailFactory {
     new SendinblueHandler(),
     new SESHandler(),
     new MailerSendHandler(),
+    new Outlook365Handler(),
   ];
 
   getHandler(
