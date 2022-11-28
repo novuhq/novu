@@ -12,7 +12,7 @@ export class PreviewEmail {
     const isEditorMode = command.contentType === 'editor';
     const [organization, content]: [OrganizationEntity, string | IEmailBlock[]] = await Promise.all([
       this.organizationRepository.findById(command.organizationId),
-      this.getContent(isEditorMode, command.content),
+      this.getContent(isEditorMode, command.content, JSON.parse(command.payload)),
     ]);
 
     const html = await this.compileTemplate.execute(
@@ -25,6 +25,7 @@ export class PreviewEmail {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
           },
+          ...JSON.parse(command.payload),
         },
       })
     );
@@ -32,13 +33,17 @@ export class PreviewEmail {
     return { html };
   }
 
-  private async getContent(isEditorMode, content: string | IEmailBlock[]): Promise<string | IEmailBlock[]> {
+  private async getContent(
+    isEditorMode,
+    content: string | IEmailBlock[],
+    payload: any = {}
+  ): Promise<string | IEmailBlock[]> {
     if (isEditorMode && Array.isArray(content)) {
       content = [...content] as IEmailBlock[];
       for (const block of content) {
-        block.content = await this.renderContent(block.content);
+        block.content = await this.renderContent(block.content, payload);
         block.content = block.content.trim();
-        block.url = await this.renderContent(block.url || '');
+        block.url = await this.renderContent(block.url || '', payload);
       }
 
       return content;
@@ -47,12 +52,14 @@ export class PreviewEmail {
     return content;
   }
 
-  private async renderContent(content: string) {
+  private async renderContent(content: string, payload: any) {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
-        customTemplate: (content as string).replace(new RegExp('{{', 'g'), '\\{{'),
-        data: {},
+        customTemplate: content,
+        data: {
+          ...payload,
+        },
       })
     );
   }
