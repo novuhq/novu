@@ -19,6 +19,7 @@ export interface ICredentials {
   clientId?: string;
   projectName?: string;
   serviceAccount?: string;
+  baseUrl?: string;
 }
 
 export class IntegrationEntity {
