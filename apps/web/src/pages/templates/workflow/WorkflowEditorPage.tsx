@@ -1,9 +1,9 @@
-import FlowEditor from '../../../components/workflow/FlowEditor';
-import styled from '@emotion/styled';
-import { Button, colors, DragButton, Text, Title } from '../../../design-system';
-import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import styled from '@emotion/styled';
+import { ActionIcon, Divider, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { StepTypeEnum } from '@novu/shared';
+import FlowEditor from '../../../components/workflow/FlowEditor';
+import { Button, colors, DragButton, Text, Title } from '../../../design-system';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
 import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
@@ -18,6 +18,7 @@ import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmM
 import { DelayMetadata } from './DelayMetadata';
 import { FilterModal } from '../filter/FilterModal';
 import { Filters } from '../filter/Filters';
+import { ShouldStopOnFailSwitch } from './ShouldStopOnFailSwitch';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -182,7 +183,10 @@ const WorkflowEditorPage = ({
                     <Divider my={30} />
                     {steps.map((i, index) => {
                       return index === activeStep ? (
-                        <StepActiveSwitch key={index} index={activeStep} control={control} />
+                        <Stack key={index}>
+                          <StepActiveSwitch index={activeStep} control={control} />
+                          <ShouldStopOnFailSwitch index={activeStep} control={control} />
+                        </Stack>
                       ) : null;
                     })}
                   </NavSection>

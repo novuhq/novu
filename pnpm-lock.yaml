@@ -180,6 +180,7 @@ importers:
       '@novu/fcm': ^0.9.0
       '@novu/firetext': ^0.9.0
       '@novu/gupshup': ^0.9.0
+      '@novu/mailersend': ^0.9.0
       '@novu/mailgun': ^0.9.0
       '@novu/mailjet': ^0.9.0
       '@novu/mandrill': ^0.9.0
@@ -284,6 +285,7 @@ importers:
       '@novu/fcm': link:../../providers/fcm
       '@novu/firetext': link:../../providers/firetext
       '@novu/gupshup': link:../../providers/gupshup
+      '@novu/mailersend': link:../../providers/mailersend
       '@novu/mailgun': link:../../providers/mailgun
       '@novu/mailjet': link:../../providers/mailjet
       '@novu/mandrill': link:../../providers/mandrill
@@ -688,7 +690,7 @@ importers:
       prettier: 2.7.1
       sinon: 9.2.4
       supertest: 6.2.2
-      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
+      ts-jest: 27.1.4_grawetaag42d3ott7xsn2rdj54
       ts-loader: 8.3.0_vhanpkig4omek67hjhmtrlsh2y
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -1316,6 +1318,7 @@ importers:
       '@novu/emailjs': ^0.9.0
       '@novu/fcm': ^0.9.0
       '@novu/gupshup': ^0.9.0
+      '@novu/mailersend': ^0.9.0
       '@novu/mailgun': ^0.9.0
       '@novu/mailjet': ^0.9.0
       '@novu/mandrill': ^0.9.0
@@ -1365,6 +1368,7 @@ importers:
       '@novu/emailjs': link:../../providers/emailjs
       '@novu/fcm': link:../../providers/fcm
       '@novu/gupshup': link:../../providers/gupshup
+      '@novu/mailersend': link:../../providers/mailersend
       '@novu/mailgun': link:../../providers/mailgun
       '@novu/mailjet': link:../../providers/mailjet
       '@novu/mandrill': link:../../providers/mandrill
@@ -1405,7 +1409,7 @@ importers:
       rimraf: 3.0.2
       sinon: 9.2.4
       standard-version: 9.3.2
-      ts-jest: 27.1.4_gxtntv5dwbdy7daxb4td26n5ra
+      ts-jest: 27.1.4_4xhzrl3rpmfnzk4dio663nrbja
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -1596,7 +1600,6 @@ importers:
       lodash.merge: ^4.6.2
       react-infinite-scroll-component: ^6.0.0
       react-query: ^3.34.19
-      react-to-webcomponent: 2.0.0-alpha.0
       rimraf: ^3.0.2
       rollup: ^2.60.0
       rollup-plugin-dts: ^4.0.1
@@ -1620,7 +1623,6 @@ importers:
       lodash.merge: 4.6.2
       react-infinite-scroll-component: 6.1.0_react@17.0.2
       react-query: 3.34.19_sfoxds7t5ydpegc3knd667wn6m
-      react-to-webcomponent: 2.0.0-alpha.0
       rollup-plugin-node-externals: 4.0.0_rollup@2.70.1
       socket.io-client: 2.3.1
       styled-components: 5.3.5_v5ja746gkdtknuc6tj46sve3be
@@ -2557,7 +2559,7 @@ importers:
       prettier: 2.6.1
       rimraf: 3.0.2
       standard-version: 9.3.2
-      ts-jest: 27.1.4_f2nb3ogvi2jblycszsucfjpvle
+      ts-jest: 27.1.4_tzmvep6o36pfgiaazqvpnnngsa
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -2692,7 +2694,7 @@ importers:
       prettier: 2.7.1
       rimraf: 3.0.2
       standard-version: 9.3.2
-      ts-jest: 27.1.4_zorco6kbqtso4tbodg3tzvjobe
+      ts-jest: 27.1.4_grawetaag42d3ott7xsn2rdj54
       ts-node: 9.1.1_typescript@4.3.5
       typedoc: 0.19.2_typescript@4.3.5
       typescript: 4.3.5
@@ -51192,10 +51194,6 @@ packages:
     transitivePeerDependencies:
       - '@types/react'
 
-  /react-to-webcomponent/2.0.0-alpha.0:
-    resolution: {integrity: sha512-TFTtKPf3Wpa9b/zcgGAlZIYtVuM0rFVb49MYlZcM8Hipg7srB2/XoCE2792LU/EXP26ZLsXFmUVjwOy2pFrotQ==}
-    dev: false
-
   /react-transition-group/4.4.2_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-/RNYfRAMlZwDSr6z4zNKV6xu53/e2BuaBbGhbyYIXTrmgu/bGHzmqOs7mJSJBHy9Ud+ApHx3QjrkKSp1pxvlFg==}
     peerDependencies:
@@ -55729,40 +55727,6 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-jest/27.1.4_2zv7k5h6rtkokmofpwrobdeggm:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@types/jest': 27.4.1
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.7
-      typescript: 4.3.5
-      yargs-parser: 20.2.9
-    dev: true
-
   /ts-jest/27.1.4_4xhzrl3rpmfnzk4dio663nrbja:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -55833,41 +55797,6 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-jest/27.1.4_f2nb3ogvi2jblycszsucfjpvle:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@babel/core': 7.18.9
-      '@types/jest': 27.4.0
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.4.7_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.7
-      typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
   /ts-jest/27.1.4_f2ydo5ucceswsbw6k7wjl7x74u:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -55935,41 +55864,6 @@ packages:
       make-error: 1.3.6
       semver: 7.3.7
       typescript: 4.3.5
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_gxtntv5dwbdy7daxb4td26n5ra:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@babel/core': 7.18.9
-      '@types/jest': 27.4.0
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.7
-      typescript: 4.6.2
       yargs-parser: 20.2.9
     dev: true
 
@@ -56075,41 +55969,6 @@ packages:
       make-error: 1.3.6
       semver: 7.3.7
       typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_zorco6kbqtso4tbodg3tzvjobe:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@babel/core': 7.18.9
-      '@types/jest': 27.4.1
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.7
-      typescript: 4.3.5
       yargs-parser: 20.2.9
     dev: true
 
