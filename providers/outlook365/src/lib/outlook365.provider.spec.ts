@@ -1,23 +1,9 @@
-const sendMailMock = jest.fn().mockReturnValue(() => {
-  return {} as any;
-});
-
-const checkIntegrationMock = jest.fn().mockReturnValue(() => {
-  return {} as any;
-});
-
+import {
+  CheckIntegrationResponseEnum,
+  ICheckIntegrationResponse,
+  ISendMessageSuccessResponse,
+} from '@novu/stateless';
 import { Outlook365Provider } from './outlook365.provider';
-
-jest.mock('./outlook365.provider', () => ({
-  get Outlook365Provider() {
-    return jest.fn().mockImplementation(function () {
-      return {
-        sendMessage: sendMailMock,
-        checkIntegration: checkIntegrationMock,
-      };
-    });
-  },
-}));
 
 const mockConfig = {
   from: 'test@test.com',
@@ -36,16 +22,44 @@ const mockNovuMessage = {
 
 test('should trigger outlook365 library correctly', async () => {
   const provider = new Outlook365Provider(mockConfig);
-  await provider.sendMessage(mockNovuMessage);
+  const spy = jest
+    .spyOn(provider, 'sendMessage')
+    .mockImplementation(async () => {
+      return {
+        id: 'message-id',
+        date: '11/28/2022',
+      } as ISendMessageSuccessResponse;
+    });
 
-  expect(sendMailMock).toHaveBeenCalled();
-  expect(sendMailMock).toHaveBeenCalledWith(mockNovuMessage);
+  const response = await provider.sendMessage(mockNovuMessage);
+
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith(mockNovuMessage);
+
+  expect(response).not.toBeNull();
+  expect(response.date).toBe('11/28/2022');
+  expect(response.id).toBe('message-id');
 });
 
 test('should check provider integration correctly', async () => {
   const provider = new Outlook365Provider(mockConfig);
+
+  const spy = jest
+    .spyOn(provider, 'checkIntegration')
+    .mockImplementation(async () => {
+      return {
+        success: true,
+        message: 'test',
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      } as ICheckIntegrationResponse;
+    });
+
   const response = await provider.checkIntegration(mockNovuMessage);
 
-  expect(checkIntegrationMock).toHaveBeenCalled();
-  expect(checkIntegrationMock).toHaveBeenCalledWith(mockNovuMessage);
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith(mockNovuMessage);
+  expect(response).not.toBeNull();
+  expect(response.success).toBeTruthy();
+  expect(response.message).toBe('test');
+  expect(response.code).toBe(CheckIntegrationResponseEnum.SUCCESS);
 });
