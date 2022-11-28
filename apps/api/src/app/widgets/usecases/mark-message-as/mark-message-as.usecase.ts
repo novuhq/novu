@@ -21,6 +21,7 @@ export class MarkMessageAs {
     await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
 
     const messages = await this.messageRepository.find({
+      _environmentId: command.environmentId,
       _id: {
         $in: command.messageIds,
       },

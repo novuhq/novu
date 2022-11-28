@@ -228,6 +228,16 @@ export const sesConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const mailerSendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const plivoConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.AccountSid,
@@ -412,4 +422,21 @@ export const firetextConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
+];
+
+export const infobipConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+  ...mailConfigBase,
 ];

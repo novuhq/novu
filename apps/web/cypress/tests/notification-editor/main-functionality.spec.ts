@@ -23,6 +23,7 @@ describe('Workflow Editor - Main Functionality', function () {
       parseSpecialCharSequences: false,
     });
     cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailPreheader').type('this is email preheader');
     goBack();
 
     editChannel('inApp');
@@ -32,6 +33,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.getByTestId('editable-text-content').contains('This text is written from a test');
     cy.getByTestId('emailSubject').should('have.value', 'this is email subject');
+    cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 
   it('should edit notification', function () {
@@ -109,17 +111,17 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.clickWorkflowNode(`node-emailSelector`);
 
-    cy.get('.mantine-Switch-input').should('have.value', 'on');
-    cy.get('.mantine-Switch-input').click();
+    cy.getByTestId(`step-active-switch`).should('have.value', 'on');
+    cy.getByTestId(`step-active-switch`).click();
 
     // enable email selector
-    cy.get('.mantine-Switch-input').click();
+    cy.getByTestId(`step-active-switch`).click();
     cy.getByTestId(`close-side-menu-btn`).click();
 
     dragAndDrop('inApp');
 
     cy.clickWorkflowNode(`node-inAppSelector`);
-    cy.get('.mantine-Switch-input').should('have.value', 'on');
+    cy.getByTestId(`step-active-switch`).should('have.value', 'on');
   });
 
   it('should show trigger snippet block when editing', function () {

@@ -40,6 +40,7 @@ export class UpdateSubscriber {
 
     await this.subscriberRepository.update(
       {
+        _environmentId: command.environmentId,
         _id: foundSubscriber,
       },
       { $set: updatePayload }
