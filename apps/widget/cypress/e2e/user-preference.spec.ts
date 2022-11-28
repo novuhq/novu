@@ -85,7 +85,7 @@ describe('User Preferences', function () {
       cy.getByTestId('workflow-active-channels').should('contain', 'Email');
       cy.getByTestId('channel-preference-item').should('have.length', 3);
       cy.getByTestId('channel-preference-item-toggle').eq(0).should('be.checked');
-      cy.getByTestId('channel-preference-item-toggle').eq(0).click();
+      cy.getByTestId('channel-preference-item-toggle').eq(0).click({ force: true });
       cy.wait(1000);
 
       cy.getByTestId('channel-preference-item-toggle').eq(0).should('not.be.checked');
