@@ -35,14 +35,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           }}
           type="button"
         >
-          <Text
-            sx={{
-              textDecoration: 'underline',
-            }}
-            gradient
-          >
-            Add defaults or mark as required
-          </Text>
+          <Text gradient>Add defaults or mark as required</Text>
         </UnstyledButton>
       </div>
       <VarLabel label="System Vars">
