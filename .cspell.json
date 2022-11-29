@@ -173,7 +173,8 @@
     "tfstate",
     "mpeltonen",
     "replstate",
-    "Intelli"
+    "Intelli",
+    "codestream"
   ],
   "flagWords": [],
   "patterns": [
