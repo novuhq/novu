@@ -8,4 +8,5 @@ export * from './postmark.handler';
 export * from './sendinblue.handler';
 export * from './ses.handler';
 export * from './netcore.handler';
+export * from './infobip.handler';
 export * from './mailersend.handler';
