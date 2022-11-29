@@ -147,7 +147,7 @@ export class SendMessage {
 
     const result = this.isActionStep(job) || this.stepPreferred(preference, job);
 
-    if (!result) {
+    if (!result && !template.critical) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -161,7 +161,7 @@ export class SendMessage {
       );
     }
 
-    return result;
+    return result || template.critical;
   }
 
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
