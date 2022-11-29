@@ -66,7 +66,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
       content: contentType === 'editor' ? editorContent : htmlContent,
       payload: processedVariables,
     });
-  }, [contentType, htmlContent, editorContent, setContent, mutateAsync, processedVariables]);
+  }, [contentType, htmlContent, editorContent, parseContent, processedVariables]);
 
   useEffect(() => {
     if (integrations.length === 0) {
@@ -126,7 +126,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
                 });
               }}
             >
-              Apply
+              Apply Variables
             </Button>
           </div>
         </Grid.Col>

@@ -9,10 +9,14 @@ export class PreviewEmail {
   constructor(private compileTemplate: CompileTemplate, private organizationRepository: OrganizationRepository) {}
 
   public async execute(command: PreviewEmailCommand) {
+    let payload = {};
+    try {
+      payload = JSON.parse(command.payload);
+    } catch (e) {}
     const isEditorMode = command.contentType === 'editor';
     const [organization, content]: [OrganizationEntity, string | IEmailBlock[]] = await Promise.all([
       this.organizationRepository.findById(command.organizationId),
-      this.getContent(isEditorMode, command.content, JSON.parse(command.payload)),
+      this.getContent(isEditorMode, command.content, payload),
     ]);
 
     const html = await this.compileTemplate.execute(
@@ -25,7 +29,7 @@ export class PreviewEmail {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
           },
-          ...JSON.parse(command.payload),
+          ...payload,
         },
       })
     );
