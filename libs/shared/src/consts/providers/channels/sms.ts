@@ -10,6 +10,7 @@ import {
   twilioConfig,
   firetextConfig,
   infobipConfig,
+  burstSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -86,5 +87,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: infobipConfig,
     docReference: 'https://www.infobip.com/docs',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
+  },
+  {
+    id: SmsProviderIdEnum.BurstSms,
+    displayName: 'BurstSMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: burstSmsConfig,
+    docReference: 'https://developer.transmitsms.com/',
+    logoFileName: { light: 'burst-sms.svg', dark: 'burst-sms.svg' },
   },
 ];
