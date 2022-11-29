@@ -3,8 +3,10 @@ import { PreviewEmail } from './usecases/parse-preview/preview-email.usecase';
 import { PreviewEmailCommand } from './usecases/parse-preview/preview-email.command';
 import { IEmailBlock, IJwtPayload, MessageTemplateContentType } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
+import { ApiExcludeController } from '@nestjs/swagger';
 
 @Controller('/content-templates')
+@ApiExcludeController()
 export class ContentTemplatesController {
   constructor(private previewEmailUsecase: PreviewEmail) {}
 

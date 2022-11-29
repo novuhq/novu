@@ -1,8 +1,8 @@
 import { Group } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 import { GotAQuestionButton } from '../utils/GotAQuestionButton';
-import { colors, Container, Text } from '../../design-system';
+import { Container } from '../../design-system';
 
 const ActionsWrapper = styled(Container)`
   margin: 0;

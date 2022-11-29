@@ -8,6 +8,9 @@ import { Tabs } from '../../../design-system';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 
+const WEB = 'Web';
+const MOBILE = 'Mobile';
+
 export const Preview = ({ activeStep }: { activeStep: number }) => {
   const { control } = useFormContext();
 
@@ -65,14 +68,14 @@ export const Preview = ({ activeStep }: { activeStep: number }) => {
 
   return (
     <Tabs
-      position="center"
+      defaultValue={WEB}
       menuTabs={[
         {
-          label: 'Web',
+          value: WEB,
           content: <PreviewWeb subject={subject} content={content} integration={integration} />,
         },
         {
-          label: 'Mobile',
+          value: MOBILE,
           content: (
             <Grid>
               <Grid.Col span={12}>

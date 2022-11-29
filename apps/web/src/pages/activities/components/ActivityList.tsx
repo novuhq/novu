@@ -1,8 +1,7 @@
 import React from 'react';
-import { LoadingOverlay, Pagination, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { LoadingOverlay, Pagination, useMantineColorScheme } from '@mantine/core';
 
 import { ActivityItem } from './ActivityItem';
-
 import { colors } from '../../../design-system';
 
 export type Data = Record<string, any>;
@@ -37,14 +36,14 @@ export function ActivityList({ data: userData, pagination = false, loading = fal
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
         <Pagination
           styles={{
-            active: {
-              backgroundImage: colors.horizontal,
-              border: 'none',
-            },
             item: {
               marginTop: '15px',
               marginBottom: '15px',
               backgroundColor: 'transparent',
+              '&[data-active]': {
+                backgroundImage: colors.horizontal,
+                border: 'none',
+              },
             },
           }}
           total={getPageCount()}

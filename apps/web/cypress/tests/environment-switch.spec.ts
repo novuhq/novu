@@ -44,6 +44,7 @@ describe('Environment Switch Control', function () {
           cy.getByTestId('environment-switch-loading-overlay')
             .should('not.exist')
             .then(() => {
+              cy.wait(100);
               cy.getByTestId('environment-switch').find('.mantine-SegmentedControl-controlActive').contains(modes[1]);
             });
         } else {
@@ -52,6 +53,7 @@ describe('Environment Switch Control', function () {
           cy.getByTestId('environment-switch-loading-overlay')
             .should('not.exist')
             .then(() => {
+              cy.wait(100);
               cy.getByTestId('environment-switch').find('.mantine-SegmentedControl-controlActive').contains(modes[0]);
             });
         }

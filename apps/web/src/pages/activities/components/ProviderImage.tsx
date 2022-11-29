@@ -1,5 +1,5 @@
 import { useMantineColorScheme } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { providers } from '@novu/shared';
 
 export const ProviderImage = ({ providerId }: { providerId: string | undefined }) => {
