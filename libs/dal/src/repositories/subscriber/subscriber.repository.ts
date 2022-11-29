@@ -31,6 +31,11 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     return super.update(query, updateBody);
   }
 
+  @InvalidateCache()
+  async create(data: EnforceEnvironmentQuery) {
+    return super.create(data);
+  }
+
   @Cached()
   async findOne(query: EnforceIdentifierQuery, select?: ProjectionType<any>) {
     return super.findOne(query, select);

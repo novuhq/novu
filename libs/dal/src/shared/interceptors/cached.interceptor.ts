@@ -23,6 +23,9 @@ export function Cached(storeKeyPrefix?: string) {
 
         try {
           const response = await originalMethod.apply(this, args);
+
+          if (!response) return response;
+
           await this.cacheService.set(cacheKey, JSON.stringify(response));
 
           return response;
