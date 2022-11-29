@@ -18,7 +18,7 @@ const notificationTemplateSchema = new Schema(
     },
     critical: {
       type: Schema.Types.Boolean,
-      default: true,
+      default: false,
     },
     _notificationGroupId: {
       type: Schema.Types.ObjectId,
