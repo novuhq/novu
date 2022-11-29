@@ -35,7 +35,7 @@ describe('User Preferences', function () {
     cy.getByTestId('user-preference-cog').should('exist');
     cy.getByTestId('user-preference-cog').click();
 
-    cy.getByTestId('workflow-list-item').should('have.length', 2);
+    cy.getByTestId('workflow-list-item').should('have.length', 5);
 
     cy.getByTestId('go-back-btn').click();
     cy.getByTestId('notification-list-item').should('have.length', 1);
