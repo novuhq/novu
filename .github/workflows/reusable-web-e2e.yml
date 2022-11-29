@@ -99,6 +99,8 @@ jobs:
 
       - name: Start Client
         working-directory: apps/web
+        env:
+          REACT_APP_API_URL: http://localhost:1336
         run: pnpm pnpm start:static:build &
 
       - name: Start API in TEST
