@@ -94,6 +94,6 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: burstSmsConfig,
     docReference: 'https://developer.transmitsms.com/',
-    logoFileName: { light: 'burstsms.svg', dark: 'burstsms.svg' },
+    logoFileName: { light: 'burst-sms.svg', dark: 'burst-sms.svg' },
   },
 ];

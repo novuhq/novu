@@ -5,7 +5,7 @@ import { BurstSmsProvider } from '@novu/burst-sms';
 
 export class BurstSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('burstsms', ChannelTypeEnum.SMS);
+    super('burst-sms', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
     const config: {
