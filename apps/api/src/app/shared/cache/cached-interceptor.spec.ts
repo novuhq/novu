@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ICacheService, Cached, InvalidateCache } from '@novu/dal';
+import { Cached, ICacheService, InvalidateCache } from '@novu/dal';
 import { CacheService } from './cache-service.spec';
 import { beforeEach } from 'mocha';
 
@@ -45,7 +45,67 @@ describe('cached interceptor', function () {
     expect(repoResponse.data).to.be.equal('new data');
     expect(repo.callCount).to.be.equal(3);
   });
+
+  it('should extract null from cache store', async function () {
+    const messageRepo = new MessageRepo();
+
+    const createCachedNull = await messageRepo.find({ _subscriberId: '123', _environmentId: '456' });
+    const responseFromCache = await messageRepo.find({ _subscriberId: '123', _environmentId: '456' });
+
+    expect(messageRepo.callCount).to.be.equal(1);
+    expect(responseFromCache).to.be.equal(null);
+  });
+
+  it('Message repository - should create new entity and invalidate the old null response', async function () {
+    const messageRepo = new MessageRepo();
+
+    // create cached null -> result  {123:456 : null} because its data not stored in the storage
+    await messageRepo.find({ _subscriberId: '123', _environmentId: '456' });
+
+    // should create new collection in the cache {123:456 : object}
+    await messageRepo.create({
+      _subscriberId: '123',
+      _environmentId: '456',
+      data: 'random data',
+    });
+
+    const extractedDataBySubscriberId = await messageRepo.find({ _subscriberId: '123', _environmentId: '456' });
+
+    expect(messageRepo.callCount).to.be.equal(3);
+    expect(extractedDataBySubscriberId.data).to.be.equal('random data');
+  });
 });
+
+class MessageRepo {
+  public cacheService: ICacheService;
+  public count = 0;
+  private store = {};
+  constructor() {
+    this.cacheService = CacheService.createClient();
+  }
+  get callCount() {
+    return this.count;
+  }
+  @Cached('Message')
+  async find(query: any, select: any = '', options: { limit?: number; sort?: any; skip?: number } = {}): Promise<any> {
+    this.count++;
+
+    const findKey = `${query._subscriberId}:${query._environmentId}`;
+
+    return this.store[findKey] ?? null;
+  }
+
+  @InvalidateCache('Message')
+  async create(data: any): Promise<any> {
+    this.count++;
+
+    const createKey = `${data._subscriberId}:${data._environmentId}`;
+    const newEntity = Object.assign({}, data, { _id: '112358132134' });
+    this.store[createKey] = newEntity;
+
+    return newEntity ?? null;
+  }
+}
 
 class Repo {
   public cacheService: ICacheService;

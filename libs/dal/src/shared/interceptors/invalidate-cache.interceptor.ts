@@ -8,22 +8,26 @@ export function InvalidateCache(storeKeyPrefix?: string) {
     descriptor.value = async function (...args: any[]) {
       if (!isStoreConnected(this.cacheService?.getStatus())) return await originalMethod.apply(this, args);
 
-      const query = args[0];
+      const res = await originalMethod.apply(this, args);
 
-      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel?.modelName, query);
+      if (!res) {
+        return res;
+      }
+
+      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel?.modelName, res);
 
       if (!cacheKey) {
-        return await originalMethod.apply(this, args);
+        return res;
       }
 
       try {
         this.cacheService.delByPattern(cacheKey);
+
+        return res;
       } catch (err) {
         // Logger.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache');
-        return await originalMethod.apply(this, args);
+        return res;
       }
-
-      return await originalMethod.apply(this, args);
     };
   };
 }
