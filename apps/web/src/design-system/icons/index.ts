@@ -61,5 +61,4 @@ export { ConnectGradient } from './gradient/ConnectGradient';
 export { ChatGradient } from './gradient/ChatGradient';
 export { LevelsGradient } from './gradient/LevelsGradient';
 export { TimerGradient } from './gradient/TimerGradient';
-
-export { GitHub } from './social/GitHub';
+export { GitHub } from './social/Github';
