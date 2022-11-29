@@ -1,7 +1,11 @@
 import { Prism } from '@mantine/prism';
 import { INotificationTrigger } from '@novu/shared';
+
 import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
+
+const NODE_JS = 'Node.js';
+const CURL = 'Curl';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
   const { subscriberVariables: triggerSubscriberVariables = [] } = trigger || {};
@@ -12,16 +16,16 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
 
   const prismTabs = [
     {
-      label: 'Node.js',
+      value: NODE_JS,
       content: getNodeTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables),
     },
     {
-      label: 'Curl',
+      value: CURL,
       content: getCurlTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables),
     },
   ];
 
-  return <Tabs data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
+  return <Tabs defaultValue={NODE_JS} data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
 }
 
 export const getNodeTriggerSnippet = (identifier, variables, subscriberVariables) => {

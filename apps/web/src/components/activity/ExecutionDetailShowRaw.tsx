@@ -1,6 +1,6 @@
 import { Container, Group, useMantineColorScheme } from '@mantine/core';
 import { Prism } from '@mantine/prism';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 import { Button, colors, Text } from '../../design-system';
 import { Close } from '../../design-system/icons/actions/Close';
@@ -20,7 +20,7 @@ const DetailTitle = styled(Text)`
   padding-bottom: 20px;
 `;
 
-const ActionButton = styled(Button)<{ theme: string }>`
+const ActionButton = styled(Button)`
   background-color: transparent;
   background-image: none;
   border: 1px solid ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B40 : colors.B80)};
@@ -34,7 +34,7 @@ const ActionButton = styled(Button)<{ theme: string }>`
   width: 95px;
 `;
 
-const CloseButton = styled(Button)<{ theme: string }>`
+const CloseButton = styled(Button)`
   background-color: transparent;
   background-image: none;
   border-radius: 30px;
@@ -49,8 +49,6 @@ const CloseButton = styled(Button)<{ theme: string }>`
 `;
 
 export const ExecutionDetailShowRaw = ({ onShowExecutionDetail, onHideExecutionDetail, showTriggerSnippet }) => {
-  const theme = useMantineColorScheme();
-
   const action = showTriggerSnippet ? onShowExecutionDetail : onHideExecutionDetail;
   const label = showTriggerSnippet ? 'Show detail' : 'Close detail';
 
@@ -58,11 +56,7 @@ export const ExecutionDetailShowRaw = ({ onShowExecutionDetail, onHideExecutionD
     action();
   };
 
-  return (
-    <ActionButton theme={theme} onClick={onClick}>
-      {label}
-    </ActionButton>
-  );
+  return <ActionButton onClick={onClick}>{label}</ActionButton>;
 };
 
 export const ExecutionDetailRawSnippet = ({ raw, onClose }) => {

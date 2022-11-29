@@ -10,9 +10,12 @@ import {
 } from '@ant-design/icons';
 import { useController } from 'react-hook-form';
 import { SystemAvatarIconEnum, IActor, ActorTypeEnum } from '@novu/shared';
+
 import { colors, Input, Switch, Text, Tooltip } from '../../design-system';
 import { Avatar, Camera } from '../../design-system/icons';
 import { AvatarWrapper, IconWrapper, useStyles } from './AvatarContainer.styles';
+
+const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
 
 const systemIcons = [
   {
@@ -86,98 +89,97 @@ const AvatarContainer = ({
   }
 
   return (
-    <>
+    <span style={{ position: 'relative' }}>
       <Popover
-        target={
-          <Tooltip label={<TooltipLabel />} position="left" opened={tooltipOpened}>
-            <AvatarWrapper onClick={handleAvatarPopover} dark={dark}>
-              <RenderAvatar actor={value} />
-            </AvatarWrapper>
-          </Tooltip>
-        }
         opened={opened}
-        position="right"
-        placement="start"
+        position="right-start"
         withArrow
-        classNames={{
-          inner: classes.inner,
-          target: classes.target,
-          arrow: classes.arrow,
-          body: classes.body,
-          popover: classes.popover,
-        }}
+        classNames={classes}
         onClose={() => setOpened(false)}
         closeOnClickOutside
+        clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
+        withinPortal
       >
-        <Stack>
-          <Group align="center">
-            <Box>
-              <Avatar />
-            </Box>
-            <Box>
-              <Text>User avatar</Text>
-            </Box>
-            <Box
-              sx={{
-                marginLeft: 'auto',
-              }}
-            >
-              <Switch
-                checked={value.type === ActorTypeEnum.USER}
-                onChange={(event) =>
-                  onChange({
-                    type: event.currentTarget.checked ? ActorTypeEnum.USER : ActorTypeEnum.NONE,
-                    data: null,
-                  })
-                }
-              />
-            </Box>
-          </Group>
-          <Divider label={<Text color={colors.B60}>Platform/System Avatars</Text>} labelPosition="left" />
-
-          <Group align="center">
-            <Box>
-              <Camera />
-            </Box>
-            <Box>
-              <Text>Enter Avatar's URL</Text>
-            </Box>
-          </Group>
-          <Input
-            placeholder="Enter Avatar's URL"
-            onBlur={(event) =>
-              onChange({
-                data: event.target.value,
-                type: event.target.value ? ActorTypeEnum.SYSTEM_CUSTOM : ActorTypeEnum.NONE,
-              })
-            }
-            onChange={(event) => {
-              setAvatarURLInput(event.target.value);
-            }}
-            value={avatarURLInput}
-          />
-          <Divider label={<Text color={colors.B60}>or choose a system avatar</Text>} labelPosition="center" />
-          <Group position="center" spacing={20}>
-            {systemIcons.map((icon) => (
-              <IconWrapper
-                iconColor={icon.iconColor}
-                containerBgColor={icon.containerBgColor}
-                onClick={() =>
-                  onChange({
-                    type: ActorTypeEnum.SYSTEM_ICON,
-                    data: icon.type,
-                  })
-                }
-                size={50}
-                key={icon.type}
+        <Popover.Target>
+          <span>
+            <Tooltip label={<TooltipLabel />} position="left" withinPortal opened={tooltipOpened}>
+              <AvatarWrapper onClick={handleAvatarPopover} dark={dark}>
+                <RenderAvatar actor={value} />
+              </AvatarWrapper>
+            </Tooltip>
+          </span>
+        </Popover.Target>
+        <Popover.Dropdown>
+          <Stack sx={{ width: '230px' }}>
+            <Group align="center">
+              <Box>
+                <Avatar />
+              </Box>
+              <Box>
+                <Text>User avatar</Text>
+              </Box>
+              <Box
+                sx={{
+                  marginLeft: 'auto',
+                }}
               >
-                <div>{icon.icon}</div>
-              </IconWrapper>
-            ))}
-          </Group>
-        </Stack>
+                <Switch
+                  checked={value.type === ActorTypeEnum.USER}
+                  onChange={(event) =>
+                    onChange({
+                      type: event.currentTarget.checked ? ActorTypeEnum.USER : ActorTypeEnum.NONE,
+                      data: null,
+                    })
+                  }
+                />
+              </Box>
+            </Group>
+            <Divider label={<Text color={colors.B60}>Platform/System Avatars</Text>} labelPosition="left" />
+
+            <Group align="center">
+              <Box>
+                <Camera />
+              </Box>
+              <Box>
+                <Text>Enter Avatar's URL</Text>
+              </Box>
+            </Group>
+            <Input
+              placeholder="Enter Avatar's URL"
+              onBlur={(event) =>
+                onChange({
+                  data: event.target.value,
+                  type: event.target.value ? ActorTypeEnum.SYSTEM_CUSTOM : ActorTypeEnum.NONE,
+                })
+              }
+              onChange={(event) => {
+                setAvatarURLInput(event.target.value);
+              }}
+              value={avatarURLInput}
+            />
+            <Divider label={<Text color={colors.B60}>or choose a system avatar</Text>} labelPosition="center" />
+            <Group position="center" spacing={20}>
+              {systemIcons.map((icon) => (
+                <IconWrapper
+                  iconColor={icon.iconColor}
+                  containerBgColor={icon.containerBgColor}
+                  onClick={() =>
+                    onChange({
+                      type: ActorTypeEnum.SYSTEM_ICON,
+                      data: icon.type,
+                    })
+                  }
+                  size={50}
+                  key={icon.type}
+                >
+                  <div>{icon.icon}</div>
+                </IconWrapper>
+              ))}
+            </Group>
+          </Stack>
+        </Popover.Dropdown>
       </Popover>
-    </>
+    </span>
   );
 };
 

@@ -1,11 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { TemplateVariableTypeEnum, MemberStatusEnum } from '@novu/shared';
-import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
-import { Button, Text, colors, Tooltip } from '../../../design-system';
-import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery } from 'react-query';
 import { useFormContext, useWatch } from 'react-hook-form';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
+import { useClipboard } from '@mantine/hooks';
+import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
+import * as set from 'lodash.set';
+import * as get from 'lodash.get';
+import { TemplateVariableTypeEnum, MemberStatusEnum } from '@novu/shared';
+
+import { Button, Text, colors, Tooltip } from '../../../design-system';
 import { testSendEmailMessage } from '../../../api/templates';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { AuthContext } from '../../../store/authContext';
@@ -14,8 +17,6 @@ import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';
 import { IMustacheVariable } from '../VariableManager';
 import { getOrganizationMembers } from '../../../api/organization';
-import * as set from 'lodash.set';
-import * as get from 'lodash.get';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentUser } = useContext(AuthContext);
@@ -63,6 +64,13 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
     }
   };
 
+  const onSendToCreate = (query: string): undefined => {
+    setMembersEmails((current) => [...current, query]);
+    setSendTo((current) => [...current, query]);
+
+    return;
+  };
+
   return (
     <div style={{ maxWidth: '800px', margin: 'auto', padding: '20px 25px' }}>
       <Text my={30} color={colors.B60}>
@@ -87,7 +95,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
           creatable
           searchable
           getCreateLabel={(newEmail) => <div>+ Send to {newEmail}</div>}
-          onCreate={(query) => setMembersEmails((current) => [...current, query])}
+          onCreate={onSendToCreate}
         />
       </Wrapper>
 
@@ -114,7 +122,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
         }
       />
 
-      <Group direction="row" mt={30}>
+      <Group mt={30}>
         <Button
           loading={isLoading}
           icon={<Invite />}
