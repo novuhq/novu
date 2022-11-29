@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { colors } from '../../../../design-system';
-import { Collapse, UnstyledButton } from '@mantine/core';
+import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { ChevronUp } from '../../../../design-system/icons';
 import { ChevronDown } from '../../../../design-system/icons/arrows/ChevronDown';
 
 export const VarLabel = ({ label, children }) => {
   const [open, setOpen] = useState(true);
+  const theme = useMantineTheme();
 
   return (
     <>
@@ -21,7 +22,7 @@ export const VarLabel = ({ label, children }) => {
       >
         <div
           style={{
-            color: colors.white,
+            color: theme.colorScheme === 'dark' ? colors.white : colors.B60,
             fontSize: 14,
             fontWeight: 'bold',
           }}

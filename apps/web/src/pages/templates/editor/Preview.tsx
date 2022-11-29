@@ -1,4 +1,4 @@
-import { Grid, JsonInput, Loader } from '@mantine/core';
+import { Grid, JsonInput, Loader, useMantineTheme } from '@mantine/core';
 import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -66,7 +66,8 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
       content: contentType === 'editor' ? editorContent : htmlContent,
       payload: processedVariables,
     });
-  }, [contentType, htmlContent, editorContent, parseContent, processedVariables]);
+  }, [contentType, htmlContent, editorContent, processedVariables]);
+  const theme = useMantineTheme();
 
   useEffect(() => {
     if (integrations.length === 0) {
@@ -99,7 +100,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
             style={{
               width: '100%',
               height: '100%',
-              background: colors.B17,
+              background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
               borderRadius: 7,
               padding: 15,
             }}
@@ -125,6 +126,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
                   payload: payloadValue,
                 });
               }}
+              variant="outline"
             >
               Apply Variables
             </Button>

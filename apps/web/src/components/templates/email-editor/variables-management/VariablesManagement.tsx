@@ -4,10 +4,12 @@ import { SystemVariablesWithTypes } from '@novu/shared';
 import { VarItem } from './VarItem';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
-import { UnstyledButton } from '@mantine/core';
+import { UnstyledButton, useMantineTheme } from '@mantine/core';
+import { getGradient } from '../../../../design-system/config/helper';
 
 export const VariablesManagement = ({ index, openVariablesModal }) => {
   const { control } = useFormContext();
+  const theme = useMantineTheme();
   const variableArray = useWatch({
     name: `steps.${index}.template.variables`,
     control,
@@ -18,7 +20,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
       style={{
         width: '100%',
         height: '100%',
-        background: colors.B17,
+        background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
         borderRadius: 7,
         padding: 15,
       }}
@@ -34,6 +36,13 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
             openVariablesModal();
           }}
           type="button"
+          sx={{
+            borderBottom: '1px solid transparent',
+            background: `${
+              theme.colorScheme === 'dark' ? getGradient(colors.B17) : getGradient(colors.B98)
+            } padding-box, ${colors.horizontal} border-box`,
+            paddingBottom: '2px',
+          }}
         >
           <Text gradient>Add defaults or mark as required</Text>
         </UnstyledButton>

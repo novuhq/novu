@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Collapse, UnstyledButton } from '@mantine/core';
+import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { ChevronUp } from '../../../../design-system/icons';
 import { ChevronDown } from '../../../../design-system/icons/arrows/ChevronDown';
 import { VarItem } from './VarItem';
+import { colors } from '../../../../design-system';
 
 export const VarItemsDropdown = ({ name, type }) => {
   const [open, setOpen] = useState(false);
+  const theme = useMantineTheme();
 
   return (
     <>
@@ -31,7 +33,7 @@ export const VarItemsDropdown = ({ name, type }) => {
       <Collapse in={open}>
         <div
           style={{
-            borderBottom: `1px solid #292933`,
+            borderBottom: `1px solid ${theme.colorScheme === 'dark' ? colors.B20 : colors.B85}`,
             marginBottom: 10,
             paddingLeft: 12,
           }}
