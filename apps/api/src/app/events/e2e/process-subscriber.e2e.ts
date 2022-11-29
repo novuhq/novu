@@ -148,7 +148,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     expect(message.length).to.equal(3);
   });
 
-  it('should ignore subscruber preference and send all triggers for System critical template', async function () {
+  it('should ignore subscriber preference and send all triggers for system critical template', async function () {
     const payload: ISubscribersDefine = {
       subscriberId: session.subscriberId,
       firstName: 'New Test Name',
