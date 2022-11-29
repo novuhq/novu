@@ -36,6 +36,7 @@ export enum EmailProviderIdEnum {
   NetCore = 'netcore',
   Infobip = 'infobip',
   MailerSend = 'mailersend',
+  Outlook365 = 'outlook365',
 }
 
 export enum SmsProviderIdEnum {
