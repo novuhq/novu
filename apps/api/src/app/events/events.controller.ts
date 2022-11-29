@@ -11,7 +11,14 @@ import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.c
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiExcludeEndpoint,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
 import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
 import { TestSendEmailRequestDto } from './dtos/test-email-request.dto';
@@ -120,6 +127,7 @@ export class EventsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('/test/email')
+  @ApiExcludeEndpoint()
   async testEmailMessage(@UserSession() user: IJwtPayload, @Body() body: TestSendEmailRequestDto): Promise<void> {
     return await this.sendTestEmail.execute(
       TestSendMessageCommand.create({
