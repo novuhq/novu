@@ -36,6 +36,7 @@ export enum EmailProviderIdEnum {
   NetCore = 'netcore',
   Infobip = 'infobip',
   MailerSend = 'mailersend',
+  Clickatell = 'clickatell',
 }
 
 export enum SmsProviderIdEnum {
@@ -49,6 +50,7 @@ export enum SmsProviderIdEnum {
   Firetext = 'firetext',
   Infobip = 'infobip',
   BurstSms = 'burst-sms',
+  Clickatell = 'clickatell',
 }
 
 export enum ChatProviderIdEnum {

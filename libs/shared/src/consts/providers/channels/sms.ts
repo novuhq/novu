@@ -11,6 +11,7 @@ import {
   firetextConfig,
   infobipConfig,
   burstSmsConfig,
+  clickatellConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -95,5 +96,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: burstSmsConfig,
     docReference: 'https://developer.transmitsms.com/',
     logoFileName: { light: 'burst-sms.svg', dark: 'burst-sms.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Clickatell,
+    displayName: 'clickatell',
+    channel: ChannelTypeEnum.SMS,
+    credentials: clickatellConfig,
+    betaVersion: true,
+    docReference: 'https://docs.clickatell.com/',
+    logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
   },
 ];
