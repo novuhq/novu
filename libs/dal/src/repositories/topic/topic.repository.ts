@@ -16,7 +16,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
     super(Topic, TopicEntity);
   }
 
-  async findTopicByKeyOrganizationAndEnvironment(
+  async findTopicByKey(
     key: TopicKey,
     organizationId: OrganizationId,
     environmentId: EnvironmentId
