@@ -1,9 +1,11 @@
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
+  ISMSEventBody,
   ISmsOptions,
   ISmsProvider,
-} from '@novu/node';
+  SmsEventStatusEnum,
+} from '@novu/stateless';
 
 import axios, { Axios } from 'axios';
 

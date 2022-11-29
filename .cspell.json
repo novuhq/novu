@@ -165,7 +165,15 @@
     "prebuild",
     "rimraf",
     "istanbuljs",
-    "infobip"
+    "infobip",
+    "clickatell",
+    "eslintcache",
+    "dbnavigator",
+    "Fdfdf",
+    "tfstate",
+    "mpeltonen",
+    "replstate",
+    "Intelli"
   ],
   "flagWords": [],
   "patterns": [

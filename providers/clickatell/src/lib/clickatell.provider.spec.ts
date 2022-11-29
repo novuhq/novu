@@ -11,7 +11,7 @@ test('should trigger clickatellSmsProvider library correctly', async () => {
     .spyOn(provider, 'sendMessage')
     .mockImplementation(async () => {
       return {
-        id: '67890-jhdbnf-90q8',
+        id: '67890-90q8',
         date: new Date().toISOString(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
