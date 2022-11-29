@@ -48,6 +48,7 @@ export enum SmsProviderIdEnum {
   Gupshup = 'gupshup',
   Firetext = 'firetext',
   Infobip = 'infobip',
+  BurstSms = 'burst-sms',
 }
 
 export enum ChatProviderIdEnum {
