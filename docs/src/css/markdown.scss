@@ -1,0 +1,181 @@
+.markdown {
+  h1,
+  h1:first-child {
+    font-size: 30px;
+  }
+
+  > h2 {
+    font-size: 24px;
+  }
+
+  > h3 {
+    font-size: 20px;
+  }
+
+  > h4 {
+    font-size: 18px;
+  }
+
+  strong {
+    font-weight: 500;
+  }
+
+  h2 {
+    padding-top: 40px;
+    margin-top: 40px;
+
+    @include mobile-screen {
+      padding-top: 25px !important;
+      margin-top: 25px !important;
+    }
+  }
+
+  a:not([class]) {
+    text-decoration: underline 1px rgba(0, 0, 0, 0);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.2s;
+  }
+
+  img {
+    border-radius: 4px;
+  }
+
+  blockquote {
+    border-left: 2px solid $color-secondary-yellow;
+
+    p {
+      font-weight: 400;
+    }
+
+    cite {
+      font-style: normal;
+    }
+  }
+
+  pre code span,
+  code {
+    font-family: 'IBM Plex Mono';
+  }
+
+  pre code:not([class]) {
+    display: initial;
+  }
+
+  code {
+    &:not([class]) {
+      border: none;
+      border-radius: 2px;
+      padding: 1px 6px;
+      line-height: 1.5;
+      font-weight: normal;
+      display: inline-block;
+      margin-top: -2px;
+      font-size: 14px;
+    }
+  }
+
+  table {
+    margin-bottom: 32px;
+
+    th,
+    td {
+      border: none;
+    }
+
+    thead {
+      background-color: transparent;
+
+      th {
+        font-weight: 400;
+        text-align: left;
+      }
+
+      tr {
+        border-bottom: none;
+        border-top: none;
+      }
+    }
+
+    tr:nth-child(2n) {
+      background-color: transparent;
+    }
+  }
+}
+
+html[data-theme='dark'] {
+  --ifm-table-border-color: #333333;
+
+  .markdown {
+    h2 {
+      border-top: 1px dashed $color-gray-4;
+    }
+
+    a:not([class]):hover {
+      text-decoration-color: $color-primary-blue;
+    }
+
+    ul, ol {
+      > li::marker {
+        color: $color-primary-blue;
+      }
+    }
+
+    blockquote {
+      cite {
+        color: $color-gray-8;
+      }
+    }
+  
+
+    code {
+      &:not([class]) {
+        background-color: $color-gray-2;
+      }
+    }
+
+    table {
+      th {
+        color: $color-gray-8;
+      }
+    }
+  }
+}
+
+
+html[data-theme='light'] {
+  --ifm-table-border-color: #cccccc;
+
+  .markdown {
+    ul, ol {
+      > li::marker {
+        color: $color-secondary-blue;
+      }
+    }
+
+    h2 {
+      border-top: 1px dashed $color-gray-9;
+    }
+
+    a:not([class]):hover {
+      text-decoration-color: $color-secondary-blue;
+    }
+
+    blockquote {
+      cite {
+        color: $color-gray-6;
+      }
+    }
+
+    code {
+      &:not([class]) {
+        background-color: $color-gray-11;
+      }
+    }
+
+    table {
+      th {
+        color: $color-gray-6;
+      }
+    }
+  }
+}

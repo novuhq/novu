@@ -1,4 +1,5 @@
 {
   "label": "Channels",
-  "position": 5
+  "position": 5,
+  "collapsible": false
 }

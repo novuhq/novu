@@ -1,6 +1,5 @@
 // eslint-ignore max-len
-
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -16,6 +15,8 @@ import { UpdateMessageTemplateCommand } from '../../../message-template/usecases
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -24,7 +25,8 @@ export class UpdateNotificationTemplate {
     private createMessageTemplate: CreateMessageTemplate,
     private updateMessageTemplate: UpdateMessageTemplate,
     private createChange: CreateChange,
-    private changeRepository: ChangeRepository
+    private changeRepository: ChangeRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -32,7 +34,7 @@ export class UpdateNotificationTemplate {
       command.templateId,
       command.organizationId
     );
-    if (!existingTemplate) throw new NotFoundException(`Entity with id ${command.templateId} not found`);
+    if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.templateId} not found`);
 
     const updatePayload: Partial<NotificationTemplateEntity> = {};
     if (command.name) {
@@ -43,11 +45,50 @@ export class UpdateNotificationTemplate {
       updatePayload.description = command.description;
     }
 
+    if (command.identifier) {
+      const isExistingIdentifier = await this.notificationTemplateRepository.findByTriggerIdentifier(
+        command.environmentId,
+        command.identifier
+      );
+
+      if (isExistingIdentifier && isExistingIdentifier._id !== command.templateId) {
+        throw new BadRequestException(`Notification template with identifier ${command.identifier} already exists`);
+      } else {
+        updatePayload['triggers.0.identifier'] = command.identifier;
+      }
+    }
+
     if (command.notificationGroupId) {
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
 
+    if (command.critical != null) {
+      updatePayload.critical = command.critical;
+
+      if (command.critical !== existingTemplate.critical) {
+        this.analyticsService.track('Update Critical Template - [Platform]', command.userId, {
+          _organization: command.organizationId,
+          critical: command.critical,
+        });
+      }
+    }
+
+    if (command.preferenceSettings) {
+      if (existingTemplate.preferenceSettings) {
+        if (JSON.stringify(existingTemplate.preferenceSettings) !== JSON.stringify(command.preferenceSettings)) {
+          this.analyticsService.track('Update Preference Defaults - [Platform]', command.userId, {
+            _organization: command.organizationId,
+            critical: command.critical,
+            ...command.preferenceSettings,
+          });
+        }
+      }
+
+      updatePayload.preferenceSettings = command.preferenceSettings;
+    }
+
     const parentChangeId: string = await this.changeRepository.getChangeId(
+      command.environmentId,
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
       existingTemplate._id
     );
@@ -66,57 +107,80 @@ export class UpdateNotificationTemplate {
 
       const subscribersVariables = contentService.extractSubscriberMessageVariables(command.steps);
 
-      updatePayload['triggers.0.subscribersVariables'] = subscribersVariables.map((i) => {
+      updatePayload['triggers.0.subscriberVariables'] = subscribersVariables.map((i) => {
         return {
           name: i,
         };
       });
 
       const templateMessages: NotificationStepEntity[] = [];
+      let parentStepId: string | null = null;
 
       for (const message of steps) {
-        if (message._id) {
+        let stepId = message._id;
+        if (message._templateId) {
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
-              templateId: message._id,
-              type: message.type,
-              name: message.name,
-              content: message.content,
+              templateId: message._templateId,
+              type: message.template.type,
+              name: message.template.name,
+              content: message.template.content,
+              variables: message.template.variables,
               organizationId: command.organizationId,
               environmentId: command.environmentId,
               userId: command.userId,
-              contentType: message.contentType,
-              cta: message.cta,
-              subject: message.subject,
+              contentType: message.template.contentType,
+              cta: message.template.cta,
+              feedId: message.template.feedId ? message.template.feedId : null,
+              subject: message.template.subject,
+              title: message.template.title,
+              preheader: message.template.preheader,
+              actor: message.template.actor,
               parentChangeId,
             })
           );
 
           templateMessages.push({
+            _id: stepId,
             _templateId: template._id,
             filters: message.filters,
+            _parentId: parentStepId,
+            active: message.active,
+            metadata: message.metadata,
+            shouldStopOnFail: message.shouldStopOnFail,
           });
         } else {
           const template = await this.createMessageTemplate.execute(
             CreateMessageTemplateCommand.create({
-              type: message.type,
-              name: message.name,
-              content: message.content,
+              type: message.template.type,
+              name: message.template.name,
+              content: message.template.content,
+              variables: message.template.variables,
               organizationId: command.organizationId,
               environmentId: command.environmentId,
-              contentType: message.contentType,
+              contentType: message.template.contentType,
               userId: command.userId,
-              cta: message.cta,
-              subject: message.subject,
+              cta: message.template.cta,
+              feedId: message.template.feedId,
+              subject: message.template.subject,
+              title: message.template.title,
+              preheader: message.template.preheader,
               parentChangeId,
             })
           );
 
+          stepId = template._id;
           templateMessages.push({
+            _id: stepId,
             _templateId: template._id,
             filters: message.filters,
+            _parentId: parentStepId,
+            active: message.active,
+            metadata: message.metadata,
+            shouldStopOnFail: message.shouldStopOnFail,
           });
         }
+        parentStepId = stepId;
       }
       updatePayload.steps = templateMessages;
     }
@@ -155,6 +219,13 @@ export class UpdateNotificationTemplate {
         changeId: parentChangeId,
       })
     );
+
+    this.analyticsService.track('Update Notification Template - [Platform]', command.userId, {
+      _organization: command.organizationId,
+      steps: command.steps?.length,
+      channels: command.steps?.map((i) => i.template.type),
+      critical: command.critical,
+    });
 
     return await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
   }

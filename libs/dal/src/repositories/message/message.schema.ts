@@ -1,5 +1,7 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
+import * as mongooseDelete from 'mongoose-delete';
+import { ActorTypeEnum } from '@novu/shared';
 import { schemaOptions } from '../schema-default.options';
 import { MessageEntity } from './message.entity';
 
@@ -32,21 +34,58 @@ const messageSchema = new Schema(
       ref: 'Subscriber',
       index: true,
     },
+    _jobId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Job',
+    },
+    templateIdentifier: Schema.Types.String,
     email: Schema.Types.String,
+    subject: Schema.Types.String,
     cta: {
       type: {
         type: Schema.Types.String,
       },
       data: Schema.Types.Mixed,
+      action: {
+        status: Schema.Types.String,
+        buttons: [
+          {
+            type: {
+              type: Schema.Types.String,
+            },
+            content: Schema.Types.String,
+            resultContent: Schema.Types.String,
+          },
+        ],
+        result: {
+          payload: Schema.Types.Mixed,
+          type: {
+            type: Schema.Types.String,
+          },
+        },
+      },
+    },
+    _feedId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Feed',
     },
     channel: Schema.Types.String,
     content: Schema.Types.Mixed,
     phone: Schema.Types.String,
+    directWebhookUrl: Schema.Types.String,
+    providerId: Schema.Types.String,
+    deviceTokens: [Schema.Types.Array],
+    title: Schema.Types.String,
     seen: {
       type: Schema.Types.Boolean,
       default: false,
     },
+    read: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     lastSeenDate: Schema.Types.Date,
+    lastReadDate: Schema.Types.Date,
     createdAt: {
       type: Schema.Types.Date,
       default: Date.now,
@@ -61,6 +100,16 @@ const messageSchema = new Schema(
     transactionId: {
       type: Schema.Types.String,
       index: true,
+    },
+    identifier: Schema.Types.String,
+    payload: Schema.Types.Mixed,
+    overrides: Schema.Types.Mixed,
+    actor: {
+      type: {
+        type: Schema.Types.String,
+        enum: ActorTypeEnum,
+      },
+      data: Schema.Types.Mixed,
     },
   },
   { ...schemaOptions }
@@ -79,6 +128,8 @@ messageSchema.virtual('template', {
   foreignField: '_id',
   justOne: true,
 });
+
+messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 interface IMessageDocument extends MessageEntity, Document {
   _id: never;

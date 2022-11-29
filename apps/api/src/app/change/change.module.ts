@@ -1,10 +1,11 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { forwardRef, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { SharedModule } from '../shared/shared.module';
 import { ChangesController } from './changes.controller';
 import { USE_CASES } from './usecases';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, forwardRef(() => AuthModule)],
   providers: [...USE_CASES],
   exports: [...USE_CASES],
   controllers: [ChangesController],

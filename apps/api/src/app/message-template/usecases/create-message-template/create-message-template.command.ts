@@ -1,17 +1,18 @@
 import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import {
+  StepTypeEnum,
+  IEmailBlock,
+  IMessageCTA,
+  ITemplateVariable,
+  IActor,
+  MessageTemplateContentType,
+} from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { ChannelCTADto } from '../../../notification-template/dto/create-notification-template.dto';
 
 export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
-  static create(data: CreateMessageTemplateCommand) {
-    return CommandHelper.create<CreateMessageTemplateCommand>(CreateMessageTemplateCommand, data);
-  }
-
   @IsDefined()
-  @IsEnum(ChannelTypeEnum)
-  type: ChannelTypeEnum;
+  @IsEnum(StepTypeEnum)
+  type: StepTypeEnum;
 
   @IsOptional()
   name?: string;
@@ -19,16 +20,33 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   subject?: string;
 
+  @IsOptional()
+  title?: string;
+
+  @IsOptional()
+  variables?: ITemplateVariable[];
+
   @IsDefined()
   content: string | IEmailBlock[];
 
   @IsOptional()
-  contentType: 'editor' | 'customHtml';
+  contentType: MessageTemplateContentType;
 
   @IsOptional()
   @ValidateNested()
-  cta: ChannelCTADto;
+  cta: IMessageCTA;
+
+  @IsOptional()
+  @IsString()
+  feedId: string;
 
   @IsMongoId()
   parentChangeId: string;
+
+  @IsOptional()
+  @IsString()
+  preheader?: string;
+
+  @IsOptional()
+  actor?: IActor;
 }

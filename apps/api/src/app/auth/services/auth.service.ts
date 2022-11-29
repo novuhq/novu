@@ -18,7 +18,6 @@ import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-
 import { SwitchEnvironment } from '../usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
-import { QueueService } from '../../shared/services/queue';
 import { AnalyticsService } from '../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 
@@ -29,7 +28,6 @@ export class AuthService {
     private subscriberRepository: SubscriberRepository,
     private createUserUsecase: CreateUser,
     private jwtService: JwtService,
-    private queueService: QueueService,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
@@ -102,7 +100,7 @@ export class AuthService {
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
 
-  async getSubscriberWidgetToken(subscriber: SubscriberEntity) {
+  async getSubscriberWidgetToken(subscriber: SubscriberEntity, userId: string): Promise<string> {
     return this.jwtService.sign(
       {
         _id: subscriber._id,
@@ -112,6 +110,7 @@ export class AuthService {
         organizationId: subscriber._organizationId,
         environmentId: subscriber._environmentId,
         subscriberId: subscriber.subscriberId,
+        organizationAdminId: userId,
       },
       {
         expiresIn: '15 day',
@@ -130,9 +129,9 @@ export class AuthService {
     return this.jwtService.sign(
       {
         _id: user._id,
-        firstName: null,
+        firstName: 'API Request',
         lastName: null,
-        email: null,
+        email: user.email,
         profilePicture: null,
         organizationId,
         roles: [MemberRoleEnum.ADMIN],

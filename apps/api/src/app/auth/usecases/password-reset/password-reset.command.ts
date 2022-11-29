@@ -1,12 +1,7 @@
 import { IsDefined, IsString, IsUUID, MinLength } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class PasswordResetCommand {
-  static create(data: PasswordResetCommand) {
-    return CommandHelper.create<PasswordResetCommand>(PasswordResetCommand, data);
-  }
-
+export class PasswordResetCommand extends BaseCommand {
   @IsString()
   @IsDefined()
   @MinLength(8)

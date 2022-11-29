@@ -1,7 +1,3 @@
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class SeedDataCommand {
-  static create(data: SeedDataCommand) {
-    return CommandHelper.create(SeedDataCommand, data);
-  }
-}
+export class SeedDataCommand extends BaseCommand {}

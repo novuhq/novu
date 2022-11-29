@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { EnvironmentRepository, SubscriberEntity } from '@novu/dal';
+import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
@@ -7,6 +7,7 @@ import { InitializeSessionCommand } from './initialize-session.command';
 import { createHmac } from 'crypto';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
 
 @Injectable()
 export class InitializeSession {
@@ -14,13 +15,12 @@ export class InitializeSession {
     private environmentRepository: EnvironmentRepository,
     private createSubscriber: CreateSubscriber,
     private authService: AuthService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private feedRepository: FeedRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private membersRepository: MemberRepository
   ) {}
 
-  async execute(command: InitializeSessionCommand): Promise<{
-    token: string;
-    profile: Partial<SubscriberEntity>;
-  }> {
+  async execute(command: InitializeSessionCommand): Promise<SessionInitializeResponseDto> {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
     if (!environment) {
@@ -44,12 +44,15 @@ export class InitializeSession {
     const subscriber = await this.createSubscriber.execute(commandos);
 
     this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
-      organizationId: environment._organizationId,
+      _organization: environment._organizationId,
       environmentName: environment.name,
+      _subscriber: subscriber._id,
     });
 
+    const organizationAdmin = await this.membersRepository.getOrganizationAdminAccount(environment._organizationId);
+
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber),
+      token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin?._userId),
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,

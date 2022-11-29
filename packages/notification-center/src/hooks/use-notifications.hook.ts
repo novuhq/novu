@@ -1,51 +1,70 @@
-import { useApi } from './use-api.hook';
-import { useEffect, useState } from 'react';
+import { useContext } from 'react';
+import { NotificationsContext } from '../store/notifications.context';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { INotificationsContext } from '../shared/interfaces';
 import { IMessage } from '@novu/shared';
+import { IStoreQuery } from '@novu/client';
 
-export function useNotifications() {
-  const { api } = useApi();
-  const [notifications, setNotifications] = useState<IMessage[]>([]);
-  const [page, setPage] = useState<number>(0);
-  const [hasNextPage, setHasNextPage] = useState<boolean>(true);
-  const [fetching, setFetching] = useState<boolean>(false);
+interface IUseNotificationsProps {
+  storeId?: string;
+}
 
-  useEffect(() => {
-    if (!api?.isAuthenticated) return;
+export function useNotifications(props?: IUseNotificationsProps): IUseNotifications {
+  const {
+    notifications: mapNotifications,
+    fetchNextPage: mapFetchNextPage,
+    hasNextPage: mapHasNextPage,
+    fetching,
+    markAsRead: mapMarkAsRead,
+    updateAction: mapUpdateAction,
+    refetch: mapRefetch,
+    markAsSeen: mapMarkAsSeen,
+    onWidgetClose: mapOnWidgetClose,
+    onTabChange: mapOnTabChange,
+    markAllAsRead: mapMarkAllAsRead,
+  } = useContext<INotificationsContext>(NotificationsContext);
 
-    fetchPage(0);
-  }, [api?.isAuthenticated]);
+  const storeId = props?.storeId ? props?.storeId : 'default_store';
 
-  async function fetchPage(pageToFetch: number, isRefetch = false) {
-    setFetching(true);
-
-    const newNotifications = await api.getNotificationsList(pageToFetch);
-
-    if (newNotifications?.length < 10) {
-      setHasNextPage(false);
-    }
-
-    if (isRefetch) {
-      setNotifications([...newNotifications]);
-    } else {
-      setNotifications([...notifications, ...newNotifications]);
-    }
-
-    setFetching(false);
-  }
+  const notifications: IMessage[] = mapNotifications[storeId];
 
   async function fetchNextPage() {
-    if (!hasNextPage) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    await fetchPage(nextPage);
+    await mapFetchNextPage(storeId);
   }
 
-  async function markAsSeen(messageId: string) {
-    return await api.markMessageAsSeen(messageId);
+  const hasNextPage = mapHasNextPage[storeId] ? mapHasNextPage[storeId] : false;
+
+  async function markAsRead(messageId: string): Promise<void> {
+    await mapMarkAsRead(messageId, storeId);
+  }
+
+  async function updateAction(
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ) {
+    await mapUpdateAction(messageId, actionButtonType, status, payload, storeId);
   }
 
   async function refetch() {
-    await fetchPage(0, true);
+    await mapRefetch(storeId);
+  }
+
+  async function markAsSeen(messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]): Promise<void> {
+    await mapMarkAsSeen(messageId, readExist, messages, storeId);
+  }
+
+  function onTabChange() {
+    mapOnTabChange(storeId);
+  }
+
+  async function markAllAsRead(): Promise<number> {
+    return await mapMarkAllAsRead(storeId);
+  }
+
+  function onWidgetClose() {
+    mapOnWidgetClose();
   }
 
   return {
@@ -53,7 +72,31 @@ export function useNotifications() {
     fetchNextPage,
     hasNextPage,
     fetching,
-    markAsSeen,
+    markAsRead,
+    updateAction,
     refetch,
+    markAsSeen,
+    onWidgetClose,
+    onTabChange,
+    markAllAsRead,
   };
+}
+
+export interface IUseNotifications {
+  notifications: IMessage[];
+  fetchNextPage: () => void;
+  hasNextPage: boolean;
+  fetching: boolean;
+  markAsRead?: (messageId: string) => void;
+  markAllAsRead: () => Promise<number>;
+  updateAction: (
+    messageId: string,
+    actionButtonType: ButtonTypeEnum,
+    status: MessageActionStatusEnum,
+    payload?: Record<string, unknown>
+  ) => void;
+  refetch: (query?: IStoreQuery) => void;
+  markAsSeen: (messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]) => void;
+  onWidgetClose: () => void;
+  onTabChange: () => void;
 }

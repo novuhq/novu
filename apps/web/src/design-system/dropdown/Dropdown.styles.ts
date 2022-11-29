@@ -20,7 +20,7 @@ export default createStyles((theme: MantineTheme) => {
     item: {
       borerRadius: '5px',
       color: `${dark ? theme.white : colors.B40} !important`,
-      fontWeight: '400',
+      fontWeight: 400,
       fontSize: '14px',
     },
     itemHovered: {

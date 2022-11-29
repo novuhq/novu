@@ -9,6 +9,9 @@ import {
   PostmarkHandler,
   SendinblueHandler,
   SESHandler,
+  NetCoreHandler,
+  InfobipEmailHandler,
+  MailerSendHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -16,6 +19,7 @@ export class MailFactory {
   handlers: IMailHandler[] = [
     new SendgridHandler(),
     new MailgunHandler(),
+    new NetCoreHandler(),
     new EmailJsHandler(),
     new MailjetHandler(),
     new MandrillHandler(),
@@ -23,9 +27,14 @@ export class MailFactory {
     new PostmarkHandler(),
     new SendinblueHandler(),
     new SESHandler(),
+    new InfobipEmailHandler(),
+    new MailerSendHandler(),
   ];
 
-  getHandler(integration: IntegrationEntity, from: string): IMailHandler {
+  getHandler(
+    integration: Pick<IntegrationEntity, '_id' | 'credentials' | 'channel' | 'providerId'>,
+    from?: string
+  ): IMailHandler {
     try {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;

@@ -1,6 +1,7 @@
-import { NotificationCenter, NovuProvider } from '@novu/notification-center';
-import { IMessage, IOrganizationEntity } from '@novu/shared';
-import React, { useEffect, useState } from 'react';
+import { NotificationCenter, NovuProvider, ITranslationEntry, ITab, IStore } from '@novu/notification-center';
+import { INovuThemeProvider } from '@novu/notification-center';
+import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
+import { useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
 import { API_URL, WS_URL } from '../../config';
 import { createGlobalStyle } from 'styled-components';
@@ -9,12 +10,20 @@ interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged: (unseenCount: number) => void;
+  onActionClick: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   applicationIdentifier: string | undefined;
 }
 
 export function NotificationCenterWidget(props: INotificationCenterWidgetProps) {
   const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
+  const [backendUrl, setBackendUrl] = useState(API_URL);
+  const [socketUrl, setSocketUrl] = useState(WS_URL);
+  const [theme, setTheme] = useState<INovuThemeProvider>({});
   const [fontFamily, setFontFamily] = useState<string>('Lato');
+  const [frameInitialized, setFrameInitialized] = useState(false);
+  const [i18n, setI18n] = useState<ITranslationEntry>();
+  const [tabs, setTabs] = useState<ITab[]>();
+  const [stores, setStores] = useState<IStore[]>();
 
   useEffect(() => {
     WebFont.load({
@@ -26,9 +35,35 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handler = async (event: { data: any }) => {
-      if (event.data.type === 'INIT_IFRAME') {
-        setUserDataPayload(event.data.value.data);
+    const handler = ({ data }: any) => {
+      if (data && data.type === 'INIT_IFRAME') {
+        setUserDataPayload(data.value.data);
+
+        if (data.value.backendUrl) {
+          setBackendUrl(data.value.backendUrl);
+        }
+
+        if (data.value.socketUrl) {
+          setSocketUrl(data.value.socketUrl);
+        }
+
+        if (data.value.theme) {
+          setTheme(data.value.theme);
+        }
+
+        if (data.value.i18n) {
+          setI18n(data.value.i18n);
+        }
+
+        if (data.value.tabs) {
+          setTabs(data.value.tabs);
+        }
+
+        if (data.value.stores) {
+          setStores(data.value.stores);
+        }
+
+        setFrameInitialized(true);
       }
     };
 
@@ -38,6 +73,8 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
     }
 
     window.addEventListener('message', handler);
+
+    window.parent.postMessage({ type: 'WIDGET_READY' }, '*');
 
     return () => window.removeEventListener('message', handler);
   }, []);
@@ -51,21 +88,28 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   return (
     <>
       <GlobalStyle fontFamily={fontFamily} />
-      <NovuProvider
-        backendUrl={API_URL}
-        socketUrl={WS_URL}
-        applicationIdentifier={props.applicationIdentifier as string}
-        subscriberId={userDataPayload.subscriberId}
-        onLoad={onLoad}
-        subscriberHash={userDataPayload.subscriberHash}
-      >
-        <NotificationCenter
-          colorScheme="light"
-          onNotificationClick={props.onNotificationClick}
-          onUrlChange={props.onUrlChange}
-          onUnseenCountChanged={props.onUnseenCountChanged}
-        />
-      </NovuProvider>
+      {frameInitialized && (
+        <NovuProvider
+          backendUrl={backendUrl}
+          socketUrl={socketUrl}
+          applicationIdentifier={props.applicationIdentifier as string}
+          subscriberId={userDataPayload.subscriberId}
+          onLoad={onLoad}
+          subscriberHash={userDataPayload.subscriberHash}
+          i18n={i18n}
+          stores={stores}
+        >
+          <NotificationCenter
+            colorScheme="light"
+            onNotificationClick={props.onNotificationClick}
+            onUrlChange={props.onUrlChange}
+            onUnseenCountChanged={props.onUnseenCountChanged}
+            onActionClick={props.onActionClick}
+            theme={theme}
+            tabs={tabs}
+          />
+        </NovuProvider>
+      )}
     </>
   );
 }

@@ -23,7 +23,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
     label: {
       ref: label,
       fontSize: '14px',
-      fontWeight: '700',
+      fontWeight: 700,
       padding: '12px 18px',
       color: theme.colors.gray[8],
     },

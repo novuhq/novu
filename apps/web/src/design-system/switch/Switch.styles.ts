@@ -1,5 +1,4 @@
 import { createStyles, MantineTheme } from '@mantine/core';
-import { colors } from '../config';
 
 export default createStyles((theme: MantineTheme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
@@ -15,6 +14,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       width: '40px',
       height: '24px',
       border: 'transparent',
+      cursor: 'pointer',
       '&::before': {
         border: 'transparent',
         width: '20px',
@@ -29,12 +29,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
         },
       },
       '&:disabled': {
-        backgroundImage: dark ? colors.darkDisabled : colors.disabled,
-        [`& + .${label}`]: {
-          backgroundImage: dark ? colors.darkDisabled : colors.disabled,
-          backgroundClip: 'text',
-          color: 'transparent',
-        },
+        opacity: 0.75,
       },
     },
     label: {
@@ -42,6 +37,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       paddingLeft: '10px',
       backgroundImage: 'none',
       color: dark ? theme.colors.dark[6] : theme.colors.gray[6],
+      cursor: 'pointer',
     },
   };
 });

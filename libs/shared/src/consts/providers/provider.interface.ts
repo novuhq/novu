@@ -9,6 +9,7 @@ export interface IProviderConfig {
   logoFileName: ILogoFileName;
   docReference: string;
   comingSoon?: boolean;
+  betaVersion?: boolean;
 }
 
 export interface IConfigCredentials {
@@ -17,6 +18,7 @@ export interface IConfigCredentials {
   displayName: string;
   description?: string;
   type: string;
+  required: boolean;
 }
 
 export interface ILogoFileName {

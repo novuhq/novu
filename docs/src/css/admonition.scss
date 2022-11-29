@@ -1,0 +1,90 @@
+article {
+  .admonition {
+    .admonition-icon svg {
+      display: none;
+    }
+    .admonition-icon {
+      display: none;
+    }
+  }
+
+  .alert {
+    --ifm-alert-border-radius: 0px;
+    --ifm-alert-shadow: none;
+    --ifm-alert-border-left-width: 2px;
+    --ifm-alert-padding-vertical: 16px;
+    --ifm-alert-padding-horizontal: 20px;
+  }
+
+  .admonition-tip {
+    --ifm-heading-color: #00e3bd;
+    --ifm-alert-border-color: #00e3bd;
+  }
+
+  .admonition-info {
+    --ifm-heading-color: #00d5ff;
+    --ifm-alert-border-color: #00d5ff;
+  }
+
+  .admonition-caution {
+    --ifm-heading-color: #ffe14d;
+    --ifm-alert-border-color: #ffe14d;
+  }
+
+  .admonition-danger {
+    --ifm-heading-color: #e300bd;
+    --ifm-alert-border-color: #e300bd;
+  }
+}
+
+html[data-theme='light'] {
+  article {
+    .admonition-note {
+      --ifm-heading-color: #999999;
+      --ifm-alert-background-color: rgba(153, 153, 153, 0.08);
+      --ifm-alert-border-color: #999999;
+    }
+
+    .admonition-tip {
+      --ifm-alert-background-color: rgba(0, 227, 189, 0.08);
+    }
+
+    .admonition-info {
+      --ifm-alert-background-color: rgba(0, 213, 255, 0.08);
+    }
+
+    .admonition-caution {
+      --ifm-alert-background-color: rgba(255, 225, 77, 0.08);
+    }
+
+    .admonition-danger {
+      --ifm-alert-background-color: rgba(227, 0, 189, 0.08);
+    }
+  }
+}
+
+html[data-theme='dark'] {
+  article {
+    .admonition-note {
+      --ifm-heading-color: #ffffff;
+      --ifm-alert-background-color: rgba(255, 255, 255, 0.1);
+      --ifm-alert-border-color: #ffffff;
+    }
+
+    .admonition-tip {
+      --ifm-alert-background-color: rgba(0, 227, 189, 0.1);
+    }
+
+    .admonition-info {
+      --ifm-alert-background-color: rgba(0, 213, 255, 0.1);
+    }
+
+    .admonition-caution {
+      --ifm-alert-background-color: rgba(255, 225, 77, 0.1);
+    }
+
+    .admonition-danger {
+      --ifm-alert-background-color: rgba(227, 0, 189, 0.08);
+    }
+  }
+}

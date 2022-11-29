@@ -1,25 +1,24 @@
 export interface ITelnyxCLient {
-    messages: {
-      create: (options: ITelnyxSmsOptions) => Promise<ITelnyxMessageResponse>;
-    };
-};
-  
-
-export interface ITelnyxSmsOptions {
-    to: string;
-    text: string;
-    from?: string;
-    messaging_profile_id?: string;
+  messages: {
+    create: (options: ITelnyxSmsOptions) => Promise<ITelnyxMessageResponse>;
+  };
 }
 
+export interface ITelnyxSmsOptions {
+  to: string;
+  text: string;
+  from?: string;
+  messaging_profile_id?: string;
+}
 
-
+// eslint-disable-next-line @typescript-eslint/naming-convention
 interface From {
   phone_number: string;
   carrier: string;
   line_type: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 interface To {
   phone_number: string;
   status: string;
@@ -27,6 +26,7 @@ interface To {
   line_type: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 interface Data {
   record_type: string;
   direction: string;
@@ -54,4 +54,3 @@ interface Data {
 export interface ITelnyxMessageResponse {
   data: Data;
 }
-

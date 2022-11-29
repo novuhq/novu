@@ -1,45 +1,160 @@
 import { Form } from 'antd';
+import { useContext, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import styled from 'styled-components';
-import { MemberStatusEnum } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
-import * as capitalize from 'lodash.capitalize';
-import { Avatar, Container, Divider, Group, Text } from '@mantine/core';
+import { Container, Group } from '@mantine/core';
+import { useClipboard } from '@mantine/hooks';
+import { MemberRoleEnum } from '@novu/shared';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { getOrganizationMembers, inviteMember } from '../../api/organization';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, colors, Input, Tag } from '../../design-system';
+import {
+  changeMemberRole,
+  getOrganizationMembers,
+  inviteMember,
+  removeMember,
+  resendInviteMember,
+} from '../../api/organization';
+import { MembersTable } from '../../components/invites/MembersTable';
+import { Button, Input } from '../../design-system';
 import { Invite } from '../../design-system/icons';
-import useStyles from '../../design-system/config/text.styles';
+import { AuthContext } from '../../store/authContext';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
-  const { classes } = useStyles();
+  const clipboardInviteLink = useClipboard({ timeout: 1000 });
+  const [invitedMember, setInvitedMember] = useState<string>('');
+  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+  const { currentOrganization, currentUser } = useContext(AuthContext);
 
   const {
     data: members,
     isLoading: loadingMembers,
     refetch,
   } = useQuery<any[]>('getOrganizationMembers', getOrganizationMembers);
+
   const { isLoading: loadingSendInvite, mutateAsync: sendInvite } = useMutation<
     string,
     { error: string; message: string; statusCode: number },
     string
   >((email) => inviteMember(email));
 
-  async function onSubmit({ email }) {
-    if (!email) return;
+  useEffect(() => {
+    if (!invitedMember) return;
+    const currentMember = members?.find((member) => member?.invite?.email === invitedMember);
+    if (!currentMember) return;
 
-    await sendInvite(email);
-    await refetch();
+    const inviteHref = buildInviteHref(currentMember, currentOrganization?.name, currentUser, generateInviteLink);
 
     showNotification({
-      message: `Invite sent to ${email}`,
+      message: getInviteMemberByLinkDiv(inviteHref, currentMember),
       color: 'green',
     });
 
+    setInvitedMember('');
+  }, [members]);
+
+  async function onSubmit({ email }) {
+    if (!email) return;
+
+    if (selfHosted) {
+      setInvitedMember(email);
+    }
+
+    try {
+      await sendInvite(email);
+      await refetch();
+    } catch (e: any) {
+      if (e?.message === 'Already invited') {
+        showNotification({
+          message: `User with email: ${email} is already invited`,
+          color: 'red',
+        });
+      } else throw e;
+    }
+
+    if (!selfHosted) {
+      showNotification({
+        message: `Invite sent to ${email}`,
+        color: 'green',
+      });
+    }
+
     form.resetFields(['email']);
+  }
+
+  async function removeMemberClick(member) {
+    try {
+      await removeMember(member._id);
+
+      showNotification({
+        message: `Successfully deleted member .`,
+        color: 'green',
+      });
+
+      refetch();
+    } catch (err: any) {
+      showNotification({
+        message: err.message,
+        color: 'red',
+      });
+    }
+  }
+
+  async function changeMemberRoleClick(member, memberRole: MemberRoleEnum) {
+    try {
+      await changeMemberRole(member._id, memberRole);
+
+      showNotification({
+        message: `Successfully changed role of member.`,
+        color: 'green',
+      });
+
+      refetch();
+    } catch (err: any) {
+      showNotification({
+        message: err.message,
+        color: 'red',
+      });
+    }
+  }
+
+  async function resendInviteMemberClick(member) {
+    try {
+      await resendInviteMember(member._id);
+
+      showNotification({
+        message: `Successfully resent invite.`,
+        color: 'green',
+      });
+    } catch (err: any) {
+      showNotification({
+        message: err.message,
+        color: 'red',
+      });
+    }
+  }
+
+  const clipboardCopyInviteLink = (memberToken: string) => {
+    clipboardInviteLink.copy(generateInviteLink(memberToken));
+  };
+
+  const generateInviteLink = (memberToken: string) => {
+    return `${window.location.origin.toString()}/auth/invitation/${memberToken}`;
+  };
+
+  function getInviteMemberByLinkDiv(inviteHref: string, currentMember) {
+    return (
+      <div>
+        The invite link was successfully created. You can send it by clicking
+        <a href={inviteHref} style={{ color: '#0000FF', paddingLeft: '3px' }}>
+          here
+        </a>
+        . Or copy it directly clicking
+        <StyledButton onClick={() => clipboardCopyInviteLink(currentMember.invite.token)}>here.</StyledButton>
+      </div>
+    );
   }
 
   return (
@@ -48,7 +163,7 @@ export function MembersInvitePage() {
       <PageHeader
         title="Team Members"
         actions={
-          <Form onFinish={onSubmit} form={form}>
+          <Form noValidate onFinish={onSubmit} form={form}>
             <Group align="center" spacing={10}>
               <Form.Item name="email" style={{ marginBottom: 0 }}>
                 <StyledInput required data-test-id="invite-email-field" placeholder="Invite user by email" />
@@ -62,56 +177,33 @@ export function MembersInvitePage() {
       />
 
       <Container fluid mt={15} ml={5}>
-        {members?.map((member) => {
-          return (
-            <MemberRowWrapper key={member._id}>
-              <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={member.user?.profilePicture} radius="xl">
-                {capitalize((member.user?.firstName || '')[0])} {capitalize((member.user?.lastName || '')[0])}
-              </Avatar>
-              <Group direction="column" spacing={5}>
-                <Text className={classes.heading}>
-                  {member.user
-                    ? `${capitalize((member.user?.firstName || '') as string)} ${capitalize(
-                        (member.user?.lastName || '') as string
-                      )}`
-                    : member.invite.email}
-                </Text>
-                <Text className={classes.subHeading}>{member.user?.email ? member?.user.email : null}</Text>
-              </Group>
-              <ActionsSider>
-                <div style={{ marginLeft: 10 }}>
-                  {/* eslint-disable-next-line no-nested-ternary */}
-                  {member.memberStatus === MemberStatusEnum.INVITED ? (
-                    <Tag>Invite Pending</Tag>
-                  ) : member.roles.find((role: string) => role === 'admin') ? (
-                    <Tag>Admin</Tag>
-                  ) : (
-                    <Tag>Member</Tag>
-                  )}
-                </div>
-              </ActionsSider>
-              <Divider className={classes.seperator} />
-            </MemberRowWrapper>
-          );
-        })}
+        <MembersTable
+          loading={loadingMembers}
+          members={members}
+          currentUser={currentUser}
+          onRemoveMember={removeMemberClick}
+          onResendInviteMember={resendInviteMemberClick}
+          onChangeMemberRole={changeMemberRoleClick}
+        />
       </Container>
     </PageContainer>
   );
 }
 
-const AddMemberRow = styled.div`
-  margin-top: 30px;
-`;
+function buildInviteHref(
+  currentMember,
+  currentOrganization,
+  currentUser,
+  generateInviteLink: (memberToken: string) => string
+) {
+  const mailTo = `mailto:${currentMember.invite.email}`;
+  const subject = `You've been invited to ${currentOrganization}`;
+  const body = `\nHi!\n\nYou have been invited to ${currentOrganization} by ${currentUser?.firstName} ${
+    currentUser?.lastName
+  }.\n\nClick on the link below to accept ${generateInviteLink(currentMember.invite.token)}.`;
 
-const ActionsSider = styled.div`
-  margin-left: auto;
-`;
-
-const MemberRowWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
+  return `${mailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 const StyledInput = styled(Input)`
   width: 300px;
@@ -123,4 +215,12 @@ const StyledInput = styled(Input)`
   }
   position: relative;
   top: -2px;
+`;
+
+const StyledButton = styled.button`
+  color: #0000ff;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 `;

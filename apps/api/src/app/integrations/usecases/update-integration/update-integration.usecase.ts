@@ -1,10 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
+import { encryptCredentials } from '../../../shared/services/encryption';
+import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 
 @Injectable()
 export class UpdateIntegration {
+  @Inject()
+  private checkIntegration: CheckIntegration;
   constructor(
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
@@ -14,6 +19,18 @@ export class UpdateIntegration {
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
     if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
 
+    if (command.check) {
+      await this.checkIntegration.execute(
+        CheckIntegrationCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          credentials: command.credentials,
+          providerId: existingIntegration.providerId,
+          channel: existingIntegration.channel,
+        })
+      );
+    }
+
     const updatePayload: Partial<IntegrationEntity> = {};
 
     if (command.active || command.active === false) {
@@ -21,7 +38,7 @@ export class UpdateIntegration {
     }
 
     if (command.credentials) {
-      updatePayload.credentials = command.credentials;
+      updatePayload.credentials = encryptCredentials(command.credentials);
     }
 
     if (!Object.keys(updatePayload).length) {

@@ -1,11 +1,7 @@
 import { IsDefined, IsEmail, IsNotEmpty } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class LoginCommand {
-  static create(data: LoginCommand) {
-    return CommandHelper.create(LoginCommand, data);
-  }
-
+export class LoginCommand extends BaseCommand {
   @IsDefined()
   @IsNotEmpty()
   @IsEmail()

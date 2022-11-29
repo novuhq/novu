@@ -1,16 +1,22 @@
 import React from 'react';
-import { Menu, MenuProps } from '@mantine/core';
+import { Menu, MenuProps, Sx } from '@mantine/core';
 import useStyles from './Dropdown.styles';
 import { shadows } from '../config';
 
 interface IDropdownProps extends JSX.ElementChildrenAttribute {
   control?: React.ReactElement;
+  opened?: boolean;
+  gutter?: number;
+  placement?: 'center' | 'end' | 'start';
+  onOpen?: () => void;
+  onClose?: () => void;
+  sx?: Sx | Sx[];
 }
 export function Dropdown({ children, ...props }: IDropdownProps) {
   const { classes, theme } = useStyles();
   const defaultDesign = {
     withArrow: true,
-    transition: 'pop',
+    transitionDuration: 0,
     radius: 7,
     gutter: 10,
     shadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
@@ -18,7 +24,7 @@ export function Dropdown({ children, ...props }: IDropdownProps) {
   } as MenuProps;
 
   return (
-    <Menu {...defaultDesign} {...props}>
+    <Menu {...defaultDesign} {...props} clickOutsideEvents={['click', 'mousedown', 'touchstart']}>
       {children}
     </Menu>
   );

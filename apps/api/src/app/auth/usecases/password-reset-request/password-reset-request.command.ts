@@ -1,12 +1,7 @@
 import { IsDefined, IsEmail } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class PasswordResetRequestCommand {
-  static create(data: PasswordResetRequestCommand) {
-    return CommandHelper.create<PasswordResetRequestCommand>(PasswordResetRequestCommand, data);
-  }
-
+export class PasswordResetRequestCommand extends BaseCommand {
   @IsEmail()
   @IsDefined()
   email: string;

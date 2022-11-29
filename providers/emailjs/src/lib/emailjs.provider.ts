@@ -3,16 +3,18 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { Message, SMTPClient, MessageAttachment } from 'emailjs';
-import { EmailJsConfig } from './emailjs.config';
+import { IEmailJsConfig } from './emailjs.config';
 
 export class EmailJsProvider implements IEmailProvider {
   readonly id = 'emailjs';
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly client: SMTPClient;
 
-  constructor(private readonly config: EmailJsConfig) {
+  constructor(private readonly config: IEmailJsConfig) {
     const { host, port, secure: ssl, user, password } = this.config;
     this.client = new SMTPClient({
       host,
@@ -57,6 +59,16 @@ export class EmailJsProvider implements IEmailProvider {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       id: sent.header['message-id']!,
       date: sent.header.date,
+    };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    return {
+      success: true,
+      message: 'Integrated successfully!',
+      code: CheckIntegrationResponseEnum.SUCCESS,
     };
   }
 }

@@ -1,0 +1,97 @@
+.pagination-nav {
+  border-top: 1px dashed $color-gray-4;
+  padding-top: 32px;
+  margin-top: 32px !important;
+  margin-bottom: 64px;
+
+  &__link {
+    border: none;
+    padding: 0;
+
+    .pagination-nav__sublabel {
+      margin-bottom: 8px;
+    }
+
+    .pagination-nav__label {
+      text-decoration: underline 1px transparent;
+      transition: text-decoration-color 0.2s;
+      text-underline-offset: 4px;
+      font-weight: 500;
+      display: flex;
+      align-items: baseline;
+    }
+
+    &.pagination-nav__link--next .pagination-nav__label::after,
+    &.pagination-nav__link--prev .pagination-nav__label::before {
+      width: 16px;
+      height: 12px;
+      display: inline-block;
+      content: '';
+      background-repeat: no-repeat;
+    }
+  
+    &.pagination-nav__link--next {
+      .pagination-nav__label {
+        justify-content: flex-end;
+        &::after {
+          transform: rotateZ(180deg);
+          margin-left: 8px;
+        }
+      }
+    } 
+  
+    &.pagination-nav__link--prev {
+      .pagination-nav__label {
+        justify-content: flex-start;
+        &::before {
+          margin-right: 8px;
+        }
+      }
+    } 
+  }
+}
+
+html[data-theme='dark'] {
+  .pagination-nav {
+    border-top: 1px dashed $color-gray-4;
+
+    &__link {
+      &:hover {
+        .pagination-nav__label {
+          text-decoration-color: $color-primary-blue;
+        }
+      }
+
+      &.pagination-nav__link--next .pagination-nav__label::after,
+      &.pagination-nav__link--prev .pagination-nav__label::before {
+        background-image: url('/img/arrow.svg');
+      }
+    }
+  }
+}
+
+html[data-theme='light'] {
+  .pagination-nav {
+    border-top: 1px dashed $color-gray-9;
+    &__link {
+      &:hover {
+        .pagination-nav__label {
+          text-decoration-color: $color-secondary-blue;
+        }
+      }
+      &.pagination-nav__link--next .pagination-nav__label::after,
+      &.pagination-nav__link--prev .pagination-nav__label::before {
+        background-image: url('/img/arrow-blue.svg');
+      }
+    }
+  }
+}
+
+// workaround to remove pagination styles on home page
+html.docs-doc-id-home {
+  .pagination-nav {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0 !important;
+  }
+}

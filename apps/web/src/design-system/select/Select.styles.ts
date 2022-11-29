@@ -38,7 +38,7 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       backgroundColor: dark ? theme.colors.dark[4] : theme.colors.gray[0],
       padding: '15px 7px 15px 10px',
       margin: '0px 5px',
-      fontWeight: '400px',
+      fontWeight: 400,
     },
     selected: {
       backgroundColor: dark ? theme.fn.lighten(theme.colors.dark[5], 0.1) : theme.fn.darken(theme.colors.gray[2], 0.1),

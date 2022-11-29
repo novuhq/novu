@@ -15,6 +15,8 @@ on:
 jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
+    secrets:
+      cypress_key: ${{ secrets.CYPRESS_WIDGET_KEY }}
 
   # This workflow contains a single job called "build"
   deploy_widget:
@@ -33,8 +35,8 @@ jobs:
         run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - uses: actions/setup-node@v2
         with:
-          node-version: '16.13.0'
-    
+          node-version: '16.15.1'
+
       - name: Cache pnpm modules
         uses: actions/cache@v2
         with:
@@ -45,7 +47,7 @@ jobs:
 
       - uses: pnpm/action-setup@v2.0.1
         with:
-          version: 6.0.2
+          version: 7.5.0
           run_install: true
 
       # Runs a single command using the runners shell
@@ -93,20 +95,20 @@ jobs:
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         env:
-          REGISTERY_OWNER: novuhq
+          REGISTRY_OWNER: novuhq
           DOCKER_NAME: novu/widget
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/widget/Dockerfile .
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          docker build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/widget/Dockerfile .
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
       - uses: actions/upload-artifact@v1
         if: failure()

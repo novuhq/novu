@@ -1,16 +1,15 @@
-import { Injectable, Logger, Scope } from '@nestjs/common';
-import { OrganizationEntity, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
+import { Inject, Injectable, Scope } from '@nestjs/common';
+import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { MemberRoleEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../environments/usecases/create-environment/create-environment.usecase';
-import { capitalize } from '../../../shared/services/helper/helper.service';
-import { MailService } from '../../../shared/services/mail/mail.service';
-import { QueueService } from '../../../shared/services/queue';
 import { GetOrganizationCommand } from '../get-organization/get-organization.command';
 import { GetOrganization } from '../get-organization/get-organization.usecase';
 import { AddMemberCommand } from '../membership/add-member/add-member.command';
 import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -20,10 +19,9 @@ export class CreateOrganization {
     private readonly organizationRepository: OrganizationRepository,
     private readonly addMemberUsecase: AddMember,
     private readonly getOrganizationUsecase: GetOrganization,
-    private readonly queueService: QueueService,
     private readonly userRepository: UserRepository,
-    private readonly mailService: MailService,
-    private readonly createEnvironmentUsecase: CreateEnvironment
+    private readonly createEnvironmentUsecase: CreateEnvironment,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
@@ -60,11 +58,7 @@ export class CreateOrganization {
       })
     );
 
-    /*
-     * Comment because the design of the process needs to be rethought
-     *
-     * await this.sendWelcomeEmail(user, organization);
-     */
+    this.analyticsService.upsertGroup(createdOrganization._id, createdOrganization, user._id);
 
     const organizationAfterChanges = await this.getOrganizationUsecase.execute(
       GetOrganizationCommand.create({
@@ -74,24 +68,5 @@ export class CreateOrganization {
     );
 
     return organizationAfterChanges;
-  }
-
-  private async sendWelcomeEmail(user: UserEntity, organization: OrganizationEntity) {
-    try {
-      await this.mailService.sendMail({
-        templateId: '35339302-a24e-4dc2-bff5-02f32b8537cc',
-        to: user.email,
-        from: {
-          email: 'hi@novu.co',
-          name: 'Novu',
-        },
-        params: {
-          firstName: capitalize(user.firstName),
-          organizationName: capitalize(organization.name),
-        },
-      });
-    } catch (e) {
-      Logger.error(e.message);
-    }
   }
 }

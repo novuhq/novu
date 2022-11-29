@@ -1,13 +1,8 @@
-import { IsDefined, IsString, IsUUID } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { IsDefined, IsString, IsOptional } from 'class-validator';
 import { ISubscribersDefine } from '@novu/node';
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class TriggerEventCommand extends EnvironmentWithUserCommand {
-  static create(data: TriggerEventCommand) {
-    return CommandHelper.create(TriggerEventCommand, data);
-  }
-
   @IsDefined()
   @IsString()
   identifier: string;
@@ -16,9 +11,15 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   @IsDefined()
-  to: ISubscribersDefine[]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  overrides: Record<string, Record<string, unknown>>;
 
-  @IsUUID()
+  @IsDefined()
+  to: ISubscribersDefine[];
+
+  @IsString()
   @IsDefined()
   transactionId: string;
+
+  @IsOptional()
+  actor?: ISubscribersDefine;
 }

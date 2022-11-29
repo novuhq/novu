@@ -1,0 +1,250 @@
+:root {
+  --ifm-font-family-monospace: 'Brother-1816';
+  --ifm-font-family-base: 'Brother-1816';
+  --ifm-footer-link-color: #ffffff;
+  --ifm-code-font-size: 16px;
+  --ifm-line-height-base: 1.5;
+  --ifm-menu-link-padding-vertical: 8px;
+  --ifm-menu-link-padding-horizontal: 20px;
+  --ifm-heading-font-weight: 500;
+  --ifm-toc-padding-vertical: 16px;
+  --ifm-navbar-padding-vertical: 12px;
+}
+
+body {
+  font-family: 'Brother-1816', 'Helvetica', 'Arial', sans-serif;
+  font-weight: 350;
+  font-size: 18px;
+}
+
+main {
+  .container {
+    max-width: 100%;
+    padding: 0 !important;
+
+    @include mobile-screen {
+      padding-top: 20px !important;
+    }
+    .row {
+      margin: 0;
+
+      > .col {
+        @include tablet-screen {
+          max-width: 100% !important;
+          padding-right: 0;
+        }
+
+        @include mobile-screen {
+          padding-left: 0;
+          padding-right: 0;
+        }
+      }
+
+      .col.col--3 {
+        padding: 0;
+        padding-left: 40px;
+
+        @include tablet-screen {
+          display: none;
+        }
+
+        .theme-doc-toc-desktop {
+          height: 100%;
+        }
+      }
+    }
+  }
+}
+
+.main-wrapper {
+  max-width: $container-width;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  position: relative;
+
+  @include mobile-screen {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 100%;
+    width: 100vw;
+    height: 100%;
+
+    @include tablet-screen {
+      display: none;
+    }
+  }
+}
+
+article,
+.pagination-nav {
+  max-width: 796px;
+  margin-left: auto;
+  margin-right: auto;
+
+  @include mobile-screen {
+    max-width: 100%;
+  }
+}
+
+article {
+  margin-top: 48px;
+
+  @include tablet-screen {
+    margin-top: 30px;
+  }
+
+  @include mobile-screen {
+    margin-top: 0;
+  }
+}
+
+.docMainContainer {
+  padding-left: 40px;
+}
+
+.docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.1);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+.theme-code-block {
+  &:hover {
+    .clean-btn {
+      opacity: 1 !important;
+      color: $color-gray-9;
+    }
+  }
+  .clean-btn {
+    font-size: 16px !important;
+    background-color: $color-black;
+
+    :hover {
+      color: $color-gray-10;
+    }
+  }
+}
+
+.theme-doc-footer-edit-meta-row {
+  .col {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+.theme-edit-this-page {
+  position: relative;
+  padding-left: 28px;
+  font-size: 14px;
+  transition: color 0.2s;
+
+  &:hover {
+    text-decoration: none;
+  }
+
+  &::before {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    content: '';
+    width: 20px;
+    height: 20px;
+  }
+  svg {
+    display: none;
+  }
+}
+
+html[data-theme='dark'] {
+  --ifm-background-color: #000000;
+  --ifm-hover-overlay: rgba(0, 213, 255, 0.1);
+  --ifm-font-color-base: #e6e6e6;
+  --ifm-toc-border-color: #262626;
+  --ifm-heading-color: #ffffff;
+  --ifm-color-primary: #00d5ff;
+  --ifm-link-color: #00d5ff;
+  --ifm-menu-color-background-active: rgba(0, 213, 255, 0.1);
+
+  main {
+    .container {
+      .row {
+        .col.col--3 {
+          border-left: 1px solid $color-gray-3;
+        }
+      }
+    }
+  }
+
+  .theme-edit-this-page {
+    color: $color-white;
+
+    &:hover {
+      color: $color-primary-blue;
+    }
+
+    &:active {
+      color: $color-gray-9;
+    }
+
+    &::before {
+      background-image: url('/img/github-white.svg');
+    }
+  }
+
+  .docusaurus-highlight-code-line {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+}
+
+html[data-theme='light'] {
+  ---ifm-navbar-background-color: #ffffff;
+  --ifm-hover-overlay: rgba(0, 213, 255, 0.1);
+  --ifm-font-color-base: #000000;
+  --ifm-toc-border-color: #e6e6e6;
+  --ifm-link-color: #0055ff;
+  --ifm-color-primary: #0055ff;
+  --ifm-menu-color-background-active: rgba(0, 85, 255, 0.08);
+
+  body {
+    background-color: $color-gray-12;
+  }
+
+  main {
+    .container {
+      .row {
+        .col.col--3 {
+          border-left: 1px solid $color-gray-10;
+        }
+      }
+    }
+  }
+
+  .theme-edit-this-page {
+    color: $color-black;
+
+    &:hover {
+      color: $color-secondary-blue;
+    }
+
+    &:active {
+      color: $color-gray-9;
+    }
+
+    &::before {
+      background-image: url('/img/github-black.svg');
+    }
+  }
+}
+
+.theme-last-updated {
+  font-style: normal;
+}

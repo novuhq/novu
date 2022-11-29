@@ -3,9 +3,12 @@ import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-syst
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
+import styled from '@emotion/styled';
+import OrganizationSelect from './OrganizationSelect';
+import { SpotlightContext } from '../../../store/spotlightContext';
 
 type Props = {};
 
@@ -17,6 +20,7 @@ export function SideNav({}: Props) {
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
+  const { addItem } = useContext(SpotlightContext);
 
   useEffect(() => {
     setOpened(readonly);
@@ -24,6 +28,18 @@ export function SideNav({}: Props) {
       navigate('/');
     }
   }, [readonly]);
+
+  useEffect(() => {
+    addItem([
+      {
+        id: 'toggle-environment',
+        title: `Toggle to ${environment?.name === 'Production' ? 'Development' : 'Production'} environment`,
+        onTrigger: () => {
+          setEnvironment(environment?.name === 'Production' ? 'Development' : 'Production');
+        },
+      },
+    ]);
+  }, [environment]);
 
   const menuItems = [
     {
@@ -34,6 +50,12 @@ export function SideNav({}: Props) {
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: '/templates', label: 'Notifications', testId: 'side-nav-templates-link' },
+    {
+      icon: <Team />,
+      link: '/subscribers',
+      label: 'Subscribers',
+      testId: 'side-nav-subscribers-link',
+    },
     { icon: <Activity />, link: '/activities', label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: '/integrations', label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     { icon: <Settings />, link: '/settings', label: 'Settings', testId: 'side-nav-settings-link' },
@@ -53,9 +75,27 @@ export function SideNav({}: Props) {
     },
   ];
 
+  async function handlePopoverForChanges(e) {
+    e.preventDefault();
+
+    await setEnvironment('Development');
+    navigate('/changes');
+  }
+
   return (
-    <Navbar p={30} sx={{ backgroundColor: 'transparent', borderRight: 'none', paddingRight: 0 }} width={{ base: 300 }}>
-      <Navbar.Section>
+    <Navbar
+      p={30}
+      sx={{
+        backgroundColor: 'transparent',
+        borderRight: 'none',
+        paddingRight: 0,
+        width: '300px',
+        '@media (max-width: 768px)': {
+          width: '100%',
+        },
+      }}
+    >
+      <Navbar.Section grow>
         <Popover
           styles={{
             inner: {
@@ -99,10 +139,50 @@ export function SideNav({}: Props) {
             />
           }
         >
-          {'To make changes you’ll need to go to development and promote the changes from there'}
+          {'To make changes you’ll need to visit '}
+          <StyledLink onClick={handlePopoverForChanges}>development changes</StyledLink>{' '}
+          {' and promote the changes from there'}
         </Popover>
         <NavMenu menuItems={menuItems} />
+      </Navbar.Section>
+      <Navbar.Section mt={15}>
+        <Navbar.Section>
+          <OrganizationSelect />
+        </Navbar.Section>
+        <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
+          <a target="_blank" href="https://discord.novu.co" data-test-id="side-nav-bottom-link-support">
+            Support
+          </a>
+          <p>
+            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+          </p>
+          <a target="_blank" href="https://docs.novu.co" data-test-id="side-nav-bottom-link-documentation">
+            Documentation
+          </a>
+        </BottomNav>
       </Navbar.Section>
     </Navbar>
   );
 }
+
+const StyledLink = styled.a`
+  font-weight: bold;
+  text-decoration: underline;
+
+  &:hover {
+    cursor: pointer;
+  }
+`;
+
+const BottomNavWrapper = styled.div`
+  margin-top: auto;
+  padding-top: 30px;
+`;
+
+const BottomNav = styled.div<{ dark: boolean }>`
+  color: ${colors.B60};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+`;

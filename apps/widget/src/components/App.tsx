@@ -1,11 +1,12 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { WidgetShell } from './ApplicationShell';
 import { NotificationCenterWidgetContainer } from './notification-center';
-import { sendNotificationClick, sendUrlChange, unseenChanged } from '../embed/embed.service';
+import { actionClick, sendNotificationClick, sendUrlChange, unseenChanged } from '../embed/embed.service';
+import { CONTEXT_PATH } from '../config';
 
 export function App() {
   return (
-    <Router>
+    <Router basename={CONTEXT_PATH}>
       <Routes>
         <Route
           path="/:applicationId"
@@ -15,6 +16,7 @@ export function App() {
                 onNotificationClick={sendNotificationClick}
                 onUrlChange={sendUrlChange}
                 onUnseenCountChanged={unseenChanged}
+                onActionClick={actionClick}
               />
             </WidgetShell>
           }

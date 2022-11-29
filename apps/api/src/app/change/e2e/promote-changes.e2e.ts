@@ -1,16 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ChangeRepository,
-  NotificationTemplateRepository,
+  EnvironmentRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
-  EnvironmentRepository,
+  NotificationTemplateRepository,
 } from '@novu/dal';
-import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, ChannelCTATypeEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { CreateNotificationTemplateDto } from '../../notification-template/dto/create-notification-template.dto';
-import { UpdateNotificationTemplateDto } from '../../notification-template/dto/update-notification-template.dto';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import {
+  CreateNotificationTemplateRequestDto,
+  UpdateNotificationTemplateRequestDto,
+} from '../../notification-template/dto';
 
 describe('Promote changes', () => {
   let session: UserSession;
@@ -20,33 +22,13 @@ describe('Promote changes', () => {
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
 
-  const applyChanges = async () => {
-    const changes = await changeRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-        enabled: false,
-      },
-      '',
-      {
-        sort: { createdAt: 1 },
-      }
-    );
-
-    for (const change of changes) {
-      await session.testAgent.post(`/v1/changes/${change._id}/apply`);
-    }
-  };
-
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
   });
 
   it('should set correct notification group for notification template', async () => {
-    const prodEnv = await environmentRepository.findOne({
-      _parentId: session.environment._id,
-    });
+    const prodEnv = await getProductionEnvironment();
 
     const parentGroup = await notificationGroupRepository.create({
       name: 'test',
@@ -61,16 +43,19 @@ describe('Promote changes', () => {
       _parentId: parentGroup._id,
     });
 
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
       notificationGroupId: parentGroup._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -83,12 +68,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },
@@ -98,9 +77,12 @@ describe('Promote changes', () => {
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
     const notificationTemplateId = body.data._id;
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const prodVersion = await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -108,16 +90,19 @@ describe('Promote changes', () => {
   });
 
   it('delete message', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -132,19 +117,13 @@ describe('Promote changes', () => {
               ],
             },
           ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
-            },
-          ],
         },
       ],
     };
 
     let { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
-    const updateData: UpdateNotificationTemplateDto = {
+    const updateData: UpdateNotificationTemplateRequestDto = {
       name: testTemplate.name,
       tags: testTemplate.tags,
       description: testTemplate.description,
@@ -156,9 +135,14 @@ describe('Promote changes', () => {
 
     body = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(updateData);
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    const prodEnv = await getProductionEnvironment();
 
     const prodVersion = await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -166,7 +150,7 @@ describe('Promote changes', () => {
   });
 
   it('update active flag on notification template', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -175,14 +159,24 @@ describe('Promote changes', () => {
     };
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
-    await applyChanges();
+
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const notificationTemplateId = body.data._id;
 
     await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
-    await applyChanges();
+
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    const prodEnv = await getProductionEnvironment();
 
     const prodVersion = await notificationTemplateRepository.findOne({
+      _organizationId: session.organization._id,
+      _notificationId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -190,16 +184,19 @@ describe('Promote changes', () => {
   });
 
   it('update existing message', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -214,12 +211,6 @@ describe('Promote changes', () => {
               ],
             },
           ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
-            },
-          ],
         },
       ],
     };
@@ -228,12 +219,14 @@ describe('Promote changes', () => {
       body: { data },
     } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const notificationTemplateId = data._id;
 
     const step = data.steps[0];
-    const update: UpdateNotificationTemplateDto = {
+    const update: UpdateNotificationTemplateRequestDto = {
       name: data.name,
       description: data.description,
       tags: data.tags,
@@ -241,10 +234,13 @@ describe('Promote changes', () => {
       steps: [
         {
           _id: step._templateId,
-          name: 'test',
-          type: step.template.type,
-          cta: step.template.cta,
-          content: step.template.content,
+          _templateId: step._templateId,
+          template: {
+            name: 'test',
+            type: step.template.type,
+            cta: step.template.cta,
+            content: step.template.content,
+          },
         },
       ],
     };
@@ -252,9 +248,14 @@ describe('Promote changes', () => {
     const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
     data = body.data;
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    const prodEnv = await getProductionEnvironment();
 
     const prodVersion = await messageTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
       _parentId: step._templateId,
     });
 
@@ -262,16 +263,19 @@ describe('Promote changes', () => {
   });
 
   it('add one more message', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -286,12 +290,6 @@ describe('Promote changes', () => {
               ],
             },
           ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
-            },
-          ],
         },
       ],
     };
@@ -299,12 +297,14 @@ describe('Promote changes', () => {
     let {
       body: { data },
     } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     const notificationTemplateId = data._id;
 
     const step = data.steps[0];
-    const update: UpdateNotificationTemplateDto = {
+    const update: UpdateNotificationTemplateRequestDto = {
       name: data.name,
       description: data.description,
       tags: data.tags,
@@ -312,19 +312,25 @@ describe('Promote changes', () => {
       steps: [
         {
           _id: step._templateId,
-          name: step.template.name,
-          type: step.template.type,
-          cta: step.template.cta,
-          content: step.template.content,
+          _templateId: step._templateId,
+          template: {
+            name: 'Message Name',
+            content: step.template.content,
+            type: step.template.type,
+            cta: step.template.cta,
+          },
         },
         {
-          name: 'Message Name 2',
-          subject: 'Test email subject 2',
-          type: ChannelTypeEnum.EMAIL,
-          cta: {
-            type: ChannelCTATypeEnum.REDIRECT,
-            data: {
-              url: '',
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
+            type: step.template.type,
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: '',
+              },
             },
           },
           filters: [
@@ -341,12 +347,6 @@ describe('Promote changes', () => {
               ],
             },
           ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
-            },
-          ],
         },
       ],
     };
@@ -354,9 +354,14 @@ describe('Promote changes', () => {
     const body: any = await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}`).send(update);
     data = body.data;
 
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    const prodEnv = await getProductionEnvironment();
 
     const prodVersion = await notificationTemplateRepository.find({
+      _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -364,16 +369,19 @@ describe('Promote changes', () => {
   });
 
   it('should count not applied changes', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -386,12 +394,6 @@ describe('Promote changes', () => {
                   operator: 'EQUAL',
                 },
               ],
-            },
-          ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
             },
           ],
         },
@@ -408,16 +410,19 @@ describe('Promote changes', () => {
   });
 
   it('should count delete change', async () => {
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
       notificationGroupId: session.notificationGroups[0]._id,
       steps: [
         {
-          name: 'Message Name',
-          subject: 'Test email subject',
-          type: ChannelTypeEnum.EMAIL,
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: 'text', content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
           filters: [
             {
               isNegated: false,
@@ -432,12 +437,6 @@ describe('Promote changes', () => {
               ],
             },
           ],
-          content: [
-            {
-              type: 'text',
-              content: 'This is a sample text block',
-            },
-          ],
         },
       ],
     };
@@ -446,7 +445,9 @@ describe('Promote changes', () => {
       body: { data },
     } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
     const notificationTemplateId = data._id;
-    await applyChanges();
+    await session.applyChanges({
+      enabled: false,
+    });
 
     await session.testAgent.delete(`/v1/notification-templates/${notificationTemplateId}`);
 
@@ -457,14 +458,14 @@ describe('Promote changes', () => {
     expect(count).to.eq(1);
   });
 
-  it('should promote notification group if it is not alredy promoted', async () => {
+  it('should promote notification group if it is not already promoted', async () => {
     const {
       body: { data: group },
     } = await session.testAgent.post(`/v1/notification-groups`).send({
       name: 'Test name',
     });
 
-    const testTemplate: Partial<CreateNotificationTemplateDto> = {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -499,6 +500,13 @@ describe('Promote changes', () => {
       _organizationId: session.organization._id,
       enabled: false,
     });
+
     expect(count).to.eq(0);
   });
+
+  async function getProductionEnvironment() {
+    return await environmentRepository.findOne({
+      _parentId: session.environment._id,
+    });
+  }
 });

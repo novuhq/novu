@@ -6,6 +6,7 @@ import {
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  FeedRepository,
 } from '@novu/dal';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 
@@ -17,9 +18,13 @@ export class NotificationTemplateService {
   private notificationGroupRepository = new NotificationGroupRepository();
 
   private messageTemplateRepository = new MessageTemplateRepository();
+  private feedRepository = new FeedRepository();
 
   async createTemplate(override: Partial<CreateTemplatePayload> = {}) {
     const groups = await this.notificationGroupRepository.find({
+      _environmentId: this.environmentId,
+    });
+    const feeds = await this.feedRepository.find({
       _environmentId: this.environmentId,
     });
 
@@ -58,9 +63,12 @@ export class NotificationTemplateService {
       const saved = await this.messageTemplateRepository.create({
         type: message.type,
         cta: message.cta,
+        variables: message.variables,
         content: message.content,
         subject: message.subject,
+        title: message.title,
         name: message.name,
+        _feedId: override.noFeedId ? undefined : feeds[0]._id,
         _creatorId: this.userId,
         _organizationId: this.organizationId,
         _environmentId: this.environmentId,
@@ -69,16 +77,19 @@ export class NotificationTemplateService {
       templateSteps.push({
         filters: message.filters,
         _templateId: saved._id,
+        active: message.active,
+        metadata: message.metadata,
       });
     }
 
     const data = {
       _notificationGroupId: groups[0]._id,
       _environmentId: this.environmentId,
-      name: faker.name.title(),
+      name: faker.name.jobTitle(),
       _organizationId: this.organizationId,
       _creatorId: this.userId,
       active: true,
+      preferenceSettings: override.preferenceSettingsOverride ?? undefined,
       draft: false,
       tags: ['test-tag'],
       description: faker.commerce.productDescription().slice(0, 90),
@@ -91,11 +102,9 @@ export class NotificationTemplateService {
       ],
       ...override,
       steps: templateSteps,
-    };
+    } as NotificationTemplateEntity;
 
-    const notificationTemplate = await this.notificationTemplateRepository.create(
-      data as Partial<NotificationTemplateEntity>
-    );
+    const notificationTemplate = await this.notificationTemplateRepository.create(data);
 
     return await this.notificationTemplateRepository.findById(
       notificationTemplate._id,

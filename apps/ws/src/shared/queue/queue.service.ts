@@ -3,6 +3,7 @@ import { Queue } from 'bull';
 import { IWsQueuePayload } from './queue.interface';
 
 export const WS_SOCKET_QUEUE = 'ws_socket_queue';
+import { getRedisPrefix } from '@novu/shared';
 
 export class QueueService {
   private bullConfig: Bull.QueueOptions = {
@@ -13,9 +14,14 @@ export class QueueService {
       db: Number(process.env.REDIS_DB_INDEX),
       port: Number(process.env.REDIS_PORT),
       host: process.env.REDIS_HOST,
+      password: process.env.REDIS_PASSWORD,
       connectTimeout: 50000,
       keepAlive: 30000,
       family: 4,
+      keyPrefix: getRedisPrefix(),
+    },
+    defaultJobOptions: {
+      removeOnComplete: true,
     },
   };
 

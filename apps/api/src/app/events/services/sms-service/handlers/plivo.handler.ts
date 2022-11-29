@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/node';
+import { ChannelTypeEnum } from '@novu/shared';
 import { PlivoSmsProvider } from '@novu/plivo';
 import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';

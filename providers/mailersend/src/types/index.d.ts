@@ -17,17 +17,29 @@
  * something();
  * ```
  */
+
+type UnfetchResponse<T = unknown, K = unknown> = {
+  ok: boolean;
+  status: number;
+  json: () => Promise<T | K>;
+};
+
 declare module 'mailersend' {
   export default class MailerSend {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(config: any);
-    request(endpoint?: string, options?: {}): any;
-    send(emailParams: EmailParams): any;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    request(endpoint?: string, options?: Record<string, unknown>): any;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    send<T = unknown, K = ErrorResponse>(
+      emailParams: EmailParams
+    ): Promise<UnfetchResponse<T, K>>;
   }
 
-  export function send(emailParams: any): any;
-
   export class EmailParams {
-    constructor(config?: {});
+    constructor(config?: Record<string, unknown>);
     from: string;
     fromName?: string;
     to: Recipient | Recipient[];
@@ -39,7 +51,9 @@ declare module 'mailersend' {
     html: string;
     text: string;
     templateId?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     variables?: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     personalization?: any;
     tags?: string[];
     setFrom(from: string): EmailParams;
@@ -52,7 +66,9 @@ declare module 'mailersend' {
     setHtml(html: string): EmailParams;
     setText(text: string): EmailParams;
     setTemplateId(templateId: string): EmailParams;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setVariables(variables: any): EmailParams;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setPersonalization(personalization: any): EmailParams;
     setTags(tags: string[]): EmailParams;
   }
@@ -69,3 +85,8 @@ declare module 'mailersend' {
     name?: string;
   }
 }
+
+export type ErrorResponse = {
+  message: string;
+  errors: { [key: string]: string[] };
+};

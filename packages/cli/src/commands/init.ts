@@ -1,7 +1,7 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
-import { IEnvironment, ICreateNotificationTemplateDto } from '@novu/shared';
+import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
 import { prompt } from '../client';
 import {
   environmentQuestions,
@@ -9,6 +9,7 @@ import {
   introQuestions,
   registerMethodQuestions,
   showWelcomeScreen,
+  termAndPrivacyQuestions,
 } from './init.consts';
 import { HttpServer } from '../server';
 import {
@@ -34,12 +35,6 @@ import {
   getEnvironmentApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
-
-export enum ChannelTypeEnum {
-  IN_APP = 'in_app',
-  EMAIL = 'email',
-  SMS = 'sms',
-}
 
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
@@ -93,6 +88,11 @@ async function handleOnboardingFlow(config: ConfigService) {
     const regMethod = await prompt(registerMethodQuestions);
 
     if (regMethod.value === 'github') {
+      const { accept } = await prompt(termAndPrivacyQuestions);
+      if (accept === false) {
+        process.exit();
+      }
+
       spinner = ora('Waiting for a brave unicorn to login').start();
       await gitHubOAuth(httpServer, config);
       spinner.stop();
@@ -181,17 +181,19 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 }
 
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
-  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}`;
+  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}&source=cli`;
 
   const steps = [
     {
-      type: ChannelTypeEnum.IN_APP,
-      content:
-        'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
-      cta: {
-        type: ChannelCTATypeEnum.REDIRECT,
-        data: {
-          url: redirectUrl,
+      template: {
+        type: StepTypeEnum.IN_APP,
+        content:
+          'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
+        cta: {
+          type: ChannelCTATypeEnum.REDIRECT,
+          data: {
+            url: redirectUrl,
+          },
         },
       },
     },
@@ -218,7 +220,7 @@ function storeDashboardData(
   decodedToken,
   applicationIdentifier: string
 ) {
-  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
 
   const tmpPayload: { key: string; value: string }[] = [
     { key: 'embedPath', value: EMBED_PATH },
@@ -284,7 +286,7 @@ async function checkExistingEnvironment(config: ConfigService): Promise<IEnviron
 
 async function handleExistingSession(result: string, config: ConfigService) {
   if (result === 'visitDashboard') {
-    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}`;
+    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
 
     await open(dashboardURL);
   } else if (result === 'exit') {

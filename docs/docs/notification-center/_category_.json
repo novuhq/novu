@@ -1,4 +1,5 @@
 {
   "label": "Notification Center",
-  "position": 4
+  "position": 4,
+  "collapsible": false
 }

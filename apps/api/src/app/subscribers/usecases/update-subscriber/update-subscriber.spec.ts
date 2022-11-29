@@ -7,7 +7,7 @@ import { UpdateSubscriber } from './update-subscriber.usecase';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 
 describe('Update Subscriber', function () {
-  let useCase: UpdateSubscriber;
+  let updateUsecase: UpdateSubscriber;
   let session: UserSession;
   const subscriberRepository = new SubscriberRepository();
   beforeEach(async () => {
@@ -19,13 +19,13 @@ describe('Update Subscriber', function () {
     session = new UserSession();
     await session.initialize();
 
-    useCase = moduleRef.get<UpdateSubscriber>(UpdateSubscriber);
+    updateUsecase = moduleRef.get<UpdateSubscriber>(UpdateSubscriber);
   });
 
   it('should update subscribers name', async function () {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
-    await useCase.execute(
+    await updateUsecase.execute(
       UpdateSubscriberCommand.create({
         organizationId: subscriber._organizationId,
         subscriberId: subscriber.subscriberId,

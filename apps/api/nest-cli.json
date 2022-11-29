@@ -25,7 +25,25 @@
       }
     ],
     "plugins": [
-      "@nestjs/swagger"
-    ]
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": true,
+          "introspectComments": true
+        }
+      }
+    ],
+    "webpack": true
+  },
+  "projects": {
+    "dal": {
+      "type": "library",
+      "root": "../../../libs/dal",
+      "entryFile": "index",
+      "sourceRoot": "../../../libs/dal/src",
+      "compilerOptions": {
+        "tsConfigPath": "../../../libs/dal/tsconfig.build.json"
+      }
+    }
   }
 }

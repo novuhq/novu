@@ -87,6 +87,34 @@ describe('Compile Template', function () {
     expect(result).to.contain('Button content of text');
   });
 
+  it('should include text align for text blocks', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        templateId: 'basic',
+        data: {
+          branding: {
+            color: '#e7e7e7e9',
+          },
+          blocks: [
+            {
+              type: 'text',
+              styles: {
+                textAlign: 'center',
+              },
+              content: '<b>Hello TESTTTT content </b>',
+            },
+            {
+              type: 'button',
+              content: 'Button content of text',
+            },
+          ],
+        },
+      })
+    );
+
+    expect(result).to.contain('text-align: center');
+  });
+
   it('should allow the user to specify handlebars helpers', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({
@@ -103,5 +131,33 @@ describe('Compile Template', function () {
     );
 
     expect(result).to.equal('<div>Hello World and hello world and HELLO WORLD</div>');
+  });
+
+  describe('Date Formation', function () {
+    it('should allow user to format the date', async function () {
+      const result = await useCase.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          data: {
+            date: '2020-01-01',
+          },
+          customTemplate: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
+        })
+      );
+      expect(result).to.equal('<div>Wednesday, January 1st 2020</div>');
+    });
+
+    it('should not fail and return same date for invalid date', async function () {
+      const result = await useCase.execute(
+        CompileTemplateCommand.create({
+          templateId: 'custom',
+          data: {
+            date: 'ABCD',
+          },
+          customTemplate: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
+        })
+      );
+      expect(result).to.equal('<div>ABCD</div>');
+    });
   });
 });

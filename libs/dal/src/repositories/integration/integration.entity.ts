@@ -15,6 +15,11 @@ export interface ICredentials {
   token?: string;
   from?: string;
   senderName?: string;
+  applicationId?: string;
+  clientId?: string;
+  projectName?: string;
+  serviceAccount?: string;
+  baseUrl?: string;
 }
 
 export class IntegrationEntity {

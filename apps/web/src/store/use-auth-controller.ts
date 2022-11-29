@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { IJwtPayload, IOrganizationEntity, IUserEntity } from '@novu/shared';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { getUser } from '../api/user';
-import { getCurrentOrganization } from '../api/organization';
+import { getOrganizations } from '../api/organization';
 
 export function applyToken(token: string | null) {
   if (token) {
@@ -32,43 +32,42 @@ export function getToken(): string {
 export function useAuthController() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [token, setToken] = useState<string | null>(getToken());
+  const [token, setToken] = useState<string | null>(() => {
+    const initialToken = getToken();
+    applyToken(initialToken);
+
+    return initialToken;
+  });
   const [jwtPayload, setJwtPayload] = useState<IJwtPayload>();
+  const [organization, setOrganization] = useState<IOrganizationEntity>();
   const isLoggedIn = !!token;
-  const { data: user, refetch: refetchUser } = useQuery<IUserEntity>('/v1/users/me', getUser, {
+
+  const { data: user } = useQuery<IUserEntity>('/v1/users/me', getUser, {
     enabled: Boolean(isLoggedIn && axios.defaults.headers.common.Authorization),
   });
 
-  const { data: organization, refetch: refetchOrganization } = useQuery<IOrganizationEntity>(
-    '/v1/organizations/me',
-    getCurrentOrganization,
-    {
-      enabled: Boolean(
-        isLoggedIn &&
-          axios.defaults.headers.common.Authorization &&
-          jwtDecode<IJwtPayload>(axios.defaults.headers.common.Authorization?.split(' ')[1])?.organizationId
-      ),
-    }
-  );
+  const { data: organizations } = useQuery<IOrganizationEntity[]>('/v1/organizations', getOrganizations, {
+    enabled: Boolean(
+      isLoggedIn &&
+        axios.defaults.headers.common.Authorization &&
+        jwtDecode<IJwtPayload>(axios.defaults.headers.common.Authorization?.split(' ')[1])?.organizationId
+    ),
+  });
 
   useEffect(() => {
-    const localToken = localStorage.getItem('auth_token');
+    const organizationId = jwtPayload?.organizationId;
+    if (!organizationId || !organizations || organizations.length === 0) return;
 
-    if (localToken) {
-      applyToken(localToken);
-      setToken(localToken);
-    }
-  }, []);
+    setOrganization(organizations.find((org) => org._id === organizationId));
+  }, [jwtPayload, organizations]);
 
   useEffect(() => {
-    applyToken(token);
-
     if (token) {
       queryClient.removeQueries({
         predicate: (query) =>
           query.queryKey !== '/v1/users/me' &&
           query.queryKey !== '/v1/environments' &&
-          query.queryKey !== '/v1/organizations/me',
+          query.queryKey !== '/v1/organizations',
       });
       const payload = jwtDecode<IJwtPayload>(token);
       setJwtPayload(payload);
@@ -89,8 +88,16 @@ export function useAuthController() {
     }
   }, [user, organization]);
 
+  const setTokenCallback = useCallback((newToken: string | null) => {
+    /**
+     * applyToken needs to be called first to avoid a race condition
+     */
+    applyToken(newToken);
+    setToken(newToken);
+  }, []);
+
   const logout = () => {
-    setToken(null);
+    setTokenCallback(null);
     queryClient.clear();
     navigate('/auth/login');
   };
@@ -98,10 +105,11 @@ export function useAuthController() {
   return {
     isLoggedIn,
     user,
+    organizations,
     organization,
-    setToken,
     token,
     logout,
     jwtPayload,
+    setToken: setTokenCallback,
   };
 }

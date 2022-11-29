@@ -1,25 +1,40 @@
-import moment from 'moment';
+import { useState } from 'react';
 import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
+import { format } from 'date-fns';
 import { useTemplates } from '../../api/hooks/use-templates';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tag, Button, Table, colors, Text } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
-import { Tooltip } from '../../design-system/tooltip/Tooltip';
+import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { useEnvController } from '../../store/use-env-controller';
 
 function NotificationList() {
   const { readonly } = useEnvController();
-  const { templates, loading: isLoading } = useTemplates();
+  const [page, setPage] = useState<number>(0);
+  const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
   const theme = useMantineTheme();
   const navigate = useNavigate();
 
+  function handleTableChange(pageIndex) {
+    setPage(pageIndex);
+  }
+
   const columns: ColumnWithStrictAccessor<Data>[] = [
+    {
+      accessor: 'identifier',
+      Header: 'Trigger ID',
+      Cell: ({ triggers }: any) => (
+        <Tooltip label={triggers ? triggers[0].identifier : 'Unknown'}>
+          <Text rows={1}>{triggers ? triggers[0].identifier : 'Unknown'}</Text>
+        </Tooltip>
+      ),
+    },
     {
       accessor: 'name',
       Header: 'Name',
@@ -37,7 +52,7 @@ function NotificationList() {
     {
       accessor: 'createdAt',
       Header: 'Created At',
-      Cell: ({ createdAt }: any) => moment(createdAt).format('DD/MM/YYYY HH:mm'),
+      Cell: ({ createdAt }: any) => format(new Date(createdAt), 'dd/MM/yyyy HH:mm'),
     },
     {
       accessor: 'status',
@@ -102,9 +117,13 @@ function NotificationList() {
           data-test-id="notifications-template"
           columns={columns}
           data={templates || []}
-        >
-          {' '}
-        </Table>
+          pagination={{
+            pageSize: pageSize,
+            current: page,
+            total: totalTemplatesCount,
+            onPageChange: handleTableChange,
+          }}
+        />
       </TemplateListTableWrapper>
     </PageContainer>
   );

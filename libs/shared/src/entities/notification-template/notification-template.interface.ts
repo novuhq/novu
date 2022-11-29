@@ -1,5 +1,6 @@
 import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '../../types/builder/builder.types';
 import { IMessageTemplate } from '../message-template';
+import { IPreferenceChannels } from '../subscriber-preference';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -11,6 +12,8 @@ export interface INotificationTemplate {
   tags: string[];
   draft: boolean;
   active: boolean;
+  critical: boolean;
+  preferenceSettings: IPreferenceChannels;
   createdAt?: string;
   updatedAt?: string;
   steps: INotificationTemplateStep[];
@@ -24,15 +27,17 @@ export enum TriggerTypeEnum {
 export interface INotificationTrigger {
   type: TriggerTypeEnum;
   identifier: string;
-  variables: { name: string }[];
-  subscriberVariables?: { name: string }[];
+  variables: { name: string; value?: any }[];
+  subscriberVariables?: { name: string; value?: any }[];
 }
 
 export interface INotificationTemplateStep {
   _id?: string;
   filters?: IMessageFilter[];
   _templateId?: string;
-  template: IMessageTemplate;
+  _parentId?: string;
+  template?: IMessageTemplate;
+  active?: boolean;
 }
 
 export interface IMessageFilter {

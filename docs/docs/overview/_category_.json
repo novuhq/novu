@@ -1,4 +1,5 @@
 {
   "label": "Overview",
-  "position": 1
+  "position": 1,
+  "collapsible": false
 }

@@ -1,16 +1,20 @@
-FROM node:16.13.1
+FROM node:16-buster-slim
 
 WORKDIR /usr/src/app
 
-RUN npm i pnpm@6.32.11 -g --loglevel notice --force
-RUN pnpm i pm2 -g
+RUN npm install -g pnpm@7.5.0 --loglevel notice
+RUN npm i pm2 -g
 
+COPY .npmrc .
 COPY package.json .
 
 COPY apps/ws ./apps/ws
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
 COPY libs/testing ./libs/testing
+COPY packages/client ./packages/client
+COPY packages/stateless ./packages/stateless
+COPY packages/node ./packages/node
 
 COPY tsconfig.json .
 COPY tsconfig.base.json .
@@ -18,6 +22,7 @@ COPY tsconfig.base.json .
 COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
+COPY .npmrc .
 
 RUN pnpm install
 RUN pnpm build:ws

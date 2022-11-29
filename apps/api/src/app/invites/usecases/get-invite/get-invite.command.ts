@@ -1,11 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class GetInviteCommand {
-  static create(data: GetInviteCommand) {
-    return CommandHelper.create(GetInviteCommand, data);
-  }
-
+export class GetInviteCommand extends BaseCommand {
   @IsNotEmpty()
   readonly token: string;
 }

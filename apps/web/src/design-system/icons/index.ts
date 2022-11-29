@@ -3,6 +3,7 @@ export { Team } from './general/Team';
 export { Settings } from './general/Settings';
 export { Bolt } from './general/Bolt';
 export { Moon } from './general/Moon';
+export { Ellipse } from './general/Ellipse';
 export { DotsHorizontal } from './general/DotsHorizontal';
 export { DotsHorizontalOutlined } from './general/DotsHorizontalOutlined';
 export { EyeShield } from './general/EyeShield';
@@ -19,6 +20,20 @@ export { CheckCircle } from './general/CheckCircle';
 export { Box } from './general/Box';
 export { CheckCircleOutlined } from './general/CheckCircleOutlined';
 export { Repeat } from './general/Repeat';
+export { Sms } from './general/Sms';
+export { Mobile } from './general/Mobile';
+export { ErrorIcon } from './general/ErrorIcon';
+export { Chat } from './general/Chat';
+export { InApp } from './general/InApp';
+export { Timer } from './general/Timer';
+export { Digest } from './general/Digest';
+export { Sent } from './general/Sent';
+export { Received } from './general/Received';
+export { Read } from './general/Read';
+export { Seen } from './general/Seen';
+export { Clicked } from './general/Clicked';
+export { Camera } from './general/Camera';
+export { Avatar } from './general/Avatar';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
@@ -31,6 +46,7 @@ export { Invite } from './actions/Invite';
 
 export { ArrowDown } from './arrows/ArrowDown';
 export { DoubleArrowRight } from './arrows/DoubleArrowRight';
+export { ArrowLeft } from './arrows/ArrowLeft';
 
 export { BellGradient } from './gradient/BellGradient';
 export { MailGradient } from './gradient/MailGradient';
@@ -41,5 +57,9 @@ export { CompassGradient } from './gradient/CompassGradient';
 export { SmsGradient } from './gradient/SmsGradient';
 export { TapeGradient } from './gradient/TapeGradient';
 export { BoltGradient } from './gradient/BoltGradient';
+export { ConnectGradient } from './gradient/ConnectGradient';
+export { ChatGradient } from './gradient/ChatGradient';
+export { LevelsGradient } from './gradient/LevelsGradient';
+export { TimerGradient } from './gradient/TimerGradient';
 
-export { Github } from './social/Github';
+export { GitHub } from './social/GitHub';

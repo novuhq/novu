@@ -18,7 +18,7 @@ describe('Create Integration - /integration (POST)', function () {
 
     expect(integration.providerId).to.equal('sendgrid');
     expect(integration.channel).to.equal('email');
-    expect(integration.credentials.apiKey).to.equal('123');
+    expect(integration.credentials.apiKey).to.equal('SG.123');
     expect(integration.credentials.secretKey).to.equal('abc');
     expect(integration.active).to.equal(true);
   });
@@ -38,7 +38,7 @@ describe('Create Integration - /integration (POST)', function () {
   it('should create the sms and email integration successfully', async function () {
     const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
 
-    expect(integrations.length).to.equal(2);
+    expect(integrations.length).to.equal(5);
 
     const emailIntegration = integrations.find((i) => i.channel.toString() === 'email');
     const smsIntegration = integrations.find((i) => i.channel.toString() === 'sms');
@@ -53,6 +53,7 @@ describe('Create Integration - /integration (POST)', function () {
       channel: 'email',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
 
     const secondInsertResponse = await insertIntegrationTwice(session, payload, false);
@@ -65,6 +66,7 @@ describe('Create Integration - /integration (POST)', function () {
       providerId: 'sendgrid',
       channel: 'email',
       active: true,
+      check: false,
     };
 
     const body = (await session.testAgent.post('/v1/integrations').send(payload)).body.data as IntegrationEntity;
@@ -78,6 +80,7 @@ describe('Create Integration - /integration (POST)', function () {
       channel: 'email',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
 
     const environmentId = (await session.testAgent.get(`/v1/integrations`)).body.data[0]._environmentId;
@@ -106,7 +109,5 @@ async function insertIntegrationTwice(
     payload.channel = 'sms';
   }
 
-  const body = await session.testAgent.post('/v1/integrations').send(payload);
-
-  return body;
+  return await session.testAgent.post('/v1/integrations').send(payload);
 }

@@ -17,6 +17,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE)', function (
       channel: 'EMAIL',
       credentials: { apiKey: '123', secretKey: 'abc' },
       active: true,
+      check: false,
     };
 
     const integration = await session.testAgent.post('/v1/integrations').send(payload);
@@ -24,11 +25,16 @@ describe('Delete Integration - /integration/:integrationId (DELETE)', function (
 
     await session.testAgent.delete(`/v1/integrations/${integrationId}`).send();
 
-    const isDeleted = !(await integrationRepository.findOne({ _id: integrationId }));
+    const isDeleted = !(await integrationRepository.findOne({
+      _environmentId: session.environment._id,
+      _id: integrationId,
+    }));
 
     expect(isDeleted).to.equal(true);
 
-    const deletedIntegration = (await integrationRepository.findDeleted({ _id: integrationId }))[0];
+    const deletedIntegration = (
+      await integrationRepository.findDeleted({ _environmentId: session.environment._id, _id: integrationId })
+    )[0];
 
     expect(deletedIntegration.deleted).to.equal(true);
   });

@@ -1,11 +1,7 @@
 import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class InitializeSessionCommand {
-  static create(data: InitializeSessionCommand) {
-    return CommandHelper.create<InitializeSessionCommand>(InitializeSessionCommand, data);
-  }
-
+export class InitializeSessionCommand extends BaseCommand {
   @IsDefined()
   @IsString()
   subscriberId: string;

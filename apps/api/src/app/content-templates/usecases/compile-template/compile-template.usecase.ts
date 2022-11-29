@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
+import { format } from 'date-fns';
 import * as fs from 'fs';
 import { CompileTemplateCommand } from './compile-template.command';
 
@@ -27,6 +28,15 @@ Handlebars.registerHelper('pluralize', function (number, single, plural) {
   return number === 1 ? single : plural;
 });
 
+Handlebars.registerHelper('dateFormat', function (date, dateFormat) {
+  // Format date if parameters are valid
+  if (date && dateFormat && !isNaN(Date.parse(date))) {
+    return format(new Date(date), dateFormat);
+  }
+
+  return date;
+});
+
 const cache = new Map();
 
 @Injectable()
@@ -49,7 +59,11 @@ export class CompileTemplate {
 
   private async loadTemplateContent(name: string) {
     return new Promise<string>((resolve, reject) => {
-      fs.readFile(`${__dirname}/templates/${name}`, (err, content) => {
+      let path = '';
+      if (!process.env.E2E_RUNNER) {
+        path = '/src/app/content-templates/usecases/compile-template';
+      }
+      fs.readFile(`${__dirname}${path}/templates/${name}`, (err, content) => {
         if (err) {
           return reject(err);
         }

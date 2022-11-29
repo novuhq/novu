@@ -8,6 +8,7 @@ declare namespace NodeJS {
     GOOGLE_OAUTH_CLIENT_ID: string;
     NODE_ENV: 'test' | 'prod' | 'dev' | 'ci' | 'local';
     PORT: string;
+    DISABLE_USER_REGISTRATION: 'true' | 'false';
     FRONT_BASE_URL: string;
     SENTRY_DSN: string;
   }

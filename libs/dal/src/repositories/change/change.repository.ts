@@ -1,16 +1,27 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { BaseRepository } from '../base-repository';
+import { BaseRepository, Omit } from '../base-repository';
 import { ChangeEntity } from './change.entity';
 import { Change } from './change.schema';
+import { Document, FilterQuery } from 'mongoose';
 
-export class ChangeRepository extends BaseRepository<ChangeEntity> {
+class PartialIntegrationEntity extends Omit(ChangeEntity, ['_environmentId', '_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, ChangeEntity> {
   constructor() {
     super(Change, ChangeEntity);
   }
 
-  public async getEntityChanges(entityType: ChangeEntityTypeEnum, entityId: string): Promise<ChangeEntity[]> {
+  public async getEntityChanges(
+    organizationId: string,
+    entityType: ChangeEntityTypeEnum,
+    entityId: string
+  ): Promise<ChangeEntity[]> {
     return await this.find(
       {
+        _organizationId: organizationId,
         _entityId: entityId,
         type: entityType,
       },
@@ -21,8 +32,9 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
     );
   }
 
-  public async getChangeId(entityType: ChangeEntityTypeEnum, entityId: string): Promise<string> {
+  public async getChangeId(environmentId: string, entityType: ChangeEntityTypeEnum, entityId: string): Promise<string> {
     const change = await this.findOne({
+      _environmentId: environmentId,
       _entityId: entityId,
       type: entityType,
       enabled: false,
@@ -35,14 +47,24 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
     return BaseRepository.createObjectId();
   }
 
-  public async getList(organizationId: string, environmentId: string, enabled: boolean) {
+  public async getList(organizationId: string, environmentId: string, enabled: boolean, skip = 0, limit = 10) {
+    const totalItemsCount = await this.count({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      enabled,
+      _parentId: { $exists: false, $eq: null },
+    });
+
     const items = await Change.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
       enabled,
       _parentId: { $exists: false, $eq: null },
-    }).populate('user');
+    })
+      .skip(skip)
+      .limit(limit)
+      .populate('user');
 
-    return this.mapEntities(items);
+    return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 }

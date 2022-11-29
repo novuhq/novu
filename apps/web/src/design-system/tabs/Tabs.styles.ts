@@ -62,7 +62,7 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
       ref: tabLabel,
 
       fontSize: '14px',
-      fontWeight: '700',
+      fontWeight: 700,
       color: colors.B60,
       textAlign: 'left',
     },
@@ -72,7 +72,7 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
 
       display: 'block',
       fontSize: '26px',
-      fontWeight: '700',
+      fontWeight: 700,
       marginBottom: '5px',
       color: colors.B60,
       textAlign: 'left',

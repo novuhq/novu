@@ -15,6 +15,10 @@ export interface IMessage {
   providerId?: string;
   channel: ChannelTypeEnum;
   template: string | ((payload: ITriggerPayload) => Promise<string> | string);
+  // used to provide a text version in emails
+  textTemplate?:
+    | string
+    | ((payload: ITriggerPayload) => Promise<string> | string);
   active?: boolean | ((payload: ITriggerPayload) => Promise<boolean> | boolean);
   validator?: IMessageValidator;
 }
@@ -22,7 +26,8 @@ export interface IMessage {
 export enum ChannelTypeEnum {
   EMAIL = 'email',
   SMS = 'sms',
-  DIRECT = 'direct',
+  CHAT = 'chat',
+  PUSH = 'push',
 }
 
 export interface ITriggerPayload {
@@ -30,7 +35,7 @@ export interface ITriggerPayload {
   $phone?: string;
   $user_id: string;
   $theme_id?: string;
-  $channel_id?: string;
+  $webhookUrl?: string;
   $attachments?: IAttachmentOptions[];
   [key: string]:
     | string
@@ -39,7 +44,8 @@ export interface ITriggerPayload {
     | number
     | undefined
     | IAttachmentOptions
-    | IAttachmentOptions[];
+    | IAttachmentOptions[]
+    | Record<string, unknown>;
 }
 
 export interface IAttachmentOptions {
@@ -47,4 +53,8 @@ export interface IAttachmentOptions {
   file: Buffer;
   name?: string;
   channels?: ChannelTypeEnum[];
+}
+
+export interface IAttachmentOptionsExtended extends IAttachmentOptions {
+  storagePath?: string;
 }

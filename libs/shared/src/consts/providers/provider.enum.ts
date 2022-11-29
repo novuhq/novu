@@ -1,30 +1,68 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 export enum CredentialsKeyEnum {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   ApiKey = 'apiKey',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   User = 'user',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   SecretKey = 'secretKey',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Domain = 'domain',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Password = 'password',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Host = 'host',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Port = 'port',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Secure = 'secure',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Region = 'region',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   AccountSid = 'accountSid',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   MessageProfileId = 'messageProfileId',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Token = 'token',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   From = 'from',
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   SenderName = 'senderName',
+  ApplicationId = 'applicationId',
+  ClientId = 'clientId',
+  ProjectName = 'projectName',
+  ServiceAccount = 'serviceAccount',
+  BaseUrl = 'baseUrl',
+  WebhookUrl = 'webhookUrl',
+}
+
+export enum EmailProviderIdEnum {
+  EmailJS = 'emailjs',
+  Mailgun = 'mailgun',
+  Mailjet = 'mailjet',
+  Mandrill = 'mandrill',
+  Nodemailer = 'nodemailer',
+  Postmark = 'postmark',
+  SendGrid = 'sendgrid',
+  Sendinblue = 'sendinblue',
+  SES = 'ses',
+  NetCore = 'netcore',
+  Infobip = 'infobip',
+  MailerSend = 'mailersend',
+}
+
+export enum SmsProviderIdEnum {
+  Nexmo = 'nexmo',
+  Plivo = 'plivo',
+  Sms77 = 'sms77',
+  SNS = 'sns',
+  Telnyx = 'telnyx',
+  Twilio = 'twilio',
+  Gupshup = 'gupshup',
+  Firetext = 'firetext',
+  Infobip = 'infobip',
+  BurstSms = 'burst-sms',
+}
+
+export enum ChatProviderIdEnum {
+  Slack = 'slack',
+  Discord = 'discord',
+  MsTeams = 'msteams',
+}
+
+export enum PushProviderIdEnum {
+  FCM = 'fcm',
+  APNS = 'apns',
+  EXPO = 'expo',
+}
+
+export enum InAppProviderIdEnum {
+  Novu = 'novu',
 }

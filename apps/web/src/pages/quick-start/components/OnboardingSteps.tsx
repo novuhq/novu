@@ -21,6 +21,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
   }>('activityStats', getActivityStats);
 
   const [showTriggerExample, setShowTriggerExample] = useState(false);
+  const [showGoLangTriggerExample, setShowGolangTriggerExample] = useState(false);
 
   const templateCreated = templates?.length > 0;
   const providerConfigured = integrations?.length > 0;
@@ -92,18 +93,38 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
               name={`node-${theme.colorScheme === 'dark' ? 'dark' : 'light'}`}
               title="Node.js"
               exist={true}
-              onClick={() => setShowTriggerExample((prev) => !prev)}
+              onClick={() => {
+                setShowGolangTriggerExample(false);
+                setShowTriggerExample((prev) => !prev);
+              }}
               opened={showTriggerExample}
+            />
+            <TriggerCard
+              name={`golang-${theme.colorScheme === 'dark' ? 'dark' : 'light'}`}
+              title="Golang"
+              exist={true}
+              onClick={() => {
+                setShowTriggerExample(false);
+                setShowGolangTriggerExample((prev) => !prev);
+              }}
+              opened={showGoLangTriggerExample}
             />
             <TriggerCard name="spring" title="Spring Boot" />
             <TriggerCard name="kotlin" title="Kotlin" />
-            <TriggerCard name="native" title="Native" />
           </Grid>
           {showTriggerExample && (
             <div>
               <StyledDescription mt={20}>Here is an example code usage</StyledDescription>
               <Prism mt={10} styles={prismStyles} language="javascript">
                 {triggerCodeSnippet}
+              </Prism>
+            </div>
+          )}
+          {showGoLangTriggerExample && (
+            <div>
+              <StyledDescription mt={20}>Here is an example code usage</StyledDescription>
+              <Prism mt={10} styles={prismStyles} language="go">
+                {golangCodeSnippet}
               </Prism>
             </div>
           )}
@@ -114,7 +135,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
           title="Embed a notification center in your app (Optional)"
           description="Use our embeddable widget to add a notification center in minutes"
         />
-        <a href="https://docs.novu.co/docs/notification-center/iframe-embed" target="_blank">
+        <a href="https://docs.novu.co/notification-center/iframe-embed" target="_blank">
           <Button mt={20}> Embed Now</Button>
         </a>
       </Timeline.Item>
@@ -132,12 +153,14 @@ const OnboardingStepHeader = ({ title, description }: { title: string; descripti
 };
 
 const prismStyles = (theme) => ({
-  code: {
-    fontWeight: '400',
-    color: `${colors.B60} !important`,
-    backgroundColor: 'transparent !important',
+  scrollArea: {
     border: ` 1px solid ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
     borderRadius: '7px',
+  },
+  code: {
+    fontWeight: 400,
+    color: `${colors.B60} !important`,
+    backgroundColor: 'transparent !important',
   },
 });
 
@@ -153,4 +176,35 @@ novu.trigger('<REPLACE_WITH_TRIGGER_ID>', {
      '<REPLACE_WITH_VARIABLE_NAME>': "<REPLACE_WITH_DATA>",
   }
 });
+`;
+
+const golangCodeSnippet = `
+package main
+
+import (
+  novu "github.com/novuhq/go-novu/lib"
+)
+
+apiKey := "<REPLACE_WITH_API_KEY>"
+subscriberID := "<REPLACE_WITH_USER_ID>"
+eventID := "<REPLACE_WITH_TRIGGER_ID>"
+
+novuClient := novu.NewAPIClient(apiKey, &novu.Config{})
+
+to := map[string]interface{}{
+  "subscriberId": subscriberID,
+}
+
+payload := map[string]interface{}{
+  "<REPLACE_WITH_VARIABLE_NAME>": "<REPLACE_WITH_DATA>"
+}
+
+_, err := novuClient.EventApi.Trigger(
+    ctx, 
+    eventID, 
+    novu.ITriggerPayloadOptions{To: to, Payload: payload}
+)
+if err != nil {
+  log.Fatal("novu error", err.Error())
+}  
 `;

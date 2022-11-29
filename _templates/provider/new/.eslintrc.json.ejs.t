@@ -1,5 +1,5 @@
 ---
-    to: providers/<%= name %>/.eslintrc.js
+    to: providers/<%= name %>/.eslintrc.json
 ---
 
 {

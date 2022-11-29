@@ -36,9 +36,12 @@ import { PasswordResetRequest } from './usecases/password-reset-request/password
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
 import { ApiException } from '../shared/exceptions/api.exception';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiTags('Auth')
+@ApiExcludeController()
 export class AuthController {
   constructor(
     private userRepository: UserRepository,
@@ -58,7 +61,7 @@ export class AuthController {
   githubAuth() {
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
       throw new ApiException(
-        'Github auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
+        'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
     }
 
@@ -74,12 +77,40 @@ export class AuthController {
       return response.redirect(`${process.env.CLIENT_SUCCESS_AUTH_REDIRECT}?error=AuthenticationError`);
     }
 
-    let url = JSON.parse(request.query.state).redirectUrl || process.env.CLIENT_SUCCESS_AUTH_REDIRECT;
+    let url = process.env.CLIENT_SUCCESS_AUTH_REDIRECT;
+    const redirectUrl = JSON.parse(request.query.state).redirectUrl;
+
+    /**
+     * Make sure we only allow localhost redirects for CLI use and our own success route
+     * https://github.com/novuhq/novu/security/code-scanning/3
+     */
+    if (redirectUrl && redirectUrl.startsWith('http://localhost:')) {
+      url = redirectUrl;
+    }
 
     url += `?token=${request.user.token}`;
 
     if (request.user.newUser) {
       url += '&newUser=true';
+    }
+
+    /**
+     * partnerCode, next and configurationId are required during external partners integration
+     * such as vercel integration etc
+     */
+    const partnerCode = JSON.parse(request.query.state).partnerCode;
+    if (partnerCode) {
+      url += `&code=${partnerCode}`;
+    }
+
+    const next = JSON.parse(request.query.state).next;
+    if (next) {
+      url += `&next=${next}`;
+    }
+
+    const configurationId = JSON.parse(request.query.state).configurationId;
+    if (configurationId) {
+      url += `&configurationId=${configurationId}`;
     }
 
     return response.redirect(url);

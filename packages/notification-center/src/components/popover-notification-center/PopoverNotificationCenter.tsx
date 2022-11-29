@@ -1,10 +1,12 @@
-import React, { useContext } from 'react';
-import { IMessage } from '@novu/shared';
+import React from 'react';
+import { PopoverProps } from '@mantine/core';
+import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { UnseenCountContext } from '../../store/unseen-count.context';
-import { ColorScheme } from '../../index';
+import { useDefaultTheme, useUnseenCount } from '../../hooks';
+import { ColorScheme, INovuThemePopoverProvider } from '../../index';
+import { ITab, ListItem } from '../../shared/interfaces';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -13,14 +15,28 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  colorScheme?: ColorScheme;
+  emptyState?: () => JSX.Element;
+  listItem?: ListItem;
+  colorScheme: ColorScheme;
+  theme?: INovuThemePopoverProvider;
+  onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
+  actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
+  tabs?: ITab[];
+  showUserPreferences?: boolean;
+  onTabClick?: (tab: ITab) => void;
+  offset?: number;
+  position?:
+    | PopoverProps['position']
+    | `${NonNullable<PopoverProps['position']>}-${NonNullable<Exclude<PopoverProps['placement'], 'center'>>}`;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
-  const { setUnseenCount, unseenCount } = useContext(UnseenCountContext);
+  const { theme } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
+  const { setUnseenCount, unseenCount } = useUnseenCount();
 
   function handlerOnUnseenCount(count: number) {
     if (isNaN(count)) return;
+
     setUnseenCount(count);
 
     if (props.onUnseenCountChanged) {
@@ -30,16 +46,26 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
 
   return (
     <Popover
-      colorScheme={props.colorScheme}
-      bell={(bellProps) => children({ colorScheme: props.colorScheme, unseenCount, ...bellProps })}
+      theme={theme}
+      bell={(bellProps) => children({ ...bellProps, unseenCount, theme })}
+      position={props.position}
+      offset={props.offset}
     >
       <NotificationCenter
-        colorScheme={props.colorScheme || 'light'}
         onNotificationClick={props.onNotificationClick}
         onUnseenCountChanged={handlerOnUnseenCount}
         onUrlChange={props.onUrlChange}
         header={props.header}
         footer={props.footer}
+        colorScheme={props.colorScheme}
+        theme={props.theme}
+        emptyState={props.emptyState}
+        onActionClick={props.onActionClick}
+        actionsResultBlock={props.actionsResultBlock}
+        listItem={props.listItem}
+        tabs={props.tabs}
+        showUserPreferences={props.showUserPreferences}
+        onTabClick={props.onTabClick}
       />
     </Popover>
   );

@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, FocusEvent } from 'react';
 import { TextInputProps, TextInput as MantineTextInput } from '@mantine/core';
 import { inputStyles } from '../config/inputs.styles';
 import { SpacingProps } from '../shared/spacing.props';
@@ -15,6 +15,9 @@ interface IInputProps extends SpacingProps {
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   rightSection?: React.ReactNode;
   type?: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number';
+  min?: string | number | undefined;
+  max?: string | number | undefined;
+  onBlur?: (event: FocusEvent<HTMLInputElement>) => void;
 }
 
 /**

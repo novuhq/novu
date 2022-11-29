@@ -4,6 +4,7 @@ import {
   UserRepository,
   OrganizationRepository,
   EnvironmentRepository,
+  ExecutionDetailsRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
   NotificationRepository,
@@ -14,16 +15,24 @@ import {
   LogRepository,
   IntegrationRepository,
   ChangeRepository,
+  JobRepository,
+  FeedRepository,
+  SubscriberPreferenceRepository,
 } from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
-import { MailService } from './services/mail/mail.service';
 import { QueueService } from './services/queue';
-import { StorageService } from './services/storage/storage.service';
+import {
+  AzureBlobStorageService,
+  GCSStorageService,
+  S3StorageService,
+  StorageService,
+} from './services/storage/storage.service';
 
 const DAL_MODELS = [
   UserRepository,
   OrganizationRepository,
   EnvironmentRepository,
+  ExecutionDetailsRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
   NotificationRepository,
@@ -34,7 +43,21 @@ const DAL_MODELS = [
   LogRepository,
   IntegrationRepository,
   ChangeRepository,
+  JobRepository,
+  FeedRepository,
+  SubscriberPreferenceRepository,
 ];
+
+function getStorageServiceClass() {
+  switch (process.env.STORAGE_SERVICE) {
+    case 'GCS':
+      return GCSStorageService;
+    case 'AZURE':
+      return AzureBlobStorageService;
+    default:
+      return S3StorageService;
+  }
+}
 
 const dalService = new DalService();
 
@@ -56,7 +79,10 @@ const PROVIDERS = [
     },
   },
   ...DAL_MODELS,
-  StorageService,
+  {
+    provide: StorageService,
+    useClass: getStorageServiceClass(),
+  },
   {
     provide: ANALYTICS_SERVICE,
     useFactory: async () => {
@@ -67,7 +93,6 @@ const PROVIDERS = [
       return analyticsService;
     },
   },
-  MailService,
 ];
 
 @Module({

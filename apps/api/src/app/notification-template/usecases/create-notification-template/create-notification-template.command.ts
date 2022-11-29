@@ -1,5 +1,4 @@
 import {
-  ArrayNotEmpty,
   IsArray,
   IsBoolean,
   IsDefined,
@@ -14,17 +13,14 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   ChannelCTATypeEnum,
-  ChannelTypeEnum,
-  IEmailBlock,
+  IMessageAction,
+  DigestUnitEnum,
+  IPreferenceChannels,
 } from '@novu/shared';
-import { CommandHelper } from '../../../shared/commands/command.helper';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { MessageTemplate } from '../../../shared/dtos/message-template';
 
 export class CreateNotificationTemplateCommand extends EnvironmentWithUserCommand {
-  static create(data: CreateNotificationTemplateCommand) {
-    return CommandHelper.create(CreateNotificationTemplateCommand, data);
-  }
-
   @IsMongoId()
   @IsDefined()
   notificationGroupId: string;
@@ -44,44 +40,49 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsDefined()
   @IsArray()
   @ValidateNested()
-  steps: NotificationStepDto[];
+  steps: NotificationStepCommand[];
 
   @IsBoolean()
   active: boolean;
 
   @IsBoolean()
   draft: boolean;
+
+  @IsBoolean()
+  critical: boolean;
+
+  @IsOptional()
+  preferenceSettings?: IPreferenceChannels;
 }
 
-export class ChannelCTADto {
+export class ChannelCTACommand {
   @IsEnum(ChannelCTATypeEnum)
   type: ChannelCTATypeEnum;
 
+  @ValidateNested()
   data: {
     url: string;
   };
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested()
+  action?: IMessageAction[];
 }
 
-export class NotificationStepDto {
-  @IsOptional()
-  @IsEnum(ChannelTypeEnum)
-  type: ChannelTypeEnum;
-
-  @IsDefined()
-  content: string | IEmailBlock[];
-
-  @IsOptional()
-  contentType?: 'editor' | 'customHtml';
-
-  @IsOptional()
+class NotificationStepCommand {
   @ValidateNested()
-  cta?: ChannelCTADto;
+  @IsOptional()
+  template?: MessageTemplate;
 
   @IsOptional()
   name?: string;
 
-  @IsOptional()
-  subject?: string;
+  @IsBoolean()
+  active?: boolean;
+
+  @IsBoolean()
+  shouldStopOnFail?: boolean;
 
   @IsOptional()
   @IsArray()
@@ -91,6 +92,14 @@ export class NotificationStepDto {
   @IsMongoId()
   @IsOptional()
   _id?: string;
+
+  @IsOptional()
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnitEnum;
+    digestKey?: string;
+    delayPath?: string;
+  };
 }
 
 export class MessageFilter {

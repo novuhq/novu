@@ -1,6 +1,6 @@
 import * as cloneDeep from 'lodash.clonedeep';
-import moment from 'moment';
 import { ScriptableContext } from 'chart.js';
+import { format, subDays } from 'date-fns';
 import { IActivityGraphStats, IChartData } from '../../interfaces';
 import { activityGraphStatsMock } from '../../consts';
 import { colors } from '../../../../design-system';
@@ -36,7 +36,7 @@ function fillWeekData(data: IActivityGraphStats[]) {
   // eslint-disable-next-line no-plusplus
   for (let i = data.length - 1; i < 6; i++) {
     const earliestDate = fullWeekData[i]._id;
-    const newDate = moment(earliestDate, 'YYYY-MM-DD').subtract(1, 'days').format('YYYY-MM-DD');
+    const newDate = format(subDays(new Date(earliestDate), 1), 'yyyy-MM-dd');
 
     fullWeekData.push({ _id: newDate, count: 0 });
   }
@@ -46,9 +46,9 @@ function fillWeekData(data: IActivityGraphStats[]) {
 
 function buildChartDateLabels(data: IActivityGraphStats[]): string[][] {
   return data.map((item) => {
-    const titleDate = moment(item._id);
+    const titleDate = new Date(item._id);
 
-    return [titleDate.format('ddd'), `${titleDate.date()}/${titleDate.month() + 1}`];
+    return [format(titleDate, 'EEE'), `${format(titleDate, 'dd')}/${format(titleDate, 'MM')}`];
   });
 }
 

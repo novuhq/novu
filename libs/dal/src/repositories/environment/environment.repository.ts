@@ -1,8 +1,12 @@
 import { BaseRepository } from '../base-repository';
 import { IApiKey, EnvironmentEntity } from './environment.entity';
 import { Environment } from './environment.schema';
+import { Document, FilterQuery } from 'mongoose';
 
-export class EnvironmentRepository extends BaseRepository<EnvironmentEntity> {
+export class EnvironmentRepository extends BaseRepository<
+  FilterQuery<EnvironmentEntity & Document>,
+  EnvironmentEntity
+> {
   constructor() {
     super(Environment, EnvironmentEntity);
   }
@@ -11,6 +15,20 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentEntity> {
     return await this.findOne({
       identifier,
     });
+  }
+
+  async updateApiKeyUserId(organizationId: string, oldUserId: string, newUserId: string) {
+    return await this.update(
+      {
+        _organizationId: organizationId,
+        'apiKeys._userId': oldUserId,
+      },
+      {
+        $set: {
+          'apiKeys.$._userId': newUserId,
+        },
+      }
+    );
   }
 
   async findOrganizationEnvironments(organizationId: string) {
@@ -51,5 +69,25 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentEntity> {
     if (!environment) return null;
 
     return environment.apiKeys;
+  }
+
+  async updateApiKey(environmentId: string, key: string, userId: string) {
+    await this.update(
+      {
+        _id: environmentId,
+      },
+      {
+        $set: {
+          apiKeys: [
+            {
+              key,
+              _userId: userId,
+            },
+          ],
+        },
+      }
+    );
+
+    return await this.getApiKeys(environmentId);
   }
 }

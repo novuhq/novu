@@ -23,13 +23,12 @@ const mockConfig = {
   password: 'test123',
 };
 
+const buffer = Buffer.from('test');
 const mockNovuMessage = {
   to: 'test@test2.com',
   subject: 'test subject',
   html: '<div> Mail Content </div>',
-  attachments: [
-    { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
-  ],
+  attachments: [{ mime: 'text/plain', file: buffer, name: 'test.txt' }],
 };
 
 test('should trigger nodemailer correctly', async () => {
@@ -45,9 +44,17 @@ test('should trigger nodemailer correctly', async () => {
     attachments: [
       {
         contentType: 'text/plain',
-        content: 'test',
+        content: buffer,
         filename: 'test.txt',
       },
     ],
   });
+});
+
+test('should check provider integration correctly', async () => {
+  const provider = new NodemailerProvider(mockConfig);
+  const response = await provider.checkIntegration(mockNovuMessage);
+
+  expect(sendMailMock).toHaveBeenCalled();
+  expect(response.success).toBe(true);
 });

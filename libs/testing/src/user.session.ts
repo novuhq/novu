@@ -4,18 +4,24 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
-import { TriggerRecipientsType } from '@novu/node';
 
-import { ChannelTypeEnum } from '@novu/shared';
+import { TriggerRecipientsType } from '@novu/node';
+import { StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
-  UserRepository,
   EnvironmentEntity,
   OrganizationEntity,
   NotificationGroupEntity,
   EnvironmentRepository,
   NotificationGroupRepository,
+  JobRepository,
+  JobStatusEnum,
+  FeedRepository,
+  ChangeRepository,
+  ChangeEntity,
+  SubscriberRepository,
 } from '@novu/dal';
+
 import { NotificationTemplateService } from './notification-template.service';
 import { testServer } from './test-server.service';
 
@@ -23,13 +29,24 @@ import { OrganizationService } from './organization.service';
 import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
+import { UserService } from './user.service';
 
 export class UserSession {
-  private userRepository = new UserRepository();
   private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
+  private jobRepository = new JobRepository();
+  private feedRepository = new FeedRepository();
+  private changeRepository: ChangeRepository = new ChangeRepository();
 
   token: string;
+
+  subscriberToken: string;
+
+  subscriberId: string;
+
+  subscriberProfile: {
+    _id: string;
+  } = null;
 
   notificationGroups: NotificationGroupEntity[] = [];
 
@@ -53,14 +70,18 @@ export class UserSession {
       lastName: faker.name.lastName(),
     };
 
-    this.user = await this.userRepository.create({
+    const userService = new UserService();
+    const userEntity: Partial<UserEntity> = {
       lastName: card.lastName,
       firstName: card.firstName,
       email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
+      password: '123qwe!@#',
       showOnBoarding: true,
-    });
+    };
+
+    this.user = await userService.createUser(userEntity);
 
     if (!options.noOrganization) {
       await this.addOrganization();
@@ -76,6 +97,8 @@ export class UserSession {
         this.apiKey = this.environment.apiKeys[0].key;
 
         await this.createIntegration();
+        await this.createFeed();
+        await this.createFeed('New');
       }
     }
 
@@ -86,6 +109,31 @@ export class UserSession {
         await this.updateOrganizationDetails();
       }
     }
+
+    if (!options.noOrganization && !options.noEnvironment) {
+      const { token, profile } = await this.initializeWidgetSession();
+      this.subscriberToken = token;
+      this.subscriberProfile = profile;
+    }
+  }
+
+  private async initializeWidgetSession() {
+    this.subscriberId = SubscriberRepository.createObjectId();
+
+    const { body } = await this.testAgent
+      .post('/v1/widgets/session/initialize')
+      .send({
+        applicationIdentifier: this.environment.identifier,
+        subscriberId: this.subscriberId,
+        firstName: 'Widget User',
+        lastName: 'Test',
+        email: 'test@example.com',
+      })
+      .expect(201);
+
+    const { token, profile } = body.data;
+
+    return { token, profile };
   }
 
   private shouldUseTestServer() {
@@ -187,7 +235,7 @@ export class UserSession {
     return await service.createIntegration(this.environment._id, this.organization._id);
   }
 
-  async createChannelTemplate(channel: ChannelTypeEnum) {
+  async createChannelTemplate(channel: StepTypeEnum) {
     const service = new NotificationTemplateService(this.user._id, this.organization._id, this.environment._id);
 
     return await service.createTemplate({
@@ -195,7 +243,7 @@ export class UserSession {
         {
           type: channel,
           content:
-            channel === ChannelTypeEnum.EMAIL
+            channel === StepTypeEnum.EMAIL
               ? [
                   {
                     type: 'text',
@@ -230,11 +278,58 @@ export class UserSession {
     }
   }
 
+  async createFeed(name?: string) {
+    name = name ? name : 'Activities';
+    const feed = await this.feedRepository.create({
+      name,
+      identifier: name,
+      _environmentId: this.environment._id,
+      _organizationId: this.organization._id,
+    });
+
+    return feed;
+  }
+
   async triggerEvent(triggerName: string, to: TriggerRecipientsType, payload = {}) {
     await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
       to: to,
       payload,
     });
+  }
+
+  public async awaitRunningJobs(templateId?: string | string[]) {
+    let runningJobs = 0;
+    do {
+      runningJobs = await this.jobRepository.count({
+        _organizationId: this.organization._id,
+        type: {
+          $nin: [StepTypeEnum.DIGEST],
+        },
+        _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
+        status: {
+          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
+        },
+      });
+    } while (runningJobs > 0);
+  }
+
+  public async applyChanges(where: Partial<ChangeEntity> = {}) {
+    const changes = await this.changeRepository.find(
+      {
+        _environmentId: this.environment._id,
+        _organizationId: this.organization._id,
+        _parentId: { $exists: false, $eq: null },
+        ...where,
+      },
+      '',
+      {
+        sort: { createdAt: 1 },
+      }
+    );
+
+    for (const change of changes) {
+      await this.testAgent.post(`/v1/changes/${change._id}/apply`);
+    }
   }
 }

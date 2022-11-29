@@ -1,4 +1,12 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '@novu/shared';
+import {
+  BuilderFieldOperator,
+  BuilderFieldType,
+  BuilderGroupValues,
+  DigestUnitEnum,
+  DigestTypeEnum,
+  IPreferenceChannels,
+  DelayTypeEnum,
+} from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 
@@ -12,6 +20,10 @@ export class NotificationTemplateEntity {
   active: boolean;
 
   draft: boolean;
+
+  preferenceSettings: IPreferenceChannels;
+
+  critical: boolean;
 
   tags: string[];
 
@@ -35,6 +47,10 @@ export class NotificationTemplateEntity {
 
   deletedBy: string;
 
+  createdAt?: string;
+
+  updatedAt?: string;
+
   readonly notificationGroup?: NotificationGroupEntity;
 }
 
@@ -57,9 +73,26 @@ export class NotificationStepEntity {
 
   _templateId: string;
 
+  active?: boolean;
+
   template?: MessageTemplateEntity;
 
   filters?: StepFilter[];
+
+  _parentId?: string;
+
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnitEnum;
+    digestKey?: string;
+    delayPath?: string;
+    type: DigestTypeEnum | DelayTypeEnum;
+    backoffUnit?: DigestUnitEnum;
+    backoffAmount?: number;
+    updateMode?: boolean;
+  };
+
+  shouldStopOnFail?: boolean;
 }
 
 export class StepFilter {
@@ -73,5 +106,6 @@ export class StepFilter {
     field: string;
     value: string;
     operator: BuilderFieldOperator;
+    on?: 'payload' | 'subscriber';
   }[];
 }

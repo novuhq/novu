@@ -1,4 +1,5 @@
 import { NovuStateless } from './novu';
+import { CheckIntegrationResponseEnum } from './provider/provider.enum';
 import { ChannelTypeEnum } from './template/template.interface';
 
 test('should register an SMS provider and return it', async () => {
@@ -9,6 +10,13 @@ test('should register an SMS provider and return it', async () => {
     channelType: ChannelTypeEnum.SMS,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    setSubscriberCredentials: () => '123',
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   };
 
   await novu.registerProvider('sms', template);
@@ -26,6 +34,13 @@ test('should call 2 hooks together', async () => {
     channelType: ChannelTypeEnum.SMS as ChannelTypeEnum,
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    setSubscriberCredentials: () => '123',
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   };
 
   await novu.registerProvider('sms', template);

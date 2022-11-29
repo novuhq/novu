@@ -1,6 +1,6 @@
 import { Injectable, Logger, Scope } from '@nestjs/common';
 import { MemberEntity, OrganizationRepository, UserEntity, MemberRepository, UserRepository } from '@novu/dal';
-import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AcceptInviteCommand } from './accept-invite.command';
@@ -32,7 +32,7 @@ export class AcceptInvite {
 
     const inviter = await this.userRepository.findById(member.invite._inviterId);
 
-    await this.memberRepository.convertInvitedUserToMember(command.token, {
+    await this.memberRepository.convertInvitedUserToMember(this.organizationId, command.token, {
       memberStatus: MemberStatusEnum.ACTIVE,
       _userId: command.userId,
       answerDate: new Date(),
@@ -48,7 +48,7 @@ export class AcceptInvite {
       if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
         const novu = new Novu(process.env.NOVU_API_KEY);
 
-        await novu.trigger('invite-accepted-dEQAsKD1E', {
+        await novu.trigger(process.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E', {
           to: {
             subscriberId: inviter._id,
             firstName: capitalize(inviter.firstName),

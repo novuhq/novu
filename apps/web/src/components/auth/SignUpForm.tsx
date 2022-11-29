@@ -1,16 +1,18 @@
-import { useContext } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ButtonProps } from '@mantine/core/lib/components/Button/Button';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
-import { Github } from '../../design-system/icons';
+import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
+import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
-import { showNotification } from '@mantine/notifications';
+import { applyToken } from '../../store/use-auth-controller';
+import { useAcceptInvite } from './use-accept-invite.hook';
+import { useVercelParams } from '../../hooks/use-vercelParams';
 
 type Props = {
   token?: string;
@@ -19,12 +21,15 @@ type Props = {
 
 export function SignUpForm({ token, email }: Props) {
   const navigate = useNavigate();
+
   const { setToken } = useContext(AuthContext);
-  const { isLoading: loadingAcceptInvite, mutateAsync: acceptInvite } = useMutation<
-    string,
-    { error: string; message: string; statusCode: number },
-    string
-  >((tokenItem) => api.post(`/v1/invites/${tokenItem}/accept`, {}));
+  const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
+  const { isFromVercel, code, next, configurationId } = useVercelParams();
+  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
+  const githubLink = isFromVercel
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
+    : `${API_ROOT}/v1/auth/github`;
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -55,17 +60,24 @@ export function SignUpForm({ token, email }: Props) {
     }
     const response = await mutateAsync(itemData);
 
-    setToken((response as any).token);
+    /**
+     * We need to call the applyToken to avoid a race condition for accept invite
+     * To get the correct token when sending the request
+     */
+    applyToken((response as any).token);
 
     if (token) {
-      const responseInvite = await acceptInvite(token);
-
-      setToken(responseInvite);
+      const result = await submitToken(token);
+      if (!result) return;
 
       navigate('/templates');
+
+      return true;
+    } else {
+      setToken((response as any).token);
     }
 
-    navigate('/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : '/auth/application');
 
     return true;
   };
@@ -82,27 +94,47 @@ export function SignUpForm({ token, email }: Props) {
     },
   });
 
+  const [accepted, setAccepted] = useState<boolean>(false);
+
+  const serverErrorString = useMemo<string>(() => {
+    return Array.isArray(error?.message) ? error?.message[0] : error?.message;
+  }, [error]);
+
+  const emailServerError = useMemo<string>(() => {
+    if (serverErrorString === 'User already exists') return 'An account with this email already exists';
+    if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
+
+    return '';
+  }, [serverErrorString]);
+
+  const accountCreationError = useMemo<string>(() => {
+    if (serverErrorString === 'Account creation is disabled')
+      return 'The creation of new accounts is currently disabled. Please contact your administrator.';
+
+    return '';
+  }, [serverErrorString]);
+
   return (
     <>
       {!IS_DOCKER_HOSTED && !token && (
         <>
-          <GithubButton
+          <GitHubButton
             my={30}
             component="a"
-            href={`${API_ROOT}/v1/auth/github`}
+            href={githubLink}
             variant="white"
             fullWidth
             radius="md"
-            leftIcon={<Github />}
-            sx={{ color: colors.B40, fontSize: '16px', fontWeight: '700', height: '50px' }}
+            leftIcon={<GitHub />}
+            sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
-            Sign Up with Github
-          </GithubButton>
+            Sign Up with GitHub
+          </GitHubButton>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
       )}
 
-      <form name="login-form" onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>
         <Input
           error={errors.fullName?.message}
           {...register('fullName', {
@@ -115,7 +147,7 @@ export function SignUpForm({ token, email }: Props) {
           mt={5}
         />
         <Input
-          error={errors.email?.message}
+          error={errors.email?.message || emailServerError}
           disabled={!!email}
           {...register('email', {
             required: 'Please provide an email',
@@ -143,19 +175,42 @@ export function SignUpForm({ token, email }: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        <Button mt={60} inherit loading={isLoading || loadingAcceptInvite} submit data-test-id="submitButton">
+        <Checkbox
+          onChange={(prev) => setAccepted(prev.target.checked)}
+          required
+          label={<Accept />}
+          data-test-id="accept-cb"
+          mt={20}
+          mb={20}
+        />
+
+        {accountCreationError && (
+          <Text mt={20} size="lg" align="center" color={colors.error}>
+            {accountCreationError}
+          </Text>
+        )}
+
+        <Button
+          disabled={!accepted}
+          mt={20}
+          inherit
+          loading={isLoading || loadingAcceptInvite}
+          submit
+          data-test-id="submitButton"
+        >
           Sign Up {token ? '& Accept Invite' : null}
         </Button>
         <Center mt={20}>
           <Text mr={10} size="md" color={colors.B60}>
             Already have an account?
           </Text>
-          <Link to="/auth/login">
+          <Link to={loginLink}>
             <Text gradient> Sign In</Text>
           </Link>
         </Center>
       </form>
-      {isError && (
+
+      {isError && !emailServerError && !accountCreationError && (
         <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}
@@ -165,7 +220,27 @@ export function SignUpForm({ token, email }: Props) {
   );
 }
 
-const GithubButton = styled(MantineButton)<{
+function Accept() {
+  return (
+    <div>
+      <span>I accept the </span>
+      <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms" target="_blank" rel="noopener noreferrer">
+        Terms and Conditions
+      </a>
+      <span> and have read the </span>
+      <a
+        style={{ textDecoration: 'underline' }}
+        href="https://novu.co/privacy"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Privacy Policy
+      </a>
+    </div>
+  );
+}
+
+const GitHubButton = styled(MantineButton)<{
   component: 'a';
   my: number;
   href: string;

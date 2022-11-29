@@ -1,5 +1,7 @@
 import { EventEmitter } from 'events';
+import { HandlebarsContentEngine } from '../content/content.engine';
 import { EmailHandler } from '../handler/email.handler';
+import { CheckIntegrationResponseEnum } from '../provider/provider.enum';
 import { ProviderStore } from '../provider/provider.store';
 import { ChannelTypeEnum } from '../template/template.interface';
 import { TemplateStore } from '../template/template.store';
@@ -10,6 +12,7 @@ test('emailHandler should be called correctly', async () => {
   const templateStore = new TemplateStore();
   const providerStore = new ProviderStore();
   const themeStore = new ThemeStore();
+  const contentEngine = new HandlebarsContentEngine();
   const ee = new EventEmitter();
 
   await providerStore.addProvider('email', {
@@ -17,6 +20,12 @@ test('emailHandler should be called correctly', async () => {
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   });
 
   await templateStore.addTemplate({
@@ -34,6 +43,7 @@ test('emailHandler should be called correctly', async () => {
     templateStore,
     providerStore,
     themeStore,
+    contentEngine,
     {},
     ee
   );
@@ -56,11 +66,13 @@ test('variable protection should throw if missing variable provided', async () =
   const providerStore = new ProviderStore();
   const themeStore = new ThemeStore();
   const ee = new EventEmitter();
+  const contentEngine = new HandlebarsContentEngine();
 
   const triggerEngine = new TriggerEngine(
     templateStore,
     providerStore,
     themeStore,
+    contentEngine,
     {
       variableProtection: true,
     },
@@ -72,6 +84,12 @@ test('variable protection should throw if missing variable provided', async () =
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   });
 
   await templateStore.addTemplate({
@@ -98,11 +116,13 @@ test('variable protection should throw if missing variable provided with templat
   const providerStore = new ProviderStore();
   const themeStore = new ThemeStore();
   const ee = new EventEmitter();
+  const contentEngine = new HandlebarsContentEngine();
 
   const triggerEngine = new TriggerEngine(
     templateStore,
     providerStore,
     themeStore,
+    contentEngine,
     {
       variableProtection: true,
     },
@@ -114,6 +134,12 @@ test('variable protection should throw if missing variable provided with templat
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   });
 
   await templateStore.addTemplate({
@@ -140,12 +166,19 @@ test('TriggerEngine should call validate if validator is provided', async () => 
   const providerStore = new ProviderStore();
   const themeStore = new ThemeStore();
   const ee = new EventEmitter();
+  const contentEngine = new HandlebarsContentEngine();
 
   await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   });
 
   const validate = jest.fn().mockImplementation(() => true);
@@ -168,6 +201,7 @@ test('TriggerEngine should call validate if validator is provided', async () => 
     templateStore,
     providerStore,
     themeStore,
+    contentEngine,
     {},
     ee
   );
@@ -189,12 +223,19 @@ test('Validation should throw error if validate method returns false', async () 
   const providerStore = new ProviderStore();
   const themeStore = new ThemeStore();
   const ee = new EventEmitter();
+  const contentEngine = new HandlebarsContentEngine();
 
   await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
     sendMessage: () =>
       Promise.resolve({ id: '1', date: new Date().toString() }),
+    checkIntegration: () =>
+      Promise.resolve({
+        message: 'test',
+        success: true,
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      }),
   });
 
   await templateStore.addTemplate({
@@ -215,6 +256,7 @@ test('Validation should throw error if validate method returns false', async () 
     templateStore,
     providerStore,
     themeStore,
+    contentEngine,
     {},
     ee
   );

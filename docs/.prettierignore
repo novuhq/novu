@@ -1,0 +1,6 @@
+# Ignore artifacts:
+build
+package.json
+yarn.lock
+*.md
+.docusaurus

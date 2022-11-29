@@ -24,7 +24,7 @@ jobs:
         run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - uses: actions/setup-node@v2
         with:
-          node-version: '16.13.0'
+          node-version: '16.15.1'
 
       - name: Cache pnpm modules
         uses: actions/cache@v2
@@ -35,10 +35,9 @@ jobs:
             ${{ runner.os }}-
       - uses: pnpm/action-setup@v2.0.1
         with:
-          version: 6.0.2
+          version: 7.5.0
           run_install: true
 
       # Runs a single command using the runners shell
       - name: Build
-        working-directory: libs/embed
-        run: CI='' pnpm build:dev
+        run: pnpm build:embed

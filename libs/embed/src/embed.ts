@@ -6,13 +6,25 @@ import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
-import { SHOW_WIDGET } from './shared/eventTypes';
+import { IStore, ITab } from '@novu/notification-center';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
 
 class Novu {
   public clientId: string | unknown;
+
+  private backendUrl?: string = '';
+
+  private socketUrl?: string = '';
+
+  private theme?: Record<string, unknown>;
+
+  private i18n?: Record<string, unknown>;
+
+  private tabs?: ITab[];
+
+  private stores?: IStore[];
 
   private debugMode: boolean;
 
@@ -55,6 +67,12 @@ class Novu {
       this.selector = selectorOrOptions.bellSelector;
       this.unseenBadgeSelector = selectorOrOptions.unseenBadgeSelector;
       this.options = selectorOrOptions;
+      this.backendUrl = selectorOrOptions.backendUrl;
+      this.socketUrl = selectorOrOptions.socketUrl;
+      this.theme = selectorOrOptions.theme;
+      this.i18n = selectorOrOptions.i18n;
+      this.tabs = selectorOrOptions.tabs;
+      this.stores = selectorOrOptions.stores;
     }
 
     this.clientId = clientId;
@@ -94,7 +112,7 @@ class Novu {
         wrapper.style.left = `${leftPosition}px`;
       }
 
-      if (_this.options?.position?.left) {
+      if (_this.options?.position?.top) {
         wrapper.style.top = isNaN(_this.options?.position?.top as number)
           ? _this.options?.position?.top
           : `${_this.options?.position?.top}px`;
@@ -111,13 +129,9 @@ class Novu {
       }
     }
 
-    window.addEventListener('resize', () => {
-      positionIframe();
-    });
-
-    window.addEventListener('click', (e: any) => {
-      if (document.querySelector(this.selector)?.contains(e.target)) {
-        this.widgetVisible = !this.widgetVisible;
+    function handleClick(e: MouseEvent | TouchEvent) {
+      if (document.querySelector(_scope.selector)?.contains(e.target as Node)) {
+        _scope.widgetVisible = !_scope.widgetVisible;
         positionIframe();
 
         var elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
@@ -126,7 +140,7 @@ class Novu {
           elem.style.display = 'inline-block';
         }
 
-        this.iframe?.contentWindow?.postMessage(
+        _scope.iframe?.contentWindow?.postMessage(
           {
             type: EventTypes.SHOW_WIDGET,
             value: {},
@@ -136,7 +150,11 @@ class Novu {
       } else {
         hideWidget();
       }
-    });
+    }
+
+    window.addEventListener('resize', positionIframe);
+    window.addEventListener('click', handleClick);
+    window.addEventListener('touchstart', handleClick);
   };
 
   // PRIVATE METHODS
@@ -184,6 +202,34 @@ class Novu {
   initializeIframe = (clientId: string, options: any) => {
     if (!document.getElementById(IFRAME_ID)) {
       const iframe = document.createElement('iframe');
+      window.addEventListener(
+        'message',
+        (event) => {
+          if (!event.target || event?.data?.type !== EventTypes.WIDGET_READY) {
+            return;
+          }
+
+          iframe?.contentWindow?.postMessage(
+            {
+              type: EventTypes.INIT_IFRAME,
+              value: {
+                clientId: this.clientId,
+                backendUrl: this.backendUrl,
+                socketUrl: this.socketUrl,
+                theme: this.theme,
+                i18n: this.i18n,
+                topHost: window.location.host,
+                data: options,
+                tabs: this.tabs,
+                stores: this.stores,
+              },
+            },
+            '*'
+          );
+        },
+        true
+      );
+
       iframe.onload = () => {
         (iFrameResize as any).iframeResize(
           {
@@ -231,30 +277,25 @@ class Novu {
                 if (this.listeners.notification_click) {
                   this.listeners.notification_click(message.notification);
                 }
+              } else if (message.type === 'action_click') {
+                if (this.listeners.action_click) {
+                  this.listeners.action_click({
+                    templateIdentifier: message.templateIdentifier,
+                    type: message.resultType,
+                    notification: message.notification,
+                  });
+                }
               }
             },
-            enablePublicMethods: true, // Enable methods within iframe hosted page
             heightCalculationMethod: 'max',
             widthCalculationMethod: 'max',
             sizeWidth: true,
           },
           `#${IFRAME_ID}`
         );
-
-        this.iframe?.contentWindow?.postMessage(
-          {
-            type: EventTypes.INIT_IFRAME,
-            value: {
-              clientId: this.clientId,
-              topHost: window.location.host,
-              data: options,
-            },
-          },
-          '*'
-        );
       };
 
-      iframe.src = `${IFRAME_URL}/${clientId}`;
+      iframe.src = `${IFRAME_URL}/${clientId}?`;
       iframe.id = IFRAME_ID;
       iframe.style.border = 'none';
       (iframe as any).crossorigin = 'anonymous';
@@ -310,9 +351,11 @@ export default ((window: any) => {
     // eslint-disable-next-line prefer-spread
     novuApi[initCall[0]].apply(novuApi, initCall[1]);
 
-    const onCall = window.novu._c.find((call: string[]) => call[0] === 'on');
-    if (onCall) {
-      novuApi[onCall[0]].apply(novuApi, onCall[1]);
+    const onCalls = window.novu._c.filter((call: string[]) => call[0] === 'on');
+    if (onCalls.length) {
+      for (const onCall of onCalls) {
+        novuApi[onCall[0]].apply(novuApi, onCall[1]);
+      }
     }
   } else {
     // eslint-disable-next-line no-param-reassign
@@ -333,8 +376,14 @@ function updateInnerTextCount(element: HTMLElement, count: number) {
 interface IOptions {
   bellSelector: string;
   unseenBadgeSelector: string;
+  backendUrl?: string;
+  socketUrl?: string;
+  theme?: Record<string, unknown>;
+  i18n?: Record<string, unknown>;
   position?: {
     top?: number | string;
     left?: number | string;
   };
+  tabs: ITab[];
+  stores: IStore[];
 }

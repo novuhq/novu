@@ -8,8 +8,8 @@ import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
-import { NavigateValidatorModal } from '../NavigateValidatorModal';
 import { useIsMounted } from '../../../hooks/use-is-mounted';
+import { useNavigate } from 'react-router-dom';
 
 export function EmailMessageEditor({
   onChange,
@@ -23,6 +23,7 @@ export function EmailMessageEditor({
   readonly: boolean;
 }) {
   const theme = useMantineTheme();
+  const navigate = useNavigate();
 
   const [blocks, setBlocks] = useState<IEmailBlock[]>(
     value?.length
@@ -39,7 +40,6 @@ export function EmailMessageEditor({
 
   const [top, setTop] = useState<number>(0);
   const [controlBarVisible, setActionBarVisible] = useState<boolean>(false);
-  const [confirmModalVisible, setConfirmModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     if (onChange && isMounted) {
@@ -47,11 +47,21 @@ export function EmailMessageEditor({
     }
   }, [blocks, isMounted]);
 
-  function onBlockStyleChanged(blockIndex: number, styles: { textDirection: 'rtl' | 'ltr' }) {
+  function onBlockStyleChanged(blockIndex: number, styles: { textAlign: 'left' | 'right' | 'center' }) {
     blocks[blockIndex].styles = {
       ...styles,
     };
 
+    setBlocks([...blocks]);
+  }
+
+  function onBlockTextChanged(blockIndex: number, content: string) {
+    blocks[blockIndex].content = content;
+    setBlocks([...blocks]);
+  }
+
+  function onBlockUrlChanged(blockIndex: number, url: string) {
+    blocks[blockIndex].url = url;
     setBlocks([...blocks]);
   }
 
@@ -108,54 +118,49 @@ export function EmailMessageEditor({
 
   return (
     <Card withBorder sx={styledCard}>
-      <div onClick={() => !branding?.logo && setConfirmModalVisible(true)}>
-        <Dropzone
-          styles={{
-            root: {
-              borderRadius: '7px',
-              padding: '10px',
-              border: 'none',
-              height: '80px',
-              backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-            },
-          }}
-          disabled
-          multiple={false}
-          onDrop={(file) => {}}
-          data-test-id="upload-image-button"
-        >
-          {(status) => (
-            <Group position="center" style={{ height: '100%' }}>
-              {!branding?.logo ? (
-                <Group
-                  style={{ height: '100%' }}
-                  spacing={5}
-                  position="center"
-                  direction="column"
-                  data-test-id="logo-upload-button"
-                >
-                  <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
-                  <Text color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70}>Upload Brand Logo</Text>
-                </Group>
-              ) : (
-                <img
-                  data-test-id="brand-logo"
-                  src={branding?.logo}
-                  alt=""
-                  style={{ width: 'inherit', maxHeight: '80%' }}
-                />
-              )}
-            </Group>
-          )}
-        </Dropzone>
-      </div>
-
-      <NavigateValidatorModal
-        isOpen={confirmModalVisible}
-        setModalVisibility={setConfirmModalVisible}
-        navigateRoute={getBrandSettingsUrl()}
-        navigateName="settings page"
-      />
+      <Container pl={0} pr={0}>
+        <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())}>
+          <Dropzone
+            styles={{
+              root: {
+                borderRadius: '7px',
+                padding: '10px',
+                border: 'none',
+                height: '80px',
+                backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+              },
+            }}
+            disabled
+            multiple={false}
+            onDrop={(file) => {}}
+            data-test-id="upload-image-button"
+          >
+            {(status) => (
+              <Group position="center" style={{ height: '100%' }}>
+                {!branding?.logo ? (
+                  <Group
+                    style={{ height: '100%' }}
+                    spacing={5}
+                    position="center"
+                    direction="column"
+                    data-test-id="logo-upload-button"
+                  >
+                    <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
+                    <Text color={colors.B60}>Upload Brand Logo</Text>
+                  </Group>
+                ) : (
+                  <img
+                    data-test-id="brand-logo"
+                    src={branding?.logo}
+                    alt=""
+                    style={{ width: 'inherit', maxHeight: '80%' }}
+                  />
+                )}
+              </Group>
+            )}
+          </Dropzone>
+        </div>
+      </Container>
 
       <Container
         mt={30}
@@ -193,10 +198,7 @@ export function EmailMessageEditor({
                       <TextRowContent
                         key={blockIndex}
                         block={block}
-                        onTextChange={(text) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.content = text;
-                        }}
+                        onTextChange={(text) => onBlockTextChanged(index, text)}
                       />
                     );
                   }
@@ -206,14 +208,8 @@ export function EmailMessageEditor({
                         key={blockIndex}
                         block={block}
                         brandingColor={branding?.color}
-                        onUrlChange={(url) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.url = url;
-                        }}
-                        onTextChange={(text) => {
-                          // eslint-disable-next-line no-param-reassign
-                          block.content = text;
-                        }}
+                        onUrlChange={(url) => onBlockUrlChanged(index, url)}
+                        onTextChange={(text) => onBlockTextChanged(index, text)}
                       />
                     );
                   }

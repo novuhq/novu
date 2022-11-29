@@ -1,4 +1,3 @@
-import Mailgun from 'mailgun.js';
 import nock from 'nock';
 import { MailgunEmailProvider } from './mailgun.provider';
 
@@ -20,16 +19,6 @@ const mockNovuMessage = {
 
 test('should trigger mailgun correctly', async () => {
   const provider = new MailgunEmailProvider(mockConfig);
-  const createFn = jest.fn();
-
-  jest.spyOn(Mailgun.prototype, 'client').mockImplementation(() => {
-    return {
-      messages: {
-        create: createFn,
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
-  });
 
   const api = nock('https://api.mailgun.net');
 
@@ -40,5 +29,25 @@ test('should trigger mailgun correctly', async () => {
 
   await provider.sendMessage(mockNovuMessage);
 
+  expect(api.isDone()).toBeTruthy();
+  api.done();
+});
+
+test('should trigger mailgun correctly with custom baseUrl', async () => {
+  const provider = new MailgunEmailProvider({
+    ...mockConfig,
+    baseUrl: 'https://api.eu.mailgun.net',
+  });
+
+  const api = nock('https://api.eu.mailgun.net');
+
+  api.post('/v3/test.com/messages').reply(200, {
+    message: 'Queued. Thank you.',
+    id: '<20111114174239.25659.5817@samples.mailgun.org>',
+  });
+
+  await provider.sendMessage(mockNovuMessage);
+
+  expect(api.isDone()).toBeTruthy();
   api.done();
 });

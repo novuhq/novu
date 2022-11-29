@@ -59,11 +59,7 @@ const data = [
   { name: 'Whats up?', category: 'Done', status: 'Enabled', creationDate: '01/01/2021 16:36' },
 ];
 
-const Template: ComponentStory<typeof Table> = ({ ...args }) => (
-  <Table columns={columns} data={data} {...args}>
-    {' '}
-  </Table>
-);
+const Template: ComponentStory<typeof Table> = ({ ...args }) => <Table columns={columns} data={data} {...args} />;
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {};

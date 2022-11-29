@@ -1,11 +1,7 @@
 import { IsDefined, IsEmail, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class UserRegisterCommand {
-  static create(data: UserRegisterCommand) {
-    return CommandHelper.create(UserRegisterCommand, data);
-  }
-
+export class UserRegisterCommand extends BaseCommand {
   @IsDefined()
   @IsNotEmpty()
   @IsEmail()

@@ -4,7 +4,8 @@ import { INovuConfig } from './novu.interface';
 import {
   IEmailProvider,
   ISmsProvider,
-  IDirectProvider,
+  IChatProvider,
+  IPushProvider,
 } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
@@ -12,12 +13,17 @@ import { TemplateStore } from './template/template.store';
 import { TriggerEngine } from './trigger/trigger.engine';
 import { ThemeStore } from './theme/theme.store';
 import { ITheme } from './theme/theme.interface';
+import {
+  HandlebarsContentEngine,
+  IContentEngine,
+} from './content/content.engine';
 
 export class NovuStateless extends EventEmitter {
   private readonly templateStore: TemplateStore;
   private readonly providerStore: ProviderStore;
   private readonly themeStore: ThemeStore;
   private readonly config: INovuConfig;
+  private readonly contentEngine: IContentEngine;
 
   constructor(config?: INovuConfig) {
     super();
@@ -33,6 +39,8 @@ export class NovuStateless extends EventEmitter {
     this.themeStore = this.config?.themeStore || new ThemeStore();
     this.templateStore = this.config?.templateStore || new TemplateStore();
     this.providerStore = this.config?.providerStore || new ProviderStore();
+    this.contentEngine =
+      this.config?.contentEngine || new HandlebarsContentEngine();
   }
 
   async registerTheme(id: string, theme: ITheme) {
@@ -50,12 +58,12 @@ export class NovuStateless extends EventEmitter {
   }
 
   async registerProvider(
-    provider: IEmailProvider | ISmsProvider | IDirectProvider
+    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
   );
 
   async registerProvider(
     providerId: string,
-    provider: IEmailProvider | ISmsProvider | IDirectProvider
+    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
   );
 
   async registerProvider(
@@ -63,8 +71,9 @@ export class NovuStateless extends EventEmitter {
       | string
       | IEmailProvider
       | ISmsProvider
-      | IDirectProvider,
-    provider?: IEmailProvider | ISmsProvider | IDirectProvider
+      | IChatProvider
+      | IPushProvider,
+    provider?: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
   ) {
     await this.providerStore.addProvider(
       typeof providerOrProviderId === 'string'
@@ -83,6 +92,7 @@ export class NovuStateless extends EventEmitter {
       this.templateStore,
       this.providerStore,
       this.themeStore,
+      this.contentEngine,
       this.config,
       this
     );

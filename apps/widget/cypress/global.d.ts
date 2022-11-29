@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+import { INovuThemeProvider, IStore, ITab, ITranslationEntry } from '@novu/notification-center';
+
 declare namespace Cypress {
   interface Chainable {
     getByTestId(dataTestAttribute: string, args?: any): Chainable<Element>;
@@ -24,20 +26,40 @@ declare namespace Cypress {
 
     initializeOrganization(): Chainable<Response>;
 
-    initializeShellSession(userId: string, identifier: string, encryptedHmacHash?: string): Chainable<Response>;
+    initializeShellSession(setting: IInitializeShellSessionSettings): Chainable<Response>;
 
-    initializeWidget(session: any, shell?: boolean, encryptedHmacHash?: string): Chainable<Response>;
+    initializeWidget(setting: IInitializeWidgetSetting): Chainable<Response>;
     /**
      * Logs-in user by using API request
      */
-    initializeSession(settings?: {
-      noEnvironment?: boolean;
-      shell?: boolean;
-      hmacEncryption?: boolean;
-    }): Chainable<Response>;
+    initializeSession(settings?: IInitializeSessionSetting): Chainable<Response>;
 
     logout(): Chainable<Response>;
 
     forceVisit(url: string): Chainable<Response>;
   }
+}
+
+interface IInitializeShellSessionSettings {
+  subscriberId: string;
+  identifier: string;
+  encryptedHmacHash?: string;
+}
+
+interface IInitializeSessionSettings {
+  noEnvironment?: boolean;
+  shell?: boolean;
+  hmacEncryption?: boolean;
+  theme?: INovuThemeProvider;
+  i18n?: ITranslationEntry;
+  tabs?: ITab[];
+  stores?: IStore[];
+}
+
+interface IInitializeWidgetSettings {
+  session: any;
+  shell?: boolean;
+  encryptedHmacHash?: string;
+  theme?: INovuThemeProvider;
+  i18n?: ITranslationEntry;
 }

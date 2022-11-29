@@ -15,13 +15,11 @@ describe('HTML Sanitizer', function () {
   it('should sanitized message email block content', function () {
     const result = sanitizeMessageContent([
       {
-        subject: 'subject<script>alert(123)</script>',
         type: 'text',
         content: 'hello <b>bold</b> <script>alert(123)</script>',
         url: '',
       },
     ]);
     expect(result[0].content).to.equal('hello <b>bold</b> ');
-    expect(result[0].subject).to.equal('subject');
   });
 });

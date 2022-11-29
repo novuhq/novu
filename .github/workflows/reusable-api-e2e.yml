@@ -20,7 +20,8 @@ jobs:
       run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
     - uses: actions/setup-node@v2
       with:
-        node-version: '16.13.0'
+        node-version: '16.15.1'
+
     - name: Start Redis
       uses: supercharge/redis-github-action@1.2.0
 
@@ -29,18 +30,29 @@ jobs:
       with:
         mongodb-version: 4.2.8
 
-    - name: Cache pnpm modules
-      uses: actions/cache@v2
+    - uses: pnpm/action-setup@v2
+      name: Install pnpm
+      id: pnpm-install
       with:
-        path: ~/.pnpm-store
-        key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-
+        version: 7.5.0
+        run_install: false
 
-    - uses: pnpm/action-setup@v2.0.1
+    - name: Get pnpm store directory
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+    - uses: actions/cache@v3
+      name: Setup pnpm cache
       with:
-        version: 6.0.2
-        run_install: true
+        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install dependencies
+      run: pnpm install
 
     - uses: mansagroup/nrwl-nx-action@v2
       with:
@@ -70,8 +82,7 @@ jobs:
           ((counter++))
         done
         docker-compose logs --tail="all"
-        aws --endpoint-url=http://localhost:4566 s3 mb s3://novu-test
-
+        aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
 
       # Runs a single command using the runners shell
     - name: Build API

@@ -1,11 +1,7 @@
 import { AuthProviderEnum } from '@novu/shared';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { BaseCommand } from '../../../shared/commands/base.command';
 
-export class CreateUserCommand {
-  static create(data: CreateUserCommand) {
-    return CommandHelper.create(CreateUserCommand, data);
-  }
-
+export class CreateUserCommand extends BaseCommand {
   email: string;
 
   firstName: string;

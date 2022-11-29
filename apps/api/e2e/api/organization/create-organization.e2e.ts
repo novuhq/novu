@@ -40,5 +40,9 @@ describe('Create Organization - /organizations (POST)', async () => {
 
       expect(body.data.name).to.eq(demoOrganization.name);
     });
+
+    it('should not create organization with no name', async () => {
+      await session.testAgent.post('/v1/organizations').send({}).expect(400);
+    });
   });
 });

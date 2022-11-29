@@ -1,4 +1,4 @@
-import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
+import { StepTypeEnum, IMessageCTA, TemplateVariableTypeEnum, IActor } from '@novu/shared';
 
 export class MessageTemplateEntity {
   _id?: string;
@@ -9,7 +9,9 @@ export class MessageTemplateEntity {
 
   _creatorId: string;
 
-  type: ChannelTypeEnum;
+  type: StepTypeEnum;
+
+  variables?: ITemplateVariable[];
 
   content: string | IEmailBlock[];
 
@@ -19,16 +21,19 @@ export class MessageTemplateEntity {
 
   subject?: string;
 
+  title?: string;
+
   name?: string;
 
-  cta?: {
-    type: ChannelCTATypeEnum;
-    data: {
-      url?: string;
-    };
-  };
+  preheader?: string;
+
+  _feedId?: string;
+
+  cta?: IMessageCTA;
 
   _parentId?: string;
+
+  actor?: IActor;
 }
 
 export class IEmailBlock {
@@ -39,6 +44,16 @@ export class IEmailBlock {
   url?: string;
 
   styles?: {
-    textDirection?: 'rtl' | 'ltr';
+    textAlign?: 'left' | 'right' | 'center';
   };
+}
+
+export class ITemplateVariable {
+  type: TemplateVariableTypeEnum;
+
+  name: string;
+
+  required: boolean;
+
+  defaultValue?: string | boolean;
 }

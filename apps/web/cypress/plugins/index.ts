@@ -1,25 +1,34 @@
 /**
  * @type {Cypress.PluginConfig}
  */
-const injectReactScriptsDevServer = require('@cypress/react/plugins/react-scripts');
-import { DalService, NotificationTemplateEntity, UserRepository } from '@novu/dal';
-import { UserSession, SubscribersService, NotificationTemplateService, NotificationsService } from '@novu/testing';
+import { DalService, NotificationTemplateEntity } from '@novu/dal';
+import {
+  UserSession,
+  SubscribersService,
+  NotificationTemplateService,
+  NotificationsService,
+  OrganizationService,
+  UserService,
+} from '@novu/testing';
 
-const userRepository = new UserRepository();
 module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
   on('task', {
-    async createNotifications({ identifier, token, count = 1, environmentId, organizationId }) {
-      const subscriberService = new SubscribersService(organizationId, environmentId);
-      const subscriber = await subscriberService.createSubscriber();
+    async createNotifications({ identifier, token, count = 1, subscriberId, environmentId, organizationId }) {
+      let subId = subscriberId;
+      if (!subId) {
+        const subscribersService = new SubscribersService(organizationId, environmentId);
+        const subscriber = await subscribersService.createSubscriber();
+        subId = subscriber.subscriberId;
+      }
 
       const triggerIdentifier = identifier;
       const service = new NotificationsService(token);
 
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < count; i++) {
-        await service.triggerEvent(triggerIdentifier, subscriber.subscriberId, {});
+        await service.triggerEvent(triggerIdentifier, subId, {});
       }
 
       return 'ok';
@@ -34,17 +43,29 @@ module.exports = (on, config) => {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
 
-      new UserSession('http://localhost:1336');
+      const userService = new UserService();
+      await userService.createTestUser();
 
       return true;
     },
     async passwordResetToken(id: string) {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
-      const user = await userRepository.findOne({
-        _id: id,
-      });
+
+      const userService = new UserService();
+      const user = await userService.getUser(id);
+
       return user?.resetToken;
+    },
+    async addOrganization(userId: string) {
+      const dal = new DalService();
+      await dal.connect('mongodb://localhost:27017/novu-test');
+      const organizationService = new OrganizationService();
+
+      const organization = await organizationService.createOrganization();
+      await organizationService.addMember(organization._id as string, userId);
+
+      return organization;
     },
     async getSession(
       settings: { noEnvironment?: boolean; partialTemplate?: Partial<NotificationTemplateEntity> } = {}
@@ -60,7 +81,7 @@ module.exports = (on, config) => {
       const notificationTemplateService = new NotificationTemplateService(
         session.user._id,
         session.organization._id,
-        session.environment._id
+        session.environment._id as string
       );
 
       let templates;
@@ -89,6 +110,4 @@ module.exports = (on, config) => {
       };
     },
   });
-
-  injectReactScriptsDevServer(on, config);
 };

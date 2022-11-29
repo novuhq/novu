@@ -1,12 +1,10 @@
 import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
-import { useMantineTheme } from '@mantine/core';
 import { colors } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 
 export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; onTextChange: (text: string) => void }) {
-  const theme = useMantineTheme();
   const { readonly } = useEnvController();
   const ref = useRef<HTMLDivElement>(null);
   const [text, setText] = useState<string>(block.content);
@@ -16,13 +14,17 @@ export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; on
     ref.current?.focus();
   }, [ref]);
 
-  function handleTextChange(data) {
-    onTextChange(data);
+  function checkPlaceholderVisibility(data = block.content) {
     let showPlaceHolder = !data;
 
     if (data === '<br>') showPlaceHolder = true;
 
     setVisiblePlaceholder(showPlaceHolder);
+  }
+
+  function handleTextChange(data: string) {
+    onTextChange(data);
+    checkPlaceholderVisibility(data);
   }
 
   useEffect(() => {
@@ -32,11 +34,7 @@ export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; on
   }, [block.content]);
 
   useEffect(() => {
-    let showPlaceHolder = !block.content;
-
-    if (block.content === '<br>') showPlaceHolder = true;
-
-    setVisiblePlaceholder(showPlaceHolder);
+    checkPlaceholderVisibility();
   }, [block.content, text]);
 
   return (
@@ -51,15 +49,14 @@ export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; on
         suppressContentEditableWarning
         onKeyUp={(e: any) => handleTextChange(e.target.innerHTML)}
         style={{
-          display: 'inline-block',
-          width: '90%',
           outline: 'none',
+          width: '100%',
           backgroundColor: 'transparent',
-          direction: block.styles?.textDirection || 'ltr',
+          textAlign: block.styles?.textAlign || 'left',
         }}
       />
 
-      <PlaceHolder color={theme.colorScheme === 'dark' ? colors.B40 : colors.B70} show={visiblePlaceholder}>
+      <PlaceHolder color={colors.B60} show={visiblePlaceholder}>
         Type the email content here...
       </PlaceHolder>
     </div>

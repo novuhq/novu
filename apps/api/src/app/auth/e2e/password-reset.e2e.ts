@@ -1,7 +1,7 @@
 import { UserRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import * as moment from 'moment';
+import { subDays } from 'date-fns';
 
 describe('Password reset - /auth/reset (POST)', async () => {
   let session: UserSession;
@@ -15,6 +15,17 @@ describe('Password reset - /auth/reset (POST)', async () => {
   it('should request a password reset for existing user', async () => {
     const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
       email: session.user.email,
+    });
+
+    expect(body.data.success).to.equal(true);
+    const found = await userRepository.findById(session.user._id);
+
+    expect(found.resetToken).to.be.ok;
+  });
+
+  it('should request a password reset for existing user with uppercase email', async () => {
+    const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
+      email: session.user.email.toUpperCase(),
     });
 
     expect(body.data.success).to.equal(true);
@@ -75,7 +86,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
       },
       {
         $set: {
-          resetTokenDate: moment().subtract(20, 'days').toDate(),
+          resetTokenDate: subDays(new Date(), 20),
         },
       }
     );

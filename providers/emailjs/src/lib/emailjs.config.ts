@@ -1,4 +1,4 @@
-export interface EmailJsConfig {
+export interface IEmailJsConfig {
   from: string;
   host: string;
   port: number;

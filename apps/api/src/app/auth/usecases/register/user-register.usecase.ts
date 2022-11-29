@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MemberEntity, OrganizationEntity, UserRepository } from '@novu/dal';
+import { OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../../services/auth.service';
 import { UserRegisterCommand } from './user-register.command';
@@ -21,6 +21,8 @@ export class UserRegister {
   ) {}
 
   async execute(command: UserRegisterCommand) {
+    if (process.env.DISABLE_USER_REGISTRATION === 'true') throw new ApiException('Account creation is disabled');
+
     const email = normalizeEmail(command.email);
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) throw new ApiException('User already exists');

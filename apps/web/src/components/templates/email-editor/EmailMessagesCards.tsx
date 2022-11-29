@@ -1,36 +1,50 @@
-import { useQuery } from 'react-query';
-import { IOrganizationEntity } from '@novu/shared';
-import { FieldArrayWithId } from 'react-hook-form';
-import { IForm } from '../use-template-controller.hook';
+import { useContext, useState } from 'react';
 import { EmailContentCard } from './EmailContentCard';
-import { getCurrentOrganization } from '../../../api/organization';
+import { AuthContext } from '../../../store/authContext';
+import { When } from '../../utils/When';
+import { Preview } from '../../../pages/templates/editor/Preview';
+import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
+import { Grid } from '@mantine/core';
+import { TestSendEmail } from './TestSendEmail';
+
+export enum ViewEnum {
+  EDIT = 'Edit',
+  PREVIEW = 'Preview',
+  TEST = 'Test',
+}
 
 export function EmailMessagesCards({
-  emailMessagesFields,
-  onRemoveTab,
+  index,
   variables,
   isIntegrationActive,
 }: {
-  emailMessagesFields: FieldArrayWithId<IForm, 'emailMessages'>[];
-  onRemoveTab: (index: number) => void;
+  index: number;
   variables: { name: string }[];
   isIntegrationActive: boolean;
 }) {
-  const { data: organization } = useQuery<IOrganizationEntity>('/v1/organizations/me', getCurrentOrganization);
+  const { currentOrganization } = useContext(AuthContext);
+  const [view, setView] = useState<ViewEnum>(ViewEnum.EDIT);
 
   return (
     <>
-      {emailMessagesFields.map((message, index) => {
-        return (
-          <EmailContentCard
-            key={index}
-            organization={organization}
-            variables={variables}
-            index={index}
-            isIntegrationActive={isIntegrationActive}
-          />
-        );
-      })}
+      <Grid justify="center" mb={view === ViewEnum.PREVIEW ? 40 : 20}>
+        <EditorPreviewSwitch view={view} setView={setView} />
+      </Grid>
+      <When truthy={view === ViewEnum.PREVIEW}>
+        <Preview activeStep={index} />
+      </When>
+      <When truthy={view === ViewEnum.TEST}>
+        <TestSendEmail isIntegrationActive={isIntegrationActive} index={index} />
+      </When>
+      <When truthy={view === ViewEnum.EDIT}>
+        <EmailContentCard
+          key={index}
+          organization={currentOrganization}
+          variables={variables}
+          index={index}
+          isIntegrationActive={isIntegrationActive}
+        />
+      </When>
     </>
   );
 }

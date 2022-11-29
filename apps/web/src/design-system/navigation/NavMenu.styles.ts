@@ -12,7 +12,7 @@ export default createStyles((theme: MantineTheme) => {
     },
     linkLabel: {
       fontSize: '14px',
-      fontWeight: '700',
+      fontWeight: 700,
     },
     link: {
       display: 'flex',

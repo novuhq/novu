@@ -1,4 +1,4 @@
-import './config';
+import { CONTEXT_PATH } from './config';
 import 'newrelic';
 import '@sentry/tracing';
 
@@ -24,6 +24,7 @@ if (process.env.SENTRY_DSN) {
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
     release: `v${version}`,
+    ignoreErrors: ['Non-Error exception captured'],
     integrations: [
       // enable HTTP calls tracing
       new Sentry.Integrations.Http({ tracing: true }),
@@ -49,7 +50,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.enableCors(corsOptionsDelegate);
 
-  app.setGlobalPrefix('v1');
+  app.setGlobalPrefix(CONTEXT_PATH + 'v1');
 
   app.use(passport.initialize());
 
@@ -63,24 +64,34 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
 
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
-
   app.use('/v1/events/trigger', bodyParser.json({ limit: '20mb' }));
   app.use('/v1/events/trigger', bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
+
   app.use(compression());
 
-  if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'local') {
-    const options = new DocumentBuilder()
-      .setTitle('novu API')
-      .setDescription('The novu API description')
-      .setVersion('1.0')
-      .build();
-    const document = SwaggerModule.createDocument(app, options);
+  const options = new DocumentBuilder()
+    .setTitle('Novu API')
+    .setDescription('The Novu API description')
+    .setVersion('1.0')
+    .addTag('Events')
+    .addTag('Subscribers')
+    .addTag('Activity')
+    .addTag('Integrations')
+    .addTag('Notification templates')
+    .addTag('Notification groups')
+    .addTag('Changes')
+    .addTag('Environments')
+    .addTag('Execution details')
+    .addTag('Feeds')
+    .addTag('Messages')
+    .addTag('Execution Details')
+    .build();
+  const document = SwaggerModule.createDocument(app, options);
 
-    SwaggerModule.setup('api', app, document);
-  }
+  SwaggerModule.setup('api', app, document);
 
   if (expressApp) {
     await app.init();
@@ -98,7 +109,7 @@ const corsOptionsDelegate = function (req, callback) {
     origin: false as boolean | string | string[],
     preflightContinue: false,
     allowedHeaders: ['Content-Type', 'Authorization', 'sentry-trace'],
-    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
   if (['dev', 'test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url)) {

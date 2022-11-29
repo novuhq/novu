@@ -1,33 +1,40 @@
-import React, { useContext } from 'react';
-import { colors } from '../../shared/config/colors';
-import { Bell as BellIcon, GradientDot } from '../../shared/icons';
+import React from 'react';
 import { ActionIcon } from '@mantine/core';
 import styled from 'styled-components';
-import { UnseenCountContext } from '../../store/unseen-count.context';
-import { ColorScheme } from '../../index';
+import { colors, ColorScheme } from '../../shared/config/colors';
+import { Bell as BellIcon, GradientDot } from '../../shared/icons';
+import { useDefaultBellColors, useUnseenCount } from '../../hooks';
+import { ISvgStopColor } from '../../store/novu-theme.context';
 
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export interface INotificationBellProps {
   unseenCount?: number;
+  unseenBadgeColor?: string | ISvgStopColor;
+  unseenBadgeBackgroundColor?: string;
   colorScheme?: ColorScheme;
 }
 
 export function NotificationBell(props: INotificationBellProps) {
-  const { unseenCount } = useContext(UnseenCountContext);
+  const { unseenCount } = useUnseenCount();
+  const { bellColors } = useDefaultBellColors({
+    bellColors: {
+      unseenBadgeColor: props?.unseenBadgeColor,
+      unseenBadgeBackgroundColor: props?.unseenBadgeBackgroundColor,
+    },
+    colorScheme: props?.colorScheme,
+  });
 
   return (
-    <ActionIcon variant="transparent">
+    <ActionIcon variant="transparent" data-test-id="notification-bell">
       <BellIcon {...headerIconsSettings} />
-      {unseenCount > 0 ? <StyledGradientDot colorScheme={props.colorScheme} /> : null}
+      {unseenCount > 0 ? <StyledGradientDot bellColors={bellColors} /> : null}
     </ActionIcon>
   );
 }
 
-export function GradientDotWrap({ colorScheme, ...props }) {
-  const borderColor = colorScheme === 'dark' ? colors.B15 : colors.white;
-
-  return <GradientDot {...props} color={borderColor} />;
+export function GradientDotWrap({ bellColors, ...props }) {
+  return <GradientDot {...props} colors={bellColors} />;
 }
 
 const StyledGradientDot = styled(GradientDotWrap)`

@@ -1,5 +1,6 @@
 import React from 'react';
 import { colors, Text, Title, Container } from '../../../design-system';
+import PageMeta from './PageMeta';
 
 export default function AuthContainer({
   title,
@@ -14,16 +15,17 @@ export default function AuthContainer({
 }) {
   return (
     <Container
-      size={600}
       sx={{
-        marginRight: '20%',
-        paddingTop: '5%',
-        '@media (max-width: 1500px)': {
-          marginRight: '10%',
+        display: 'flex',
+        alignItems: 'center',
+        margin: 0,
+        '@media (max-width: 1100px)': {
+          justifyContent: 'center',
         },
       }}
     >
-      <div style={{ marginTop: '30px' }}>
+      <PageMeta title={title} />
+      <div style={{ margin: '30px 0', width: '100%', maxWidth: 550 }}>
         <Title>{title}</Title>
         {customDescription || (
           <Text size="lg" color={colors.B60} mb={60} mt={20}>

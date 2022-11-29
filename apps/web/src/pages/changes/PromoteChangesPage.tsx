@@ -1,38 +1,62 @@
+import { useState } from 'react';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, Tabs } from '../../design-system';
+import { Button, colors, Tabs } from '../../design-system';
 import PageMeta from '../../components/layout/components/PageMeta';
 import styled from '@emotion/styled';
-import { useEnvironmentChanges } from '../../api/hooks/use-environment-changes';
+import { usePromotedChanges, useUnPromotedChanges } from '../../api/hooks/use-environment-changes';
 import { ChangesTable } from '../../components/changes/ChangesTableLayout';
 import { useMutation, useQueryClient } from 'react-query';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
-import { showNotification } from '@mantine/notifications';
+import { successMessage } from '../../utils/notifications';
 
 export function PromoteChangesPage() {
-  const { changes = [], isLoadingChanges, history, isLoadingHistory } = useEnvironmentChanges();
+  const [page, setPage] = useState<number>(0);
+
+  const { changes, isLoadingChanges, changesPageSize, totalChangesCount } = useUnPromotedChanges(page);
+  const { history, isLoadingHistory, historyPageSize, totalHistoryCount } = usePromotedChanges(page);
+
   const queryClient = useQueryClient();
   const { mutate, isLoading } = useMutation(bulkPromoteChanges, {
     onSuccess: () => {
       queryClient.refetchQueries([QueryKeys.currentUnpromotedChanges]);
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
       queryClient.refetchQueries([QueryKeys.changesCount]);
-      showNotification({
-        message: 'All changes was promoted',
-        color: 'green',
-      });
+      successMessage('All changes were promoted');
     },
   });
+
+  function handleTableChange(pageIndex) {
+    setPage(pageIndex);
+  }
 
   const menuTabs = [
     {
       label: 'Pending',
-      content: <ChangesTable loading={isLoadingChanges} changes={changes} />,
+      content: (
+        <ChangesTable
+          loading={isLoadingChanges}
+          changes={changes}
+          handleTableChange={handleTableChange}
+          page={page}
+          pageSize={changesPageSize}
+          totalCount={totalChangesCount}
+        />
+      ),
     },
     {
       label: 'History',
-      content: <ChangesTable loading={isLoadingHistory} changes={history} />,
+      content: (
+        <ChangesTable
+          loading={isLoadingHistory}
+          changes={history}
+          handleTableChange={handleTableChange}
+          page={page}
+          pageSize={historyPageSize}
+          totalCount={totalHistoryCount}
+        />
+      ),
     },
   ];
 
@@ -43,7 +67,7 @@ export function PromoteChangesPage() {
         title="Changes"
         actions={
           <Button
-            disabled={changes.length === 0}
+            disabled={isLoadingChanges || changes.length === 0}
             data-test-id="promote-all-btn"
             loading={isLoading}
             onClick={() => {

@@ -7,8 +7,9 @@ module.exports = {
     'prettier/@typescript-eslint',
     'plugin:prettier/recommended',
     'plugin:promise/recommended',
+    'plugin:@cspell/recommended',
   ],
-  ignorePatterns: ['.eslintrc.js'],
+  ignorePatterns: ['.eslintrc.js', '*.json', 'jest.config.js'],
   plugins: ['import', 'promise', '@typescript-eslint', 'prettier'],
   parser: '@typescript-eslint/parser',
   settings: {
@@ -20,8 +21,10 @@ module.exports = {
     project: './tsconfig.json',
     ecmaVersion: 2020,
     sourceType: 'module',
+    tsconfigRootDir: __dirname,
   },
   rules: {
+    '@typescript-eslint/space-before-blocks': 'off',
     '@typescript-eslint/lines-between-class-members': 'off',
     'react/jsx-wrap-multilines': 'off',
     'react/jsx-filename-extension': 'off',
@@ -70,7 +73,7 @@ module.exports = {
       { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
       { blankLine: 'always', prev: '*', next: 'return' },
     ],
-    'id-length': ['error', { min: 2, exceptions: ['i', 'e', 'a', 'b', '_'], properties: 'never' }],
+    'id-length': ['error', { min: 2, exceptions: ['i', 'e', 'a', 'b', '_', 't'], properties: 'never' }],
     '@typescript-eslint/naming-convention': [
       'error',
 
@@ -87,6 +90,12 @@ module.exports = {
         selector: ['function'],
         format: ['camelCase'],
         leadingUnderscore: 'allow',
+      },
+    ],
+    'prettier/prettier': [
+      'error',
+      {
+        endOfLine: 'auto',
       },
     ],
   },

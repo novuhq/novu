@@ -9,11 +9,16 @@ import {
 } from '@mantine/core';
 import { useContext, useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
+import { useIntercom } from 'react-use-intercom';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
-import { Sun, Moon, Bell, Trash, Mail } from '../../../design-system/icons';
-import { useColorScheme } from '@mantine/hooks';
+import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
+import { useLocalThemePreference } from '../../../hooks/use-localThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
+import { Tooltip } from '../../../design-system';
+import { INTERCOM_APP_ID } from '../../../config';
+import { SpotlightContext } from '../../../store/spotlightContext';
 
 type Props = {};
 const menuItem = [
@@ -27,13 +32,71 @@ const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export function HeaderNav({}: Props) {
   const { currentOrganization, currentUser, logout } = useContext(AuthContext);
-  const browserColorScheme = useColorScheme();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+  const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
+  const { addItem } = useContext(SpotlightContext);
+
+  if (INTERCOM_APP_ID) {
+    const { boot } = useIntercom();
+
+    useEffect(() => {
+      if (currentUser && currentOrganization) {
+        boot({
+          email: currentUser?.email,
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          createdAt: currentUser?.createdAt,
+          company: {
+            name: currentOrganization?.name,
+            companyId: currentOrganization?._id as string,
+          },
+        });
+      }
+    }, [currentUser, currentOrganization]);
+  }
+
+  const themeTitle = () => {
+    let title = 'Match System Appearance';
+    if (themeStatus === 'dark') {
+      title = `Dark Theme`;
+    } else if (themeStatus === 'light') {
+      title = `Light Theme`;
+    }
+
+    return title;
+  };
+
+  const Icon = () => {
+    if (themeStatus === 'dark') {
+      return <Moon {...headerIconsSettings} />;
+    }
+    if (themeStatus === 'light') {
+      return <Sun {...headerIconsSettings} />;
+    }
+
+    return <Ellipse {...headerIconsSettings} height={24} width={24} />;
+  };
 
   useEffect(() => {
-    toggleColorScheme(browserColorScheme);
-  }, [browserColorScheme]);
+    addItem([
+      {
+        id: 'toggle-theme',
+        title: themeTitle(),
+        icon: Icon(),
+        onTrigger: () => {
+          toggleColorScheme();
+        },
+      },
+      {
+        id: 'sign-out',
+        title: 'Sign out',
+        icon: <Trash />,
+        onTrigger: () => {
+          logout();
+        },
+      },
+    ]);
+  }, [colorScheme]);
 
   const profileMenuMantine = [
     <MantineMenu.Item disabled key="user">
@@ -57,9 +120,11 @@ export function HeaderNav({}: Props) {
       </Group>
     </MantineMenu.Item>,
     ...menuItem.map(({ title, icon, path }) => (
-      <MantineMenu.Item key={title} icon={icon} component="a" href={path}>
-        {title}
-      </MantineMenu.Item>
+      <Link to={path} key={title}>
+        <MantineMenu.Item key={title} icon={icon} component="div">
+          {title}
+        </MantineMenu.Item>
+      </Link>
     )),
     <MantineMenu.Item key="logout" icon={<Trash />} onClick={logout} data-test-id="logout-button">
       Sign Out
@@ -79,14 +144,16 @@ export function HeaderNav({}: Props) {
         p={30}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%' }}
       >
-        <img
-          src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
-          alt="logo"
-          style={{ maxWidth: 150, maxHeight: 25 }}
-        />
+        <Link to="/">
+          <img
+            src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
+            alt="logo"
+            style={{ maxWidth: 150, maxHeight: 25 }}
+          />
+        </Link>
         <Group>
-          <ActionIcon variant="transparent" onClick={() => toggleColorScheme()} title="Toggle color scheme">
-            {dark ? <Sun {...headerIconsSettings} /> : <Moon {...headerIconsSettings} />}
+          <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
+            <Tooltip label={themeTitle()}>{Icon()}</Tooltip>
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown

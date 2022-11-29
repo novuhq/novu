@@ -1,7 +1,7 @@
 import { createStyles, MantineTheme } from '@mantine/core';
 import { colors } from '../config';
 
-export default createStyles<string, { disabled: boolean }>((theme: MantineTheme, _params, getRef) => {
+export default createStyles<string, { disabled: boolean }>((theme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
   const label = getRef('label');
 
@@ -38,5 +38,5 @@ export default createStyles<string, { disabled: boolean }>((theme: MantineTheme,
       paddingLeft: '10px',
       opacity: _params.disabled ? 0.4 : 1,
     },
-  };
+  } as any;
 });

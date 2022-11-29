@@ -1,7 +1,8 @@
 import { Button, colors, Switch, Text } from '../../../../design-system';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { ColorScheme, InputWrapper, useMantineTheme } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
@@ -19,10 +20,9 @@ export const Security = () => {
   >(updateWidgetSettings);
 
   useEffect(() => {
-    if (environment?.widget?.notificationCenterEncryption) {
-      setIsHmacEnabled(environment.widget.notificationCenterEncryption);
-    }
-  }, []);
+    const isHmacEnabledEnv = environment?.widget?.notificationCenterEncryption ?? false;
+    setIsHmacEnabled(isHmacEnabledEnv);
+  }, [environment]);
 
   async function handlerSwitchChange() {
     const newIsHmacEnabled = !isHmacEnabled;
@@ -36,6 +36,11 @@ export const Security = () => {
 
     await updateWidgetSettingsMutation(data);
     await refetchEnvironment();
+
+    showNotification({
+      message: 'Security info updated successfully',
+      color: 'green',
+    });
   }
 
   const { handleSubmit } = useForm({
@@ -46,7 +51,7 @@ export const Security = () => {
 
   return (
     <>
-      <form onSubmit={handleSubmit(saveSecurityForm)}>
+      <form noValidate onSubmit={handleSubmit(saveSecurityForm)}>
         <Title>Security</Title>
         <InputWrapper label="Enable HMAC encryption" description={<DescriptionText />} styles={inputStyles}>
           <RowDiv>
@@ -70,8 +75,8 @@ function DescriptionText() {
   const { colorScheme } = useMantineTheme();
 
   return (
-    <InlineDiv>
-      HMAC used to verify that the request performed by the specific user. Read more
+    <div>
+      HMAC used to verify that the request performed by the specific user. Read more{' '}
       <StyledHref
         colorScheme={colorScheme}
         className={'security-doc-href'}
@@ -81,7 +86,7 @@ function DescriptionText() {
       >
         here.
       </StyledHref>
-    </InlineDiv>
+    </div>
   );
 }
 
@@ -89,10 +94,6 @@ const Title = styled(Text)`
   padding-bottom: 17px;
   font-size: 20px;
   font-weight: 700;
-`;
-
-const InlineDiv = styled.div`
-  max-width: 400px;
 `;
 
 const RowDiv = styled.div`

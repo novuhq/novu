@@ -1,18 +1,21 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { NovuContext } from '../../store/novu-provider.context';
-import { ColorScheme, IAuthContext, INovuProviderContext } from '../../index';
-import { AuthContext } from '../../store/auth.context';
-import { useSocketController } from '../../store/socket/use-socket-controller';
-import { SocketContext } from '../../store/socket/socket.store';
-import { useSocket, useUnseenController } from '../../hooks';
-import { UnseenCountContext } from '../../store/unseen-count.context';
-import { ApiContext } from '../../store/api.context';
-import { ApiService } from '../../api/api.service';
-import { useApi } from '../../hooks/use-api.hook';
-import { AuthProvider } from '../notification-center/components';
+import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
+import { ApiService } from '@novu/client';
 import { IOrganizationEntity } from '@novu/shared';
+import { ColorScheme } from '../../index';
+import { useApi, useAuth } from '../../hooks';
+import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
+import { AuthProvider } from '../../store/auth-provider.context';
+import { NotificationsProvider } from '../../store/notifications-provider.context';
+import { NovuContext } from '../../store/novu-provider.context';
+import { NovuI18NProvider } from '../../store/i18n.context';
+import { UnseenProvider } from '../../store/unseen-provider.context';
+import { SocketInitializationProvider } from '../../store/socket-initialization-provider.context';
+import { ApiContext } from '../../store/api.context';
+import { INovuProviderContext, IStore } from '../../shared/interfaces';
+import { FeedProvider } from '../../store/feed-provider';
 
 interface INovuProviderProps {
+  stores?: IStore[];
   children: React.ReactNode;
   backendUrl?: string;
   subscriberId?: string;
@@ -21,20 +24,17 @@ interface INovuProviderProps {
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash?: string;
+  i18n?: I18NLanguage | ITranslationEntry;
 }
 
-let api: ApiService;
-
 export function NovuProvider(props: INovuProviderProps) {
+  const [isSessionInitialized, setIsSessionInitialized] = useState(false);
   const backendUrl = props.backendUrl ?? 'https://api.novu.co';
   const socketUrl = props.socketUrl ?? 'https://ws.novu.co';
-  const [isSessionInitialized, setIsSessionInitialized] = useState(false);
 
-  if (!api) api = new ApiService(backendUrl);
+  const { current: api } = useRef<ApiService>(new ApiService(backendUrl));
 
-  useEffect(() => {
-    if (api?.isAuthenticated) setIsSessionInitialized(api?.isAuthenticated);
-  }, [api?.isAuthenticated]);
+  const stores = props.stores ?? [{ storeId: 'default_store' }];
 
   return (
     <NovuContext.Provider
@@ -48,90 +48,59 @@ export function NovuProvider(props: INovuProviderProps) {
         subscriberHash: props.subscriberHash,
       }}
     >
-      <ApiContext.Provider value={{ api }}>
-        <AuthProvider>
-          <SessionInitialization applicationIdentifier={props.applicationIdentifier} subscriberId={props.subscriberId}>
-            <SocketInitialization>
-              <UnseenProvider>{props.children}</UnseenProvider>
-            </SocketInitialization>
-          </SessionInitialization>
-        </AuthProvider>
-      </ApiContext.Provider>
+      <FeedProvider stores={stores}>
+        <ApiContext.Provider value={{ api }}>
+          <AuthProvider>
+            <SessionInitialization onInit={setIsSessionInitialized}>
+              <NotificationsProvider>
+                <SocketInitializationProvider>
+                  <NovuI18NProvider i18n={props.i18n}>
+                    <UnseenProvider>{props.children}</UnseenProvider>
+                  </NovuI18NProvider>
+                </SocketInitializationProvider>
+              </NotificationsProvider>
+            </SessionInitialization>
+          </AuthProvider>
+        </ApiContext.Provider>
+      </FeedProvider>
     </NovuContext.Provider>
   );
 }
 
 interface ISessionInitializationProps {
-  applicationIdentifier: string;
-  subscriberId?: string;
+  onInit: (flag: boolean) => void;
   children: JSX.Element;
 }
 
-function SessionInitialization({ children, ...props }: ISessionInitializationProps) {
-  const { api: apiService } = useApi();
-  const { applyToken, setUser } = useContext<IAuthContext>(AuthContext);
-  const { onLoad, subscriberHash } = useContext<INovuProviderContext>(NovuContext);
+function SessionInitialization({ onInit, children }: ISessionInitializationProps) {
+  const { api } = useApi();
+  const { applyToken, setUser } = useAuth();
+  const { applicationIdentifier, subscriberId, subscriberHash, onLoad } = useContext<INovuProviderContext>(NovuContext);
 
-  useEffect(() => {
-    if (props.subscriberId && props.applicationIdentifier) {
-      (async (): Promise<void> => {
-        await initSession({
-          clientId: props.applicationIdentifier,
-          data: { subscriberId: props.subscriberId },
-          subscriberHash,
-        });
-      })();
-    }
-  }, [props.subscriberId, props.applicationIdentifier]);
-
-  async function initSession(payload: { clientId: string; data: { subscriberId: string }; subscriberHash: string }) {
+  const initSession = useCallback(async () => {
     if ('parentIFrame' in window) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).parentIFrame.autoResize(true);
     }
 
-    const response = await apiService.initializeSession(payload.clientId, payload.data.subscriberId, subscriberHash);
-
-    api.setAuthorizationToken(response.token);
+    const response = await api.initializeSession(applicationIdentifier, subscriberId, subscriberHash);
 
     setUser(response.profile);
     applyToken(response.token);
 
-    const organizationData = await api.getOrganization();
-
     if (onLoad) {
+      const organizationData = await api.getOrganization();
       onLoad({ organization: organizationData });
     }
-  }
 
-  return children;
-}
-
-function SocketInitialization({ children }: { children: React.ReactNode }) {
-  const { socket } = useSocketController();
-
-  return <SocketContext.Provider value={{ socket }}>{children}</SocketContext.Provider>;
-}
-
-function UnseenProvider({ children }: { children: React.ReactNode }) {
-  const { unseenCount, setUnseenCount } = useUnseenController();
-  const { socket } = useSocket();
+    return response;
+  }, [applicationIdentifier, subscriberId, subscriberHash]);
 
   useEffect(() => {
-    if (socket) {
-      socket.on('unseen_count_changed', (onData: { unseenCount: number }) => {
-        if (!isNaN(onData?.unseenCount)) {
-          setUnseenCount(onData.unseenCount);
-        }
-      });
+    if (subscriberId && applicationIdentifier) {
+      initSession().then(() => onInit(api.isAuthenticated));
     }
+  }, [subscriberId, applicationIdentifier, initSession]);
 
-    return () => {
-      if (socket) {
-        socket.off('unseen_count_changed');
-      }
-    };
-  }, [socket]);
-
-  return <UnseenCountContext.Provider value={{ unseenCount, setUnseenCount }}>{children}</UnseenCountContext.Provider>;
+  return children;
 }

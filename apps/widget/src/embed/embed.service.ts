@@ -1,4 +1,4 @@
-import { IMessage } from '@novu/shared';
+import { IMessage, ButtonTypeEnum } from '@novu/shared';
 
 export function sendUrlChange(url: string) {
   if (!window.parentIFrame) return;
@@ -22,6 +22,18 @@ export function unseenChanged(unseenCount: number) {
     (window as any).parentIFrame.sendMessage({
       type: 'unseen_count_changed',
       count: unseenCount,
+    });
+  }
+}
+
+export function actionClick(templateIdentifier: string, type: ButtonTypeEnum, notification: IMessage) {
+  if ('parentIFrame' in window) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).parentIFrame.sendMessage({
+      type: 'action_click',
+      templateIdentifier,
+      resultType: type,
+      notification,
     });
   }
 }

@@ -1,23 +1,9 @@
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsDefined,
-  IsEnum,
-  IsMongoId,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-import { ChannelCTATypeEnum } from '@novu/shared';
-import { CommandHelper } from '../../../shared/commands/command.helper';
+import { IsArray, IsBoolean, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { NotificationStepDto } from '../../dto/update-notification-template.dto';
+import { IPreferenceChannels } from '@novu/shared';
+import { NotificationStep } from '../../../shared/dtos/notification-step';
 
 export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
-  static create(data: UpdateNotificationTemplateCommand) {
-    return CommandHelper.create<UpdateNotificationTemplateCommand>(UpdateNotificationTemplateCommand, data);
-  }
-
   @IsDefined()
   @IsMongoId()
   templateId: string;
@@ -34,6 +20,17 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsOptional()
   description: string;
 
+  @IsString()
+  @IsOptional()
+  identifier: string;
+
+  @IsBoolean()
+  @IsOptional()
+  critical: boolean;
+
+  @IsOptional()
+  preferenceSettings?: IPreferenceChannels;
+
   @IsOptional()
   @IsMongoId({
     message: 'Bad group id name',
@@ -43,14 +40,5 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsArray()
   @ValidateNested()
   @IsOptional()
-  steps: NotificationStepDto[];
-}
-
-export class ChannelCTADto {
-  @IsEnum(ChannelCTATypeEnum)
-  type: ChannelCTATypeEnum;
-
-  data: {
-    url: string;
-  };
+  steps: NotificationStep[];
 }

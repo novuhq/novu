@@ -1,5 +1,6 @@
 import { IEmailBlock } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import { showNotification } from '@mantine/notifications';
 import { TextInput as MantineInput, Popover, Button as MantineButton } from '@mantine/core';
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
@@ -31,6 +32,20 @@ export function ButtonRowContent({
     onUrlChange(e.target.value);
   }
 
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') {
+      setDropDownVisible(false);
+      showSaveSuccess();
+    }
+  }
+
+  function showSaveSuccess() {
+    showNotification({
+      message: 'Button saved',
+      color: 'green',
+    });
+  }
+
   useEffect(() => {
     setText(block.content);
   }, [block.content]);
@@ -40,10 +55,7 @@ export function ButtonRowContent({
   }, [block.url]);
 
   return (
-    <div
-      style={{ textAlign: 'center', direction: block?.styles?.textDirection || 'ltr' }}
-      data-test-id="button-block-wrapper"
-    >
+    <div style={{ textAlign: block?.styles?.textAlign || 'left' }} data-test-id="button-block-wrapper">
       <Popover
         styles={(theme) => ({
           inner: {
@@ -65,7 +77,10 @@ export function ButtonRowContent({
         })}
         opened={dropDownVisible && !readonly}
         withArrow
-        onClose={() => setDropDownVisible(false)}
+        onClose={() => {
+          setDropDownVisible(false);
+          showSaveSuccess();
+        }}
         target={
           <MantineButton
             sx={{
@@ -86,6 +101,7 @@ export function ButtonRowContent({
           icon={<TextAlignment />}
           variant="unstyled"
           onChange={handleTextChange}
+          onKeyDown={handleKeyDown}
           value={text}
           placeholder="Button Text"
         />
@@ -93,6 +109,7 @@ export function ButtonRowContent({
           icon={<Wifi width={20} height={20} />}
           variant="unstyled"
           onChange={handleUrlChange}
+          onKeyDown={handleKeyDown}
           value={url || ''}
           placeholder="Button Link"
         />
