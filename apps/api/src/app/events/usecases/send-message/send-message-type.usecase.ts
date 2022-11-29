@@ -1,17 +1,22 @@
-import { MessageRepository, NotificationEntity } from '@novu/dal';
+import { MessageEntity, MessageRepository, NotificationEntity } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { SendMessageCommand } from './send-message.command';
 import * as Sentry from '@sentry/node';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 
 export abstract class SendMessageType {
-  protected constructor(protected messageRepository: MessageRepository, protected createLogUsecase: CreateLog) {}
+  protected constructor(
+    protected messageRepository: MessageRepository,
+    protected createLogUsecase: CreateLog,
+    protected createExecutionDetails: CreateExecutionDetails
+  ) {}
 
   public abstract execute(command: SendMessageCommand);
 
   protected async sendErrorStatus(
-    message,
+    message: MessageEntity,
     status: 'error' | 'sent' | 'warning',
     errorId: string,
     errorMessageFallback: string,

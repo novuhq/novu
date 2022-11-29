@@ -30,7 +30,7 @@ const codeTheme = require('./src/utils/prism');
             showLastUpdateTime: true,
           },
           gtag: {
-            trackingID: 'G-226F0LR9KE',
+            trackingID: 'G-ZC17SLMXRN',
             anonymizeIP: true,
           },
           theme: {

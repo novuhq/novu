@@ -27,8 +27,8 @@ export enum TriggerTypeEnum {
 export interface INotificationTrigger {
   type: TriggerTypeEnum;
   identifier: string;
-  variables: { name: string }[];
-  subscriberVariables?: { name: string }[];
+  variables: { name: string; value?: any }[];
+  subscriberVariables?: { name: string; value?: any }[];
 }
 
 export interface INotificationTemplateStep {

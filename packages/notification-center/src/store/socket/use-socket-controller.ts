@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
-import { ISocket } from '../../index';
 import { useAuth, useNovuContext } from '../../hooks';
+import { ISocket } from '../../shared/interfaces';
 
 let socket;
 

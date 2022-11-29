@@ -26,6 +26,12 @@ export { ErrorIcon } from './general/ErrorIcon';
 export { Chat } from './general/Chat';
 export { InApp } from './general/InApp';
 export { Timer } from './general/Timer';
+export { Digest } from './general/Digest';
+export { Sent } from './general/Sent';
+export { Received } from './general/Received';
+export { Read } from './general/Read';
+export { Seen } from './general/Seen';
+export { Clicked } from './general/Clicked';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';

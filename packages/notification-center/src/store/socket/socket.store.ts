@@ -1,5 +1,5 @@
 import React from 'react';
-import { ISocketContext } from '../../index';
+import { ISocketContext } from '../../shared/interfaces';
 
 export const SocketContext = React.createContext<ISocketContext>({
   socket: null,
