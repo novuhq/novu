@@ -31,6 +31,6 @@ RUN pnpm add @babel/core -w
 
 COPY [".eslintrc.js",".prettierrc",".prettierignore","./"]
 
-RUN pnpm build:web
+RUN NX_DAEMON=false pnpm build:web
 
 CMD [ "pnpm", "start:static:web" ]
