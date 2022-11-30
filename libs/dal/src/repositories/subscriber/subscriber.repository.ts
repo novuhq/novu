@@ -6,9 +6,9 @@ import { Cached, DalException, ICacheService, InvalidateCache } from '../../shar
 import { Document, FilterQuery, ProjectionType } from 'mongoose';
 import { isStoreConnected } from '../../shared/interceptors/shared-cache.interceptor';
 
-class PartialIntegrationEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
+class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 type EnforceIdentifierQuery = EnforceEnvironmentQuery & { _id: string };

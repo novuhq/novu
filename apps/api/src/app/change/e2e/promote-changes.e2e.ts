@@ -84,7 +84,7 @@ describe('Promote changes', () => {
     const prodVersion = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
-    });
+    } as any);
 
     expect(prodVersion._notificationGroupId).to.eq(prodGroup._id);
   });
@@ -144,7 +144,7 @@ describe('Promote changes', () => {
     const prodVersion = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
-    });
+    } as any);
 
     expect(prodVersion.steps.length).to.eq(0);
   });
@@ -178,7 +178,7 @@ describe('Promote changes', () => {
       _organizationId: session.organization._id,
       _notificationId: prodEnv._id,
       _parentId: notificationTemplateId,
-    });
+    } as any);
 
     expect(prodVersion.active).to.eq(true);
   });
