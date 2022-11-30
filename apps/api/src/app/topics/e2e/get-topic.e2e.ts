@@ -11,14 +11,6 @@ describe('Get a topic - /topics/:topicId (GET)', async () => {
     await session.initialize();
   });
 
-  it('should throw route not found 404 error for missing param in the path', async () => {
-    const { body } = await session.testAgent.get(`${BASE_PATH}/`);
-
-    expect(body.statusCode).to.equal(404);
-    expect(body.message).to.eql('Cannot GET /v1/topics/');
-    expect(body.error).to.eql('Not Found');
-  });
-
   it('should retrieve the requested topic successfully if exists in the database for that user', async () => {
     const topicKey = 'topic-key';
     const topicName = 'topic-name';

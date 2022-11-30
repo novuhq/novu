@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EnvironmentId, OrganizationId, TopicId, TopicKey, TopicName, UserId } from '../types';
 
 export class TopicDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
   _id?: TopicId;
 
   @ApiProperty()
