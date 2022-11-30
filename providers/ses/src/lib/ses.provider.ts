@@ -72,7 +72,7 @@ export class SESEmailProvider implements IEmailProvider {
       await this.sendMail({
         html: '',
         text: 'This is a Test mail to test your Amazon SES integration',
-        to: this.config.from,
+        to: 'no-reply@novu.co',
         from: this.config.from,
         subject: 'Test SES integration',
         attachments: {},
