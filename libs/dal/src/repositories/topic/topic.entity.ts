@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 export type EnvironmentId = Types.ObjectId;
 export type OrganizationId = Types.ObjectId;
 export type TopicId = Types.ObjectId;
-type TopicKey = string;
+export type TopicKey = string;
 export type UserId = Types.ObjectId;
 
 export class TopicEntity {

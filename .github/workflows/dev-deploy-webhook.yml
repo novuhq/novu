@@ -61,7 +61,7 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          cd apps/webhook && DOCKER_BUILDKIT=1 npm run build:docker
+          cd apps/webhook && DOCKER_BUILDKIT=1 npm run docker:build
           docker tag novu-webhook ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker tag novu-webhook ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
