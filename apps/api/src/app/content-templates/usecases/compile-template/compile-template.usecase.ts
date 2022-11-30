@@ -2,33 +2,34 @@ import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 import { format } from 'date-fns';
 import * as fs from 'fs';
+import { HandlebarHelpersEnum } from '@novu/shared';
 import { CompileTemplateCommand } from './compile-template.command';
 
-Handlebars.registerHelper('equals', function (arg1, arg2, options) {
+Handlebars.registerHelper(HandlebarHelpersEnum.EQUALS, function (arg1, arg2, options) {
   // eslint-disable-next-line eqeqeq
   return arg1 == arg2 ? options.fn(this) : options.inverse(this);
 });
 
-Handlebars.registerHelper('titlecase', function (value) {
+Handlebars.registerHelper(HandlebarHelpersEnum.TITLECASE, function (value) {
   return value
     ?.split(' ')
     .map((letter) => letter.charAt(0).toUpperCase() + letter.slice(1).toLowerCase())
     .join(' ');
 });
 
-Handlebars.registerHelper('uppercase', function (value) {
+Handlebars.registerHelper(HandlebarHelpersEnum.UPPERCASE, function (value) {
   return value?.toUpperCase();
 });
 
-Handlebars.registerHelper('lowercase', function (value) {
+Handlebars.registerHelper(HandlebarHelpersEnum.LOWERCASE, function (value) {
   return value?.toLowerCase();
 });
 
-Handlebars.registerHelper('pluralize', function (number, single, plural) {
+Handlebars.registerHelper(HandlebarHelpersEnum.PLURALIZE, function (number, single, plural) {
   return number === 1 ? single : plural;
 });
 
-Handlebars.registerHelper('dateFormat', function (date, dateFormat) {
+Handlebars.registerHelper(HandlebarHelpersEnum.DATEFORMAT, function (date, dateFormat) {
   // Format date if parameters are valid
   if (date && dateFormat && !isNaN(Date.parse(date))) {
     return format(new Date(date), dateFormat);

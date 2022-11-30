@@ -176,7 +176,9 @@
     "Intelli",
     "codestream",
     "nosniff",
-    "hookform"
+    "hookform",
+    "noconflict",
+    "monokai"
   ],
   "flagWords": [],
   "patterns": [

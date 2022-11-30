@@ -16,8 +16,9 @@ describe('Preview email - /v1/content-templates/preview/email (POST)', function 
     } = await session.testAgent.post(`/v1/content-templates/preview/email`).send({
       contentType: 'editor',
       content: [{ type: 'text', content: 'test {{test}} test' }],
+      payload: JSON.stringify({ test: 'test' }),
     });
 
-    expect(html.includes('test {{test}} test')).true;
+    expect(html.includes('test test test')).true;
   });
 });
