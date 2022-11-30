@@ -14,19 +14,16 @@ export class MsTeamsProvider implements IChatProvider {
   constructor(private config) {}
 
   async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {
-    let payload
-    
+    let payload;
+
     try {
-      payload = JSON.parse(data.content)
+      payload = JSON.parse(data.content);
     } catch (err) {
-      payload = { text: data.content }
+      payload = { text: data.content };
     }
-    
-    const response = await this.axiosInstance.post(
-      data.webhookUrl,
-      payload
-    );
-    
+
+    const response = await this.axiosInstance.post(data.webhookUrl, payload);
+
     return {
       id: response.headers['request-id'],
       date: new Date().toISOString(),
