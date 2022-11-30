@@ -21,7 +21,7 @@ Clone the Novu repo and enter the docker directory locally:
 git clone https://github.com/novuhq/novu
 
 # Go to the docker folder
-cd novu/docker/docker-compose
+cd novu/docker
 
 # Copy the example env file
 cp .env.example ./local/deployment/.env
