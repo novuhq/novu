@@ -73,7 +73,7 @@ jobs:
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
           AWS_EC2_METADATA_DISABLED: true
-        working-directory: docker/local
+        working-directory: environment/test
         run: |
           docker-compose -f docker-compose.localstack.yml up -d
           sleep 5
