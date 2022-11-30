@@ -76,6 +76,6 @@ jobs:
 
     # Runs a set of commands using the runners shell
     - name: Run a test
-      run: |
+      run: | 
         cd apps/webhook && pnpm test:e2e
         pnpm test

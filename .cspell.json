@@ -175,7 +175,8 @@
     "replstate",
     "Intelli",
     "codestream",
-    "nosniff"
+    "nosniff",
+    "hookform"
   ],
   "flagWords": [],
   "patterns": [
@@ -216,6 +217,8 @@
   ],
   "ignorePaths": [
     "apps/api/src/.env.test",
+    "apps/ws/src/.env.test",
+    "apps/ws/src/.example.env",
     ".cspell.json",
     "package.json",
     "package-lock.json",
