@@ -175,7 +175,9 @@
     "replstate",
     "Intelli",
     "codestream",
-    "nosniff"
+    "nosniff",
+    "noconflict",
+    "monokai"
   ],
   "flagWords": [],
   "patterns": [

@@ -13,8 +13,12 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
           border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
           borderRadius: '30px',
         },
+        label: {
+          fontSize: '14px',
+          lineHeight: '24px',
+        },
         control: {
-          width: '70px',
+          minWidth: '80px',
         },
         active: {
           background: theme.colorScheme === 'dark' ? colors.white : colors.B98,
@@ -22,6 +26,8 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
         },
         labelActive: {
           color: `${colors.B40} !important`,
+          fontSize: '14px',
+          lineHeight: '24px',
         },
       }}
       data={Object.values(ViewEnum)}
@@ -30,6 +36,7 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
         setView(value);
       }}
       defaultValue={view}
+      fullWidth
     />
   );
 };
