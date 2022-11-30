@@ -1,12 +1,10 @@
-import { colors, Text } from '../../../../design-system';
+import { colors, Text, Tooltip } from '../../../../design-system';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { SystemVariablesWithTypes } from '@novu/shared';
 import { VarItem } from './VarItem';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
 import { UnstyledButton, useMantineTheme } from '@mantine/core';
-import { Edit } from '../../../../design-system/icons';
-import { GlobeGradient } from '../../../../design-system/icons/gradient/GlobeGradient';
 import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
 
 export const VariablesManagement = ({ index, openVariablesModal }) => {
@@ -33,13 +31,13 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           marginBottom: '20px',
         }}
       >
-        <UnstyledButton
-          onClick={() => {
-            openVariablesModal();
-          }}
-          type="button"
-        >
-          <Tooltip label="Add defaults or mark as required">
+        <Tooltip label="Add defaults or mark as required">
+          <UnstyledButton
+            onClick={() => {
+              openVariablesModal();
+            }}
+            type="button"
+          >
             <Text gradient>
               Edit Variables
               <EditGradient
@@ -51,8 +49,8 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
                 }}
               />
             </Text>
-          </Tooltip>
-        </UnstyledButton>
+          </UnstyledButton>
+        </Tooltip>
       </div>
       <VarLabel label="System Variables">
         {Object.keys(SystemVariablesWithTypes).map((name) => {
