@@ -14,7 +14,9 @@ export function InvalidateCache(storeKeyPrefix?: string) {
         return res;
       }
 
-      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel?.modelName, res);
+      const query = key === 'create' ? res : args[0];
+
+      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel?.modelName, query);
 
       if (!cacheKey) {
         return res;
