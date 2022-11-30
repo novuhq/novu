@@ -120,7 +120,7 @@ jobs:
           DEPOT_PROJECT_ID: xxxxxx # TODO: add project ID here
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          depot build \
+          depot build --push \
             -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG \
             -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev \
             -f apps/web/Dockerfile .
