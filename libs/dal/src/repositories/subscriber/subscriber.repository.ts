@@ -11,7 +11,9 @@ class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', 
 type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
-type EnforceIdentifierQuery = EnforceEnvironmentQuery & { _id: string };
+type EnforceIdentifierQuery = FilterQuery<PartialSubscriberEntity & Document> & { _environmentId: string } & {
+  _id: string;
+};
 
 export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery, SubscriberEntity> {
   private subscriber: SoftDeleteModel;
