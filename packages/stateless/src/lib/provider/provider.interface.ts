@@ -32,6 +32,7 @@ export interface IPushOptions {
   content: string;
   payload: object;
   overrides?: {
+    type?: 'notification' | 'data';
     tag?: string;
     body?: string;
     icon?: string;

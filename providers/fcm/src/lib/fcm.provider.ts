@@ -38,14 +38,34 @@ export class FcmPushProvider implements IPushProvider {
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
     delete (options.overrides as any)?.deviceTokens;
-    const res = await this.messaging.sendMulticast({
-      tokens: options.target,
-      notification: {
-        title: options.title,
-        body: options.content,
-        ...options.overrides,
-      },
-    });
+
+    let res;
+
+    if (options.overrides?.type === 'data') {
+      delete (options.overrides as any)?.type;
+      res = await this.messaging.sendMulticast({
+        tokens: options.target,
+        data: options.payload as any,
+      });
+    } else {
+      delete (options.overrides as any)?.type;
+      res = await this.messaging.sendMulticast({
+        tokens: options.target,
+        notification: {
+          title: options.title,
+          body: options.content,
+          ...options.overrides,
+        },
+      });
+    }
+
+    if (res.failureCount > 0) {
+      throw new Error(
+        `Sending message failed due to "${
+          res.responses.find((i) => i.success === false).error.message
+        }"`
+      );
+    }
 
     return {
       ids: res?.responses?.map((response) => response.messageId),
