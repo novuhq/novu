@@ -44,11 +44,13 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       '& tbody tr:last-of-type td': {
         borderBottom: `1px solid ${dark ? colors.B20 : colors.B98}`,
       },
-      '& tbody tr:hover': {
-        backgroundColor: dark ? colors.B20 : colors.B98,
-      },
-      [`&.${hover.ref} tbody tr:hover`]: {
-        backgroundColor: dark ? colors.B20 : colors.B98,
+      ['&[data-hover]']: {
+        '& tbody tr:hover': {
+          backgroundColor: dark ? colors.B20 : colors.B98,
+        },
+        [`&.${hover.ref} tbody tr:hover`]: {
+          backgroundColor: dark ? colors.B20 : colors.B98,
+        },
       },
     },
   };

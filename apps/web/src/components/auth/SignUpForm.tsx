@@ -222,7 +222,7 @@ export function SignUpForm({ token, email }: Props) {
 
 function Accept() {
   return (
-    <div>
+    <>
       <span>I accept the </span>
       <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms" target="_blank" rel="noopener noreferrer">
         Terms and Conditions
@@ -236,7 +236,7 @@ function Accept() {
       >
         Privacy Policy
       </a>
-    </div>
+    </>
   );
 }
 

@@ -1,8 +1,7 @@
 import React from 'react';
-import { Button as MantineButton, SharedButtonProps } from '@mantine/core';
+import { Button as MantineButton } from '@mantine/core';
 
 import useStyles from './Button.styles';
-
 import { SpacingProps } from '../shared/spacing.props';
 
 export type Size = 'md' | 'lg' | undefined;
@@ -10,7 +9,7 @@ export type Size = 'md' | 'lg' | undefined;
 interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   loading?: boolean;
   size?: Size;
-  variant?: 'outline' | 'filled';
+  variant?: 'outline' | 'gradient';
   disabled?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;
@@ -33,15 +32,16 @@ export function Button({
   disabled = false,
   inherit = false,
   onClick,
+  variant = 'gradient',
   ...props
 }: IButtonProps) {
-  const { classes } = useStyles({ disabled, inherit });
-  const defaultDesign = { radius: 'md', classNames: classes } as SharedButtonProps;
+  const { classes } = useStyles({ disabled, inherit, variant });
   const withIconProps = icon ? { leftIcon: icon } : {};
 
   return (
     <MantineButton
-      {...defaultDesign}
+      radius="md"
+      classNames={classes}
       {...withIconProps}
       type={submit ? 'submit' : 'button'}
       onClick={onClick}
@@ -49,6 +49,7 @@ export function Button({
       size={size}
       loading={loading}
       fullWidth={fullWidth}
+      variant={variant}
       {...props}
     >
       {children}

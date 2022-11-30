@@ -161,7 +161,11 @@
     "WEASL",
     "dbpath",
     "prebuilds",
-    "mongod"
+    "mongod",
+    "prebuild",
+    "rimraf",
+    "istanbuljs",
+    "infobip"
   ],
   "flagWords": [],
   "patterns": [
