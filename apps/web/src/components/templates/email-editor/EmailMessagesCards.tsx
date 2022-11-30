@@ -1,18 +1,14 @@
 import { useContext, useState } from 'react';
-
 import { EmailContentCard } from './EmailContentCard';
 import { AuthContext } from '../../../store/authContext';
 import { When } from '../../utils/When';
 import { Preview } from '../../../pages/templates/editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
-import { Grid, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
+import { Grid, Group, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
-import { colors, shadows } from '../../../design-system';
+import { Button, colors, shadows } from '../../../design-system';
 import { MobileIcon } from '../../../pages/templates/editor/PreviewSegment/MobileIcon';
 import { WebIcon } from '../../../pages/templates/editor/PreviewSegment/WebIcon';
-import { UnstyledButton } from '@mantine/core';
-import { ChevronRight } from '../../../design-system/icons/arrows/ChevronRight';
-import { ChevronLeft } from '../../../design-system/icons/arrows/ChevronLeft';
 import { useHotkeys } from '@mantine/hooks';
 import { VariableManager } from '../VariableManager';
 import { VariablesManagement } from './variables-management/VariablesManagement';
@@ -28,7 +24,6 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
   const [view, setView] = useState<ViewEnum>(ViewEnum.EDIT);
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();
-  const [showVarManagement, setShowVarManagement] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
   useHotkeys([
@@ -113,24 +108,6 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
             </When>
           </Grid.Col>
         </Grid>
-        <When truthy={view === ViewEnum.EDIT}>
-          <div
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: '0',
-            }}
-          >
-            <UnstyledButton
-              type="button"
-              onClick={() => {
-                setShowVarManagement(!showVarManagement);
-              }}
-            >
-              {showVarManagement ? <ChevronRight /> : <ChevronLeft />}
-            </UnstyledButton>
-          </div>
-        </When>
       </div>
       <When truthy={view === ViewEnum.PREVIEW}>
         <Preview activeStep={index} view={preview} />
@@ -140,7 +117,7 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
       </When>
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
-          <Grid.Col span={showVarManagement ? 8 : 12}>
+          <Grid.Col span={9}>
             <EmailContentCard
               key={index}
               organization={currentOrganization}
@@ -149,9 +126,9 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
             />
           </Grid.Col>
           <Grid.Col
-            span={showVarManagement ? 4 : 0}
-            sx={{
-              maxWidth: '325px',
+            span={3}
+            style={{
+              maxWidth: '350px',
             }}
           >
             <VariablesManagement
@@ -189,6 +166,16 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
         overflow="inside"
       >
         <VariableManager hideLabel={true} index={index} contents={['content', 'htmlContent', 'subject']} />
+        <Group position="right">
+          <Button
+            mt={30}
+            onClick={() => {
+              setModalOpen(false);
+            }}
+          >
+            Close
+          </Button>
+        </Group>
       </Modal>
     </>
   );
