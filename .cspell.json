@@ -178,7 +178,8 @@
     "nosniff",
     "hookform",
     "noconflict",
-    "monokai"
+    "monokai",
+    "sparkpost"
   ],
   "flagWords": [],
   "patterns": [
