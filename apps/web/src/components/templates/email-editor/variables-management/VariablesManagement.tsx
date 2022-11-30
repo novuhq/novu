@@ -1,4 +1,4 @@
-import { Button, colors, Tooltip, Text } from '../../../../design-system';
+import { colors, Text } from '../../../../design-system';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { SystemVariablesWithTypes } from '@novu/shared';
 import { VarItem } from './VarItem';
@@ -47,7 +47,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           <Text gradient>Add defaults or mark as required</Text>
         </UnstyledButton>
       </div>
-      <VarLabel label="System Vars">
+      <VarLabel label="System Variables">
         {Object.keys(SystemVariablesWithTypes).map((name) => {
           const type = SystemVariablesWithTypes[name];
 
@@ -63,7 +63,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           marginTop: '20px',
         }}
       >
-        <VarLabel label="Step Vars">
+        <VarLabel label="Step Variables">
           {variableArray.map((item) => {
             return <VarItem name={item.name} type={item.type.toLowerCase()} />;
           })}
