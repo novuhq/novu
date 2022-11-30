@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   assign_milestone:
-    if: github.event.review.state == 'approved'
+    if: false
     name: Add milestone
     permissions:
       issues: write

@@ -1,5 +1,7 @@
 import { createStyles, MantineTheme } from '@mantine/core';
 
+import { colors } from '../config';
+
 export default createStyles((theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
 
@@ -63,7 +65,7 @@ export default createStyles((theme: MantineTheme) => {
           bottom: 0,
           left: 0,
           borderRadius: '7px 0px 0px 7px',
-          background: theme.colors.gradient[7],
+          background: colors.vertical,
         },
       },
     },

@@ -21,3 +21,7 @@ export function createIntegration(data: {
 export function updateIntegration(integrationId: string, data: { credentials: ICredentialsDto; active: boolean }) {
   return api.put(`/v1/integrations/${integrationId}`, data);
 }
+
+export function getWebhookSupportStatus(providerId: string) {
+  return api.get(`/v1/integrations/webhook/provider/${providerId}/status`);
+}

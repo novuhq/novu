@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-slim
+FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine
 
 WORKDIR /usr/src/app
 
@@ -24,13 +24,13 @@ COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
-RUN pnpm install
+RUN --mount=type=cache,id=pnpm-store-web,target=/root/.pnpm-store\
+  pnpm install --reporter=silent
+
 RUN pnpm add @babel/core -w
 
-COPY .eslintrc.js .
-COPY .prettierrc .
-COPY .prettierignore .
+COPY [".eslintrc.js",".prettierrc",".prettierignore","./"]
 
-RUN pnpm build:web
+RUN NX_DAEMON=false pnpm build:web
 
 CMD [ "pnpm", "start:static:web" ]

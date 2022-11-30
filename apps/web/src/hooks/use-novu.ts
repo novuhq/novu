@@ -1,5 +1,5 @@
 import { useContext, useEffect } from 'react';
-import { APP_ID, ENV, WIDGET_EMEBED_PATH } from '../config';
+import { APP_ID, ENV, WIDGET_EMBED_PATH } from '../config';
 import { AuthContext } from '../store/authContext';
 
 export function useNovu() {
@@ -25,7 +25,7 @@ export function useNovu() {
         elt.src = t;
         const before = o.getElementsByTagName(f)[0];
         before.parentNode?.insertBefore(elt, before);
-      })(window, document, WIDGET_EMEBED_PATH, 'novu', 'script');
+      })(window, document, WIDGET_EMBED_PATH, 'novu', 'script');
 
       (window as any).novu.init(
         APP_ID,

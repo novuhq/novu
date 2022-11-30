@@ -55,7 +55,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME>', {
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
 
 #### 💌 Email
 

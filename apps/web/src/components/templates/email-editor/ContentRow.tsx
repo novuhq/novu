@@ -1,8 +1,9 @@
-import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
-import { ActionIcon, MenuItem as DropdownItem, MenuLabel } from '@mantine/core';
+import { ActionIcon, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { AlignCenterOutlined, AlignLeftOutlined, AlignRightOutlined } from '@ant-design/icons';
+import { IEmailBlock } from '@novu/shared';
+
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { Button, colors, Dropdown } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -23,6 +24,7 @@ export function ContentRow({
   onStyleChanged: (data: { textAlign: 'left' | 'right' | 'center' }) => void;
 }) {
   const { readonly } = useEnvController();
+  const theme = useMantineTheme();
   const [textAlign, settextAlign] = useState<'left' | 'right' | 'center'>(block?.styles?.textAlign || 'left');
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const parentRef = useRef<HTMLDivElement>(null);
@@ -55,19 +57,19 @@ export function ContentRow({
   };
 
   const rowStyleMenu = [
-    <MenuLabel style={{ fontSize: '14px' }}>Align Text</MenuLabel>,
-    <TextAlignmentWrapper>
+    <Dropdown.Label style={{ fontSize: '14px' }}>Align Text</Dropdown.Label>,
+    <TextAlignmentWrapper colorScheme={theme.colorScheme}>
       {textAlignments.map(([dir, icon]) => (
         <Button
           onClick={(e) => changeRowStyles(e, dir)}
           data-test-id={`align-${dir}-btn`}
-          variant={dir === textAlign ? 'filled' : 'outline'}
+          variant={dir === textAlign ? 'gradient' : 'outline'}
         >
           {icon}
         </Button>
       ))}
     </TextAlignmentWrapper>,
-    <DropdownItem
+    <Dropdown.Item
       key="removeBtn"
       disabled={!allowRemove}
       data-test-id="remove-row-btn"
@@ -75,7 +77,7 @@ export function ContentRow({
       icon={<Trash />}
     >
       Remove Row
-    </DropdownItem>,
+    </Dropdown.Item>,
   ];
 
   return (
@@ -130,7 +132,7 @@ const ContentRowWrapper = styled.div`
   }
 `;
 
-const TextAlignmentWrapper = styled.div`
+const TextAlignmentWrapper = styled.div<{ colorScheme: 'light' | 'dark' }>`
   display: flex;
   justify-content: space-between;
   padding: 5px 15px 15px 15px;
@@ -139,5 +141,9 @@ const TextAlignmentWrapper = styled.div`
     padding: 0;
     margin: 0 5px;
     width: 100%;
+  }
+
+  .anticon svg {
+    color: ${({ colorScheme }) => (colorScheme === 'dark' ? colors.white : colors.B40)};
   }
 `;

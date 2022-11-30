@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { ColorScheme, useMantineTheme } from '@mantine/core';
 import { IFeedEntity } from '@novu/shared';
+
 import { colors, shadows } from '../../../design-system';
 import { DotsHorizontal } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -63,7 +64,7 @@ const Wrapper = styled.div<{ colorScheme: ColorScheme; showFeed: boolean; select
   display: flex;
   align-items: center;
   width: 100%;
-  height: 100%;
+  height: 45px;
   border-radius: 7px;
   cursor: default;
   justify-content: space-between;

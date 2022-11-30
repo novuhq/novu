@@ -22,15 +22,17 @@ describe('Settings Screen', function () {
   });
 
   it('should update logo', function () {
-    cy.fixture('test-logo.png', { encoding: null }).then((contents) => {
-      cy.getByTestId('upload-image-button').find('input').selectFile(
-        {
-          contents,
-          fileName: 'test-logo.png',
-          mimeType: 'image/png',
-        },
-        { force: true }
-      );
+    cy.fixture('test-logo.png', {}).then((contents) => {
+      cy.getByTestId('upload-image-button')
+        .find('input')
+        .selectFile(
+          {
+            contents: Buffer.from(contents),
+            fileName: 'test-logo.png',
+            mimeType: 'image/png',
+          },
+          { force: true }
+        );
     });
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 
@@ -44,7 +46,7 @@ describe('Settings Screen', function () {
   it('should change look and feel settings', function () {
     cy.getByTestId('color-picker').click({ force: true });
     cy.get('button[aria-label="#BA68C8"]').click({ force: true });
-    cy.getByTestId('color-picker').should('have.value', '#b967c7');
+    cy.getByTestId('color-picker').should('have.value', '#BA68C8');
     cy.getByTestId('color-picker').click({ force: true });
     cy.get('div[aria-valuetext="rgba(185, 103, 199, 1)"]');
     cy.get('body').click();
@@ -57,7 +59,7 @@ describe('Settings Screen', function () {
     cy.wait('@updateBrandingSettings');
 
     cy.reload();
-    cy.getByTestId('color-picker').should('have.value', '#b967c7');
+    cy.getByTestId('color-picker').should('have.value', '#BA68C8');
     cy.getByTestId('font-family-selector').should('have.value', 'Lato');
   });
 });

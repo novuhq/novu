@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
+import { ActorTypeEnum } from '@novu/shared';
 import { schemaOptions } from '../schema-default.options';
 import { MessageTemplateEntity } from './message-template.entity';
 
@@ -37,6 +38,7 @@ const messageTemplateSchema = new Schema(
       data: Schema.Types.Mixed,
       action: Schema.Types.Mixed,
     },
+    preheader: Schema.Types.String,
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -56,6 +58,13 @@ const messageTemplateSchema = new Schema(
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
+    },
+    actor: {
+      type: {
+        type: Schema.Types.String,
+        enum: ActorTypeEnum,
+      },
+      data: Schema.Types.Mixed,
     },
   },
   schemaOptions

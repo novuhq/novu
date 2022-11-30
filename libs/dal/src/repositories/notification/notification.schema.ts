@@ -28,6 +28,20 @@ const notificationSchema = new Schema(
       type: Schema.Types.String,
       index: true,
     },
+    channels: [
+      {
+        type: Schema.Types.String,
+      },
+    ],
+    _digestedNotificationId: {
+      type: Schema.Types.String,
+    },
+    to: {
+      type: Schema.Types.Mixed,
+    },
+    payload: {
+      type: Schema.Types.Mixed,
+    },
   },
   schemaOptions
 );
@@ -51,6 +65,12 @@ notificationSchema.virtual('subscriber', {
   localField: '_subscriberId',
   foreignField: '_id',
   justOne: true,
+});
+
+notificationSchema.virtual('jobs', {
+  ref: 'Job',
+  localField: '_id',
+  foreignField: '_notificationId',
 });
 
 interface INotificationDocument extends NotificationEntity, Document {

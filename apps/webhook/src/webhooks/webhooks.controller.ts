@@ -1,5 +1,7 @@
 import { Body, ClassSerializerInterceptor, Controller, Param, Post, UseInterceptors } from '@nestjs/common';
-import { Webhook, IWebhookResult } from './usecases/webhook/webhook.usecase';
+
+import { IWebhookResult } from './dtos/webhooks-response.dto';
+import { Webhook } from './usecases/webhook/webhook.usecase';
 import { WebhookCommand } from './usecases/webhook/webhook.command';
 
 @Controller('/webhooks')

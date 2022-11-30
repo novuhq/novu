@@ -77,26 +77,21 @@ export enum EmailEventStatusEnum {
   BLOCKED = 'blocked',
   SPAM = 'spam',
   UNSUBSCRIBED = 'unsubscribed',
-  SPAM_COMPLAINED = 'spam complained',
-  SUBSCRIPTION_CHANGED = 'subscription changed',
 }
 
 export enum SmsEventStatusEnum {
   CREATED = 'created',
   DELIVERED = 'delivered',
-  RECEIVED = 'received',
   ACCEPTED = 'accepted',
   QUEUED = 'queued',
   SENDING = 'sending',
   SENT = 'sent',
   FAILED = 'failed',
   UNDELIVERED = 'undelivered',
-  RECEIVING = 'receiving',
-  DELIVERY_UNCONFIRMED = 'delivery unconfirmed',
 }
 
 export interface IEventBody {
-  status: string;
+  status: EmailEventStatusEnum | SmsEventStatusEnum;
   date: string;
   externalId?: string;
   attempts?: number;

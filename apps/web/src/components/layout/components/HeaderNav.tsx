@@ -1,16 +1,9 @@
-import {
-  Avatar,
-  useMantineColorScheme,
-  ActionIcon,
-  Header,
-  Group,
-  Menu as MantineMenu,
-  Container,
-} from '@mantine/core';
+import { Avatar, useMantineColorScheme, ActionIcon, Header, Group, Container } from '@mantine/core';
 import { useContext, useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
+
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
@@ -99,7 +92,7 @@ export function HeaderNav({}: Props) {
   }, [colorScheme]);
 
   const profileMenuMantine = [
-    <MantineMenu.Item disabled key="user">
+    <Dropdown.Item disabled key="user">
       <Group spacing={15}>
         <Avatar
           sx={(theme) => ({
@@ -118,23 +111,24 @@ export function HeaderNav({}: Props) {
           </Text>
         </div>
       </Group>
-    </MantineMenu.Item>,
+    </Dropdown.Item>,
     ...menuItem.map(({ title, icon, path }) => (
       <Link to={path} key={title}>
-        <MantineMenu.Item key={title} icon={icon} component="div">
+        <Dropdown.Item key={title} icon={icon} component="div">
           {title}
-        </MantineMenu.Item>
+        </Dropdown.Item>
       </Link>
     )),
-    <MantineMenu.Item key="logout" icon={<Trash />} onClick={logout} data-test-id="logout-button">
+    <Dropdown.Item key="logout" icon={<Trash />} onClick={logout} data-test-id="logout-button">
       Sign Out
-    </MantineMenu.Item>,
+    </Dropdown.Item>,
   ];
 
   return (
     <Header
       height="65px"
       sx={(theme) => ({
+        position: 'static',
         boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
         borderBottom: 'none',
       })}
@@ -153,10 +147,13 @@ export function HeaderNav({}: Props) {
         </Link>
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
-            <Tooltip label={themeTitle()}>{Icon()}</Tooltip>
+            <Tooltip label={themeTitle()}>
+              <div>{Icon()}</div>
+            </Tooltip>
           </ActionIcon>
           <NotificationCenterWidget user={currentUser} />
           <Dropdown
+            position="bottom-end"
             control={
               <ActionIcon variant="transparent">
                 <Avatar
