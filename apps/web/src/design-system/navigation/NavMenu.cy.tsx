@@ -4,8 +4,6 @@ import { TestWrapper } from '../../testing';
 
 describe('NavMenu', () => {
   it('should have active class when clicked menu item', () => {
-    const activeClass = 'mantine-g10fyh';
-    const notActiveClass = 'mantine-16w7c2e';
     const menuItems = [
       {
         icon: null,
@@ -39,11 +37,11 @@ describe('NavMenu', () => {
       </Router>
     );
 
-    cy.getByTestId(menuHomeItemSelector).should('have.class', activeClass);
-    cy.get(`a.${notActiveClass}`).each(($elem) => {
-      cy.wrap($elem).should('not.have.class', activeClass);
+    cy.getByTestId(menuHomeItemSelector).should('have.attr', 'aria-current', 'page');
+    cy.get(`a:not([aria-current])`).each(($elem) => {
+      cy.wrap($elem).should('not.have.attr', 'aria-current', 'page');
       cy.wrap($elem).click();
-      cy.wrap($elem).should('have.class', activeClass);
+      cy.wrap($elem).should('have.attr', 'aria-current', 'page');
     });
   });
 });

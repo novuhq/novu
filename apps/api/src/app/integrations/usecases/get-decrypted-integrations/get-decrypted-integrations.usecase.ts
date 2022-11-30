@@ -8,7 +8,7 @@ export class GetDecryptedIntegrations {
   constructor(private integrationRepository: IntegrationRepository) {}
 
   async execute(command: GetDecryptedIntegrationsCommand): Promise<IntegrationEntity[]> {
-    const query: Partial<IntegrationEntity> = {
+    const query: Partial<IntegrationEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
     };
 

@@ -81,6 +81,9 @@ class NotificationStepCommand {
   @IsBoolean()
   active?: boolean;
 
+  @IsBoolean()
+  shouldStopOnFail?: boolean;
+
   @IsOptional()
   @IsArray()
   @ValidateNested()

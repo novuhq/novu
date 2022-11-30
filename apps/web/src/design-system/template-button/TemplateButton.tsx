@@ -1,14 +1,32 @@
 import React, { useState } from 'react';
-import { Popover } from '@mantine/core';
+import { Popover, createStyles } from '@mantine/core';
 import styled from '@emotion/styled';
+import { useFormContext } from 'react-hook-form';
+
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
-import { useFormContext } from 'react-hook-form';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { Button } from './Button';
 import { IconWrapper } from './IconWrapper';
+
+const usePopoverStyles = createStyles(() => ({
+  dropdown: {
+    position: 'absolute',
+    padding: '12px 15px 14px',
+    backgroundColor: colors.error,
+    color: colors.white,
+    border: 'none',
+    marginTop: '1px',
+  },
+  arrow: {
+    backgroundColor: colors.error,
+    height: '7px',
+    border: 'none',
+    margin: '0px',
+  },
+}));
 
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
@@ -45,96 +63,71 @@ export function TemplateButton({
   const disabledProp = disabled ? { disabled } : {};
   const [popoverOpened, setPopoverOpened] = useState(false);
   const { trigger } = useFormContext();
+  const { classes: popoverClasses } = usePopoverStyles();
 
   return (
-    <>
-      <Button
-        type={'button'}
-        onMouseEnter={() => setPopoverOpened(true)}
-        onMouseLeave={() => setPopoverOpened(false)}
-        onClick={async () => {
-          if (active) {
+    <Button
+      onMouseEnter={() => setPopoverOpened(true)}
+      onMouseLeave={() => setPopoverOpened(false)}
+      onClick={async () => {
+        if (active) {
+          return;
+        }
+
+        if (tabKey === ActivePageEnum.WORKFLOW) {
+          const valid = await trigger(['name', 'notificationGroup'], { shouldFocus: true });
+
+          if (!valid) {
             return;
           }
+        }
 
-          if (tabKey === ActivePageEnum.WORKFLOW) {
-            const valid = await trigger(['name', 'notificationGroup'], { shouldFocus: true });
+        changeTab(tabKey);
+      }}
+      data-test-id={testId}
+      className={cx(classes.button, { [classes.active]: active })}
+    >
+      <ButtonWrapper>
+        <LeftContainerWrapper>
+          <IconWrapper className={classes.linkIcon}>
+            <Icon {...disabledProp} />
+          </IconWrapper>
+          <StyledContentWrapper>
+            <Text {...disabledColor} weight="bold">
+              {label}
+            </Text>
+            <Text mt={3} color={colors.B60} {...disabledColor}>
+              {description}
+            </Text>
+          </StyledContentWrapper>
+        </LeftContainerWrapper>
 
-            if (!valid) {
-              return;
-            }
-          }
+        <ActionWrapper>
+          {action && !readonly && (
+            <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
+          )}
+        </ActionWrapper>
+      </ButtonWrapper>
 
-          changeTab(tabKey);
-        }}
-        data-test-id={testId}
-        className={cx(classes.button, { [classes.active]: active })}
-      >
-        <ButtonWrapper>
-          <LeftContainerWrapper>
-            <IconWrapper className={classes.linkIcon}>
-              <Icon {...disabledProp} />
-            </IconWrapper>
-            <StyledContentWrapper>
-              <Text {...disabledColor} weight="bold">
-                {label}
-              </Text>
-              <Text mt={3} color={colors.B60} {...disabledColor}>
-                {description}
-              </Text>
-            </StyledContentWrapper>
-          </LeftContainerWrapper>
-
-          <ActionWrapper>
-            {action && !readonly && (
-              <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
-            )}
-          </ActionWrapper>
-        </ButtonWrapper>
-
-        {errors && (
-          <Popover
-            styles={{
-              root: {
-                position: 'absolute',
-                right: 0,
-                top: 'calc(50% - 1px)',
-              },
-              inner: {
-                padding: '12px 15px 14px',
-              },
-              arrow: {
-                backgroundColor: colors.error,
-                height: '7px',
-                border: 'none',
-                margin: '0px',
-              },
-              body: {
-                backgroundColor: colors.error,
-                position: 'relative',
-                color: colors.white,
-                border: 'none',
-                marginTop: '1px',
-              },
-            }}
-            withArrow
-            opened={popoverOpened}
-            transition="rotate-left"
-            transitionDuration={250}
-            gutter={theme.spacing.xs}
-            mb={20}
-            placement="center"
-            position="right"
-            target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
-          >
-            {errors || 'Something is missing here'}
-          </Popover>
-        )}
-      </Button>
-    </>
+      {errors && (
+        <Popover
+          classNames={popoverClasses}
+          withArrow
+          opened={popoverOpened}
+          transition="rotate-left"
+          transitionDuration={250}
+          offset={theme.spacing.xs}
+          position="right"
+        >
+          <Popover.Target>
+            <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
+          </Popover.Target>
+          <Popover.Dropdown>{errors || 'Something is missing here'}</Popover.Dropdown>
+        </Popover>
+      )}
+    </Button>
   );
 }
-
 const ErrorCircle = styled.div<{ dark: boolean }>`
   width: 11px;
   height: 11px;

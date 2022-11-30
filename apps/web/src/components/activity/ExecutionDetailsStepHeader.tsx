@@ -1,15 +1,14 @@
-import { Container, Grid, useMantineColorScheme } from '@mantine/core';
-import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
+import { Container, Grid } from '@mantine/core';
 import { format, parseISO } from 'date-fns';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
+import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
 import { getLogoByType } from './helpers';
-
 import { colors, Text } from '../../design-system';
 import { CheckCircle, ErrorIcon } from '../../design-system/icons';
 
-const StepName = styled(Text)<{ theme: string }>`
+const StepName = styled(Text)`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
   font-size: 16px;
   font-weight: 700;
@@ -19,14 +18,14 @@ const StepName = styled(Text)<{ theme: string }>`
   text-transform: capitalize;
 `;
 
-const StepDetails = styled(Text)<{ theme: string }>`
+const StepDetails = styled(Text)`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B60)};
   font-size: 12px;
   line-height: 16px;
   padding: 0;
 `;
 
-const StepDate = styled(Text)<{ theme: string }>`
+const StepDate = styled(Text)`
   color: ${colors.B60};
   font-size: 12px;
   line-height: 16px;
@@ -118,15 +117,14 @@ const getDetailsStyledComponentByStepStatus = (status) => {
 };
 
 const StepOutcome = ({ createdAt, name, detail, status }) => {
-  const theme = useMantineColorScheme();
   const Details = getDetailsStyledComponentByStepStatus(status);
   const date = format(parseISO(createdAt), 'dd/MM/yyyy');
 
   return (
     <>
-      <StepName theme={theme}>{name?.replace('_', ' ')}</StepName>
-      <Details theme={theme}>{detail}</Details>
-      <StepDate theme={theme}>{date}</StepDate>
+      <StepName>{name?.replace('_', ' ')}</StepName>
+      <Details>{detail}</Details>
+      <StepDate>{date}</StepDate>
     </>
   );
 };
@@ -144,7 +142,7 @@ export const ExecutionDetailsStepHeader = ({ step }) => {
         <StepOutcome createdAt={step?.createdAt} name={step?.type} detail={generatedDetail} status={status} />
       </Grid.Col>
       <Grid.Col span={4}>
-        <ExecutionDetailsWebhookFeedback show={false} />
+        <ExecutionDetailsWebhookFeedback executionDetails={step.executionDetails} />
       </Grid.Col>
     </Grid>
   );

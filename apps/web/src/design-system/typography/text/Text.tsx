@@ -1,4 +1,5 @@
-import { Text as MantineText, SharedTextProps, MantineColor, useMantineTheme } from '@mantine/core';
+import { Text as MantineText, MantineColor, useMantineTheme } from '@mantine/core';
+
 import { colors } from '../../config';
 import { SpacingProps } from '../../shared/spacing.props';
 
@@ -17,7 +18,6 @@ interface ITextProps extends JSX.ElementChildrenAttribute, SpacingProps {
  */
 export function Text({ children, gradient = false, ...props }: ITextProps) {
   const { colorScheme } = useMantineTheme();
-  const defaultDesign = { size: 'md', weight: 'normal' } as SharedTextProps;
   const gradientStyles = gradient
     ? { backgroundImage: colors.horizontal, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
     : {};
@@ -28,7 +28,7 @@ export function Text({ children, gradient = false, ...props }: ITextProps) {
   }
 
   return (
-    <MantineText lineClamp={props.rows} {...defaultDesign} style={gradientStyles} {...props} color={textColor}>
+    <MantineText lineClamp={props.rows} size="md" weight="normal" style={gradientStyles} {...props} color={textColor}>
       {children}
     </MantineText>
   );

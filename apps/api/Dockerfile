@@ -20,7 +20,7 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --unsafe-perm\
  --reporter=silent
 
-RUN NODE_ENV=production pnpm build:api
+RUN NODE_ENV=production NX_DAEMON=false pnpm build:api
 
 WORKDIR /usr/src/app/apps/api
 

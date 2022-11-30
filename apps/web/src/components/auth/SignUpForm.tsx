@@ -25,8 +25,8 @@ export function SignUpForm({ token, email }: Props) {
   const { setToken } = useContext(AuthContext);
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
   const { isFromVercel, code, next, configurationId } = useVercelParams();
-  const vercelQueryParamss = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParamss}` : '/auth/login';
+  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
@@ -77,7 +77,7 @@ export function SignUpForm({ token, email }: Props) {
       setToken((response as any).token);
     }
 
-    navigate(isFromVercel ? `/auth/application?${vercelQueryParamss}` : '/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : '/auth/application');
 
     return true;
   };
@@ -222,7 +222,7 @@ export function SignUpForm({ token, email }: Props) {
 
 function Accept() {
   return (
-    <div>
+    <>
       <span>I accept the </span>
       <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms" target="_blank" rel="noopener noreferrer">
         Terms and Conditions
@@ -236,7 +236,7 @@ function Accept() {
       >
         Privacy Policy
       </a>
-    </div>
+    </>
   );
 }
 

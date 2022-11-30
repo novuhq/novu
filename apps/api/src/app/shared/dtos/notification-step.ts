@@ -103,6 +103,9 @@ export class NotificationStep {
   @ApiPropertyOptional()
   active?: boolean;
 
+  @ApiPropertyOptional()
+  shouldStopOnFail?: boolean;
+
   @ApiPropertyOptional({
     type: MessageTemplate,
   })

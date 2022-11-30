@@ -5,13 +5,23 @@ import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ISubscribersDefine } from '@novu/node';
+import { ISubscribersDefine, TriggerRecipientsTypeSingle } from '@novu/node';
 import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
 import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiExcludeEndpoint,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
+import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
+import { TestSendEmailRequestDto } from './dtos/test-email-request.dto';
 
 @Controller('events')
 @ApiTags('Events')
@@ -19,7 +29,8 @@ export class EventsController {
   constructor(
     private triggerEvent: TriggerEvent,
     private cancelDelayedUsecase: CancelDelayed,
-    private triggerEventToAll: TriggerEventToAll
+    private triggerEventToAll: TriggerEventToAll,
+    private sendTestEmail: SendTestEmail
   ) {}
 
   @ExternalApiAccessible()
@@ -50,6 +61,7 @@ export class EventsController {
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const mappedSubscribers = this.mapSubscribers(body);
+    const mappedActor = this.mapActor(body.actor);
     const transactionId = body.transactionId || uuidv4();
 
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
@@ -63,6 +75,7 @@ export class EventsController {
         payload: body.payload,
         overrides: body.overrides || {},
         to: mappedSubscribers,
+        actor: mappedActor,
         transactionId,
       })
     );
@@ -96,6 +109,7 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
+    const mappedActor = this.mapActor(body.actor);
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -106,6 +120,26 @@ export class EventsController {
         payload: body.payload,
         transactionId,
         overrides: body.overrides || {},
+        actor: mappedActor,
+      })
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/test/email')
+  @ApiExcludeEndpoint()
+  async testEmailMessage(@UserSession() user: IJwtPayload, @Body() body: TestSendEmailRequestDto): Promise<void> {
+    return await this.sendTestEmail.execute(
+      TestSendMessageCommand.create({
+        subject: body.subject,
+        payload: body.payload,
+        contentType: body.contentType,
+        content: body.content,
+        preheader: body.preheader,
+        to: body.to,
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
       })
     );
   }
@@ -149,5 +183,14 @@ export class EventsController {
         return subscriber;
       }
     });
+  }
+
+  private mapActor(actor: TriggerRecipientsTypeSingle): ISubscribersDefine {
+    if (!actor) return;
+    if (typeof actor === 'string') {
+      return { subscriberId: actor };
+    }
+
+    return actor;
   }
 }

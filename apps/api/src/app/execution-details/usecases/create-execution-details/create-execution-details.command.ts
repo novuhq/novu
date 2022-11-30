@@ -1,9 +1,11 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { JobEntity } from '@novu/dal';
 
 export enum DetailEnum {
+  CHAT_WEBHOOK_URL_MISSING = 'Webhook URL for the chat channel is missing',
   STEP_CREATED = 'Step created',
   STEP_QUEUED = 'Step queued',
   STEP_DELAYED = 'Step delayed',
@@ -22,6 +24,7 @@ export enum DetailEnum {
   STEP_FILTERED_BY_PREFERENCES = 'Step filtered by subscriber preferences',
   DIGEST_MERGED = 'Digest was merged with other digest',
   DELAY_FINISHED = 'Delay is finished',
+  PUSH_MISSING_DEVICE_TOKENS = 'Subscriber credentials is missing the tokens for sending a push notification message',
 }
 
 export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
@@ -64,6 +67,8 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @IsString()
   raw?: string;
+
+  webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
 
   static getDetailsFromJob(
     job: JobEntity

@@ -302,6 +302,7 @@ export class UserSession {
     let runningJobs = 0;
     do {
       runningJobs = await this.jobRepository.count({
+        _organizationId: this.organization._id,
         type: {
           $nin: [StepTypeEnum.DIGEST],
         },

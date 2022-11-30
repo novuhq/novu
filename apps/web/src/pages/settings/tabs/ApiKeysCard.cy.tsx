@@ -84,11 +84,11 @@ describe('Input Component', () => {
 
       return;
     });
-    cy.get("[data-test-id='api-key-tooltip']").click();
+    cy.get("[data-test-id='api-key-copy']").click();
     cy.get('@copy').should('be.calledWithExactly', apiKeys[0].key);
 
     cy.wait('@currentEnvironment');
-    cy.get("[data-test-id='application-identifier-tooltip']").click();
+    cy.get("[data-test-id='application-identifier-copy']").click();
     cy.get('@copy').should('be.calledWithExactly', currentEnvironment.identifier);
   });
 });

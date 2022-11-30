@@ -10,6 +10,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   BuilderFieldOperator,
+  ActorTypeEnum,
 } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 import { useMutation, useQueryClient } from 'react-query';
@@ -108,6 +109,13 @@ export function useTemplateController(templateId: string) {
             template: {
               ...item.template,
               feedId: item.template._feedId || '',
+              actor: item.template.actor?.type
+                ? item.template.actor
+                : {
+                    type: ActorTypeEnum.NONE,
+                    data: null,
+                  },
+              enableAvatar: item.template.actor?.type && item.template.actor.type !== ActorTypeEnum.NONE ? true : false,
             },
           };
         }
@@ -127,10 +135,22 @@ export function useTemplateController(templateId: string) {
   }, [templateId]);
 
   const onSubmit = async (data: IForm) => {
-    let stepsToSave = data.steps as StepEntity[];
+    let stepsToSave = data.steps;
+
     stepsToSave = stepsToSave.map((step: StepEntity) => {
       if (step.template.type === StepTypeEnum.EMAIL && step.template.contentType === 'customHtml') {
         step.template.content = step.template.htmlContent as string;
+      }
+
+      if (step.template.type === StepTypeEnum.IN_APP) {
+        if (!step.template.enableAvatar) {
+          step.template.actor = {
+            type: ActorTypeEnum.NONE,
+            data: null,
+          };
+        }
+
+        delete step.template.enableAvatar;
       }
 
       return step;
@@ -202,7 +222,15 @@ export function useTemplateController(templateId: string) {
       template: {
         type: channelType,
         content: [],
+        contentType: 'editor',
         variables: [],
+        ...(channelType === StepTypeEnum.IN_APP && {
+          actor: {
+            type: ActorTypeEnum.NONE,
+            data: null,
+          },
+          enableAvatar: false,
+        }),
       },
       active: true,
       filters: [],
@@ -247,6 +275,7 @@ export function useTemplateController(templateId: string) {
 
 interface ITemplates extends IMessageTemplate {
   htmlContent?: string;
+  enableAvatar?: boolean;
 }
 
 export interface StepEntity {
