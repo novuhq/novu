@@ -56,7 +56,7 @@ describe('cached interceptor', function () {
     expect(responseFromCache).to.be.equal(null);
   });
 
-  it('Message repository - should create new entity and invalidate the old null response', async function () {
+  it('Message repository - should create new entity and invalidate the old null response with create method', async function () {
     const messageRepo = new MessageRepo();
 
     // create cached null -> result  {123:456 : null} because its data not stored in the storage
@@ -73,6 +73,36 @@ describe('cached interceptor', function () {
 
     expect(messageRepo.callCount).to.be.equal(3);
     expect(extractedDataBySubscriberId.data).to.be.equal('random data');
+  });
+
+  it('Message repository - should invalidate with update method', async function () {
+    const messageRepo = new MessageRepo();
+
+    // should create new collection in the cache {123:456 : object}
+    await messageRepo.create({
+      _subscriberId: '123',
+      _environmentId: '456',
+      data: 'random data',
+    });
+
+    // cache created data
+    await messageRepo.find({ _subscriberId: '123', _environmentId: '456' });
+
+    // should update newly create object + invalidate
+    await messageRepo.update(
+      {
+        _subscriberId: '123',
+        _environmentId: '456',
+      },
+      {
+        data: 'updated data',
+      }
+    );
+
+    const extractedDataBySubscriberId = await messageRepo.find({ _subscriberId: '123', _environmentId: '456' });
+
+    expect(messageRepo.callCount).to.be.equal(4);
+    expect(extractedDataBySubscriberId.data).to.be.equal('updated data');
   });
 });
 
@@ -105,6 +135,18 @@ class MessageRepo {
 
     return newEntity ?? null;
   }
+
+  @InvalidateCache('Message')
+  async update(query: any, updateBody: any): Promise<any> {
+    this.count++;
+    const createKey = `${query._subscriberId}:${query._environmentId}`;
+    this.store[createKey] = Object.assign({}, query, updateBody);
+
+    return {
+      matched: 1,
+      modified: 1,
+    };
+  }
 }
 
 class Repo {
@@ -129,6 +171,9 @@ class Repo {
     this.store = updateBody;
     this.count++;
 
-    return this.store;
+    return {
+      matched: 1,
+      modified: 1,
+    };
   }
 }
