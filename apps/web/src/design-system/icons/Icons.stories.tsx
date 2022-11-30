@@ -29,7 +29,7 @@ export const Icons = () => {
           if (name.includes(search.toLowerCase())) {
             return (
               <Grid.Col key={name} span={3}>
-                <Group align="center" spacing={3} direction="row">
+                <Group align="center" spacing={3}>
                   <ActionIcon variant="transparent" onClick={() => setIconName(name)}>
                     <Icon width="20px" height="20px" />
                   </ActionIcon>

@@ -59,7 +59,7 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
             visible={isLoading}
             data-test-id="channel-preference-item-loader"
             loaderProps={{
-              size: 'xs',
+              size: 15,
               color:
                 theme.loaderColor.indexOf('gradient') === -1
                   ? theme.loaderColor
@@ -67,7 +67,12 @@ export function ChannelPreference({ type, active, disabled, handleUpdateChannelP
             }}
             overlayOpacity={0.3}
             overlayColor="transparent"
-            sx={{ justifyContent: active ? 'right' : 'left', marginLeft: '2.5px', marginRight: '2px' }}
+            sx={{
+              justifyContent: active ? 'right' : 'left',
+              marginLeft: '3px',
+              marginRight: '1.5px',
+              marginTop: '1px',
+            }}
           />
           <Switch
             data-test-id="channel-preference-item-toggle"

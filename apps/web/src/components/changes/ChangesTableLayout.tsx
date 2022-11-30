@@ -19,6 +19,7 @@ export const ChangesTable = ({
   page,
   pageSize,
   totalCount,
+  dataTestId,
 }: {
   changes: Data[];
   loading: boolean;
@@ -26,6 +27,7 @@ export const ChangesTable = ({
   page: Number;
   pageSize: Number;
   totalCount: Number;
+  dataTestId?: string;
 }) => {
   const queryClient = useQueryClient();
   const { colorScheme } = useMantineColorScheme();
@@ -114,7 +116,7 @@ export const ChangesTable = ({
 
   return (
     <Table
-      data-test-id="changes-table"
+      data-test-id={dataTestId}
       loading={loading}
       data={changes || []}
       columns={columns}

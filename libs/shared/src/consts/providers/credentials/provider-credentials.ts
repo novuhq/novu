@@ -274,6 +274,30 @@ export const termiiConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const burstSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'API Secret',
+    type: 'string',
+    required: true,
+  },
+];
+
+export const clickatellConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const snsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -409,6 +433,16 @@ export const firetextConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const outlook365Config: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const infobipConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -423,5 +457,4 @@ export const infobipConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
-  ...mailConfigBase,
 ];

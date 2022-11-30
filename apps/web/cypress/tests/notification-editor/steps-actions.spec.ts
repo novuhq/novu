@@ -90,7 +90,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-active-switch`).get('label').contains('Step is active');
-    cy.getByTestId(`step-active-switch`).click();
+    cy.getByTestId(`step-active-switch`).click({ force: true });
     cy.getByTestId('submit-btn').click();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
@@ -108,7 +108,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).get('label').contains('Stop workflow if this step fails?');
-    cy.getByTestId(`step-should-stop-on-fail-switch`).click();
+    cy.getByTestId(`step-should-stop-on-fail-switch`).click({ force: true });
     cy.getByTestId('submit-btn').click();
 
     cy.clickWorkflowNode(`node-inAppSelector`);

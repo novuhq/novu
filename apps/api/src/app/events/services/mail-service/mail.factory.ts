@@ -12,6 +12,7 @@ import {
   NetCoreHandler,
   InfobipEmailHandler,
   MailerSendHandler,
+  Outlook365Handler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -29,6 +30,7 @@ export class MailFactory {
     new SESHandler(),
     new InfobipEmailHandler(),
     new MailerSendHandler(),
+    new Outlook365Handler(),
   ];
 
   getHandler(

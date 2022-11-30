@@ -1,4 +1,5 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+
 import { useActiveIntegrations } from '../../api/hooks';
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
@@ -36,7 +37,6 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
             return message.template.type === StepTypeEnum.EMAIL && activeStep === index ? (
               <EmailMessagesCards
                 key={message._id}
-                variables={trigger?.variables || []}
                 index={index}
                 isIntegrationActive={
                   !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { parse } from '@handlebars/parser';
 import { Code, Space, Table } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { colors, Input, Switch, Text } from '../../design-system';
 import { FieldArrayProvider } from './FieldArrayProvider';
 import { When } from '../utils/When';

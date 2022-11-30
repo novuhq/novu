@@ -1,6 +1,6 @@
-import { MenuItem as DropdownItem } from '@mantine/core';
 import { MemberRoleEnum } from '@novu/shared';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
+
 import { Dropdown, Tag } from '../../design-system';
 
 export function MemberRole({ member, onChangeMemberRole, isEnableMemberActions }) {
@@ -30,13 +30,14 @@ export function MemberRole({ member, onChangeMemberRole, isEnableMemberActions }
           </ClickableTag>
         }
       >
-        {availableRoles().map((role) => (
-          <DropdownItem
+        {availableRoles().map((role, index: number) => (
+          <Dropdown.Item
+            key={index}
             data-test-id={`change-member-role-to-${role[1]}-btn`}
             onClick={() => onChangeMemberRole(member, role[1])}
           >
             {role[0]}
-          </DropdownItem>
+          </Dropdown.Item>
         ))}
       </Dropdown>
     </>
