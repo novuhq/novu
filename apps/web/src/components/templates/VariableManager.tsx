@@ -218,6 +218,13 @@ export const VariableManager = ({ index, contents, hideLabel = false }: Variable
         arrayFields.push(vari);
       }
     });
+    if (variables.length) {
+      arrayFields.forEach((vari, ind) => {
+        if (!variables.find((field) => field.name === vari.name)) {
+          delete arrayFields[ind];
+        }
+      });
+    }
 
     variablesArray.replace(arrayFields.filter((field) => !!field));
   }, [ast]);
