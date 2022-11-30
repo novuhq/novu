@@ -89,7 +89,11 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
           creatable
           searchable
           getCreateLabel={(newEmail) => <div>+ Send to {newEmail}</div>}
-          onCreate={(query) => setMembersEmails((current) => [...current, query])}
+          onCreate={(query) => {
+            setMembersEmails((current) => [...current, query]);
+
+            return query;
+          }}
         />
       </Wrapper>
 
@@ -116,7 +120,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
         }
       />
 
-      <Group direction="row" mt={30}>
+      <Group mt={30}>
         <Button
           loading={isLoading}
           icon={<Invite />}
