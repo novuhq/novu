@@ -5,7 +5,9 @@ import { VarItem } from './VarItem';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
 import { UnstyledButton, useMantineTheme } from '@mantine/core';
-import { getGradient } from '../../../../design-system/config/helper';
+import { Edit } from '../../../../design-system/icons';
+import { GlobeGradient } from '../../../../design-system/icons/gradient/GlobeGradient';
+import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
 
 export const VariablesManagement = ({ index, openVariablesModal }) => {
   const { control } = useFormContext();
@@ -27,7 +29,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
     >
       <div
         style={{
-          textAlign: 'center',
+          textAlign: 'right',
           marginBottom: '20px',
         }}
       >
@@ -36,15 +38,20 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
             openVariablesModal();
           }}
           type="button"
-          sx={{
-            borderBottom: '1px solid transparent',
-            background: `${
-              theme.colorScheme === 'dark' ? getGradient(colors.B17) : getGradient(colors.B98)
-            } padding-box, ${colors.horizontal} border-box`,
-            paddingBottom: '2px',
-          }}
         >
-          <Text gradient>Add defaults or mark as required</Text>
+          <Tooltip label="Add defaults or mark as required">
+            <Text gradient>
+              Edit Variables
+              <EditGradient
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  marginBottom: '-4px',
+                  marginLeft: 5,
+                }}
+              />
+            </Text>
+          </Tooltip>
         </UnstyledButton>
       </div>
       <VarLabel label="System Variables">
